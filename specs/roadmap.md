@@ -20,7 +20,6 @@ implementation registers.
 4. Continue OpenMRS contribution review and Catalyst delivery through their product
    contracts, independently of the workspace restructuring.
 
-
 ## 2. Implementation Status
 
 | Area | Current state | Remaining work |
@@ -52,6 +51,9 @@ publication and deployed acceptance.
 - U1 and U2 share changes where component layout affects a validation adapter.
 - U3 uses the component configuration and native entry points established in U1.
 - U4 updates documentation, references and tests alongside their interfaces.
+  With U1/U2, amend the harness constitution, agent instructions and SpecKit context
+  to define experiment-runner scope and configurable targets; remove control-plane
+  duties and the fixed product-path requirements.
 - OpenMRS contribution publication proceeds as a separate delivery track.
 
 ### Verification

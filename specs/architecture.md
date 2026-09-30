@@ -82,9 +82,13 @@ digest, model/profile identifier or deployment receipt supplied by the caller or
 reported by the target. Unavailable metadata is explicitly identified.
 
 Evaluators read captured inputs, outputs and evidence according to the experiment's
-evaluation settings. Model-based assessments record model, prompt and configuration
-provenance. Human review records the reviewer, findings and rationale. Reports
-present the captured evidence and evaluation results.
+evaluation settings. Evaluation may invoke configured model services, recording
+model, prompt and configuration provenance. Human review records the reviewer,
+findings and rationale.
+
+Report generation is an offline transformation of captured evidence, evaluation
+results and review records. A report can be regenerated with the target and
+evaluator services unavailable.
 
 ## 4. Interfaces
 
@@ -107,7 +111,7 @@ selects component versions and connects their interfaces.
 
 These links identify contracts at the component revisions recorded by the workspace.
 
-- [Experiment governance](https://github.com/pmanko/clinical-ai-validation-harness/blob/a27d7e51b7268653420e8f91306c9aaa4ab5a8ee/.specify/memory/constitution.md)
+
 - [OpenMRS provider contract](https://github.com/pmanko/clinical-ai-validation-harness/blob/a27d7e51b7268653420e8f91306c9aaa4ab5a8ee/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md)
 - [QueryStore API](https://github.com/pmanko/openmrs-module-querystore/blob/8b79db9791fe47315d3aae9cb09e9fdf004e6ee6/docs/rest-api.md)
 - [Catalyst–Med Agent Hub contract](https://github.com/DIGI-UW/openelis-catalyst/blob/6ba00082519f9fb2d864895b292352d8987ce51c/docs/med-agent-hub.md)

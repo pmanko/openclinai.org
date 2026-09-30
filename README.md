@@ -5,18 +5,18 @@ analysis, and reproducible evaluation. This repository connects the projects and
 provides a shared development workspace.
 
 **[Project website](https://openclinai.org)** ·
-**[Roadmap](specs/roadmap.md)** ·
-**[Architecture](specs/architecture.md)**
+**[Explore the projects](#explore-the-projects)** ·
+**[Contribute](#contribute)**
 
 ## Projects
 
-| Project | What it does | Source |
+| Project | What it does | Setup and source |
 | --- | --- | --- |
-| **ChartSearchAI** | Lets clinicians ask questions about an OpenMRS patient chart and inspect answers with source citations. Supports bundled inference and a separately configured Med Agent Hub provider. | [Backend](https://github.com/pmanko/openmrs-module-chartsearchai) · [OpenMRS frontend](https://github.com/pmanko/openmrs-esm-chartsearchai) |
-| **Med Agent Hub** | Provides shared model profiles, prompts and execution services, including clinical-answer workflows and model roles used by Catalyst. | [Repository](https://github.com/pmanko/med-agent-hub) |
+| **ChartSearchAI** | Lets clinicians ask questions about an OpenMRS patient chart and inspect answers with source citations. | [Backend](https://github.com/pmanko/openmrs-module-chartsearchai) · [OpenMRS frontend](https://github.com/pmanko/openmrs-esm-chartsearchai) |
+| **Med Agent Hub** | A shared service for applications to configure and call language models, including clinical-answer workflows. | [Repository](https://github.com/pmanko/med-agent-hub) |
 | **Catalyst** | A supervised SQL workbench and dashboard builder for exploring health data, reviewing queries and publishing results to Apache Superset. | [Repository](https://github.com/DIGI-UW/catalyst-ai) |
-| **QueryStore** | Provides OpenMRS clinical-record retrieval and context selection for ChartSearchAI, and an optional patient-data source for Med Agent Hub. | [Repository](https://github.com/pmanko/openmrs-module-querystore) |
-| **Clinical AI Validation Harness** | Runs reproducible evaluations through product APIs and captures scenarios, provenance, evidence and review reports. | [Repository](https://github.com/pmanko/clinical-ai-validation-harness) |
+| **QueryStore** | Retrieves and organizes OpenMRS clinical records for chart search and AI applications. | [Repository](https://github.com/pmanko/openmrs-module-querystore) |
+| **Clinical AI Validation Harness** | Runs clinical-AI experiments, collects outputs and evidence, and produces evaluation and review reports. | [Repository](https://github.com/pmanko/clinical-ai-validation-harness) |
 
 ChartSearchAI integrates with [OpenMRS](https://openmrs.org/). Catalyst supports
 SQL-connected data sources, including reporting workflows for
@@ -27,40 +27,50 @@ For ChartSearchAI background and community discussion, see the
 [OpenMRS project page](https://openmrs.atlassian.net/wiki/spaces/projects/pages/373325839/Chart+Search+aka+ChartSearchAI).
 The OpenMRS repository links above point to the development forks used by this workspace.
 
-## Get started
+## Explore the projects
 
-Clone the workspace with its recorded component revisions. The roadmap describes
-[current implementation status](specs/roadmap.md#2-implementation-status).
+- [ChartSearchAI overview](https://openclinai.org/chartsearchai/): patient-chart
+  search and clinical-answer workflows.
+- [Catalyst overview](https://openclinai.org/catalyst/) and
+  [screenshot walkthrough](https://openclinai.org/catalyst/hiv-gallery/): query
+  workbench and reporting workflows.
+- [Evaluation reports](https://reports.openclinai.org/): published experiments
+  and supporting evidence.
+
+To install a project, follow its setup guide in the repositories listed above.
+
+## Contribute
+
+For product development, use that project's repository and contributor instructions.
+For component integration and shared development tooling, use this workspace.
+The [architecture](specs/architecture.md) explains how the projects fit together;
+the [implementation roadmap](specs/roadmap.md) records priorities, status and
+acceptance criteria. Read the [repository instructions](AGENTS.md) before editing.
+
+### Workspace checkout
+
+Cloning requires Git and authenticated GitHub access to this private repository.
+The checkout uses the component revisions recorded by the workspace.
 
 ```sh
 git clone --recurse-submodules https://github.com/pmanko/openclinai.org.git
 cd openclinai.org
 ```
 
-For an existing clone:
+For an existing clone, check for local changes before updating its submodules:
 
 ```sh
 git submodule update --init --recursive
 ```
 
-Read the component's README for installation, configuration and usage. Submodule
-updates use the revisions recorded by the workspace. Check for local changes
-before updating.
+### Workspace checks
 
-## Development
-
-The [roadmap](specs/roadmap.md) describes current priorities and the
-[architecture](specs/architecture.md) explains how the projects fit together.
-Component repositories own their implementation, contracts and tests.
-
-Workspace checks require Python 3.10+:
+Requires Python 3.10+:
 
 ```sh
 python3 -m unittest discover -s tests -v
 python3 scripts/check_workspace.py
 ```
 
-These checks validate workspace links and component checkout consistency.
-Products own their tests, the harness runs validation experiments, and the umbrella
-owns workspace deployment and release verification. See
-[contributor instructions](AGENTS.md) before making changes.
+These commands check documentation links and component checkout consistency.
+Each product supplies its own build and test instructions.

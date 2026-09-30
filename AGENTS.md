@@ -2,6 +2,10 @@
 
 - Start with `specs/roadmap.md`; it is the umbrella coordination authority.
 - `specs/architecture.md` supports design decisions; it is not another task list.
+- Write and review for each document's audience: README, website and repository
+  description for new users; roadmap for implementing agents; architecture for
+  technical readers; AGENTS.md for repository working rules. Evaluate clarity and
+  completeness for that audience separately from automated link/structure checks.
 - Keep each decision, phase status and requirement in its owning document. Link
   product specifications and detailed task registers instead of copying them.
 - Add only material required by the new architecture. Do not import legacy
