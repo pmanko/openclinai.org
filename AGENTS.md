@@ -26,6 +26,9 @@
 - The umbrella owns component gitlinks, version pins, checkouts, builds,
   deployment and release coordination. Remove these responsibilities from the
   harness; do not replace them with configurable harness-owned management.
+- Keep openclinai.org website content, assets, site configuration, build tooling
+  and deployment workflows in this repository. The harness produces validation
+  artifacts; the umbrella owns their publication to OpenClinAI web properties.
 - The harness is a modular validation runner. It must not require Git, submodules,
   product pins, local product source trees or the umbrella to run experiments.
   It records supplied or observed target provenance; it does not enforce pins.

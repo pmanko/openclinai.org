@@ -107,10 +107,22 @@ Product contracts define clinical and application behavior. Experiment contracts
 define execution, evidence, scoring, sampling and review semantics. The umbrella
 selects component versions and connects their interfaces.
 
-## 5. Contract References
+## 5. Website and Publication
+
+The `openclinai.org` repository contains the public website's page content, assets,
+navigation, documentation/status interfaces, sitemap and site configuration.
+It also contains the associated build tools, publication scripts, deployment
+workflows and web-server configuration. Website CI and release operations run
+from this repository.
+
+The validation harness produces experiment artifacts and rendered reports.
+OpenClinAI publication tooling consumes selected artifacts, maintains public
+catalogs and publishes them to the configured web destinations. Publication uses
+the recorded evidence and evaluation results as its inputs.
+
+## 6. Contract References
 
 These links identify contracts at the component revisions recorded by the workspace.
-
 
 - [OpenMRS provider contract](https://github.com/pmanko/clinical-ai-validation-harness/blob/a27d7e51b7268653420e8f91306c9aaa4ab5a8ee/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md)
 - [QueryStore API](https://github.com/pmanko/openmrs-module-querystore/blob/8b79db9791fe47315d3aae9cb09e9fdf004e6ee6/docs/rest-api.md)
