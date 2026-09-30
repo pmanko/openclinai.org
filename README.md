@@ -1,95 +1,76 @@
 # OpenClinAI
 
-Scoped umbrella workspace for OpenClinAI coordination, shared tooling and pinned
-component checkouts. Repository: [pmanko/openclinai.org](https://github.com/pmanko/openclinai.org)
-(private initially; a future organization/visibility change is separate).
+OpenClinAI brings together tools for clinical AI, patient-chart search, health-data
+analysis, and reproducible evaluation. This repository connects the projects and
+provides a shared development workspace.
 
-**Start with [specs/roadmap.md](specs/roadmap.md).** It owns priorities, cross-project
-decisions and migration gates. [Architecture](specs/architecture.md) explains
-responsibility boundaries, not a second task list.
+**[Project website](https://openclinai.org)** ·
+**[Explore the projects](#explore-the-projects)** ·
+**[Contribute](#contribute)**
 
-## Scope and checkout layout
+## Projects
 
-```text
-openclinai.org/
-  specs/                         # current coordination and implementation direction
-  scripts/                       # umbrella workspace checks
-  tests/                         # checks for umbrella tooling
-  targets/validation-harness/     # pinned harness submodule
-    targets/                     # product submodules pinned by the harness
-      catalyst/
-      chartsearchai/
-      chartsearchai-esm/
-      med-agent-hub/
-      openmrs_chatbot/
-      querystore/
-```
+| Project | What it does | Setup and source |
+| --- | --- | --- |
+| **ChartSearchAI** | Lets clinicians ask questions about an OpenMRS patient chart and inspect answers with source citations. | [Backend](https://github.com/pmanko/openmrs-module-chartsearchai) · [OpenMRS frontend](https://github.com/pmanko/openmrs-esm-chartsearchai) |
+| **Med Agent Hub** | A shared service for applications to configure and call language models, including clinical-answer workflows. | [Repository](https://github.com/pmanko/med-agent-hub) |
+| **Catalyst** | A supervised SQL workbench and dashboard builder for exploring health data, reviewing queries and publishing results to Apache Superset. | [Repository](https://github.com/DIGI-UW/catalyst-ai) |
+| **QueryStore** | Retrieves and organizes OpenMRS clinical records for chart search and AI applications. | [Repository](https://github.com/pmanko/openmrs-module-querystore) |
+| **Clinical AI Validation Harness** | Runs clinical-AI experiments, collects outputs and evidence, and produces evaluation and review reports. | [Repository](https://github.com/pmanko/clinical-ai-validation-harness) |
 
-The umbrella owns program coordination and, as migration proceeds, shared
-checkout/build/deployment tooling. The harness owns validation scenarios, thin
-adapters, reproducible fixtures, provenance, evaluation/review and reports.
-Products own their behavior and contracts. This is a submodule-based umbrella,
-not a merger of product histories or another clinical application.
+ChartSearchAI integrates with [OpenMRS](https://openmrs.org/). Catalyst supports
+SQL-connected data sources, including reporting workflows for
+[OpenELIS Global](https://openelis-global.org/). Each project provides installation
+and usage documentation in its repository.
 
-The initial topology deliberately preserves the harness's nested product paths
-and pins. There are **no duplicate top-level product gitlinks or revision lockfiles**.
-Promoting products to direct umbrella submodules requires a reviewed path/consumer
-migration; it is not achieved by checking out a second independently pinned copy.
-The harness still contains mixed responsibilities pending the roadmap's splits.
+For ChartSearchAI background and community discussion, see the
+[OpenMRS project page](https://openmrs.atlassian.net/wiki/spaces/projects/pages/373325839/Chart+Search+aka+ChartSearchAI).
+The OpenMRS repository links above point to the development forks used by this workspace.
 
-The public website remains in the harness's `landing/` and `site/` flows. No
-website, domain, runtime, deployment or existing dirty checkout has been migrated.
+## Explore the projects
 
-## Bootstrap and offline checks
+- [ChartSearchAI overview](https://openclinai.org/chartsearchai/): patient-chart
+  search and clinical-answer workflows.
+- [Catalyst overview](https://openclinai.org/catalyst/) and
+  [screenshot walkthrough](https://openclinai.org/catalyst/hiv-gallery/): query
+  workbench and reporting workflows.
+- [Evaluation reports](https://reports.openclinai.org/): published experiments
+  and supporting evidence.
 
-Requires Git and Python 3.10+; these umbrella checks do not install product dependencies.
+To install a project, follow its setup guide in the repositories listed above.
+
+## Contribute
+
+For product development, use that project's repository and contributor instructions.
+For component integration and shared development tooling, use this workspace.
+The [architecture](specs/architecture.md) explains how the projects fit together;
+the [implementation roadmap](specs/roadmap.md) records priorities, status and
+acceptance criteria. Read the [repository instructions](AGENTS.md) before editing.
+
+### Workspace checkout
+
+Cloning requires Git and authenticated GitHub access to this private repository.
+The checkout uses the component revisions recorded by the workspace.
 
 ```sh
 git clone --recurse-submodules https://github.com/pmanko/openclinai.org.git
 cd openclinai.org
-python3 -m unittest discover -s tests -v
-python3 scripts/check_workspace.py
 ```
 
-For an existing clone, initialize the recorded revisions:
+For an existing clone, check for local changes before updating its submodules:
 
 ```sh
 git submodule update --init --recursive
 ```
 
-Do **not** use `git submodule update --remote` as bootstrap. Gitlinks are exact
-revision authority; `.gitmodules` contains URLs and branch hints, not moving pins.
-Check for local component work before any update that may switch its checkout.
+### Workspace checks
 
-The [workspace CI](.github/workflows/workspace.yml) initializes recursive submodules,
-runs unit tests and checks umbrella links, recorded pins and component cleanliness.
-It does not build products, invoke models, deploy, or certify release/publication
-policy. Component tests and CI remain owned by their repositories.
+Requires Python 3.10+:
 
-Cross-repository document links use GitHub permalinks to the recorded component
-commits so they work on GitHub as well as locally. The offline checker verifies
-those paths against the local pinned Git objects. Update links with reviewed pin
-changes, not independently of their source checkout.
+```sh
+python3 -m unittest discover -s tests -v
+python3 scripts/check_workspace.py
+```
 
-## Component changes and first slice
-
-Read each component's own instructions and current contracts before editing it.
-Use a short-lived branch in each affected repository. Commit/publish component
-changes in that repository first, then update the umbrella gitlink to the reviewed,
-remote-reachable commit. Never publish an umbrella pin to a local-only commit.
-Do not stage dirty product pins or unrelated files with documentation changes.
-
-The prepared first slice is [Feature 005 cleanup](specs/spec-cleanup-inventory.md):
-reconcile its direct canvas/catalog consumers, consolidate any current requirements
-into existing owners, and delete obsolete specification content. No superseded
-banners, archived spec copies or redirect stubs. Git history owns prior specs.
-One canvas direction question must be resolved before executing that deletion.
-
-Implementation uses matching local `spec/005-current-contract-cleanup` branches in
-the umbrella and harness after the bootstrap main is published. Only branch setup
-and preparation are included in bootstrap; no harness deletion is claimed.
-
-The existing sibling `clinical-ai-validation-harness` checkout remains independent.
-Its dirty report-index, Hub profile, submodule and Compose work is not imported.
-Upstream OpenMRS projects keep their existing `harness-integration` publication
-policy; umbrella setup does not authorize replacement PRs or product pushes.
+These commands check documentation links and component checkout consistency.
+Each product supplies its own build and test instructions.
