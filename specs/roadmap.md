@@ -15,9 +15,9 @@ Product requirements remain in their owning repositories.
 
 ### Current Focus
 
-1. Finish umbrella bootstrap checks/publication and prepare matching
-   `spec/005-current-contract-cleanup` branches in the umbrella and its isolated
-   harness checkout. The first implementation slice is Feature 005 and its direct
+1. Use the published umbrella and matching local
+   `spec/005-current-contract-cleanup` branches in the umbrella and isolated harness
+   checkout for the first implementation slice: Feature 005 and its direct
    consumers, not a runtime extraction or wholesale status-artifact move.
 2. Resolve the concrete canvas direction question in the
    [cleanup inventory](spec-cleanup-inventory.md), reconcile current consumers,
@@ -57,10 +57,10 @@ remain in the harness's `landing/` and `site/` flows; nothing was deployed.
 | Repository | `https://github.com/pmanko/openclinai.org`, private; default branch `main` |
 | Implementation checkout | `targets/validation-harness`, isolated from the dirty sibling; existing nested product paths preserved |
 | Revision authority | Umbrella harness gitlink and harness product gitlinks; no duplicate revision catalog |
-| Local umbrella verification | 16 standard-library unit tests and offline workspace link/pin/cleanliness checks passed; component/runtime checks not run |
-| Hosted verification | Workspace workflow configured; hosted result must be recorded after push |
-| Publication | GitHub repository created; bootstrap commit/push is the remaining setup step |
-| First branch pair | `spec/005-current-contract-cleanup` in umbrella and harness, created after bootstrap publication |
+| Local umbrella verification | 16 standard-library unit tests and offline workspace link/pin/cleanliness checks passed in both the working checkout and a fresh recursive clone from GitHub; component/runtime checks not run |
+| Hosted verification | [Workspace CI](https://github.com/pmanko/openclinai.org/actions/runs/36772389367) passed for bootstrap commit `9d02e63`; this is umbrella verification, not product/runtime acceptance |
+| Publication | Bootstrap commit `9d02e63` pushed to `origin/main`; GitHub default branch is `main` |
+| First branch pair | Matching local `spec/005-current-contract-cleanup` branches in umbrella and harness; no component commit/pin change or branch publication |
 | First slice | Reconcile Feature 005's direct canvas/status/catalog consumers and delete obsolete spec content; no runtime/product-pin changes |
 | Blocking direction question | Remove canvas gateway/MCP work as obsolete, or identify an explicitly approved current requirement/owner; do not infer direction from an old feature card |
 
