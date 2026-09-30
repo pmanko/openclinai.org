@@ -20,8 +20,8 @@ provides a shared development workspace.
 
 ChartSearchAI integrates with [OpenMRS](https://openmrs.org/). Catalyst supports
 SQL-connected data sources, including reporting workflows for
-[OpenELIS Global](https://openelis-global.org/). The projects have distinct
-responsibilities and do not require every component for every use case.
+[OpenELIS Global](https://openelis-global.org/). Each project provides installation
+and usage documentation in its repository.
 
 For ChartSearchAI background and community discussion, see the
 [OpenMRS project page](https://openmrs.atlassian.net/wiki/spaces/projects/pages/373325839/Chart+Search+aka+ChartSearchAI).
@@ -43,9 +43,9 @@ For an existing clone:
 git submodule update --init --recursive
 ```
 
-Read the component's README for installation, configuration and usage. Check for
-local changes before updating submodules; use their recorded revisions rather
-than `git submodule update --remote`.
+Read the component's README for installation, configuration and usage. Submodule
+updates use the revisions recorded by the workspace. Check for local changes
+before updating.
 
 ## Development
 

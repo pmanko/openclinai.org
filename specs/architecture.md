@@ -1,41 +1,31 @@
 # OpenClinAI Architecture
 
-This document defines component responsibilities and dependency boundaries.
-The [roadmap](roadmap.md) owns priorities, implementation phases and progress.
+OpenClinAI combines clinical applications, model execution, clinical-record
+retrieval and validation. This document describes the target architecture and
+interfaces. The [roadmap](roadmap.md) tracks implementation and delivery.
 
-## 1. System Overview
+## 1. Components
 
-OpenClinAI brings together clinical AI applications, model execution, clinical
-record retrieval and validation. The umbrella repository assembles the development
-workspace and owns cross-project operations. Each product owns its application
-contracts. The validation harness is an independent consumer of those contracts,
-not the workspace manager or a required product runtime.
+| Component | Responsibilities |
+| --- | --- |
+| OpenClinAI umbrella | Component repositories and version pins; workspace configuration; builds, deployment and release orchestration; project documentation and website |
+| Validation harness | Run configured experiments, collect outputs and traces, record provenance, evaluate results and produce evidence and review reports |
+| ChartSearchAI and ESM | OpenMRS patient-chart questions, conversations, authorization, provider selection, streaming answers and clinical-evidence presentation |
+| QueryStore | OpenMRS clinical-record projections, synchronization, retrieval, context selection and freshness/completeness metadata |
+| Med Agent Hub | Model profiles, prompts, role mappings, model access and clinical-answer workflows |
+| Catalyst | SQL workbench, source/schema context, query execution, Datasets, Widgets, Dashboards and publication |
 
-This architecture defines the intended implementation. Current delivery status
-is recorded in the roadmap. The umbrella contains only the tooling, configuration
-and documentation required by this setup; it is not a copy of the previous
-workspace. Paths, commands and package interfaces may change to establish these
-boundaries. Backward compatibility requires an explicit current use case.
+ChartSearchAI uses QueryStore for clinical context and supports bundled inference
+and configured Med Agent Hub workflows. Catalyst supplies schema context and
+orchestrates query generation through model roles configured in Med Agent Hub.
 
-## 2. Responsibility Map
+Model servers execute inference requests. FHIR Data Pipes provides ingestion for
+the reference analytics deployment; Apache Superset renders published dashboards.
+OpenELIS also provides native reporting.
 
-| Owner | Responsibilities | Excluded responsibilities |
-| --- | --- | --- |
-| OpenClinAI umbrella | Component gitlinks and version pins; checkout resolution; build/dependency order; shared environment configuration; deployment/lifecycle tooling; release verification; cross-project planning; public website and program status | Clinical application behavior; experiment scoring; a mandatory service for running validation |
-| Validation harness | Configured experiment execution; validation adapters; scenarios and fixtures; output/trace collection; provenance recording; evaluation and human-review workflows; evidence and reports | Product gitlinks or pins; checkout/build/deployment management; release-policy enforcement; a fixed registry of OpenClinAI repositories |
-| ChartSearchAI and ESM | OpenMRS authorization and conversations; provider lifecycle and persistence; bundled inference and configured Hub integration; clinical/evidence UI | A duplicate retrieval implementation or compulsory Hub-only application |
-| QueryStore | OpenMRS read projections, synchronization, retrieval, shared context slices, freshness/completeness and public read API | Model execution, application chat UI or umbrella metadata |
-| Med Agent Hub | Model profiles, prompts, role mappings, model access and hosted clinical execution contracts | Catalyst schema discovery, SQL execution or Dataset/Dashboard state |
-| Catalyst | Source/dialect/schema context; query orchestration; advisory validation; selected SQL execution; Datasets, Widgets, Dashboards and publication | FHIR ingestion, a mandated warehouse engine or clinical-answer scoring |
-| Data tooling | Reusable data migration and terminology operations under an explicit owner outside the harness | Application records or validation scoring; validation-specific fixture definitions remain experiment inputs |
+## 2. Development Workspace
 
-Model serving remains an external runtime. FHIR Data Pipes and Superset own their
-ingestion and visualization functions. Native OpenELIS reporting remains useful
-independently of Catalyst or Hub.
-
-## 3. Umbrella Workspace
-
-The intended component checkout layout is:
+The component layout is:
 
 ```text
 openclinai.org/
@@ -51,83 +41,73 @@ openclinai.org/
     querystore/
 ```
 
-In this design, each component has one umbrella gitlink and the validation harness
-has no product gitlinks. `.gitmodules` describes repository locations; Git records
-the selected revisions without a duplicate revision catalog.
+Each component has one umbrella gitlink. `.gitmodules` records repository locations,
+and Git records the selected revisions.
 
-The umbrella owns checkout discovery, component selection, cross-component builds,
-shared environment configuration, deployment orchestration and release verification.
-Products supply their native build, test and runtime entry points. The umbrella
-invokes those entry points with explicit inputs; neither component assembly nor
-product lifecycle management belongs to the validation harness.
+The umbrella resolves component checkouts, configures shared environments, orders
+builds, orchestrates deployment and verifies releases. Products expose native
+build, test and runtime commands. Workspace tooling invokes those commands with
+explicit component paths and environment settings.
 
+## 3. Validation Experiments
 
-## 4. Validation Harness Interface
+The validation harness is an independently installable experiment runner. Its
+modules provide target adapters, scenario execution, trace collection, evaluation
+and report generation.
 
-An experiment supplies:
+### Inputs
 
-- a validation adapter and target connection/configuration;
-- scenarios, fixtures and experiment parameters;
-- evaluation and review settings;
-- an output location and relevant target/run provenance.
+| Input | Purpose |
+| --- | --- |
+| Target adapter and connection settings | Select the target interface and connect to a local or remote service |
+| Scenarios, fixtures and parameters | Define experiment inputs and execution conditions |
+| Evaluation and review settings | Select evaluators, criteria and review workflows |
+| Target and run metadata | Identify the tested system, models, data and experiment configuration |
+| Output location | Store responses, traces, evaluation results and reports |
 
-The harness invokes the configured target's actual interface, captures responses
-and traces, evaluates the experiment and writes evidence/report artifacts. An
-adapter may be product-specific without making its product repository or checkout
-layout a requirement of the harness core. Target identifiers are experiment
-configuration, not a hard-coded list of workspace repositories.
+Adapters invoke product interfaces and capture their responses. Experiment
+configuration selects the adapter and target. Readiness checks verify the
+capabilities and connectivity needed by the experiment.
 
-Experiments must run against supplied targets without Git, submodules, product
-source checkouts, version pins or an umbrella installation. The harness does not
-clone, build, deploy or release targets as a prerequisite to validation. A target
-may run locally or remotely; connection details come from experiment configuration.
-Readiness checks test the capabilities needed by the experiment, not repository
-branch, pin or worktree state.
+An experiment runs with the harness package, its selected adapter/evaluator
+dependencies, input data and access to its target. The same interface supports
+services launched by the umbrella, independently deployed services and externally
+provided targets.
 
-Source revisions, image digests, model/profile identities and deployment receipts
-can be supplied by the caller or observed through a target interface and recorded
-as provenance. Recording identity is not selecting or enforcing a pin. Missing
-metadata must be represented honestly under the experiment's evidence contract,
-not inferred from an unrelated local checkout.
+### Outputs and Provenance
 
-Offline evaluation/reporting consumes captured artifacts without starting product
-services, making live clinical queries or silently rerunning model judgments.
-Local unit-test fixtures and test doubles are not real-target acceptance evidence.
+Run artifacts contain experiment inputs, target responses, traces, evaluation
+results and review records. Target identity can include a source revision, image
+digest, model/profile identifier or deployment receipt supplied by the caller or
+reported by the target. Unavailable metadata is explicitly identified.
 
-## 5. Dependency and Contract Rules
+Evaluators read captured inputs, outputs and evidence according to the experiment's
+evaluation settings. Model-based assessments record model, prompt and configuration
+provenance. Human review records the reviewer, findings and rationale. Reports
+present the captured evidence and evaluation results.
 
-- Workspace assembly and deployment must not import validation scoring or run
-  experiments as a prerequisite. Validation must not import umbrella checkout or
-  release-policy machinery.
-- Products expose their own interfaces and remain independent of the validation
-  runner. Validation adapters consume those interfaces rather than implementing
-  product behavior a second time.
-- Hub profiles and model settings remain product-owned. Experiment parameters and
-  provenance are separate from product configuration management.
-- Catalyst owns its SQL workflow; Hub supplies configured model roles. Hub's
-  clinical execution capabilities do not move into the validation harness.
-- Product and experiment correctness is defined by current contracts, including
-  clinical policy, scoring and sampling semantics. Workspace interface changes
-  are independent of those application and evaluation requirements.
-- Each requirement has one maintained owner. Documentation consumers link directly
-  to that owner; historical evidence does not define current requirements.
+## 4. Interfaces
 
-## 6. Component Authorities
+| Interaction | Contract |
+| --- | --- |
+| Umbrella → product | Component revision, build/runtime configuration and native command interface |
+| Umbrella → harness | Experiment configuration, target connection settings, provenance and output location |
+| Harness → product | Adapter-specific requests through the product's API or execution interface |
+| Harness → evaluator | Captured inputs, outputs and evidence plus evaluation settings |
+| Evaluator → report | Results, findings and review records linked to their source evidence |
+| ChartSearchAI → QueryStore | Clinical-record retrieval and selected context with provenance and completeness metadata |
+| ChartSearchAI → Med Agent Hub | Configured clinical profile execution with streamed answer and evidence events |
+| Catalyst → Med Agent Hub | Configured model roles for Catalyst's application-controlled SQL workflow |
 
-The linked contracts and registers correspond to recorded workspace revisions.
-The component repositories maintain their subsequent development and release status.
+Product contracts define clinical and application behavior. Experiment contracts
+define execution, evidence, scoring, sampling and review semantics. The umbrella
+selects component versions and connects their interfaces.
 
-- [Harness constitution](https://github.com/pmanko/clinical-ai-validation-harness/blob/a27d7e51b7268653420e8f91306c9aaa4ab5a8ee/.specify/memory/constitution.md)
-  supplies experiment governance; its control-plane scope must be amended in the
-  harness repository as part of the ownership change.
-- [Dual-provider contract](https://github.com/pmanko/clinical-ai-validation-harness/blob/a27d7e51b7268653420e8f91306c9aaa4ab5a8ee/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md)
-  defines current OpenMRS provider behavior. Coordination moves to the umbrella;
-  product requirements and validation protocols go to their respective owners.
-- [Catalyst-Hub contract](https://github.com/DIGI-UW/openelis-catalyst/blob/6ba00082519f9fb2d864895b292352d8987ce51c/docs/med-agent-hub.md)
-  defines the application/model-execution boundary.
-- [Catalyst delivery register](https://github.com/pmanko/clinical-ai-validation-harness/blob/a27d7e51b7268653420e8f91306c9aaa4ab5a8ee/specs/008-catalyst-query-workbench/tasks.md)
-  records product work at the selected component revision; its coordination and
-  validation content is assigned to the respective owners in the roadmap.
+## 5. Contract References
 
-Component changes follow their owning repository's governance. Implementation,
-local verification, CI, publication and deployed acceptance are distinct outcomes.
+These links identify contracts at the component revisions recorded by the workspace.
+
+- [Experiment governance](https://github.com/pmanko/clinical-ai-validation-harness/blob/a27d7e51b7268653420e8f91306c9aaa4ab5a8ee/.specify/memory/constitution.md)
+- [OpenMRS provider contract](https://github.com/pmanko/clinical-ai-validation-harness/blob/a27d7e51b7268653420e8f91306c9aaa4ab5a8ee/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md)
+- [QueryStore API](https://github.com/pmanko/openmrs-module-querystore/blob/8b79db9791fe47315d3aae9cb09e9fdf004e6ee6/docs/rest-api.md)
+- [Catalyst–Med Agent Hub contract](https://github.com/DIGI-UW/openelis-catalyst/blob/6ba00082519f9fb2d864895b292352d8987ce51c/docs/med-agent-hub.md)
