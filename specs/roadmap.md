@@ -11,9 +11,10 @@ implementation registers.
 
 1. Break the existing ChartSearchAI backend and frontend integration work into the
    smallest practical reviewable PRs. Extract the existing implementation, tests
-   and documentation together onto branches based on each project's current
-   `main`. Limit code changes to those needed for extraction and compatibility
-   with current upstream code; new features and replacement implementations are
+   and documentation together into independent or stacked topic branches rooted
+   in each project's current `main`. Fix confirmed review defects. The complete
+   set must reproduce the integration branches' functionality while preserving
+   newer upstream behavior; new features and replacement implementations are
    outside this task.
 2. Review the published component-ownership slice:
    [harness #197](https://github.com/pmanko/clinical-ai-validation-harness/pull/197)
@@ -38,7 +39,7 @@ only when they directly block a specific contribution.
 | Validation harness | Clinical and Catalyst runners use configured targets and supplied/observed provenance; source-free wheel isolation, portable reports and the full local harness suite pass | Review the published component change and verify actual product interfaces separately |
 | Website | `landing/`, `site/`, static hosting configuration, build/publication tools and workflows are umbrella-owned; local website tests and build have run | Hosted CI and explicit deployment acceptance |
 | Specifications | Harness governance and validation foundations are reconciled; retained 004 criteria are in Feature 006; obsolete 004/005/007 files are removed | Consolidate mixed Feature 008, program-delivery and OpenMRS coordination specifications |
-| Product delivery | Provider contracts (#583), local token counting (#584), safety-check status (#585) and frontend staged stream client (#55) are published as independent extractions with passing local and hosted builds | Extract dependent work after its prerequisites merge into main; frontend #55 has three inherited review findings and backend independent review is pending; retain integration branches unchanged |
+| Product delivery | Provider contracts (#583), local token counting (#584), safety-check status (#585) and frontend staged stream client (#55) are published foundations; renewed review and focused checks completed, with the three stream findings fixed and resolved | Publish the remaining work as dependency stacks; verify the combined backend and frontend against the integration functionality; retain integration branches unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -134,9 +135,12 @@ carry its existing tests and documentation with each extracted change. Do not
 reimplement a capability from its description or add new features, redesigns or
 unrelated fixes as prerequisites for the split.
 
-Create topic branches from the destination project's current `main` and open PRs
-targeting that `main`. Make only the adjustments necessary to separate the existing
-changes, resolve conflicts and preserve newer upstream functionality. Keep closely
+Create independent topic branches from the destination project's current `main`.
+Build dependent changes on their prerequisite topic branches and target the
+preceding branch so each PR shows only its own contribution. Do not wait for
+upstream merges to prepare, test or publish the rest of the split.
+Make the adjustments necessary to separate the existing changes, resolve conflicts,
+fix confirmed review defects and preserve newer upstream functionality. Keep closely
 dependent changes together when splitting them would require scaffolding or a
 rewrite. Use existing commits where suitable or extract their relevant changes;
 preserving commit history is optional, and rewriting working code is not a goal.
@@ -152,11 +156,21 @@ Keep the existing `harness-integration` branches unchanged: do not rewrite, dele
 or rebase them. Preserve newer upstream code when extracting changes; a raw tree
 diff against an older integration branch is not a patch to apply wholesale.
 
-Each PR must be understandable, buildable and testable against its main base.
-Independent changes may proceed in parallel. A dependent change follows its
-prerequisite into `main`; do not include unmerged prerequisite changes merely to
-make a later PR compile. Run the relevant existing checks for each extracted piece;
-adjust tests only where the extraction or integration with current main requires it.
+Each PR must be understandable, buildable and testable against its declared base.
+Independent changes may proceed in parallel. A stack makes dependencies explicit;
+ancestor changes belong in the base, not in the displayed contribution diff.
+After a prerequisite merges, update and retarget its dependents without losing
+their changes. Run the relevant existing checks for each extracted piece and add
+focused regression coverage for confirmed defects.
+
+Completion means that both projects' full integration functionality is accounted
+for by the complete PR set and retained upstream behavior. Review every PR, address
+each actionable finding, require passing applicable CI on its current revision,
+and run the existing integration acceptance checks against the assembled stack
+heads and exact QueryStore dependency. Explain mechanical omissions such as
+integration-only build jobs; do not omit product capabilities. An unextracted
+capability is unfinished work. A few green foundation PRs or a completed file
+inventory do not satisfy this goal.
 
 ### Milestones
 
@@ -164,19 +178,21 @@ adjust tests only where the extraction or integration with current main requires
 | --- | --- | --- |
 | M0 | Inventory and grouping of existing integration work | Main and integration revisions are identified; existing code, tests and documentation are mapped to upstream coverage or proposed PRs, with necessary dependencies |
 | M1 | QueryStore Q0 review resolution | Exact-source tests and required integration evidence support the published contribution |
-| M2 | Small main-based backend/frontend PRs | Each PR extracts one coherent portion of the existing work, targets current main and passes its applicable checks; coverage and remaining extraction work are explicit |
+| M2 | Small independent or stacked backend/frontend PRs | Each PR extracts one coherent portion of the existing work, shows only its own changes against its declared base and passes its applicable checks; coverage and remaining extraction work are explicit |
 | M3 | Backend delivery | Existing B1–B5 work is accounted for in upstream or extracted PRs, with its product checks |
 | M4 | Frontend delivery | Existing F1–F3 work is accounted for in upstream or extracted PRs, with its lifecycle, provider and evidence/browser checks |
 | M5 | Integrated release acceptance | Assembled product behavior and deployed evidence satisfy the existing release signoffs |
 
 M5 is separate release work, not a prerequisite for publishing the extracted PRs.
 The split does not require new test suites, acceptance infrastructure or a new demo.
+Combined functional validation of the complete split is required before declaring
+the decomposition complete; it is distinct from deployment and release signoff.
 
 Publication requires current source/review status and applicable verification
-evidence. Resolve dependencies in order: QueryStore APIs before backend consumers,
-and backend APIs before frontend consumers that require them. Independent changes
-need not wait for unrelated work. Paired tests provide integration evidence but do
-not replace each PR's checks against its main base.
+evidence. Declare QueryStore/backend/frontend dependencies explicitly and test
+their exact source revisions together without requiring upstream publication.
+Paired tests provide integration evidence but do not replace each PR's checks
+against its declared base.
 
 ### QueryStore Review Slice Q0
 
@@ -213,7 +229,7 @@ work. Token counting does not need that contract; the full context consumer does
 need the QueryStore additions. Endpoint wiring follows its actual providers and
 persistence. Frontend transport, state, provider selection and presentation follow
 their actual imports and backend interfaces, not a mandatory single sequence.
-Each PR must compile and satisfy the relevant product contracts on its main base.
+Each PR must compile and satisfy the relevant product contracts on its declared base.
 Integrated acceptance covers explicit provider choice, no silent fallback,
 traceable evidence, cancellation and reload survival.
 
@@ -232,12 +248,12 @@ changes to current main. Newer upstream safety and citation behavior must remain
 | B4 exact token counting | [Backend #584](https://github.com/openmrs/openmrs-module-chartsearchai/pull/584), `370f4c32`; full local Maven verification and hosted Java 11/17/21 and QueryStore-main builds passed. Existing counting requests adapted to upstream authentication |
 | B4 chart context and budgets | Awaiting extraction: `QueryStoreChartBuilder`, `InsufficientContextException`, scoped/budget tests and QueryStore test doubles. Requires QueryStore's chart-read/context-slice API |
 | B3 safety-check execution status | [Backend #585](https://github.com/openmrs/openmrs-module-chartsearchai/pull/585), `c1f43ce9`; 64 focused tests, full local Maven verification and hosted Java 11/17/21 and QueryStore-main builds passed. Carries validator status/issues and patient-context completeness while preserving upstream order-read and attribution logic |
-| B3 safety status on answers | Awaiting extraction after #585: `ChartAnswer` fields, inference-service wiring and affected API/REST tests. The Java status API in #585 does not yet publish status on answers |
+| B3 safety status on answers | Stack on #585: `ChartAnswer` fields, inference-service wiring and affected API/REST tests. The Java status API in #585 does not yet publish status on answers |
 | B3 bundled provider and cancellation | Awaiting extraction after B1 and context prerequisites: bundled adapter, service/router/engine cancellation, provider registry and existing tests |
 | B2 Hub connection | Awaiting extraction: `HubProfileService`, Hub adapter/transport/request/event classes, configuration and existing tests, including `TemporalGateRelayConformanceTest`. Adapter depends on B1 |
 | B5 conversation storage | Awaiting extraction after B1: conversation service/DAO/models, audit attribution and purge handling, mappings/migrations, their registration in `config.xml`, and persistence/allocation tests |
 | B5 endpoints and wiring | Awaiting extraction after providers/storage: controller, REST/history/persistence tests, `omod/pom.xml` test dependencies/resources and `XmlPayloads` updates |
-| F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55), `95ca92d`; local checks and hosted build passed. Three inherited review findings remain: CRLF separators, final-event model normalization and reader cleanup after failure. Existing search transport and visible panel are unchanged |
+| F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55), `fdf262ce`; all 468 tests, lint, type checks, local build and hosted build passed. CRLF separators, final-event model normalization and terminal reader cleanup are fixed with regression coverage; all three review threads are resolved. Existing search transport and visible panel are unchanged |
 | F1 conversation state and history | Awaiting extraction: history/new-session client calls, `turn-phase`, hook/store and their tests, with chat/search-panel lifecycle wiring and the existing removal of patient-open warmup |
 | F2 provider/profile selection | Awaiting extraction: discovery client calls/types, provider/model pickers, configuration, selection state and tests |
 | F3 answer/evidence presentation | Awaiting extraction: markdown/table/citation components, response-panel and feedback changes, styling, translations, renderer dependencies and existing tests |
@@ -264,33 +280,41 @@ review and verification against current main. Integration acceptance is separate
 All four published extractions remain open. The next publication steps follow the
 existing imports and contracts:
 
-1. After backend #583 merges, extract the Hub adapter and conversation storage as
+1. Stack on backend #583 to extract the Hub adapter and conversation storage as
    separate PRs. Both use its provider types; neither needs the other or the bundled
    adapter. Keep Hub profile discovery with its adapter rather than creating another
    prerequisite PR for that small helper.
-2. After backend #584 and the required QueryStore API are available in their
-   respective main branches, extract chart-context selection and budget enforcement.
+2. Stack on backend #584 and test against the required QueryStore source to extract
+   chart-context selection and budget enforcement.
    The current source imports `PatientChartRead`, `ContextSlice` and `TokenCounter`.
-3. After #583, #585 and context prerequisites, extract bundled-provider behavior,
+3. Assemble the #583, #585 and context prerequisites to extract bundled-provider behavior,
    cancellation and safety answer wiring; then connect providers and storage to the
    REST endpoints. Preserve current main's additional answer-limit fields throughout.
-4. After frontend #55 merges, extract conversation state/history and answer
+4. Stack on frontend #55 to extract conversation state/history and answer
    presentation using its types and transport. Carry `turn-phase` with the first
    consumer that needs it. Keep tightly coupled hook/panel changes together when a
    smaller split would need temporary compatibility code. Provider/profile selection
    follows its discovery calls and state, with its existing tests.
 
-Frontend #55's three inherited stream defects are recorded in its PR description;
-they are unresolved, despite passing checks. The backend repository's automated
-review is disabled for fork PRs, so passing builds do not establish independent
-review. None of these publications constitutes deployment or integrated acceptance.
+Renewed backend checks passed: 25 provider-contract, 92 local-token/engine and
+64 safety-status tests. Renewed source review found no additional actionable
+defects in these four PRs. Frontend #55's three inherited stream defects are fixed;
+six new regression cases failed before the fixes and pass afterward. Its build
+retains the existing bundle-size warning. The backend repository's automated
+review is disabled for fork PRs, so passing builds and this review do not establish
+maintainer approval. Release/deployment jobs are skipped; none of these publications
+constitutes deployment or integrated acceptance.
 
 ### Publication
 
-Publish each topic branch to the project fork and open its PR against the
-corresponding project's `main`. PR descriptions state the focused behavior,
-applicable contract, tests and dependencies; they need not reproduce the
-integration branch's development history.
+Publish each topic branch to the project fork. Independent PRs target the
+corresponding project's `main`; dependent PRs target the preceding topic branch.
+GitHub requires that base branch in the destination repository: publish an exact
+copy of the prerequisite revision there under a dedicated `codex/` topic ref,
+using the verified repository write access. Keep that base aligned with its
+prerequisite PR and record the relationship. PR descriptions state the focused
+behavior, tests, dependencies and merge order. Do not present the stacked diff as
+an independent change against main.
 
 If an extracted contribution needs umbrella verification, update the affected
 `scripts/openmrs-source-pair-test.sh`, `scripts/verify-repository-lines.sh` or CI
