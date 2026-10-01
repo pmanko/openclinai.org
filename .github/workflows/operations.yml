@@ -1,0 +1,77 @@
+name: operations
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  operational-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: ShellCheck local lifecycle and Catalyst scripts
+        run: |
+          docker run --rm -v "$PWD:/mnt:ro" -w /mnt \
+            koalaman/shellcheck:v0.11.0@sha256:61862eba1fcf09a484ebcc6feea46f1782532571a34ed51fedf90dd25f925a8d \
+            scripts/stack-up.sh scripts/stack-down.sh \
+            scripts/local-stack-up.sh scripts/local-stack-down.sh \
+            scripts/catalyst-mvp.sh scripts/catalyst-ui-update.sh \
+            scripts/catalyst-model-router.sh scripts/build-catalyst-model-router.sh \
+            scripts/verify-repository-lines.sh
+      - uses: astral-sh/setup-uv@v5
+      - name: Initialize the recorded direct components
+        run: git submodule update --init targets/validation-harness targets/catalyst targets/med-agent-hub targets/chartsearchai targets/chartsearchai-esm targets/querystore
+      - name: Test workspace operations
+        run: |
+          uv python install 3.11
+          make test
+
+  openmrs-integration-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Fetch authoritative integration refs
+        run: |
+          for repo in \
+            targets/chartsearchai \
+            targets/chartsearchai-esm \
+            targets/querystore; do
+            git -C "$repo" fetch origin \
+              harness-integration:refs/remotes/origin/harness-integration
+          done
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+          cache: maven
+
+      - name: Build the pinned QueryStore and ChartSearchAI source pair
+        run: make openmrs-source-pair-test
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'yarn'
+          cache-dependency-path: targets/chartsearchai-esm/yarn.lock
+
+      - name: Install and verify the pinned ChartSearchAI ESM
+        working-directory: targets/chartsearchai-esm
+        run: |
+          yarn install --immutable
+          yarn extract-translations
+          git diff --exit-code translations/
+          yarn lint
+          yarn typescript
+          yarn test --coverage
+          yarn build

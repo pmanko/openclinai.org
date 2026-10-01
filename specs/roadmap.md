@@ -9,28 +9,26 @@ implementation registers.
 
 ## 1. Current Priorities
 
-1. Establish direct umbrella submodules for the validation harness, Med Agent Hub,
-   Catalyst, ChartSearchAI backend/frontend and QueryStore. Remove the harness's
-   product gitlinks and the `openmrs_chatbot` target.
-2. Remove checkout, pin, build, deployment and release management from the harness.
-   Implement the required workspace-management capabilities in the umbrella.
-   Make the harness an independent, modular runner for configured experiments.
-3. Bring the OpenClinAI website content, assets, site configuration, build and
-   deployment tooling into this repository, with its publication workflows.
-4. Align code, configuration, commands, tests and documentation with those owners.
-   Consolidate current requirements and delete obsolete implementations and specs.
-5. Continue OpenMRS contribution review and Catalyst delivery through their product
-   contracts, independently of the workspace restructuring.
+1. Verify and review the component-ownership slice: direct gitlinks, umbrella-owned
+   builds/environments and website delivery, and independent validation execution.
+   The published harness implementation is selected by its umbrella gitlink;
+   verify a fresh checkout of the assembled commits before acceptance.
+2. Consolidate the remaining Catalyst and OpenMRS delivery specifications into their
+   maintained owners, preserving current requirement identifiers and updating consumers.
+3. Verify product-native builds and shared environments against the recorded revisions;
+   record deployed acceptance separately from local tests and package isolation.
+4. Continue OpenMRS contribution review and Catalyst delivery through their product
+   contracts.
 
 ## 2. Implementation Status
 
 | Area | Current state | Remaining work |
 | --- | --- | --- |
-| Umbrella repository | [pmanko/openclinai.org](https://github.com/pmanko/openclinai.org) is published; workspace checks and CI exist | Direct component layout and operational tooling |
-| Component checkouts | `targets/validation-harness` is initialized; product submodules are still nested beneath it | Move product gitlinks to the umbrella and remove the excluded target |
-| Validation harness | Experiment functionality exists alongside workspace-management dependencies | Independent configuration, adapters and execution without Git, pins or product source checkouts |
-| Website | Public pages, documentation/status interfaces and publication tooling currently reside in the harness | Move required website sources and build/deployment tooling into this repository; update publication workflows and consumers |
-| Specifications | Umbrella direction and architecture are defined; component specs still mix responsibilities | Consolidate current requirements into their owners and delete obsolete content |
+| Umbrella repository | [pmanko/openclinai.org](https://github.com/pmanko/openclinai.org) is published; implementation includes product operations and website sources | Review and verify the assembled component revisions |
+| Component checkouts | Six direct umbrella components are initialized; harness product gitlinks and `openmrs_chatbot` are removed from the published harness revision | Review the component changes and verify a fresh checkout |
+| Validation harness | Clinical and Catalyst runners use configured targets and supplied/observed provenance; source-free wheel isolation, portable reports and the full local harness suite pass | Review the published component change and verify actual product interfaces separately |
+| Website | `landing/`, `site/`, static hosting configuration, build/publication tools and workflows are umbrella-owned; local website tests and build have run | Hosted CI and explicit deployment acceptance |
+| Specifications | Harness governance and validation foundations are reconciled; retained 004 criteria are in Feature 006; obsolete 004/005/007 files are removed | Consolidate mixed Feature 008, program-delivery and OpenMRS coordination specifications |
 | Product delivery | OpenMRS review and Catalyst delivery have existing contracts and task registers | Component verification, publication and deployed acceptance remain separate from workspace checks |
 
 The phases below cover the component layout and validation interfaces defined in
@@ -41,11 +39,11 @@ publication and deployed acceptance.
 
 | Phase | Deliverable | Acceptance criteria | Status |
 | --- | --- | --- | --- |
-| U0 Ownership and dependencies | Map capabilities, interfaces and consumers to component owners | Each capability has an owner, defined inputs/outputs and verification criteria | Ownership defined; consumer analysis incomplete |
-| U1 Component and management ownership | Direct umbrella gitlinks and workspace-management tooling; removal of nested product gitlinks and `openmrs_chatbot` | One canonical gitlink per component; fresh umbrella checkout resolves recorded revisions; umbrella tooling manages component selection and checkouts | Not implemented |
-| U2 Independent validation | Modular experiment execution, target adapters, evidence collection, evaluation and reporting | Experiments run against configured targets without Git, submodules, product source trees, product pins or an umbrella installation; offline reports consume captured artifacts only | Not implemented |
-| U3 Environment and delivery tooling | Umbrella environment, build, deployment and release orchestration; OpenClinAI website build and publication tooling | Configured workspace operations invoke product-native commands; website build/publication runs from umbrella-owned sources, configuration and workflows; build/run provenance records actual inputs | Not implemented |
-| U4 Documentation and interfaces | Current specs, instructions, commands, configuration, CI and website consumers aligned with ownership | Consumers resolve directly to current owners; obsolete specs, copied history and unnecessary compatibility entry points are removed | Umbrella documentation updated; component changes pending |
+| U0 Ownership and dependencies | Map capabilities, interfaces and consumers to component owners | Each capability has an owner, defined inputs/outputs and verification criteria | First-slice runtime, operations and publication consumers mapped; remaining specification ownership pending |
+| U1 Component and management ownership | Direct umbrella gitlinks and workspace-management tooling; removal of nested product gitlinks and `openmrs_chatbot` | One canonical gitlink per component; fresh umbrella checkout resolves recorded revisions; umbrella tooling manages component selection and checkouts | Topology and operations implemented; published harness revision selected; fresh-checkout verification pending |
+| U2 Independent validation | Modular experiment execution, target adapters, evidence collection, evaluation and reporting | Experiments run against configured targets without Git, submodules, product source trees, product pins or an umbrella installation; offline reports consume captured artifacts only | Local runtime, full regression and installed-wheel clinical/Catalyst isolation checks pass; portable reports tested with doubles; component review and real-interface acceptance pending |
+| U3 Environment and delivery tooling | Umbrella environment, build, deployment and release orchestration; OpenClinAI website build and publication tooling | Configured workspace operations invoke product-native commands; website build/publication runs from umbrella-owned sources, configuration and workflows; build/run provenance records actual inputs | Required local operations and website delivery tooling moved; local checks/build pass; actual product builds and deployment pending |
+| U4 Documentation and interfaces | Current specs, instructions, commands, configuration, CI and website consumers aligned with ownership | Consumers resolve directly to current owners; obsolete specs, copied history and unnecessary compatibility entry points are removed | Governance, foundational specs, commands, tests and website consumers aligned; mixed delivery-spec consolidation remains |
 | U5 Completion | Remove remaining obsolete code, dependencies and duplicate responsibilities; verify the assembled system | Independent harness checks and umbrella integration checks pass; current requirements have one maintained owner; component and deployed acceptance are explicit | Not implemented |
 
 ### Dependencies
@@ -95,14 +93,14 @@ the maintained destination for its requirements.
 | --- | --- | --- |
 | `specs/001-harness-control-plane-foundation/` | Experiment readiness, fixture/endpoint identity and run provenance | Component catalog, pins, checkouts, builds and shared environment management belong to the umbrella |
 | `specs/002-openmrs-demo-data-2-8-remap/` | Reviewed validation corpus, mappings, fixtures, clinical-meaning checks and provenance | Reusable migration/terminology utilities require a data-tooling owner; shared deployment belongs outside the harness |
-| `specs/004-real-adapter-entrypoints/`, `specs/005-med-agent-hub-bridge/`, `specs/007-llm-config-overrides/` | Any still-current validation protocols missing from maintained validation specs | Consolidate current requirements with their product or umbrella owners; delete obsolete plans and files with no current responsibility |
+| Feature 006 smoke/evaluation criteria | Retains `SC-004.4` and namespaced `MAH-CONSOLIDATION-2026-07-09-v1:G09/G21` | Obsolete Feature 004/005/007 files and the redundant consolidation roadmap are deleted |
 | `specs/006-validation-harness-mvp/`, metadata and evaluation contracts | Scenarios, adapters, evidence, evaluation, review and reporting | Link transport and provider behavior to their product contracts |
 | `specs/008-catalyst-query-workbench/` | Validation scenarios, experiment protocols, evidence and reporting | Catalyst owns application requirements; the umbrella owns cross-project delivery coordination |
 | `specs/catalyst-program-roadmap.md`, `specs/openelis-reporting-catalyst-integration.md` | Evaluation methodology and test protocols | Current delivery priorities belong to the umbrella; application behavior belongs to Catalyst/OpenELIS |
 | `specs/artifacts/planning/openmrs-dual-provider-*` | Conformance experiments and their evidence | Joint delivery, review and release coordination belong to the umbrella; concrete API behavior remains product-owned |
-| `specs/roadmap.canvas.tsx`, program lanes/status | Validation-specific results and reports | Current program information belongs to the umbrella; remove obsolete plans |
-| `landing/`, required public interfaces in `site/`, website build/configuration and tests | Experiment artifacts and report generation | Website content/assets, navigation, public catalogs and site configuration belong in this repository |
-| `scripts/publish-landing.sh`, website/report publication tooling, `.github/workflows/pages.yml` and web-server configuration | Validation output artifacts supplied for publication | Build/deployment scripts, publication workflows and hosting configuration belong in this repository; update paths and consumers with the move |
+| Program lanes/status | Validation-specific results and dated evidence | Current coordination belongs to this roadmap; obsolete public roadmap and architecture canvases are deleted |
+| Website sources and tests | Experiment artifacts and report generation | `landing/`, `site/`, public catalogs and `tests/website/` are implemented in this repository |
+| Website/report publication | Validation output artifacts supplied for publication | Umbrella `scripts/`, `.github/workflows/pages.yml` and `compose/website/` own static publication; product deployment is separate |
 
 Each requirement retains its identifier under one maintained owner. Update SpecKit
 pointers, instructions, links, imports, navigation, generated catalogs and tests to
@@ -112,9 +110,9 @@ reference that owner. Remove obsolete specification content and its references.
 
 This track coordinates QueryStore, ChartSearchAI and its OpenMRS frontend.
 Application behavior is defined by the
-[dual-provider conformance contract](https://github.com/pmanko/clinical-ai-validation-harness/blob/a27d7e51b7268653420e8f91306c9aaa4ab5a8ee/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md)
+[dual-provider conformance contract](https://github.com/pmanko/clinical-ai-validation-harness/blob/9c1f65606f357662419aaa3417a4dde6d81c9948/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md)
 and [QueryStore ADR](https://github.com/pmanko/openmrs-module-querystore/blob/8b79db9791fe47315d3aae9cb09e9fdf004e6ee6/docs/adr.md).
-The [delivery status register](https://github.com/pmanko/clinical-ai-validation-harness/blob/a27d7e51b7268653420e8f91306c9aaa4ab5a8ee/specs/artifacts/planning/openmrs-dual-provider-parity-roadmap-status.md)
+The [delivery status register](https://github.com/pmanko/clinical-ai-validation-harness/blob/9c1f65606f357662419aaa3417a4dde6d81c9948/specs/artifacts/planning/openmrs-dual-provider-parity-roadmap-status.md)
 records implementation and acceptance evidence at the selected harness revision.
 The component repositories maintain subsequent development and release status;
 coordination content is assigned to the umbrella under section 4.
@@ -180,8 +178,8 @@ verification and records the resulting release evidence.
 
 ## 6. Catalyst Delivery
 
-The [four-pathway delivery roadmap](https://github.com/pmanko/clinical-ai-validation-harness/blob/a27d7e51b7268653420e8f91306c9aaa4ab5a8ee/specs/openelis-reporting-catalyst-integration.md)
-and [Feature 008 register](https://github.com/pmanko/clinical-ai-validation-harness/blob/a27d7e51b7268653420e8f91306c9aaa4ab5a8ee/specs/008-catalyst-query-workbench/tasks.md)
+The [four-pathway delivery roadmap](https://github.com/pmanko/clinical-ai-validation-harness/blob/9c1f65606f357662419aaa3417a4dde6d81c9948/specs/openelis-reporting-catalyst-integration.md)
+and [Feature 008 register](https://github.com/pmanko/clinical-ai-validation-harness/blob/9c1f65606f357662419aaa3417a4dde6d81c9948/specs/008-catalyst-query-workbench/tasks.md)
 record delivery scope and acceptance at the selected component revision. Catalyst
 owns the SQL workbench, Datasets, Widgets, Dashboards and publication. Med Agent Hub owns configured model
 roles; native reporting remains OpenELIS-owned.

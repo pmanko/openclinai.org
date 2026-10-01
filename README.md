@@ -74,3 +74,26 @@ python3 scripts/check_workspace.py
 
 These commands check documentation links and component checkout consistency.
 Each product supplies its own build and test instructions.
+
+### Shared development
+
+The root `Makefile` provides the shared environment and product build commands:
+
+| Command | Purpose |
+| --- | --- |
+| `make openmrs-source-pair-build` | Build QueryStore, then ChartSearchAI, and stage their modules. |
+| `make chartsearch-esm-build` | Build and stage the OpenMRS frontend. |
+| `make chartsearchai-local` | Prepare the local ChartSearchAI environment. |
+| `make catalyst-mvp-up` | Start the configured Catalyst environment, retaining existing data. |
+| `make validate-run SET=demo` | Run the selected validation experiment against prepared services. |
+
+Read the component's setup instructions before building or starting it. Product
+builds require the component-specific Java, Node, Docker or model-service tools.
+Connection settings and credentials belong in ignored environment files.
+
+### Website
+
+Website pages and assets are in `landing/`; documentation and interactive previews
+are in `site/`. The [website guide](site/README.md) covers local builds, checks and
+publication. Static hosting configuration lives in `compose/website/`, and the
+GitHub Pages workflow is configured in this repository.

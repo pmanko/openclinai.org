@@ -1,0 +1,76 @@
+{
+    admin off
+    email {$CADDY_EMAIL:nobody@example.com}
+    log {
+        output stderr
+        format console
+    }
+}
+
+(chartsearch_overrides) {
+    header /openmrs/spa/importmap.json Cache-Control "no-cache, must-revalidate"
+    header /openmrs/spa/routes.registry.json Cache-Control "no-cache, must-revalidate"
+    header /openmrs/spa/openmrs-esm-chartsearchai-app-multiturn/* Cache-Control "no-cache, must-revalidate"
+    handle /openmrs/spa/importmap.json {
+        rewrite * /importmap.json
+        root * /srv/spa-custom
+        file_server
+    }
+    handle /openmrs/spa/routes.registry.json {
+        rewrite * /routes.registry.json
+        root * /srv/spa-custom
+        file_server
+    }
+    handle_path /openmrs/spa/openmrs-esm-chartsearchai-app-multiturn/* {
+        root * /srv/spa-custom/openmrs-esm-chartsearchai-app-multiturn
+        file_server
+    }
+}
+
+(openmrs_routes) {
+    request_body {
+        max_size 256MB
+    }
+    @ocl_upload {
+        method POST
+        path /openmrs/ws/rest/v1/openconceptlab/import
+    }
+    handle @ocl_upload {
+        reverse_proxy backend:8080
+    }
+    # Chat turns bypass the gateway's shorter timeout.
+    handle /openmrs/ws/rest/v1/chartsearchai/* {
+        reverse_proxy backend:8080 {
+            transport http {
+                read_timeout 2700s
+                write_timeout 2700s
+            }
+        }
+    }
+    handle /openmrs/* {
+        reverse_proxy gateway:80
+    }
+    handle /__proxy_health {
+        respond "ok" 200
+    }
+}
+
+{$CADDY_SITE::80} {
+    import chartsearch_overrides
+    import openmrs_routes
+    handle {
+        respond "OpenMRS workspace: use /openmrs/spa" 404
+    }
+}
+
+{$CADDY_SITE_OPENMRS::8090} {
+    import chartsearch_overrides
+    import openmrs_routes
+    handle / {
+        rewrite * /openmrs/spa/
+        reverse_proxy gateway:80
+    }
+    handle {
+        respond "OpenMRS workspace: no route configured" 404
+    }
+}
