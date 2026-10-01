@@ -38,7 +38,7 @@ only when they directly block a specific contribution.
 | Validation harness | Clinical and Catalyst runners use configured targets and supplied/observed provenance; source-free wheel isolation, portable reports and the full local harness suite pass | Review the published component change and verify actual product interfaces separately |
 | Website | `landing/`, `site/`, static hosting configuration, build/publication tools and workflows are umbrella-owned; local website tests and build have run | Hosted CI and explicit deployment acceptance |
 | Specifications | Harness governance and validation foundations are reconciled; retained 004 criteria are in Feature 006; obsolete 004/005/007 files are removed | Consolidate mixed Feature 008, program-delivery and OpenMRS coordination specifications |
-| Product delivery | Provider contracts (#583), local token counting (#584) and frontend staged stream client (#55) are published as independent extractions with passing local checks | Continue the remaining extraction groups below; frontend #55 has three inherited review findings; review and hosted checks are separate from local verification; retain integration branches unchanged |
+| Product delivery | Provider contracts (#583), local token counting (#584), safety-check status (#585) and frontend staged stream client (#55) are published as independent extractions with passing local checks | Extract dependent work after its prerequisites merge into main; frontend #55 has three inherited review findings; hosted safety-status checks are running; retain integration branches unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -229,9 +229,10 @@ changes to current main. Newer upstream safety and citation behavior must remain
 | Existing work | Publication or remaining extraction |
 | --- | --- |
 | B1 provider contracts, lifecycle validation, cancellation/preemption and prior-turn input | [Backend #583](https://github.com/openmrs/openmrs-module-chartsearchai/pull/583), `b89211ce`; full Maven verification passed locally and hosted Java 11/17/21 builds passed. No adapter or endpoint activation in this PR |
-| B4 exact token counting | [Backend #584](https://github.com/openmrs/openmrs-module-chartsearchai/pull/584), `370f4c32`; full local Maven verification passed. Existing counting requests adapted to upstream authentication; hosted checks pending |
+| B4 exact token counting | [Backend #584](https://github.com/openmrs/openmrs-module-chartsearchai/pull/584), `370f4c32`; full local Maven verification and hosted Java 11/17/21 and QueryStore-main builds passed. Existing counting requests adapted to upstream authentication |
 | B4 chart context and budgets | Awaiting extraction: `QueryStoreChartBuilder`, `InsufficientContextException`, scoped/budget tests and QueryStore test doubles. Requires QueryStore's chart-read/context-slice API |
-| B3 safety-check completeness | Awaiting extraction: status/issue reporting in `DrugSafetyValidator`, patient-context completeness, answer fields and affected tests. Preserve current upstream safety logic |
+| B3 safety-check execution status | [Backend #585](https://github.com/openmrs/openmrs-module-chartsearchai/pull/585), `c1f43ce9`; 64 focused tests and full Maven verification passed locally; hosted builds running. Carries validator status/issues and patient-context completeness while preserving upstream order-read and attribution logic |
+| B3 safety status on answers | Awaiting extraction after #585: `ChartAnswer` fields, inference-service wiring and affected API/REST tests. The Java status API in #585 does not yet publish status on answers |
 | B3 bundled provider and cancellation | Awaiting extraction after B1 and context prerequisites: bundled adapter, service/router/engine cancellation, provider registry and existing tests |
 | B2 Hub connection | Awaiting extraction: `HubProfileService`, Hub adapter/transport/request/event classes, configuration and existing tests. Adapter depends on B1 |
 | B5 conversation storage | Awaiting extraction after B1: conversation service/DAO/models, audit attribution, mappings/migrations and persistence/allocation tests |
@@ -248,6 +249,32 @@ The old embedding-plan note belongs with context ownership reconciliation. Test
 mock, TypeScript configuration and lockfile changes travel only with the extraction
 that needs them. This register records published foundations and remaining scope;
 it does not claim the full inventory or integration acceptance is complete.
+
+### Next Extractions
+
+All four published extractions remain open. The next publication steps follow the
+existing imports and contracts:
+
+1. After backend #583 merges, extract the Hub adapter and conversation storage as
+   separate PRs. Both use its provider types; neither needs the other or the bundled
+   adapter. Keep Hub profile discovery with its adapter rather than creating another
+   prerequisite PR for that small helper.
+2. After backend #584 and the required QueryStore API are available in their
+   respective main branches, extract chart-context selection and budget enforcement.
+   The current source imports `PatientChartRead`, `ContextSlice` and `TokenCounter`.
+3. After #583, #585 and context prerequisites, extract bundled-provider behavior,
+   cancellation and safety answer wiring; then connect providers and storage to the
+   REST endpoints. Preserve current main's additional answer-limit fields throughout.
+4. After frontend #55 merges, extract conversation state/history and answer
+   presentation using its types and transport. Carry `turn-phase` with the first
+   consumer that needs it. Keep tightly coupled hook/panel changes together when a
+   smaller split would need temporary compatibility code. Provider/profile selection
+   follows its discovery calls and state, with its existing tests.
+
+Frontend #55's three inherited stream defects are recorded in its PR description;
+they are unresolved, despite passing checks. The backend repository's automated
+review is disabled for fork PRs, so passing builds do not establish independent
+review. None of these publications constitutes deployment or integrated acceptance.
 
 ### Publication
 
