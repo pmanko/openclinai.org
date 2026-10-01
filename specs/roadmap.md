@@ -263,7 +263,7 @@ changes to current main. Newer upstream safety and citation behavior must remain
 | B3 bundled provider, cancellation and safety status on answers | [Backend draft #588](https://github.com/openmrs/openmrs-module-chartsearchai/pull/588), `389ae7a3`, on the exact #583/#585/#587 prerequisite assembly `1cf826b5`: bundled adapter, registry, router/engine cancellation, final prompt-budget preflight and `ChartAnswer` safety wiring, including module-composed answers. Preserves newer upstream prompt arguments and answer fields; existing validator/constructor fixtures are adapted without changing clinical assertions. Full API verification has 2,903 tests with zero failures/errors and 59 skips; all 285 web-module tests and packaging pass. Hosted source-pair Java 11/17/21, selftest and lint checks against QueryStore `8b79db97` passed at this revision. Review findings are recorded below; combined endpoint/frontend behavior and approved capability/toggle acceptance remain unverified |
 | B2 Hub connection | Extracted and staged on `codex/hub-provider`, based on #583: profile discovery, adapter/transport/request/event classes, configuration and existing tests. Review fixes close terminal streams and reuse upstream remote-response byte limits. 75 focused checks and all 285 web-module tests pass; full local API run has one previously reproduced upstream macOS socket-test failure (59 skips). Commit/publication is pending a commit-guard false positive on the runtime-property name constant; hosted CI has not run |
 | B5 conversation storage | [Backend #586](https://github.com/openmrs/openmrs-module-chartsearchai/pull/586), `5ddfd912`, stacked on #583: service/DAO/models, audit attribution and purge handling, mappings/migrations and module registration. All 16 source/schema/test changes match the integration additions/removals. Ten focused tests and all 285 web-module tests plus packaging pass. Full local API run has only the previously reproduced upstream macOS socket-test failure (59 skips). Hosted Java 11/17/21, QueryStore-main, selftest and lint checks passed at this revision; no review threads outstanding. Combined runtime and MySQL migration acceptance remain unverified |
-| B5 endpoints and wiring | Awaiting extraction after providers/storage: controller, REST/history/persistence tests, `omod/pom.xml` test dependencies/resources and `XmlPayloads` updates |
+| B5 endpoints and wiring | Prepared locally against the exact #588/#586 and staged Hub assembly: controller discovery, new conversation, history and provider-neutral stream; REST/history/persistence tests; test dependencies/resources; component documentation and paired-source branch checks. All 49 focused checks and 316 web-module tests plus packaging pass against QueryStore `8b79db97`. Full API verification ran 2,944 tests with one previously reproduced upstream macOS socket-test failure and 59 skips; the web module was verified separately after the reactor stopped. Newer upstream answer fields and clinical assertions are retained; existing upstream `XmlPayloads.marshal` already provides the required behavior. Publication waits for the held Hub prerequisite commit; no endpoint PR or hosted checks yet. Combined runtime and approved capability/toggle acceptance remain unverified |
 | F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55), `fdf262ce`; all 468 tests, lint, type checks, local build and hosted build passed. CRLF separators, final-event model normalization and terminal reader cleanup are fixed with regression coverage; all three review threads are resolved. Existing search transport and visible panel are unchanged |
 | F1 history client and session state | [Frontend #56](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/56), `f6f5cc24`, stacked on #55: history/new-session requests, conversation identifiers and provider/profile state, with logout isolation. Preserves upstream reasoning-display preferences and correctly represents empty history with a null session. All 476 local tests, lint, type checks, translation verification and production build pass; existing bundle-size warning remains. Hosted build and automated review check passed at this revision; no review threads outstanding. This slice does not activate history in the visible panel |
 | F1 conversation lifecycle and visible history | [Frontend draft #59](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59), `7cf9503a`, on the exact #58/#57 prerequisite assembly `9ca6703a`: history hydration, New chat, lifecycle phases, cancellation/preemption, mounted selectors and chat/search-panel wiring. Carries the existing removal of patient-open warmup and restored-provider test. Conflicts are resolved under the approved decisions below; newer upstream answer-limit fields, reasoning controls and reader scrolling are retained. All 615 local tests, lint, type checks, translation extraction and production build pass; the existing bundle-size warning remains. Hosted build passed at this revision; release was skipped. Review findings are recorded below; browser/video and combined runtime acceptance remain unverified |
@@ -311,7 +311,11 @@ history/session state and answer-rendering extractions remain open. The next pub
    as draft #588 on the exact #583/#585/#587 assembly. Connect providers and storage
    to the REST endpoints next. Preserve current main's additional answer-limit
    fields through the existing canonical answer serializer; the bundled envelope
-   retains its source `ChartAnswer` for that endpoint adaptation.
+   retains its source `ChartAnswer` for that endpoint adaptation. The endpoint slice
+   is now prepared and locally verified with #586 and the staged Hub changes;
+   publish it on their exact prerequisite assembly after the Hub commit hold is
+   resolved. Keep prerequisites out of the endpoint PR's review diff. Carry the
+   same declared QueryStore source dependency into its hosted checks.
 4. Provider/profile selectors are published as frontend #58 on #56. Frontend draft
    #59 connects those selectors/history with #57 renderers for conversation lifecycle,
    visible history and staged presentation. Its exact prerequisite assembly is published
@@ -425,6 +429,17 @@ review-fix pass:
 Do not infer readiness from #588's passing local suites. Approved streaming-off
 and unsupported-capability behavior remains work for the provider/endpoint/frontend
 consumers and combined acceptance, as required above.
+
+The prepared B5 endpoint slice has a source-review finding at
+`ChartSearchAiRestController.java:1500,1543,1548`: a turn is stored before provider
+execution, but an exceptional completion or disconnect can reach the catch without
+persisting a terminal result. The wire error alone does not settle stored history.
+Reproduce the actual controller-to-storage path during its review-fix pass and
+preserve any answer already shown while recording the failure or interruption.
+Several carried REST tests also call package-private helpers; passing them does
+not establish the request authorization and HTTP contract. The existing real
+controller-to-Hibernate tests verify audit identity and bundled-mode rejection;
+broader request-path and failure acceptance remains pending.
 
 Renewed backend checks passed: 25 provider-contract, 92 local-token/engine and
 64 safety-status tests. Renewed source review found no additional actionable
