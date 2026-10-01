@@ -38,7 +38,7 @@ only when they directly block a specific contribution.
 | Validation harness | Clinical and Catalyst runners use configured targets and supplied/observed provenance; source-free wheel isolation, portable reports and the full local harness suite pass | Review the published component change and verify actual product interfaces separately |
 | Website | `landing/`, `site/`, static hosting configuration, build/publication tools and workflows are umbrella-owned; local website tests and build have run | Hosted CI and explicit deployment acceptance |
 | Specifications | Harness governance and validation foundations are reconciled; retained 004 criteria are in Feature 006; obsolete 004/005/007 files are removed | Consolidate mixed Feature 008, program-delivery and OpenMRS coordination specifications |
-| Product delivery | ChartSearchAI backend #157 and frontend #23 contain the implementation, tests and documentation to split | Extract that existing work into focused PRs, verify against current main and publish in dependency order; retain integration branches unchanged |
+| Product delivery | Provider contracts are published in backend #583; staged stream client is published in frontend #55. Both extract existing integration code and tests and pass local product checks | Continue the remaining extraction groups below; review and hosted checks are separate from local verification; retain integration branches unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -200,19 +200,54 @@ changes rather than adding code to force an artificial split.
 | Slice | Responsibility | Integration dependency |
 | --- | --- | --- |
 | B1 Contract | Provider descriptors, request/result and event types, answer envelope, lifecycle and cancellation contract | No concrete provider implementation required |
-| B4 Context consumer | QueryStore-backed chart context and token/budget accounting; retrieval policy remains in QueryStore | B1 and the reviewed QueryStore API |
+| B4 Context consumer | QueryStore-backed chart context and token/budget accounting; retrieval policy remains in QueryStore | Token counting can stand alone; chart-context consumer needs the reviewed QueryStore API |
 | B3 Bundled provider | Bundled inference implementation, registry and routing/engine integration | B1/B4; bundled installation remains independent of Hub |
-| B2 Hub adapter | Configured Hub discovery, request/stream transport, cancellation and failure handling | B1/B3; no silent provider fallback |
-| B5 OpenMRS integration | Authorization, conversation persistence, schema changes, REST/SSE and startup wiring | B1–B4 |
+| B2 Hub adapter | Configured Hub discovery, request/stream transport, cancellation and failure handling | B1 for the adapter; no bundled-provider prerequisite or silent fallback |
+| B5 OpenMRS integration | Authorization, conversation persistence, schema changes, REST/SSE and startup wiring | Persistence uses B1; endpoint/provider wiring uses B1–B4 |
 | F1 Transport and state | Client transport, lifecycle, durable session state and reload behavior | Backend contracts; B5 for real-path acceptance |
 | F2 Provider selection | Explicit provider selection and configuration-aware availability | F1 and backend provider discovery |
-| F3 Answer and evidence UI | Clinical output, references, original/rejected drafts, validation/safety disclosure and optional In-Depth | F1/F2 and real backend payloads |
+| F3 Answer and evidence UI | Clinical output, references, original/rejected drafts, validation/safety disclosure and optional In-Depth | F1 types/state and real backend payloads; no inherent provider-picker prerequisite |
 
-The proposed backend dependency order is B1 → B4 → B3 → B2 → B5; frontend order
-is F1 → F2 → F3. Confirm these dependencies against current main before extraction.
-Each PR must compile and satisfy the relevant product contracts on that base.
+The backend contract unlocks independent Hub-adapter and conversation-persistence
+work. Token counting does not need that contract; the full context consumer does
+need the QueryStore additions. Endpoint wiring follows its actual providers and
+persistence. Frontend transport, state, provider selection and presentation follow
+their actual imports and backend interfaces, not a mandatory single sequence.
+Each PR must compile and satisfy the relevant product contracts on its main base.
 Integrated acceptance covers explicit provider choice, no silent fallback,
 traceable evidence, cancellation and reload survival.
+
+### Extraction Register
+
+The source comparison uses backend integration `2b020dd268fa526c7fa0e168a0a1a8bbc1e6761c`
+and frontend integration `77f61c8a1f9afcf7eb03208caac3dd7ae8ea35a2`. The first PRs
+use upstream main `d183c5bfc1820ba8fb274a11595db5eab0dd313b` and
+`d0bf8b5b14ef23273e70428e8deb7457ad47b616`, respectively. Compare integration changes
+from their common ancestors (`7446d9a` backend, `9668ae0` frontend), then fit those
+changes to current main. Newer upstream safety and citation behavior must remain.
+
+| Existing work | Publication or remaining extraction |
+| --- | --- |
+| B1 provider contracts, lifecycle validation, cancellation/preemption and prior-turn input | [Backend #583](https://github.com/openmrs/openmrs-module-chartsearchai/pull/583), `b89211ce`; full Maven verification passed locally. No adapter or endpoint activation in this PR |
+| B4 exact token counting | Next independent backend extraction: `TokenCounter`, `LocalLlamaTokenCounter`, local-engine counting methods, response parser and their existing tests |
+| B4 chart context and budgets | Awaiting extraction: `QueryStoreChartBuilder`, `InsufficientContextException`, scoped/budget tests and QueryStore test doubles. Requires QueryStore's chart-read/context-slice API |
+| B3 safety-check completeness | Awaiting extraction: status/issue reporting in `DrugSafetyValidator`, patient-context completeness, answer fields and affected tests. Preserve current upstream safety logic |
+| B3 bundled provider and cancellation | Awaiting extraction after B1 and context prerequisites: bundled adapter, service/router/engine cancellation, provider registry and existing tests |
+| B2 Hub connection | Awaiting extraction: `HubProfileService`, Hub adapter/transport/request/event classes, configuration and existing tests. Adapter depends on B1 |
+| B5 conversation storage | Awaiting extraction after B1: conversation service/DAO/models, audit attribution, mappings/migrations and persistence/allocation tests |
+| B5 endpoints and wiring | Awaiting extraction after providers/storage: controller, module configuration, REST/history/persistence tests and their test resources/dependencies |
+| F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55), `95ca92d`; local translation, lint, type, coverage-test and build checks passed. Existing search transport and visible panel are unchanged |
+| F1 conversation state and history | Awaiting extraction: history/new-session client calls, `turn-phase`, hook/store and their tests, with chat-panel lifecycle wiring |
+| F2 provider/profile selection | Awaiting extraction: discovery client calls/types, provider/model pickers, configuration, selection state and tests |
+| F3 answer/evidence presentation | Awaiting extraction: markdown/table/citation components, response-panel and feedback changes, styling, translations, renderer dependencies and existing tests |
+
+Carry relevant README changes with each contribution. Shared files are split by
+behavior; do not replace their newer upstream versions. The integration-only paired
+CI job is not copied into each topic PR; normal main-based product checks apply.
+The old embedding-plan note belongs with context ownership reconciliation. Test
+mock, TypeScript configuration and lockfile changes travel only with the extraction
+that needs them. This register records published foundations and remaining scope;
+it does not claim the full inventory or integration acceptance is complete.
 
 ### Publication
 
