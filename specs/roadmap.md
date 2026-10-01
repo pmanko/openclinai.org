@@ -38,7 +38,7 @@ only when they directly block a specific contribution.
 | Validation harness | Clinical and Catalyst runners use configured targets and supplied/observed provenance; source-free wheel isolation, portable reports and the full local harness suite pass | Review the published component change and verify actual product interfaces separately |
 | Website | `landing/`, `site/`, static hosting configuration, build/publication tools and workflows are umbrella-owned; local website tests and build have run | Hosted CI and explicit deployment acceptance |
 | Specifications | Harness governance and validation foundations are reconciled; retained 004 criteria are in Feature 006; obsolete 004/005/007 files are removed | Consolidate mixed Feature 008, program-delivery and OpenMRS coordination specifications |
-| Product delivery | Provider contracts (#583), local token counting (#584), safety-check status (#585) and frontend staged stream client (#55) are published as independent extractions with passing local checks | Extract dependent work after its prerequisites merge into main; frontend #55 has three inherited review findings; hosted safety-status checks are running; retain integration branches unchanged |
+| Product delivery | Provider contracts (#583), local token counting (#584), safety-check status (#585) and frontend staged stream client (#55) are published as independent extractions with passing local and hosted builds | Extract dependent work after its prerequisites merge into main; frontend #55 has three inherited review findings and backend independent review is pending; retain integration branches unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -231,14 +231,14 @@ changes to current main. Newer upstream safety and citation behavior must remain
 | B1 provider contracts, lifecycle validation, cancellation/preemption and prior-turn input | [Backend #583](https://github.com/openmrs/openmrs-module-chartsearchai/pull/583), `b89211ce`; full Maven verification passed locally and hosted Java 11/17/21 builds passed. No adapter or endpoint activation in this PR |
 | B4 exact token counting | [Backend #584](https://github.com/openmrs/openmrs-module-chartsearchai/pull/584), `370f4c32`; full local Maven verification and hosted Java 11/17/21 and QueryStore-main builds passed. Existing counting requests adapted to upstream authentication |
 | B4 chart context and budgets | Awaiting extraction: `QueryStoreChartBuilder`, `InsufficientContextException`, scoped/budget tests and QueryStore test doubles. Requires QueryStore's chart-read/context-slice API |
-| B3 safety-check execution status | [Backend #585](https://github.com/openmrs/openmrs-module-chartsearchai/pull/585), `c1f43ce9`; 64 focused tests and full Maven verification passed locally; hosted builds running. Carries validator status/issues and patient-context completeness while preserving upstream order-read and attribution logic |
+| B3 safety-check execution status | [Backend #585](https://github.com/openmrs/openmrs-module-chartsearchai/pull/585), `c1f43ce9`; 64 focused tests, full local Maven verification and hosted Java 11/17/21 and QueryStore-main builds passed. Carries validator status/issues and patient-context completeness while preserving upstream order-read and attribution logic |
 | B3 safety status on answers | Awaiting extraction after #585: `ChartAnswer` fields, inference-service wiring and affected API/REST tests. The Java status API in #585 does not yet publish status on answers |
 | B3 bundled provider and cancellation | Awaiting extraction after B1 and context prerequisites: bundled adapter, service/router/engine cancellation, provider registry and existing tests |
-| B2 Hub connection | Awaiting extraction: `HubProfileService`, Hub adapter/transport/request/event classes, configuration and existing tests. Adapter depends on B1 |
-| B5 conversation storage | Awaiting extraction after B1: conversation service/DAO/models, audit attribution, mappings/migrations and persistence/allocation tests |
-| B5 endpoints and wiring | Awaiting extraction after providers/storage: controller, module configuration, REST/history/persistence tests and their test resources/dependencies |
+| B2 Hub connection | Awaiting extraction: `HubProfileService`, Hub adapter/transport/request/event classes, configuration and existing tests, including `TemporalGateRelayConformanceTest`. Adapter depends on B1 |
+| B5 conversation storage | Awaiting extraction after B1: conversation service/DAO/models, audit attribution and purge handling, mappings/migrations, their registration in `config.xml`, and persistence/allocation tests |
+| B5 endpoints and wiring | Awaiting extraction after providers/storage: controller, REST/history/persistence tests, `omod/pom.xml` test dependencies/resources and `XmlPayloads` updates |
 | F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55), `95ca92d`; local checks and hosted build passed. Three inherited review findings remain: CRLF separators, final-event model normalization and reader cleanup after failure. Existing search transport and visible panel are unchanged |
-| F1 conversation state and history | Awaiting extraction: history/new-session client calls, `turn-phase`, hook/store and their tests, with chat-panel lifecycle wiring |
+| F1 conversation state and history | Awaiting extraction: history/new-session client calls, `turn-phase`, hook/store and their tests, with chat/search-panel lifecycle wiring and the existing removal of patient-open warmup |
 | F2 provider/profile selection | Awaiting extraction: discovery client calls/types, provider/model pickers, configuration, selection state and tests |
 | F3 answer/evidence presentation | Awaiting extraction: markdown/table/citation components, response-panel and feedback changes, styling, translations, renderer dependencies and existing tests |
 
@@ -247,8 +247,17 @@ behavior; do not replace their newer upstream versions. The integration-only pai
 CI job is not copied into each topic PR; normal main-based product checks apply.
 The old embedding-plan note belongs with context ownership reconciliation. Test
 mock, TypeScript configuration and lockfile changes travel only with the extraction
-that needs them. This register records published foundations and remaining scope;
-it does not claim the full inventory or integration acceptance is complete.
+that needs them.
+
+The file inventory covers all 97 backend and 39 frontend files changed between the
+common ancestors and the source integration revisions above. Each is assigned to
+the published or remaining groups, shared support, or the excluded paired workflow.
+Shared-file extraction is not completion of the whole file: `LocalLlmEngine` and
+its tests still contain cancellation changes, while frontend `chartsearchai.ts`
+and its tests still contain history, discovery and feedback changes. Carry the
+architecture and answer-wiring tests with the corresponding backend answer changes.
+This completes file grouping; each remaining extraction still needs adaptation,
+review and verification against current main. Integration acceptance is separate.
 
 ### Next Extractions
 
