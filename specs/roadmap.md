@@ -41,7 +41,7 @@ only when they directly block a specific contribution.
 | Validation harness | Clinical and Catalyst runners use configured targets and supplied/observed provenance; source-free wheel isolation, portable reports and the full local harness suite pass | Review the published component change and verify actual product interfaces separately |
 | Website | `landing/`, `site/`, static hosting configuration, build/publication tools and workflows are umbrella-owned; local website tests and build have run | Hosted CI and explicit deployment acceptance |
 | Specifications | Harness governance and validation foundations are reconciled; retained 004 criteria are in Feature 006; obsolete 004/005/007 files are removed | Consolidate mixed Feature 008, program-delivery and OpenMRS coordination specifications |
-| Product delivery | Six backend and four frontend extractions are published. Applicable hosted checks pass for #583–#587 and #55–#58; bundled-provider draft #588 has passing local checks and hosted checks running. Rendering #57, selectors #58 and bundled-provider #588 have findings recorded below; earlier stream findings are fixed and resolved | Finish publishing the full dependency stacks, then address collected findings and verify combined functionality; retain integration branches unchanged |
+| Product delivery | Six backend and five frontend extractions are published. Applicable hosted checks pass for #583–#588 and #55–#58; lifecycle/presentation draft #59 has passing local checks and hosted checks running. Rendering #57, selectors #58, bundled-provider #588 and lifecycle/presentation #59 have findings recorded below; earlier stream findings are fixed and resolved | Publish the remaining Hub adapter and backend endpoints, then address collected findings and verify combined functionality; retain integration branches unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -260,16 +260,16 @@ changes to current main. Newer upstream safety and citation behavior must remain
 | B4 exact token counting | [Backend #584](https://github.com/openmrs/openmrs-module-chartsearchai/pull/584), `370f4c32`; full local Maven verification and hosted Java 11/17/21 and QueryStore-main builds passed. Existing counting requests adapted to upstream authentication |
 | B4 chart context and budgets | [Backend #587](https://github.com/openmrs/openmrs-module-chartsearchai/pull/587), `508546e5`, stacked on #584: QueryStore context consumer, protected-evidence budgets and existing tests/fixture. Review fixed acceptance of incomplete source projections; both regression cases failed before the fix. All 110 focused checks and 285 web-module tests plus packaging pass against QueryStore `8b79db97`; full API run has only the previously reproduced upstream macOS socket-test failure (59 skips). Hosted paired-source Java 11/17/21, selftest and lint checks passed at this revision; no review threads outstanding. Ordinary artifact builds are replaced by the declared source-pair checks for this branch; combined runtime acceptance is unverified |
 | B3 safety-check execution status | [Backend #585](https://github.com/openmrs/openmrs-module-chartsearchai/pull/585), `c1f43ce9`; 64 focused tests, full local Maven verification and hosted Java 11/17/21 and QueryStore-main builds passed. Carries validator status/issues and patient-context completeness while preserving upstream order-read and attribution logic |
-| B3 bundled provider, cancellation and safety status on answers | [Backend draft #588](https://github.com/openmrs/openmrs-module-chartsearchai/pull/588), `389ae7a3`, on the exact #583/#585/#587 prerequisite assembly `1cf826b5`: bundled adapter, registry, router/engine cancellation, final prompt-budget preflight and `ChartAnswer` safety wiring, including module-composed answers. Preserves newer upstream prompt arguments and answer fields; existing validator/constructor fixtures are adapted without changing clinical assertions. Full API verification has 2,903 tests with zero failures/errors and 59 skips; all 285 web-module tests and packaging pass. Hosted source-pair Java 11/17/21 checks against QueryStore `8b79db97` are running. Review findings are recorded below; endpoint/frontend activation and approved capability/toggle acceptance remain unverified |
+| B3 bundled provider, cancellation and safety status on answers | [Backend draft #588](https://github.com/openmrs/openmrs-module-chartsearchai/pull/588), `389ae7a3`, on the exact #583/#585/#587 prerequisite assembly `1cf826b5`: bundled adapter, registry, router/engine cancellation, final prompt-budget preflight and `ChartAnswer` safety wiring, including module-composed answers. Preserves newer upstream prompt arguments and answer fields; existing validator/constructor fixtures are adapted without changing clinical assertions. Full API verification has 2,903 tests with zero failures/errors and 59 skips; all 285 web-module tests and packaging pass. Hosted source-pair Java 11/17/21, selftest and lint checks against QueryStore `8b79db97` passed at this revision. Review findings are recorded below; combined endpoint/frontend behavior and approved capability/toggle acceptance remain unverified |
 | B2 Hub connection | Extracted and staged on `codex/hub-provider`, based on #583: profile discovery, adapter/transport/request/event classes, configuration and existing tests. Review fixes close terminal streams and reuse upstream remote-response byte limits. 75 focused checks and all 285 web-module tests pass; full local API run has one previously reproduced upstream macOS socket-test failure (59 skips). Commit/publication is pending a commit-guard false positive on the runtime-property name constant; hosted CI has not run |
 | B5 conversation storage | [Backend #586](https://github.com/openmrs/openmrs-module-chartsearchai/pull/586), `5ddfd912`, stacked on #583: service/DAO/models, audit attribution and purge handling, mappings/migrations and module registration. All 16 source/schema/test changes match the integration additions/removals. Ten focused tests and all 285 web-module tests plus packaging pass. Full local API run has only the previously reproduced upstream macOS socket-test failure (59 skips). Hosted Java 11/17/21, QueryStore-main, selftest and lint checks passed at this revision; no review threads outstanding. Combined runtime and MySQL migration acceptance remain unverified |
 | B5 endpoints and wiring | Awaiting extraction after providers/storage: controller, REST/history/persistence tests, `omod/pom.xml` test dependencies/resources and `XmlPayloads` updates |
 | F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55), `fdf262ce`; all 468 tests, lint, type checks, local build and hosted build passed. CRLF separators, final-event model normalization and terminal reader cleanup are fixed with regression coverage; all three review threads are resolved. Existing search transport and visible panel are unchanged |
 | F1 history client and session state | [Frontend #56](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/56), `f6f5cc24`, stacked on #55: history/new-session requests, conversation identifiers and provider/profile state, with logout isolation. Preserves upstream reasoning-display preferences and correctly represents empty history with a null session. All 476 local tests, lint, type checks, translation verification and production build pass; existing bundle-size warning remains. Hosted build and automated review check passed at this revision; no review threads outstanding. This slice does not activate history in the visible panel |
-| F1 conversation lifecycle and visible history | The #56/#58 history/selectors and #57 rendering prerequisites are assembled locally at `9ca6703`; the existing lifecycle/presentation patch is applied with conflicts awaiting resolution under the approved decisions below. Carry `turn-phase`, hook/panel tests, chat/search-panel wiring, existing removal of patient-open warmup and the restored-provider test. History hydration, New chat, cancellation/preemption and review/In-Depth state must work together. This extraction is not published or validated |
+| F1 conversation lifecycle and visible history | [Frontend draft #59](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59), `7cf9503a`, on the exact #58/#57 prerequisite assembly `9ca6703a`: history hydration, New chat, lifecycle phases, cancellation/preemption, mounted selectors and chat/search-panel wiring. Carries the existing removal of patient-open warmup and restored-provider test. Conflicts are resolved under the approved decisions below; newer upstream answer-limit fields, reasoning controls and reader scrolling are retained. All 615 local tests, lint, type checks, translation extraction and production build pass; the existing bundle-size warning remains. Hosted build is running. Review findings are recorded below; browser/video and combined runtime acceptance remain unverified |
 | F2 provider/profile selection | [Frontend #58](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/58), `08eec6ca`, stacked on #56: discovery client calls/types, provider/model pickers, configuration, styles and tests. All 499 local tests, lint, type checks, translation extraction and production build pass; hosted build and automated review check passed at this revision. One open finding is recorded below. Controls are not mounted until the lifecycle extraction. Carry its existing real-hook restored-provider test with that extraction |
 | F3 formatted answers and citation renderers | [Frontend #57](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/57), `1102317b`, stacked directly on #55: existing Markdown/table renderers, dependencies and tests; completed answers now use Markdown while retaining newer upstream citation safeguards. Six reproduced rendering failures are fixed, including disappearing clinical disclosures under repeated React rendering. All 484 tests, lint, type checks, translation extraction and production build pass locally; bundle-size warnings remain. Hosted build passed; automated review produced three open findings recorded below. Structured table activation and combined browser/runtime acceptance remain unverified |
-| F3 staged answer/evidence presentation | Awaiting extraction: response-panel lifecycle, review/original-draft and In-Depth displays, evidence cards, feedback changes, styling, translations and existing tests. Reuse #57 renderers; keep tightly coupled hook/panel changes together |
+| F3 staged answer/evidence presentation | Included with the tightly coupled lifecycle in [frontend draft #59](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59): separate answer/review/In-Depth sections, original/withheld drafts, evidence cards and grounding, feedback, styles, translations and existing tests. Reuses #57 renderers while retaining newer upstream attribution, severity and significance disclosures. Streaming off suppresses incremental display on the same conversation transport; backend token generation is not yet disabled. Local checks pass as recorded above; real-model capability behavior and combined acceptance remain unverified |
 
 Carry relevant README changes with each contribution. Shared files are split by
 behavior; do not replace their newer upstream versions. Ordinary topic PRs use
@@ -312,12 +312,13 @@ history/session state and answer-rendering extractions remain open. The next pub
    to the REST endpoints next. Preserve current main's additional answer-limit
    fields through the existing canonical answer serializer; the bundled envelope
    retains its source `ChartAnswer` for that endpoint adaptation.
-4. Provider/profile selectors are published as frontend #58 on #56. Assemble that
-   history/session state and selectors with #57 renderers for conversation lifecycle, visible
-   history and staged answer presentation. Carry `turn-phase` with the first
-   consumer that needs it. Keep tightly coupled hook/panel changes together when a
-   smaller split would need temporary compatibility code. Carry the selector's
-   existing real-hook restored-provider test with this lifecycle consumer.
+4. Provider/profile selectors are published as frontend #58 on #56. Frontend draft
+   #59 connects those selectors/history with #57 renderers for conversation lifecycle,
+   visible history and staged presentation. Its exact prerequisite assembly is published
+   as `codex/conversation-prerequisites`; `turn-phase` and the selector's existing
+   real-hook restored-provider test travel with this consumer. Hosted checks and
+   collected review remediation remain pending. Coordinate the streaming preference
+   and optional capabilities with the backend endpoints before combined acceptance.
 5. Once every integration capability is represented in the published set, address
    outstanding findings, recheck affected descendants and validate the assembled
    functionality against both integration branches. Do not wait for upstream merges.
@@ -383,6 +384,30 @@ Frontend #58 has one open finding at `08eec6ca`:
 Retain manual selection of available profiles without silently choosing a fallback.
 Its passing build and automated review check do not resolve this finding.
 
+Frontend draft #59 has these source-review findings at `7cf9503a`, assigned to its
+review-fix pass. They are identified from source; focused reproductions are still
+needed before remediation:
+
+- `useChartSearchAi.ts:245,657,670`: disabling reasoning clears cached notes, but
+  an active turn's callbacks retain the submission-time setting and can store notes
+  again. Honor the disabled setting throughout the turn, including completed-answer
+  delivery when streaming is off.
+- `useChartSearchAi.ts:238`: effect cleanup marks the hook unmounted without restoring
+  that flag on setup. React StrictMode effect replay can drop history/New chat results.
+- `useChartSearchAi.ts:495,542,688`: late session callbacks are not guarded by current
+  request identity, even where late message updates are rejected. An old callback
+  can replace a newer conversation identifier or clear its visible history.
+- `ai-response-panel.component.tsx:1263` and `ai-response-panel.scss:624`: warning
+  markup never applies the new status modifiers; ordinary warnings lose upstream
+  red styling. Preserve the approved distinction between clinical warnings and
+  neutral notices.
+- `ai-response-panel.component.tsx:337,1122`: unresolved evidence can still receive
+  a chart navigation link from the shared helper. Reconcile this across evidence
+  cards and citation rendering; a missing source must not appear navigable as resolved.
+
+#59 inherits the outstanding #57/#58 findings as well. Its passing local suites
+do not establish complete graceful-degradation behavior or review readiness.
+
 Backend draft #588 has these source-review findings at `389ae7a3`, assigned to its
 review-fix pass:
 
@@ -433,6 +458,11 @@ The frontend `codex/chat-stream-client` base is published upstream at
 `fdf262cedcc8719c1621775179591f381c022a79`, exactly matching frontend #55.
 The frontend `codex/chat-session-history` base is published upstream at
 `f6f5cc24e6fd7b8e6149afbab1a0f30ef7e3a594`, exactly matching #56; #58 targets it.
+The frontend `codex/conversation-prerequisites` base is published identically in
+upstream and the fork at `9ca6703a98a90c3ee2d82e4cac8c93d69b893627`, assembling
+exact #58 `08eec6ca` (including #56/#55) and #57 `1102317b`; #59 targets this
+base and contains only its lifecycle/presentation additions and required adaptations.
+Retarget and recheck after those prerequisites merge.
 No integration branch or main branch was changed to create these bases.
 
 If an extracted contribution needs umbrella verification, update the affected
