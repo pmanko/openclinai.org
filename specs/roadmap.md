@@ -9,9 +9,12 @@ implementation registers.
 
 ## 1. Current Priorities
 
-1. Extract small, reviewable ChartSearchAI backend and frontend PRs from each
-   project's current `main`, using its `harness-integration` branch as a reference.
-   Each PR contains one coherent change with its tests and documentation.
+1. Break the existing ChartSearchAI backend and frontend integration work into the
+   smallest practical reviewable PRs. Extract the existing implementation, tests
+   and documentation together onto branches based on each project's current
+   `main`. Limit code changes to those needed for extraction and compatibility
+   with current upstream code; new features and replacement implementations are
+   outside this task.
 2. Review the published component-ownership slice:
    [harness #197](https://github.com/pmanko/clinical-ai-validation-harness/pull/197)
    and [umbrella #2](https://github.com/pmanko/openclinai.org/pull/2).
@@ -23,6 +26,9 @@ implementation registers.
    Verify product-native builds and shared environments against recorded revisions;
    record deployed acceptance separately from source verification.
 
+The active ChartSearchAI task is this PR split. Other priorities enter that task
+only when they directly block a specific contribution.
+
 ## 2. Implementation Status
 
 | Area | Current state | Remaining work |
@@ -32,7 +38,7 @@ implementation registers.
 | Validation harness | Clinical and Catalyst runners use configured targets and supplied/observed provenance; source-free wheel isolation, portable reports and the full local harness suite pass | Review the published component change and verify actual product interfaces separately |
 | Website | `landing/`, `site/`, static hosting configuration, build/publication tools and workflows are umbrella-owned; local website tests and build have run | Hosted CI and explicit deployment acceptance |
 | Specifications | Harness governance and validation foundations are reconciled; retained 004 criteria are in Feature 006; obsolete 004/005/007 files are removed | Consolidate mixed Feature 008, program-delivery and OpenMRS coordination specifications |
-| Product delivery | ChartSearchAI backend #157 and frontend #23 contain the integration implementations; smaller main-based PRs are the selected delivery approach | Extract focused changes, verify each against current main and publish in dependency order; retain integration branches as references |
+| Product delivery | ChartSearchAI backend #157 and frontend #23 contain the implementation, tests and documentation to split | Extract that existing work into focused PRs, verify against current main and publish in dependency order; retain integration branches unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -122,31 +128,49 @@ coordination content is assigned to the umbrella under section 4.
 
 ### Contribution Model
 
-Create fresh topic branches from the destination project's current `main` and
-open small PRs targeting that `main`. Use the existing integration implementation
-to identify and implement the intended capability, adapting it to current product
-code and contracts. Fresh commits are expected; preserving commit history, merge
-structure or the integration branch's exact diff is not an acceptance requirement.
+The deliverable is a set of reviewable PRs containing the work already implemented
+on the backend and frontend `harness-integration` branches. Reuse that code and
+carry its existing tests and documentation with each extracted change. Do not
+reimplement a capability from its description or add new features, redesigns or
+unrelated fixes as prerequisites for the split.
 
-The existing `harness-integration` branches remain available as reference. Do not
-rewrite, delete or rebase them as part of this split. Track capability coverage and
-remaining work, not a replay or disposition of every historical commit.
+Create topic branches from the destination project's current `main` and open PRs
+targeting that `main`. Make only the adjustments necessary to separate the existing
+changes, resolve conflicts and preserve newer upstream functionality. Keep closely
+dependent changes together when splitting them would require scaffolding or a
+rewrite. Use existing commits where suitable or extract their relevant changes;
+preserving commit history is optional, and rewriting working code is not a goal.
+
+Use the [existing contribution catalogue](https://openclinai.org/docs/openmrs-upstream/)
+as the starting inventory, checked against the integration branches and current
+upstream code. Its dated review and test status is not current acceptance evidence.
+Track each existing capability as already covered by upstream, assigned to a small
+PR, or still awaiting extraction. Keep the corresponding tests and documentation
+with the behavior rather than making a separate test or documentation project.
+
+Keep the existing `harness-integration` branches unchanged: do not rewrite, delete
+or rebase them. Preserve newer upstream code when extracting changes; a raw tree
+diff against an older integration branch is not a patch to apply wholesale.
 
 Each PR must be understandable, buildable and testable against its main base.
 Independent changes may proceed in parallel. A dependent change follows its
 prerequisite into `main`; do not include unmerged prerequisite changes merely to
-make a later PR compile. Include relevant tests and documentation with the behavior.
+make a later PR compile. Run the relevant existing checks for each extracted piece;
+adjust tests only where the extraction or integration with current main requires it.
 
 ### Milestones
 
 | ID | Deliverable | Acceptance |
 | --- | --- | --- |
-| M0 | Current main/reference comparison and capability dependencies | Main and integration reference revisions are identified; intended changes, existing upstream behavior and necessary prerequisites are understood |
+| M0 | Inventory and grouping of existing integration work | Main and integration revisions are identified; existing code, tests and documentation are mapped to upstream coverage or proposed PRs, with necessary dependencies |
 | M1 | QueryStore Q0 review resolution | Exact-source tests and required integration evidence support the published contribution |
-| M2 | Small main-based backend/frontend PRs | Each PR implements one coherent change, targets current main and passes its applicable checks; capability coverage and remaining work are explicit |
-| M3 | Backend delivery | B1–B5 satisfy product contracts and affected integration checks |
-| M4 | Frontend delivery | F1–F3 satisfy lifecycle, provider and evidence/browser acceptance against the tested backend |
+| M2 | Small main-based backend/frontend PRs | Each PR extracts one coherent portion of the existing work, targets current main and passes its applicable checks; coverage and remaining extraction work are explicit |
+| M3 | Backend delivery | Existing B1–B5 work is accounted for in upstream or extracted PRs, with its product checks |
+| M4 | Frontend delivery | Existing F1–F3 work is accounted for in upstream or extracted PRs, with its lifecycle, provider and evidence/browser checks |
 | M5 | Integrated release acceptance | Assembled product behavior and deployed evidence satisfy the existing release signoffs |
+
+M5 is separate release work, not a prerequisite for publishing the extracted PRs.
+The split does not require new test suites, acceptance infrastructure or a new demo.
 
 Publication requires current source/review status and applicable verification
 evidence. Resolve dependencies in order: QueryStore APIs before backend consumers,
@@ -168,9 +192,10 @@ additional Elasticsearch checks are recorded separately.
 
 ### Backend and Frontend Boundaries
 
-These capability groups organize the work by responsibility and dependency.
-They are not fixed PR sizes: subdivide or adjust boundaries to produce small,
-coherent changes against current main.
+These groups describe the existing implementation to split; they are not new
+implementation assignments or fixed PR sizes. Choose boundaries that make the
+existing changes easy to review with the least adaptation. Combine inseparable
+changes rather than adding code to force an artificial split.
 
 | Slice | Responsibility | Integration dependency |
 | --- | --- | --- |
@@ -196,9 +221,11 @@ corresponding project's `main`. PR descriptions state the focused behavior,
 applicable contract, tests and dependencies; they need not reproduce the
 integration branch's development history.
 
-Update `scripts/openmrs-source-pair-test.sh`, `scripts/verify-repository-lines.sh`
-and their CI consumers to verify selected PR revisions and dependency versions
-rather than require every contribution head to equal `harness-integration`.
+If an extracted contribution needs umbrella verification, update the affected
+`scripts/openmrs-source-pair-test.sh`, `scripts/verify-repository-lines.sh` or CI
+consumer to verify selected PR revisions and dependency versions rather than
+require every contribution head to equal `harness-integration`. General tooling
+cleanup is not a prerequisite for publishing the split.
 The umbrella continues to own assembled-system gitlinks and reproducible source
 verification. The integration branches remain reference sources, not publication
 gates for the new PRs.
