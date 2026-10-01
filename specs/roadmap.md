@@ -251,7 +251,7 @@ changes to current main. Newer upstream safety and citation behavior must remain
 | B3 safety status on answers | Stack on #585: `ChartAnswer` fields, inference-service wiring and affected API/REST tests. The Java status API in #585 does not yet publish status on answers |
 | B3 bundled provider and cancellation | Awaiting extraction after B1 and context prerequisites: bundled adapter, service/router/engine cancellation, provider registry and existing tests |
 | B2 Hub connection | Extracted and staged on `codex/hub-provider`, based on #583: profile discovery, adapter/transport/request/event classes, configuration and existing tests. Review fixes close terminal streams and reuse upstream remote-response byte limits. 75 focused checks and all 285 web-module tests pass; full local API run has one previously reproduced upstream macOS socket-test failure (59 skips). Commit/publication is pending a commit-guard false positive on the runtime-property name constant; hosted CI has not run |
-| B5 conversation storage | Awaiting extraction after B1: conversation service/DAO/models, audit attribution and purge handling, mappings/migrations, their registration in `config.xml`, and persistence/allocation tests |
+| B5 conversation storage | [Backend #586](https://github.com/openmrs/openmrs-module-chartsearchai/pull/586), `5ddfd912`, stacked on #583: service/DAO/models, audit attribution and purge handling, mappings/migrations and module registration. All 16 source/schema/test changes match the integration additions/removals. Ten focused tests and all 285 web-module tests plus packaging pass. Full local API run has only the previously reproduced upstream macOS socket-test failure (59 skips). Hosted CI is running; combined runtime and MySQL migration acceptance remain unverified |
 | B5 endpoints and wiring | Awaiting extraction after providers/storage: controller, REST/history/persistence tests, `omod/pom.xml` test dependencies/resources and `XmlPayloads` updates |
 | F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55), `fdf262ce`; all 468 tests, lint, type checks, local build and hosted build passed. CRLF separators, final-event model normalization and terminal reader cleanup are fixed with regression coverage; all three review threads are resolved. Existing search transport and visible panel are unchanged |
 | F1 conversation state and history | Awaiting extraction: history/new-session client calls, `turn-phase`, hook/store and their tests, with chat/search-panel lifecycle wiring and the existing removal of patient-open warmup |
@@ -277,13 +277,13 @@ review and verification against current main. Integration acceptance is separate
 
 ### Next Extractions
 
-All four published extractions remain open. The next publication steps follow the
+The four foundations and conversation-storage extraction remain open. The next publication steps follow the
 existing imports and contracts:
 
-1. Publish the prepared Hub adapter on backend #583, then extract conversation storage
-   as a separate PR on #583. Both use its provider types; neither needs the other or the bundled
-   adapter. Keep Hub profile discovery with its adapter rather than creating another
-   prerequisite PR for that small helper.
+1. Publish the prepared Hub adapter on backend #583 and finish hosted verification of
+   conversation storage (#586), already published separately on #583. Both use its
+   provider types; neither needs the other or the bundled adapter. Hub profile
+   discovery stays with its adapter.
 2. Stack on backend #584 and test against the required QueryStore source to extract
    chart-context selection and budget enforcement.
    The current source imports `PatientChartRead`, `ContextSlice` and `TokenCounter`.
