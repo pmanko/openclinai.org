@@ -254,7 +254,8 @@ changes to current main. Newer upstream safety and citation behavior must remain
 | B5 conversation storage | [Backend #586](https://github.com/openmrs/openmrs-module-chartsearchai/pull/586), `5ddfd912`, stacked on #583: service/DAO/models, audit attribution and purge handling, mappings/migrations and module registration. All 16 source/schema/test changes match the integration additions/removals. Ten focused tests and all 285 web-module tests plus packaging pass. Full local API run has only the previously reproduced upstream macOS socket-test failure (59 skips). Hosted Java 11/17/21, QueryStore-main, selftest and lint checks passed at this revision; no review threads outstanding. Combined runtime and MySQL migration acceptance remain unverified |
 | B5 endpoints and wiring | Awaiting extraction after providers/storage: controller, REST/history/persistence tests, `omod/pom.xml` test dependencies/resources and `XmlPayloads` updates |
 | F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55), `fdf262ce`; all 468 tests, lint, type checks, local build and hosted build passed. CRLF separators, final-event model normalization and terminal reader cleanup are fixed with regression coverage; all three review threads are resolved. Existing search transport and visible panel are unchanged |
-| F1 conversation state and history | Awaiting extraction: history/new-session client calls, `turn-phase`, hook/store and their tests, with chat/search-panel lifecycle wiring and the existing removal of patient-open warmup |
+| F1 history client and session state | [Frontend #56](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/56), `f6f5cc24`, stacked on #55: history/new-session requests, conversation identifiers and provider/profile state, with logout isolation. Preserves upstream reasoning-display preferences and correctly represents empty history with a null session. All 476 local tests, lint, type checks, translation verification and production build pass; existing bundle-size warning remains. Hosted checks and automated review are running. This slice does not activate history in the visible panel |
+| F1 conversation lifecycle and visible history | Awaiting extraction on #56: `turn-phase`, hook and tests, chat/search-panel lifecycle wiring and existing removal of patient-open warmup. History hydration, New chat, cancellation/preemption and review/In-Depth state must work together with the answer panel |
 | F2 provider/profile selection | Awaiting extraction: discovery client calls/types, provider/model pickers, configuration, selection state and tests |
 | F3 answer/evidence presentation | Awaiting extraction: markdown/table/citation components, response-panel and feedback changes, styling, translations, renderer dependencies and existing tests |
 
@@ -284,8 +285,8 @@ review and verification against current main. Integration acceptance is separate
 
 ### Next Extractions
 
-The four foundations, conversation storage and context-budget extraction remain
-open. The next publication steps follow the existing imports and contracts:
+The four foundations, conversation storage, context budgets and frontend
+history/session extraction remain open. The next publication steps follow the existing imports and contracts:
 
 1. Publish the prepared Hub adapter on backend #583. Conversation storage (#586)
    is published separately on #583 with passing hosted checks. Both use its
@@ -297,8 +298,9 @@ open. The next publication steps follow the existing imports and contracts:
 3. Assemble the #583, #585 and context prerequisites to extract bundled-provider behavior,
    cancellation and safety answer wiring; then connect providers and storage to the
    REST endpoints. Preserve current main's additional answer-limit fields throughout.
-4. Stack on frontend #55 to extract conversation state/history and answer
-   presentation using its types and transport. Carry `turn-phase` with the first
+4. Finish hosted checks and review of frontend #56, stacked on #55. Continue
+   conversation lifecycle and visible history on #56, and extract answer
+   presentation using the shared types and transport. Carry `turn-phase` with the first
    consumer that needs it. Keep tightly coupled hook/panel changes together when a
    smaller split would need temporary compatibility code. Provider/profile selection
    follows its discovery calls and state, with its existing tests.
@@ -326,6 +328,8 @@ an independent change against main.
 The backend `codex/provider-contract` base is published upstream at `b89211ced6f5da1df866ea72d361dcce154f0238`,
 exactly matching #583. The backend `codex/local-token-counting` base is published
 upstream at `370f4c329242242a86f1fdf167855f617fd94426`, exactly matching #584.
+The frontend `codex/chat-stream-client` base is published upstream at
+`fdf262cedcc8719c1621775179591f381c022a79`, exactly matching frontend #55.
 No integration branch or main branch was changed to create these bases.
 
 If an extracted contribution needs umbrella verification, update the affected
