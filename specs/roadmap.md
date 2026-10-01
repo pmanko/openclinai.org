@@ -9,17 +9,19 @@ implementation registers.
 
 ## 1. Current Priorities
 
-1. Review the published component-ownership slice:
+1. Extract small, reviewable ChartSearchAI backend and frontend PRs from each
+   project's current `main`, using its `harness-integration` branch as a reference.
+   Each PR contains one coherent change with its tests and documentation.
+2. Review the published component-ownership slice:
    [harness #197](https://github.com/pmanko/clinical-ai-validation-harness/pull/197)
    and [umbrella #2](https://github.com/pmanko/openclinai.org/pull/2).
    Merge the harness first, then the umbrella; retain separate product-build and
    deployed-acceptance evidence.
-2. Consolidate the remaining Catalyst and OpenMRS delivery specifications into their
+3. Consolidate the remaining Catalyst and OpenMRS delivery specifications into their
    maintained owners, preserving current requirement identifiers and updating consumers.
-3. Verify product-native builds and shared environments against the recorded revisions;
-   record deployed acceptance separately from local tests and package isolation.
-4. Continue OpenMRS contribution review and Catalyst delivery through their product
-   contracts.
+4. Continue QueryStore review and Catalyst delivery through their product contracts.
+   Verify product-native builds and shared environments against recorded revisions;
+   record deployed acceptance separately from source verification.
 
 ## 2. Implementation Status
 
@@ -30,7 +32,7 @@ implementation registers.
 | Validation harness | Clinical and Catalyst runners use configured targets and supplied/observed provenance; source-free wheel isolation, portable reports and the full local harness suite pass | Review the published component change and verify actual product interfaces separately |
 | Website | `landing/`, `site/`, static hosting configuration, build/publication tools and workflows are umbrella-owned; local website tests and build have run | Hosted CI and explicit deployment acceptance |
 | Specifications | Harness governance and validation foundations are reconciled; retained 004 criteria are in Feature 006; obsolete 004/005/007 files are removed | Consolidate mixed Feature 008, program-delivery and OpenMRS coordination specifications |
-| Product delivery | OpenMRS review and Catalyst delivery have existing contracts and task registers | Component verification, publication and deployed acceptance remain separate from workspace checks |
+| Product delivery | ChartSearchAI backend #157 and frontend #23 contain the integration implementations; smaller main-based PRs are the selected delivery approach | Extract focused changes, verify each against current main and publish in dependency order; retain integration branches as references |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -118,20 +120,39 @@ records implementation and acceptance evidence at the selected harness revision.
 The component repositories maintain subsequent development and release status;
 coordination content is assigned to the umbrella under section 4.
 
+### Contribution Model
+
+Create fresh topic branches from the destination project's current `main` and
+open small PRs targeting that `main`. Use the existing integration implementation
+to identify and implement the intended capability, adapting it to current product
+code and contracts. Fresh commits are expected; preserving commit history, merge
+structure or the integration branch's exact diff is not an acceptance requirement.
+
+The existing `harness-integration` branches remain available as reference. Do not
+rewrite, delete or rebase them as part of this split. Track capability coverage and
+remaining work, not a replay or disposition of every historical commit.
+
+Each PR must be understandable, buildable and testable against its main base.
+Independent changes may proceed in parallel. A dependent change follows its
+prerequisite into `main`; do not include unmerged prerequisite changes merely to
+make a later PR compile. Include relevant tests and documentation with the behavior.
+
 ### Milestones
 
 | ID | Deliverable | Acceptance |
 | --- | --- | --- |
-| M0 | Current source/base/PR inventory and dependency map | Candidate revisions, compilation dependencies and outstanding review findings are identified |
+| M0 | Current main/reference comparison and capability dependencies | Main and integration reference revisions are identified; intended changes, existing upstream behavior and necessary prerequisites are understood |
 | M1 | QueryStore Q0 review resolution | Exact-source tests and required integration evidence support the published contribution |
-| M2 | Reviewable backend/frontend decomposition | Every source delta has a destination; the cumulative sequence builds; the publication model is agreed |
+| M2 | Small main-based backend/frontend PRs | Each PR implements one coherent change, targets current main and passes its applicable checks; capability coverage and remaining work are explicit |
 | M3 | Backend delivery | B1–B5 satisfy product contracts and affected integration checks |
 | M4 | Frontend delivery | F1–F3 satisfy lifecycle, provider and evidence/browser acceptance against the tested backend |
 | M5 | Integrated release acceptance | Assembled product behavior and deployed evidence satisfy the existing release signoffs |
 
 Publication requires current source/review status and applicable verification
-evidence. Merge/deployment order is QueryStore, ChartSearchAI backend, then frontend.
-Paired pre-merge testing can establish compatibility before upstream merge.
+evidence. Resolve dependencies in order: QueryStore APIs before backend consumers,
+and backend APIs before frontend consumers that require them. Independent changes
+need not wait for unrelated work. Paired tests provide integration evidence but do
+not replace each PR's checks against its main base.
 
 ### QueryStore Review Slice Q0
 
@@ -147,8 +168,9 @@ additional Elasticsearch checks are recorded separately.
 
 ### Backend and Frontend Boundaries
 
-These proposed contribution boundaries group product changes by responsibility
-and compilation dependency.
+These capability groups organize the work by responsibility and dependency.
+They are not fixed PR sizes: subdivide or adjust boundaries to produce small,
+coherent changes against current main.
 
 | Slice | Responsibility | Integration dependency |
 | --- | --- | --- |
@@ -161,21 +183,30 @@ and compilation dependency.
 | F2 Provider selection | Explicit provider selection and configuration-aware availability | F1 and backend provider discovery |
 | F3 Answer and evidence UI | Clinical output, references, original/rejected drafts, validation/safety disclosure and optional In-Depth | F1/F2 and real backend payloads |
 
-The proposed backend order is B1 → B4 → B3 → B2 → B5; frontend order is F1 → F2 → F3.
-Each cumulative contribution must compile and satisfy the relevant product
-contracts. Integration acceptance covers explicit provider choice, no silent
-fallback, traceable evidence, cancellation and reload survival.
+The proposed backend dependency order is B1 → B4 → B3 → B2 → B5; frontend order
+is F1 → F2 → F3. Confirm these dependencies against current main before extraction.
+Each PR must compile and satisfy the relevant product contracts on that base.
+Integrated acceptance covers explicit provider choice, no silent fallback,
+traceable evidence, cancellation and reload survival.
 
 ### Publication
 
-The current OpenMRS contribution policy uses tested `pmanko:harness-integration`
-heads. Publishing separate replacement PR heads requires agreement on the
-publication model and corresponding verification changes. Until that decision,
-review boundaries can organize the existing PRs without replacing them.
+Publish each topic branch to the project fork and open its PR against the
+corresponding project's `main`. PR descriptions state the focused behavior,
+applicable contract, tests and dependencies; they need not reproduce the
+integration branch's development history.
 
-Replacement of QueryStore #68, ChartSearchAI #157 or frontend #23 requires accounted
-source deltas and replacement links. The umbrella coordinates publication
-verification and records the resulting release evidence.
+Update `scripts/openmrs-source-pair-test.sh`, `scripts/verify-repository-lines.sh`
+and their CI consumers to verify selected PR revisions and dependency versions
+rather than require every contribution head to equal `harness-integration`.
+The umbrella continues to own assembled-system gitlinks and reproducible source
+verification. The integration branches remain reference sources, not publication
+gates for the new PRs.
+
+The split does not authorize closing the existing integration PRs. Their disposition
+can be decided once the smaller contributions cover the intended capabilities.
+Branch retention is independent of PR closure. QueryStore #68 review remains its
+own delivery work; do not expand the ChartSearchAI split to it automatically.
 
 ## 6. Catalyst Delivery
 
@@ -193,7 +224,6 @@ contracts and implementation tasks.
 
 - **Data tooling:** Assign a maintained owner for reusable migration and terminology
   utilities outside the validation harness.
-- **OpenMRS publication:** Select review chapters on existing integration PRs or
-  independently published replacement slices with the required policy changes.
+
 - **Public delivery:** Decide repository visibility/organization and website hosting
   changes separately from the internal component layout.
