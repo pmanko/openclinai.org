@@ -39,7 +39,7 @@ only when they directly block a specific contribution.
 | Validation harness | Clinical and Catalyst runners use configured targets and supplied/observed provenance; source-free wheel isolation, portable reports and the full local harness suite pass | Review the published component change and verify actual product interfaces separately |
 | Website | `landing/`, `site/`, static hosting configuration, build/publication tools and workflows are umbrella-owned; local website tests and build have run | Hosted CI and explicit deployment acceptance |
 | Specifications | Harness governance and validation foundations are reconciled; retained 004 criteria are in Feature 006; obsolete 004/005/007 files are removed | Consolidate mixed Feature 008, program-delivery and OpenMRS coordination specifications |
-| Product delivery | Provider contracts (#583), local token counting (#584), safety-check status (#585) and frontend staged stream client (#55) are published foundations; renewed review and focused checks completed, with the three stream findings fixed and resolved | Publish the remaining work as dependency stacks; verify the combined backend and frontend against the integration functionality; retain integration branches unchanged |
+| Product delivery | Provider contracts (#583), local token counting (#584), safety-check status (#585) and frontend staged stream client (#55) are published foundations; conversation storage (#586) has passing hosted checks, and context/budget consumer (#587) is published with hosted checks running; the three stream findings are fixed and resolved | Publish the remaining work as dependency stacks; verify the combined backend and frontend against the integration functionality; retain integration branches unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -246,12 +246,12 @@ changes to current main. Newer upstream safety and citation behavior must remain
 | --- | --- |
 | B1 provider contracts, lifecycle validation, cancellation/preemption and prior-turn input | [Backend #583](https://github.com/openmrs/openmrs-module-chartsearchai/pull/583), `b89211ce`; full Maven verification passed locally and hosted Java 11/17/21 builds passed. No adapter or endpoint activation in this PR |
 | B4 exact token counting | [Backend #584](https://github.com/openmrs/openmrs-module-chartsearchai/pull/584), `370f4c32`; full local Maven verification and hosted Java 11/17/21 and QueryStore-main builds passed. Existing counting requests adapted to upstream authentication |
-| B4 chart context and budgets | Awaiting extraction: `QueryStoreChartBuilder`, `InsufficientContextException`, scoped/budget tests and QueryStore test doubles. Requires QueryStore's chart-read/context-slice API |
+| B4 chart context and budgets | [Backend #587](https://github.com/openmrs/openmrs-module-chartsearchai/pull/587), `508546e5`, stacked on #584: QueryStore context consumer, protected-evidence budgets and existing tests/fixture. Review fixed acceptance of incomplete source projections; both regression cases failed before the fix. All 110 focused checks and 285 web-module tests plus packaging pass against QueryStore `8b79db97`; full API run has only the previously reproduced upstream macOS socket-test failure (59 skips). Hosted paired-source CI is pending; combined runtime acceptance is unverified |
 | B3 safety-check execution status | [Backend #585](https://github.com/openmrs/openmrs-module-chartsearchai/pull/585), `c1f43ce9`; 64 focused tests, full local Maven verification and hosted Java 11/17/21 and QueryStore-main builds passed. Carries validator status/issues and patient-context completeness while preserving upstream order-read and attribution logic |
 | B3 safety status on answers | Stack on #585: `ChartAnswer` fields, inference-service wiring and affected API/REST tests. The Java status API in #585 does not yet publish status on answers |
 | B3 bundled provider and cancellation | Awaiting extraction after B1 and context prerequisites: bundled adapter, service/router/engine cancellation, provider registry and existing tests |
 | B2 Hub connection | Extracted and staged on `codex/hub-provider`, based on #583: profile discovery, adapter/transport/request/event classes, configuration and existing tests. Review fixes close terminal streams and reuse upstream remote-response byte limits. 75 focused checks and all 285 web-module tests pass; full local API run has one previously reproduced upstream macOS socket-test failure (59 skips). Commit/publication is pending a commit-guard false positive on the runtime-property name constant; hosted CI has not run |
-| B5 conversation storage | [Backend #586](https://github.com/openmrs/openmrs-module-chartsearchai/pull/586), `5ddfd912`, stacked on #583: service/DAO/models, audit attribution and purge handling, mappings/migrations and module registration. All 16 source/schema/test changes match the integration additions/removals. Ten focused tests and all 285 web-module tests plus packaging pass. Full local API run has only the previously reproduced upstream macOS socket-test failure (59 skips). Hosted CI is running; combined runtime and MySQL migration acceptance remain unverified |
+| B5 conversation storage | [Backend #586](https://github.com/openmrs/openmrs-module-chartsearchai/pull/586), `5ddfd912`, stacked on #583: service/DAO/models, audit attribution and purge handling, mappings/migrations and module registration. All 16 source/schema/test changes match the integration additions/removals. Ten focused tests and all 285 web-module tests plus packaging pass. Full local API run has only the previously reproduced upstream macOS socket-test failure (59 skips). Hosted Java 11/17/21, QueryStore-main, selftest and lint checks passed at this revision; no review threads outstanding. Combined runtime and MySQL migration acceptance remain unverified |
 | B5 endpoints and wiring | Awaiting extraction after providers/storage: controller, REST/history/persistence tests, `omod/pom.xml` test dependencies/resources and `XmlPayloads` updates |
 | F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55), `fdf262ce`; all 468 tests, lint, type checks, local build and hosted build passed. CRLF separators, final-event model normalization and terminal reader cleanup are fixed with regression coverage; all three review threads are resolved. Existing search transport and visible panel are unchanged |
 | F1 conversation state and history | Awaiting extraction: history/new-session client calls, `turn-phase`, hook/store and their tests, with chat/search-panel lifecycle wiring and the existing removal of patient-open warmup |
@@ -259,10 +259,17 @@ changes to current main. Newer upstream safety and citation behavior must remain
 | F3 answer/evidence presentation | Awaiting extraction: markdown/table/citation components, response-panel and feedback changes, styling, translations, renderer dependencies and existing tests |
 
 Carry relevant README changes with each contribution. Shared files are split by
-behavior; do not replace their newer upstream versions. The integration-only paired
-CI job is not copied into each topic PR; normal main-based product checks apply.
-The old embedding-plan note belongs with context ownership reconciliation. Test
-mock, TypeScript configuration and lockfile changes travel only with the extraction
+behavior; do not replace their newer upstream versions. Ordinary topic PRs use
+the normal product checks. Context PR #587 consumes an API still under review in
+QueryStore #68, so it adapts the existing paired-source Java 11/17/21 job for that
+branch only, replacing checks against artifacts that lack the required API. It
+installs the exact QueryStore source without a shared Maven cache and runs the full
+ChartSearchAI reactor. Remove that temporary substitution and rerun ordinary checks
+after the dependency merges/publishes, before merging #587. Any descendants consuming
+that API must declare and verify the same source dependency rather than wait to be
+extracted. The umbrella retains ownership of assembled-system pins and acceptance.
+The obsolete local-embedding plan is removed with #587; current retrieval belongs
+to QueryStore. Test mock, TypeScript configuration and lockfile changes travel only with the extraction
 that needs them.
 
 The file inventory covers all 97 backend and 39 frontend files changed between the
@@ -277,16 +284,16 @@ review and verification against current main. Integration acceptance is separate
 
 ### Next Extractions
 
-The four foundations and conversation-storage extraction remain open. The next publication steps follow the
-existing imports and contracts:
+The four foundations, conversation storage and context-budget extraction remain
+open. The next publication steps follow the existing imports and contracts:
 
-1. Publish the prepared Hub adapter on backend #583 and finish hosted verification of
-   conversation storage (#586), already published separately on #583. Both use its
+1. Publish the prepared Hub adapter on backend #583. Conversation storage (#586)
+   is published separately on #583 with passing hosted checks. Both use its
    provider types; neither needs the other or the bundled adapter. Hub profile
    discovery stays with its adapter.
-2. Stack on backend #584 and test against the required QueryStore source to extract
-   chart-context selection and budget enforcement.
-   The current source imports `PatientChartRead`, `ContextSlice` and `TokenCounter`.
+2. Finish hosted verification of context-budget PR #587, already stacked on #584
+   and locally tested against the required QueryStore source. It imports
+   `PatientChartRead`, `ContextSlice` and `TokenCounter`.
 3. Assemble the #583, #585 and context prerequisites to extract bundled-provider behavior,
    cancellation and safety answer wiring; then connect providers and storage to the
    REST endpoints. Preserve current main's additional answer-limit fields throughout.
@@ -317,7 +324,9 @@ behavior, tests, dependencies and merge order. Do not present the stacked diff a
 an independent change against main.
 
 The backend `codex/provider-contract` base is published upstream at `b89211ced6f5da1df866ea72d361dcce154f0238`,
-exactly matching #583. No integration branch or main branch was changed to create it.
+exactly matching #583. The backend `codex/local-token-counting` base is published
+upstream at `370f4c329242242a86f1fdf167855f617fd94426`, exactly matching #584.
+No integration branch or main branch was changed to create these bases.
 
 If an extracted contribution needs umbrella verification, update the affected
 `scripts/openmrs-source-pair-test.sh`, `scripts/verify-repository-lines.sh` or CI
