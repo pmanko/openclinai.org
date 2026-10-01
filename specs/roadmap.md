@@ -261,7 +261,7 @@ changes to current main. Newer upstream safety and citation behavior must remain
 | B4 chart context and budgets | [Backend #587](https://github.com/openmrs/openmrs-module-chartsearchai/pull/587), `508546e5`, stacked on #584: QueryStore context consumer, protected-evidence budgets and existing tests/fixture. Review fixed acceptance of incomplete source projections; both regression cases failed before the fix. All 110 focused checks and 285 web-module tests plus packaging pass against QueryStore `8b79db97`; full API run has only the previously reproduced upstream macOS socket-test failure (59 skips). Hosted paired-source Java 11/17/21, selftest and lint checks passed at this revision; no review threads outstanding. Ordinary artifact builds are replaced by the declared source-pair checks for this branch; combined runtime acceptance is unverified |
 | B3 safety-check execution status | [Backend #585](https://github.com/openmrs/openmrs-module-chartsearchai/pull/585), `c1f43ce9`; 64 focused tests, full local Maven verification and hosted Java 11/17/21 and QueryStore-main builds passed. Carries validator status/issues and patient-context completeness while preserving upstream order-read and attribution logic |
 | B3 bundled provider, cancellation and safety status on answers | [Backend draft #588](https://github.com/openmrs/openmrs-module-chartsearchai/pull/588), `389ae7a3`, on the exact #583/#585/#587 prerequisite assembly `1cf826b5`: bundled adapter, registry, router/engine cancellation, final prompt-budget preflight and `ChartAnswer` safety wiring, including module-composed answers. Preserves newer upstream prompt arguments and answer fields; existing validator/constructor fixtures are adapted without changing clinical assertions. Full API verification has 2,903 tests with zero failures/errors and 59 skips; all 285 web-module tests and packaging pass. Hosted source-pair Java 11/17/21, selftest and lint checks against QueryStore `8b79db97` passed at this revision. Review findings are recorded below; combined endpoint/frontend behavior and approved capability/toggle acceptance remain unverified |
-| B2 Hub connection | [Backend draft #589](https://github.com/openmrs/openmrs-module-chartsearchai/pull/589), `4929eba8`, stacked on #583: profile discovery, adapter/transport/request/event classes, configuration and existing tests. Review fixes close terminal streams and reuse upstream remote-response byte limits. 75 focused checks and all 285 web-module tests pass; full local API run has one previously reproduced upstream macOS socket-test failure (59 skips). Hosted Java 11/17/21 builds, selftests and lint passed at this revision; QueryStore-main check also passed. The local guard property-name false positive is corrected without disabling credential checks. Source-review findings are recorded below; combined runtime acceptance remains unverified |
+| B2 Hub connection | [Backend draft #589](https://github.com/openmrs/openmrs-module-chartsearchai/pull/589), `439fbc11`, stacked on #583: profile discovery, adapter/transport/request/event classes, configuration and existing tests. Review fixes close terminal streams, reuse upstream remote-response byte limits and settle unfinished optional stages on normal completion while preserving the answer. Actual OpenMRS provider/HTTP regressions pass; 61 focused checks, full API verification (2,866 tests, zero failures/errors, 59 skips), all 285 web-module tests and packaging pass. Hosted builds for this updated head are pending; preceding head passed its applicable checks. Combined runtime and real-model acceptance remain unverified |
 | B5 conversation storage | [Backend #586](https://github.com/openmrs/openmrs-module-chartsearchai/pull/586), `5ddfd912`, stacked on #583: service/DAO/models, audit attribution and purge handling, mappings/migrations and module registration. All 16 source/schema/test changes match the integration additions/removals. Ten focused tests and all 285 web-module tests plus packaging pass. Full local API run has only the previously reproduced upstream macOS socket-test failure (59 skips). Hosted Java 11/17/21, QueryStore-main, selftest and lint checks passed at this revision; no review threads outstanding. Combined runtime and MySQL migration acceptance remain unverified |
 | B5 endpoints and wiring | [Backend draft #590](https://github.com/openmrs/openmrs-module-chartsearchai/pull/590), `60bb5adf`, on the exact #588/#586/#589 prerequisite assembly `97d07172`: controller discovery, new conversation, history and provider-neutral stream; REST/history/persistence tests; test dependencies/resources; component documentation and paired-source branch checks. All 49 focused checks and 316 web-module tests plus packaging pass against QueryStore `8b79db97`. Full API verification ran 2,944 tests with one previously reproduced upstream macOS socket-test failure and 59 skips; the web module was verified separately after the reactor stopped. Newer upstream answer fields and clinical assertions are retained; existing upstream `XmlPayloads.marshal` already provides the required behavior. The published endpoint tree exactly matches the locally tested preparation. Hosted paired-source Java 11/17/21 checks passed; ordinary artifact and QueryStore-main checks are replaced by those declared source-pair checks. Combined runtime and approved capability/toggle acceptance remain unverified |
 | F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55), `fdf262ce`; all 468 tests, lint, type checks, local build and hosted build passed. CRLF separators, final-event model normalization and terminal reader cleanup are fixed with regression coverage; all three review threads are resolved. Existing search transport and visible panel are unchanged |
@@ -312,7 +312,8 @@ alone does not satisfy M2–M4 acceptance or establish functional equivalence.
    checks at `4181b0d` (hosted build passed). Verify the approved streaming toggle and unsupported optional
    capabilities on the same provider/profile and conversation path in combined acceptance.
 3. Reproduce and address #588's deterministic-answer budget ordering and inherited
-   test/comment findings, plus #589's unfinished optional-stage status. Rebuild
+   test/comment findings. #589's optional-stage finding is fixed at `439fbc11`;
+   require passing hosted checks on that head. Rebuild
    #590's exact prerequisite assembly from the updated published parents and
    address its failure/history and request-path findings. Recheck each current head.
 4. Validate the assembled backend/frontend heads with QueryStore `8b79db97` against
@@ -422,15 +423,14 @@ Do not infer readiness from #588's passing local suites. Approved streaming-off
 and unsupported-capability behavior remains work for the provider/endpoint/frontend
 consumers and combined acceptance, as required above.
 
-Backend draft #589 has these source-review findings at `4929eba8`:
-
-- `HubClinicalAnswerProvider.java:215`: a normal `done` envelope is retained even
-  when optional validation or In-Depth status still says checking/pending. Reproduce
-  the composed provider/HTTP path and settle unfinished stages without claiming
-  a successful check or discarding a supported answer.
-- `HubClinicalAnswerProviderTest.java` and `TemporalGateRelayConformanceTest.java`:
-  scripted transport assertions do not prove the composed provider/HTTP path.
-  Extend existing production-path coverage for the confirmed defect.
+Backend draft #589's recorded terminal-status finding is fixed at `439fbc11`.
+A normal terminal response settles unfinished review and In-Depth stages without
+claiming success and preserves the supported answer, original draft and partial
+detail. Two regressions exercise the configured OpenMRS provider through its real
+HTTP transport, including absent optional capabilities; they serve protocol fixtures
+and do not establish real-model quality. Full API verification and web-module checks
+pass locally at this revision; hosted checks and combined runtime acceptance remain
+pending. Existing scripted tests are retained alongside this composed-path coverage.
 
 Backend draft #590 at `60bb5adf` has a source-review finding at
 `ChartSearchAiRestController.java:1500,1543,1548`: a turn is stored before provider
