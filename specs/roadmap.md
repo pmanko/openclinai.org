@@ -41,7 +41,7 @@ only when they directly block a specific contribution.
 | Validation harness | Clinical and Catalyst runners use configured targets and supplied/observed provenance; source-free wheel isolation, portable reports and the full local harness suite pass | Review the published component change and verify actual product interfaces separately |
 | Website | `landing/`, `site/`, static hosting configuration, build/publication tools and workflows are umbrella-owned; local website tests and build have run | Hosted CI and explicit deployment acceptance |
 | Specifications | Harness governance and validation foundations are reconciled; retained 004 criteria are in Feature 006; obsolete 004/005/007 files are removed | Consolidate mixed Feature 008, program-delivery and OpenMRS coordination specifications |
-| Product delivery | Six backend and five frontend extractions are published. Applicable hosted checks pass for #583–#588 and #55–#59; lifecycle/presentation draft #59 also has passing local checks. Rendering #57, selectors #58, bundled-provider #588 and lifecycle/presentation #59 have findings recorded below; earlier stream findings are fixed and resolved | Publish the remaining Hub adapter and backend endpoints, then address collected findings and verify combined functionality; retain integration branches unchanged |
+| Product delivery | Eight backend and five frontend extractions are published. Applicable hosted checks passed for #583–#588 and #55–#59 at the recorded heads. Hub draft #589 has passing Java 11/17/21 builds; its QueryStore-main check is still running. Endpoint draft #590 has paired-source checks running. Findings are recorded below; earlier stream findings are fixed and resolved | Address collected findings, recheck affected descendants and verify combined functionality; retain integration branches unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -261,9 +261,9 @@ changes to current main. Newer upstream safety and citation behavior must remain
 | B4 chart context and budgets | [Backend #587](https://github.com/openmrs/openmrs-module-chartsearchai/pull/587), `508546e5`, stacked on #584: QueryStore context consumer, protected-evidence budgets and existing tests/fixture. Review fixed acceptance of incomplete source projections; both regression cases failed before the fix. All 110 focused checks and 285 web-module tests plus packaging pass against QueryStore `8b79db97`; full API run has only the previously reproduced upstream macOS socket-test failure (59 skips). Hosted paired-source Java 11/17/21, selftest and lint checks passed at this revision; no review threads outstanding. Ordinary artifact builds are replaced by the declared source-pair checks for this branch; combined runtime acceptance is unverified |
 | B3 safety-check execution status | [Backend #585](https://github.com/openmrs/openmrs-module-chartsearchai/pull/585), `c1f43ce9`; 64 focused tests, full local Maven verification and hosted Java 11/17/21 and QueryStore-main builds passed. Carries validator status/issues and patient-context completeness while preserving upstream order-read and attribution logic |
 | B3 bundled provider, cancellation and safety status on answers | [Backend draft #588](https://github.com/openmrs/openmrs-module-chartsearchai/pull/588), `389ae7a3`, on the exact #583/#585/#587 prerequisite assembly `1cf826b5`: bundled adapter, registry, router/engine cancellation, final prompt-budget preflight and `ChartAnswer` safety wiring, including module-composed answers. Preserves newer upstream prompt arguments and answer fields; existing validator/constructor fixtures are adapted without changing clinical assertions. Full API verification has 2,903 tests with zero failures/errors and 59 skips; all 285 web-module tests and packaging pass. Hosted source-pair Java 11/17/21, selftest and lint checks against QueryStore `8b79db97` passed at this revision. Review findings are recorded below; combined endpoint/frontend behavior and approved capability/toggle acceptance remain unverified |
-| B2 Hub connection | Extracted and staged on `codex/hub-provider`, based on #583: profile discovery, adapter/transport/request/event classes, configuration and existing tests. Review fixes close terminal streams and reuse upstream remote-response byte limits. 75 focused checks and all 285 web-module tests pass; full local API run has one previously reproduced upstream macOS socket-test failure (59 skips). Commit/publication is pending a commit-guard false positive on the runtime-property name constant; hosted CI has not run |
+| B2 Hub connection | [Backend draft #589](https://github.com/openmrs/openmrs-module-chartsearchai/pull/589), `4929eba8`, stacked on #583: profile discovery, adapter/transport/request/event classes, configuration and existing tests. Review fixes close terminal streams and reuse upstream remote-response byte limits. 75 focused checks and all 285 web-module tests pass; full local API run has one previously reproduced upstream macOS socket-test failure (59 skips). Hosted Java 11/17/21 builds, selftests and lint passed at this revision; QueryStore-main check is still running. The local guard property-name false positive is corrected without disabling credential checks. Source-review findings are recorded below; combined runtime acceptance remains unverified |
 | B5 conversation storage | [Backend #586](https://github.com/openmrs/openmrs-module-chartsearchai/pull/586), `5ddfd912`, stacked on #583: service/DAO/models, audit attribution and purge handling, mappings/migrations and module registration. All 16 source/schema/test changes match the integration additions/removals. Ten focused tests and all 285 web-module tests plus packaging pass. Full local API run has only the previously reproduced upstream macOS socket-test failure (59 skips). Hosted Java 11/17/21, QueryStore-main, selftest and lint checks passed at this revision; no review threads outstanding. Combined runtime and MySQL migration acceptance remain unverified |
-| B5 endpoints and wiring | Prepared locally against the exact #588/#586 and staged Hub assembly: controller discovery, new conversation, history and provider-neutral stream; REST/history/persistence tests; test dependencies/resources; component documentation and paired-source branch checks. All 49 focused checks and 316 web-module tests plus packaging pass against QueryStore `8b79db97`. Full API verification ran 2,944 tests with one previously reproduced upstream macOS socket-test failure and 59 skips; the web module was verified separately after the reactor stopped. Newer upstream answer fields and clinical assertions are retained; existing upstream `XmlPayloads.marshal` already provides the required behavior. Publication waits for the held Hub prerequisite commit; no endpoint PR or hosted checks yet. Combined runtime and approved capability/toggle acceptance remain unverified |
+| B5 endpoints and wiring | [Backend draft #590](https://github.com/openmrs/openmrs-module-chartsearchai/pull/590), `60bb5adf`, on the exact #588/#586/#589 prerequisite assembly `97d07172`: controller discovery, new conversation, history and provider-neutral stream; REST/history/persistence tests; test dependencies/resources; component documentation and paired-source branch checks. All 49 focused checks and 316 web-module tests plus packaging pass against QueryStore `8b79db97`. Full API verification ran 2,944 tests with one previously reproduced upstream macOS socket-test failure and 59 skips; the web module was verified separately after the reactor stopped. Newer upstream answer fields and clinical assertions are retained; existing upstream `XmlPayloads.marshal` already provides the required behavior. The published endpoint tree exactly matches the locally tested preparation. Hosted paired-source Java 11/17/21 checks are running; ordinary artifact and QueryStore-main checks are replaced by those declared source-pair checks. Combined runtime and approved capability/toggle acceptance remain unverified |
 | F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55), `fdf262ce`; all 468 tests, lint, type checks, local build and hosted build passed. CRLF separators, final-event model normalization and terminal reader cleanup are fixed with regression coverage; all three review threads are resolved. Existing search transport and visible panel are unchanged |
 | F1 history client and session state | [Frontend #56](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/56), `f6f5cc24`, stacked on #55: history/new-session requests, conversation identifiers and provider/profile state, with logout isolation. Preserves upstream reasoning-display preferences and correctly represents empty history with a null session. All 476 local tests, lint, type checks, translation verification and production build pass; existing bundle-size warning remains. Hosted build and automated review check passed at this revision; no review threads outstanding. This slice does not activate history in the visible panel |
 | F1 conversation lifecycle and visible history | [Frontend draft #59](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59), `7cf9503a`, on the exact #58/#57 prerequisite assembly `9ca6703a`: history hydration, New chat, lifecycle phases, cancellation/preemption, mounted selectors and chat/search-panel wiring. Carries the existing removal of patient-open warmup and restored-provider test. Conflicts are resolved under the approved decisions below; newer upstream answer-limit fields, reasoning controls and reader scrolling are retained. All 615 local tests, lint, type checks, translation extraction and production build pass; the existing bundle-size warning remains. Hosted build passed at this revision; release was skipped. Review findings are recorded below; browser/video and combined runtime acceptance remain unverified |
@@ -273,12 +273,12 @@ changes to current main. Newer upstream safety and citation behavior must remain
 
 Carry relevant README changes with each contribution. Shared files are split by
 behavior; do not replace their newer upstream versions. Ordinary topic PRs use
-the normal product checks. Context PR #587 and its bundled-provider descendant #588
+the normal product checks. Context PR #587 and its bundled-provider/endpoint descendants #588/#590
 consume an API still under review in QueryStore #68, so they adapt the existing
 paired-source Java 11/17/21 job for those branches, replacing checks against artifacts that lack the required API. It
 installs the exact QueryStore source without a shared Maven cache and runs the full
 ChartSearchAI reactor. Remove that temporary substitution and rerun ordinary checks
-after the dependency merges/publishes, before merging either contribution. Any descendants consuming
+after the dependency merges/publishes, before merging these contributions. Any descendants consuming
 that API must declare and verify the same source dependency rather than wait to be
 extracted. The umbrella retains ownership of assembled-system pins and acceptance.
 The obsolete local-embedding plan is removed with #587; current retrieval belongs
@@ -291,45 +291,34 @@ the published or remaining groups, shared support, or the excluded paired workfl
 Shared files are accounted for by behavior: #588 carries engine cancellation and
 the architecture/answer-wiring tests; #58/#59 carry frontend discovery and feedback.
 The source-path comparison finds all 56 added backend and 14 added frontend files
-in the assembled work, including the held Hub and prepared endpoint slices. Stream
+in the published assembled work, including Hub #589 and endpoint #590. Stream
 tests moved to `src/api/chat-stream.test.ts`; constructor, tokenizer authentication,
 clinical-read and serializer adaptations retain newer upstream contracts. This
 path/line comparison is extraction evidence, not functional acceptance: adapted
 behavior, collected findings and approved decisions still require verification.
-Publication of the two remaining backend slices and combined acceptance remain
-unfinished.
+All extraction groups are now published. Review remediation and combined acceptance
+remain unfinished.
 
-### Next Extractions
+### Current Execution: Review Fixes, Then Combined Validation
 
-The four foundations, conversation storage, context budgets, frontend
-history/session state and answer-rendering extractions remain open. The next publication steps follow the existing imports and contracts:
+The complete extraction set is published: backend #583–#590 and frontend #55–#59.
+The current task is the second step, resolving the findings below. Publication
+alone does not satisfy M2–M4 acceptance or establish functional equivalence.
 
-1. Publish the prepared Hub adapter on backend #583. Conversation storage (#586)
-   is published separately on #583 with passing hosted checks. Both use its
-   provider types; neither needs the other or the bundled adapter. Hub profile
-   discovery stays with its adapter.
-2. Context-budget PR #587 is stacked on #584 with passing hosted source-pair
-   verification against the required QueryStore revision. It supplies
-   `PatientChartRead`, `ContextSlice` and `TokenCounter` consumers for the next slice.
-3. Bundled-provider behavior, cancellation and safety answer wiring are published
-   as draft #588 on the exact #583/#585/#587 assembly. Connect providers and storage
-   to the REST endpoints next. Preserve current main's additional answer-limit
-   fields through the existing canonical answer serializer; the bundled envelope
-   retains its source `ChartAnswer` for that endpoint adaptation. The endpoint slice
-   is now prepared and locally verified with #586 and the staged Hub changes;
-   publish it on their exact prerequisite assembly after the Hub commit hold is
-   resolved. Keep prerequisites out of the endpoint PR's review diff. Carry the
-   same declared QueryStore source dependency into its hosted checks.
-4. Provider/profile selectors are published as frontend #58 on #56. Frontend draft
-   #59 connects those selectors/history with #57 renderers for conversation lifecycle,
-   visible history and staged presentation. Its exact prerequisite assembly is published
-   as `codex/conversation-prerequisites`; `turn-phase` and the selector's existing
-   real-hook restored-provider test travel with this consumer. Its hosted build
-   passed; collected review remediation remains pending. Coordinate the streaming preference
-   and optional capabilities with the backend endpoints before combined acceptance.
-5. Once every integration capability is represented in the published set, address
-   outstanding findings, recheck affected descendants and validate the assembled
-   functionality against both integration branches. Do not wait for upstream merges.
+1. Reproduce and address #57's rendering/citation findings and #58's profile-picker
+   finding in their owning branches. Merge the updated prerequisites into #59's
+   assembly, then rerun its checks; preserve narrow contribution diffs.
+2. Reproduce and address #59's reasoning, StrictMode, stale-session, warning and
+   evidence findings. Verify the approved streaming toggle and unsupported optional
+   capabilities on the same provider/profile and conversation path.
+3. Reproduce and address #588's deterministic-answer budget ordering and inherited
+   test/comment findings, plus #589's unfinished optional-stage status. Rebuild
+   #590's exact prerequisite assembly from the updated published parents and
+   address its failure/history and request-path findings. Recheck each current head.
+4. Validate the assembled backend/frontend heads with QueryStore `8b79db97` against
+   the existing integration functionality and retained newer upstream behavior.
+   Use the existing checks and real browser/runtime evidence; distinguish this from
+   deployed release acceptance. Do not wait for upstream merges.
 
 ### Approved Frontend Integration Decisions
 
@@ -439,7 +428,17 @@ Do not infer readiness from #588's passing local suites. Approved streaming-off
 and unsupported-capability behavior remains work for the provider/endpoint/frontend
 consumers and combined acceptance, as required above.
 
-The prepared B5 endpoint slice has a source-review finding at
+Backend draft #589 has these source-review findings at `4929eba8`:
+
+- `HubClinicalAnswerProvider.java:215`: a normal `done` envelope is retained even
+  when optional validation or In-Depth status still says checking/pending. Reproduce
+  the composed provider/HTTP path and settle unfinished stages without claiming
+  a successful check or discarding a supported answer.
+- `HubClinicalAnswerProviderTest.java` and `TemporalGateRelayConformanceTest.java`:
+  scripted transport assertions do not prove the composed provider/HTTP path.
+  Extend existing production-path coverage for the confirmed defect.
+
+Backend draft #590 at `60bb5adf` has a source-review finding at
 `ChartSearchAiRestController.java:1500,1543,1548`: a turn is stored before provider
 execution, but an exceptional completion or disconnect can reach the catch without
 persisting a terminal result. The wire error alone does not settle stored history.
@@ -478,6 +477,11 @@ and the fork at `1cf826b5`, assembling exact #583 `b89211ce`, #585 `c1f43ce9`
 and #587 `508546e5` (including #584); #588 targets this base and contains only its
 bundled-provider additions and required adaptations. Retarget after those
 prerequisites merge and recheck the resulting contribution.
+The backend `codex/conversation-prerequisites` base is published identically in
+upstream and the fork at `97d071725835141b6ddce0b9a30436da8dc4426e`, with native
+merge ancestry for exact #588 `389ae7a3`, #586 `5ddfd912` and #589 `4929eba8`.
+#590 targets this base and shows only its ten endpoint contribution files.
+Rebuild the assembly when prerequisite findings are fixed, then recheck #590.
 The frontend `codex/chat-stream-client` base is published upstream at
 `fdf262cedcc8719c1621775179591f381c022a79`, exactly matching frontend #55.
 The frontend `codex/chat-session-history` base is published upstream at
