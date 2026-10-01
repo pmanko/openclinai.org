@@ -9,10 +9,11 @@ implementation registers.
 
 ## 1. Current Priorities
 
-1. Verify and review the component-ownership slice: direct gitlinks, umbrella-owned
-   builds/environments and website delivery, and independent validation execution.
-   The published harness implementation is selected by its umbrella gitlink;
-   verify a fresh checkout of the assembled commits before acceptance.
+1. Review the published component-ownership slice:
+   [harness #197](https://github.com/pmanko/clinical-ai-validation-harness/pull/197)
+   and [umbrella #2](https://github.com/pmanko/openclinai.org/pull/2).
+   Merge the harness first, then the umbrella; retain separate product-build and
+   deployed-acceptance evidence.
 2. Consolidate the remaining Catalyst and OpenMRS delivery specifications into their
    maintained owners, preserving current requirement identifiers and updating consumers.
 3. Verify product-native builds and shared environments against the recorded revisions;
@@ -24,8 +25,8 @@ implementation registers.
 
 | Area | Current state | Remaining work |
 | --- | --- | --- |
-| Umbrella repository | [pmanko/openclinai.org](https://github.com/pmanko/openclinai.org) is published; implementation includes product operations and website sources | Review and verify the assembled component revisions |
-| Component checkouts | Six direct umbrella components are initialized; harness product gitlinks and `openmrs_chatbot` are removed from the published harness revision | Review the component changes and verify a fresh checkout |
+| Umbrella repository | [pmanko/openclinai.org](https://github.com/pmanko/openclinai.org) has the component-ownership implementation published in PR #2, including product operations and website sources | Review and merge the assembled changes |
+| Component checkouts | Fresh recursive GitHub clone resolves exactly six direct components at their recorded revisions; harness product gitlinks and `openmrs_chatbot` are absent | Review and merge the component changes |
 | Validation harness | Clinical and Catalyst runners use configured targets and supplied/observed provenance; source-free wheel isolation, portable reports and the full local harness suite pass | Review the published component change and verify actual product interfaces separately |
 | Website | `landing/`, `site/`, static hosting configuration, build/publication tools and workflows are umbrella-owned; local website tests and build have run | Hosted CI and explicit deployment acceptance |
 | Specifications | Harness governance and validation foundations are reconciled; retained 004 criteria are in Feature 006; obsolete 004/005/007 files are removed | Consolidate mixed Feature 008, program-delivery and OpenMRS coordination specifications |
@@ -40,7 +41,7 @@ publication and deployed acceptance.
 | Phase | Deliverable | Acceptance criteria | Status |
 | --- | --- | --- | --- |
 | U0 Ownership and dependencies | Map capabilities, interfaces and consumers to component owners | Each capability has an owner, defined inputs/outputs and verification criteria | First-slice runtime, operations and publication consumers mapped; remaining specification ownership pending |
-| U1 Component and management ownership | Direct umbrella gitlinks and workspace-management tooling; removal of nested product gitlinks and `openmrs_chatbot` | One canonical gitlink per component; fresh umbrella checkout resolves recorded revisions; umbrella tooling manages component selection and checkouts | Topology and operations implemented; published harness revision selected; fresh-checkout verification pending |
+| U1 Component and management ownership | Direct umbrella gitlinks and workspace-management tooling; removal of nested product gitlinks and `openmrs_chatbot` | One canonical gitlink per component; fresh umbrella checkout resolves recorded revisions; umbrella tooling manages component selection and checkouts | Implemented and published for review; fresh recursive checkout, workspace checker and component cleanliness pass |
 | U2 Independent validation | Modular experiment execution, target adapters, evidence collection, evaluation and reporting | Experiments run against configured targets without Git, submodules, product source trees, product pins or an umbrella installation; offline reports consume captured artifacts only | Local runtime, full regression and installed-wheel clinical/Catalyst isolation checks pass; portable reports tested with doubles; component review and real-interface acceptance pending |
 | U3 Environment and delivery tooling | Umbrella environment, build, deployment and release orchestration; OpenClinAI website build and publication tooling | Configured workspace operations invoke product-native commands; website build/publication runs from umbrella-owned sources, configuration and workflows; build/run provenance records actual inputs | Required local operations and website delivery tooling moved; local checks/build pass; actual product builds and deployment pending |
 | U4 Documentation and interfaces | Current specs, instructions, commands, configuration, CI and website consumers aligned with ownership | Consumers resolve directly to current owners; obsolete specs, copied history and unnecessary compatibility entry points are removed | Governance, foundational specs, commands, tests and website consumers aligned; mixed delivery-spec consolidation remains |
