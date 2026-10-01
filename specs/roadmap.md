@@ -15,8 +15,9 @@ implementation registers.
    in each project's current `main`. Finish the full split before the review-fix
    pass; record findings as they arrive and carry them with their owning PRs. The complete
    set must reproduce the integration branches' functionality while preserving
-   newer upstream behavior; new features and replacement implementations are
-   outside this task.
+   newer upstream behavior and apply the approved frontend integration decisions
+   below. Unrelated new features and replacement implementations are outside this
+   task.
 2. Review the published component-ownership slice:
    [harness #197](https://github.com/pmanko/clinical-ai-validation-harness/pull/197)
    and [umbrella #2](https://github.com/pmanko/openclinai.org/pull/2).
@@ -133,8 +134,10 @@ coordination content is assigned to the umbrella under section 4.
 The deliverable is a set of reviewable PRs containing the work already implemented
 on the backend and frontend `harness-integration` branches. Reuse that code and
 carry its existing tests and documentation with each extracted change. Do not
-reimplement a capability from its description or add new features, redesigns or
-unrelated fixes as prerequisites for the split.
+reimplement a capability from its description or add unrelated new features,
+redesigns or fixes as prerequisites for the split. The approved frontend
+integration decisions below explicitly authorize the necessary adaptation for
+toggleable streaming and unsupported model capabilities.
 
 Create independent topic branches from the destination project's current `main`.
 Build dependent changes on their prerequisite topic branches and target the
@@ -317,6 +320,51 @@ history/session state and answer-rendering extractions remain open. The next pub
 5. Once every integration capability is represented in the published set, address
    outstanding findings, recheck affected descendants and validate the assembled
    functionality against both integration branches. Do not wait for upstream merges.
+
+### Approved Frontend Integration Decisions
+
+These decisions govern resolution of the frontend lifecycle and presentation
+conflicts. They are approved implementation direction, not evidence that the
+behavior is implemented or validated. Carry the resulting behavior and its
+documentation into the owning frontend/backend contributions; this roadmap owns
+the cross-project coordination and acceptance tracking.
+
+| Area | Approved behavior | Owning extraction |
+| --- | --- | --- |
+| Reasoning and previews | Honor `showReasoning`. When enabled, retain actual model reasoning behind a collapsed disclosure after the answer; when disabled, neither display nor retain it. Temporary previews remain distinct from the final answer. Missing reasoning is a supported case | F1 lifecycle and F3 presentation |
+| Stop and cancellation | Keep answer or enabled reasoning content already shown when the user stops a turn. Mark unfinished checks, review and In-Depth as interrupted; do not imply they completed | F1 lifecycle, B3 cancellation and B5 endpoints |
+| Scrolling | Follow new content only while the reader is at the latest content. Answer, review or In-Depth completion must not pull the reader away from earlier content | F1 chat panel |
+| Safety disclosure | Combine the integration's execution status and rule/source details with newer upstream compact advisories, dates and caveats. Preserve upstream clinical limitations without duplicate warnings | B3 answer wiring and F3 presentation |
+| Evidence and citations | Keep evidence cards and grounding results together with newer upstream attribution, severity and significance disclosures. Apply the same citation safeguards in Markdown, tables and evidence cards | F3 renderers and staged presentation |
+| Feedback | Keep the internal numeric audit identifier and serialize it under the backend's existing `questionId` request field. Verify the actual feedback request against the controller contract | F3 feedback and B5 endpoints |
+| Streaming choice | Preserve and honor the existing `useStreaming` toggle in the conversation flow. Enabled permits incremental output when supported; disabled presents a complete response without incremental output. Both choices retain the selected provider/profile and conversation/history behavior, cancellation and truthful check/review status | F1 transport/lifecycle, B2/B3 providers and B5 endpoints |
+| Unsupported capabilities | A model or provider lacking an optional capability must still deliver its supported answer. Missing token streaming uses completed-answer delivery from the same selected provider; missing reasoning, structured blocks, review or In-Depth must not break plain-answer display or leave progress waiting indefinitely. Offer only supported actions; identify unavailable checks or elaboration where their absence matters | B1 descriptors, B2/B3 providers and F1/F2/F3 consumers |
+
+Use the existing provider capability contract and the selected model/profile's
+actual support rather than assuming every model supports every feature. Do not
+silently switch providers or models to obtain a missing capability. Unsupported,
+not run, interrupted and failed checks remain distinguishable from passed checks;
+absence of a safety or grounding result is not proof that an answer is safe or
+grounded. Required answer capability or provider unavailability still needs a
+clear unavailable/error state and explicit user choice.
+
+Streaming support needs frontend and backend coordination: the source integration
+has a conversation streaming endpoint but no equivalent non-streaming conversation
+endpoint. Do not route streaming-off requests through the old search flow if that
+loses provider selection, conversation identity or history. Choose the smallest
+product-native adaptation that fulfills the approved behavior; the transport
+details remain an implementation decision, not a reason to ignore the toggle.
+
+Resolve the mechanical merges under these decisions while completing the split.
+Retain the full-split, review-fix, combined-validation sequence above. Verification
+must exercise streaming enabled and disabled, supported and unsupported optional
+capabilities, and absent optional payloads for bundled inference and Hub using the
+existing tests and acceptance paths. Check that a usable answer remains visible,
+progress terminates honestly, provider/profile and history are retained, Stop
+preserves visible content, scrolling respects the reader and feedback uses the
+backend request contract. Extend focused coverage only where these approved
+adaptations require it; no new acceptance framework or unrelated feature work is
+authorized. Record local, hosted and combined acceptance separately.
 
 ### Findings for the Review-Fix Pass
 
