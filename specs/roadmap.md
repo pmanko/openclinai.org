@@ -38,7 +38,7 @@ only when they directly block a specific contribution.
 | Validation harness | Clinical and Catalyst runners use configured targets and supplied/observed provenance; source-free wheel isolation, portable reports and the full local harness suite pass | Review the published component change and verify actual product interfaces separately |
 | Website | `landing/`, `site/`, static hosting configuration, build/publication tools and workflows are umbrella-owned; local website tests and build have run | Hosted CI and explicit deployment acceptance |
 | Specifications | Harness governance and validation foundations are reconciled; retained 004 criteria are in Feature 006; obsolete 004/005/007 files are removed | Consolidate mixed Feature 008, program-delivery and OpenMRS coordination specifications |
-| Product delivery | Provider contracts are published in backend #583; staged stream client is published in frontend #55. Both extract existing integration code and tests and pass local product checks | Continue the remaining extraction groups below; review and hosted checks are separate from local verification; retain integration branches unchanged |
+| Product delivery | Provider contracts (#583), local token counting (#584) and frontend staged stream client (#55) are published as independent extractions with passing local checks | Continue the remaining extraction groups below; frontend #55 has three inherited review findings; review and hosted checks are separate from local verification; retain integration branches unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -228,15 +228,15 @@ changes to current main. Newer upstream safety and citation behavior must remain
 
 | Existing work | Publication or remaining extraction |
 | --- | --- |
-| B1 provider contracts, lifecycle validation, cancellation/preemption and prior-turn input | [Backend #583](https://github.com/openmrs/openmrs-module-chartsearchai/pull/583), `b89211ce`; full Maven verification passed locally. No adapter or endpoint activation in this PR |
-| B4 exact token counting | Next independent backend extraction: `TokenCounter`, `LocalLlamaTokenCounter`, local-engine counting methods, response parser and their existing tests |
+| B1 provider contracts, lifecycle validation, cancellation/preemption and prior-turn input | [Backend #583](https://github.com/openmrs/openmrs-module-chartsearchai/pull/583), `b89211ce`; full Maven verification passed locally and hosted Java 11/17/21 builds passed. No adapter or endpoint activation in this PR |
+| B4 exact token counting | [Backend #584](https://github.com/openmrs/openmrs-module-chartsearchai/pull/584), `370f4c32`; full local Maven verification passed. Existing counting requests adapted to upstream authentication; hosted checks pending |
 | B4 chart context and budgets | Awaiting extraction: `QueryStoreChartBuilder`, `InsufficientContextException`, scoped/budget tests and QueryStore test doubles. Requires QueryStore's chart-read/context-slice API |
 | B3 safety-check completeness | Awaiting extraction: status/issue reporting in `DrugSafetyValidator`, patient-context completeness, answer fields and affected tests. Preserve current upstream safety logic |
 | B3 bundled provider and cancellation | Awaiting extraction after B1 and context prerequisites: bundled adapter, service/router/engine cancellation, provider registry and existing tests |
 | B2 Hub connection | Awaiting extraction: `HubProfileService`, Hub adapter/transport/request/event classes, configuration and existing tests. Adapter depends on B1 |
 | B5 conversation storage | Awaiting extraction after B1: conversation service/DAO/models, audit attribution, mappings/migrations and persistence/allocation tests |
 | B5 endpoints and wiring | Awaiting extraction after providers/storage: controller, module configuration, REST/history/persistence tests and their test resources/dependencies |
-| F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55), `95ca92d`; local translation, lint, type, coverage-test and build checks passed. Existing search transport and visible panel are unchanged |
+| F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55), `95ca92d`; local checks and hosted build passed. Three inherited review findings remain: CRLF separators, final-event model normalization and reader cleanup after failure. Existing search transport and visible panel are unchanged |
 | F1 conversation state and history | Awaiting extraction: history/new-session client calls, `turn-phase`, hook/store and their tests, with chat-panel lifecycle wiring |
 | F2 provider/profile selection | Awaiting extraction: discovery client calls/types, provider/model pickers, configuration, selection state and tests |
 | F3 answer/evidence presentation | Awaiting extraction: markdown/table/citation components, response-panel and feedback changes, styling, translations, renderer dependencies and existing tests |
