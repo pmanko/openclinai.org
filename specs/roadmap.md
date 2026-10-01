@@ -288,12 +288,16 @@ that needs them.
 The file inventory covers all 97 backend and 39 frontend files changed between the
 common ancestors and the source integration revisions above. Each is assigned to
 the published or remaining groups, shared support, or the excluded paired workflow.
-Shared-file extraction is not completion of the whole file: `LocalLlmEngine` and
-its tests still contain cancellation changes, while frontend `chartsearchai.ts`
-and its tests still contain discovery and feedback changes. Carry the
-architecture and answer-wiring tests with the corresponding backend answer changes.
-This completes file grouping; each remaining extraction still needs adaptation,
-review and verification against current main. Integration acceptance is separate.
+Shared files are accounted for by behavior: #588 carries engine cancellation and
+the architecture/answer-wiring tests; #58/#59 carry frontend discovery and feedback.
+The source-path comparison finds all 56 added backend and 14 added frontend files
+in the assembled work, including the held Hub and prepared endpoint slices. Stream
+tests moved to `src/api/chat-stream.test.ts`; constructor, tokenizer authentication,
+clinical-read and serializer adaptations retain newer upstream contracts. This
+path/line comparison is extraction evidence, not functional acceptance: adapted
+behavior, collected findings and approved decisions still require verification.
+Publication of the two remaining backend slices and combined acceptance remain
+unfinished.
 
 ### Next Extractions
 
@@ -408,6 +412,11 @@ needed before remediation:
 - `ai-response-panel.component.tsx:337,1122`: unresolved evidence can still receive
   a chart navigation link from the shared helper. Reconcile this across evidence
   cards and citation rendering; a missing source must not appear navigable as resolved.
+- `ai-chat-content.component.tsx:331,337,344`: the retained reasoning disclosure is
+  placed before the answer. Move the collapsed disclosure after the answer under
+  the approved reasoning decision, while keeping stopped/failed-turn content
+  inspectable and honoring the disabled setting. Current placement is confirmed
+  from source; revised rendering still needs focused verification.
 
 #59 inherits the outstanding #57/#58 findings as well. Its passing local suites
 do not establish complete graceful-degradation behavior or review readiness.
