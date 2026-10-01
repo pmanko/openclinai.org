@@ -41,7 +41,7 @@ only when they directly block a specific contribution.
 | Validation harness | Clinical and Catalyst runners use configured targets and supplied/observed provenance; source-free wheel isolation, portable reports and the full local harness suite pass | Review the published component change and verify actual product interfaces separately |
 | Website | `landing/`, `site/`, static hosting configuration, build/publication tools and workflows are umbrella-owned; local website tests and build have run | Hosted CI and explicit deployment acceptance |
 | Specifications | Harness governance and validation foundations are reconciled; retained 004 criteria are in Feature 006; obsolete 004/005/007 files are removed | Consolidate mixed Feature 008, program-delivery and OpenMRS coordination specifications |
-| Product delivery | Eight backend and five frontend extractions are published. Applicable hosted checks passed for backend #583–#590 and frontend #55–#58 at the recorded heads. Frontend #57–#59 fixes are published with passing hosted builds. Backend #588 fixes have passing local and hosted checks. The latest #589 fix is published with passing local checks and hosted checks pending. Endpoint #590 fixes pass focused checks locally; full verification, publication and combined acceptance remain | Address collected findings, recheck affected descendants and verify combined functionality; retain integration branches unchanged |
+| Product delivery | Eight backend and five frontend extractions are published. Applicable hosted checks passed for backend #583–#590 and frontend #55–#58 at the recorded heads. Frontend #57–#59 fixes are published with passing hosted builds. Backend #588 fixes have passing local and hosted checks. The latest #589 fix is published with passing local and hosted checks. Endpoint #590 fixes are published with focused/web checks passing and the recorded macOS API-test failure; latest hosted checks and combined acceptance remain | Address collected findings, recheck affected descendants and verify combined functionality; retain integration branches unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -261,9 +261,9 @@ changes to current main. Newer upstream safety and citation behavior must remain
 | B4 chart context and budgets | [Backend #587](https://github.com/openmrs/openmrs-module-chartsearchai/pull/587), `508546e5`, stacked on #584: QueryStore context consumer, protected-evidence budgets and existing tests/fixture. Review fixed acceptance of incomplete source projections; both regression cases failed before the fix. All 110 focused checks and 285 web-module tests plus packaging pass against QueryStore `8b79db97`; full API run has only the previously reproduced upstream macOS socket-test failure (59 skips). Hosted paired-source Java 11/17/21, selftest and lint checks passed at this revision; no review threads outstanding. Ordinary artifact builds are replaced by the declared source-pair checks for this branch; combined runtime acceptance is unverified |
 | B3 safety-check execution status | [Backend #585](https://github.com/openmrs/openmrs-module-chartsearchai/pull/585), `c1f43ce9`; 64 focused tests, full local Maven verification and hosted Java 11/17/21 and QueryStore-main builds passed. Carries validator status/issues and patient-context completeness while preserving upstream order-read and attribution logic |
 | B3 bundled provider, cancellation and safety status on answers | [Backend draft #588](https://github.com/openmrs/openmrs-module-chartsearchai/pull/588), `e2ae0874`, on the exact #583/#585/#587 prerequisite assembly `1cf826b5`: bundled adapter, registry, router/engine cancellation, final prompt-budget preflight and `ChartAnswer` safety wiring. Review fixes preserve module-composed answers before model tokenization, move inherited budget/overflow assertions to real retrieval and HTTP paths, and correct stale comments. Both ordering regressions failed first; 113 focused checks, full API verification (2,905 tests, zero failures/errors, 59 skips), all 285 web tests and packaging pass. Hosted paired-source Java 11/17/21 checks, selftests and lint pass on this updated head; ordinary artifact, QueryStore-main and dependency-scan jobs were skipped. Combined endpoint/frontend behavior and approved capability/toggle acceptance remain unverified |
-| B2 Hub connection | [Backend draft #589](https://github.com/openmrs/openmrs-module-chartsearchai/pull/589), `8f3ccea2`, stacked on #583: profile discovery, adapter/transport/request/event classes, configuration and existing tests. Review fixes close terminal streams, reuse upstream remote-response byte limits and settle unfinished optional stages on normal completion and before incomplete-stream errors while preserving the answer. Actual OpenMRS provider/HTTP regressions pass; 62 focused checks, full API verification (2,867 tests, zero failures/errors, 59 skips), all 285 web-module tests and packaging pass. Hosted checks are pending on this latest head; all applicable checks passed at the preceding `439fbc11` revision. Combined runtime and real-model acceptance remain unverified |
+| B2 Hub connection | [Backend draft #589](https://github.com/openmrs/openmrs-module-chartsearchai/pull/589), `8f3ccea2`, stacked on #583: profile discovery, adapter/transport/request/event classes, configuration and existing tests. Review fixes close terminal streams, reuse upstream remote-response byte limits and settle unfinished optional stages on normal completion and before incomplete-stream errors while preserving the answer. Actual OpenMRS provider/HTTP regressions pass; 62 focused checks, full API verification (2,867 tests, zero failures/errors, 59 skips), all 285 web-module tests and packaging pass. Hosted Java 11/17/21, QueryStore-main, selftests and lint passed on this latest head; snapshot publication and the dependency scan were skipped. Combined runtime and real-model acceptance remain unverified |
 | B5 conversation storage | [Backend #586](https://github.com/openmrs/openmrs-module-chartsearchai/pull/586), `5ddfd912`, stacked on #583: service/DAO/models, audit attribution and purge handling, mappings/migrations and module registration. All 16 source/schema/test changes match the integration additions/removals. Ten focused tests and all 285 web-module tests plus packaging pass. Full local API run has only the previously reproduced upstream macOS socket-test failure (59 skips). Hosted Java 11/17/21, QueryStore-main, selftest and lint checks passed at this revision; no review threads outstanding. Combined runtime and MySQL migration acceptance remain unverified |
-| B5 endpoints and wiring | [Backend draft #590](https://github.com/openmrs/openmrs-module-chartsearchai/pull/590), `60bb5adf`, on the exact #588/#586/#589 prerequisite assembly `97d07172`: controller discovery, new conversation, history and provider-neutral stream; REST/history/persistence tests; test dependencies/resources; component documentation and paired-source branch checks. All 49 focused checks and 316 web-module tests plus packaging pass against QueryStore `8b79db97`. Full API verification ran 2,944 tests with one previously reproduced upstream macOS socket-test failure and 59 skips; the web module was verified separately after the reactor stopped. Newer upstream answer fields and clinical assertions are retained; existing upstream `XmlPayloads.marshal` already provides the required behavior. The published endpoint tree exactly matches the locally tested preparation. Hosted paired-source Java 11/17/21 checks passed; ordinary artifact and QueryStore-main checks are replaced by those declared source-pair checks. Combined runtime and approved capability/toggle acceptance remain unverified |
+| B5 endpoints and wiring | [Backend draft #590](https://github.com/openmrs/openmrs-module-chartsearchai/pull/590), `1f9166c2`, on exact #588/#586/#589 assembly `c7809ed1`: provider discovery, conversation/history and provider-neutral stream; component tests/docs and paired-source checks. Review fixes settle interrupted turns and retain checked answers with failed In-Depth outcomes. Both response-failure regressions failed first; all 35 focused checks and 321 web tests plus packaging pass against QueryStore `8b79db97`. Full API verification: 2,949 tests, one previously recorded macOS socket-listener test failure, zero errors, 59 skips. API installation explicitly skipped tests before separate web verification. Latest hosted checks and combined runtime/capability/toggle acceptance remain pending |
 | F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55), `fdf262ce`; all 468 tests, lint, type checks, local build and hosted build passed. CRLF separators, final-event model normalization and terminal reader cleanup are fixed with regression coverage; all three review threads are resolved. Existing search transport and visible panel are unchanged |
 | F1 history client and session state | [Frontend #56](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/56), `f6f5cc24`, stacked on #55: history/new-session requests, conversation identifiers and provider/profile state, with logout isolation. Preserves upstream reasoning-display preferences and correctly represents empty history with a null session. All 476 local tests, lint, type checks, translation verification and production build pass; existing bundle-size warning remains. Hosted build and automated review check passed at this revision; no review threads outstanding. This slice does not activate history in the visible panel |
 | F1 conversation lifecycle and visible history | [Frontend draft #59](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59), `4181b0d`, on the exact #58/#57 assembly `498726be`: history hydration, New chat, lifecycle phases, cancellation/preemption, mounted selectors and panel wiring. All six recorded source findings plus table safeguard propagation are fixed; fourteen regression cases failed before the fixes and pass afterward. All 635 local tests, lint, type checks, translation extraction and production build pass; existing bundle-size warning remains. Hosted build passed at this updated head; release was skipped; browser/video and combined runtime acceptance remain unverified |
@@ -312,10 +312,11 @@ alone does not satisfy M2–M4 acceptance or establish functional equivalence.
    checks at `4181b0d` (hosted build passed). Verify the approved streaming toggle and unsupported optional
    capabilities on the same provider/profile and conversation path in combined acceptance.
 3. #588's recorded findings are fixed at `e2ae0874` with passing local and hosted
-   checks. #589's terminal-stage fixes at `8f3ccea2` have passing local checks;
-   require passing hosted checks on this latest head. #590 carries those exact
-   parents and its failure/history fixes pass all 35 focused checks. Complete its
-   full verification, publish its fixes and require passing current-head checks.
+   checks. #589's terminal-stage fixes at `8f3ccea2` also have passing local and
+   hosted checks. #590 carries those exact
+   parents and its failure/history fixes are published at `1f9166c2`. All 35
+   focused and 321 web tests pass; full API verification has the recorded macOS
+   socket-listener test failure. Require passing hosted checks on the latest head.
 4. Validate the assembled backend/frontend heads with QueryStore `8b79db97` against
    the existing integration functionality and retained newer upstream behavior.
    Use the existing checks and real browser/runtime evidence; distinguish this from
@@ -429,11 +430,11 @@ interrupted optional stages publish their failed outcomes first. Three regressio
 exercise the configured OpenMRS provider through its real HTTP transport, including
 absent optional capabilities. They use protocol fixtures and do not establish
 real-model quality. All 62 focused checks, full API verification and web-module
-checks pass locally; hosted checks on this latest head and combined runtime
-acceptance remain pending. The preceding `439fbc11` revision passed its applicable
-hosted checks.
+checks pass locally. Hosted Java 11/17/21, QueryStore-main, selftests and lint
+also pass on this latest head; snapshot publication and the dependency scan were
+skipped. Combined runtime acceptance remains pending.
 
-Backend draft #590's failure/history and request-path fixes are in local verification.
+Backend draft #590's failure/history and request-path fixes are published at `1f9166c2`.
 Actual request-handler regressions reproduced stored turns lacking a terminal
 result after response failures. The controller now settles started turns before
 abandoning the response and avoids duplicate persistence. Interrupted In-Depth
@@ -441,8 +442,11 @@ outcomes are stored with already checked answers; incomplete turns remain inspec
 but are not replayed as completed context. The composed request/HTTP-provider/Hibernate
 path verifies provider rejection, restored answer/draft/status/audit identity and
 unauthenticated request rejection using synthetic fixtures and a local HTTP peer.
-All 35 focused checks pass against the updated prerequisite assembly. Full component
-verification and publication remain in progress; these checks do not establish
+All 35 focused checks and 321 web tests plus packaging pass against the updated
+prerequisite assembly. Full API verification ran 2,949 tests with zero errors,
+59 skips and the previously recorded macOS failure in
+`LocalLlmServerAuthTest.aPortHeldByAListenerThatAcceptsNothingFailsTheStart`.
+Hosted checks on this latest head are pending. These checks do not establish
 live routing, browser/video evidence or combined model acceptance.
 
 Renewed backend checks passed: 25 provider-contract, 92 local-token/engine and
@@ -477,8 +481,8 @@ The backend `codex/conversation-prerequisites` base is published identically in
 upstream and the fork at `c7809ed1`, with native merge ancestry for exact
 #588 `e2ae0874`, #586 `5ddfd912` and #589 `8f3ccea2`.
 #590 targets this base and shows only its ten endpoint contribution files.
-The local #590 branch carries this updated assembly; publish its reviewed fixes
-after full verification, then recheck the published head.
+#590 carries this updated assembly in its published `1f9166c2` head. Require
+passing applicable hosted checks on that head before declaring readiness.
 The frontend `codex/chat-stream-client` base is published upstream at
 `fdf262cedcc8719c1621775179591f381c022a79`, exactly matching frontend #55.
 The frontend `codex/chat-session-history` base is published upstream at
