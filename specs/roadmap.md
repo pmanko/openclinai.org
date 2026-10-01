@@ -12,7 +12,8 @@ implementation registers.
 1. Break the existing ChartSearchAI backend and frontend integration work into the
    smallest practical reviewable PRs. Extract the existing implementation, tests
    and documentation together into independent or stacked topic branches rooted
-   in each project's current `main`. Fix confirmed review defects. The complete
+   in each project's current `main`. Finish the full split before the review-fix
+   pass; record findings as they arrive and carry them with their owning PRs. The complete
    set must reproduce the integration branches' functionality while preserving
    newer upstream behavior; new features and replacement implementations are
    outside this task.
@@ -39,7 +40,7 @@ only when they directly block a specific contribution.
 | Validation harness | Clinical and Catalyst runners use configured targets and supplied/observed provenance; source-free wheel isolation, portable reports and the full local harness suite pass | Review the published component change and verify actual product interfaces separately |
 | Website | `landing/`, `site/`, static hosting configuration, build/publication tools and workflows are umbrella-owned; local website tests and build have run | Hosted CI and explicit deployment acceptance |
 | Specifications | Harness governance and validation foundations are reconciled; retained 004 criteria are in Feature 006; obsolete 004/005/007 files are removed | Consolidate mixed Feature 008, program-delivery and OpenMRS coordination specifications |
-| Product delivery | Provider contracts (#583), local token counting (#584), safety-check status (#585) and frontend staged stream client (#55) are published foundations; conversation storage (#586), context budgets (#587) and frontend history/session state (#56) have passing applicable hosted checks; formatted answer rendering (#57) is published with hosted checks pending; the three stream findings are fixed and resolved | Publish the remaining work as dependency stacks; verify the combined backend and frontend against the integration functionality; retain integration branches unchanged |
+| Product delivery | Five backend and four frontend extractions are published. Applicable hosted checks pass for #583–#587 and #55–#57; provider/profile selectors (#58) have passing local checks and hosted checks pending. Rendering PR #57 has three open findings; earlier stream findings are fixed and resolved | Finish publishing the full dependency stacks, then address collected findings and verify combined functionality; retain integration branches unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -188,8 +189,16 @@ The split does not require new test suites, acceptance infrastructure or a new d
 Combined functional validation of the complete split is required before declaring
 the decomposition complete; it is distinct from deployment and release signoff.
 
-Publication requires current source/review status and applicable verification
-evidence. Declare QueryStore/backend/frontend dependencies explicitly and test
+Execute this work in three steps: publish the complete backend/frontend split,
+address the collected review findings across that set, then verify the combined
+functionality. Open review findings do not block later extractions. Fix only
+compilation or dependency problems needed to make an extraction coherent during
+the split; defer review remediation to the second step. Do not merge or call the
+work ready until findings are addressed and applicable checks and combined
+functional validation pass.
+
+Publication requires accurate source/review status and applicable verification
+evidence, including outstanding findings. Declare QueryStore/backend/frontend dependencies explicitly and test
 their exact source revisions together without requiring upstream publication.
 Paired tests provide integration evidence but do not replace each PR's checks
 against its declared base.
@@ -256,8 +265,8 @@ changes to current main. Newer upstream safety and citation behavior must remain
 | F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55), `fdf262ce`; all 468 tests, lint, type checks, local build and hosted build passed. CRLF separators, final-event model normalization and terminal reader cleanup are fixed with regression coverage; all three review threads are resolved. Existing search transport and visible panel are unchanged |
 | F1 history client and session state | [Frontend #56](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/56), `f6f5cc24`, stacked on #55: history/new-session requests, conversation identifiers and provider/profile state, with logout isolation. Preserves upstream reasoning-display preferences and correctly represents empty history with a null session. All 476 local tests, lint, type checks, translation verification and production build pass; existing bundle-size warning remains. Hosted build and automated review check passed at this revision; no review threads outstanding. This slice does not activate history in the visible panel |
 | F1 conversation lifecycle and visible history | Awaiting extraction on #56: `turn-phase`, hook and tests, chat/search-panel lifecycle wiring and existing removal of patient-open warmup. History hydration, New chat, cancellation/preemption and review/In-Depth state must work together with the answer panel |
-| F2 provider/profile selection | Awaiting extraction: discovery client calls/types, provider/model pickers, configuration, selection state and tests |
-| F3 formatted answers and citation renderers | [Frontend #57](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/57), `1102317b`, stacked directly on #55: existing Markdown/table renderers, dependencies and tests; completed answers now use Markdown while retaining newer upstream citation safeguards. Six reproduced rendering failures are fixed, including disappearing clinical disclosures under repeated React rendering. All 484 tests, lint, type checks, translation extraction and production build pass locally; bundle-size warnings remain. Hosted checks/review are pending. Structured table activation and combined browser/runtime acceptance remain unverified |
+| F2 provider/profile selection | [Frontend #58](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/58), `08eec6ca`, stacked on #56: discovery client calls/types, provider/model pickers, configuration, styles and tests. All 499 local tests, lint, type checks, translation extraction and production build pass; hosted checks/review are pending. Controls are not mounted until the lifecycle extraction. Carry its existing real-hook restored-provider test with that extraction |
+| F3 formatted answers and citation renderers | [Frontend #57](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/57), `1102317b`, stacked directly on #55: existing Markdown/table renderers, dependencies and tests; completed answers now use Markdown while retaining newer upstream citation safeguards. Six reproduced rendering failures are fixed, including disappearing clinical disclosures under repeated React rendering. All 484 tests, lint, type checks, translation extraction and production build pass locally; bundle-size warnings remain. Hosted build passed; automated review produced three open findings recorded below. Structured table activation and combined browser/runtime acceptance remain unverified |
 | F3 staged answer/evidence presentation | Awaiting extraction: response-panel lifecycle, review/original-draft and In-Depth displays, evidence cards, feedback changes, styling, translations and existing tests. Reuse #57 renderers; keep tightly coupled hook/panel changes together |
 
 Carry relevant README changes with each contribution. Shared files are split by
@@ -299,13 +308,26 @@ history/session state and answer-rendering extractions remain open. The next pub
 3. Assemble the #583, #585 and context prerequisites to extract bundled-provider behavior,
    cancellation and safety answer wiring; then connect providers and storage to the
    REST endpoints. Preserve current main's additional answer-limit fields throughout.
-4. Verify hosted checks/review of frontend #57, stacked directly on #55. Frontend
-   #56 has passing hosted checks and no outstanding review threads. Assemble its
-   history/session state with #57 renderers for conversation lifecycle, visible
+4. Provider/profile selectors are published as frontend #58 on #56. Assemble that
+   history/session state and selectors with #57 renderers for conversation lifecycle, visible
    history and staged answer presentation. Carry `turn-phase` with the first
    consumer that needs it. Keep tightly coupled hook/panel changes together when a
-   smaller split would need temporary compatibility code. Provider/profile selection
-   follows its discovery calls and state, with its existing tests.
+   smaller split would need temporary compatibility code. Carry the selector's
+   existing real-hook restored-provider test with this lifecycle consumer.
+5. Once every integration capability is represented in the published set, address
+   outstanding findings, recheck affected descendants and validate the assembled
+   functionality against both integration branches. Do not wait for upstream merges.
+
+### Findings for the Review-Fix Pass
+
+Frontend #57 has three open findings at `1102317b`: answer Markdown can
+[load remote images](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/57#discussion_r4159510429),
+[turn a citation number into an external link](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/57#discussion_r4159510442),
+and structured tables
+[omit citation warnings and clinical disclosures](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/57#discussion_r4159510448).
+These remain assigned to #57 for remediation after the full split. A passing
+automated review check does not mean there are no findings. Collect subsequent
+findings with their PR and disposition; review readiness remains unverified.
 
 Renewed backend checks passed: 25 provider-contract, 92 local-token/engine and
 64 safety-status tests. Renewed source review found no additional actionable
@@ -332,6 +354,8 @@ exactly matching #583. The backend `codex/local-token-counting` base is publishe
 upstream at `370f4c329242242a86f1fdf167855f617fd94426`, exactly matching #584.
 The frontend `codex/chat-stream-client` base is published upstream at
 `fdf262cedcc8719c1621775179591f381c022a79`, exactly matching frontend #55.
+The frontend `codex/chat-session-history` base is published upstream at
+`f6f5cc24e6fd7b8e6149afbab1a0f30ef7e3a594`, exactly matching #56; #58 targets it.
 No integration branch or main branch was changed to create these bases.
 
 If an extracted contribution needs umbrella verification, update the affected
