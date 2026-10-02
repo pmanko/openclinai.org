@@ -6,6 +6,10 @@
   description for new users; roadmap for implementing agents; architecture for
   technical readers; AGENTS.md for repository working rules. Evaluate clarity and
   completeness for that audience separately from automated link/structure checks.
+- Keep our cross-project integration specifications, acceptance requirements,
+  roadmap and process documents in this umbrella. Do not add them to OpenMRS-owned
+  repositories or their forks. Native module setup/API documentation remains with
+  the module; umbrella documentation cleanup does not require module doc PRs.
 - Keep each decision, phase status and requirement in its owning document. Link
   product specifications and detailed task registers instead of copying them.
 - Add only material required by the new architecture. Do not import legacy

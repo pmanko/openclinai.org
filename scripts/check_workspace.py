@@ -121,6 +121,10 @@ def check_link(root, source, link, remotes):
         if not match:
             return None
         identity, sha, target = match.groups()
+        # External product authorities need not be workspace components. Only
+        # locally managed repositories have a recorded source pin to enforce.
+        if identity.lower() not in {name for name, _ in remotes}:
+            return None
         repo = remotes.get((identity.lower(), sha))
         if not re.fullmatch(SHA, sha) or repo is None:
             return "GitHub blob link does not match a local remote and recorded 40-SHA pin"

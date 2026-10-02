@@ -3,13 +3,14 @@
 OpenClinAI brings together independently maintained applications and a validation
 runner. Start with each component's native documentation for setup, supported
 interfaces and current application behavior. The public website does not redefine
-those contracts.
+those contracts. The OpenMRS links below identify the reviewed assembled revisions;
+they do not imply an upstream merge or deployed release.
 
-- **ChartSearchAI:** [project documentation](https://github.com/pmanko/openmrs-module-chartsearchai/tree/harness-integration/docs) and [source/setup](https://github.com/pmanko/openmrs-module-chartsearchai/tree/harness-integration).
-- **ChartSearchAI frontend:** [source/setup](https://github.com/pmanko/openmrs-esm-chartsearchai/tree/harness-integration).
-- **QueryStore:** [REST API](https://github.com/pmanko/openmrs-module-querystore/blob/harness-integration/docs/rest-api.md) and [architecture decisions](https://github.com/pmanko/openmrs-module-querystore/blob/harness-integration/docs/adr.md).
+- **ChartSearchAI:** [project documentation](https://github.com/pmanko/openmrs-module-chartsearchai/tree/8622f1b5c8995ac5361dd634705434ba65fe2fae/docs) and [source/setup](https://github.com/pmanko/openmrs-module-chartsearchai/tree/8622f1b5c8995ac5361dd634705434ba65fe2fae).
+- **ChartSearchAI frontend:** [source/setup](https://github.com/pmanko/openmrs-esm-chartsearchai/tree/e60cea9cf5be41410c2401fe3261cdb712d1b0ee).
+- **QueryStore:** [REST API](https://github.com/pmanko/openmrs-module-querystore/blob/55bf9971eb293b2155fb72de1e7cadfd6fab3bdd/docs/rest-api.md) and [architecture decisions](https://github.com/pmanko/openmrs-module-querystore/blob/55bf9971eb293b2155fb72de1e7cadfd6fab3bdd/docs/adr.md).
 - **Med Agent Hub:** [source/setup](https://github.com/pmanko/med-agent-hub).
-- **Catalyst:** [application specification](https://github.com/DIGI-UW/catalyst-ai/blob/main/docs/specification.md), [Hub integration](https://github.com/DIGI-UW/catalyst-ai/blob/main/docs/med-agent-hub.md) and [delivery roadmap](https://github.com/DIGI-UW/catalyst-ai/blob/main/docs/roadmap.md).
+- **Catalyst:** [application specification](https://github.com/DIGI-UW/catalyst-ai/blob/main/docs/specification.md), [Hub integration](https://github.com/DIGI-UW/catalyst-ai/blob/main/docs/med-agent-hub.md) and [cross-project delivery](../roadmap.md#6-catalyst-delivery).
 - **Validation harness:** [setup and experiment commands](https://github.com/pmanko/clinical-ai-validation-harness#readme) and [current validation contract](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/006-validation-harness-mvp/spec.md).
 
 The [workspace roadmap](https://github.com/pmanko/openclinai.org/blob/main/specs/roadmap.md)
