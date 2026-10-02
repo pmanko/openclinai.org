@@ -485,7 +485,7 @@ is fixed at `b3d8a7c`: the picker remains usable for explicit selection while no
 profile is selected. No fallback is chosen silently. Its reproduced regression,
 all 500 tests and hosted build pass; the thread is resolved.
 
-Frontend draft #59 carries both prerequisite fixes and resolves its six recorded
+Frontend #59 carries both prerequisite fixes and resolves its six recorded
 source findings at `4181b0d`:
 
 - Live reasoning configuration gates active callbacks and clears cached/buffered
@@ -506,7 +506,7 @@ whitespace checks pass. Existing bundle-size warnings remain. Hosted build passe
 at this updated head; release was skipped. These local results do not establish browser/video
 proof, complete graceful degradation across real models or combined acceptance.
 
-Backend draft #588's recorded findings are fixed at `e2ae0874`:
+Backend #588's recorded findings are fixed at `e2ae0874`:
 
 - Model-budget checks follow the module-composed-answer return on both paths,
   before any model inference or preliminary reasoning pass. Both regressions
@@ -519,10 +519,10 @@ Backend draft #588's recorded findings are fixed at `e2ae0874`:
 
 All 113 focused checks, full API verification and web-module verification/packaging
 pass locally. Hosted paired-source Java 11/17/21 checks, selftests and lint also
-pass on this updated head. Combined acceptance remains pending. Streaming-off and unsupported real-model behavior still require the
-provider/endpoint/frontend acceptance specified above.
+pass on that head. The subsequent streaming and unsupported-capability runtime
+checks are recorded under Current Execution above.
 
-Backend draft #589's terminal-status findings are fixed at `8f3ccea2`.
+Backend #589's terminal-status findings are fixed at `8f3ccea2`.
 A normal terminal response settles unfinished review and In-Depth stages without
 claiming success and preserves the supported answer, original draft and partial
 detail. EOF without a terminal Hub event still produces an incomplete-stream error;
@@ -532,9 +532,9 @@ absent optional capabilities. They use protocol fixtures and do not establish
 real-model quality. All 62 focused checks, full API verification and web-module
 checks pass locally. Hosted Java 11/17/21, QueryStore-main, selftests and lint
 also pass on this latest head; snapshot publication and the dependency scan were
-skipped. Combined runtime acceptance remains pending.
+skipped. Subsequent combined runtime acceptance is recorded above.
 
-Backend draft #590's failure/history and request-path fixes are published at `1f9166c2`.
+Backend #590's failure/history and request-path fixes are published at `1f9166c2`.
 Actual request-handler regressions reproduced stored turns lacking a terminal
 result after response failures. The controller now settles started turns before
 abandoning the response and avoids duplicate persistence. Interrupted In-Depth
