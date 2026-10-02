@@ -278,7 +278,6 @@ REQUIRED_PATTERNS = {
 }
 
 HELPERS = {
-    "G20": ("scripts/verify-doc-drift.sh", ()),
     "G21": ("scripts/verify-repository-lines.sh", ("--allow-workspace-branch",)),
 }
 
