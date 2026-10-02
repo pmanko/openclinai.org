@@ -9,7 +9,16 @@ direction.
 
 ## 1. Current Priorities
 
-1. Review the consolidated documentation and focused website patch. Move remaining Catalyst/OpenMRS
+1. Prioritize Ross's tested migration and instructions through the
+   [reusable environments, evaluations and demos roadmap](reusable-environments-roadmap.md).
+   Carry his useful setup into the revamped umbrella, preserving data, accounts
+   and customizations. Deliver the verified ChartSearchAI preview and copyable
+   handoff instructions before Catalyst alignment or broader tooling cleanup.
+   Keep the evaluation pause short through bounded scope and reuse, not skipped
+   acceptance or security checks. Retain the old installation as migration input
+   and recovery, not an ongoing evaluation path. Planning is recorded; migration,
+   deployment and report/demo publication still require their explicit approvals.
+2. Review the consolidated documentation and focused website patch. Move remaining Catalyst/OpenMRS
    application requirements to their maintained authorities, our cross-project
    integration specifications and delivery to this umbrella, and experiment
    protocols/evidence to the harness. Keep our coordination material out of
@@ -30,7 +39,7 @@ direction.
    [harness #198](https://github.com/pmanko/clinical-ai-validation-harness/pull/198).
    OpenMRS module documentation and feature PRs are unchanged. The umbrella PR
    contains the integration reference, roadmap, website patch and compatible pins.
-2. Complete maintainer review and ordered merging of the ChartSearchAI split.
+3. Complete maintainer review and ordered merging of the ChartSearchAI split.
    Break the existing ChartSearchAI backend and frontend integration work into the
    smallest practical reviewable PRs. Extract the existing implementation, tests
    and documentation together into one linear PR stack per project, rooted
@@ -43,18 +52,20 @@ direction.
    newer upstream behavior and apply the approved frontend integration decisions
    below. Unrelated new features and replacement implementations are outside this
    task.
-3. Review the published component-ownership slice:
+4. Review the published component-ownership slice:
    [harness #197](https://github.com/pmanko/clinical-ai-validation-harness/pull/197)
    and [umbrella #2](https://github.com/pmanko/openclinai.org/pull/2).
    Merge the harness first, then the umbrella; retain separate product-build and
    deployed-acceptance evidence.
-4. Continue QueryStore review and [Catalyst delivery](roadmap.md#6-catalyst-delivery) through their product contracts.
+5. Continue QueryStore review and [Catalyst delivery](roadmap.md#6-catalyst-delivery) through their product contracts.
    Verify product-native builds and shared environments against recorded revisions;
    record deployed acceptance separately from source verification.
 
-The current focus is owner review of the consolidated documentation and content patch.
-The completed split remains under its existing contribution rules; this cleanup
-does not reopen its functional acceptance or authorize upstream merges.
+The immediate environment priority is Ross's reviewed migration and usable handoff.
+Documentation review and the existing contribution tracks continue separately.
+The completed split remains under its existing contribution rules; this priority
+change does not reopen its functional acceptance or authorize upstream merges.
+Environment sequence, review points and acceptance live in the linked roadmap.
 
 ## 2. Implementation Status
 
@@ -65,6 +76,7 @@ does not reopen its functional acceptance or authorize upstream merges.
 | Validation harness | Clinical and Catalyst runners use configured targets and supplied/observed provenance; source-free wheel isolation, portable reports and the full local harness suite pass | Review the published component change and verify actual product interfaces separately |
 | Website | `landing/`, `site/`, static hosting configuration, build/publication tools and workflows are umbrella-owned; local website tests and build have run | Hosted CI and explicit deployment acceptance |
 | Specifications | Product behavior, shared delivery and validation protocols have maintained owners; duplicate plans and obsolete lane instructions are removed locally; consumer/link checks pass | Owner review and component publication, followed by reachable umbrella pin updates |
+| Reusable environments | [Detailed roadmap](reusable-environments-roadmap.md) records shared presets, private settings, safe updates and experiment/demo handoff; no runtime implementation yet | Review the bounded setup contract, port Ross's useful setup, and verify ChartSearchAI then existing Catalyst operations |
 | Product delivery | Eight backend and five frontend extractions are published. Applicable hosted checks pass on all recorded heads; no review threads are unresolved. Confirmed findings are fixed. Backend #590 retains the documented local macOS socket-test failure despite passing hosted source-pair checks. Both linear stacks are published and their current hosted builds pass. Combined functional validation passes, and all thirteen contributions are ready for review | Maintainer review and ordered merging; retain integration branches unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
