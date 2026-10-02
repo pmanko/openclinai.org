@@ -122,9 +122,9 @@ reference that owner. Remove obsolete specification content and its references.
 
 This track coordinates QueryStore, ChartSearchAI and its OpenMRS frontend.
 Application behavior is defined by the
-[dual-provider conformance contract](https://github.com/pmanko/clinical-ai-validation-harness/blob/9c1f65606f357662419aaa3417a4dde6d81c9948/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md)
+[dual-provider conformance contract](https://github.com/pmanko/clinical-ai-validation-harness/blob/9b5b87ef67397fe7705b37467b98d3550c8d0e47/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md)
 and [QueryStore ADR](https://github.com/pmanko/openmrs-module-querystore/blob/8b79db9791fe47315d3aae9cb09e9fdf004e6ee6/docs/adr.md).
-The [delivery status register](https://github.com/pmanko/clinical-ai-validation-harness/blob/9c1f65606f357662419aaa3417a4dde6d81c9948/specs/artifacts/planning/openmrs-dual-provider-parity-roadmap-status.md)
+The [delivery status register](https://github.com/pmanko/clinical-ai-validation-harness/blob/9b5b87ef67397fe7705b37467b98d3550c8d0e47/specs/artifacts/planning/openmrs-dual-provider-parity-roadmap-status.md)
 records implementation and acceptance evidence at the selected harness revision.
 The component repositories maintain subsequent development and release status;
 coordination content is assigned to the umbrella under section 4.
@@ -272,7 +272,7 @@ changes to current main. Newer upstream safety and citation behavior must remain
 | B5 endpoints and wiring | [Backend draft #590](https://github.com/openmrs/openmrs-module-chartsearchai/pull/590), `1f9166c2`, on exact #588/#586/#589 assembly `c7809ed1`: provider discovery, conversation/history and provider-neutral stream; component tests/docs and paired-source checks. Review fixes settle interrupted turns and retain checked answers with failed In-Depth outcomes. Both response-failure regressions failed first; all 35 focused checks and 321 web tests plus packaging pass against QueryStore `8b79db97`. Full API verification: 2,949 tests, one previously recorded macOS socket-listener test failure, zero errors, 59 skips. API installation explicitly skipped tests before separate web verification. Hosted paired-source Java 11/17/21 checks, selftests and lint passed on this head; ordinary artifact, QueryStore-main and dependency-scan jobs were skipped. Combined runtime/capability/toggle acceptance remains pending |
 | F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55), `fdf262ce`; all 468 tests, lint, type checks, local build and hosted build passed. CRLF separators, final-event model normalization and terminal reader cleanup are fixed with regression coverage; all three review threads are resolved. Existing search transport and visible panel are unchanged |
 | F1 history client and session state | [Frontend #56](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/56), `f6f5cc24`, stacked on #55: history/new-session requests, conversation identifiers and provider/profile state, with logout isolation. Preserves upstream reasoning-display preferences and correctly represents empty history with a null session. All 476 local tests, lint, type checks, translation verification and production build pass; existing bundle-size warning remains. Hosted build and automated review check passed at this revision; no review threads outstanding. This slice does not activate history in the visible panel |
-| F1 conversation lifecycle and visible history | [Frontend draft #59](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59), `4181b0d`, on the exact #58/#57 assembly `498726be`: history hydration, New chat, lifecycle phases, cancellation/preemption, mounted selectors and panel wiring. All six recorded source findings plus table safeguard propagation are fixed; fourteen regression cases failed before the fixes and pass afterward. All 635 local tests, lint, type checks, translation extraction and production build pass; existing bundle-size warning remains. Hosted build passed at this updated head; release was skipped; browser/video and combined runtime acceptance remain unverified |
+| F1 conversation lifecycle and visible history | [Frontend draft #59](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59), `4181b0d`, on the exact #58/#57 assembly `498726be`: history hydration, New chat, lifecycle phases, cancellation/preemption, mounted selectors and panel wiring. All six recorded source findings plus table safeguard propagation are fixed; fourteen regression cases failed before the fixes and pass afterward. All 635 local tests, lint, type checks, translation extraction and production build pass; existing bundle-size warning remains. The documentation-only follow-up is published at `77c1d19` with a passing hosted build and a fresh local artifact build; release was skipped. The existing staged, multi-turn and preemption browser checks pass, with recordings. Streaming/capability acceptance remains pending |
 | F2 provider/profile selection | [Frontend #58](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/58), `b3d8a7c`, stacked on #56: discovery, provider/model pickers, configuration, styles and tests. The reproduced available-but-nondefault profile finding is fixed without selecting a fallback. All 500 local tests, lint, type checks, translation extraction and production build pass; hosted build passed at this revision. Its review thread is resolved. Controls are mounted by #59; browser/combined acceptance remains pending |
 | F3 formatted answers and citation renderers | [Frontend #57](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/57), `59943fb`, stacked on #55: Markdown/table renderers, dependencies and tests, preserving upstream citation safeguards. All three review findings are fixed: model images are omitted, numeric links use chart citation resolution, and tables accept clinical citation safeguards. Five new cases failed before the fixes; six added cases and all 490 tests pass, with lint, types, translations and build. Hosted build passed; all three threads are resolved. #59 passes safeguards into the actual table path. Existing bundle-size warning and pending browser/combined acceptance remain |
 | F3 staged answer/evidence presentation | Included with the tightly coupled lifecycle in [frontend draft #59](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59): separate answer/review/In-Depth sections, original/withheld drafts, evidence cards and grounding, feedback, styles, translations and existing tests. Reuses #57 renderers while retaining newer upstream attribution, severity and significance disclosures. Streaming off suppresses incremental display on the same conversation transport; backend token generation is not yet disabled. Local checks pass as recorded above; real-model capability behavior and combined acceptance remain unverified |
@@ -316,7 +316,7 @@ validation. Publication alone does not satisfy M2–M4 acceptance or establish f
    builds pass. Exact updated prerequisites are carried into #59's published assembly.
 2. #59's six recorded findings and composed-table safeguard propagation are fixed
    with reproduced regressions and passing local checks. Require passing hosted
-   checks at `4181b0d` (hosted build passed). Verify the approved streaming toggle and unsupported optional
+   checks at `77c1d19` (documentation-only follow-up; hosted build passed). Verify the approved streaming toggle and unsupported optional
    capabilities on the same provider/profile and conversation path in combined acceptance.
 3. #588's recorded findings are fixed at `e2ae0874` with passing local and hosted
    checks. #589's terminal-stage fixes at `8f3ccea2` also have passing local and
@@ -329,6 +329,24 @@ validation. Publication alone does not satisfy M2–M4 acceptance or establish f
    the existing integration functionality and retained newer upstream behavior.
    Use the existing checks and real browser/runtime evidence; distinguish this from
    deployed release acceptance. Do not wait for upstream merges.
+
+The running source-pair environment has started the reviewed modules and verifies
+mounted backend/QueryStore hashes and served frontend assets against their build
+receipts. The existing staged Answer/check/In-Depth, two-turn follow-up and
+In-Depth preemption browser checks pass with real E4B inference. Existing display
+fixtures also pass for tables and flagged/rejected output through reload after
+correction to the current terminal-event payload. Those fixture corrections are
+published in harness `9b5b87e`; the full harness suite passes (1,111 tests, 36 skips,
+3 deselected), and hosted harness checks pass. Actual UI feedback persisted on its
+numeric audit row.
+
+Combined acceptance remains unfinished. The bundled streaming-off run was
+withheld because QueryStore reports that global indexing has not started; indexing
+only the selected patient does not satisfy its documented completeness contract.
+The existing native full backfill is now running in the isolated synthetic-data
+environment. Finish indexing, then rerun the bundled streaming/capability cases;
+verify the Hub streaming-off case and retain the exact runtime evidence. Do not
+claim readiness or mark the draft contributions ready before those checks pass.
 
 ### Approved Frontend Integration Decisions
 
@@ -516,8 +534,8 @@ own delivery work; do not expand the ChartSearchAI split to it automatically.
 
 ## 6. Catalyst Delivery
 
-The [four-pathway delivery roadmap](https://github.com/pmanko/clinical-ai-validation-harness/blob/9c1f65606f357662419aaa3417a4dde6d81c9948/specs/openelis-reporting-catalyst-integration.md)
-and [Feature 008 register](https://github.com/pmanko/clinical-ai-validation-harness/blob/9c1f65606f357662419aaa3417a4dde6d81c9948/specs/008-catalyst-query-workbench/tasks.md)
+The [four-pathway delivery roadmap](https://github.com/pmanko/clinical-ai-validation-harness/blob/9b5b87ef67397fe7705b37467b98d3550c8d0e47/specs/openelis-reporting-catalyst-integration.md)
+and [Feature 008 register](https://github.com/pmanko/clinical-ai-validation-harness/blob/9b5b87ef67397fe7705b37467b98d3550c8d0e47/specs/008-catalyst-query-workbench/tasks.md)
 record delivery scope and acceptance at the selected component revision. Catalyst
 owns the SQL workbench, Datasets, Widgets, Dashboards and publication. Med Agent Hub owns configured model
 roles; native reporting remains OpenELIS-owned.
