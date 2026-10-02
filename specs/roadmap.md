@@ -191,6 +191,12 @@ M5 is separate release work, not a prerequisite for publishing the extracted PRs
 The split does not require new test suites, acceptance infrastructure or a new demo.
 Combined functional validation of the complete split is required before declaring
 the decomposition complete; it is distinct from deployment and release signoff.
+Run that validation once against the completed stack as part of this implementation.
+If it fails, fix the failures and rerun the affected checks. Record the exact
+revisions, results and browser evidence with the run. Temporary PR branches,
+dependency arrangements and CI status belong in that evidence; do not add
+permanent tests or workflow gates to enforce this temporary stack state.
+Permanent tests verify lasting product or workspace functionality.
 
 Execute this work in three steps: publish the complete backend/frontend split,
 address the collected review findings across that set, then verify the combined
@@ -494,14 +500,11 @@ base and contains only its lifecycle/presentation additions and required adaptat
 Retarget and recheck after those prerequisites merge.
 No integration branch or main branch was changed to create these bases.
 
-If an extracted contribution needs umbrella verification, update the affected
-`scripts/openmrs-source-pair-test.sh`, `scripts/verify-repository-lines.sh` or CI
-consumer to verify selected PR revisions and dependency versions rather than
-require every contribution head to equal `harness-integration`. General tooling
-cleanup is not a prerequisite for publishing the split.
-The umbrella continues to own assembled-system gitlinks and reproducible source
-verification. The integration branches remain reference sources, not publication
-gates for the new PRs.
+Assembled-system verification records the selected source revisions and invokes
+existing functional checks. Permanent workspace checks verify source consistency
+and reproducible builds; they must not require a particular contribution branch,
+PR base, PR number or current publication state. The integration branches remain
+reference sources. The umbrella owns assembled-system gitlinks and build provenance.
 
 The split does not authorize closing the existing integration PRs. Their disposition
 can be decided once the smaller contributions cover the intended capabilities.

@@ -10,7 +10,7 @@ CORPUS_PROVENANCE ?= $(wildcard $(CURDIR)/artifacts/chartsearchai-local/corpus-p
 UV_PROJECT_ENVIRONMENT ?= $(CURDIR)/$(HARNESS)/.venv
 export UV_PROJECT_ENVIRONMENT
 
-.PHONY: up down local-stack-up local-stack-down reset status logs catalyst-mvp-up catalyst-mvp-external catalyst-mvp-seed catalyst-mvp-warm catalyst-mvp-health catalyst-mvp-restart catalyst-mvp-down catalyst-mvp-reset catalyst-superset-status catalyst-superset-import reset-transform sqlmesh-status loadtest-up loadtest-down dump-loaded chartsearch-build querystore-build openmrs-source-pair-build openmrs-source-pair-test repository-lines-check repository-lines-pr-check repository-publication-check deployed-sources-check chartsearch-esm-build chartsearch-esm-dev llama-router-up llama-router-down llama-router-models llama-router-small-model-proof med-agent-hub-build med-agent-hub-up med-agent-hub-logs med-agent-hub-restart med-agent-hub-test chartsearch-test querystore-test querystore-test-integration chartsearch-configure querystore-configure querystore-reindex querystore-recreate-index chartsearch-backend chartsearchai-local dual-provider-up chartsearch-doctor seed validate-preflight validate-run load-test orphan-fk-check import-smoke completeness-check test
+.PHONY: up down local-stack-up local-stack-down reset status logs catalyst-mvp-up catalyst-mvp-external catalyst-mvp-seed catalyst-mvp-warm catalyst-mvp-health catalyst-mvp-restart catalyst-mvp-down catalyst-mvp-reset catalyst-superset-status catalyst-superset-import reset-transform sqlmesh-status loadtest-up loadtest-down dump-loaded chartsearch-build querystore-build openmrs-source-pair-build openmrs-source-pair-test repository-lines-check repository-lines-pr-check deployed-sources-check chartsearch-esm-build chartsearch-esm-dev llama-router-up llama-router-down llama-router-models llama-router-small-model-proof med-agent-hub-build med-agent-hub-up med-agent-hub-logs med-agent-hub-restart med-agent-hub-test chartsearch-test querystore-test querystore-test-integration chartsearch-configure querystore-configure querystore-reindex querystore-recreate-index chartsearch-backend chartsearchai-local dual-provider-up chartsearch-doctor seed validate-preflight validate-run load-test orphan-fk-check import-smoke completeness-check test
 
 # --- compose lifecycle ---
 up:
@@ -121,11 +121,6 @@ repository-lines-check:
 
 repository-lines-pr-check:
 	./scripts/verify-repository-lines.sh --allow-workspace-branch
-
-# Network-backed PR-safe publication check: the exact integration heads pinned
-# above must be ready OpenMRS PR heads, with no duplicate same-head feature PR.
-repository-publication-check:
-	./scripts/verify-repository-lines.sh --allow-workspace-branch --check-publication-prs
 
 # Verify that staged, mounted, and served OpenMRS artifacts plus the running hub
 # image were all built from the source revisions currently pinned by this repo.

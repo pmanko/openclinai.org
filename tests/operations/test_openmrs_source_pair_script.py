@@ -6,13 +6,9 @@ import stat
 import subprocess
 from pathlib import Path
 
-import yaml
-
-
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "openmrs-source-pair-test.sh"
 LOCAL_SCRIPT = ROOT / "scripts" / "chartsearchai-local.sh"
-CHARTSEARCHAI_WORKFLOW = ROOT / "targets" / "chartsearchai" / ".github" / "workflows" / "build.yml"
 SUBMODULES = ("querystore", "chartsearchai", "chartsearchai-esm")
 
 
@@ -56,7 +52,7 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, Path]:
         _git(
             repo,
             "update-ref",
-            "refs/remotes/origin/harness-integration",
+            "refs/remotes/origin/source",
             heads[name],
         )
         _git(
@@ -66,7 +62,7 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, Path]:
             "--cacheinfo",
             f"160000,{heads[name]},targets/{name}",
         )
-    _git(root, "commit", "-m", "pin integration heads")
+    _git(root, "commit", "-m", "pin sources")
 
     log = tmp_path / "maven.log"
     fake_maven = tmp_path / "fake-maven"
@@ -105,23 +101,12 @@ def test_source_pair_gate_runs_pinned_sources_in_dependency_order(tmp_path):
     ]
 
 
-def test_source_pair_gate_rejects_stale_remote_or_parent_gitlink_before_build(tmp_path):
+def test_source_pair_gate_rejects_a_checkout_that_differs_from_the_pin(tmp_path):
     root, fake_maven, log = _fixture(tmp_path)
-    querystore = root / "targets" / "querystore"
+    _commit(root / "targets" / "querystore", "querystore-two")
 
-    remote_mismatch = _commit(querystore, "querystore-two")
     result = _run(root, fake_maven, log)
-    assert result.returncode != 0
-    assert "does not match origin/harness-integration" in result.stderr
-    assert not log.exists()
 
-    _git(
-        querystore,
-        "update-ref",
-        "refs/remotes/origin/harness-integration",
-        remote_mismatch,
-    )
-    result = _run(root, fake_maven, log)
     assert result.returncode != 0
     assert "does not match parent gitlink" in result.stderr
     assert not log.exists()
@@ -150,42 +135,3 @@ def test_local_entrypoint_builds_the_openmrs_modules_as_one_pair():
     assert "make openmrs-source-pair-build" in source
     assert '"ChartSearchAI module" \\\n' not in source
     assert '"Querystore module" \\\n' not in source
-
-
-def test_chartsearchai_integration_ci_builds_the_exact_pinned_querystore_source():
-    workflow_text = CHARTSEARCHAI_WORKFLOW.read_text(encoding="utf-8")
-    workflow = yaml.safe_load(workflow_text)
-    querystore_head = _git(ROOT / "targets" / "querystore", "rev-parse", "HEAD")
-
-    assert "github.head_ref != 'harness-integration'" in workflow["jobs"]["build"]["if"]
-    paired = workflow["jobs"]["paired-build"]
-    assert "github.head_ref == 'harness-integration'" in paired["if"]
-    assert paired["strategy"]["matrix"]["java"] == [11, 17, 21]
-
-    checkout = next(
-        step for step in paired["steps"] if step["name"] == "Checkout paired QueryStore source"
-    )
-    assert checkout["with"]["repository"] == "pmanko/openmrs-module-querystore"
-    assert checkout["with"]["ref"] == querystore_head
-
-    install = next(
-        step for step in paired["steps"] if step["name"] == "Install paired QueryStore source"
-    )
-    assert "clean install -DskipTests" in install["run"]
-
-
-def test_openmrs_source_pair_gate_builds_exact_integration_heads_in_dependency_order():
-    script = SCRIPT.read_text(encoding="utf-8")
-    makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-
-    assert "openmrs-source-pair-test:" in makefile
-    assert "./scripts/openmrs-source-pair-test.sh" in makefile
-    assert script.count("origin/harness-integration") >= 2
-    assert 'verify_integration_head "${ROOT}/targets/querystore"' in script
-    assert 'verify_integration_head "${ROOT}/targets/chartsearchai"' in script
-    assert 'verify_integration_head "${ROOT}/targets/chartsearchai-esm"' in script
-    assert 'rev-parse "HEAD:${gitlink_path}"' in script
-    assert "status --porcelain --untracked-files=all" in script
-    assert script.index('"${MVN_BIN}" -q -B clean install') < script.index(
-        '"${MVN_BIN}" -q -B clean package'
-    )

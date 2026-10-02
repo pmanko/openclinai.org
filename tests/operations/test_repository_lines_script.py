@@ -45,7 +45,7 @@ def _fixture(tmp_path: Path) -> Path:
         _git(repo, "config", "user.name", "Test")
         head = _commit(repo, f"{name} source")
         remote_ref = (
-            "refs/remotes/origin/harness-integration"
+            "refs/remotes/origin/source"
             if name in OPENMRS_REPOS
             else "refs/remotes/origin/main"
         )
@@ -73,57 +73,7 @@ def _run(
     )
 
 
-def _fake_gh(tmp_path: Path) -> tuple[Path, Path]:
-    bin_dir = tmp_path / "bin"
-    bin_dir.mkdir()
-    log = tmp_path / "gh.log"
-    executable = bin_dir / "gh"
-    executable.write_text(
-        """#!/usr/bin/env bash
-set -euo pipefail
-printf '%s\\n' "$*" >> "$FAKE_GH_LOG"
-
-if [[ "${1:-}" == "api" ]]; then
-  endpoint=""
-  for argument in "$@"; do
-    if [[ "$argument" == repos/*/pulls* ]]; then
-      endpoint="$argument"
-      break
-    fi
-  done
-  if [[ "$endpoint" == *"state=all"* ]]; then
-    case "$endpoint" in
-      repos/openmrs/openmrs-module-chartsearchai/*)
-        printf '157\\tOPEN\\thttps://example.test/chartsearchai/157\\n'
-        ;;
-      repos/openmrs/openmrs-esm-chartsearchai/*)
-        printf '23\\tOPEN\\thttps://example.test/chartsearchai-esm/23\\n'
-        ;;
-      repos/openmrs/openmrs-module-querystore/*)
-        printf '68\\tOPEN\\thttps://example.test/querystore/68\\n'
-        ;;
-      *)
-        exit 3
-        ;;
-    esac
-  fi
-  exit 0
-fi
-
-if [[ "${1:-}" == "pr" && "${2:-}" == "view" ]]; then
-  printf '%s\\n' "${FAKE_GH_READINESS:-false\tMERGEABLE\t2\t0}"
-  exit 0
-fi
-
-exit 4
-""",
-        encoding="utf-8",
-    )
-    executable.chmod(0o755)
-    return bin_dir, log
-
-
-def test_repository_check_accepts_owned_main_and_exact_openmrs_integration(tmp_path):
+def test_repository_check_accepts_published_sources_matching_the_pins(tmp_path):
     root = _fixture(tmp_path)
 
     result = _run(root)
@@ -132,7 +82,7 @@ def test_repository_check_accepts_owned_main_and_exact_openmrs_integration(tmp_p
     assert "approved ownership policy" in result.stdout
 
 
-def test_repository_check_allows_only_the_harness_pull_request_branch(tmp_path):
+def test_repository_check_can_validate_a_published_workspace_revision(tmp_path):
     root = _fixture(tmp_path)
     _commit(root, "pull request change")
     _git(
@@ -150,7 +100,7 @@ def test_repository_check_allows_only_the_harness_pull_request_branch(tmp_path):
     assert pull_request.returncode == 0, pull_request.stderr
 
 
-def test_repository_check_rejects_unmerged_hub_and_stale_openmrs_head(tmp_path):
+def test_repository_check_rejects_unmerged_hub_and_unpublished_source(tmp_path):
     root = _fixture(tmp_path)
     hub = root / "targets" / "med-agent-hub"
     unmerged_hub = _commit(hub, "unmerged hub change")
@@ -182,12 +132,6 @@ def test_repository_check_rejects_unmerged_hub_and_stale_openmrs_head(tmp_path):
     querystore = root / "targets" / "querystore"
     unpublished_querystore = _commit(querystore, "unpublished QueryStore change")
     _git(
-        querystore,
-        "update-ref",
-        "refs/remotes/origin/feat/unpublished",
-        unpublished_querystore,
-    )
-    _git(
         root,
         "update-index",
         "--cacheinfo",
@@ -202,68 +146,4 @@ def test_repository_check_rejects_unmerged_hub_and_stale_openmrs_head(tmp_path):
     )
     result = _run(root, "--allow-workspace-branch")
     assert result.returncode != 0
-    assert "QueryStore does not match origin/harness-integration" in result.stderr
-
-
-def test_publication_check_executes_exact_head_lookup_and_readiness(tmp_path):
-    root = _fixture(tmp_path)
-    bin_dir, log = _fake_gh(tmp_path)
-
-    result = _run(
-        root,
-        "--check-publication-prs",
-        extra_env={
-            "PATH": f"{bin_dir}:{os.environ['PATH']}",
-            "FAKE_GH_LOG": str(log),
-        },
-    )
-
-    assert result.returncode == 0, result.stderr
-    calls = log.read_text(encoding="utf-8")
-    for repo in (
-        "openmrs/openmrs-module-chartsearchai",
-        "openmrs/openmrs-esm-chartsearchai",
-        "openmrs/openmrs-module-querystore",
-    ):
-        assert f"repos/{repo}/pulls?state=all" in calls
-        assert f"repos/{repo}/pulls?state=open" in calls
-    for name in OPENMRS_REPOS:
-        expected_head = _git(root / "targets" / name, "rev-parse", "HEAD")
-        assert expected_head in calls
-    assert calls.count("pr view") == 3
-
-
-def test_publication_check_rejects_draft_or_unready_pr(tmp_path):
-    root = _fixture(tmp_path)
-    bin_dir, log = _fake_gh(tmp_path)
-    environment = {
-        "PATH": f"{bin_dir}:{os.environ['PATH']}",
-        "FAKE_GH_LOG": str(log),
-        "FAKE_GH_READINESS": "true\tMERGEABLE\t2\t0",
-    }
-
-    draft = _run(root, "--check-publication-prs", extra_env=environment)
-
-    assert draft.returncode != 0
-    assert "is still a draft" in draft.stderr
-
-    environment["FAKE_GH_READINESS"] = "false\tMERGEABLE\t2\t1"
-    blocked = _run(root, "--check-publication-prs", extra_env=environment)
-
-    assert blocked.returncode != 0
-    assert "failing or pending checks" in blocked.stderr
-
-
-def test_operations_ci_uses_the_repository_node_action_major():
-    workflow = (ROOT / ".github" / "workflows" / "operations.yml").read_text(
-        encoding="utf-8"
-    )
-
-    assert "actions/setup-node@v4" in workflow
-    assert "actions/setup-node@v6" not in workflow
-
-
-def test_publication_make_target_is_described_as_pull_request_safe():
-    makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-
-    assert "Network-backed PR-safe publication check" in makefile
+    assert "QueryStore HEAD is not available from its origin remote" in result.stderr

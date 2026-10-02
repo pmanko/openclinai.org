@@ -35,16 +35,6 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      - name: Fetch authoritative integration refs
-        run: |
-          for repo in \
-            targets/chartsearchai \
-            targets/chartsearchai-esm \
-            targets/querystore; do
-            git -C "$repo" fetch origin \
-              harness-integration:refs/remotes/origin/harness-integration
-          done
-
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
