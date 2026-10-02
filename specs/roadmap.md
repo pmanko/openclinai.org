@@ -299,7 +299,7 @@ changes to current main. Newer upstream safety and citation behavior must remain
 | F1 history client and session state | [Frontend #56](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/56) | #55 | `f6f5cc24` |
 | F3 Markdown, tables and citations | [Frontend #57](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/57) | #56 | `39b5217f` |
 | F2 provider/profile selection | [Frontend #58](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/58) | #57 | `150c236a` |
-| F1/F3 conversation lifecycle, staged answers, evidence and streaming toggle | [Frontend #59](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59) | #58 | `be4f8bd6` |
+| F1/F3 conversation lifecycle, staged answers, evidence and streaming toggle | [Frontend #59](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59) | #58 | `e60cea9c` |
 
 All thirteen PRs have passing applicable hosted builds on these heads and no
 unresolved review threads. Some superseded runs were cancelled during push/base
@@ -348,7 +348,8 @@ Both final Git trees were identical immediately after restacking. A necessary
 follow-up in #587 removed inherited branch-name-dependent CI selection and updated
 the declared QueryStore source revision. This changed only the backend workflow
 and its README explanation; backend application code and tests remain identical.
-The final frontend tree remains identical in full. The one-time ancestry, diff,
+The restacked frontend tree at `be4f8bd6` was identical in full; the later
+history-race fix at `e60cea9c` is recorded below. The one-time ancestry, diff,
 tree and hosted-check evidence is recorded under
 `artifacts/pr-split-acceptance/linear-stack-*.json` and
 `artifacts/pr-split-acceptance/linear-restack-tree-proof.json`; these are run records,
@@ -411,11 +412,23 @@ optional QueryStore Elasticsearch/ONNX suites are not claimed.
 
 All thirteen component heads have passing applicable hosted checks and zero
 unresolved review threads. QueryStore maintainer threads retain their documented
-responses and remain formally open. The umbrella exact-source build at `c5f7b55`
-passes; the later proxy/documentation change has its own verification record.
+responses and remain formally open. The umbrella exact-source build at `20ed2a1`
+passes, including the proxy correction. The selected frontend follow-up has its
+own regression, build and runtime evidence below.
 The next contribution step is maintainer review and merging in the approved
 linear order, updating dependents with `gh stack`. Release signoff (M5), production
 deployment and the other umbrella roadmap tracks remain separate unfinished work.
+
+The current frontend pin is `e60cea9c`. A review triggered when #59 became ready
+found that delayed initial history could replace a submitted question while its
+session identifier stayed unchanged. The fix ignores a stale history snapshot
+once a live transcript exists. Both timing regressions failed before the fix;
+all 88 hook tests and 637 frontend tests now pass, along with lint, type checks,
+translation extraction and production build. The rebuilt native UI restores both
+completed Hub turns, original drafts, evidence and terminal stages after reload.
+The earlier combined run remains evidence for unaffected behavior; the two race
+cases are deterministic hook regressions, not claims about manually reproduced
+network timing. The review thread links the fix and its validation.
 
 ### Approved Frontend Integration Decisions
 
