@@ -128,6 +128,6 @@ the recorded evidence and evaluation results as its inputs.
 
 These links identify contracts at the component revisions recorded by the workspace.
 
-- [OpenMRS provider contract](https://github.com/pmanko/clinical-ai-validation-harness/blob/9c1f65606f357662419aaa3417a4dde6d81c9948/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md)
+- [OpenMRS provider contract](https://github.com/pmanko/clinical-ai-validation-harness/blob/9b5b87ef67397fe7705b37467b98d3550c8d0e47/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md)
 - [QueryStore API](https://github.com/pmanko/openmrs-module-querystore/blob/8b79db9791fe47315d3aae9cb09e9fdf004e6ee6/docs/rest-api.md)
 - [Catalyst–Med Agent Hub contract](https://github.com/DIGI-UW/catalyst-ai/blob/6ba00082519f9fb2d864895b292352d8987ce51c/docs/med-agent-hub.md)
