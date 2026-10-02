@@ -123,7 +123,7 @@ reference that owner. Remove obsolete specification content and its references.
 This track coordinates QueryStore, ChartSearchAI and its OpenMRS frontend.
 Application behavior is defined by the
 [dual-provider conformance contract](https://github.com/pmanko/clinical-ai-validation-harness/blob/9b5b87ef67397fe7705b37467b98d3550c8d0e47/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md)
-and [QueryStore ADR](https://github.com/pmanko/openmrs-module-querystore/blob/8b79db9791fe47315d3aae9cb09e9fdf004e6ee6/docs/adr.md).
+and [QueryStore ADR](https://github.com/pmanko/openmrs-module-querystore/blob/55bf9971eb293b2155fb72de1e7cadfd6fab3bdd/docs/adr.md).
 The [delivery status register](https://github.com/pmanko/clinical-ai-validation-harness/blob/9b5b87ef67397fe7705b37467b98d3550c8d0e47/specs/artifacts/planning/openmrs-dual-provider-parity-roadmap-status.md)
 records implementation and acceptance evidence at the selected harness revision.
 The component repositories maintain subsequent development and release status;
@@ -217,7 +217,7 @@ against its declared base.
 Q0 resolves [QueryStore review #68](https://github.com/openmrs/openmrs-module-querystore/pull/68),
 covering preprocessing documentation, dispatcher link handling, explicit chart-read
 construction and parameter/resource-type validation. The
-[QueryStore API contract](https://github.com/pmanko/openmrs-module-querystore/blob/8b79db9791fe47315d3aae9cb09e9fdf004e6ee6/docs/rest-api.md)
+[QueryStore API contract](https://github.com/pmanko/openmrs-module-querystore/blob/55bf9971eb293b2155fb72de1e7cadfd6fab3bdd/docs/rest-api.md)
 and product review own the detailed behavior and any required contract updates.
 
 Delivery requires exact-source reactor and MySQL integration evidence, applicable
@@ -308,9 +308,14 @@ Combined acceptance remains unfinished.
 ### Current Execution: Combined Functional Validation
 
 The complete extraction set is published: backend #583–#590 and frontend #55–#59.
-The recorded findings below are fixed, applicable hosted checks pass on the recorded
-heads, and no review threads are unresolved. The current task is combined functional
-validation. Publication alone does not satisfy M2–M4 acceptance or establish functional equivalence.
+The recorded backend/frontend findings below are fixed, applicable hosted checks
+pass on the recorded heads, and their review threads are resolved. QueryStore Q0
+review fixes are published at `55bf9971`: all five dependency findings have
+commit-linked responses, the full native reactor passes (527 API tests, 57 web
+tests, two existing skips), and all 22 MySQL integration checks pass. Verify hosted
+checks and deployed HTTP behavior at this revised dependency before completing
+combined acceptance. QueryStore threads remain open for the maintainer to resolve.
+Publication alone does not satisfy M2–M4 acceptance or establish functional equivalence.
 
 1. Completed: #57/#58 findings are fixed in their owning branches and their hosted
    builds pass. Exact updated prerequisites are carried into #59's published assembly.
@@ -325,12 +330,13 @@ validation. Publication alone does not satisfy M2–M4 acceptance or establish f
    focused and 321 web tests pass; full API verification has the recorded macOS
    socket-listener test failure. Hosted paired-source Java 11/17/21 checks, selftests
    and lint passed on this latest head.
-4. Validate the assembled backend/frontend heads with QueryStore `8b79db97` against
+4. Validate the assembled backend/frontend heads with QueryStore `55bf9971` against
    the existing integration functionality and retained newer upstream behavior.
    Use the existing checks and real browser/runtime evidence; distinguish this from
    deployed release acceptance. Do not wait for upstream merges.
 
-The running source-pair environment has started the reviewed modules and verifies
+The recorded source-pair acceptance currently uses QueryStore `8b79db97` with the
+reviewed backend/frontend modules and verifies
 mounted backend/QueryStore hashes and served frontend assets against their build
 receipts. The existing staged Answer/check/In-Depth, two-turn follow-up and
 In-Depth preemption browser checks pass with real E4B inference. Existing display
@@ -347,8 +353,9 @@ Combined acceptance remains unfinished. The bundled streaming-off run was
 withheld because QueryStore reports that global indexing has not started; indexing
 only the selected patient does not satisfy its documented completeness contract.
 The existing native full backfill is now running in the isolated synthetic-data
-environment. Finish indexing, then rerun the bundled streaming/capability cases
-and retain the exact runtime evidence. Do not
+environment. Let that run finish, then load the reviewed QueryStore repair, verify
+its actual paging and validation responses, and rerun the affected Hub read path
+and bundled streaming/capability cases. Retain the exact runtime evidence. Do not
 claim readiness or mark the draft contributions ready before those checks pass.
 
 ### Approved Frontend Integration Decisions
