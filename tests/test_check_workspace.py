@@ -42,9 +42,8 @@ class LinkTests(unittest.TestCase):
                 git.assert_called_once_with(repo, "cat-file", "-e",
                                             f"{sha}:docs/a b.md", check=False)
 
-    def test_wrong_remote_wrong_pin_and_branch_refs(self):
-        for identity, ref in (("unknown/repo", HARNESS_SHA),
-                              ("owner/harness", PRODUCT_SHA),
+    def test_managed_component_wrong_pin_and_branch_refs(self):
+        for identity, ref in (("owner/harness", PRODUCT_SHA),
                               ("owner/harness", "main")):
             with self.subTest(identity=identity, ref=ref), patch.object(checker, "git") as git:
                 self.assertIn("recorded 40-SHA", self.check(
@@ -59,7 +58,9 @@ class LinkTests(unittest.TestCase):
     def test_other_external_links_are_not_network_checked(self):
         with patch.object(checker, "git") as git:
             for link in ("https://example.org/docs", "mailto:owner@example.org",
-                         "https://github.com/owner/harness/issues/1"):
+                         "https://github.com/owner/harness/issues/1",
+                         "https://github.com/external/product/blob/main/docs/spec.md",
+                         f"https://github.com/external/product/blob/{PRODUCT_SHA}/README.md"):
                 self.assertIsNone(self.check(link))
             git.assert_not_called()
 

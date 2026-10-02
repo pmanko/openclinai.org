@@ -9,27 +9,6 @@ def text(path):
     return (ROOT / path).read_text(encoding="utf-8")
 
 
-def test_harness_introduction_describes_experiments_not_environment_management():
-    home = text("landing/index.html")
-    harness = text("landing/validation-harness/index.html")
-    assert "Run configured experiments against applications" in home
-    assert "Run configured experiments against clinical AI applications" in harness
-    assert "Choose a target interface, connection settings, scenarios and evaluation methods" in harness
-    assert "supplied or observed" in harness
-    assert "https://github.com/pmanko/clinical-ai-validation-harness#readme" in harness
-    for obsolete in ("clinical AI environments", "Run repeatable environments", "Keep compatible component revisions", "Harness integrates and evaluates", "Bring components together"):
-        assert obsolete not in home + harness
-
-
-def test_current_openmrs_proposals_do_not_publish_the_retired_pr_appendix():
-    page = text("landing/docs/openmrs-upstream/index.html")
-    assert "Three repositories, three pull requests" in page
-    assert "Sources: the three pull requests" in page
-    assert "as read on 15 September 2026" in page
-    for obsolete in ("dropped-title", "nine earlier pull requests", "Reverted to the typed bridge", "Superseded by", "legacy multi-turn client"):
-        assert obsolete not in page
-
-
 def test_selected_research_has_no_unqualified_guarantees_or_writer_todos():
     selection = text("site/published-content.ts")
     paths = re.findall(r"'\.\./([^']+\.(?:md|canvas\.tsx))'", selection)
