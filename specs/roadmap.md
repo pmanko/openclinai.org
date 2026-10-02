@@ -13,7 +13,9 @@ implementation registers.
    smallest practical reviewable PRs. Extract the existing implementation, tests
    and documentation together into one linear PR stack per project, rooted
    in each project's current `main`. The published contributions now follow the
-   exact order defined under Contribution Model; finish combined acceptance.
+   exact order defined under Contribution Model. Extraction, recorded review fixes
+   and combined functional validation are complete; maintainer review and merging
+   remain.
    Carry recorded findings and their fixes with their owning PRs. The complete
    set must reproduce the integration branches' functionality while preserving
    newer upstream behavior and apply the approved frontend integration decisions
@@ -42,7 +44,7 @@ only when they directly block a specific contribution.
 | Validation harness | Clinical and Catalyst runners use configured targets and supplied/observed provenance; source-free wheel isolation, portable reports and the full local harness suite pass | Review the published component change and verify actual product interfaces separately |
 | Website | `landing/`, `site/`, static hosting configuration, build/publication tools and workflows are umbrella-owned; local website tests and build have run | Hosted CI and explicit deployment acceptance |
 | Specifications | Harness governance and validation foundations are reconciled; retained 004 criteria are in Feature 006; obsolete 004/005/007 files are removed | Consolidate mixed Feature 008, program-delivery and OpenMRS coordination specifications |
-| Product delivery | Eight backend and five frontend extractions are published. Applicable hosted checks pass on all recorded heads; no review threads are unresolved. Confirmed findings are fixed. Backend #590 retains the documented local macOS socket-test failure despite passing hosted source-pair checks. Both linear stacks are published and their current hosted builds pass. Four contributions remain drafts pending combined acceptance | Finish combined acceptance and address any findings it exposes; retain integration branches unchanged |
+| Product delivery | Eight backend and five frontend extractions are published. Applicable hosted checks pass on all recorded heads; no review threads are unresolved. Confirmed findings are fixed. Backend #590 retains the documented local macOS socket-test failure despite passing hosted source-pair checks. Both linear stacks are published and their current hosted builds pass. Combined functional validation passes, and all thirteen contributions are ready for review | Maintainer review and ordered merging; retain integration branches unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -290,19 +292,19 @@ changes to current main. Newer upstream safety and citation behavior must remain
 | B3 safety-check execution status | [Backend #585](https://github.com/openmrs/openmrs-module-chartsearchai/pull/585) | #584 | `ddfb4202` |
 | B5 conversation persistence | [Backend #586](https://github.com/openmrs/openmrs-module-chartsearchai/pull/586) | #585 | `7d9056c3` |
 | B4 QueryStore context and budgets | [Backend #587](https://github.com/openmrs/openmrs-module-chartsearchai/pull/587) | #586 | `b1cf5d56` |
-| B3 bundled inference and cancellation | [Backend draft #588](https://github.com/openmrs/openmrs-module-chartsearchai/pull/588) | #587 | `18e03f6e` |
-| B2 Hub discovery and transport | [Backend draft #589](https://github.com/openmrs/openmrs-module-chartsearchai/pull/589) | #588 | `b69ea2bb` |
-| B5 conversation endpoints and history | [Backend draft #590](https://github.com/openmrs/openmrs-module-chartsearchai/pull/590) | #589 | `8622f1b5` |
+| B3 bundled inference and cancellation | [Backend #588](https://github.com/openmrs/openmrs-module-chartsearchai/pull/588) | #587 | `18e03f6e` |
+| B2 Hub discovery and transport | [Backend #589](https://github.com/openmrs/openmrs-module-chartsearchai/pull/589) | #588 | `b69ea2bb` |
+| B5 conversation endpoints and history | [Backend #590](https://github.com/openmrs/openmrs-module-chartsearchai/pull/590) | #589 | `8622f1b5` |
 | F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55) | main | `fdf262ce` |
 | F1 history client and session state | [Frontend #56](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/56) | #55 | `f6f5cc24` |
 | F3 Markdown, tables and citations | [Frontend #57](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/57) | #56 | `39b5217f` |
 | F2 provider/profile selection | [Frontend #58](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/58) | #57 | `150c236a` |
-| F1/F3 conversation lifecycle, staged answers, evidence and streaming toggle | [Frontend draft #59](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59) | #58 | `be4f8bd6` |
+| F1/F3 conversation lifecycle, staged answers, evidence and streaming toggle | [Frontend #59](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59) | #58 | `be4f8bd6` |
 
 All thirteen PRs have passing applicable hosted builds on these heads and no
 unresolved review threads. Some superseded runs were cancelled during push/base
 updates; the final runs completed successfully. Component verification and the
-four remaining draft states are separate from combined acceptance.
+release/deployment signoff remain separate from review readiness.
 
 Carry relevant README changes with each contribution. Shared files are split by
 behavior; preserve newer upstream versions. From #587 onward, pull-request builds
@@ -325,19 +327,22 @@ The source-path comparison finds all 56 added backend and 14 added frontend file
 in the published assembled work, including Hub #589 and endpoint #590. Stream
 tests moved to `src/api/chat-stream.test.ts`; constructor, tokenizer authentication,
 clinical-read and serializer adaptations retain newer upstream contracts. This
-path/line comparison is extraction evidence, not functional acceptance: adapted
-behavior, collected findings and approved decisions still require verification.
-All extraction groups are published and recorded review findings are fixed.
-Combined acceptance remains unfinished.
+path/line comparison is extraction evidence, not functional acceptance; the
+separate behavioral verification is recorded below.
+All extraction groups are published, recorded review findings are fixed, and
+combined functional validation passes. All thirteen PRs are ready for review.
 
-### Current Execution: Combined Functional Validation
+### Current Execution: Review-Ready Stacks
 
 The first acceptance step is complete: both published PR chains match the exact
 Contribution Model order. `gh stack init`, `rebase` and `submit` adopted and
 updated all existing PRs without replacements. Each actual GitHub base names the
 immediate predecessor and points to its exact current head; each contribution diff
 stays within its original scope. Existing review discussions, fixes and draft
-states are preserved. PR descriptions now give the linear review order.
+states were preserved through restacking. After combined validation passed,
+`gh stack submit --auto --open --remote origin` marked backend #588/#589/#590 and
+frontend #59 ready for review without changing their heads. PR descriptions give
+the linear review order and acceptance evidence.
 
 Both final Git trees were identical immediately after restacking. A necessary
 follow-up in #587 removed inherited branch-name-dependent CI selection and updated
@@ -355,35 +360,62 @@ fixes at `55bf9971` pass hosted Java 8/11/17/21 builds, the native reactor (527 
 tests, 57 web tests, two existing skips) and all 22 MySQL integration checks.
 Its maintainer threads retain commit-linked responses and remain formally open.
 
-Next, finish combined functional validation using backend `8622f1b5` and frontend
-`be4f8bd6` with QueryStore `55bf9971`. Retain valid behavioral evidence for unchanged
-code; complete the outstanding dependency HTTP checks and bundled/Hub capability
-cases below. Keep backend #588/#589/#590 and frontend #59 as drafts until those
-checks pass. Do not wait for upstream merges. Passing component checks and the
-correct stack arrangement do not establish combined acceptance or release signoff.
+Combined functional validation passes using backend `8622f1b5`, frontend
+`be4f8bd6`, QueryStore `55bf9971` and Hub `6120c313`. Native module and frontend
+builds completed; both modules report started without errors. The identity probe
+verifies staged/mounted module hashes, served frontend assets and the Hub image
+revision. The native backfill completed for all twelve registered types; the
+selected synthetic chart reports 365 records, complete and not truncated.
 
-The recorded source-pair acceptance currently uses QueryStore `8b79db97` with the
-reviewed backend/frontend modules and verifies
-mounted backend/QueryStore hashes and served frontend assets against their build
-receipts. The existing staged Answer/check/In-Depth, two-turn follow-up and
-In-Depth preemption browser checks pass with real E4B inference. Existing display
-fixtures also pass for tables and flagged/rejected output through reload after
-correction to the current terminal-event payload. Those fixture corrections are
-published in harness `9b5b87e`; the full harness suite passes (1,111 tests, 36 skips,
-3 deselected), and hosted harness checks pass. Actual UI feedback persisted on its
-numeric audit row. The manual Hub streaming-off run also completed on the same
-E4B profile and conversation path, retained its original answer and terminal
-In-Depth withholding through history, and displayed the limited safety coverage.
-Missing model reasoning did not prevent its answer.
+Actual QueryStore HTTP checks accept registered context types, reject unknown
+explicit types and reject context-only parameters outside context mode. Following
+the exact next-page link preserves the chart snapshot and returns disjoint page
+records. That check exposed the standard gateway dropping the external port from
+absolute links; the umbrella's QueryStore route now goes directly to the same
+backend, preserving the external Host. Caddy validation and the HTTP rerun pass.
 
-Combined acceptance remains unfinished. The bundled streaming-off run was
-withheld because QueryStore reports that global indexing has not started; indexing
-only the selected patient does not satisfy its documented completeness contract.
-The existing native full backfill is now running in the isolated synthetic-data
-environment. Let that run finish, then load the reviewed QueryStore repair, verify
-its actual paging and validation responses, and rerun the affected Hub read path
-and bundled streaming/capability cases. Retain the exact runtime evidence. Do not
-claim readiness or mark the draft contributions ready before those checks pass.
+The existing real-model staged Answer/check/In-Depth, two-turn date continuity and
+In-Depth preemption checks pass. Existing display fixtures pass for tables and
+flagged/rejected output through reload. Actual UI feedback persisted on its
+numeric audit row. Those harness checks and fixture corrections are published at
+`9b5b87e`; its full suite passes (1,111 tests, 36 skips, 3 deselected), with hosted
+checks passing. Valid evidence for unchanged code is retained.
+
+The final runtime checks additionally establish:
+
+- Bundled streaming off delivers a complete cited answer. Enabling streaming
+  retains the same provider and conversation; a follow-up resolves the prior
+  measurement's date and both answers persist.
+- Stop during actual incremental output retains visible partial answer/reasoning
+  and re-enables the composer. The server records cancellation; durable storage
+  of that unfinished draft is not claimed.
+- Missing optional checks and In-Depth do not leave bundled progress waiting;
+  disabled safety checks are labeled unavailable. Hub, which does not advertise
+  token streaming, still delivers completed answers on its selected profile.
+  Missing model reasoning does not prevent its answer.
+- Hub streaming off and on preserve explicit provider/profile selection,
+  checked/original answers, evidence and terminal In-Depth withholding. The
+  affected Hub read path passes with the reviewed QueryStore revision, and the
+  completed two-turn history restores after reload.
+- Scrolling to earlier content during a Hub follow-up stays at that position
+  through answer review and In-Depth completion.
+
+One-time evidence is under `artifacts/pr-split-acceptance/`, including
+`runtime-identity-current.json`, `querystore-q0-http-current.json`,
+`manual-runtime-observations.md`, the bundled/Hub history JSON files and browser
+screenshots/recordings. Model output still includes recorded quality failures:
+Hub In-Depth can be withheld and a cancelled bundled draft contained inconsistent
+dates. No prompt tuning or model-quality acceptance is implied. The bundled
+provider used its configured remote engine; bundled local-engine execution and
+optional QueryStore Elasticsearch/ONNX suites are not claimed.
+
+All thirteen component heads have passing applicable hosted checks and zero
+unresolved review threads. QueryStore maintainer threads retain their documented
+responses and remain formally open. The umbrella exact-source build at `c5f7b55`
+passes; the later proxy/documentation change has its own verification record.
+The next contribution step is maintainer review and merging in the approved
+linear order, updating dependents with `gh stack`. Release signoff (M5), production
+deployment and the other umbrella roadmap tracks remain separate unfinished work.
 
 ### Approved Frontend Integration Decisions
 
