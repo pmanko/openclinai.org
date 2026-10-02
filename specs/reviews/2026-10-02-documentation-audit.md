@@ -190,9 +190,9 @@ application tests pass.
 The documentation/status build completes and writes 19 prerendered files; it
 logs a sandbox WebSocket bind warning and the tests log existing server-render
 warnings. Rendered navigation, fragments and local assets resolve. The workspace
-checker reports the five locally edited components as dirty; it is not a green
-workspace acceptance result. Component publication and gitlink updates remain
-separate work.
+checker initially reported the five locally edited components as dirty. After
+publication of the three retained documentation companions and the umbrella pin
+update, the workspace check passes. OpenMRS checkouts and pins are unchanged.
 
 ## Consolidation prepared locally
 
@@ -227,10 +227,10 @@ commits are published for review and pinned by the umbrella; no deployment occur
 
 ## Review and publication decisions
 
-1. Review the consolidated ownership and focused website patch locally.
-2. Publish component documentation through its owning repository, then update
-   reachable umbrella pins and their contract links. New cross-repository links
-   currently describe the local patch; they are not claimed available on `main`.
+1. Review the consolidated ownership and focused website patch in the linked PRs.
+2. Merge the companion documentation PRs and the umbrella follow-up in dependency
+   order. The umbrella pins the published review commits; links targeting `main`
+   become current when their owning PRs merge.
 3. Publish the maintained documentation destination and verify it before updating
    live navigation away from the legacy harness documentation.
 4. Investigate the two report-catalog provenance mismatches before changing their
@@ -245,8 +245,8 @@ The full harness run produced 1,009 passes and 95 sandbox-related failures; all
 95 failed cases passed when rerun with permission for their local fixture servers.
 Thirty-eight tests were skipped and three deselected. The focused documentation
 and renderer tests, shared-fixture/evidence checks and 24 umbrella tests pass.
-The website rebuild succeeds; rendered navigation/assets resolve. The remaining
-workspace-check failures are exactly the five intentionally edited components.
+The website rebuild succeeds; rendered navigation/assets resolve. Before publication, the workspace check reported the five edited components;
+the committed review workspace now passes.
 These are documentation/runner checks, not a new product-runtime acceptance run.
 
 Removed the explicitly superseded model-gateway and standalone knowledge-service
