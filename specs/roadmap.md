@@ -338,14 +338,17 @@ fixtures also pass for tables and flagged/rejected output through reload after
 correction to the current terminal-event payload. Those fixture corrections are
 published in harness `9b5b87e`; the full harness suite passes (1,111 tests, 36 skips,
 3 deselected), and hosted harness checks pass. Actual UI feedback persisted on its
-numeric audit row.
+numeric audit row. The manual Hub streaming-off run also completed on the same
+E4B profile and conversation path, retained its original answer and terminal
+In-Depth withholding through history, and displayed the limited safety coverage.
+Missing model reasoning did not prevent its answer.
 
 Combined acceptance remains unfinished. The bundled streaming-off run was
 withheld because QueryStore reports that global indexing has not started; indexing
 only the selected patient does not satisfy its documented completeness contract.
 The existing native full backfill is now running in the isolated synthetic-data
-environment. Finish indexing, then rerun the bundled streaming/capability cases;
-verify the Hub streaming-off case and retain the exact runtime evidence. Do not
+environment. Finish indexing, then rerun the bundled streaming/capability cases
+and retain the exact runtime evidence. Do not
 claim readiness or mark the draft contributions ready before those checks pass.
 
 ### Approved Frontend Integration Decisions
