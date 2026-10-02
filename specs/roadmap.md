@@ -11,9 +11,10 @@ implementation registers.
 
 1. Break the existing ChartSearchAI backend and frontend integration work into the
    smallest practical reviewable PRs. Extract the existing implementation, tests
-   and documentation together into independent or stacked topic branches rooted
-   in each project's current `main`. Finish the full split before the review-fix
-   pass; record findings as they arrive and carry them with their owning PRs. The complete
+   and documentation together into one linear PR stack per project, rooted
+   in each project's current `main`. Restack the published contributions in the
+   exact order defined under Contribution Model, then finish combined acceptance.
+   Carry recorded findings and their fixes with their owning PRs. The complete
    set must reproduce the integration branches' functionality while preserving
    newer upstream behavior and apply the approved frontend integration decisions
    below. Unrelated new features and replacement implementations are outside this
@@ -41,7 +42,7 @@ only when they directly block a specific contribution.
 | Validation harness | Clinical and Catalyst runners use configured targets and supplied/observed provenance; source-free wheel isolation, portable reports and the full local harness suite pass | Review the published component change and verify actual product interfaces separately |
 | Website | `landing/`, `site/`, static hosting configuration, build/publication tools and workflows are umbrella-owned; local website tests and build have run | Hosted CI and explicit deployment acceptance |
 | Specifications | Harness governance and validation foundations are reconciled; retained 004 criteria are in Feature 006; obsolete 004/005/007 files are removed | Consolidate mixed Feature 008, program-delivery and OpenMRS coordination specifications |
-| Product delivery | Eight backend and five frontend extractions are published. Applicable hosted checks pass on all recorded heads; no review threads are unresolved. Confirmed findings are fixed. Backend #590 retains the documented local macOS socket-test failure despite passing hosted source-pair checks. Four contributions remain drafts pending combined acceptance | Verify combined functionality and address any findings it exposes; retain integration branches unchanged |
+| Product delivery | Eight backend and five frontend extractions are published. Applicable hosted checks pass on all recorded heads; no review threads are unresolved. Confirmed findings are fixed. Backend #590 retains the documented local macOS socket-test failure despite passing hosted source-pair checks. Four contributions remain drafts; the published branching arrangement still requires linear restacking | Restack in the exact Contribution Model order, verify unchanged final trees and current checks, then finish combined acceptance; retain integration branches unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -139,10 +140,30 @@ redesigns or fixes as prerequisites for the split. The approved frontend
 integration decisions below explicitly authorize the necessary adaptation for
 toggleable streaming and unsupported model capabilities.
 
-Create independent topic branches from the destination project's current `main`.
-Build dependent changes on their prerequisite topic branches and target the
-preceding branch so each PR shows only its own contribution. Do not wait for
-upstream merges to prepare, test or publish the rest of the split.
+Use one linear stack per project in this exact review and merge order:
+
+- **Backend:** `main → #583 → #584 → #585 → #586 → #587 → #588 → #589 → #590`
+- **Frontend:** `main → #55 → #56 → #57 → #58 → #59`
+
+The first PR targets the destination project's current `main`. Every subsequent
+PR targets the immediately preceding PR's branch and contains that predecessor's
+current head, so its diff shows only its own contribution. Do not use separate
+prerequisite assembly branches or branching dependency graphs. Keep the existing
+PR numbers, scopes, review discussions and confirmed fixes while restacking.
+Do not wait for upstream merges to prepare, test or publish the rest of the stack.
+
+Manage both stacks with the installed `github/gh-stack` extension (`gh stack`).
+Adopt the existing branches in bottom-to-top order with `gh stack init --base`,
+using a verified trunk at the destination project's `main`; inspect the result
+with `gh stack view`. Use `gh stack rebase` for cascading rebases and
+`gh stack submit` to update the existing PRs and their stack on GitHub, followed
+by `gh stack sync` for subsequent synchronization. Inspect the installed command
+help and verify fork/upstream remote selection and existing-PR matching before
+any remote update. Preserve current draft states; do not use `--open` until the
+readiness requirements pass. Verify both the local stack and actual GitHub bases
+after publication. Do not substitute manually maintained assembly branches or
+create replacement PRs when adopting the existing contributions.
+
 Make the adjustments necessary to separate the existing changes, resolve conflicts,
 fix confirmed review defects and preserve newer upstream functionality. Keep closely
 dependent changes together when splitting them would require scaffolding or a
@@ -161,8 +182,8 @@ or rebase them. Preserve newer upstream code when extracting changes; a raw tree
 diff against an older integration branch is not a patch to apply wholesale.
 
 Each PR must be understandable, buildable and testable against its declared base.
-Independent changes may proceed in parallel. A stack makes dependencies explicit;
-ancestor changes belong in the base, not in the displayed contribution diff.
+Each project follows the linear order above; the two projects can proceed in
+parallel. Ancestor changes belong in the base, not in the displayed contribution diff.
 After a prerequisite merges, update and retarget its dependents without losing
 their changes. Run the relevant existing checks for each extracted piece and add
 focused regression coverage for confirmed defects.
@@ -182,7 +203,7 @@ inventory do not satisfy this goal.
 | --- | --- | --- |
 | M0 | Inventory and grouping of existing integration work | Main and integration revisions are identified; existing code, tests and documentation are mapped to upstream coverage or proposed PRs, with necessary dependencies |
 | M1 | QueryStore Q0 review resolution | Exact-source tests and required integration evidence support the published contribution |
-| M2 | Small independent or stacked backend/frontend PRs | Each PR extracts one coherent portion of the existing work, shows only its own changes against its declared base and passes its applicable checks; coverage and remaining extraction work are explicit |
+| M2 | One linear PR stack per project | The existing PRs follow the exact Contribution Model order, each targets its immediate predecessor (first targets main), shows only its own changes and passes applicable checks; no prerequisite assembly branches remain in the review path |
 | M3 | Backend delivery | Existing B1–B5 work is accounted for in upstream or extracted PRs, with its product checks |
 | M4 | Frontend delivery | Existing F1–F3 work is accounted for in upstream or extracted PRs, with its lifecycle, provider and evidence/browser checks |
 | M5 | Integrated release acceptance | Assembled product behavior and deployed evidence satisfy the existing release signoffs |
@@ -242,11 +263,11 @@ changes rather than adding code to force an artificial split.
 | F2 Provider selection | Explicit provider selection and configuration-aware availability | F1 and backend provider discovery |
 | F3 Answer and evidence UI | Clinical output, references, original/rejected drafts, validation/safety disclosure and optional In-Depth | F1 types/state and real backend payloads; no inherent provider-picker prerequisite |
 
-The backend contract unlocks independent Hub-adapter and conversation-persistence
-work. Token counting does not need that contract; the full context consumer does
-need the QueryStore additions. Endpoint wiring follows its actual providers and
-persistence. Frontend transport, state, provider selection and presentation follow
-their actual imports and backend interfaces, not a mandatory single sequence.
+These are code dependencies, not alternative PR arrangements. Some slices have
+no direct code dependency on their immediate predecessor, but all contributions
+follow the linear review order in Contribution Model to keep review and merging
+simple. The full context consumer still needs the QueryStore additions, and
+endpoint wiring requires its providers and persistence.
 Each PR must compile and satisfy the relevant product contracts on its declared base.
 Integrated acceptance covers explicit provider choice, no silent fallback,
 traceable evidence, cancellation and reload survival.
@@ -305,7 +326,7 @@ behavior, collected findings and approved decisions still require verification.
 All extraction groups are published and recorded review findings are fixed.
 Combined acceptance remains unfinished.
 
-### Current Execution: Combined Functional Validation
+### Current Execution: Linear Restacking and Combined Functional Validation
 
 The complete extraction set is published: backend #583–#590 and frontend #55–#59.
 The recorded backend/frontend findings below are fixed, applicable hosted checks
@@ -316,6 +337,17 @@ tests, two existing skips), and all 22 MySQL integration checks pass. Verify hos
 checks and deployed HTTP behavior at this revised dependency before completing
 combined acceptance. QueryStore threads remain open for the maintainer to resolve.
 Publication alone does not satisfy M2–M4 acceptance or establish functional equivalence.
+
+Next, restack the existing PRs in the exact Contribution Model order. The recorded
+heads and assembly bases in the extraction register describe the published state;
+they do not yet satisfy the required linear arrangement. Capture the current final
+backend and frontend trees, rearrange the existing changes, and verify that the
+final trees remain identical. Resolve conflicts without dropping fixes or adding
+functionality. Update PR bases and descriptions, publish the revised heads, run
+applicable existing checks and refresh the recorded revisions and umbrella pins.
+Record the one-time tree comparison with the implementation evidence; do not add
+permanent tests for this temporary branch arrangement. Then resume the remaining
+combined acceptance below, retaining valid behavioral evidence where code is unchanged.
 
 1. Completed: #57/#58 findings are fixed in their owning branches and their hosted
    builds pass. Exact updated prerequisites are carried into #59's published assembly.
@@ -497,39 +529,21 @@ constitutes deployment or integrated acceptance.
 
 ### Publication
 
-Publish each topic branch to the project fork. Independent PRs target the
-corresponding project's `main`; dependent PRs target the preceding topic branch.
+Publish each topic branch to the project fork and preserve its existing PR.
+Follow the exact linear order in Contribution Model: only the first PR in each
+project targets `main`; every other PR targets its immediate predecessor.
 GitHub requires that base branch in the destination repository: publish an exact
-copy of the prerequisite revision there under a dedicated `codex/` topic ref,
-using the verified repository write access. Keep that base aligned with its
-prerequisite PR and record the relationship. PR descriptions state the focused
-behavior, tests, dependencies and merge order. Do not present the stacked diff as
-an independent change against main.
+copy of the predecessor PR's current head there under its `codex/` topic ref,
+using the verified repository write access. Keep each destination base aligned
+with its corresponding PR head. These are copies of individual PR branches,
+not extra branches that assemble multiple prerequisites.
 
-The backend `codex/provider-contract` base is published upstream at `b89211ced6f5da1df866ea72d361dcce154f0238`,
-exactly matching #583. The backend `codex/local-token-counting` base is published
-upstream at `370f4c329242242a86f1fdf167855f617fd94426`, exactly matching #584.
-The backend `codex/bundled-prerequisites` base is published identically in upstream
-and the fork at `1cf826b5`, assembling exact #583 `b89211ce`, #585 `c1f43ce9`
-and #587 `508546e5` (including #584); #588 targets this base and contains only its
-bundled-provider additions and required adaptations. Retarget after those
-prerequisites merge and recheck the resulting contribution.
-The backend `codex/conversation-prerequisites` base is published identically in
-upstream and the fork at `c7809ed1`, with native merge ancestry for exact
-#588 `e2ae0874`, #586 `5ddfd912` and #589 `8f3ccea2`.
-#590 targets this base and shows only its ten endpoint contribution files.
-#590 carries this updated assembly in its published `1f9166c2` head. Require
-passing applicable hosted checks on that head before declaring readiness.
-The frontend `codex/chat-stream-client` base is published upstream at
-`fdf262cedcc8719c1621775179591f381c022a79`, exactly matching frontend #55.
-The frontend `codex/chat-session-history` base is published upstream at
-`f6f5cc24e6fd7b8e6149afbab1a0f30ef7e3a594`, exactly matching #56; #58 targets it.
-The frontend `codex/conversation-prerequisites` base is published identically in
-upstream and the fork at `498726be44007bdb0c6b736cbfc7e78559ece3f7`, assembling
-exact #58 `b3d8a7c` (including #56/#55) and #57 `59943fb`; #59 targets this
-base and contains only its lifecycle/presentation additions and required adaptations.
-Retarget and recheck after those prerequisites merge.
-No integration branch or main branch was changed to create these bases.
+Update PR descriptions to state their focused behavior, validation and immediate
+predecessor. Remove assembly branches from the PR review path as the existing
+PRs are retargeted. After a predecessor merges, rebase and retarget the remaining
+stack in order, preserving its changes and checking the resulting diffs. Do not
+change the reference integration branches or merge into upstream `main` as part
+of restacking.
 
 Assembled-system verification records the selected source revisions and invokes
 existing functional checks. Permanent workspace checks verify source consistency
