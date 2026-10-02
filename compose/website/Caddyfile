@@ -1,0 +1,26 @@
+{
+    # Domain addresses enable automatic TLS; port-only defaults use HTTP.
+    admin off
+    email {$CADDY_EMAIL:nobody@example.com}
+    log {
+        output stderr
+        format console
+    }
+}
+
+# Static OpenClinAI hosts. Product routing uses separate deployment configuration.
+{$CADDY_SITE::80} {
+    root * /srv/landing
+    file_server
+}
+
+# Optional publication hosts use unpublished local ports by default.
+{$CADDY_SITE_REPORTS::8091} {
+    root * /srv/reports
+    file_server browse
+}
+
+{$CADDY_SITE_WAHS::8092} {
+    root * /srv/landing/wahs
+    file_server
+}

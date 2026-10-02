@@ -167,6 +167,22 @@ class GitTests(unittest.TestCase):
                 checker.git(ROOT, "cat-file", "-e", "bad")
 
 
+class TopologyTests(unittest.TestCase):
+    def test_exact_direct_components_with_git_owned_revisions(self):
+        pins = {path: PRODUCT_SHA for path in checker.COMPONENT_PATHS}
+        self.assertEqual(checker.check_topology(pins), [])
+
+    def test_missing_nested_duplicate_and_excluded_components_fail(self):
+        pins = {path: PRODUCT_SHA for path in checker.COMPONENT_PATHS}
+        del pins["targets/med-agent-hub"]
+        pins["targets/validation-harness/targets/querystore"] = PRODUCT_SHA
+        pins["targets/openmrs_chatbot"] = PRODUCT_SHA
+        errors = checker.check_topology(pins)
+        self.assertEqual(len(errors), 3)
+        self.assertTrue(any("missing direct" in item for item in errors))
+        self.assertEqual(sum("unexpected or nested" in item for item in errors), 2)
+
+
 class ScopeTests(unittest.TestCase):
     def test_only_umbrella_readme_agents_and_top_level_specs_are_scanned(self):
         sources = []
@@ -182,7 +198,7 @@ class ScopeTests(unittest.TestCase):
                 patch.object(Path, "exists", return_value=False):
             errors = checker.validate(ROOT)
         self.assertEqual(sources, ["README.md", "AGENTS.md", "specs/roadmap.md"])
-        self.assertEqual(len(errors), 3)
+        self.assertEqual(len([error for error in errors if "missing.md" in error]), 3)
 
 
 if __name__ == "__main__":

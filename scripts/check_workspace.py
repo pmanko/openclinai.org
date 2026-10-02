@@ -10,6 +10,10 @@ from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 SHA = r"[0-9a-f]{40}"
+COMPONENT_PATHS = {
+    "targets/validation-harness", "targets/med-agent-hub", "targets/catalyst",
+    "targets/chartsearchai", "targets/chartsearchai-esm", "targets/querystore",
+}
 
 
 @overload
@@ -90,6 +94,15 @@ def check_status(status, pins):
     return errors
 
 
+def check_topology(pins):
+    paths = set(pins)
+    errors = [f"{path}: missing direct component gitlink"
+              for path in sorted(COMPONENT_PATHS - paths)]
+    errors.extend(f"{path}: unexpected or nested component gitlink"
+                  for path in sorted(paths - COMPONENT_PATHS))
+    return errors
+
+
 def markdown_links(text):
     text = re.sub(r"(?ms)^ {0,3}(`{3,}|~{3,})[^\n]*\n.*?^ {0,3}\1[ \t]*$", "", text)
     patterns = (r"\[[^\]\n]*\]\(\s*(<[^>]+>|[^\s)]+)",
@@ -128,6 +141,7 @@ def validate(root=ROOT):
     root = root.resolve()
     errors = []
     pins, remotes = repositories(root, errors)
+    errors.extend(check_topology(pins))
     errors.extend(check_status(git(root, "submodule", "status", "--recursive"), pins))
     documents = [root / "README.md", root / "AGENTS.md", *sorted((root / "specs").glob("*.md"))]
     for source in documents:
