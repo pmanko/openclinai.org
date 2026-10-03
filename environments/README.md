@@ -39,10 +39,16 @@ Shared `.env.chartsearch.example` defaults are applied first, then this file, th
 explicit command options. The old checkout-wide `.env.chartsearch` and ambient
 shell settings do not silently supply installation overrides.
 
+The verified HIV baseline uses the standard OpenMRS demo login: `admin` /
+`Admin123`, already supplied by the shared defaults. No credential setup or
+password reset is needed. Override `CHARTSEARCH_ADMIN_USER` and
+`CHARTSEARCH_ADMIN_PASSWORD` only when an existing installation uses a different
+login; these settings select credentials to use, not a new password to assign.
+
 Supported overrides are the existing settings in `.env.chartsearch.example`, plus
 database/index ports, database credentials/name, backend tag, timezone/anchor and
 the optional warmup patient identifier. Unknown keys fail rather than being passed
-to a service. Credentials are accepted only from the private settings file, not
+to a service. Credential overrides belong in the private settings file, not
 command options. Warmup remains optional test preparation, not a product change.
 
 ## Inspect Without Changes

@@ -161,10 +161,9 @@ case "$*" in *"exec -T frontend cat "*) printf '{"imports": {}}\\n' ;; *) exit 1
     assert "harness-openmrs" not in calls[0]
 
 
-@pytest.mark.parametrize("invalid_target,stop_fails,missing_password", (
-    (True, False, False), (False, True, False), (False, False, True)))
+@pytest.mark.parametrize("invalid_target,stop_fails", ((True, False), (False, True)))
 def test_demo_seed_refuses_unsafe_identifiers_and_failed_backend_stop_before_database_changes(
-        tmp_path, invalid_target, stop_fails, missing_password):
+        tmp_path, invalid_target, stop_fails):
     root = tmp_path / "workspace"
     (root / "scripts").mkdir(parents=True)
     shutil.copy2(ROOT / "scripts/seed-local.sh", root / "scripts/seed-local.sh")
@@ -182,7 +181,6 @@ if [ "$1" = stop ] && [ "$STOP_FAILS" = 1 ]; then exit 1; fi
 ''')
     env = {**os.environ, "PATH": f"{fake}:{os.environ['PATH']}", "CALL_LOG": str(log),
            "STOP_FAILS": str(int(stop_fails)), "DB_CONTAINER": "owned-db-id",
-           "CHARTSEARCH_ADMIN_PASSWORD": "" if missing_password else secrets.token_urlsafe(24),
            "OPENMRS_BACKEND": "owned-backend-id", "ARTIFACTS_DIR": str(root / "owned-artifacts")}
     target = "openmrs`; DROP DATABASE other; --" if invalid_target else "openmrs"
     result = subprocess.run(["bash", str(root / "scripts/seed-local.sh"), "--dump", str(dump),
@@ -191,19 +189,17 @@ if [ "$1" = stop ] && [ "$STOP_FAILS" = 1 ]; then exit 1; fi
     assert result.returncode != 0
     calls = log.read_text().splitlines() if log.exists() else []
     assert not any("mariadb" in call or "start " in call for call in calls)
-    if invalid_target or missing_password:
+    if invalid_target:
         assert calls == []
-        if missing_password:
-            assert "configure CHARTSEARCH_ADMIN_PASSWORD in private settings" in result.stderr
     else:
         assert calls == ["exec owned-db-id sh -c true", "stop owned-backend-id"]
 
 
-@pytest.mark.parametrize("api_ready,modules_present,clinical_changed", (
-    (True, True, False), (False, True, False), (True, False, False), (True, True, True),
-    ("denied", True, False)))
-def test_demo_seed_uses_selected_credentials_receipt_and_never_restarts_on_timeout(
-        tmp_path, api_ready, modules_present, clinical_changed):
+@pytest.mark.parametrize("api_ready,modules_present,clinical_changed,use_demo_defaults", (
+    (True, True, False, False), (False, True, False, False), (True, False, False, False),
+    (True, True, True, False), ("denied", True, False, False), (True, True, False, True)))
+def test_demo_seed_uses_demo_defaults_or_selected_credentials_and_never_restarts_on_timeout(
+        tmp_path, api_ready, modules_present, clinical_changed, use_demo_defaults):
     root = tmp_path / "workspace"
     (root / "scripts").mkdir(parents=True)
     shutil.copy2(ROOT / "scripts/seed-local.sh", root / "scripts/seed-local.sh")
@@ -222,7 +218,7 @@ else printf 'verified\\n' >> "$CALL_LOG"; fi
     executable(fake / "curl", '''args=("$@")
 for ((i=0; i<${#args[@]}; i++)); do
   if [ "${args[$i]}" = -u ]; then
-    [ "${args[$((i+1))]}" = "$CHARTSEARCH_ADMIN_USER:$CHARTSEARCH_ADMIN_PASSWORD" ] || exit 9
+    [ "${args[$((i+1))]}" = "$EXPECTED_ADMIN_AUTH" ] || exit 9
   fi
 done
 case "$*" in
@@ -242,17 +238,24 @@ case "$*" in *"mariadb-dump"*)
 esac
 ''')
     artifacts = root / "selected-artifacts"
-    test_password = secrets.token_urlsafe(24)
+    test_user = "admin" if use_demo_defaults else "study-admin"
+    test_password = "Admin123" if use_demo_defaults else secrets.token_urlsafe(24)
     env = {**os.environ, "PATH": f"{fake}:{os.environ['PATH']}", "CALL_LOG": str(log),
            "DB_CONTAINER": "owned-db-id", "OPENMRS_BACKEND": "owned-backend-id",
-           "CHARTSEARCH_ADMIN_USER": "study-admin", "CHARTSEARCH_ADMIN_PASSWORD": test_password,
+           "CHARTSEARCH_ADMIN_USER": test_user, "CHARTSEARCH_ADMIN_PASSWORD": test_password,
+           "EXPECTED_ADMIN_AUTH": f"{test_user}:{test_password}",
            "API_READY": str(int(api_ready)) if isinstance(api_ready, bool) else api_ready,
            "MODULES_PRESENT": str(int(modules_present)),
            "CLINICAL_CHANGED": str(int(clinical_changed)), "HASH_MARKER": str(tmp_path / "hash-marker"),
            "REAL_PYTHON": sys.executable, "ARTIFACTS_DIR": str(artifacts)}
+    if use_demo_defaults:
+        env.pop("CHARTSEARCH_ADMIN_USER", None)
+        env.pop("CHARTSEARCH_ADMIN_PASSWORD", None)
     result = subprocess.run(["bash", str(root / "scripts/seed-local.sh"), "--dump", str(dump),
                              "--no-reindex"], cwd=root, env=env, capture_output=True, text=True,
                             check=False, timeout=15)
+    if use_demo_defaults:
+        assert result.returncode == 0, result.stderr
     calls = log.read_text().splitlines()
     assert calls[0] == "verified"
     assert calls.count("stop owned-backend-id") == 1

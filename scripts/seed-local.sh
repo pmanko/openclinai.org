@@ -31,7 +31,8 @@ BACKEND="${OPENMRS_BACKEND:-harness-openmrs-backend}"
 PROXY_PORT="${PROXY_PORT:-${HARNESS_PROXY_HTTP_PORT:-8088}}"
 TARGET_DB="${SEED_TARGET_DB:-openmrs}"
 ADMIN_USER="${CHARTSEARCH_ADMIN_USER:-admin}"
-ADMIN_PASSWORD="${CHARTSEARCH_ADMIN_PASSWORD:-}"
+# Match the local OpenMRS demo defaults; existing installations can override them.
+ADMIN_PASSWORD="${CHARTSEARCH_ADMIN_PASSWORD:-Admin123}"
 ARTIFACTS_DIR="${ARTIFACTS_DIR:-${ROOT}/artifacts}"
 if [[ "$ARTIFACTS_DIR" != /* ]]; then ARTIFACTS_DIR="${ROOT}/${ARTIFACTS_DIR}"; fi
 DUMP=""
@@ -55,11 +56,6 @@ for identifier in "$TARGET_DB" "$DB_USER"; do
     exit 1
   fi
 done
-
-if [[ -z "$ADMIN_PASSWORD" ]]; then
-  echo "ERROR: configure CHARTSEARCH_ADMIN_PASSWORD in private settings before importing the baseline. No database change was attempted." >&2
-  exit 1
-fi
 
 # --- resolve the dump to restore ---
 if [[ -n "$FROM_SCHEMA" ]]; then

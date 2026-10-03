@@ -20,8 +20,8 @@ on umbrella `5116e8602bc9f216a2b1f385fa930e87a761d0d1`; component pins are uncha
 - Explicit seed rejects unsafe database/user identifiers and a failed backend
   stop. It uses selected credentials/artifacts, requires both consumer modules,
   bounds API waits and does not restart/reset because a wait expires.
-  Missing private administrator credentials stop before import; there is no
-  hardcoded administrator password fallback.
+  The standard OpenMRS demo login is the default; existing installations may
+  supply a credential override without changing an account's password.
 - Selected research imports require the preset's exact HIV archive identity in
   addition to the existing portable-corpus/provenance checks. No other dataset
   is an accepted fallback.
@@ -95,13 +95,19 @@ selected-backend restart reached the native session API again, retained the
 generator-off property and produced the same clinical-content digest. No other
 installation was restarted or imported.
 
-**Remaining setup failure:** startup finished, but the configured administrator
-login was rejected by the imported baseline. The seed now reports this immediately
-and fails without writing a success receipt. No password was reset or guessed.
-Known baseline credentials or an approved fresh-install account bootstrap must
-be established before authentication, module/API and browser readiness can pass.
-QueryStore still reports missing embedding properties, and the bundled model has
-not been provisioned; neither provider is claimed ready.
+**Authentication correction, 3 October 2026:** the imported baseline accepts the
+standard `admin` / `Admin123` demo login. The earlier rejection was caused by an
+incorrect password override in the disposable instance settings. Removing that
+override restored the existing shared default; no database account was changed.
+An authenticated session returned `authenticated=true`, both required modules
+reported started, no module reported stopped, and the FHIR Patient API returned
+HTTP 200 with a patient record. An administrator bootstrap or a new credential
+policy was unnecessary. The seed helper again accepts the standard demo defaults
+as well as explicitly configured credentials.
+
+QueryStore embedding configuration and bundled model provisioning remain open;
+neither provider or the browser workflow is claimed ready. The earlier failed
+seed did not write a success receipt; the later read-only checks do not invent one.
 
 ## Validation and Remaining Delivery
 
@@ -126,16 +132,17 @@ failed. `RemoteLlmEngineResponseSizeBoundTest.contextOverflowIsReportedThroughBl
 expected `ChartTooLargeException` in its streaming case and received `APIException`
 with `HTTP/1.1 header parser received no bytes`. The ChartSearchAI API suite
 reported 2,949 tests, one failure and 59 skips; subsequent frontend steps did not
-run. The product pins are unchanged. This is not evidence of an HIV import
-regression, but its cause is not established and required CI is not green.
-No test was weakened, product source changed or rerun used to erase this finding.
+run. The product pins are unchanged. The automatically triggered
+[run for documentation head `19ab29e`](https://github.com/pmanko/openclinai.org/actions/runs/37097812744)
+subsequently passed both the source pair and frontend checks with those same pins.
+The earlier HTTP failure's cause remains unexplained; the later pass does not
+establish a fix. No product source or test was changed to dismiss it.
 
 Read-only account inspection found the archive administrator at user ID 1 with
 system ID `admin`, no username and `retired=0`. The checked-in user transform
 passes through the source password and salt rather than establishing the private
-settings password. This identifies the account but does not establish valid
-credentials; fresh-install credential policy remains an owner decision. Existing
-installation passwords must remain unchanged.
+settings password. The successful standard-demo login above verifies its existing
+credentials. Private connection settings are not password-reset instructions.
 
 The native-property check is reproducible from the umbrella root with the built
 backend image; it has no application volume mounts or network access:

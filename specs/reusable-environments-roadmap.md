@@ -354,6 +354,11 @@ setup must preserve existing credentials and unrelated users. Keep both bundled
 and Hub provider paths available. Role/context metadata is not proof of role-based
 authorization or automatic adaptation of model instructions.
 
+Use the verified baseline's standard OpenMRS demo login (`admin` / `Admin123`)
+from the existing shared defaults. Private settings can select an existing
+installation's different credentials; they do not reset its password. Do not add
+an administrator bootstrap or a credential-policy approval step for this demo.
+
 For Ross's existing installation, first inspect ownership, Compose project/volume
 names, data identity, configurations and component versions without mutation.
 Present the migration and backup/rollback steps before stopping it. Carry over
@@ -567,7 +572,7 @@ and recipient acceptance. These remain distinct facts.
 | --- | --- | --- |
 | Research and roadmap | Ross implementation authorized | User authorized diligent execution; contract and migration signoffs remain required |
 | Select and inspect | Approved and locally verified; publication/CI pending | 39 umbrella unit and 230 operational tests passed (one existing opt-in deselected); two private configurations rendered distinct projects/ports/volumes through real read-only Compose inspection; no test installation started; separate self-review caught and fixed the Make default regression and covered secret-safe output, native reuse, scope and truthful readiness limits |
-| Prepare and preserve ChartSearchAI | Native core preparation and HIV-only boot/restart preservation verified; not ready for handoff | 48 umbrella unit and 246 operational tests passed (one existing opt-in deselected); real selected source builds/import and 16 clinical-table content comparisons passed before/after boot and restart with generator disabled; baseline administrator credentials are rejected, so authenticated API/account/provider readiness and historical-schema migration remain open. See [disposable proof](reviews/2026-10-02-research-preparation-proof.md). |
+| Prepare and preserve ChartSearchAI | Native core preparation, HIV-only boot/restart preservation and standard demo login verified; not ready for handoff | 48 umbrella unit and 246 operational tests passed (one existing opt-in deselected); real selected source builds/import and 16 clinical-table content comparisons passed before/after boot and restart with generator disabled. Removing an incorrect disposable password override restored authenticated patient/API access; every module is started. Account/provider readiness and historical-schema migration remain open. See [disposable proof](reviews/2026-10-02-research-preparation-proof.md). |
 | Restore research accounts and context | Not started | Pending account and companion product/browser tests |
 | Run and hand off ChartSearchAI | Not started | Pending real run, browser evidence and recipient confirmation |
 | Reuse with Catalyst | Not started | Pending bounded native-path proof |
