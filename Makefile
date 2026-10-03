@@ -9,22 +9,12 @@ TRACE_FILE ?= $(CURDIR)/artifacts/hub-trace/trace.jsonl
 CORPUS_PROVENANCE ?= $(wildcard $(CURDIR)/artifacts/chartsearchai-local/corpus-provenance.json)
 UV_PROJECT_ENVIRONMENT ?= $(CURDIR)/$(HARNESS)/.venv
 export UV_PROJECT_ENVIRONMENT
-export ENV
-ARTIFACTS_DIR ?= artifacts
-export ARTIFACTS_DIR
 
 .PHONY: up down local-stack-up local-stack-down reset status logs catalyst-mvp-up catalyst-mvp-external catalyst-mvp-seed catalyst-mvp-warm catalyst-mvp-health catalyst-mvp-restart catalyst-mvp-down catalyst-mvp-reset catalyst-superset-status catalyst-superset-import reset-transform sqlmesh-status loadtest-up loadtest-down dump-loaded chartsearch-build querystore-build openmrs-source-pair-build openmrs-source-pair-test repository-lines-check repository-lines-pr-check deployed-sources-check chartsearch-esm-build chartsearch-esm-dev llama-router-up llama-router-down llama-router-models llama-router-small-model-proof med-agent-hub-build med-agent-hub-up med-agent-hub-logs med-agent-hub-restart med-agent-hub-test chartsearch-test querystore-test querystore-test-integration chartsearch-configure querystore-configure querystore-reindex querystore-recreate-index chartsearch-backend chartsearchai-local dual-provider-up chartsearch-doctor seed validate-preflight validate-run load-test orphan-fk-check import-smoke completeness-check test
 
 # --- compose lifecycle ---
 up:
 	./scripts/stack-up.sh --wait
-
-.PHONY: environment-config environment-status
-environment-config:
-	python3 scripts/environment.py config
-
-environment-status:
-	python3 scripts/environment.py status
 
 down:
 	./scripts/stack-down.sh
@@ -99,23 +89,23 @@ dump-loaded:
 
 chartsearch-build: querystore-build
 	cd targets/chartsearchai && mvn -DskipTests -B package
-	mkdir -p "$(ARTIFACTS_DIR)/openmrs/modules" "$(ARTIFACTS_DIR)/chartsearchai-local/module-provenance"
-	cp targets/chartsearchai/omod/target/chartsearchai-*.omod "$(ARTIFACTS_DIR)/openmrs/modules/"
+	mkdir -p artifacts/openmrs/modules artifacts/chartsearchai-local/module-provenance
+	cp targets/chartsearchai/omod/target/chartsearchai-*.omod artifacts/openmrs/modules/
 	./scripts/artifact-provenance.py write --repo targets/chartsearchai \
-	  --artifact "$(ARTIFACTS_DIR)/openmrs/modules/chartsearchai-1.0.0-SNAPSHOT.omod" \
-	  --manifest "$(ARTIFACTS_DIR)/chartsearchai-local/module-provenance/chartsearchai-1.0.0-SNAPSHOT.omod.provenance.json"
-	@ls -la "$(ARTIFACTS_DIR)/openmrs/modules/"chartsearchai-*.omod
+	  --artifact artifacts/openmrs/modules/chartsearchai-1.0.0-SNAPSHOT.omod \
+	  --manifest artifacts/chartsearchai-local/module-provenance/chartsearchai-1.0.0-SNAPSHOT.omod.provenance.json
+	@ls -la artifacts/openmrs/modules/chartsearchai-*.omod
 
 # Build the pinned patient-record source module used by the hub's optional
 # Querystore adapter. The local entrypoint invokes this only when missing/stale.
 querystore-build:
 	cd targets/querystore && mvn -DskipTests -B install
-	mkdir -p "$(ARTIFACTS_DIR)/openmrs/modules" "$(ARTIFACTS_DIR)/chartsearchai-local/module-provenance"
-	cp targets/querystore/omod/target/querystore-*.omod "$(ARTIFACTS_DIR)/openmrs/modules/"
+	mkdir -p artifacts/openmrs/modules artifacts/chartsearchai-local/module-provenance
+	cp targets/querystore/omod/target/querystore-*.omod artifacts/openmrs/modules/
 	./scripts/artifact-provenance.py write --repo targets/querystore \
-	  --artifact "$(ARTIFACTS_DIR)/openmrs/modules/querystore-1.0.0-SNAPSHOT.omod" \
-	  --manifest "$(ARTIFACTS_DIR)/chartsearchai-local/module-provenance/querystore-1.0.0-SNAPSHOT.omod.provenance.json"
-	@ls -la "$(ARTIFACTS_DIR)/openmrs/modules/"querystore-*.omod
+	  --artifact artifacts/openmrs/modules/querystore-1.0.0-SNAPSHOT.omod \
+	  --manifest artifacts/chartsearchai-local/module-provenance/querystore-1.0.0-SNAPSHOT.omod.provenance.json
+	@ls -la artifacts/openmrs/modules/querystore-*.omod
 
 # Build and stage the current development pair in dependency order. Unlike the
 # strict test target below, this supports intentional dirty-tree local work.
@@ -140,8 +130,8 @@ deployed-sources-check: repository-lines-check
 chartsearch-esm-build:
 	@./scripts/chartsearch-esm-build.sh
 	@./scripts/artifact-provenance.py write --repo targets/chartsearchai-esm \
-	  --artifact "$(ARTIFACTS_DIR)/openmrs/spa-custom" \
-	  --manifest "$(ARTIFACTS_DIR)/openmrs/chartsearchai-esm.provenance.json"
+	  --artifact artifacts/openmrs/spa-custom \
+	  --manifest artifacts/openmrs/chartsearchai-esm.provenance.json
 
 # Day-to-day ESM dev loop. Spins up `openmrs develop` (Express + HMR) on
 # port 8080 and proxies API to the local docker backend. Edits in

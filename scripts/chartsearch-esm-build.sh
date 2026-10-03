@@ -17,10 +17,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ESM_DIR="${ROOT}/targets/chartsearchai-esm"
-ARTIFACTS_DIR="${ARTIFACTS_DIR:-${ROOT}/artifacts}"
-case "${ARTIFACTS_DIR}" in /*) ;; *) ARTIFACTS_DIR="${ROOT}/${ARTIFACTS_DIR}" ;; esac
-export ARTIFACTS_DIR
-ARTIFACT_DIR="${ARTIFACTS_DIR}/openmrs/spa-custom"
+ARTIFACT_DIR="${ROOT}/artifacts/openmrs/spa-custom"
 TARGET_NAME="openmrs-esm-chartsearchai-app-multiturn"
 
 if [ ! -d "${ESM_DIR}" ]; then
@@ -49,7 +46,7 @@ echo "==> yarn ${EXPECTED_YARN} install --immutable ($(cd "${ESM_DIR}" && pwd))"
 echo "==> yarn build"
 (cd "${ESM_DIR}" && "${YARN_CMD[@]}" build)
 
-echo "==> stage dist/ → ${ARTIFACT_DIR}/${TARGET_NAME}/"
+echo "==> stage dist/ → artifacts/openmrs/spa-custom/${TARGET_NAME}/"
 mkdir -p "${ARTIFACT_DIR}/${TARGET_NAME}"
 rsync -a --delete "${ESM_DIR}/dist/" "${ARTIFACT_DIR}/${TARGET_NAME}/"
 

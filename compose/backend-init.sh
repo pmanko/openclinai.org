@@ -7,15 +7,14 @@
 # pre-uid-1001 root-owned contents and drop to the openmrs user. The OpenMRS
 # process always runs as uid 1001.
 set -eu
-OMRS_HOME="${OMRS_HOME:-/openmrs}"
 if [ "$(id -u)" = "0" ]; then
-  chown -R 1001:1001 "$OMRS_HOME/data" 2>/dev/null || true
+  chown -R 1001:1001 /openmrs/data 2>/dev/null || true
   exec runuser -u openmrs -- "$0" "$@"
 fi
 
 # Native startup merges this file into runtime properties (or installation
 # properties on first boot). OMRS_EXTRA_* cannot preserve this case-sensitive key.
-cd "$OMRS_HOME"
+cd /openmrs
 touch openmrs-extra.properties
 awk '
   BEGIN { print "referencedemodata.createDemoPatients=false" }
@@ -23,7 +22,7 @@ awk '
 ' openmrs-extra.properties > openmrs-extra.properties.next
 mv openmrs-extra.properties.next openmrs-extra.properties
 
-MODEL_DIR="$OMRS_HOME/data/chartsearchai"
+MODEL_DIR="/openmrs/data/chartsearchai"
 mkdir -p "$MODEL_DIR"
 
 # Embedding model (all-MiniLM-L6-v2, ~86MB). querystore.embedding.modelFilePath
@@ -45,4 +44,4 @@ if [ ! -f "$VOCAB_FILE" ]; then
   echo "Vocab downloaded."
 fi
 
-exec "$OMRS_HOME/startup.sh"
+exec /openmrs/startup.sh

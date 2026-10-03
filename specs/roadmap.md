@@ -15,12 +15,13 @@ direction.
    ordered scenario additions including all seven evaluation accounts. Carry over
    useful setup code, not an old database. Deliver the verified ChartSearchAI
    preview and copyable instructions before Catalyst alignment or broader cleanup.
-   Keep the evaluation pause short through bounded scope and reuse, not skipped
-   acceptance or security checks. Old-database backup, migration, repair and
-   adoption are not delivery requirements. Leave unrelated installations alone;
-   normal repeat startup must not duplicate accounts or reload data. Report/demo
-   publication and changes to someone else's running environment require their
-   own approval.
+   Setup proof is OpenMRS booting, ChartSearchAI available on it and a sample of
+   the intended HIV records. Remove custom
+   Docker ownership/storage auditing and unrelated backup/restore work. Role-context
+   enhancements, broader functionality tests, evaluations and videos follow
+   separately; they are not setup blockers. Leave unrelated installations alone.
+   Report/demo publication and changes to someone else's running environment
+   require their own approval.
 2. Use the consolidated documentation and focused website patch. Application
    requirements belong to their maintained product authorities; cross-project
    integration specifications and delivery belong to this umbrella; experiment
@@ -84,7 +85,7 @@ Environment sequence, review points and acceptance live in the linked roadmap.
 | Validation harness | PRs #197 and #198 are merged; runners use configured targets and supplied/observed provenance; required fields/types are checked without treating caller claims as verified revisions | Verify actual product interfaces separately; fixture isolation is not product acceptance |
 | Website | Sources and publication tooling are umbrella-owned; GitHub Pages is configured for Actions and build/deploy pass; browser inspection confirms the documentation loads | Public landing deployment and product/demo publication remain separate |
 | Specifications | Product behavior, shared delivery and validation protocols have maintained owners; duplicate plans and obsolete lane instructions are removed; companion documentation is merged | Follow the maintained owners; broader content proposals retain their own review |
-| Reusable environments | [Detailed roadmap](reusable-environments-roadmap.md) specifies fresh HIV-only setup and ordered scenario additions; selection/status and disposable native preparation/import/login proof exist | Connect fresh setup, indexing/providers and the seven-account provisioner; reconcile account context and prove browser/evaluation/handoff. Old-database upgrade and backup research are not blockers. See the [scope audit](reviews/2026-10-02-ross-migration-inventory.md#scope-audit-3-october-2026) and [preparation evidence](reviews/2026-10-02-research-preparation-proof.md). |
+| Reusable environments | [Detailed roadmap](reusable-environments-roadmap.md) defines fresh HIV-only setup using existing tools and saved accounts/settings; partial startup/import proof exists | Connect the public setup command, indexing/providers and the seven-account provisioner. Smoke-check OpenMRS, ChartSearchAI availability and sampled HIV data. Account-context enhancements and broader evaluation remain follow-up, not setup gates. See the [scope audit](reviews/2026-10-02-ross-migration-inventory.md#scope-audit-3-october-2026). |
 | Product delivery | Eight backend and five frontend extractions are published. Applicable hosted checks pass on all recorded heads; no review threads are unresolved. Confirmed findings are fixed. Backend #590 retains the documented local macOS socket-test failure despite passing hosted source-pair checks. Both linear stacks are published and their current hosted builds pass. Combined functional validation passes, and all thirteen contributions are ready for review | Maintainer review and ordered merging; retain integration branches unchanged |
 
 The phases below cover the component layout and validation interfaces defined in

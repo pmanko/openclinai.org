@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prepare OpenMRS core, or run the existing local Hub demo path explicitly.
+# Bring up the complete local ChartSearchAI product path through med-agent-hub.
 
 set -euo pipefail
 
@@ -9,20 +9,16 @@ HUB_BUILD_REVISION="$(git -C targets/med-agent-hub rev-parse HEAD)"
 export HUB_BUILD_REVISION
 
 CHECK_ONLY=0
-PREPARE_CORE=0
-for arg in "$@"; do
-  case "${arg}" in
-    --check) CHECK_ONLY=1 ;;
-    --prepare-core) PREPARE_CORE=1 ;;
-    *) echo "usage: $0 [--check] [--prepare-core]" >&2; exit 2 ;;
-  esac
-done
+if [ "${1:-}" = "--check" ]; then
+  CHECK_ONLY=1
+elif [ "$#" -gt 0 ]; then
+  echo "usage: $0 [--check]" >&2
+  exit 2
+fi
 
 load_config_value() {
   local name="$1" file value
   printenv "${name}" >/dev/null 2>&1 && return
-  # Instance settings were already parsed as data by the umbrella selector.
-  [ -n "${OPENCLINAI_ENVIRONMENT:-}" ] && return
   for file in .env.chartsearch .env.chartsearch.example; do
     [ -f "${file}" ] || continue
     grep -q "^${name}=" "${file}" || continue
@@ -54,32 +50,26 @@ if [ -z "${HUB_TIMEZONE:-}" ]; then
 fi
 export HUB_TIMEZONE
 
-COMPOSE=(docker compose)
-if [ -n "${COMPOSE_ENV_FILE:-}" ]; then
-  COMPOSE+=(--env-file "${COMPOSE_ENV_FILE}")
-fi
-COMPOSE+=(-f "${COMPOSE_FILE:-compose/openmrs-2.8-refapp.yml}")
-ARTIFACTS_DIR="${ARTIFACTS_DIR:-artifacts}"
-export ARTIFACTS_DIR
+COMPOSE=(docker compose -f compose/openmrs-2.8-refapp.yml)
 OPENMRS_URL="http://127.0.0.1:${HARNESS_PROXY_HTTP_PORT:-8088}/openmrs"
 HUB_URL="http://127.0.0.1:${MED_AGENT_HUB_PORT:-18081}"
 ROUTER_URL="http://127.0.0.1:8077"
 MODEL_DIR="${LLAMA_MODEL_DIR:-${HOME}/.cache/llama-router-models}"
 BUILD_MODE="${CHARTSEARCH_LOCAL_BUILD:-auto}"
 WARM_MODE="${CHARTSEARCH_LOCAL_WARM:-off}"
-SOURCE_ENV="${ARTIFACTS_DIR}/chartsearchai-local/querystore-service.env"
+SOURCE_ENV="${ROOT}/artifacts/chartsearchai-local/querystore-service.env"
 DEFAULT_PATIENT="${CHARTSEARCH_LOCAL_PATIENT_UUID:-dd75c020-1691-11df-97a5-7038c432aabf}"
 WARM_QUESTION="${CHARTSEARCH_LOCAL_WARM_QUESTION:-What was the latest visit date?}"
 MODULES_CHANGED=0
 OPENMRS_PAIR_NEEDS_BUILD=0
-CHARTSEARCH_OMOD="${ARTIFACTS_DIR}/openmrs/modules/chartsearchai-1.0.0-SNAPSHOT.omod"
-CHARTSEARCH_OMOD_PROVENANCE="${ARTIFACTS_DIR}/chartsearchai-local/module-provenance/chartsearchai-1.0.0-SNAPSHOT.omod.provenance.json"
-QUERYSTORE_OMOD="${ARTIFACTS_DIR}/openmrs/modules/querystore-1.0.0-SNAPSHOT.omod"
-QUERYSTORE_OMOD_PROVENANCE="${ARTIFACTS_DIR}/chartsearchai-local/module-provenance/querystore-1.0.0-SNAPSHOT.omod.provenance.json"
-CHARTSEARCH_ESM="${ARTIFACTS_DIR}/openmrs/spa-custom"
-CHARTSEARCH_ESM_PROVENANCE="${ARTIFACTS_DIR}/openmrs/chartsearchai-esm.provenance.json"
-DEPLOYED_CHARTSEARCH_PROVENANCE="${ARTIFACTS_DIR}/chartsearchai-local/deployed-chartsearchai-omod.json"
-DEPLOYED_QUERYSTORE_PROVENANCE="${ARTIFACTS_DIR}/chartsearchai-local/deployed-querystore-omod.json"
+CHARTSEARCH_OMOD="artifacts/openmrs/modules/chartsearchai-1.0.0-SNAPSHOT.omod"
+CHARTSEARCH_OMOD_PROVENANCE="artifacts/chartsearchai-local/module-provenance/chartsearchai-1.0.0-SNAPSHOT.omod.provenance.json"
+QUERYSTORE_OMOD="artifacts/openmrs/modules/querystore-1.0.0-SNAPSHOT.omod"
+QUERYSTORE_OMOD_PROVENANCE="artifacts/chartsearchai-local/module-provenance/querystore-1.0.0-SNAPSHOT.omod.provenance.json"
+CHARTSEARCH_ESM="artifacts/openmrs/spa-custom"
+CHARTSEARCH_ESM_PROVENANCE="artifacts/openmrs/chartsearchai-esm.provenance.json"
+DEPLOYED_CHARTSEARCH_PROVENANCE="artifacts/chartsearchai-local/deployed-chartsearchai-omod.json"
+DEPLOYED_QUERYSTORE_PROVENANCE="artifacts/chartsearchai-local/deployed-querystore-omod.json"
 
 say() { printf '%s\n' "$*"; }
 fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
@@ -101,10 +91,8 @@ wait_http() {
 }
 
 wait_container() {
-  local label="$1" service="$2" timeout="$3" elapsed=0 status container
+  local label="$1" container="$2" timeout="$3" elapsed=0 status
   while true; do
-    container="$("${COMPOSE[@]}" ps -q "${service}")"
-    [ -n "${container}" ] || fail "${label} service is missing from the selected Compose project"
     status="$(docker inspect -f '{{.State.Health.Status}}' "${container}" 2>/dev/null || echo starting)"
     if [ "${status}" = "healthy" ]; then
       say "  ${label}: healthy"
@@ -175,8 +163,8 @@ remove_legacy_module_manifests() {
   # OpenMRS scans every file in this bind-mounted directory as a candidate module.
   # Provenance belongs outside it; these are stale copies from the prior layout.
   rm -f \
-    "${ARTIFACTS_DIR}/openmrs/modules/chartsearchai-1.0.0-SNAPSHOT.omod.provenance.json" \
-    "${ARTIFACTS_DIR}/openmrs/modules/querystore-1.0.0-SNAPSHOT.omod.provenance.json"
+    artifacts/openmrs/modules/chartsearchai-1.0.0-SNAPSHOT.omod.provenance.json \
+    artifacts/openmrs/modules/querystore-1.0.0-SNAPSHOT.omod.provenance.json
 }
 
 require_command curl
@@ -219,7 +207,6 @@ esac
 if [ "${OPENMRS_PAIR_NEEDS_BUILD}" = "1" ]; then
   require_command make
   require_command mvn
-  mvn -version >/dev/null 2>&1 || fail "Maven cannot start; configure the installed Java runtime (JAVA_HOME) first"
 fi
 if artifact_needs_build \
     "${CHARTSEARCH_ESM}" targets/chartsearchai-esm "${CHARTSEARCH_ESM_PROVENANCE}" \
@@ -232,29 +219,23 @@ fi
 "${COMPOSE[@]}" config --quiet
 
 ROUTER_REACHABLE=0
-if [ "${PREPARE_CORE}" = "0" ]; then
-  if curl -fsS --max-time 3 "${ROUTER_URL}/v1/models" >/dev/null 2>&1; then
-    ROUTER_REACHABLE=1
-  else
-    require_command llama-server
-    [ -d "${MODEL_DIR}" ] || fail "model directory not found: ${MODEL_DIR}"
-    [ -f "${MODEL_DIR}/gemma-e4b.gguf" ] || fail "default model missing: ${MODEL_DIR}/gemma-e4b.gguf"
-  fi
+if curl -fsS --max-time 3 "${ROUTER_URL}/v1/models" >/dev/null 2>&1; then
+  ROUTER_REACHABLE=1
+else
+  require_command llama-server
+  [ -d "${MODEL_DIR}" ] || fail "model directory not found: ${MODEL_DIR}"
+  [ -f "${MODEL_DIR}/gemma-e4b.gguf" ] || fail "default model missing: ${MODEL_DIR}/gemma-e4b.gguf"
 fi
 
 if [ "${CHECK_ONLY}" = "1" ]; then
   say "ChartSearchAI local prerequisites are present."
-  if [ "${PREPARE_CORE}" = "0" ]; then
-    say "  model directory: ${MODEL_DIR}"
-    say "  router: $([ "${ROUTER_REACHABLE}" = "1" ] && echo existing || echo host-native prerequisites)"
-  else
-    say "  core preparation only; model/provider readiness not checked"
-  fi
+  say "  model directory: ${MODEL_DIR}"
+  say "  router: $([ "${ROUTER_REACHABLE}" = "1" ] && echo existing || echo host-native prerequisites)"
   say "  temporal timezone: ${HUB_TIMEZONE}"
   exit 0
 fi
 
-mkdir -p "${ARTIFACTS_DIR}/chartsearchai-local" "${ARTIFACTS_DIR}/openmrs/backend-logs"
+mkdir -p artifacts/chartsearchai-local artifacts/llama-router
 
 if [ "${OPENMRS_PAIR_NEEDS_BUILD}" = "1" ]; then
   say "==> build OpenMRS source pair (Querystore, then ChartSearchAI)"
@@ -273,30 +254,28 @@ if ! cmp -s "${CHARTSEARCH_OMOD_PROVENANCE}" "${DEPLOYED_CHARTSEARCH_PROVENANCE}
   MODULES_CHANGED=1
 fi
 
-if [ "${PREPARE_CORE}" = "0" ]; then
-  say "==> llama.cpp router"
-  if [ "${ROUTER_REACHABLE}" = "1" ]; then
-    say "  existing router: reachable"
-  else
-    env \
-      LLAMA_MODEL_DIR="${MODEL_DIR}" \
-      LLAMA_ROUTER_MODELS_MAX="${LLAMA_ROUTER_MODELS_MAX:-2}" \
-      ./scripts/llama-router-up.sh --daemon
-    wait_http "llama.cpp router" "${ROUTER_URL}/v1/models" 60
-  fi
-  curl -fsS "${ROUTER_URL}/v1/models" \
-    | python3 -c "import json,sys; ids={x.get('id') for x in json.load(sys.stdin).get('data',[])}; assert 'gemma-e4b' in ids, 'router does not advertise gemma-e4b'"
+say "==> llama.cpp router"
+if [ "${ROUTER_REACHABLE}" = "1" ]; then
+  say "  existing router: reachable"
+else
+  env \
+    LLAMA_MODEL_DIR="${MODEL_DIR}" \
+    LLAMA_ROUTER_MODELS_MAX="${LLAMA_ROUTER_MODELS_MAX:-2}" \
+    ./scripts/llama-router-up.sh --daemon
+  wait_http "llama.cpp router" "${ROUTER_URL}/v1/models" 60
 fi
+curl -fsS "${ROUTER_URL}/v1/models" \
+  | python3 -c "import json,sys; ids={x.get('id') for x in json.load(sys.stdin).get('data',[])}; assert 'gemma-e4b' in ids, 'router does not advertise gemma-e4b'"
 
 say "==> OpenMRS core stack"
 "${COMPOSE[@]}" up -d --build db elasticsearch backend frontend gateway proxy
 if [ "${MODULES_CHANGED}" = "1" ]; then
   say "  module artifacts changed: refresh OpenMRS module caches"
-  "${COMPOSE[@]}" exec -T backend sh -c \
+  docker exec harness-openmrs-backend sh -c \
     'rm -rf /openmrs/data/.openmrs-lib-cache/chartsearchai /openmrs/data/.openmrs-lib-cache/querystore'
   "${COMPOSE[@]}" restart backend
 fi
-wait_container "OpenMRS backend" backend 600
+wait_container "OpenMRS backend" harness-openmrs-backend 600
 wait_http "OpenMRS proxy" "http://127.0.0.1:${HARNESS_PROXY_HTTP_PORT:-8088}/__proxy_health" 120
 if [ "${MODULES_CHANGED}" = "1" ]; then
   cp "${CHARTSEARCH_OMOD_PROVENANCE}" "${DEPLOYED_CHARTSEARCH_PROVENANCE}"
@@ -310,12 +289,6 @@ build_if_needed \
   targets/chartsearchai-esm \
   "${CHARTSEARCH_ESM_PROVENANCE}" \
   targets/chartsearchai-esm/src targets/chartsearchai-esm/package.json targets/chartsearchai-esm/yarn.lock
-
-if [ "${PREPARE_CORE}" = "1" ]; then
-  say "OpenMRS core prepared; provider settings and chart data were not configured or reset."
-  say "Model, patient retrieval, account and browser readiness still require verification."
-  exit 0
-fi
 
 if [ -n "${QUERYSTORE_BASE_URL:-}" ] || [ -n "${QUERYSTORE_USERNAME:-}" ] || [ -n "${QUERYSTORE_PASSWORD:-}" ]; then
   [ -n "${QUERYSTORE_BASE_URL:-}" ] && [ -n "${QUERYSTORE_USERNAME:-}" ] && [ -n "${QUERYSTORE_PASSWORD:-}" ] \

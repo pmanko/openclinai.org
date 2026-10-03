@@ -12,21 +12,15 @@
 # updates don't need a script edit.
 #
 # Where the base is fetched from:
-#   - the frontend service of the selected local Compose project
-#   - cloud generation is not available in this command
+#   - default: the local docker container `harness-openmrs-frontend`
+#   - cloud:   pass CLOUD=1 to fetch via gcp_ssh + the VM's container
 #
 # Output: artifacts/openmrs/spa-custom/routes.registry.json
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ARTIFACTS_DIR="${ARTIFACTS_DIR:-${ROOT}/artifacts}"
-case "${ARTIFACTS_DIR}" in /*) ;; *) ARTIFACTS_DIR="${ROOT}/${ARTIFACTS_DIR}" ;; esac
-ARTIFACT_DIR="${ARTIFACTS_DIR}/openmrs/spa-custom"
-COMPOSE=(docker compose)
-if [ -n "${COMPOSE_ENV_FILE:-}" ]; then COMPOSE+=(--env-file "${COMPOSE_ENV_FILE}"); fi
-COMPOSE+=(-f "${COMPOSE_FILE:-${ROOT}/compose/openmrs-2.8-refapp.yml}")
-export HUB_BUILD_REVISION="${HUB_BUILD_REVISION:-$(git -C "${ROOT}/targets/med-agent-hub" rev-parse HEAD)}"
+ARTIFACT_DIR="${ROOT}/artifacts/openmrs/spa-custom"
 TARGET_NAME="openmrs-esm-chartsearchai-app-multiturn"
 OUT="${ARTIFACT_DIR}/routes.registry.json"
 ENTRY_NAME="@openmrs/esm-chartsearchai-app"
@@ -49,10 +43,11 @@ if [ "${CLOUD:-0}" = "1" ]; then
   exit 1
 else
   echo "==> fetching live routes.registry.json from local frontend container"
-  if ! BASE_JSON="$("${COMPOSE[@]}" exec -T frontend cat /usr/share/nginx/html/routes.registry.json)"; then
-    echo "error: cannot read routes registry from the selected frontend service" >&2
+  if ! docker inspect -f '{{.State.Status}}' harness-openmrs-frontend >/dev/null 2>&1; then
+    echo "error: harness-openmrs-frontend container not running locally" >&2
     exit 1
   fi
+  BASE_JSON="$(docker exec harness-openmrs-frontend cat /usr/share/nginx/html/routes.registry.json)"
 fi
 
 # Merge in the chartsearchai entry — overwrite if already present (idempotent).

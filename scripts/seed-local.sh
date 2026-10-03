@@ -33,8 +33,6 @@ TARGET_DB="${SEED_TARGET_DB:-openmrs}"
 ADMIN_USER="${CHARTSEARCH_ADMIN_USER:-admin}"
 # Match the local OpenMRS demo defaults; existing installations can override them.
 ADMIN_PASSWORD="${CHARTSEARCH_ADMIN_PASSWORD:-Admin123}"
-ARTIFACTS_DIR="${ARTIFACTS_DIR:-${ROOT}/artifacts}"
-if [[ "$ARTIFACTS_DIR" != /* ]]; then ARTIFACTS_DIR="${ROOT}/${ARTIFACTS_DIR}"; fi
 DUMP=""
 FROM_SCHEMA=""
 REINDEX=1
@@ -60,7 +58,7 @@ done
 # --- resolve the dump to restore ---
 if [[ -n "$FROM_SCHEMA" ]]; then
   echo "==> building a module-clean dump from '${FROM_SCHEMA}' (dump-loaded.sh)"
-  DUMP="${ARTIFACTS_DIR}/seed-local/refapp_28_demo.sql.gz"
+  DUMP="${ROOT}/artifacts/seed-local/refapp_28_demo.sql.gz"
   mkdir -p "$(dirname "$DUMP")"
   SOURCE_DB="$FROM_SCHEMA" "${ROOT}/scripts/dump-loaded.sh" --source "$FROM_SCHEMA" --out "$DUMP"
 elif [[ -z "$DUMP" ]]; then
@@ -118,20 +116,6 @@ docker exec "$DB_CONTAINER" mariadb --user=root --password="$DB_ROOT_PASS" "$TAR
   UNION ALL SELECT 'encounter', COUNT(*) FROM encounter
   UNION ALL SELECT 'obs', COUNT(*) FROM obs;" || true
 
-# Compare deterministic clinical rows, not stock metadata or newly installed module tables.
-clinical_fingerprint() {
-  docker exec "$DB_CONTAINER" mariadb-dump --user=root --password="$DB_ROOT_PASS" \
-    --single-transaction --no-create-info --compact --skip-comments --skip-dump-date \
-    --skip-extended-insert --order-by-primary --hex-blob "$TARGET_DB" \
-    patient patient_identifier patient_program patient_state person_address person_attribute \
-    encounter encounter_provider obs orders drug_order test_order conditions allergy allergy_reaction visit \
-    | python3 -c 'import hashlib, sys; h = hashlib.sha256()
-for chunk in iter(lambda: sys.stdin.buffer.read(1024 * 1024), b""): h.update(chunk)
-print(h.hexdigest())'
-}
-RESTORED_CLINICAL_SHA="$(clinical_fingerprint)"
-echo "    restored clinical rows sha256: ${RESTORED_CLINICAL_SHA}"
-
 # --- start the backend; Liquibase reconciles core and both consumer modules install fresh ---
 echo "==> starting backend '${BACKEND}' (Liquibase upgrade-in-place + module install)"
 docker start "$BACKEND" >/dev/null
@@ -175,16 +159,11 @@ if [[ -n "$FAILED_MODULES" ]]; then
 fi
 echo "    all modules started"
 
-if [[ "$(clinical_fingerprint)" != "$RESTORED_CLINICAL_SHA" ]]; then
-  echo "ERROR: clinical rows changed during startup; preserve the database for diagnosis. No success receipt or automatic reset." >&2
-  exit 1
-fi
-
 # Persist the exact corpus identity consumed by the running local stack. Validation
 # manifests copy this receipt so a published run can be traced back to the dump bytes.
-CORPUS_RECEIPT="${ARTIFACTS_DIR}/chartsearchai-local/corpus-provenance.json"
+CORPUS_RECEIPT="${ROOT}/artifacts/chartsearchai-local/corpus-provenance.json"
 mkdir -p "$(dirname "${CORPUS_RECEIPT}")"
-python3 - "${DUMP}" "${PROVENANCE}" "${CORPUS_RECEIPT}" "${TARGET_DB}" "${RESTORED_CLINICAL_SHA}" <<'PY'
+python3 - "${DUMP}" "${PROVENANCE}" "${CORPUS_RECEIPT}" "${TARGET_DB}" <<'PY'
 import json
 import os
 import sys
@@ -203,7 +182,6 @@ receipt = {
     "dump_sha256": provenance["output_sha256"],
     "dump_bytes": provenance["output_bytes"],
     "source_schema": provenance.get("source_schema"),
-    "clinical_rows_sha256": sys.argv[5],
     "restored_at": datetime.now(timezone.utc).isoformat(),
 }
 tmp = receipt_path.with_suffix(receipt_path.suffix + ".tmp")
