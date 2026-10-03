@@ -9,8 +9,9 @@ boot. Starting/updating must preserve the imported corpus; importing/resetting i
 explicit. Missing data is a setup failure, not a reason to generate other patients.
 
 **Current implementation:** configuration selection and read-only status only.
-Startup, initialization, updates, account provisioning and migration through this
-interface are not available yet. Do not use it to replace an existing installation.
+Fresh setup, startup, updates and account provisioning through this interface
+are not available yet. The intended setup starts from the verified HIV baseline,
+not an old installation or database backup.
 
 ## Select an Installation
 
@@ -83,10 +84,11 @@ The native `chartsearchai-local.sh --prepare-core` helper now supports the selec
 Compose services and artifact paths without configuring providers or importing
 chart data. It is under disposable testing, not a public research setup command.
 Existing stacks with another project name are not adopted or changed by inspection.
-The environment selector still does not start or migrate an application. Retained
-data, historical-schema and two-running-instance proof are not complete.
+The environment selector still does not start an application. Native preparation
+and HIV-only restart have disposable test evidence; the complete installer,
+account provisioning and provider/browser walkthrough remain unfinished.
 
-## Research Accounts and Migration
+## Research Accounts and Setup Layers
 
 The preset's account manifest is carried over from the reviewed source of
 [setup PR #148](https://github.com/pmanko/clinical-ai-validation-harness/pull/148)
@@ -97,13 +99,20 @@ provisioned by the current commands.** Doctor/Nurse inherited permissions must b
 inspected when provisioning is implemented; these are not production least-privilege
 accounts or an automatic role-based instruction policy.
 
-Baseline metadata records the verified SQL archive checksum/size and the private
-project package location. Selection does not download or import it, and package
-access does not imply verified restore/upgrade behavior.
+The planned setup uses ordered layers: verified HIV baseline, native application
+setup, then scenario additions such as these accounts and research settings.
+Baseline metadata records the archive checksum/size and authorized project package
+location. Selection currently does not download, import or apply any additions.
 
-Normal future startup/update must preserve data, accounts, conversations and custom
-settings. First initialization and reset remain distinct explicit operations.
-An existing installation requires an ownership/schema inventory, restorable backup
-and approved storage mapping before changes. See the
-[implementation roadmap](../specs/reusable-environments-roadmap.md); recipient
-browser testing and final handoff remain open.
+Saved additions must declare what they create or change and use existing tools
+and application APIs. Repeating setup must not duplicate accounts, reset passwords
+or reload the dataset; conflicting changes must be reported rather than silently
+overwritten. The source HIV archive remains unchanged. Other scenarios can reuse
+the baseline and select their own declared additions, without another database
+dump or installer framework.
+
+Fresh setup does not require a backup, old-schema repair or adoption of Ross's
+previous installation. Ordinary start/update must not reset the new environment;
+an explicit reset recreates only the selected disposable setup. See the
+[implementation roadmap](../specs/reusable-environments-roadmap.md) for the
+remaining implementation and recipient checks.

@@ -9,15 +9,18 @@ direction.
 
 ## 1. Current Priorities
 
-1. Prioritize Ross's tested migration and instructions through the
+1. Prioritize Ross's fresh research setup and instructions through the
    [reusable environments, evaluations and demos roadmap](reusable-environments-roadmap.md).
-   Carry his useful setup into the revamped umbrella, preserving data, accounts
-   and customizations. Deliver the verified ChartSearchAI preview and copyable
-   handoff instructions before Catalyst alignment or broader tooling cleanup.
+   Reuse the verified HIV baseline and native tooling, then apply reproducible,
+   ordered scenario additions including all seven evaluation accounts. Carry over
+   useful setup code, not an old database. Deliver the verified ChartSearchAI
+   preview and copyable instructions before Catalyst alignment or broader cleanup.
    Keep the evaluation pause short through bounded scope and reuse, not skipped
-   acceptance or security checks. Retain the old installation as migration input
-   and recovery, not an ongoing evaluation path. Planning is recorded; migration,
-   deployment and report/demo publication still require their explicit approvals.
+   acceptance or security checks. Old-database backup, migration, repair and
+   adoption are not delivery requirements. Leave unrelated installations alone;
+   normal repeat startup must not duplicate accounts or reload data. Report/demo
+   publication and changes to someone else's running environment require their
+   own approval.
 2. Use the consolidated documentation and focused website patch. Application
    requirements belong to their maintained product authorities; cross-project
    integration specifications and delivery belong to this umbrella; experiment
@@ -61,12 +64,12 @@ direction.
    The umbrella implementation and documentation PRs are merged, followed by the
    harness review corrections and documentation cleanup. Retain separate
    product-build and deployed-acceptance evidence; this refactor does not complete
-   Ross's environment migration or authorize OpenMRS upstream merges.
+   Ross's fresh environment handoff or authorize OpenMRS upstream merges.
 5. Continue QueryStore review and [Catalyst delivery](roadmap.md#6-catalyst-delivery) through their product contracts.
    Verify product-native builds and shared environments against recorded revisions;
    record deployed acceptance separately from source verification.
 
-The immediate environment priority is Ross's reviewed migration and usable handoff.
+The immediate environment priority is Ross's reproducible fresh setup and usable handoff.
 Broader documentation proposals and the existing contribution tracks continue separately.
 The completed split remains under its existing contribution rules; this priority
 change does not reopen its functional acceptance or authorize upstream merges.
@@ -81,7 +84,7 @@ Environment sequence, review points and acceptance live in the linked roadmap.
 | Validation harness | PRs #197 and #198 are merged; runners use configured targets and supplied/observed provenance; required fields/types are checked without treating caller claims as verified revisions | Verify actual product interfaces separately; fixture isolation is not product acceptance |
 | Website | Sources and publication tooling are umbrella-owned; GitHub Pages is configured for Actions and build/deploy pass; browser inspection confirms the documentation loads | Public landing deployment and product/demo publication remain separate |
 | Specifications | Product behavior, shared delivery and validation protocols have maintained owners; duplicate plans and obsolete lane instructions are removed; companion documentation is merged | Follow the maintained owners; broader content proposals retain their own review |
-| Reusable environments | [Detailed roadmap](reusable-environments-roadmap.md) has approved Ross setup, implemented selection/status and disposable proof of native preparation, HIV-only preservation, standard demo login and isolated full-backup restore | Verify the historical-schema upgrade, then port accounts/context and prove the recipient workflow; public lifecycle and handoff are not ready. The [preparation proof](reviews/2026-10-02-research-preparation-proof.md) separates restore/isolation results from outstanding upgrade and browser work. |
+| Reusable environments | [Detailed roadmap](reusable-environments-roadmap.md) specifies fresh HIV-only setup and ordered scenario additions; selection/status and disposable native preparation/import/login proof exist | Connect fresh setup, indexing/providers and the seven-account provisioner; reconcile account context and prove browser/evaluation/handoff. Old-database upgrade and backup research are not blockers. See the [scope audit](reviews/2026-10-02-ross-migration-inventory.md#scope-audit-3-october-2026) and [preparation evidence](reviews/2026-10-02-research-preparation-proof.md). |
 | Product delivery | Eight backend and five frontend extractions are published. Applicable hosted checks pass on all recorded heads; no review threads are unresolved. Confirmed findings are fixed. Backend #590 retains the documented local macOS socket-test failure despite passing hosted source-pair checks. Both linear stacks are published and their current hosted builds pass. Combined functional validation passes, and all thirteen contributions are ready for review | Maintainer review and ordered merging; retain integration branches unchanged |
 
 The phases below cover the component layout and validation interfaces defined in

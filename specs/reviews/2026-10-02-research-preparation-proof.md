@@ -5,6 +5,13 @@ implementation evidence for the [environment roadmap](../reusable-environments-r
 not a setup procedure or recipient acceptance. The tested working diff is based
 on umbrella `5116e8602bc9f216a2b1f385fa930e87a761d0d1`; component pins are unchanged.
 
+**Scope correction, 3 October 2026:** The backup/restore and historical-upgrade
+investigations below were an assistant-added detour, not requirements for Ross's
+fresh setup. Their observations are retained as evidence only. No repair approval
+is pending for this delivery. The [scope audit](2026-10-02-ross-migration-inventory.md#scope-audit-3-october-2026)
+and current roadmap define the remaining work: connect fresh HIV-only setup,
+ordered scenario/account additions, providers/context, and recipient proof.
+
 ## Implemented and Tested
 
 - Core-only preparation reuses native builds and Compose services. It does not
@@ -144,7 +151,8 @@ RUN_DOCKER_TESTS=1 uv run --project targets/validation-harness --extra dev \
 It passed using `/bin/bash` 3.2.57. The default suite again passed 48 umbrella and
 246 operational tests, with the Docker test deselected there. Workspace checks and
 `git diff --check` passed. This proves backup/restore and bounded isolation, not
-the historical-schema upgrade: that remains the next check before migration.
+a historical-schema upgrade. Neither backup restoration nor that upgrade is a
+requirement for the fresh-setup handoff.
 
 ### Historical migration collision, 3 October 2026
 
@@ -171,22 +179,12 @@ now: 9:e8f2c324e2b3ae73733f62d15881021d
 
 The diagnostic asserted the validation failure and that both columns remained
 absent. It touched no installed database. This is a reproduction, not a passing
-upgrade or the permanent product regression test; actual OpenMRS startup/version
-handling and a MariaDB upgrade remain required.
+upgrade or the permanent product regression test. It does not establish a
+requirement to repair an old database as part of fresh setup.
 
-**Proposed repair, awaiting owner approval:** accept only the exact known
-historical checksum as additional migration metadata, retain the existing SQL
-and applied-history rows, and add a new guarded forward migration for missing
-columns. Unknown checksums must still fail. No reset, blanket checksum clearing,
-wildcard acceptance or replay of the old foreign-key operation is proposed.
-Verify that normal module upgrading executes the repair despite same-version
-snapshot deployment before claiming it works in OpenMRS.
-
-This needs a narrow exception to the roadmap's prohibition on editing an applied
-changeset. [Liquibase's checksum guidance](https://www.liquibase.com/blog/what-affects-changeset-checksums)
-describes exact `validCheckSum` metadata plus a new conditional repair; accepting
-the checksum alone does not apply the missing schema change. The source remains
-unchanged while that exception is awaiting approval.
+An exact-checksum/forward-repair approach was investigated but is not authorized
+or implemented here. It is not an open approval request or a remaining step in
+this delivery. Product source remains unchanged by that investigation.
 
 ### Earlier preparation checks
 
@@ -232,10 +230,10 @@ docker run --rm --network none --user 1001 --entrypoint /bin/bash \
   harness-openmrs-backend:3.6.0-temurin /tmp/proof.sh
 ```
 
-Prove the historical-schema upgrade on the restored disposable database, then complete
-account/provider readiness. No public installer, migration of
-Ross's installation, seven-account/context, provider/browser, run/report or
-recipient walkthrough is declared complete by this slice.
+Remaining delivery is the public fresh-setup command, ordered account additions,
+account context, provider/browser readiness, run/report and recipient walkthrough.
+None is declared complete by this preparation slice. Old-database upgrade work
+is not on that path.
 
 OpenMRS's own [performance-test instructions](https://github.com/openmrs/openmrs-contrib-performance-test)
 document the next-startup demo-generation property. The installed bytecode,

@@ -78,8 +78,9 @@ Each product supplies its own build and test instructions.
 ### Shared development
 
 For reusable research installations, see [Research environments](environments/README.md).
-Configuration selection and read-only status are implemented; migration and the
-tested researcher handoff remain in progress.
+Configuration selection and read-only status are implemented. The fresh HIV-data
+setup with reproducible evaluation accounts and a tested researcher handoff is
+still being connected; no old database is required.
 
 The root `Makefile` provides the shared environment and product build commands:
 

@@ -1,9 +1,44 @@
-# Ross Environment Migration: Source Inspection
+# Ross Setup: Source Inspection and Scope Audit
 
 Inspected 2 October 2026. This is evidence for the
 [reusable-environments roadmap](../reusable-environments-roadmap.md), not a second
 setup procedure or a claim of recipient readiness. No services, data, accounts,
 provider settings or product branches were changed during this inspection.
+
+## Scope Audit, 3 October 2026
+
+Reviewed the full environment roadmap, its parent-roadmap entries, operator guide
+and linked preparation evidence against the user's requests. The user asked for
+fresh setup and reusable, ordered scenario additions, not migration of an old
+database. The older report explicitly states that a fresh baseline avoids the
+schema collision and that Ross had no data to retain. The assistant nevertheless
+added historical-upgrade acceptance to the roadmap; that was not a user requirement.
+
+| Finding | Disposition in the current roadmap |
+| --- | --- |
+| Old-installation adoption, schema inventory, full-backup restoration and historical upgrade required before handoff | Removed. Reuse setup code and the verified HIV archive, not the previous database. No migration signoff is pending. |
+| Repair of `chartsearchai-009` treated as the next delivery step | Removed from this delivery. The reproduced historical defect remains dated evidence, not a setup blocker or an authorized product change. |
+| A fresh assistant session made an extra acceptance gate | Simplified to tested, self-contained commands and one generic guide usable by humans or assistants. The actual recipient walkthrough remains. |
+| Update requirements could grow into a custom branch/update framework | Bound to existing Git, workspace and native commands, with clear selected revisions and no destructive automatic source changes. |
+| Repeated proof of existing harness independence/reporting could expand setup work | Reuse existing tests/evidence where unchanged; require one real small clinical run/report against the new setup. |
+| Account setup not expressed as ordered reusable additions | Added baseline/application/scenario layers, declared affected records, conflict checks, safe repetition and receipt provenance. No generic plugin or migration engine. |
+| Credential/setup complexity | Retained the already-restored `admin` / `Admin123` default. No new administrator bootstrap or password-policy approval; private overrides remain private. |
+
+Retained because they serve the requested handoff: the HIV-only baseline, all
+seven accounts, real account/location context in both providers, browser evidence,
+follow-up/reload and supported In-Depth states, a small evaluation/report, generic
+instructions, and final code-qa/security/scope review. Ordinary repeat startup
+must not reload data or duplicate accounts. Catalyst reuse remains later work.
+None of these remaining requirements authorizes model tuning, production
+permission redesign or an automatic role-to-prompt policy.
+
+**Implementation finding to address when connecting lifecycle:** the current
+`scripts/environment.py:check_ownership` rejects selected volumes without an owning
+container, and `scripts/stack-down.sh` normally removes containers while retaining
+volumes. A blanket orphan-volume rejection cannot become the public restart path.
+Verify ordinary stop/start of the newly created environment using native ownership
+metadata; do not turn it into another backup or recovery workflow. Runtime code is
+unchanged by this documentation audit.
 
 ## Sources Inspected
 
@@ -18,18 +53,18 @@ PR status was read from GitHub; old setup source was fetched without checking ou
 its branch. Current component pins remain unchanged. This inspection does not
 authorize rewriting either old PR or merging an OpenMRS contribution.
 
-## Port Decisions
+## Reuse Decisions
 
 Paths in the first column refer to the original setup PR unless marked current.
 
 | Source | Treatment | Reason and next proof |
 | --- | --- | --- |
-| `docs/environment-setup.md` | Rewrite as the generic umbrella operator guide | Useful preserve-first install/update distinction and recipient checks; old commands and harness ownership are no longer correct |
-| `.claude/skills/harness-environment/SKILL.md` | Replace with a thin umbrella assistant entry point | One maintained human guide must drive both workflows; test from a fresh assistant session |
+| `docs/environment-setup.md` | Rewrite as the generic umbrella operator guide | Retain useful fresh-setup commands and recipient checks; old commands and harness ownership are no longer correct |
+| `.claude/skills/harness-environment/SKILL.md` | Replace with a thin umbrella assistant entry point | Link one maintained human guide, without a separate installation procedure or mandatory new-agent exercise |
 | `datasets/validation/evaluation-roles.json` | Port the seven account definitions into the research preset's account input | All seven roles are required; remove unused study-tier metadata, preserve occupational labels, explicit read privileges and existing-role requirements |
 | `harness/evaluation_users.py`, `harness/common/openmrs.py`, `scripts/provision-evaluation-users.py` | Adapt the required account provisioning to umbrella operations | Reuse generated credentials, ownership checks, no existing-role rewrite and real login checks; test unrelated users, role inheritance and both providers |
-| `harness/environment_setup.py` | Reuse preservation checks, not the fixed-stack implementation wholesale | Current container-name/checkout ownership assumptions cannot adopt the new layout or isolate two installations |
-| `harness/evaluation_setup.py` and data/reset tests | Inspect and adapt backup/restore guarantees when lifecycle is implemented | Preserve-first update is distinct from initialize/reset; actual historical-schema and restored-backup proof remains required |
+| `harness/environment_setup.py` | Reuse necessary target selection and repeat-start checks, not the fixed-stack implementation wholesale | Operate on the selected new installation and leave unrelated resources alone; do not implement adoption |
+| `harness/evaluation_setup.py` and data/reset tests | Reuse verified baseline import and explicit reset behavior only | Fresh setup uses the reviewed archive; old-database backup/restore and historical upgrade guarantees are outside this delivery |
 | `harness/environment_assets.py`, `datasets/sources/evaluation-baseline.json` | Reuse checksum/asset checks; save baseline identity once in the preset | Explicit acquisition only; no download/reseed during ordinary start/update |
 | `scripts/update-evaluation-checkout.py` | Adapt its refusal checks to umbrella main and exact direct pins | Resolve target once; preserve preview revisions, dirty work and ignored-file collisions; no independent component branch updates |
 | Current `compose/openmrs-2.8-refapp.yml` and lifecycle scripts | Adapt native operations, do not duplicate configuration | Fixed `harness-*` names and common artifact mounts prevent honest instance isolation today |
@@ -55,7 +90,7 @@ This local package is enough to begin disposable implementation tests; no new
 asset-hosting service is needed. Do not commit the SQL, provenance contents,
 private settings, credentials or backups.
 
-## Runtime and Migration Boundaries
+## Runtime Boundaries
 
 A read-only Docker listing found a healthy OpenMRS stack under Compose project
 `chartsearch-pr-split`, using the fixed `harness-*` container names. Other Catalyst,
@@ -63,19 +98,11 @@ OpenELIS and unrelated stacks are also running. This is an author-side observati
 not Ross's installation inventory and not evidence that the new umbrella owns
 those services. None were restarted or claimed.
 
-The current ChartSearchAI changelog already describes same-version redeployment
-and applied-changeset hazards. The reported preserved-database failure therefore
-requires an actual historical-schema regression and inspection of the installed
-module/schema state, not a speculative edit or reset. No schema defect is claimed
-fixed by this inspection.
-
-Still required before changing Ross's installation:
-
-- Exact owning checkout, Compose project, data volumes/bind mounts and private
-  settings; do not collect secrets into a shared report.
-- Actual schema and applied migration state, with a tested compatible upgrade.
-- Full backup and demonstrated restoration; source rollback alone is insufficient.
-- Explicit storage mapping and migration approval.
+The reported historical schema collision is not a fresh-setup requirement.
+No old database, existing-installation inventory, backup restoration or storage
+adoption is needed. The current roadmap calls for a new selected environment with
+the verified baseline and declared additions. This does not authorize deleting
+or modifying any unrelated installation.
 
 Before calling the handoff ready, also verify all seven account logins, actual
 role/location transport through both providers, a completed question/follow-up,
