@@ -77,11 +77,9 @@ Each product supplies its own build and test instructions.
 
 ### Shared development
 
-For reusable research installations, see [Research environments](environments/README.md).
-The fresh HIV-data setup and account provisioning are still being connected
-through the existing native tools. Acceptance is a real
-OpenMRS startup, ChartSearchAI availability and a sample of the intended HIV data;
-broader functional evaluations follow separately. No old database is required.
+For a fresh OpenMRS instance with the HIV dataset, ChartSearchAI and research
+accounts, follow the [research setup guide](environments/README.md) and run
+`make chartsearch-research-setup`. This imports the baseline; it is not an upgrade.
 
 The root `Makefile` provides the shared environment and product build commands:
 
@@ -90,6 +88,7 @@ The root `Makefile` provides the shared environment and product build commands:
 | `make openmrs-source-pair-build` | Build QueryStore, then ChartSearchAI, and stage their modules. |
 | `make chartsearch-esm-build` | Build and stage the OpenMRS frontend. |
 | `make chartsearchai-local` | Prepare the local ChartSearchAI environment. |
+| `make chartsearch-research-setup` | Fresh HIV OpenMRS setup and seven research accounts. |
 | `make catalyst-mvp-up` | Start the configured Catalyst environment, retaining existing data. |
 | `make validate-run SET=demo` | Run the selected validation experiment against prepared services. |
 

@@ -311,6 +311,11 @@ chartsearch-backend:
 chartsearchai-local:
 	@./scripts/chartsearchai-local.sh
 
+# Fresh HIV baseline, ChartSearchAI and saved research accounts.
+.PHONY: chartsearch-research-setup
+chartsearch-research-setup:
+	@bash scripts/chartsearch-research-setup.sh $(if $(DUMP),DUMP=$(DUMP))
+
 # One command: fresh reset -> working DUAL-provider stack (bundled + hub), restoring the cached
 # Elasticsearch querystore index instead of re-embedding the static demo corpus. Build the cache
 # once with `scripts/querystore-snapshot.sh snapshot <ver>`; thereafter every reset is minutes.

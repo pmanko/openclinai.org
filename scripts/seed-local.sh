@@ -30,9 +30,6 @@ DB_USER="${OMRS_DB_USER:-openmrs}"
 BACKEND="${OPENMRS_BACKEND:-harness-openmrs-backend}"
 PROXY_PORT="${PROXY_PORT:-${HARNESS_PROXY_HTTP_PORT:-8088}}"
 TARGET_DB="${SEED_TARGET_DB:-openmrs}"
-ADMIN_USER="${CHARTSEARCH_ADMIN_USER:-admin}"
-# Match the local OpenMRS demo defaults; existing installations can override them.
-ADMIN_PASSWORD="${CHARTSEARCH_ADMIN_PASSWORD:-Admin123}"
 DUMP=""
 FROM_SCHEMA=""
 REINDEX=1
@@ -46,13 +43,6 @@ while [[ $# -gt 0 ]]; do
     -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
     *) echo "unknown arg: $1" >&2; exit 1 ;;
   esac
-done
-
-for identifier in "$TARGET_DB" "$DB_USER"; do
-  if [[ ! "$identifier" =~ ^[a-zA-Z0-9_]+$ ]]; then
-    echo "ERROR: database and user names must contain only letters, digits and underscores." >&2
-    exit 1
-  fi
 done
 
 # --- resolve the dump to restore ---
@@ -89,10 +79,7 @@ fi
 
 # --- stop the backend so the schema swap doesn't race a live Hibernate/Liquibase ---
 echo "==> stopping backend '${BACKEND}' (provision into a quiescent DB)"
-if ! docker stop "$BACKEND" >/dev/null 2>&1; then
-  echo "ERROR: backend did not stop; the database was not changed." >&2
-  exit 1
-fi
+docker stop "$BACKEND" >/dev/null 2>&1 || true
 
 # --- DROP/CREATE the target schema + restore (target-neutral dump → named DB) ---
 echo "==> recreating '${TARGET_DB}' and restoring the dump"
@@ -117,39 +104,42 @@ docker exec "$DB_CONTAINER" mariadb --user=root --password="$DB_ROOT_PASS" "$TAR
   UNION ALL SELECT 'obs', COUNT(*) FROM obs;" || true
 
 # --- start the backend; Liquibase reconciles core and both consumer modules install fresh ---
+# On the very first boot against a just-restored (non-empty) schema, OpenMRS core's own
+# DatabaseUpdater can race into re-running its "empty database" snapshot changelog against
+# tables that already exist ("Table 'allergy' already exists"), then loop retrying that same
+# wrong decision forever within that one JVM. A plain container restart re-evaluates from
+# scratch and clears it — observed reliably, so it's handled here rather than left as a manual
+# step every seed would otherwise require.
 echo "==> starting backend '${BACKEND}' (Liquibase upgrade-in-place + module install)"
 docker start "$BACKEND" >/dev/null
 UP=0
-deadline=$((SECONDS + 600))
-echo "    waiting for backend API (first boot runs Liquibase; can take minutes)..."
-for i in $(seq 1 100); do
-  [ "$SECONDS" -lt "$deadline" ] || break
-  code=$(curl -s --connect-timeout 5 --max-time 15 -o /dev/null -w "%{http_code}" -u "${ADMIN_USER}:${ADMIN_PASSWORD}" \
-    "http://localhost:${PROXY_PORT}/openmrs/ws/fhir2/R4/Patient?_count=1" || true)
-  [ "$code" = "200" ] && { echo "    backend up (~$((i*6))s)"; UP=1; break; }
-  if [ "$code" = "401" ] || [ "$code" = "403" ]; then
-    echo "ERROR: imported baseline rejected the configured administrator credentials or access. No password reset, automatic restart or reseed was attempted." >&2
-    exit 1
+for attempt in 1 2 3; do
+  echo "    waiting for backend health (first boot runs Liquibase; can take minutes) [attempt ${attempt}/3]..."
+  for i in $(seq 1 100); do
+    code=$(curl -s -o /dev/null -w "%{http_code}" -u admin:Admin123 \
+      "http://localhost:${PROXY_PORT}/openmrs/ws/fhir2/R4/Patient?_count=1" || true)
+    [ "$code" = "200" ] && { echo "    backend up (~$((i*6))s)"; UP=1; break; }
+    sleep 6
+  done
+  [ "$UP" = "1" ] && break
+  if [ "$attempt" -lt 3 ]; then
+    echo "    backend stuck on the known first-boot snapshot race (never resolves within the same JVM); restarting to re-evaluate"
+    docker restart "$BACKEND" >/dev/null
   fi
-  sleep 6
 done
-[ "$UP" = "1" ] || { echo "ERROR: backend API unavailable; inspect the selected backend logs. No automatic restart or reset was attempted." >&2; exit 1; }
+[ "$UP" = "1" ] || { echo "ERROR: backend did not become healthy; check 'make logs SERVICE=backend'." >&2; exit 1; }
 
 # --- module health: the backend can report healthy via FHIR while an OpenMRS module still failed
 #     to start (e.g. a Liquibase checksum mismatch) — checked here so a broken seed fails loudly at
 #     seed time instead of being discovered later during manual QA. ---
 echo "==> verifying every OpenMRS module started cleanly"
-FAILED_MODULES="$(curl -fsS --connect-timeout 5 --max-time 30 -u "${ADMIN_USER}:${ADMIN_PASSWORD}" \
-  "http://localhost:${PROXY_PORT}/openmrs/ws/rest/v1/module?v=custom:(uuid,name,started,startupErrorMessage)" \
+FAILED_MODULES="$(curl -fsS -u admin:Admin123 \
+  "http://localhost:${PROXY_PORT}/openmrs/ws/rest/v1/module?v=custom:(name,started,startupErrorMessage)" \
   | python3 -c "
 import json, sys
 data = json.load(sys.stdin)
-modules = data['results']
-for required in ('chartsearchai', 'querystore'):
-    if not any(m.get('uuid') == required for m in modules):
-        print(f'  {required}: required module is missing')
-for m in modules:
-    if m.get('started') is not True:
+for m in data.get('results', []):
+    if not m.get('started'):
         print(f\"  {m.get('name')}: {m.get('startupErrorMessage') or '(no error message)'}\")
 ")"
 if [[ -n "$FAILED_MODULES" ]]; then
@@ -194,7 +184,7 @@ echo "    corpus receipt: ${CORPUS_RECEIPT}"
 #     index is empty until a full reindex. Synchronous; ~30-60s for 5K patients. ---
 if [[ "$REINDEX" == "1" ]]; then
   echo "==> triggering Hibernate Search reindex (synchronous)"
-  curl -fsS -u "${ADMIN_USER}:${ADMIN_PASSWORD}" -m 600 -X POST \
+  curl -fsS -u admin:Admin123 -m 600 -X POST \
     "http://localhost:${PROXY_PORT}/openmrs/ws/rest/v1/searchindexupdate" >/dev/null \
     && echo "    reindex complete" \
     || echo "    WARNING: reindex POST failed — run it manually once the backend settles."

@@ -10,7 +10,7 @@ direction.
 ## 1. Current Priorities
 
 1. Prioritize Ross's fresh research setup and instructions through the
-   [reusable environments, evaluations and demos roadmap](reusable-environments-roadmap.md).
+   [HIV OpenMRS setup roadmap](reusable-environments-roadmap.md).
    Reuse the verified HIV baseline and native tooling, then apply reproducible,
    ordered scenario additions including all seven evaluation accounts. Carry over
    useful setup code, not an old database. Deliver the verified ChartSearchAI
@@ -85,7 +85,7 @@ Environment sequence, review points and acceptance live in the linked roadmap.
 | Validation harness | PRs #197 and #198 are merged; runners use configured targets and supplied/observed provenance; required fields/types are checked without treating caller claims as verified revisions | Verify actual product interfaces separately; fixture isolation is not product acceptance |
 | Website | Sources and publication tooling are umbrella-owned; GitHub Pages is configured for Actions and build/deploy pass; browser inspection confirms the documentation loads | Public landing deployment and product/demo publication remain separate |
 | Specifications | Product behavior, shared delivery and validation protocols have maintained owners; duplicate plans and obsolete lane instructions are removed; companion documentation is merged | Follow the maintained owners; broader content proposals retain their own review |
-| Reusable environments | [Detailed roadmap](reusable-environments-roadmap.md) defines fresh HIV-only setup using existing tools and saved accounts/settings; partial startup/import proof exists | Connect the public setup command, indexing/providers and the seven-account provisioner. Smoke-check OpenMRS, ChartSearchAI availability and sampled HIV data. Account-context enhancements and broader evaluation remain follow-up, not setup gates. See the [scope audit](reviews/2026-10-02-ross-migration-inventory.md#scope-audit-3-october-2026). |
+| Research setup | [Setup guide](../environments/README.md) and `make chartsearch-research-setup` prepare the fresh HIV baseline, ChartSearchAI and seven accounts using existing tools. Local startup, account logins and the patient-chart browser smoke passed on 3 October 2026 | PR review and Ross's fresh install. Account-context enhancements and broader evaluation remain follow-up, not setup gates. |
 | Product delivery | Eight backend and five frontend extractions are published. Applicable hosted checks pass on all recorded heads; no review threads are unresolved. Confirmed findings are fixed. Backend #590 retains the documented local macOS socket-test failure despite passing hosted source-pair checks. Both linear stacks are published and their current hosted builds pass. Combined functional validation passes, and all thirteen contributions are ready for review | Maintainer review and ordered merging; retain integration branches unchanged |
 
 The phases below cover the component layout and validation interfaces defined in

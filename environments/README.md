@@ -1,48 +1,74 @@
 # ChartSearchAI Research Setup
 
-OpenClinAI owns application setup. The validation harness runs experiments
-against the prepared application.
+This prepares a fresh local OpenMRS instance with the HIV dataset, ChartSearchAI
+and [seven evaluation accounts](chartsearch-research/accounts.json). The
+validation harness runs experiments afterward; it does not install this stack.
 
-The shared [research recipe](chartsearch-research/preset.json) identifies the
-verified HIV archive and existing configuration. Its [account definitions](chartsearch-research/accounts.json)
-list the seven evaluation accounts: clinical officer, nurse, pharmaceutical
-technologist, adherence counsellor, health records officer, doctor and peer
-educator. These are saved inputs for the existing setup tools.
+## First Setup
 
-## Current State
+Start from the recursive umbrella checkout described in the [README](../README.md#workspace-checkout).
+While [PR #5](https://github.com/pmanko/openclinai.org/pull/5) is open, use
+`codex/research-environment-handoff`.
 
-The HIV-only startup change and saved account definitions are present. The
-complete setup command, account provisioning and final startup smoke checks
-are unfinished. This branch is not yet a tested handoff for Ross.
+Prerequisites: running Docker with Compose, Java/Maven, Python 3, Node.js 18+,
+Yarn 4 and `llama-server` on your PATH. Put the
+[Gemma E4B GGUF](https://huggingface.co/unsloth/gemma-4-E4B-it-GGUF)
+in `~/.cache/llama-router-models/gemma-e4b.gguf`, or set `LLAMA_MODEL_DIR` in
+an ignored `.env.chartsearch` file. The existing router uses this directory.
 
-Native commands already available in the umbrella include:
+Download the [HIV baseline package](https://drive.google.com/file/d/1FxuaYxOfthzMHVL4bUPleLj_P7n_EN-X/view)
+and place both files in `artifacts/demo-data/`:
 
-| Command | Purpose |
-| --- | --- |
-| `make openmrs-source-pair-build` | Build and stage QueryStore and ChartSearchAI |
-| `make chartsearch-esm-build` | Build and stage the frontend |
-| `make up` | Start the configured OpenMRS services |
-| `make seed DUMP=<verified-archive-path>` | Explicitly import the existing HIV archive using native verification |
-| `make chartsearch-configure` | Apply ChartSearchAI configuration |
-| `make querystore-configure` | Apply QueryStore configuration |
-| `make status` | Show service status |
+- `refapp_28_demo.sql.gz`
+- `refapp_28_demo.sql.gz.provenance.json`
 
-This table is a tool reference, not the finished fresh-setup procedure. The
-[roadmap](../specs/reusable-environments-roadmap.md) connects these operations
-in the required order and adds existing account provisioning.
+Run from the umbrella root:
 
-Use the native `.env.chartsearch.example` defaults and ignored
-`.env.chartsearch` overrides for local settings. The baseline accepts the
-standard OpenMRS demo login, `admin` / `Admin123`.
-Keep private settings out of Git and shared output.
+```sh
+make chartsearch-research-setup
+```
 
-## Ready for Research
+**This replaces the local OpenMRS database with the HIV baseline.** It builds
+the pinned modules and frontend, starts the existing stack and model router,
+imports the HIV data, configures both ChartSearchAI providers, and creates the
+accounts. No stock patients are generated. There is no upgrade or backup flow.
 
-Use only simple smoke checks: OpenMRS opens, ChartSearchAI is available on it,
-and known HIV patient records can be sampled. The scenario adds the seven
-evaluation accounts. Stock-generated patients must not be added.
+ChartSearchAI defaults to Hub; its bundled provider uses the same local Gemma
+E4B router. Other available Hub profiles appear in the picker.
 
-The handoff will give the tested setup command and revision, application URL,
-account access and provider selection. Role-context improvements, model
-comparisons, reports and videos are subsequent work. Other scenarios can save
-their own account/settings inputs and reuse the same native tools.
+## Access
+
+Open [OpenMRS](http://localhost:8088/openmrs/spa). Select Outpatient Clinic
+when asked for a login location.
+
+| Username | Role | Demo password |
+| --- | --- | --- |
+| `admin` | Administrator | `Admin123` |
+| `eval-clinical-officer` | Clinical officer | `Admin123` |
+| `eval-nurse` | Nurse | `Admin123` |
+| `eval-pharmacy` | Pharmaceutical technologist | `Admin123` |
+| `eval-counsellor` | Adherence counsellor | `Admin123` |
+| `eval-records` | Health records officer | `Admin123` |
+| `eval-doctor` | Doctor | `Admin123` |
+| `eval-peer` | Peer educator | `Admin123` |
+
+These public passwords are for this local synthetic-data environment only.
+`EVALUATION_PASSWORD` can override the research-account password. Existing
+Doctor/Nurse roles are not changed. Account labels do not prove role-aware model
+instructions or production permission isolation; those are separate work.
+
+After login, open the [sample patient chart](http://localhost:8088/openmrs/spa/patient/dd75c020-1691-11df-97a5-7038c432aabf/chart/Patient%20Summary)
+and launch ChartSearchAI. Non-clinician accounts may not have access to the
+unrelated service-queue home page; use patient search or this chart link.
+
+Use the existing `make down` to stop containers without deleting their data.
+For later startup, run `bash scripts/llama-router-up.sh --daemon`, then
+`COMPOSE_ENV_FILE=.env.chartsearch.example make up med-agent-hub-up`.
+Use `.env.chartsearch` instead if you have private overrides. Do not repeat
+the fresh setup unless you want to reload the baseline.
+
+## Setup Acceptance
+
+Check only that OpenMRS opens, ChartSearchAI is available on a patient chart,
+and known HIV patient records are loaded. Account logins are checked while
+provisioning. Model-quality evaluations, reports and videos are not setup gates.
