@@ -552,7 +552,7 @@ and recipient acceptance. These remain distinct facts.
 | --- | --- | --- |
 | Research and roadmap | Ross implementation authorized | User authorized diligent execution; contract and migration signoffs remain required |
 | Select and inspect | Approved and locally verified; publication/CI pending | 39 umbrella unit and 230 operational tests passed (one existing opt-in deselected); two private configurations rendered distinct projects/ports/volumes through real read-only Compose inspection; no test installation started; separate self-review caught and fixed the Make default regression and covered secret-safe output, native reuse, scope and truthful readiness limits |
-| Prepare and preserve ChartSearchAI | Not started | Pending tests and recipient-safe migration proof |
+| Prepare and preserve ChartSearchAI | Resource selection locally verified; lifecycle unavailable | 41 umbrella unit and 230 operational tests passed (one existing opt-in deselected); actual read-only Compose inspection proved two selections have disjoint container names, volumes and writable mounts; disposable startup, second-run preservation and recipient-safe migration proof remain pending |
 | Restore research accounts and context | Not started | Pending account and companion product/browser tests |
 | Run and hand off ChartSearchAI | Not started | Pending real run, browser evidence and recipient confirmation |
 | Reuse with Catalyst | Not started | Pending bounded native-path proof |

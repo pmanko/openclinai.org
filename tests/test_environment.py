@@ -160,6 +160,26 @@ class ConfigurationTests(EnvironmentFixture):
 
 
 class StatusTests(EnvironmentFixture):
+    def test_native_commands_receive_owned_names_paths_and_user_without_ambient_overrides(self):
+        config = self.resolve()
+        with patch.dict(os.environ, {"STACK_CONTAINER_PREFIX": "other",
+                                     "STACK_ARTIFACTS_DIR": "/another-checkout"}), patch.object(
+                subprocess, "run", return_value=subprocess.CompletedProcess(
+                    [], 0, stdout="{}", stderr="")) as run:
+            environment.inspect_command(config, ["docker", "compose", "version"])
+        values = run.call_args.kwargs["env"]
+        self.assertEqual(values["STACK_CONTAINER_PREFIX"], "openclinai-alpha")
+        self.assertEqual(values["STACK_ARTIFACTS_DIR"], str(config["artifacts"]))
+        self.assertEqual(values["MED_AGENT_HUB_UID"], str(os.getuid()))
+        self.assertEqual(values["MED_AGENT_HUB_GID"], str(os.getgid()))
+
+    def test_storage_alias_to_another_instance_is_refused(self):
+        target = self.root / "artifacts/environments/beta"
+        target.mkdir(parents=True)
+        (target.parent / "alpha").symlink_to(target, target_is_directory=True)
+        with self.assertRaisesRegex(environment.ConfigError, "artifact"):
+            self.resolve()
+
     def test_status_is_read_only_redacted_and_does_not_claim_readiness(self):
         config = self.resolve()
         native = {"services": {"db": {"container_name": "harness-openmrs-db"}},

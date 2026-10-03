@@ -133,9 +133,12 @@ def resolve(root, identifier, overrides=None):
             raise ConfigError("Setting values must be strings.")
         if key in PORTS and (not value.isascii() or not value.isdecimal() or not 1 <= int(value) <= 65535):
             raise ConfigError(f"{key} must be a port between 1 and 65535.")
+    artifacts = root / "artifacts/environments" / identifier
+    if artifacts.resolve() != artifacts or not artifacts.resolve().is_relative_to(root):
+        raise ConfigError("Installation artifacts cannot be symlinked or shared with another path.")
     return {"root": root, "name": identifier, "preset": selected,
             "project": f"openclinai-{identifier}", "settings_path": settings_path,
-            "artifacts": root / "artifacts/environments" / identifier,
+            "artifacts": artifacts,
             "values": values, "origins": origins}
 
 
@@ -162,6 +165,9 @@ def inspect_command(config, args):
                                            "DOCKER_CONTEXT", "DOCKER_HOST", "DOCKER_CONFIG")
            if key in os.environ}
     env.update(config["values"])
+    env.update(STACK_CONTAINER_PREFIX=config["project"],
+               STACK_ARTIFACTS_DIR=str(config["artifacts"]),
+               MED_AGENT_HUB_UID=str(os.getuid()), MED_AGENT_HUB_GID=str(os.getgid()))
     try:
         result = subprocess.run(args, cwd=config["root"], env=env, text=True,
                                 capture_output=True, timeout=30, check=False)
@@ -198,9 +204,15 @@ def status(config):
         {key.lower(): row.get(key) for key in ("Service", "Name", "State", "Health", "Image")}
         for row in rows], volumes={key: value.get("name") for key, value in native.get("volumes", {}).items()},
         limitations=["Authentication, data, provider responses and browser behavior are not checked."])
-    fixed_names = [service["container_name"] for service in native["services"].values()
-                   if service.get("container_name")]
-    if fixed_names:
+    names = {key: service.get("container_name") for key, service in native["services"].items()}
+    result["container_names"] = names
+    result["bind_mounts"] = {
+        key: [{"source": mount["source"], "target": mount["target"],
+               "read_only": mount.get("read_only", False)}
+              for mount in service.get("volumes", []) if mount["type"] == "bind"]
+        for key, service in native["services"].items()
+    }
+    if any(value and not value.startswith(config["project"] + "-") for value in names.values()):
         result["limitations"].append("Native Compose still uses fixed container names; instance lifecycle is unavailable.")
     return result
 

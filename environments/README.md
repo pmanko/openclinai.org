@@ -65,10 +65,12 @@ ports, selected paths and observed service state, not credential values. A Docke
 error is a failure, not evidence of an empty installation.
 
 The selected project is `openclinai-<name>` and its future artifacts directory is
-`artifacts/environments/<name>`. The current native Compose file still uses fixed
-container names and shared artifact mounts. Status reports that limitation;
-distinct selected project names alone do **not** prove runtime isolation. Existing
-stacks with another project name are not adopted or changed by these commands.
+`artifacts/environments/<name>`. Native Compose container names and writable mounts
+follow that selection; read-only prompts and profile files still reference the
+recorded component checkout. Status lists the actual rendered names and mounts.
+This is configuration proof, not a claim that two running installations have been
+tested. Existing stacks with another project name are not adopted or changed by
+these commands. Application startup and data migration remain unavailable here.
 
 ## Research Accounts and Migration
 

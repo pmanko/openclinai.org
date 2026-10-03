@@ -18,7 +18,7 @@
 services:
   proxy:
     image: caddy:2.8-alpine
-    container_name: harness-proxy
+    container_name: ${STACK_CONTAINER_PREFIX:-harness}-proxy
     restart: "unless-stopped"
     ports:
       # Local dev: HARNESS_PROXY_HTTP_PORT defaults to 8088 (avoids OrbStack/8080
@@ -45,7 +45,7 @@ services:
       # the corresponding paths from the :nightly-chartsearch frontend
       # container without rebuilding that image. See (chartsearch_overrides)
       # in Caddyfile and `make chartsearch-esm-build` for the build step.
-      - ../artifacts/openmrs/spa-custom:/srv/spa-custom:ro
+      - ${STACK_ARTIFACTS_DIR:-../artifacts}/openmrs/spa-custom:/srv/spa-custom:ro
 
     depends_on:
       gateway:
@@ -58,7 +58,7 @@ services:
 
   gateway:
     image: openmrs/openmrs-reference-application-3-gateway:${OPENMRS_REFAPP_TAG:-3.6.0}
-    container_name: harness-openmrs-gateway
+    container_name: ${STACK_CONTAINER_PREFIX:-harness}-openmrs-gateway
     restart: "unless-stopped"
     depends_on:
       frontend:
@@ -80,7 +80,7 @@ services:
 
   frontend:
     image: openmrs/openmrs-reference-application-3-frontend:${OPENMRS_REFAPP_TAG:-3.6.0}
-    container_name: harness-openmrs-frontend
+    container_name: ${STACK_CONTAINER_PREFIX:-harness}-openmrs-frontend
     restart: "unless-stopped"
     environment:
       SPA_PATH: /openmrs/spa
@@ -117,7 +117,7 @@ services:
       dockerfile: Dockerfile.backend
       args:
         OPENMRS_BACKEND_TAG: ${OPENMRS_BACKEND_TAG:-3.6.0}
-    container_name: harness-openmrs-backend
+    container_name: ${STACK_CONTAINER_PREFIX:-harness}-openmrs-backend
     restart: "unless-stopped"
     depends_on:
       db:
@@ -163,13 +163,13 @@ services:
       start_period: 600s
     volumes:
       - openmrs-data:/openmrs/data
-      - ../artifacts/openmrs/modules:/openmrs/data/modules
+      - ${STACK_ARTIFACTS_DIR:-../artifacts}/openmrs/modules:/openmrs/data/modules
       # Surface Tomcat access logs to the host so debugging doesn't require
       # `docker exec ... tail` against /usr/local/tomcat/logs/. The catalina
       # log already streams to docker logs (stdout/stderr); this mount adds
       # the AccessLogValve output (localhost_access_log.*.txt) for completeness.
       # Tail from host: tail -F artifacts/openmrs/backend-logs/localhost_access_log.*.txt
-      - ../artifacts/openmrs/backend-logs:/usr/local/tomcat/logs
+      - ${STACK_ARTIFACTS_DIR:-../artifacts}/openmrs/backend-logs:/usr/local/tomcat/logs
 
   med-agent-hub:
     # The client-facing med-agent-hub service. Profiles may be single-model or
@@ -188,7 +188,7 @@ services:
       context: ../targets/med-agent-hub
       args:
         HUB_BUILD_REVISION: ${HUB_BUILD_REVISION:?set HUB_BUILD_REVISION to the med-agent-hub commit}
-    container_name: harness-med-agent-hub
+    container_name: ${STACK_CONTAINER_PREFIX:-harness}-med-agent-hub
     restart: "unless-stopped"
     # Local launchers set these to the invoking host user so bind-mounted trace artifacts remain
     # writable. Direct image users retain the Dockerfile's unprivileged 65532:65532 default.
@@ -223,10 +223,10 @@ services:
       - ../targets/med-agent-hub/server/prompts:/app/server/prompts:ro
       - ../targets/med-agent-hub/server/levels.yaml:/app/server/levels.yaml:ro
       # Writable: per-turn reasoning-trace JSONL the live dashboard renders (team._write_trace).
-      - ../artifacts/hub-trace:/app/trace:rw
+      - ${STACK_ARTIFACTS_DIR:-../artifacts}/hub-trace:/app/trace:rw
   db:
     image: mariadb:10.11.7
-    container_name: harness-openmrs-db
+    container_name: ${STACK_CONTAINER_PREFIX:-harness}-openmrs-db
     restart: "unless-stopped"
     command: "mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci"
     healthcheck:
@@ -253,7 +253,7 @@ services:
     # patientrecord REST adapter. ChartSearchAI does not retrieve from it directly. Single-node,
     # security disabled — dev/validation harness only, never a public deployment.
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
-    container_name: harness-querystore-es
+    container_name: ${STACK_CONTAINER_PREFIX:-harness}-querystore-es
     restart: "unless-stopped"
     environment:
       - discovery.type=single-node
