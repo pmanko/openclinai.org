@@ -125,6 +125,8 @@ COMMON_FLAGS=(
 # table-filter in one pass, hence the split; neither part emits USE, so both apply to
 # whichever DB the restore pipes into.
 dump_stream() {
+  # Bash 3.2 (macOS) treats an empty array as unset under nounset.
+  # The guarded expansion passes zero arguments, not an empty table exclusion.
   if [[ "$EXCLUDE_MODULE" == "1" ]]; then
     changelog_where="1=1"
     gp_where="1=1"
@@ -139,7 +141,7 @@ dump_stream() {
     done
     # (1) The body: everything except liquibasechangelog and global_property (module tables
     #     are already dropped via IGNORE_TABLE_FLAGS).
-    docker exec "$DB_CONTAINER" mariadb-dump "${COMMON_FLAGS[@]}" "${IGNORE_TABLE_FLAGS[@]}" \
+    docker exec "$DB_CONTAINER" mariadb-dump "${COMMON_FLAGS[@]}" ${IGNORE_TABLE_FLAGS[@]+"${IGNORE_TABLE_FLAGS[@]}"} \
       --ignore-table="${SOURCE_DB}.liquibasechangelog" \
       --ignore-table="${SOURCE_DB}.global_property" "$SOURCE_DB"
     # (2) liquibasechangelog WITHOUT the module's rows.
@@ -154,7 +156,7 @@ dump_stream() {
       --where="$gp_where" \
       "$SOURCE_DB" global_property
   else
-    docker exec "$DB_CONTAINER" mariadb-dump "${COMMON_FLAGS[@]}" "${IGNORE_TABLE_FLAGS[@]}" \
+    docker exec "$DB_CONTAINER" mariadb-dump "${COMMON_FLAGS[@]}" ${IGNORE_TABLE_FLAGS[@]+"${IGNORE_TABLE_FLAGS[@]}"} \
       "$SOURCE_DB"
   fi
 }

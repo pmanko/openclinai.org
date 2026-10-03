@@ -111,6 +111,43 @@ seed did not write a success receipt; the later read-only checks do not invent o
 
 ## Validation and Remaining Delivery
 
+### Full backup and isolated restore, 3 October 2026
+
+The native full-backup helper initially failed on macOS Bash 3.2 because
+`set -u` rejects an empty exclusion-array expansion. Its guarded expansion now
+passes zero exclusion arguments correctly. The existing real MariaDB integration
+test failed before this correction and passed afterward. The test now supplies
+the native helper's required global-property table and verifies both the clean
+corpus and full-backup restores, including module records and settings.
+
+Using the corrected helper on `selector-proof-a`, a checksum-verified full backup
+restored into an empty database in the separate `selector-proof-b` project.
+All 244 tables restored. Deterministic data exports matched across 26 selected
+clinical, user/role, settings, conversation/audit and migration tables. The HIV
+counts remained 5,334 patients, 14,322 encounters and 428,036 observations.
+Conversation tables in this preparation-only instance do not substitute for the
+later required populated conversation/reload test.
+
+Stopping B with the native `stack-down.sh` (without volume deletion) and restarting
+its database with `stack-up.sh --wait --no-build db` preserved its clinical digest.
+A retained the same backend container ID/start time, healthy state and clinical
+digest. No other project was restarted, imported or adopted. Private backup and
+instance files remain ignored; neither their contents nor credentials are published.
+
+The real round-trip test was run explicitly, separately from the default suite:
+
+```sh
+RUN_DOCKER_TESTS=1 uv run --project targets/validation-harness --extra dev \
+  python -m pytest -o addopts='' tests/operations/test_dump_loaded_integration.py -q
+```
+
+It passed using `/bin/bash` 3.2.57. The default suite again passed 48 umbrella and
+246 operational tests, with the Docker test deselected there. Workspace checks and
+`git diff --check` passed. This proves backup/restore and bounded isolation, not
+the historical-schema upgrade: that remains the next check before migration.
+
+### Earlier preparation checks
+
 - Separate self-review checked selected-resource routing, private-value handling,
   native helper reuse, baseline enforcement and the distinction between command
   doubles, native properties and live clinical-content proof. It is not an
@@ -153,7 +190,7 @@ docker run --rm --network none --user 1001 --entrypoint /bin/bash \
   harness-openmrs-backend:3.6.0-temurin /tmp/proof.sh
 ```
 
-Prove the historical-schema/full-backup restore path, then complete
+Prove the historical-schema upgrade on the restored disposable database, then complete
 account/provider readiness. No public installer, migration of
 Ross's installation, seven-account/context, provider/browser, run/report or
 recipient walkthrough is declared complete by this slice.

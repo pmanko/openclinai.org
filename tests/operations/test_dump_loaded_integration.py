@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import gzip
 import os
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -25,11 +26,12 @@ def _docker(
 
 
 @pytest.mark.slow
+@pytest.mark.parametrize("shell", sorted({"/bin/bash", shutil.which("bash") or "/bin/bash"}))
 @pytest.mark.skipif(
     os.getenv("RUN_DOCKER_TESTS") != "1",
     reason="set RUN_DOCKER_TESTS=1 to run the real MariaDB dump/restore contract",
 )
-def test_portable_dump_round_trip_excludes_consumer_module_state(tmp_path: Path) -> None:
+def test_portable_and_full_dump_round_trips(tmp_path: Path, shell: str) -> None:
     container = f"harness-dump-test-{uuid4().hex[:10]}"
     portable = tmp_path / "portable.sql.gz"
     full = tmp_path / "full.sql.gz"
@@ -75,6 +77,11 @@ INSERT INTO liquibasechangelog VALUES
   ('core-001', 'liquibase/core.xml'),
   ('chartsearchai-001', 'liquibase/chartsearchai.xml'),
   ('querystore-001', 'liquibase/querystore.xml');
+CREATE TABLE global_property (property VARCHAR(255), property_value VARCHAR(255));
+INSERT INTO global_property VALUES
+  ('other.setting', 'preserved'),
+  ('chartsearchai.setting', 'research'),
+  ('module.chartsearchai.version', '1.0.0-SNAPSHOT');
 """
         _docker(
             "exec",
@@ -93,7 +100,7 @@ INSERT INTO liquibasechangelog VALUES
         env.pop("PYTHONPATH", None)
         subprocess.run(
             [
-                "bash",
+                shell,
                 "scripts/dump-loaded.sh",
                 "--source",
                 "source_db",
@@ -108,7 +115,7 @@ INSERT INTO liquibasechangelog VALUES
         )
         subprocess.run(
             [
-                "bash",
+                shell,
                 "scripts/dump-loaded.sh",
                 "--source",
                 "source_db",
@@ -130,8 +137,14 @@ INSERT INTO liquibasechangelog VALUES
         assert "querystore_document" not in portable_sql
         assert "chartsearchai-001" not in portable_sql
         assert "querystore-001" not in portable_sql
+        assert "other.setting" in portable_sql
+        assert "chartsearchai.setting" not in portable_sql
+        assert "module.chartsearchai.version" not in portable_sql
         assert "chartsearchai_session" in full_sql
         assert "querystore_document" in full_sql
+        assert "chartsearchai-001" in full_sql
+        assert "querystore-001" in full_sql
+        assert "module.chartsearchai.version" in full_sql
 
         rejected = subprocess.run(
             [
@@ -187,5 +200,23 @@ INSERT INTO liquibasechangelog VALUES
             query,
         )
         assert result.stdout.decode().splitlines() == ["0", "0"]
+
+        _docker("exec", container, "mariadb", "--user=root", "--password=openmrs",
+                "-e", "CREATE DATABASE full_restored;")
+        _docker("exec", "-i", container, "mariadb", "--user=root", "--password=openmrs",
+                "full_restored", input=gzip.decompress(full.read_bytes()))
+        result = _docker(
+            "exec", container, "mariadb", "--user=root", "--password=openmrs", "-N", "-B",
+            "full_restored", "-e",
+            "SELECT patient_id FROM patient; SELECT id FROM chartsearchai_session; "
+            "SELECT id FROM querystore_document; "
+            "SELECT id FROM liquibasechangelog ORDER BY id; "
+            "SELECT property,property_value FROM global_property ORDER BY property;",
+        )
+        assert result.stdout.decode().splitlines() == [
+            "1", "10", "20", "chartsearchai-001", "core-001", "querystore-001",
+            "chartsearchai.setting\tresearch", "module.chartsearchai.version\t1.0.0-SNAPSHOT",
+            "other.setting\tpreserved",
+        ]
     finally:
         _docker("rm", "-f", container, check=False)
