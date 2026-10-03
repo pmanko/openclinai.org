@@ -77,6 +77,10 @@ Each product supplies its own build and test instructions.
 
 ### Shared development
 
+For reusable research installations, see [Research environments](environments/README.md).
+Configuration selection and read-only status are implemented; migration and the
+tested researcher handoff remain in progress.
+
 The root `Makefile` provides the shared environment and product build commands:
 
 | Command | Purpose |

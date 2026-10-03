@@ -1,7 +1,7 @@
 # Reusable Environments, Evaluations and Demos
 
-**Status:** Ross remediation authorized; source inspection complete and bounded
-setup contract awaiting owner review. Runtime implementation has not started.
+**Status:** Ross setup contract approved. Read-only configuration/status selection
+is implemented; lifecycle, migration and recipient acceptance remain open.
 **Reviewed against source:** 2 October 2026.
 **Publication scope:** Documentation publication is authorized; runtime execution
 and changes to Ross's installation remain separate approvals.
@@ -283,11 +283,11 @@ The current data-tooling ownership decision remains with the main roadmap.
 Review this bounded design with the owner;
 do not introduce a generic framework to settle unresolved details.
 
-### First setup contract for owner review
+### Approved First Setup Contract
 
-The following is the proposed first implementation, not an available installer.
-It implements the configuration layout above without moving product or experiment
-configuration into another format.
+The owner approved this contract on 2 October 2026. Configuration/status selection
+is now implemented; it is not an available installer. It uses the layout above
+without moving product or experiment configuration into another format.
 
 | Saved input | Contents and authority |
 | --- | --- |
@@ -305,7 +305,7 @@ settings fail without writes. Shared defaults, private instance settings and
 documented command overrides have that precedence; ambient shell variables and
 another checkout's `.env` cannot silently choose the instance.
 
-The first executable commands will be `make environment-config ENV=<name>` and
+The first executable commands are `make environment-config ENV=<name>` and
 `make environment-status ENV=<name>`. They inspect, never start, install, build,
 seed, repair or create accounts. Status separates observed services from untested
 authentication, provider response and browser behavior. Lifecycle commands from
@@ -327,8 +327,9 @@ installation remains untouched until that migration is approved.
 
 The [source inspection](reviews/2026-10-02-ross-migration-inventory.md) records
 which old setup files are useful, current gaps, the verified local baseline and
-unverified recipient inputs. This contract review precedes resolver implementation;
-passing resolver/security tests then closes the first delivery iteration.
+unverified recipient inputs. The [operator guide](../environments/README.md) states
+which commands exist and their limits. Resolver/security tests and native read-only
+inspection establish selection only, not lifecycle isolation or recipient readiness.
 
 ### Deliver ChartSearchAI research setup
 
@@ -550,7 +551,7 @@ and recipient acceptance. These remain distinct facts.
 | Delivery | Status | Evidence |
 | --- | --- | --- |
 | Research and roadmap | Ross implementation authorized | User authorized diligent execution; contract and migration signoffs remain required |
-| Select and inspect | Source inspection complete; contract review pending | [Port inventory](reviews/2026-10-02-ross-migration-inventory.md); proposed contract above; resolver tests not run because implementation awaits review |
+| Select and inspect | Approved and locally verified; publication/CI pending | 39 umbrella unit and 230 operational tests passed (one existing opt-in deselected); two private configurations rendered distinct projects/ports/volumes through real read-only Compose inspection; no test installation started; separate self-review caught and fixed the Make default regression and covered secret-safe output, native reuse, scope and truthful readiness limits |
 | Prepare and preserve ChartSearchAI | Not started | Pending tests and recipient-safe migration proof |
 | Restore research accounts and context | Not started | Pending account and companion product/browser tests |
 | Run and hand off ChartSearchAI | Not started | Pending real run, browser evidence and recipient confirmation |
