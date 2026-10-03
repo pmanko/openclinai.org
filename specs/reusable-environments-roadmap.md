@@ -1,7 +1,8 @@
 # Reusable Environments, Evaluations and Demos
 
 **Status:** Ross setup contract approved. Read-only configuration/status selection
-is implemented; lifecycle, migration and recipient acceptance remain open.
+is implemented; instance-scoped native core preparation is under disposable testing.
+Public lifecycle, migration and recipient acceptance remain open.
 **Reviewed against source:** 2 October 2026.
 **Publication scope:** Documentation publication is authorized; runtime execution
 and changes to Ross's installation remain separate approvals.
@@ -69,8 +70,8 @@ These are inspected implementation facts, not claims of recipient acceptance.
 | Existing source | Useful behavior or gap | Planned treatment |
 | --- | --- | --- |
 | [ChartSearchAI defaults](../.env.chartsearch.example) and [ignore rules](../.gitignore) | Shared defaults and private local overrides already exist | Consolidate selection and preserve local values; do not add a parallel configuration store |
-| [OpenMRS Compose](../compose/openmrs-2.8-refapp.yml) | Fixed `harness-*` container names; persistent named volumes and checkout-relative mounts | Make names, ports, storage and commands consistently instance-specific; explicitly migrate existing installations |
-| [Stack startup](../scripts/stack-up.sh) and [ChartSearchAI preparation](../scripts/chartsearchai-local.sh) | Native lifecycle and preparation exist, but assume one local setup | Reuse these functions with explicit instance settings; separate first initialization from ordinary startup/update |
+| [OpenMRS Compose](../compose/openmrs-2.8-refapp.yml) | Selected project names and artifact mounts are parameterized; persistent volumes remain native Compose resources | Verify live isolation/preservation before exposing lifecycle; explicitly review existing-installation storage mapping |
+| [Stack startup](../scripts/stack-up.sh) and [ChartSearchAI preparation](../scripts/chartsearchai-local.sh) | Core-only preparation uses selected Compose services and artifacts without changing provider settings or chart data; the older full demo path remains separate | Complete preserve-first selection over native operations; do not advertise the full demo path as the research installer |
 | [Catalyst wrapper](../scripts/catalyst-mvp.sh) and [override](../compose/catalyst-mvp-isolated.override.yml) | Startup, seed, restart and reset are separate; project/container prefixes are configurable | Adapt this established pattern; preserve native Catalyst lifecycle and data semantics |
 | [Umbrella Makefile](../Makefile) | `validate-run` currently starts Hub before calling the harness | Make running against a selected target independent of preparation; name any combined operation explicitly |
 | [Clinical runner](../targets/validation-harness/harness/validate/runner.py) and [Catalyst run configuration](../targets/validation-harness/harness/catalyst/run_config.py) | Inputs and run configuration are already captured | Supply environment identity through existing provenance/configuration inputs; do not create another report system |
@@ -126,6 +127,19 @@ retrieval location. Do not commit database dumps, model weights or credentials.
 Download/import is explicit; a resumed environment does not fetch or reseed data
 because its software revision changed. Existing harness-owned fixture/transform
 utilities can be invoked without moving deployment ownership back to the harness.
+
+For ChartSearchAI research, the only clinical baseline is the verified HIV corpus
+remapped from `large-demo-data-2-7-0.sql`, identified in
+`environments/chartsearch-research/preset.json`. This is a settled requirement,
+not an optional data choice. Reuse `seed-local.sh` and the portable-dump provenance
+verifier for explicit import; do not regenerate or replace the corpus. Disable
+the stock Reference Demo Data patient/visit generator before OpenMRS starts,
+including first installation, repeat startup and software update. Do not infer
+this from a setting name: verify the effective case-sensitive runtime property.
+Check clinical record identities/content before and after startup, not counts
+alone. A missing, corrupt or mismatched archive stops initialization; never fall
+back to stock/generated patients. Detect unexpected additional clinical data and
+stop with a diagnosis; do not silently delete it or reset a retained installation.
 
 ### Private instances
 
@@ -465,6 +479,7 @@ enough where listed; do not expand this into a full clinical benchmark.
 | Ownership | Presets reference existing native configuration; independently installed harness runs without umbrella, Git, Docker or product checkouts | Diff/owner review plus existing source-free runner isolation checks; no second deployment or version registry |
 | Configuration | Defaults, instance and explicit options resolve in that order; unknown selections, malformed inputs and missing referenced files stop before side effects; updates resolve one approved umbrella revision and its exact pins | Resolver/update tests cover precedence, explicit preview versus main, dirty/diverged source and zero mutations on rejection |
 | Preservation | Repeating startup/update retains selected clinical fixture records, existing user credentials/roles, unrelated users, saved conversations and custom settings; initialization refuses existing state | Before/after observations on a disposable installation, including repeat login and conversation reload; migration metadata may change as expected |
+| HIV baseline only | Explicit initial import uses the preset's exact archive/checksum and provenance; native demo generation is disabled before application startup; initial and repeated startup/update add no generated patients or unrelated clinical records | Effective runtime-property inspection and before/after clinical-record identity/content digests on a disposable instance; known HIV patient records readable through real APIs; missing/corrupt archive fails before import with no stock-data fallback |
 | Migration | A retained old snapshot or representative historical-schema fixture upgrades without reset; Ross's actual current schema is checked before mutation; recorded mapping names the correct existing volumes and backup can be restored | Historical-schema regression plus restore/upgrade evidence and recipient preflight before owner-approved migration; unknown schema fails safely rather than being reset |
 | Isolation | Two instances resolve distinct application resources and data locations; stopping/updating one leaves the other's selected data and readiness unchanged | Resolved Compose inspection, command-target tests and one bounded real lifecycle check; explicitly shared inference is recorded |
 | Accounts and context | All seven accounts authenticate after initial and repeated setup; two distinct role accounts carry their actual role/context through bundled and Hub request/persistence paths; a browser-selected location is retained and absent location stays absent | Account provisioning tests, product transport/persistence tests and representative browser login/turn/reload; no claim of production permission enforcement |
@@ -552,7 +567,7 @@ and recipient acceptance. These remain distinct facts.
 | --- | --- | --- |
 | Research and roadmap | Ross implementation authorized | User authorized diligent execution; contract and migration signoffs remain required |
 | Select and inspect | Approved and locally verified; publication/CI pending | 39 umbrella unit and 230 operational tests passed (one existing opt-in deselected); two private configurations rendered distinct projects/ports/volumes through real read-only Compose inspection; no test installation started; separate self-review caught and fixed the Make default regression and covered secret-safe output, native reuse, scope and truthful readiness limits |
-| Prepare and preserve ChartSearchAI | Resource selection locally verified; lifecycle unavailable | 41 umbrella unit and 230 operational tests passed (one existing opt-in deselected); actual read-only Compose inspection proved two selections have disjoint container names, volumes and writable mounts; disposable startup, second-run preservation and recipient-safe migration proof remain pending |
+| Prepare and preserve ChartSearchAI | Native core preparation and HIV-only boot/restart preservation verified; not ready for handoff | 48 umbrella unit and 246 operational tests passed (one existing opt-in deselected); real selected source builds/import and 16 clinical-table content comparisons passed before/after boot and restart with generator disabled; baseline administrator credentials are rejected, so authenticated API/account/provider readiness and historical-schema migration remain open. See [disposable proof](reviews/2026-10-02-research-preparation-proof.md). |
 | Restore research accounts and context | Not started | Pending account and companion product/browser tests |
 | Run and hand off ChartSearchAI | Not started | Pending real run, browser evidence and recipient confirmation |
 | Reuse with Catalyst | Not started | Pending bounded native-path proof |

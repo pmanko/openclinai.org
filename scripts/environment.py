@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import re
+import socket
 import subprocess
 import sys
 from pathlib import Path
@@ -158,18 +159,26 @@ def public_config(config):
             "data_action": "preserve", "lifecycle": "not_implemented"}
 
 
-def inspect_command(config, args):
+def process_environment(config):
     # Only operational process settings are inherited; ambient Compose/.env values
     # must not silently select a different installation or leak into interpolation.
     env = {key: os.environ[key] for key in ("PATH", "HOME", "LANG", "LC_ALL", "TMPDIR",
-                                           "DOCKER_CONTEXT", "DOCKER_HOST", "DOCKER_CONFIG")
+                                           "DOCKER_CONTEXT", "DOCKER_HOST", "DOCKER_CONFIG",
+                                           "JAVA_HOME", "COREPACK_HOME", "XDG_CACHE_HOME")
            if key in os.environ}
     env.update(config["values"])
     env.update(STACK_CONTAINER_PREFIX=config["project"],
                STACK_ARTIFACTS_DIR=str(config["artifacts"]),
+               ARTIFACTS_DIR=str(config["artifacts"]),
+               OPENCLINAI_ENVIRONMENT=config["name"],
+               COMPOSE_PROJECT_NAME=config["project"], COMPOSE_ENV_FILE=os.devnull,
                MED_AGENT_HUB_UID=str(os.getuid()), MED_AGENT_HUB_GID=str(os.getgid()))
+    return env
+
+
+def inspect_command(config, args):
     try:
-        result = subprocess.run(args, cwd=config["root"], env=env, text=True,
+        result = subprocess.run(args, cwd=config["root"], env=process_environment(config), text=True,
                                 capture_output=True, timeout=30, check=False)
     except (OSError, subprocess.TimeoutExpired):
         raise ConfigError("Read-only inspection unavailable; check the required tool/service.") from None
@@ -185,7 +194,7 @@ def compose_rows(output):
     return [json.loads(line) for line in output.splitlines() if line.strip()]
 
 
-def status(config):
+def native_environment(config):
     contexts = json.loads(inspect_command(config, ["docker", "context", "inspect"]))
     endpoint = contexts[0]["Endpoints"]["docker"]["Host"]
     if not os.environ.get("DOCKER_CONTEXT"):
@@ -198,6 +207,11 @@ def status(config):
     compose = ["docker", "compose", "--project-name", config["project"], "--env-file", os.devnull,
                "-f", str(within(config["root"], config["preset"]["files"]["compose"]))]
     native = json.loads(inspect_command(native_config, [*compose, "config", "--format", "json"]))
+    return native_config, compose, native
+
+
+def status(config):
+    native_config, compose, native = native_environment(config)
     rows = compose_rows(inspect_command(native_config, [*compose, "ps", "--all", "--format", "json"]))
     result = public_config(config)
     result.update(readiness="not_verified", services=[
@@ -215,6 +229,78 @@ def status(config):
     if any(value and not value.startswith(config["project"] + "-") for value in names.values()):
         result["limitations"].append("Native Compose still uses fixed container names; instance lifecycle is unavailable.")
     return result
+
+
+def check_ownership(config, native, containers, volume_names):
+    """Adapt the original Ross ownership guard to an explicitly selected project."""
+    expected = {value["container_name"]: key for key, value in native["services"].items()}
+    volumes = {value["name"] for value in native["volumes"].values()}
+    owned_volumes, database_mounts = set(), None
+    found = False
+    for item in containers:
+        container = item.get("Name", "").removeprefix("/")
+        mounts = {mount["Name"] for mount in item.get("Mounts", []) if mount.get("Type") == "volume"}
+        labels = item.get("Config", {}).get("Labels") or {}
+        if container not in expected:
+            if mounts & volumes or labels.get("com.docker.compose.project") == config["project"]:
+                raise ConfigError("Selected resources are shared with an unexpected container; inspect ownership first.")
+            continue
+        root = config["root"]
+        working_dir = labels.get("com.docker.compose.project.working_dir", "")
+        if (not working_dir or Path(working_dir).resolve() not in {root, root / "compose"}
+                or labels.get("com.docker.compose.project") != config["project"]
+                or labels.get("com.docker.compose.service") != expected[container]
+                or labels.get("com.docker.compose.project.config_files", "").split(",")
+                != [str(within(root, config["preset"]["files"]["compose"]))]):
+            raise ConfigError("Selected container belongs to another checkout or configuration; no takeover is allowed.")
+        for desired in native["services"][expected[container]].get("volumes", []):
+            actual = next((mount for mount in item.get("Mounts", [])
+                           if mount.get("Destination") == desired["target"]), {})
+            if desired["type"] == "volume":
+                source_matches = actual.get("Name") == native["volumes"][desired["source"]]["name"]
+            else:
+                source_matches = bool(actual.get("Source")) and Path(actual["Source"]).resolve() == Path(desired["source"]).resolve()
+            if (actual.get("Type") != desired["type"] or not source_matches
+                    or actual.get("RW", True) == desired.get("read_only", False)):
+                raise ConfigError("Retained container mount differs from the selected storage mapping; inspect before migration.")
+        found = True
+        owned_volumes.update(mounts)
+        if expected[container] == "db":
+            database_mounts = mounts
+    if volumes.intersection(volume_names) - owned_volumes:
+        raise ConfigError("Existing selected storage has no verified owning container; recover it instead of initializing.")
+    if found:
+        database = native["volumes"]["db-data"]["name"]
+        if database_mounts is None or database not in database_mounts or database not in volume_names:
+            raise ConfigError("The retained database or its volume is missing; do not create an empty replacement.")
+    return "existing" if found else "absent"
+
+
+def lifecycle_preflight(config):
+    """Inspect ownership and ports; do not build, start, repair or write receipts."""
+    selected, compose, native = native_environment(config)
+    ids = inspect_command(selected, ["docker", "ps", "-aq"]).split()
+    containers = json.loads(inspect_command(selected, ["docker", "inspect", *ids])) if ids else []
+    volumes = inspect_command(selected, ["docker", "volume", "ls", "--format", "{{.Name}}"]).splitlines()
+    deployment = check_ownership(config, native, containers, volumes)
+    by_name = {item["Name"].removeprefix("/"): item for item in containers}
+    for service in native["services"].values():
+        container = by_name.get(service["container_name"], {})
+        bindings = container.get("NetworkSettings", {}).get("Ports") or {}
+        for port in service.get("ports", []):
+            if port.get("protocol", "tcp") != "tcp" or not port.get("published"):
+                continue
+            address = port.get("host_ip") or "0.0.0.0"
+            current = bindings.get(f"{port['target']}/tcp") or []
+            if container.get("State", {}).get("Running") and any(
+                    entry["HostPort"] == str(port["published"]) and entry["HostIp"] == address for entry in current):
+                continue
+            try:
+                with socket.socket() as probe:
+                    probe.bind((address, int(port["published"])))
+            except OSError:
+                raise ConfigError(f"Selected host port {port['published']} is in use; choose another port before startup.") from None
+    return selected, compose, deployment
 
 
 def main():

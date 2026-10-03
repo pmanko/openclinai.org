@@ -16,7 +16,7 @@ class EnvironmentFixture(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
-        self.root = Path(self.temporary.name)
+        self.root = Path(self.temporary.name).resolve()
         self.credentials = {key: secrets.token_urlsafe(24) for key in ("default", "instance", "api")}
         self.preset = json.loads(
             (ROOT / "environments/chartsearch-research/preset.json").read_text()
@@ -180,6 +180,14 @@ class StatusTests(EnvironmentFixture):
         with self.assertRaisesRegex(environment.ConfigError, "artifact"):
             self.resolve()
 
+    def test_native_toolchain_settings_survive_without_ambient_instance_settings(self):
+        with patch.dict(os.environ, {"JAVA_HOME": "/installed/java", "COREPACK_HOME": "/cached/yarn",
+                                     "HARNESS_PROXY_HTTP_PORT": "9999"}):
+            values = environment.process_environment(self.resolve())
+        self.assertEqual(values["JAVA_HOME"], "/installed/java")
+        self.assertEqual(values["COREPACK_HOME"], "/cached/yarn")
+        self.assertEqual(values["HARNESS_PROXY_HTTP_PORT"], "8088")
+
     def test_status_is_read_only_redacted_and_does_not_claim_readiness(self):
         config = self.resolve()
         native = {"services": {"db": {"container_name": "harness-openmrs-db"}},
@@ -243,6 +251,53 @@ class MakeInterfaceTests(unittest.TestCase):
         default = next((line for line in result.stdout.splitlines()
                         if line.startswith(".DEFAULT_GOAL := ")), None)
         self.assertEqual(default, ".DEFAULT_GOAL := up")
+
+
+class OwnershipTests(EnvironmentFixture):
+    def native(self):
+        return {"name": "openclinai-alpha", "services": {
+            "db": {"container_name": "openclinai-alpha-openmrs-db"},
+            "backend": {"container_name": "openclinai-alpha-openmrs-backend"}},
+            "volumes": {"db-data": {"name": "openclinai-alpha_db-data"}}}
+
+    def container(self, service="db", project="openclinai-alpha", root=None):
+        return {"Name": f"/openclinai-alpha-openmrs-{service}", "Config": {"Labels": {
+            "com.docker.compose.project": project,
+            "com.docker.compose.service": service,
+            "com.docker.compose.project.working_dir": str(root or self.root),
+            "com.docker.compose.project.config_files": str(self.root / "compose/openmrs-2.8-refapp.yml")}},
+            "Mounts": [{"Type": "volume", "Name": "openclinai-alpha_db-data"}]}
+
+    def test_new_and_retained_installations_are_distinguished(self):
+        self.assertEqual(environment.check_ownership(self.resolve(), self.native(), [], []), "absent")
+        self.assertEqual(environment.check_ownership(self.resolve(), self.native(),
+                         [self.container()], ["openclinai-alpha_db-data"]), "existing")
+
+    def test_foreign_project_checkout_service_or_configuration_rejects(self):
+        cases = [self.container(project="foreign"), self.container(root=self.root / "elsewhere"),
+                 self.container()]
+        cases[2]["Config"]["Labels"]["com.docker.compose.service"] = "backend"
+        for item in cases:
+            with self.subTest(item=item), self.assertRaises(environment.ConfigError):
+                environment.check_ownership(self.resolve(), self.native(), [item], ["openclinai-alpha_db-data"])
+
+    def test_matching_labels_cannot_adopt_a_different_writable_mount(self):
+        config, native, item = self.resolve(), self.native(), self.container()
+        native["services"]["db"]["volumes"] = [{"type": "bind", "source": str(config["artifacts"]),
+                                                "target": "/local-proof"}]
+        item["Mounts"].append({"Type": "bind", "Source": str(self.root / "another-installation"),
+                              "Destination": "/local-proof", "RW": True})
+        with self.assertRaisesRegex(environment.ConfigError, "mount"):
+            environment.check_ownership(config, native, [item], ["openclinai-alpha_db-data"])
+
+    def test_shared_or_orphaned_storage_and_missing_database_reject(self):
+        foreign = {"Name": "/unrelated", "Mounts": [{"Type": "volume", "Name": "openclinai-alpha_db-data"}]}
+        for containers, volumes in (([], ["openclinai-alpha_db-data"]),
+                                    ([self.container(), foreign], ["openclinai-alpha_db-data"]),
+                                    ([self.container("backend")], ["openclinai-alpha_db-data"]),
+                                    ([self.container()], [])):
+            with self.subTest(containers=containers), self.assertRaises(environment.ConfigError):
+                environment.check_ownership(self.resolve(), self.native(), containers, volumes)
 
 
 if __name__ == "__main__":

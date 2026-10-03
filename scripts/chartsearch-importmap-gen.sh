@@ -8,15 +8,21 @@
 # currently in use — no manual editing of importmap.json ever.
 #
 # Where the base is fetched from:
-#   - default: the local docker container `harness-openmrs-frontend`
-#   - cloud:   pass CLOUD=1 to fetch via gcp_ssh + the VM's container
+#   - the frontend service of the selected local Compose project
+#   - cloud generation is not available in this command
 #
 # Output: artifacts/openmrs/spa-custom/importmap.json
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ARTIFACT_DIR="${ROOT}/artifacts/openmrs/spa-custom"
+ARTIFACTS_DIR="${ARTIFACTS_DIR:-${ROOT}/artifacts}"
+case "${ARTIFACTS_DIR}" in /*) ;; *) ARTIFACTS_DIR="${ROOT}/${ARTIFACTS_DIR}" ;; esac
+ARTIFACT_DIR="${ARTIFACTS_DIR}/openmrs/spa-custom"
+COMPOSE=(docker compose)
+if [ -n "${COMPOSE_ENV_FILE:-}" ]; then COMPOSE+=(--env-file "${COMPOSE_ENV_FILE}"); fi
+COMPOSE+=(-f "${COMPOSE_FILE:-${ROOT}/compose/openmrs-2.8-refapp.yml}")
+export HUB_BUILD_REVISION="${HUB_BUILD_REVISION:-$(git -C "${ROOT}/targets/med-agent-hub" rev-parse HEAD)}"
 TARGET_NAME="openmrs-esm-chartsearchai-app-multiturn"
 OUT="${ARTIFACT_DIR}/importmap.json"
 ENTRY_VALUE="./${TARGET_NAME}/openmrs-esm-chartsearchai-app.js"
@@ -33,12 +39,11 @@ if [ "${CLOUD:-0}" = "1" ]; then
   exit 1
 else
   echo "==> fetching live importmap from local frontend container"
-  if ! docker inspect -f '{{.State.Status}}' harness-openmrs-frontend >/dev/null 2>&1; then
-    echo "error: harness-openmrs-frontend container not running locally" >&2
+  if ! BASE_JSON="$("${COMPOSE[@]}" exec -T frontend cat /usr/share/nginx/html/importmap.json)"; then
+    echo "error: cannot read importmap from the selected frontend service" >&2
     echo "  bring the local stack up first (make up)" >&2
     exit 1
   fi
-  BASE_JSON="$(docker exec harness-openmrs-frontend cat /usr/share/nginx/html/importmap.json)"
 fi
 
 echo "${BASE_JSON}" | jq --arg value "${ENTRY_VALUE}" '.imports."@openmrs/esm-chartsearchai-app" = $value' > "${OUT}"

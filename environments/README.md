@@ -3,6 +3,11 @@
 OpenClinAI owns setup and updates. The validation harness runs experiments against
 an already-prepared service and produces reports; it does not manage installations.
 
+ChartSearchAI research uses only the verified HIV archive named in its preset.
+The umbrella backend disables OpenMRS's stock demo-patient generator on every
+boot. Starting/updating must preserve the imported corpus; importing/resetting is
+explicit. Missing data is a setup failure, not a reason to generate other patients.
+
 **Current implementation:** configuration selection and read-only status only.
 Startup, initialization, updates, account provisioning and migration through this
 interface are not available yet. Do not use it to replace an existing installation.
@@ -68,9 +73,12 @@ The selected project is `openclinai-<name>` and its future artifacts directory i
 `artifacts/environments/<name>`. Native Compose container names and writable mounts
 follow that selection; read-only prompts and profile files still reference the
 recorded component checkout. Status lists the actual rendered names and mounts.
-This is configuration proof, not a claim that two running installations have been
-tested. Existing stacks with another project name are not adopted or changed by
-these commands. Application startup and data migration remain unavailable here.
+The native `chartsearchai-local.sh --prepare-core` helper now supports the selected
+Compose services and artifact paths without configuring providers or importing
+chart data. It is under disposable testing, not a public research setup command.
+Existing stacks with another project name are not adopted or changed by inspection.
+The environment selector still does not start or migrate an application. Retained
+data, historical-schema and two-running-instance proof are not complete.
 
 ## Research Accounts and Migration
 

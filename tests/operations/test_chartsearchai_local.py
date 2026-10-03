@@ -477,7 +477,7 @@ def test_seed_rejects_unverified_dump_before_database_mutation():
     assert "--require-portable" in seed
     assert "reconciling consumer-module Liquibase state" not in seed
     assert "DELETE FROM liquibasechangelog" not in seed
-    assert "artifacts/chartsearchai-local/corpus-provenance.json" in seed
+    assert 'CORPUS_RECEIPT="${ARTIFACTS_DIR}/chartsearchai-local/corpus-provenance.json"' in seed
 
 
 def test_querystore_recreate_is_explicit_and_read_store_scoped():
@@ -557,9 +557,9 @@ def test_local_builds_require_source_bound_artifact_provenance():
     probe = _read("scripts/probe-chartsearchai-relay.py")
 
     assert makefile.count("artifact-provenance.py write") >= 3
-    assert "artifacts/chartsearchai-local/module-provenance" in makefile
-    assert 'CHARTSEARCH_OMOD_PROVENANCE="artifacts/chartsearchai-local/module-provenance/chartsearchai-1.0.0-SNAPSHOT.omod.provenance.json"' in local
-    assert 'QUERYSTORE_OMOD_PROVENANCE="artifacts/chartsearchai-local/module-provenance/querystore-1.0.0-SNAPSHOT.omod.provenance.json"' in local
+    assert "$(ARTIFACTS_DIR)/chartsearchai-local/module-provenance" in makefile
+    assert 'CHARTSEARCH_OMOD_PROVENANCE="${ARTIFACTS_DIR}/chartsearchai-local/module-provenance/chartsearchai-1.0.0-SNAPSHOT.omod.provenance.json"' in local
+    assert 'QUERYSTORE_OMOD_PROVENANCE="${ARTIFACTS_DIR}/chartsearchai-local/module-provenance/querystore-1.0.0-SNAPSHOT.omod.provenance.json"' in local
     assert "artifacts/chartsearchai-local/module-provenance" in probe
     assert "remove_legacy_module_manifests" in local
     assert "artifact-provenance.py verify" in local
