@@ -118,6 +118,25 @@ not been provisioned; neither provider is claimed ready.
   afterward. Native first/existing-property conversion and the actual restored
   clinical-content comparison are separate from command-double tests.
 
+The pushed implementation is `1c3fa31d140fad7ff53bf6a255b3655bac32297e` in
+[umbrella PR #5](https://github.com/pmanko/openclinai.org/pull/5). Its workspace,
+operational and GitGuardian checks passed, but the
+[pinned source-pair CI job](https://github.com/pmanko/openclinai.org/actions/runs/37097306288/job/111129753661)
+failed. `RemoteLlmEngineResponseSizeBoundTest.contextOverflowIsReportedThroughBlockingAndStreamingHttpCalls`
+expected `ChartTooLargeException` in its streaming case and received `APIException`
+with `HTTP/1.1 header parser received no bytes`. The ChartSearchAI API suite
+reported 2,949 tests, one failure and 59 skips; subsequent frontend steps did not
+run. The product pins are unchanged. This is not evidence of an HIV import
+regression, but its cause is not established and required CI is not green.
+No test was weakened, product source changed or rerun used to erase this finding.
+
+Read-only account inspection found the archive administrator at user ID 1 with
+system ID `admin`, no username and `retired=0`. The checked-in user transform
+passes through the source password and salt rather than establishing the private
+settings password. This identifies the account but does not establish valid
+credentials; fresh-install credential policy remains an owner decision. Existing
+installation passwords must remain unchanged.
+
 The native-property check is reproducible from the umbrella root with the built
 backend image; it has no application volume mounts or network access:
 
