@@ -1,20 +1,26 @@
 #!/bin/sh
-# Backend runtime init for the harness — chartsearchai's own backend-init.sh, minus the local-LLM
-# GGUF download. chartsearchai DOES retain a bundled local engine (chartsearchai.llm.engine can be
-# "local" or "remote"; the harness's operating default is "remote", pointed at LM Studio/llama-router
-# — see the dual-provider parity roadmap's G06 evidence), but this backend image does not
-# auto-provision the multi-GB GGUF weights it would need, so only Querystore's ONNX embedding model
-# is fetched here. Exercising the local engine requires manually placing a GGUF file at
-# /openmrs/data/chartsearchai/<chartsearchai.llm.modelFilePath> before flipping the GP.
-# Everything else mirrors targets/chartsearchai/backend-init.sh.
+# Umbrella OpenMRS initialization. Both ChartSearchAI providers remain supported;
+# model provisioning is separate. Clinical data comes only from the verified HIV
+# archive, never the distribution's automatic demo-patient generator.
 #
 # When started as root (no separate init container chowns the volume), heal
 # pre-uid-1001 root-owned contents and drop to the openmrs user. The OpenMRS
 # process always runs as uid 1001.
+set -eu
 if [ "$(id -u)" = "0" ]; then
   chown -R 1001:1001 /openmrs/data 2>/dev/null || true
   exec runuser -u openmrs -- "$0" "$@"
 fi
+
+# Native startup merges this file into runtime properties (or installation
+# properties on first boot). OMRS_EXTRA_* cannot preserve this case-sensitive key.
+cd /openmrs
+touch openmrs-extra.properties
+awk '
+  BEGIN { print "referencedemodata.createDemoPatients=false" }
+  $0 !~ /^[[:space:]]*referencedemodata[.]createDemoPatients[[:space:]]*[:=]/ { print }
+' openmrs-extra.properties > openmrs-extra.properties.next
+mv openmrs-extra.properties.next openmrs-extra.properties
 
 MODEL_DIR="/openmrs/data/chartsearchai"
 mkdir -p "$MODEL_DIR"
