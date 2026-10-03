@@ -1,6 +1,7 @@
 # Reusable Environments, Evaluations and Demos
 
-**Status:** Roadmap recorded for review; runtime implementation has not started.
+**Status:** Ross remediation authorized; source inspection complete and bounded
+setup contract awaiting owner review. Runtime implementation has not started.
 **Reviewed against source:** 2 October 2026.
 **Publication scope:** Documentation publication is authorized; runtime execution
 and changes to Ross's installation remain separate approvals.
@@ -282,6 +283,53 @@ The current data-tooling ownership decision remains with the main roadmap.
 Review this bounded design with the owner;
 do not introduce a generic framework to settle unresolved details.
 
+### First setup contract for owner review
+
+The following is the proposed first implementation, not an available installer.
+It implements the configuration layout above without moving product or experiment
+configuration into another format.
+
+| Saved input | Contents and authority |
+| --- | --- |
+| `environments/chartsearch-research/preset.json` | Identifier, label, application, paths to the existing Compose/default files, reviewed baseline identity, required seven-account setup, and references to existing experiment/browser inputs |
+| `.local/environments/<name>/settings.env` | Preset selection and only documented machine overrides: ports, model directory/endpoint and private connection credentials; parsed as data, never sourced as shell |
+| Git checkout | Umbrella revision and its six component pins; no second software-version list in the preset |
+| Native product configuration | Model profiles, prompts and provider behavior remain in their owning products; preserved user changes are reported, never overwritten to make setup pass |
+
+Start with ChartSearchAI only. A second ChartSearchAI instance proves isolation;
+Catalyst adoption follows later. The read-only resolver validates the name, keys,
+paths and selected references before invoking any native operation. Its public
+output contains selected paths/resource identities and configuration origins, not
+credentials. Unknown inputs, path escape, unsafe permissions and unsupported
+settings fail without writes. Shared defaults, private instance settings and
+documented command overrides have that precedence; ambient shell variables and
+another checkout's `.env` cannot silently choose the instance.
+
+The first executable commands will be `make environment-config ENV=<name>` and
+`make environment-status ENV=<name>`. They inspect, never start, install, build,
+seed, repair or create accounts. Status separates observed services from untested
+authentication, provider response and browser behavior. Lifecycle commands from
+section 4 remain unavailable until their preservation tests pass. The existing
+fixed-name launchers must not be presented as instance-aware before adaptation.
+
+For the next lifecycle slice, reuse the native Compose file and preparation/build
+helpers, remove fixed container-name assumptions, and use Compose project/service
+lookup throughout. Instance artifacts and private settings must stay separate;
+the host model server can be explicitly shared. Do not introduce a generic task
+runner or a copied Compose/model/scenario configuration.
+
+Test fresh and repeat startup plus historical-schema upgrade on disposable
+instances first. Adopting an existing installation is a separate reviewed step:
+inspect its actual project, mounts, settings and schema, verify a restorable full
+backup, and present the exact storage mapping before any stop or upgrade. Do not
+infer ownership from a checkout name or rename volumes implicitly. Ross's current
+installation remains untouched until that migration is approved.
+
+The [source inspection](reviews/2026-10-02-ross-migration-inventory.md) records
+which old setup files are useful, current gaps, the verified local baseline and
+unverified recipient inputs. This contract review precedes resolver implementation;
+passing resolver/security tests then closes the first delivery iteration.
+
 ### Deliver ChartSearchAI research setup
 
 Implement the first preset and thin command selection over existing operations.
@@ -501,8 +549,8 @@ and recipient acceptance. These remain distinct facts.
 
 | Delivery | Status | Evidence |
 | --- | --- | --- |
-| Research and roadmap | Recorded for review | Current source links and primary references in this document |
-| Select and inspect | Not started | Pending contract/migration review and resolver tests |
+| Research and roadmap | Ross implementation authorized | User authorized diligent execution; contract and migration signoffs remain required |
+| Select and inspect | Source inspection complete; contract review pending | [Port inventory](reviews/2026-10-02-ross-migration-inventory.md); proposed contract above; resolver tests not run because implementation awaits review |
 | Prepare and preserve ChartSearchAI | Not started | Pending tests and recipient-safe migration proof |
 | Restore research accounts and context | Not started | Pending account and companion product/browser tests |
 | Run and hand off ChartSearchAI | Not started | Pending real run, browser evidence and recipient confirmation |
