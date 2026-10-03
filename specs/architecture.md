@@ -131,4 +131,4 @@ These links identify contracts at the component revisions recorded by the worksp
 - [OpenClinAI provider integration requirements/reference](../docs/openmrs-provider-interface.md)
 - [Native OpenMRS provider contract](https://github.com/pmanko/openmrs-module-chartsearchai/blob/8622f1b5c8995ac5361dd634705434ba65fe2fae/README.md#provider-integration-contract)
 - [QueryStore API](https://github.com/pmanko/openmrs-module-querystore/blob/55bf9971eb293b2155fb72de1e7cadfd6fab3bdd/docs/rest-api.md)
-- [Catalyst–Med Agent Hub contract](https://github.com/DIGI-UW/catalyst-ai/blob/30ecb954604366b54c7ffa2ec22913af9d78e962/docs/med-agent-hub.md)
+- [Catalyst–Med Agent Hub contract](https://github.com/DIGI-UW/catalyst-ai/blob/94742f1af6d634f03b47b9e97f3512829ba265b1/docs/med-agent-hub.md)

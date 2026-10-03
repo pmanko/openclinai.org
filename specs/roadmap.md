@@ -18,10 +18,10 @@ direction.
    acceptance or security checks. Retain the old installation as migration input
    and recovery, not an ongoing evaluation path. Planning is recorded; migration,
    deployment and report/demo publication still require their explicit approvals.
-2. Review the consolidated documentation and focused website patch. Move remaining Catalyst/OpenMRS
-   application requirements to their maintained authorities, our cross-project
-   integration specifications and delivery to this umbrella, and experiment
-   protocols/evidence to the harness. Keep our coordination material out of
+2. Use the consolidated documentation and focused website patch. Application
+   requirements belong to their maintained product authorities; cross-project
+   integration specifications and delivery belong to this umbrella; experiment
+   protocols and evidence belong to the harness. Keep our coordination material out of
    OpenMRS-owned repositories and forks; their native module docs remain unchanged.
    Retain only requirements supported by current code or explicit current direction.
    Delete obsolete sections, consolidate duplicates and preserve IDs only for
@@ -32,13 +32,16 @@ direction.
    records findings, proposed dispositions and verification evidence; it does not
    replace the product authorities or this roadmap.
    Ownership consolidation, consumer checks and the technical/non-technical site
-   audit are complete locally. The patch and remediation proposal are ready for
-   owner review through linked documentation PRs. Website deployment is separate; this documentation work changes no product runtime behavior.
-   Review companions: [Catalyst #140](https://github.com/DIGI-UW/catalyst-ai/pull/140),
+   audit are complete and merged. The documentation site is published through the
+   umbrella's GitHub Pages workflow. The separate public landing deployment and
+   broader audit proposals are not implied by that publication; this documentation
+   work changes no product runtime behavior.
+   Merged companions: [Catalyst #140](https://github.com/DIGI-UW/catalyst-ai/pull/140),
    [Hub #32](https://github.com/pmanko/med-agent-hub/pull/32) and
    [harness #198](https://github.com/pmanko/clinical-ai-validation-harness/pull/198).
-   OpenMRS module documentation and feature PRs are unchanged. The umbrella PR
-   contains the integration reference, roadmap, website patch and compatible pins.
+   OpenMRS module documentation and feature PRs are unchanged. Umbrella
+   [#3](https://github.com/pmanko/openclinai.org/pull/3) contains the integration
+   reference, roadmap and website patch; the closeout records merged component pins.
 3. Complete maintainer review and ordered merging of the ChartSearchAI split.
    Break the existing ChartSearchAI backend and frontend integration work into the
    smallest practical reviewable PRs. Extract the existing implementation, tests
@@ -52,17 +55,19 @@ direction.
    newer upstream behavior and apply the approved frontend integration decisions
    below. Unrelated new features and replacement implementations are outside this
    task.
-4. Review the published component-ownership slice:
+4. The component-ownership slice is merged:
    [harness #197](https://github.com/pmanko/clinical-ai-validation-harness/pull/197)
    and [umbrella #2](https://github.com/pmanko/openclinai.org/pull/2).
-   Merge the harness first, then the umbrella; retain separate product-build and
-   deployed-acceptance evidence.
+   The umbrella implementation and documentation PRs are merged, followed by the
+   harness review corrections and documentation cleanup. Retain separate
+   product-build and deployed-acceptance evidence; this refactor does not complete
+   Ross's environment migration or authorize OpenMRS upstream merges.
 5. Continue QueryStore review and [Catalyst delivery](roadmap.md#6-catalyst-delivery) through their product contracts.
    Verify product-native builds and shared environments against recorded revisions;
    record deployed acceptance separately from source verification.
 
 The immediate environment priority is Ross's reviewed migration and usable handoff.
-Documentation review and the existing contribution tracks continue separately.
+Broader documentation proposals and the existing contribution tracks continue separately.
 The completed split remains under its existing contribution rules; this priority
 change does not reopen its functional acceptance or authorize upstream merges.
 Environment sequence, review points and acceptance live in the linked roadmap.
@@ -71,11 +76,11 @@ Environment sequence, review points and acceptance live in the linked roadmap.
 
 | Area | Current state | Remaining work |
 | --- | --- | --- |
-| Umbrella repository | [pmanko/openclinai.org](https://github.com/pmanko/openclinai.org) has the component-ownership implementation published in PR #2, including product operations and website sources | Review and merge the assembled changes |
-| Component checkouts | Fresh recursive GitHub clone resolves exactly six direct components at their recorded revisions; harness product gitlinks and `openmrs_chatbot` are absent | Review and merge the component changes |
-| Validation harness | Clinical and Catalyst runners use configured targets and supplied/observed provenance; source-free wheel isolation, portable reports and the full local harness suite pass | Review the published component change and verify actual product interfaces separately |
-| Website | `landing/`, `site/`, static hosting configuration, build/publication tools and workflows are umbrella-owned; local website tests and build have run | Hosted CI and explicit deployment acceptance |
-| Specifications | Product behavior, shared delivery and validation protocols have maintained owners; duplicate plans and obsolete lane instructions are removed locally; consumer/link checks pass | Owner review and component publication, followed by reachable umbrella pin updates |
+| Umbrella repository | [pmanko/openclinai.org](https://github.com/pmanko/openclinai.org) owns product operations, component pins and website sources; PRs #2 and #3 are merged | Verify reusable environments against actual installations under the separate roadmap |
+| Component checkouts | Exactly six direct components have recorded revisions; harness product gitlinks and `openmrs_chatbot` are absent; companion changes are merged | Preserve recorded versions during environment setup and updates |
+| Validation harness | PRs #197 and #198 are merged; runners use configured targets and supplied/observed provenance; required fields/types are checked without treating caller claims as verified revisions | Verify actual product interfaces separately; fixture isolation is not product acceptance |
+| Website | Sources and publication tooling are umbrella-owned; GitHub Pages is configured for Actions and build/deploy pass; browser inspection confirms the documentation loads | Public landing deployment and product/demo publication remain separate |
+| Specifications | Product behavior, shared delivery and validation protocols have maintained owners; duplicate plans and obsolete lane instructions are removed; companion documentation is merged | Follow the maintained owners; broader content proposals retain their own review |
 | Reusable environments | [Detailed roadmap](reusable-environments-roadmap.md) records shared presets, private settings, safe updates and experiment/demo handoff; no runtime implementation yet | Review the bounded setup contract, port Ross's useful setup, and verify ChartSearchAI then existing Catalyst operations |
 | Product delivery | Eight backend and five frontend extractions are published. Applicable hosted checks pass on all recorded heads; no review threads are unresolved. Confirmed findings are fixed. Backend #590 retains the documented local macOS socket-test failure despite passing hosted source-pair checks. Both linear stacks are published and their current hosted builds pass. Combined functional validation passes, and all thirteen contributions are ready for review | Maintainer review and ordered merging; retain integration branches unchanged |
 
@@ -87,12 +92,39 @@ publication and deployed acceptance.
 
 | Phase | Deliverable | Acceptance criteria | Status |
 | --- | --- | --- | --- |
-| U0 Ownership and dependencies | Map capabilities, interfaces and consumers to component owners | Each capability has an owner, defined inputs/outputs and verification criteria | Runtime, operations, publication and retained specification responsibilities mapped; consolidated documentation is locally verified and awaits owner review/publication |
-| U1 Component and management ownership | Direct umbrella gitlinks and workspace-management tooling; removal of nested product gitlinks and `openmrs_chatbot` | One canonical gitlink per component; fresh umbrella checkout resolves recorded revisions; umbrella tooling manages component selection and checkouts | Implemented and published for review; fresh recursive checkout, workspace checker and component cleanliness pass |
-| U2 Independent validation | Modular experiment execution, target adapters, evidence collection, evaluation and reporting | Experiments run against configured targets without Git, submodules, product source trees, product pins or an umbrella installation; offline reports consume captured artifacts only | Local runtime, full regression and installed-wheel clinical/Catalyst isolation checks pass; portable reports tested with doubles; component review and real-interface acceptance pending |
-| U3 Environment and delivery tooling | Umbrella environment, build, deployment and release orchestration; OpenClinAI website build and publication tooling | Configured workspace operations invoke product-native commands; website build/publication runs from umbrella-owned sources, configuration and workflows; build/run provenance records actual inputs | Required local operations and website delivery tooling moved; local website checks/build and the recorded native OpenMRS component builds pass. Website publication from the umbrella and broader deployed acceptance remain pending |
-| U4 Documentation and interfaces | Current specs, instructions, commands, configuration, CI and website consumers aligned with ownership | Consumers resolve directly to current owners; obsolete specs, copied history and unnecessary compatibility entry points are removed | Locally complete: retained requirements and consumers aligned, obsolete delivery/lane plans removed, public-site audit and focused patch prepared; owner review/publication remain |
-| U5 Completion | Remove remaining obsolete code, dependencies and duplicate responsibilities; verify the assembled system | Independent harness checks and umbrella integration checks pass; current requirements have one maintained owner; component and deployed acceptance are explicit | Local ownership cleanup and harness verification complete. Documentation companions are published for review and pinned here; website deployment and broader product acceptance remain separate |
+| U0 Ownership and dependencies | Map capabilities, interfaces and consumers to component owners | Each capability has an owner, defined inputs/outputs and verification criteria | Ownership consolidation and its documentation companions are merged |
+| U1 Component and management ownership | Direct umbrella gitlinks and workspace-management tooling; removal of nested product gitlinks and `openmrs_chatbot` | One canonical gitlink per component; fresh umbrella checkout resolves recorded revisions; umbrella tooling manages component selection and checkouts | Implemented and merged; fresh recursive checkout and offline workspace verification are recorded |
+| U2 Independent validation | Modular experiment execution, target adapters, evidence collection, evaluation and reporting | Experiments run against configured targets without Git, submodules, product source trees, product pins or an umbrella installation; offline reports consume captured artifacts only | Implemented and merged; local and hosted harness suites pass; portable reports and isolation tested with doubles; actual product acceptance remains separate |
+| U3 Environment and delivery tooling | Umbrella environment, build, deployment and release orchestration; OpenClinAI website build and publication tooling | Configured workspace operations invoke product-native commands; website build/publication runs from umbrella-owned sources, configuration and workflows; build/run provenance records actual inputs | Ownership move is merged; operational tests and documentation Pages build/deploy pass. Reusable environment implementation and broader deployed acceptance follow their separate roadmap |
+| U4 Documentation and interfaces | Current specs, instructions, commands, configuration, CI and website consumers aligned with ownership | Consumers resolve directly to current owners; obsolete specs, copied history and unnecessary compatibility entry points are removed | Retained requirements, consumers and cleanup are merged; documentation is published; broader public-content proposals still require their own review |
+| U5 Completion | Remove remaining obsolete code, dependencies and duplicate responsibilities; verify the assembled system | Independent harness checks and umbrella integration checks pass; current requirements have one maintained owner; component and deployed acceptance are explicit | Repository split and documentation closeout are merged and verified; not a claim of Ross handoff, upstream merging or new clinical/product acceptance |
+
+### Refactor Closeout Evidence
+
+Recorded 2 October 2026. These revisions replace the pre-merge companion pins:
+
+| Component | Merged changes | Recorded revision |
+| --- | --- | --- |
+| Validation harness | [#197](https://github.com/pmanko/clinical-ai-validation-harness/pull/197), [#198](https://github.com/pmanko/clinical-ai-validation-harness/pull/198) | `5f180650aab46e607e5f21595faa4d0dc1620d4c` |
+| Med Agent Hub | [#32](https://github.com/pmanko/med-agent-hub/pull/32) | `96d0489660c161acdf28f6ace621a29654e48c49` |
+| Catalyst | [#140](https://github.com/DIGI-UW/catalyst-ai/pull/140) | `94742f1af6d634f03b47b9e97f3512829ba265b1` |
+
+The OpenMRS component pins are unchanged. All four companion PRs passed their
+applicable hosted checks before merging. The final harness tree is identical to
+the checked documentation PR head. Local verification: 1,136 harness tests passed,
+36 skipped and 3 deselected; 97% changed-line coverage; 58 focused checks passed
+on the documentation branch; Markdown consistency passed. Umbrella verification:
+24 unit tests, 230 operational tests, 125 website/publication tests and 54 site
+tests passed. The operational suite deselected one opt-in test. These are source,
+runner and tooling checks, not new live clinical evaluation.
+
+GitHub Pages was enabled in workflow mode without a custom-domain or DNS change.
+The [documentation publication run](https://github.com/pmanko/openclinai.org/actions/runs/37078640482)
+passed build, rendered-link/asset checks and deployment from `30133f3db9c574dd918349ce2822fec54abba06a`.
+The [published documentation](https://pmanko.github.io/openclinai.org/) and its
+architecture page were inspected in the browser. Subsequent main updates publish
+through the same workflow. This is not a claim that the separate `openclinai.org`
+landing deployment or a product environment was updated.
 
 ### Dependencies
 
@@ -375,8 +407,9 @@ separately scheduled. Designs for follow-ons are reviewed when those efforts sta
 
 ## 7. Outstanding decisions
 
-- **Documentation/publication:** review the local content patch and audit proposal;
-  publish maintained docs before switching public navigation to them.
+- **Documentation/publication:** the focused patch and documentation companions
+  are merged, and the documentation site is published. Broader audit proposals,
+  public-navigation changes and the separate landing deployment retain owner review.
 - **Catalyst source discovery:** review current-data versus snapshot-history
   presentation at the FHIR Data Pipes source boundary. Preserve saved SQL and
   snapshots; do not add a FHIR-specific filter to Catalyst.
@@ -391,14 +424,14 @@ separately scheduled. Designs for follow-ons are reviewed when those efforts sta
 [backend]: https://github.com/pmanko/openmrs-module-chartsearchai/blob/8622f1b5c8995ac5361dd634705434ba65fe2fae/README.md#provider-integration-contract
 [frontend]: https://github.com/pmanko/openmrs-esm-chartsearchai/blob/e60cea9cf5be41410c2401fe3261cdb712d1b0ee/README.md
 [querystore]: https://github.com/pmanko/openmrs-module-querystore/blob/55bf9971eb293b2155fb72de1e7cadfd6fab3bdd/docs/rest-api.md
-[hub]: https://github.com/pmanko/med-agent-hub/blob/50e65fa44c807d941515ca67600f923239b3ef5b/README.md
-[conformance]: https://github.com/pmanko/clinical-ai-validation-harness/blob/335668a9fbc4c7769de9d46c2bbcef916b3c2eac/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md
-[product]: https://github.com/DIGI-UW/catalyst-ai/blob/30ecb954604366b54c7ffa2ec22913af9d78e962/docs/specification.md
-[binding]: https://github.com/DIGI-UW/catalyst-ai/blob/30ecb954604366b54c7ffa2ec22913af9d78e962/docs/dashboard-builder-mvp-design.md
-[design]: https://github.com/DIGI-UW/catalyst-ai/blob/30ecb954604366b54c7ffa2ec22913af9d78e962/docs/specs/openelis-reporting-integration/spec.md
-[postgres]: https://github.com/DIGI-UW/catalyst-ai/blob/30ecb954604366b54c7ffa2ec22913af9d78e962/docs/specification.md#postgresql-source
-[publication]: https://github.com/DIGI-UW/catalyst-ai/blob/30ecb954604366b54c7ffa2ec22913af9d78e962/docs/specification.md#publication-and-import
-[imports]: https://github.com/DIGI-UW/catalyst-ai/blob/30ecb954604366b54c7ffa2ec22913af9d78e962/docs/specification.md#imported-dataset
-[widgets]: https://github.com/DIGI-UW/catalyst-ai/blob/30ecb954604366b54c7ffa2ec22913af9d78e962/docs/specification.md#widget
+[hub]: https://github.com/pmanko/med-agent-hub/blob/96d0489660c161acdf28f6ace621a29654e48c49/README.md
+[conformance]: https://github.com/pmanko/clinical-ai-validation-harness/blob/5f180650aab46e607e5f21595faa4d0dc1620d4c/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md
+[product]: https://github.com/DIGI-UW/catalyst-ai/blob/94742f1af6d634f03b47b9e97f3512829ba265b1/docs/specification.md
+[binding]: https://github.com/DIGI-UW/catalyst-ai/blob/94742f1af6d634f03b47b9e97f3512829ba265b1/docs/dashboard-builder-mvp-design.md
+[design]: https://github.com/DIGI-UW/catalyst-ai/blob/94742f1af6d634f03b47b9e97f3512829ba265b1/docs/specs/openelis-reporting-integration/spec.md
+[postgres]: https://github.com/DIGI-UW/catalyst-ai/blob/94742f1af6d634f03b47b9e97f3512829ba265b1/docs/specification.md#postgresql-source
+[publication]: https://github.com/DIGI-UW/catalyst-ai/blob/94742f1af6d634f03b47b9e97f3512829ba265b1/docs/specification.md#publication-and-import
+[imports]: https://github.com/DIGI-UW/catalyst-ai/blob/94742f1af6d634f03b47b9e97f3512829ba265b1/docs/specification.md#imported-dataset
+[widgets]: https://github.com/DIGI-UW/catalyst-ai/blob/94742f1af6d634f03b47b9e97f3512829ba265b1/docs/specification.md#widget
 [native]: https://github.com/DIGI-UW/OpenELIS-Global-2/blob/codex/reporting-ui/specs/479-reporting-mvp/plan.md
 [catalyst-history]: reviews/2026-10-02-documentation-audit.md#evidence-and-coverage
