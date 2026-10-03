@@ -146,6 +146,48 @@ It passed using `/bin/bash` 3.2.57. The default suite again passed 48 umbrella a
 `git diff --check` passed. This proves backup/restore and bounded isolation, not
 the historical-schema upgrade: that remains the next check before migration.
 
+### Historical migration collision, 3 October 2026
+
+Read-only inspection of the retained Git history recovered the original operation
+at `f0c9a542758b53f6f90958f9fd2f8dc732233b84` (also present in
+`8a46914deae2d5a10e6a450374f5740722418bfc`). Its `chartsearchai-009` changes
+`chartsearchai_chat_message.audit_log_id` to `ON DELETE SET NULL`. The selected
+ChartSearchAI `8622f1b5c8995ac5361dd634705434ba65fe2fae` instead uses that same
+identifier, author and file path for the two reference-slice audit columns.
+This confirms the conflicting operations in Ross's supplied test report.
+
+A disposable in-memory H2/MySQL-mode diagnostic used Liquibase 4.32.0 from the
+module's resolved dependencies. It applied the current production changelog,
+constructed the representative historical state with the two columns absent,
+and executed the recovered foreign-key operation through Liquibase under its
+original identity. Attempting the current production changelog again failed:
+
+```text
+ValidationFailedException
+liquibase.xml::chartsearchai-009::openmrs
+was: 9:d781912f8a1c94b8e5b9fa2d1d31906b
+now: 9:e8f2c324e2b3ae73733f62d15881021d
+```
+
+The diagnostic asserted the validation failure and that both columns remained
+absent. It touched no installed database. This is a reproduction, not a passing
+upgrade or the permanent product regression test; actual OpenMRS startup/version
+handling and a MariaDB upgrade remain required.
+
+**Proposed repair, awaiting owner approval:** accept only the exact known
+historical checksum as additional migration metadata, retain the existing SQL
+and applied-history rows, and add a new guarded forward migration for missing
+columns. Unknown checksums must still fail. No reset, blanket checksum clearing,
+wildcard acceptance or replay of the old foreign-key operation is proposed.
+Verify that normal module upgrading executes the repair despite same-version
+snapshot deployment before claiming it works in OpenMRS.
+
+This needs a narrow exception to the roadmap's prohibition on editing an applied
+changeset. [Liquibase's checksum guidance](https://www.liquibase.com/blog/what-affects-changeset-checksums)
+describes exact `validCheckSum` metadata plus a new conditional repair; accepting
+the checksum alone does not apply the missing schema change. The source remains
+unchanged while that exception is awaiting approval.
+
 ### Earlier preparation checks
 
 - Separate self-review checked selected-resource routing, private-value handling,

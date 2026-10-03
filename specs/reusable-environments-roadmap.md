@@ -373,6 +373,11 @@ Inspect Ross's actual current schema before his migration and reject unsupported
 states before mutation. If the defect remains, add a forward product migration
 and an old-schema regression test; do not edit an applied changeset or solve it
 by forcing a reset.
+The [historical collision reproduction](reviews/2026-10-02-research-preparation-proof.md#historical-migration-collision-3-october-2026)
+now confirms that the current changelog rejects the old migration checksum before
+an upgrade can run. A narrowly scoped exception to recognize that exact historical
+checksum, without changing executed SQL or discarding history, has been proposed
+to the owner. It is not approved or implemented; the no-edit rule remains in force.
 Reconcile account-context transport with current provider/persistence contracts in
 ChartSearchAI. Investigate any remaining In-Depth failure from its captured error,
 not merely the event name. Keep model-quality changes out of this migration.
