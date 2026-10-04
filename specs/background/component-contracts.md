@@ -6,9 +6,9 @@ interfaces and current application behavior. The public website does not redefin
 those contracts. The OpenMRS links below identify the reviewed assembled revisions;
 they do not imply an upstream merge or deployed release.
 
-- **ChartSearchAI:** [project documentation](https://github.com/pmanko/openmrs-module-chartsearchai/tree/8622f1b5c8995ac5361dd634705434ba65fe2fae/docs) and [source/setup](https://github.com/pmanko/openmrs-module-chartsearchai/tree/8622f1b5c8995ac5361dd634705434ba65fe2fae).
+- **ChartSearchAI:** [project documentation](https://github.com/pmanko/openmrs-module-chartsearchai/tree/d638318cdf0c1156144a8538108de8e65771f630/docs) and [source/setup](https://github.com/pmanko/openmrs-module-chartsearchai/tree/d638318cdf0c1156144a8538108de8e65771f630).
 - **ChartSearchAI frontend:** [source/setup](https://github.com/pmanko/openmrs-esm-chartsearchai/tree/e60cea9cf5be41410c2401fe3261cdb712d1b0ee).
-- **QueryStore:** [REST API](https://github.com/pmanko/openmrs-module-querystore/blob/55bf9971eb293b2155fb72de1e7cadfd6fab3bdd/docs/rest-api.md) and [architecture decisions](https://github.com/pmanko/openmrs-module-querystore/blob/55bf9971eb293b2155fb72de1e7cadfd6fab3bdd/docs/adr.md).
+- **QueryStore:** [REST API](https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/rest-api.md) and [architecture decisions](https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/adr.md).
 - **Med Agent Hub:** [source/setup](https://github.com/pmanko/med-agent-hub).
 - **Catalyst:** [application specification](https://github.com/DIGI-UW/catalyst-ai/blob/main/docs/specification.md), [Hub integration](https://github.com/DIGI-UW/catalyst-ai/blob/main/docs/med-agent-hub.md) and [cross-project delivery](../roadmap.md#6-catalyst-delivery).
 - **Validation harness:** [setup and experiment commands](https://github.com/pmanko/clinical-ai-validation-harness#readme) and [current validation contract](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/006-validation-harness-mvp/spec.md).
