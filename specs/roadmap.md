@@ -268,8 +268,12 @@ QueryStore revision.
 Local `mvn -q -B clean install` passed for QueryStore (587 tests, two skips),
 followed by `mvn -q -B clean package` for the assembled backend (3,277 tests,
 59 skips); both had zero failures or errors. The prior macOS socket failure did
-not reproduce. Hosted checks are rerunning on the updated heads; local success
-does not stand in for those checks or maintainer approval. The split's earlier
+not reproduce. The fork heads and destination comparison branches are synced;
+each dependent PR's base commit matches its predecessor's current head. QueryStore
+and the first backend PR have successful hosted checks. Fresh checks for the
+dependent backend PRs remain outstanding after GitHub skipped scheduling while
+their old comparison branches conflicted. Local success does not stand in for
+those checks or maintainer approval. The split's earlier
 functional evidence remains in the [acceptance checkpoint](https://github.com/pmanko/openclinai.org/blob/6e048c2ac3d45987922270e6f2e59e5ff444d239/specs/roadmap.md#current-execution-review-ready-stacks).
 
 ### QueryStore review (M1 / Q0)
