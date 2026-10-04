@@ -30,7 +30,7 @@ make med-agent-hub-up
 set_openmrs_property chartsearchai.llm.engine remote
 set_openmrs_property chartsearchai.llm.remote.endpointUrl \
   "${MED_AGENT_LLM_BASE_URL%/}/v1/chat/completions"
-set_openmrs_property chartsearchai.llm.remote.modelName gemma-e4b
+set_openmrs_property chartsearchai.llm.remote.modelName gemma-4-12b
 CHARTSEARCH_PROVIDERS_DEFAULT=hub make chartsearch-configure
 python3 scripts/provision-evaluation-users.py
 

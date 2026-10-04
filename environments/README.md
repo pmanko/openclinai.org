@@ -7,13 +7,14 @@ validation harness runs experiments afterward; it does not install this stack.
 ## First Setup
 
 Start from the recursive umbrella checkout described in the [README](../README.md#workspace-checkout).
-While [PR #5](https://github.com/pmanko/openclinai.org/pull/5) is open, use
-`codex/research-environment-handoff`.
+While [setup PR #5](https://github.com/pmanko/openclinai.org/pull/5) and
+[sync PR #6](https://github.com/pmanko/openclinai.org/pull/6) are open, use
+`codex/openmrs-upstream-sync` for the latest setup and component versions.
 
 Prerequisites: running Docker with Compose, Java/Maven, Python 3, Node.js 18+,
 Yarn 4 and `llama-server` on your PATH. Put the
-[Gemma E4B GGUF](https://huggingface.co/unsloth/gemma-4-E4B-it-GGUF)
-in `~/.cache/llama-router-models/gemma-e4b.gguf`, or set `LLAMA_MODEL_DIR` in
+[Gemma 4 12B GGUF](https://huggingface.co/unsloth/gemma-4-12B-it-GGUF)
+in `~/.cache/llama-router-models/gemma-4-12b.gguf`, or set `LLAMA_MODEL_DIR` in
 an ignored `.env.chartsearch` file. The existing router uses this directory.
 
 Download the [HIV baseline package](https://drive.google.com/file/d/1FxuaYxOfthzMHVL4bUPleLj_P7n_EN-X/view)
@@ -33,8 +34,9 @@ the pinned modules and frontend, starts the existing stack and model router,
 imports the HIV data, configures both ChartSearchAI providers, and creates the
 accounts. No stock patients are generated. There is no upgrade or backup flow.
 
-ChartSearchAI defaults to Hub; its bundled provider uses the same local Gemma
-E4B router. Other available Hub profiles appear in the picker.
+ChartSearchAI defaults to Hub's checked Gemma 4 12B profile; its bundled provider
+uses the same local Gemma 4 12B router. E4B remains available as an explicit
+comparison when installed, along with other available Hub profiles in the picker.
 
 ## Access
 

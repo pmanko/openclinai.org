@@ -16,7 +16,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; cd "${ROOT}"
 # shellcheck source=scripts/openmrs-settings-lib.sh
 . scripts/openmrs-settings-lib.sh
 
-PARITY_MODEL_ID="${PARITY_MODEL_ID:-gemma-e4b}"
+PARITY_MODEL_ID="${PARITY_MODEL_ID:-gemma-4-12b}"
 BUNDLED_TAP_PORT="${BUNDLED_TAP_PORT:-8078}"
 HUB_TAP_PORT="${HUB_TAP_PORT:-8079}"
 ROUTER_URL="${ROUTER_URL:-http://127.0.0.1:8077}"

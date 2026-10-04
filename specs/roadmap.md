@@ -16,7 +16,8 @@ direction.
    useful setup code, not an old database. Deliver the verified ChartSearchAI
    preview and copyable instructions before Catalyst alignment or broader cleanup.
    Setup proof is OpenMRS booting, ChartSearchAI available on it and a sample of
-   the intended HIV records. Remove custom
+   the intended HIV records. Use checked Gemma 4 12B as the default for research
+   testing; smaller models such as E4B are explicit comparisons. Remove custom
    Docker ownership/storage auditing and unrelated backup/restore work. Role-context
    enhancements, broader functionality tests, evaluations and videos follow
    separately; they are not setup blockers. Leave unrelated installations alone.
@@ -439,7 +440,7 @@ separately scheduled. Designs for follow-ons are reviewed when those efforts sta
 [backend]: https://github.com/pmanko/openmrs-module-chartsearchai/blob/d638318cdf0c1156144a8538108de8e65771f630/README.md#provider-integration-contract
 [frontend]: https://github.com/pmanko/openmrs-esm-chartsearchai/blob/e60cea9cf5be41410c2401fe3261cdb712d1b0ee/README.md
 [querystore]: https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/rest-api.md
-[hub]: https://github.com/pmanko/med-agent-hub/blob/96d0489660c161acdf28f6ace621a29654e48c49/README.md
+[hub]: https://github.com/pmanko/med-agent-hub/blob/05a40fb4f074d4a108df0c705b30492d48309d94/README.md
 [conformance]: https://github.com/pmanko/clinical-ai-validation-harness/blob/5f180650aab46e607e5f21595faa4d0dc1620d4c/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md
 [product]: https://github.com/DIGI-UW/catalyst-ai/blob/94742f1af6d634f03b47b9e97f3512829ba265b1/docs/specification.md
 [binding]: https://github.com/DIGI-UW/catalyst-ai/blob/94742f1af6d634f03b47b9e97f3512829ba265b1/docs/dashboard-builder-mvp-design.md
