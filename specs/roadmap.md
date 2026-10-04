@@ -86,7 +86,7 @@ Environment sequence, review points and acceptance live in the linked roadmap.
 | Website | Sources and publication tooling are umbrella-owned; GitHub Pages is configured for Actions and build/deploy pass; browser inspection confirms the documentation loads | Public landing deployment and product/demo publication remain separate |
 | Specifications | Product behavior, shared delivery and validation protocols have maintained owners; duplicate plans and obsolete lane instructions are removed; companion documentation is merged | Follow the maintained owners; broader content proposals retain their own review |
 | Research setup | [Setup guide](../environments/README.md) and `make chartsearch-research-setup` prepare the fresh HIV baseline, ChartSearchAI and seven accounts using existing tools. Local startup, account logins and the patient-chart browser smoke passed on 3 October 2026 | PR review and Ross's fresh install. Account-context enhancements and broader evaluation remain follow-up, not setup gates. |
-| Product delivery | Eight backend and five frontend extractions are published. Applicable hosted checks pass on all recorded heads; no review threads are unresolved. Confirmed findings are fixed. Backend #590 retains the documented local macOS socket-test failure despite passing hosted source-pair checks. Both linear stacks are published and their current hosted builds pass. Combined functional validation passes, and all thirteen contributions are ready for review | Maintainer review and ordered merging; retain integration branches unchanged |
+| Product delivery | Eight backend and five frontend extractions are published. Backend and QueryStore include upstream through 3 October; the frontend already included its latest upstream. The synced source pair passes local Maven builds and tests. Hosted checks must be refreshed for the new heads | Maintainer review and ordered merging; retain backend/frontend integration references unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -242,14 +242,14 @@ builds must not depend on upstream merging or publishing first.
 
 | Existing work | Published PR | Immediate base | Current head |
 | --- | --- | --- | --- |
-| B1 shared provider contract | [Backend #583](https://github.com/openmrs/openmrs-module-chartsearchai/pull/583) | main | `b89211ce` |
-| B4 exact token counting | [Backend #584](https://github.com/openmrs/openmrs-module-chartsearchai/pull/584) | #583 | `c245fa53` |
-| B3 safety-check execution status | [Backend #585](https://github.com/openmrs/openmrs-module-chartsearchai/pull/585) | #584 | `ddfb4202` |
-| B5 conversation persistence | [Backend #586](https://github.com/openmrs/openmrs-module-chartsearchai/pull/586) | #585 | `7d9056c3` |
-| B4 QueryStore context and budgets | [Backend #587](https://github.com/openmrs/openmrs-module-chartsearchai/pull/587) | #586 | `b1cf5d56` |
-| B3 bundled inference and cancellation | [Backend #588](https://github.com/openmrs/openmrs-module-chartsearchai/pull/588) | #587 | `18e03f6e` |
-| B2 Hub discovery and transport | [Backend #589](https://github.com/openmrs/openmrs-module-chartsearchai/pull/589) | #588 | `b69ea2bb` |
-| B5 conversation endpoints and history | [Backend #590](https://github.com/openmrs/openmrs-module-chartsearchai/pull/590) | #589 | `8622f1b5` |
+| B1 shared provider contract | [Backend #583](https://github.com/openmrs/openmrs-module-chartsearchai/pull/583) | main | `9dbf83de` |
+| B4 exact token counting | [Backend #584](https://github.com/openmrs/openmrs-module-chartsearchai/pull/584) | #583 | `9da939f8` |
+| B3 safety-check execution status | [Backend #585](https://github.com/openmrs/openmrs-module-chartsearchai/pull/585) | #584 | `a9a68d3a` |
+| B5 conversation persistence | [Backend #586](https://github.com/openmrs/openmrs-module-chartsearchai/pull/586) | #585 | `13380038` |
+| B4 QueryStore context and budgets | [Backend #587](https://github.com/openmrs/openmrs-module-chartsearchai/pull/587) | #586 | `50a36f0f` |
+| B3 bundled inference and cancellation | [Backend #588](https://github.com/openmrs/openmrs-module-chartsearchai/pull/588) | #587 | `2b11d37d` |
+| B2 Hub discovery and transport | [Backend #589](https://github.com/openmrs/openmrs-module-chartsearchai/pull/589) | #588 | `b84bcfb3` |
+| B5 conversation endpoints and history | [Backend #590](https://github.com/openmrs/openmrs-module-chartsearchai/pull/590) | #589 | `d638318c` |
 | F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55) | main | `fdf262ce` |
 | F1 history client and session state | [Frontend #56](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/56) | #55 | `f6f5cc24` |
 | F3 Markdown, tables and citations | [Frontend #57](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/57) | #56 | `39b5217f` |
@@ -258,19 +258,30 @@ builds must not depend on upstream merging or publishing first.
 
 ### Current execution: review-ready stacks
 
-Recorded 2 October: all thirteen contributions are open and non-draft with
-successful applicable builds. The completed split's review fixes and combined
-functional evidence are recorded in the [acceptance checkpoint](https://github.com/pmanko/openclinai.org/blob/6e048c2ac3d45987922270e6f2e59e5ff444d239/specs/roadmap.md#current-execution-review-ready-stacks).
-Backend #590 retains the recorded local macOS socket-test limitation despite
-passing hosted source-pair builds. QueryStore review and maintainer approval are
-separate. Refresh GitHub before a merge decision; this paragraph is dated evidence.
+Recorded 3 October: the existing backend stack is rebased onto upstream
+`315d10db`, preserving our provider work and upstream's citation-aware safety
+checks. QueryStore includes upstream `e12a1de2` at `286993cc`, including its
+calendar-date birthdate fix. Frontend `e60cea9c` already contains upstream
+`d0bf8b5b` and is unchanged. Backend paired-build CI now installs this same
+QueryStore revision.
+
+Local `mvn -q -B clean install` passed for QueryStore (587 tests, two skips),
+followed by `mvn -q -B clean package` for the assembled backend (3,277 tests,
+59 skips); both had zero failures or errors. The prior macOS socket failure did
+not reproduce. The fork heads and destination comparison branches are synced;
+each dependent PR's base commit matches its predecessor's current head. QueryStore
+and the first backend PR have successful hosted checks. Fresh checks for the
+dependent backend PRs remain outstanding after GitHub skipped scheduling while
+their old comparison branches conflicted. Local success does not stand in for
+those checks or maintainer approval. The split's earlier
+functional evidence remains in the [acceptance checkpoint](https://github.com/pmanko/openclinai.org/blob/6e048c2ac3d45987922270e6f2e59e5ff444d239/specs/roadmap.md#current-execution-review-ready-stacks).
 
 ### QueryStore review (M1 / Q0)
 
 Q0 resolves [QueryStore review #68](https://github.com/openmrs/openmrs-module-querystore/pull/68),
 covering preprocessing documentation, dispatcher link handling, explicit chart-read
 construction and parameter/resource-type validation. The
-[QueryStore API contract](https://github.com/pmanko/openmrs-module-querystore/blob/55bf9971eb293b2155fb72de1e7cadfd6fab3bdd/docs/rest-api.md)
+[QueryStore API contract](https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/rest-api.md)
 and product review own the detailed behavior and any required contract updates.
 
 Delivery requires exact-source reactor and MySQL integration evidence, applicable
@@ -425,9 +436,9 @@ separately scheduled. Designs for follow-ons are reviewed when those efforts sta
 - **Public hosting:** decide repository organization/visibility or hosting changes
   separately from this documentation cleanup.
 
-[backend]: https://github.com/pmanko/openmrs-module-chartsearchai/blob/8622f1b5c8995ac5361dd634705434ba65fe2fae/README.md#provider-integration-contract
+[backend]: https://github.com/pmanko/openmrs-module-chartsearchai/blob/d638318cdf0c1156144a8538108de8e65771f630/README.md#provider-integration-contract
 [frontend]: https://github.com/pmanko/openmrs-esm-chartsearchai/blob/e60cea9cf5be41410c2401fe3261cdb712d1b0ee/README.md
-[querystore]: https://github.com/pmanko/openmrs-module-querystore/blob/55bf9971eb293b2155fb72de1e7cadfd6fab3bdd/docs/rest-api.md
+[querystore]: https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/rest-api.md
 [hub]: https://github.com/pmanko/med-agent-hub/blob/96d0489660c161acdf28f6ace621a29654e48c49/README.md
 [conformance]: https://github.com/pmanko/clinical-ai-validation-harness/blob/5f180650aab46e607e5f21595faa4d0dc1620d4c/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md
 [product]: https://github.com/DIGI-UW/catalyst-ai/blob/94742f1af6d634f03b47b9e97f3512829ba265b1/docs/specification.md
