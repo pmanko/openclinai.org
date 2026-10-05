@@ -11,7 +11,10 @@ set +a
 echo "This imports the HIV baseline into the local OpenMRS database."
 make openmrs-source-pair-build chartsearch-esm-build
 ./scripts/llama-router-up.sh --daemon
+docker compose -f compose/openmrs-2.8-refapp.yml build backend
 make up
+docker exec harness-openmrs-backend sh -c \
+  'rm -rf /openmrs/data/.openmrs-lib-cache/chartsearchai /openmrs/data/.openmrs-lib-cache/querystore'
 make seed "$@"
 make querystore-configure
 make querystore-reindex
