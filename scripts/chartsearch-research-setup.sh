@@ -17,7 +17,7 @@ docker exec harness-openmrs-backend sh -c \
   'rm -rf /openmrs/data/.openmrs-lib-cache/chartsearchai /openmrs/data/.openmrs-lib-cache/querystore'
 make seed "$@"
 make querystore-configure
-make querystore-reindex
+ALLOW_QUERYSTORE_INDEX_RESET=1 make querystore-recreate-index
 
 python3 scripts/provision-querystore-service-account.py \
   --base-url "http://localhost:${HARNESS_PROXY_HTTP_PORT}/openmrs" \
