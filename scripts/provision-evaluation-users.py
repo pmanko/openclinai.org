@@ -49,8 +49,14 @@ def main() -> None:
             "privileges": privileges,
             "inheritedRoles": [],
         })
-    elif {item["uuid"] for item in access.get("privileges", [])} != set(privileges):
-        client.request("POST", f"role/{access['uuid']}", {"privileges": privileges})
+    elif (
+        {item["uuid"] for item in access.get("privileges", [])} != set(privileges)
+        or access.get("inheritedRoles")
+    ):
+        client.request("POST", f"role/{access['uuid']}", {
+            "privileges": privileges,
+            "inheritedRoles": [],
+        })
 
     for account in config["accounts"]:
         role = client.exact("role", "name", account["role"])
@@ -75,6 +81,10 @@ def main() -> None:
                     "names": [{"givenName": "Evaluation", "familyName": username[5:]}],
                     "gender": "U",
                 },
+            })
+        elif {item["uuid"] for item in user.get("roles", [])} != {role["uuid"], access["uuid"]}:
+            client.request("POST", f"user/{user['uuid']}", {
+                "roles": [role["uuid"], access["uuid"]],
             })
         session = OpenMrsClient(base_url, username, password).request("GET", "session")
         if not session.get("authenticated") or session.get("user", {}).get("uuid") != user["uuid"]:
