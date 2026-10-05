@@ -36,7 +36,8 @@ make chartsearch-research-setup
 
 **This replaces the local OpenMRS database with the HIV baseline.** It builds
 the pinned modules and frontend, starts the existing stack and model router,
-imports the HIV data, configures both ChartSearchAI providers, and creates the
+imports the HIV data, recreates QueryStore's search index from that baseline,
+configures both ChartSearchAI providers, and creates the
 accounts. No stock patients are generated. There is no upgrade or backup flow.
 
 ChartSearchAI defaults to Hub's checked Gemma 4 12B profile; its bundled provider
@@ -75,14 +76,16 @@ or the containers:
 ```sh
 set -a
 . ./.env.chartsearch.example
+. artifacts/chartsearchai-local/querystore-service.env
 [ ! -f .env.chartsearch ] || . ./.env.chartsearch
 set +a
 bash scripts/llama-router-up.sh --daemon
 make up med-agent-hub-up
 ```
 
-This includes `LLAMA_MODEL_DIR` from your private overrides. Do not repeat the
-fresh setup unless you want to reload the baseline.
+This restores the service credentials generated during setup and includes
+`LLAMA_MODEL_DIR` from your private overrides. Keep the generated service file;
+do not repeat the fresh setup unless you want to reload the baseline.
 
 ## Setup Acceptance
 
