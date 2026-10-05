@@ -6,7 +6,7 @@ interfaces and current application behavior. The public website does not redefin
 those contracts. The OpenMRS links below identify the reviewed assembled revisions;
 they do not imply an upstream merge or deployed release.
 
-- **ChartSearchAI:** [project documentation](https://github.com/pmanko/openmrs-module-chartsearchai/tree/d638318cdf0c1156144a8538108de8e65771f630/docs) and [source/setup](https://github.com/pmanko/openmrs-module-chartsearchai/tree/d638318cdf0c1156144a8538108de8e65771f630).
+- **ChartSearchAI:** [project documentation](https://github.com/pmanko/openmrs-module-chartsearchai/tree/08c7fadea6bf2aff33c48ff3e2b6fbbb2ab91b5e/docs) and [source/setup](https://github.com/pmanko/openmrs-module-chartsearchai/tree/08c7fadea6bf2aff33c48ff3e2b6fbbb2ab91b5e).
 - **ChartSearchAI frontend:** [source/setup](https://github.com/pmanko/openmrs-esm-chartsearchai/tree/e60cea9cf5be41410c2401fe3261cdb712d1b0ee).
 - **QueryStore:** [REST API](https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/rest-api.md) and [architecture decisions](https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/adr.md).
 - **Med Agent Hub:** [source/setup](https://github.com/pmanko/med-agent-hub).
