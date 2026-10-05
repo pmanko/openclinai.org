@@ -14,6 +14,7 @@ make openmrs-source-pair-build chartsearch-esm-build
 make up
 make seed "$@"
 make querystore-configure
+make querystore-reindex
 
 python3 scripts/provision-querystore-service-account.py \
   --base-url "http://localhost:${HARNESS_PROXY_HTTP_PORT}/openmrs" \
