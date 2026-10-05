@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Prepare a configured product profile and demo patient's chart prefix for a
-# steady-state UI recording. The canonical default remains E4B; DEMO_PROFILE_ID
-# selects an explicit comparison profile without changing product defaults.
+# steady-state UI recording. The default is discovered from Hub profile metadata;
+# DEMO_PROFILE_ID selects a comparison without changing product defaults.
 
 set -euo pipefail
 
