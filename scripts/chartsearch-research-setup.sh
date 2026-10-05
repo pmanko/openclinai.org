@@ -15,7 +15,7 @@ docker compose -f compose/openmrs-2.8-refapp.yml build backend
 make up
 docker exec harness-openmrs-backend sh -c \
   'rm -rf /openmrs/data/.openmrs-lib-cache/chartsearchai /openmrs/data/.openmrs-lib-cache/querystore'
-make seed "$@"
+make seed "$@" TARGET="${OMRS_DB_NAME:-openmrs}"
 make querystore-configure
 ALLOW_QUERYSTORE_INDEX_RESET=1 make querystore-recreate-index
 
