@@ -7,8 +7,7 @@ validation harness runs experiments afterward; it does not install this stack.
 ## First Setup
 
 Start from the recursive umbrella checkout described in the [README](../README.md#workspace-checkout).
-While [setup PR #5](https://github.com/pmanko/openclinai.org/pull/5) and
-[sync PR #6](https://github.com/pmanko/openclinai.org/pull/6) are open, use
+While [PR #6](https://github.com/pmanko/openclinai.org/pull/6) is open, use
 `codex/openmrs-upstream-sync` for the latest setup and component versions.
 
 Prerequisites: running Docker with Compose, Java 21/Maven, Python 3, Node.js 18+,
@@ -69,23 +68,19 @@ After login, open the [sample patient chart](http://localhost:8088/openmrs/spa/p
 and launch ChartSearchAI. Non-clinician accounts may not have access to the
 unrelated service-queue home page; use patient search or this chart link.
 
-Use the existing `make down` to stop containers without deleting their data.
-For later startup, export the settings before starting either the host router
-or the containers:
+For every later startup, run this one command from the umbrella root:
 
 ```sh
-set -a
-. ./.env.chartsearch.example
-. artifacts/chartsearchai-local/querystore-service.env
-[ ! -f .env.chartsearch ] || . ./.env.chartsearch
-set +a
-bash scripts/llama-router-up.sh --daemon
-make up med-agent-hub-up
+make local-stack-up
 ```
 
-This restores the service credentials generated during setup and includes
-`LLAMA_MODEL_DIR` from your private overrides. Keep the generated service file;
-do not repeat the fresh setup unless you want to reload the baseline.
+It loads the defaults and optional `.env.chartsearch` overrides, starts Docker
+Desktop when available, and starts the model router, OpenMRS and Hub. Local chart
+access uses the existing demo administrator login; no generated credential file
+is needed. `LLAMA_MODEL_DIR` is read automatically from your overrides.
+
+Stop with `make local-stack-down`. Startup retains the loaded data; repeat
+`make chartsearch-research-setup` only when you want to reload the HIV baseline.
 
 ## Setup Acceptance
 

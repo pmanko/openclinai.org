@@ -21,8 +21,7 @@ down:
 
 # Fast-resume path for a day-to-day dev machine: starts Docker Desktop,
 # llama-router, and the already-built compose stack with no rebuilds — for
-# first-time setup or after source changes under targets/, use
-# `make chartsearchai-local` instead.
+# first-time HIV research setup, use `make chartsearch-research-setup`.
 local-stack-up:
 	./scripts/local-stack-up.sh
 

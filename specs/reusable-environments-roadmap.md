@@ -13,6 +13,10 @@ of installing the environment.
 The setup command is `make chartsearch-research-setup`. It connects the existing
 build, startup, import and configuration tools, followed by the saved accounts.
 The [operator guide](../environments/README.md) owns prerequisites and logins.
+Ordinary startup is `make local-stack-up` for every operator. Fresh setup uses
+the same startup script after building the components. The script loads local
+configuration and connects Hub using the existing demo administrator account;
+operators do not source environment files or manage a generated service password.
 
 ## Implementation
 
@@ -32,7 +36,8 @@ Keep these operations in the short [setup script](../scripts/chartsearch-researc
 Use the existing local configuration conventions.
 The standard demo administrator login is `admin` / `Admin123`.
 
-Work in [umbrella PR #5](https://github.com/pmanko/openclinai.org/pull/5).
+The setup baseline is merged in [PR #5](https://github.com/pmanko/openclinai.org/pull/5).
+Finish the startup cleanup and component sync in [PR #6](https://github.com/pmanko/openclinai.org/pull/6).
 No custom environment manager, storage/ownership audit, per-installation build
 framework, migration, backup or recovery work belongs in this PR. No added
 command-detail tests, exact-archive restriction or clinical-table hashing.

@@ -4,7 +4,7 @@
 # Assumes the one-time setup is already done: Homebrew, Docker Desktop, uv,
 # Maven/Java, Node/yarn, llama.cpp installed; chartsearchai/querystore .omod
 # files and the chartsearchai ESM bundle already built into artifacts/;
-# .env.chartsearch configured; querystore backend already switched to
+# optional .env.chartsearch overrides; querystore backend already switched to
 # elasticsearch with bootstrap.autostart. This script does NOT rebuild any of
 # that — it just starts the processes/containers so the stack (and the
 # already-indexed patient data) comes back up as it was.
@@ -15,7 +15,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ENV_FILE="${ROOT}/.env.chartsearch"
+ENV_FILE="${ROOT}/.env.chartsearch.example"
 COMPOSE_FILE="${ROOT}/compose/openmrs-2.8-refapp.yml"
 ROUTER_URL="http://127.0.0.1:8077/v1/models"
 STARTED_ROUTER_PID=""
@@ -81,12 +81,18 @@ handle_signal() {
 trap handle_signal INT TERM
 
 echo "==> Loading local configuration"
-[[ -f "${ENV_FILE}" ]] || fail ".env.chartsearch not found; copy .env.chartsearch.example and configure it first"
-# This is an operator-owned shell environment file, matching the repository's
-# other local launchers. Export its values for host tools and Compose.
 set -a
 # shellcheck disable=SC1090
 . "${ENV_FILE}"
+if [[ -f "${ROOT}/.env.chartsearch" ]]; then
+  ENV_FILE="${ROOT}/.env.chartsearch"
+  # shellcheck disable=SC1090
+  . "${ENV_FILE}"
+fi
+# The local synthetic-data stack uses its existing demo administrator account.
+QUERYSTORE_BASE_URL="${QUERYSTORE_BASE_URL:-http://backend:8080/openmrs}"
+QUERYSTORE_USERNAME="${QUERYSTORE_USERNAME:-${CHARTSEARCH_ADMIN_USER:-admin}}"
+QUERYSTORE_PASSWORD="${QUERYSTORE_PASSWORD:-${CHARTSEARCH_ADMIN_PASSWORD:-Admin123}}"
 set +a
 
 ROUTER_RUNTIME_DIR="${LLAMA_ROUTER_RUNTIME_DIR:-${ROOT}/artifacts/llama-router}"
@@ -185,6 +191,7 @@ cat <<EOF
 Stack is up:
   OpenMRS SPA:   http://localhost:${HARNESS_PROXY_HTTP_PORT:-8088}/openmrs/spa
   llama-router:  http://localhost:8077/v1/models
+  med-agent-hub: http://localhost:${MED_AGENT_HUB_PORT:-18081}/health
   Elasticsearch: http://localhost:${QUERYSTORE_ES_PORT:-9200}/_cat/indices?v
 
 Stop everything with: make local-stack-down
