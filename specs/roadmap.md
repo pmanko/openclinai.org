@@ -248,9 +248,9 @@ builds must not depend on upstream merging or publishing first.
 | B3 safety-check execution status | [Backend #585](https://github.com/openmrs/openmrs-module-chartsearchai/pull/585) | #584 | `a9a68d3a` |
 | B5 conversation persistence | [Backend #586](https://github.com/openmrs/openmrs-module-chartsearchai/pull/586) | #585 | `13380038` |
 | B4 QueryStore context and budgets | [Backend #587](https://github.com/openmrs/openmrs-module-chartsearchai/pull/587) | #586 | `50a36f0f` |
-| B3 bundled inference and cancellation | [Backend #588](https://github.com/openmrs/openmrs-module-chartsearchai/pull/588) | #587 | `2b11d37d` |
-| B2 Hub discovery and transport | [Backend #589](https://github.com/openmrs/openmrs-module-chartsearchai/pull/589) | #588 | `b84bcfb3` |
-| B5 conversation endpoints and history | [Backend #590](https://github.com/openmrs/openmrs-module-chartsearchai/pull/590) | #589 | `d638318c` |
+| B3 bundled inference and cancellation | [Backend #588](https://github.com/openmrs/openmrs-module-chartsearchai/pull/588) | #587 | `6430d6a5` |
+| B2 Hub discovery and transport | [Backend #589](https://github.com/openmrs/openmrs-module-chartsearchai/pull/589) | #588 | `1cb16230` |
+| B5 conversation endpoints and history | [Backend #590](https://github.com/openmrs/openmrs-module-chartsearchai/pull/590) | #589 | `08c7fade` |
 | F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55) | main | `fdf262ce` |
 | F1 history client and session state | [Frontend #56](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/56) | #55 | `f6f5cc24` |
 | F3 Markdown, tables and citations | [Frontend #57](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/57) | #56 | `39b5217f` |
@@ -276,6 +276,15 @@ dependent backend PRs remain outstanding after GitHub skipped scheduling while
 their old comparison branches conflicted. Local success does not stand in for
 those checks or maintainer approval. The split's earlier
 functional evidence remains in the [acceptance checkpoint](https://github.com/pmanko/openclinai.org/blob/6e048c2ac3d45987922270e6f2e59e5ff444d239/specs/roadmap.md#current-execution-review-ready-stacks).
+
+Recorded 5 October: the umbrella's Java 11 build exposed an HTTP error-fixture
+failure in `RemoteLlmEngineResponseSizeBoundTest`. The fixture now reuses its
+existing response helper, which consumes and closes the request and closes the
+response stream, including empty error responses. All 14 tests in that class
+passed locally on Java 21 and Java 11, with no inference changes or weakened
+assertions. The correction is published in #588 and carried through #589/#590;
+the umbrella pins the assembled `08c7fade` head. Full hosted build verification
+is still pending; the focused results do not replace it.
 
 ### QueryStore review (M1 / Q0)
 
@@ -437,7 +446,7 @@ separately scheduled. Designs for follow-ons are reviewed when those efforts sta
 - **Public hosting:** decide repository organization/visibility or hosting changes
   separately from this documentation cleanup.
 
-[backend]: https://github.com/pmanko/openmrs-module-chartsearchai/blob/d638318cdf0c1156144a8538108de8e65771f630/README.md#provider-integration-contract
+[backend]: https://github.com/pmanko/openmrs-module-chartsearchai/blob/08c7fadea6bf2aff33c48ff3e2b6fbbb2ab91b5e/README.md#provider-integration-contract
 [frontend]: https://github.com/pmanko/openmrs-esm-chartsearchai/blob/e60cea9cf5be41410c2401fe3261cdb712d1b0ee/README.md
 [querystore]: https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/rest-api.md
 [hub]: https://github.com/pmanko/med-agent-hub/blob/05a40fb4f074d4a108df0c705b30492d48309d94/README.md
