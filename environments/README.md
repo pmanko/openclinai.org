@@ -69,10 +69,20 @@ and launch ChartSearchAI. Non-clinician accounts may not have access to the
 unrelated service-queue home page; use patient search or this chart link.
 
 Use the existing `make down` to stop containers without deleting their data.
-For later startup, run `bash scripts/llama-router-up.sh --daemon`, then
-`COMPOSE_ENV_FILE=.env.chartsearch.example make up med-agent-hub-up`.
-Use `.env.chartsearch` instead if you have private overrides. Do not repeat
-the fresh setup unless you want to reload the baseline.
+For later startup, export the settings before starting either the host router
+or the containers:
+
+```sh
+set -a
+. ./.env.chartsearch.example
+[ ! -f .env.chartsearch ] || . ./.env.chartsearch
+set +a
+bash scripts/llama-router-up.sh --daemon
+make up med-agent-hub-up
+```
+
+This includes `LLAMA_MODEL_DIR` from your private overrides. Do not repeat the
+fresh setup unless you want to reload the baseline.
 
 ## Setup Acceptance
 
