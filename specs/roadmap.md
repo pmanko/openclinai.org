@@ -283,8 +283,17 @@ existing response helper, which consumes and closes the request and closes the
 response stream, including empty error responses. All 14 tests in that class
 passed locally on Java 21 and Java 11, with no inference changes or weakened
 assertions. The correction is published in #588 and carried through #589/#590;
-the umbrella pins the assembled `08c7fade` head. Full hosted build verification
-is still pending; the focused results do not replace it.
+the umbrella pins the assembled `08c7fade` head. The full source-pair build passed
+locally on Java 21 (587 QueryStore tests, two skips; 3,277 ChartSearchAI tests,
+59 skips; no failures or errors). Hosted Linux Java 11 source-pair and frontend
+verification also passed at umbrella `37b260e`.
+
+The full Java 11 build on macOS separately failed
+`LocalLlmServerAuthTest.aPortHeldByAListenerThatAcceptsNothingFailsTheStart`:
+the probe safely refused an occupied port but reported a listener rather than
+the timeout expected by the fixture. No production behavior or assertion was
+changed for that finding. The research setup guide specifies the verified Java
+21 local build path; Java 11/macOS fixture portability remains a separate issue.
 
 ### QueryStore review (M1 / Q0)
 

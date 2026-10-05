@@ -11,7 +11,7 @@ While [setup PR #5](https://github.com/pmanko/openclinai.org/pull/5) and
 [sync PR #6](https://github.com/pmanko/openclinai.org/pull/6) are open, use
 `codex/openmrs-upstream-sync` for the latest setup and component versions.
 
-Prerequisites: running Docker with Compose, Java/Maven, Python 3, Node.js 18+,
+Prerequisites: running Docker with Compose, Java 21/Maven, Python 3, Node.js 18+,
 Yarn 4 and `llama-server` on your PATH. Put the
 [Gemma 4 12B GGUF](https://huggingface.co/unsloth/gemma-4-12B-it-GGUF)
 in `~/.cache/llama-router-models/gemma-4-12b.gguf`, or set `LLAMA_MODEL_DIR` in
