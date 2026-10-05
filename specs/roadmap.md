@@ -9,15 +9,19 @@ direction.
 
 ## 1. Current Priorities
 
-1. Prioritize Ross's tested migration and instructions through the
-   [reusable environments, evaluations and demos roadmap](reusable-environments-roadmap.md).
-   Carry his useful setup into the revamped umbrella, preserving data, accounts
-   and customizations. Deliver the verified ChartSearchAI preview and copyable
-   handoff instructions before Catalyst alignment or broader tooling cleanup.
-   Keep the evaluation pause short through bounded scope and reuse, not skipped
-   acceptance or security checks. Retain the old installation as migration input
-   and recovery, not an ongoing evaluation path. Planning is recorded; migration,
-   deployment and report/demo publication still require their explicit approvals.
+1. Prioritize Ross's fresh research setup and instructions through the
+   [HIV OpenMRS setup roadmap](reusable-environments-roadmap.md).
+   Reuse the verified HIV baseline and native tooling, then apply reproducible,
+   ordered scenario additions including all seven evaluation accounts. Carry over
+   useful setup code, not an old database. Deliver the verified ChartSearchAI
+   preview and copyable instructions before Catalyst alignment or broader cleanup.
+   Setup proof is OpenMRS booting, ChartSearchAI available on it and a sample of
+   the intended HIV records. Remove custom
+   Docker ownership/storage auditing and unrelated backup/restore work. Role-context
+   enhancements, broader functionality tests, evaluations and videos follow
+   separately; they are not setup blockers. Leave unrelated installations alone.
+   Report/demo publication and changes to someone else's running environment
+   require their own approval.
 2. Use the consolidated documentation and focused website patch. Application
    requirements belong to their maintained product authorities; cross-project
    integration specifications and delivery belong to this umbrella; experiment
@@ -61,12 +65,12 @@ direction.
    The umbrella implementation and documentation PRs are merged, followed by the
    harness review corrections and documentation cleanup. Retain separate
    product-build and deployed-acceptance evidence; this refactor does not complete
-   Ross's environment migration or authorize OpenMRS upstream merges.
+   Ross's fresh environment handoff or authorize OpenMRS upstream merges.
 5. Continue QueryStore review and [Catalyst delivery](roadmap.md#6-catalyst-delivery) through their product contracts.
    Verify product-native builds and shared environments against recorded revisions;
    record deployed acceptance separately from source verification.
 
-The immediate environment priority is Ross's reviewed migration and usable handoff.
+The immediate environment priority is Ross's reproducible fresh setup and usable handoff.
 Broader documentation proposals and the existing contribution tracks continue separately.
 The completed split remains under its existing contribution rules; this priority
 change does not reopen its functional acceptance or authorize upstream merges.
@@ -81,7 +85,7 @@ Environment sequence, review points and acceptance live in the linked roadmap.
 | Validation harness | PRs #197 and #198 are merged; runners use configured targets and supplied/observed provenance; required fields/types are checked without treating caller claims as verified revisions | Verify actual product interfaces separately; fixture isolation is not product acceptance |
 | Website | Sources and publication tooling are umbrella-owned; GitHub Pages is configured for Actions and build/deploy pass; browser inspection confirms the documentation loads | Public landing deployment and product/demo publication remain separate |
 | Specifications | Product behavior, shared delivery and validation protocols have maintained owners; duplicate plans and obsolete lane instructions are removed; companion documentation is merged | Follow the maintained owners; broader content proposals retain their own review |
-| Reusable environments | [Detailed roadmap](reusable-environments-roadmap.md) records shared presets, private settings, safe updates and experiment/demo handoff; no runtime implementation yet | Review the bounded setup contract, port Ross's useful setup, and verify ChartSearchAI then existing Catalyst operations |
+| Research setup | [Setup guide](../environments/README.md) and `make chartsearch-research-setup` prepare the fresh HIV baseline, ChartSearchAI and seven accounts using existing tools. Local startup, account logins and the patient-chart browser smoke passed on 3 October 2026 | PR review and Ross's fresh install. Account-context enhancements and broader evaluation remain follow-up, not setup gates. |
 | Product delivery | Eight backend and five frontend extractions are published. Applicable hosted checks pass on all recorded heads; no review threads are unresolved. Confirmed findings are fixed. Backend #590 retains the documented local macOS socket-test failure despite passing hosted source-pair checks. Both linear stacks are published and their current hosted builds pass. Combined functional validation passes, and all thirteen contributions are ready for review | Maintainer review and ordered merging; retain integration branches unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
