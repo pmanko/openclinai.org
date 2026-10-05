@@ -12,10 +12,15 @@ While [setup PR #5](https://github.com/pmanko/openclinai.org/pull/5) and
 `codex/openmrs-upstream-sync` for the latest setup and component versions.
 
 Prerequisites: running Docker with Compose, Java 21/Maven, Python 3, Node.js 18+,
-Yarn 4 and `llama-server` on your PATH. Put the
-[Gemma 4 12B GGUF](https://huggingface.co/unsloth/gemma-4-12B-it-GGUF)
-in `~/.cache/llama-router-models/gemma-4-12b.gguf`, or set `LLAMA_MODEL_DIR` in
-an ignored `.env.chartsearch` file. The existing router uses this directory.
+Yarn 4 and `llama-server` on your PATH. Download
+[`gemma-4-12b-it-Q8_0.gguf`](https://huggingface.co/unsloth/gemma-4-12b-it-GGUF/resolve/fc034cfff751157913579611efad8462ac1be606/gemma-4-12b-it-Q8_0.gguf)
+from the pinned model revision and save it as
+`~/.cache/llama-router-models/gemma-4-12b.gguf`, or set `LLAMA_MODEL_DIR` in
+an ignored `.env.chartsearch` file. This is the Q8 artifact used by the default
+router preset, not a Q4 or other quantization renamed to the same filename.
+Its published SHA-256 is
+`f20e7ff1be28c283eeeb18fc895733791c56a5851d5cd3fe9691b7f7d12afa72`.
+The existing router uses this directory.
 
 Download the [HIV baseline package](https://drive.google.com/file/d/1FxuaYxOfthzMHVL4bUPleLj_P7n_EN-X/view)
 and place both files in `artifacts/demo-data/`:
