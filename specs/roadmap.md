@@ -259,36 +259,19 @@ builds must not depend on upstream merging or publishing first.
 
 ### Current execution: review-ready stacks
 
-Recorded 3 October: the existing backend stack is rebased onto upstream
-`315d10db`, preserving our provider work and upstream's citation-aware safety
-checks. QueryStore includes upstream `e12a1de2` at `286993cc`, including its
-calendar-date birthdate fix. Frontend `e60cea9c` already contains upstream
-`d0bf8b5b` and is unchanged. Backend paired-build CI now installs this same
-QueryStore revision.
+The assembled backend `08c7fade` includes upstream `315d10db` and our provider
+changes. QueryStore `286993cc` includes upstream `e12a1de2`; frontend `e60cea9c`
+includes upstream `d0bf8b5b`. These upstream revisions were fetched on 3 October.
+Paired builds install the pinned QueryStore source before building ChartSearchAI.
 
-Local `mvn -q -B clean install` passed for QueryStore (587 tests, two skips),
-followed by `mvn -q -B clean package` for the assembled backend (3,277 tests,
-59 skips); both had zero failures or errors. The prior macOS socket failure did
-not reproduce. The fork heads and destination comparison branches are synced;
-each dependent PR's base commit matches its predecessor's current head. QueryStore
-and the first backend PR have successful hosted checks. Fresh checks for the
-dependent backend PRs remain outstanding after GitHub skipped scheduling while
-their old comparison branches conflicted. Local success does not stand in for
-those checks or maintainer approval. The split's earlier
-functional evidence remains in the [acceptance checkpoint](https://github.com/pmanko/openclinai.org/blob/6e048c2ac3d45987922270e6f2e59e5ff444d239/specs/roadmap.md#current-execution-review-ready-stacks).
+The assembled pair passed locally on Java 21: 587 QueryStore tests (two skips)
+and 3,277 ChartSearchAI tests (59 skips), with no failures or errors. The HTTP
+error-fixture correction in #588 is included in #589/#590; its 14 tests passed
+on Java 11 and Java 21. Hosted Linux Java 11 source-pair and frontend checks
+passed at umbrella `37b260e`. Check each PR's current head before merging.
+Earlier functional evidence is in the [acceptance checkpoint](https://github.com/pmanko/openclinai.org/blob/6e048c2ac3d45987922270e6f2e59e5ff444d239/specs/roadmap.md#current-execution-review-ready-stacks).
 
-Recorded 5 October: the umbrella's Java 11 build exposed an HTTP error-fixture
-failure in `RemoteLlmEngineResponseSizeBoundTest`. The fixture now reuses its
-existing response helper, which consumes and closes the request and closes the
-response stream, including empty error responses. All 14 tests in that class
-passed locally on Java 21 and Java 11, with no inference changes or weakened
-assertions. The correction is published in #588 and carried through #589/#590;
-the umbrella pins the assembled `08c7fade` head. The full source-pair build passed
-locally on Java 21 (587 QueryStore tests, two skips; 3,277 ChartSearchAI tests,
-59 skips; no failures or errors). Hosted Linux Java 11 source-pair and frontend
-verification also passed at umbrella `37b260e`.
-
-The full Java 11 build on macOS separately failed
+The macOS Java 11 build retains one fixture portability issue:
 `LocalLlmServerAuthTest.aPortHeldByAListenerThatAcceptsNothingFailsTheStart`:
 the probe safely refused an occupied port but reported a listener rather than
 the timeout expected by the fixture. No production behavior or assertion was
