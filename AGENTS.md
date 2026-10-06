@@ -47,3 +47,20 @@
 - Run `python3 -m unittest discover -s tests -v` and
   `python3 scripts/check_workspace.py` for umbrella changes. These checks are
   not component, deployed-runtime or release acceptance.
+
+## Local HIV Environment
+
+- `environments/README.md` owns prerequisites, setup/start/stop instructions,
+  account logins and troubleshooting. Keep it aligned with the existing Make targets.
+- Reuse the existing build, HIV import, configuration and account tools. Do not
+  add an environment framework, migration/backup flow or generated service password.
+- Fresh setup replaces the local database; ordinary startup retains it. Never
+  generate stock patients or silently change the selected inference provider.
+- Leave other installations alone. Changing someone else's running environment
+  or publishing reports/demos requires their approval.
+- Use checked Gemma 4 12B by default. Smaller models are explicit comparisons.
+- Setup proof is a live smoke: log into OpenMRS, inspect known HIV patient records,
+  and open ChartSearchAI on a patient chart. Provisioning checks the seven account
+  logins. Model evaluations, reports and videos are separate functionality work.
+- Keep completed setup instructions in the guide, not a separate implementation
+  roadmap or review diary. Git history and PRs retain the work's past record.

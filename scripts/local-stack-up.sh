@@ -9,8 +9,8 @@
 # that — it just starts the processes/containers so the stack (and the
 # already-indexed patient data) comes back up as it was.
 #
-# Re-run anytime; every step is idempotent. For a first setup or after source
-# changes, use `make chartsearchai-local` instead.
+# Re-run anytime. For a fresh HIV environment, use
+# `make chartsearch-research-setup`; see environments/README.md.
 
 set -euo pipefail
 

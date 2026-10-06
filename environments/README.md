@@ -87,3 +87,15 @@ Stop with `make local-stack-down`. Startup retains the loaded data; repeat
 Check only that OpenMRS opens, ChartSearchAI is available on a patient chart,
 and known HIV patient records are loaded. Account logins are checked while
 provisioning. Model-quality evaluations, reports and videos are not setup gates.
+
+## Troubleshooting
+
+- If a build fails, check the prerequisites above. Components are built from the
+  pinned local checkouts; no upstream PR merge is required.
+- If startup fails, read the error printed by `make local-stack-up`. Use
+  `make logs` for container logs or `make med-agent-hub-logs` for Hub logs.
+  Router logs are in `artifacts/llama-router/router.log` by default.
+- If the model is missing, check the model filename and directory above. Optional
+  settings belong in `.env.chartsearch`; no generated credential file is needed.
+- Do not rerun first setup to fix an ordinary startup failure: it replaces the
+  database. Restart with `make local-stack-down` then `make local-stack-up`.

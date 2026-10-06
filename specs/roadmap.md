@@ -9,20 +9,11 @@ direction.
 
 ## 1. Current Priorities
 
-1. Prioritize Ross's fresh research setup and instructions through the
-   [HIV OpenMRS setup roadmap](reusable-environments-roadmap.md).
-   Reuse the verified HIV baseline and native tooling, then apply reproducible,
-   ordered scenario additions including all seven evaluation accounts. Carry over
-   useful setup code, not an old database. Deliver the verified ChartSearchAI
-   preview and copyable instructions before Catalyst alignment or broader cleanup.
-   Setup proof is OpenMRS booting, ChartSearchAI available on it and a sample of
-   the intended HIV records. Use checked Gemma 4 12B as the default for research
-   testing; smaller models such as E4B are explicit comparisons. Remove custom
-   Docker ownership/storage auditing and unrelated backup/restore work. Role-context
-   enhancements, broader functionality tests, evaluations and videos follow
-   separately; they are not setup blockers. Leave unrelated installations alone.
-   Report/demo publication and changes to someone else's running environment
-   require their own approval.
+1. Finish review and Ross's fresh installation of the local HIV environment.
+   The [setup guide](../environments/README.md) owns commands, accounts and smoke
+   checks; [agent instructions](../AGENTS.md#local-hiv-environment) own maintenance
+   rules. Role-context enhancements, model evaluation and demonstrations are
+   separate follow-up work, not setup prerequisites.
 2. Use the consolidated documentation and focused website patch. Application
    requirements belong to their maintained product authorities; cross-project
    integration specifications and delivery belong to this umbrella; experiment
@@ -75,13 +66,13 @@ The immediate environment priority is Ross's reproducible fresh setup and usable
 Broader documentation proposals and the existing contribution tracks continue separately.
 The completed split remains under its existing contribution rules; this priority
 change does not reopen its functional acceptance or authorize upstream merges.
-Environment sequence, review points and acceptance live in the linked roadmap.
+Environment operation and smoke checks live in the setup guide.
 
 ## 2. Implementation Status
 
 | Area | Current state | Remaining work |
 | --- | --- | --- |
-| Umbrella repository | [pmanko/openclinai.org](https://github.com/pmanko/openclinai.org) owns product operations, component pins and website sources; PRs #2 and #3 are merged | Verify reusable environments against actual installations under the separate roadmap |
+| Umbrella repository | [pmanko/openclinai.org](https://github.com/pmanko/openclinai.org) owns product operations, component pins and website sources; PRs #2 and #3 are merged | Review the local HIV setup and support fresh installations using the setup guide |
 | Component checkouts | Exactly six direct components have recorded revisions; harness product gitlinks and `openmrs_chatbot` are absent; companion changes are merged | Preserve recorded versions during environment setup and updates |
 | Validation harness | PRs #197 and #198 are merged; runners use configured targets and supplied/observed provenance; required fields/types are checked without treating caller claims as verified revisions | Verify actual product interfaces separately; fixture isolation is not product acceptance |
 | Website | Sources and publication tooling are umbrella-owned; GitHub Pages is configured for Actions and build/deploy pass; browser inspection confirms the documentation loads | Public landing deployment and product/demo publication remain separate |
@@ -100,7 +91,7 @@ publication and deployed acceptance.
 | U0 Ownership and dependencies | Map capabilities, interfaces and consumers to component owners | Each capability has an owner, defined inputs/outputs and verification criteria | Ownership consolidation and its documentation companions are merged |
 | U1 Component and management ownership | Direct umbrella gitlinks and workspace-management tooling; removal of nested product gitlinks and `openmrs_chatbot` | One canonical gitlink per component; fresh umbrella checkout resolves recorded revisions; umbrella tooling manages component selection and checkouts | Implemented and merged; fresh recursive checkout and offline workspace verification are recorded |
 | U2 Independent validation | Modular experiment execution, target adapters, evidence collection, evaluation and reporting | Experiments run against configured targets without Git, submodules, product source trees, product pins or an umbrella installation; offline reports consume captured artifacts only | Implemented and merged; local and hosted harness suites pass; portable reports and isolation tested with doubles; actual product acceptance remains separate |
-| U3 Environment and delivery tooling | Umbrella environment, build, deployment and release orchestration; OpenClinAI website build and publication tooling | Configured workspace operations invoke product-native commands; website build/publication runs from umbrella-owned sources, configuration and workflows; build/run provenance records actual inputs | Ownership move is merged; operational tests and documentation Pages build/deploy pass. Reusable environment implementation and broader deployed acceptance follow their separate roadmap |
+| U3 Environment and delivery tooling | Umbrella environment, build, deployment and release orchestration; OpenClinAI website build and publication tooling | Configured workspace operations invoke product-native commands; website build/publication runs from umbrella-owned sources, configuration and workflows; build/run provenance records actual inputs | Ownership move is merged; operational tests and documentation Pages build/deploy pass. Local HIV setup is documented in the setup guide; broader product acceptance remains separate |
 | U4 Documentation and interfaces | Current specs, instructions, commands, configuration, CI and website consumers aligned with ownership | Consumers resolve directly to current owners; obsolete specs, copied history and unnecessary compatibility entry points are removed | Retained requirements, consumers and cleanup are merged; documentation is published; broader public-content proposals still require their own review |
 | U5 Completion | Remove remaining obsolete code, dependencies and duplicate responsibilities; verify the assembled system | Independent harness checks and umbrella integration checks pass; current requirements have one maintained owner; component and deployed acceptance are explicit | Repository split and documentation closeout are merged and verified; not a claim of Ross handoff, upstream merging or new clinical/product acceptance |
 
