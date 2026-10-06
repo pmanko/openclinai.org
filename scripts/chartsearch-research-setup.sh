@@ -7,11 +7,14 @@ set -a
 . ./.env.chartsearch.example
 [ ! -f .env.chartsearch ] || . ./.env.chartsearch
 set +a
+HUB_BUILD_REVISION="$(git -C targets/med-agent-hub rev-parse HEAD)"
+export HUB_BUILD_REVISION
 
 echo "This imports the HIV baseline into the local OpenMRS database."
-make openmrs-source-pair-build chartsearch-esm-build med-agent-hub-build
+make openmrs-source-pair-build med-agent-hub-build
 docker compose -f compose/openmrs-2.8-refapp.yml build backend
 make local-stack-up
+make chartsearch-esm-build
 docker exec harness-openmrs-backend sh -c \
   'rm -rf /openmrs/data/.openmrs-lib-cache/chartsearchai /openmrs/data/.openmrs-lib-cache/querystore'
 make seed "$@" TARGET="${OMRS_DB_NAME:-openmrs}"
