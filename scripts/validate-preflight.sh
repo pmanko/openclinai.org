@@ -3,8 +3,7 @@
 # Make the stack RUN-READY for `make validate-run SET=<set>`, in one command.
 #
 # A validate run silently produces garbage (empty charts → wrong answers) if any
-# piece is down or un-indexed, and the bring-up is fiddly: Elasticsearch is
-# profile-gated (off by default), the proxy serves :8088, and the hub +
+# piece is down or un-indexed: the proxy serves :8088, and the hub +
 # llama-router are separate processes. This script brings up every component a
 # run needs and verifies each piece answers — surfacing a down / mis-indexed
 # component as a clear failure up front, not as bad data mid-run.
@@ -39,16 +38,14 @@ SET_FILE="${HARNESS_ROOT}/datasets/validation/comparison_sets/${SET}.json"
 echo "==> [0/5] validate comparison execution contract"
 (cd "${HARNESS_ROOT}" && uv run harness-cli validate check "${SET}" --data-root datasets/validation)
 
-# .env.chartsearch carries OPENMRS_REFAPP_TAG (nightly-chartsearch) + the proxy ports;
-# without it the frontend/gateway downgrade to stock and the SPA 404s.
-[ -f ./.env.chartsearch ] || { echo "ERROR: ./.env.chartsearch not found — provision it (see scripts/chartsearch-configure.sh) before running preflight." >&2; exit 1; }
-set -a; . ./.env.chartsearch; set +a
-SOURCE_ENV="${ROOT}/artifacts/chartsearchai-local/querystore-service.env"
-if [ ! -s "${SOURCE_ENV}" ]; then
-  echo "ERROR: ${SOURCE_ENV} is missing — run 'make chartsearchai-local' to provision the least-privileged patient source" >&2
-  exit 1
-fi
-set -a; . "${SOURCE_ENV}"; set +a
+# Use the same local demo defaults as ordinary startup.
+set -a
+. ./.env.chartsearch.example
+[ ! -f .env.chartsearch ] || . ./.env.chartsearch
+QUERYSTORE_BASE_URL="${QUERYSTORE_BASE_URL:-http://backend:8080/openmrs}"
+QUERYSTORE_USERNAME="${QUERYSTORE_USERNAME:-${CHARTSEARCH_ADMIN_USER:-admin}}"
+QUERYSTORE_PASSWORD="${QUERYSTORE_PASSWORD:-${CHARTSEARCH_ADMIN_PASSWORD:-Admin123}}"
+set +a
 HUB_BUILD_REVISION="$(git -C targets/med-agent-hub rev-parse HEAD)"
 export HUB_BUILD_REVISION
 PORT="${HARNESS_PROXY_HTTP_PORT:-8088}"

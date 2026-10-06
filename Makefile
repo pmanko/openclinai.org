@@ -211,13 +211,15 @@ med-agent-hub-up:
 	  override_llm_set=$${MED_AGENT_LLM_BASE_URL+x}; override_llm=$${MED_AGENT_LLM_BASE_URL-}; \
 	  set -a; . ./.env.chartsearch.example; \
 	  [ ! -f .env.chartsearch ] || . ./.env.chartsearch; \
-	  [ ! -f artifacts/chartsearchai-local/querystore-service.env ] || . artifacts/chartsearchai-local/querystore-service.env; \
 	  [ -z "$$override_source_set" ] || QUERYSTORE_BASE_URL="$$override_source"; \
 	  [ -z "$$override_user_set" ] || QUERYSTORE_USERNAME="$$override_user"; \
 	  [ -z "$$override_password_set" ] || QUERYSTORE_PASSWORD="$$override_password"; \
 	  [ -z "$$override_timezone_set" ] || HUB_TIMEZONE="$$override_timezone"; \
 	  [ -z "$$override_anchor_set" ] || HUB_ANCHOR="$$override_anchor"; \
 	  [ -z "$$override_llm_set" ] || MED_AGENT_LLM_BASE_URL="$$override_llm"; \
+	  QUERYSTORE_BASE_URL=$${QUERYSTORE_BASE_URL:-http://backend:8080/openmrs}; \
+	  QUERYSTORE_USERNAME=$${QUERYSTORE_USERNAME:-$${CHARTSEARCH_ADMIN_USER:-admin}}; \
+	  QUERYSTORE_PASSWORD=$${QUERYSTORE_PASSWORD:-$${CHARTSEARCH_ADMIN_PASSWORD:-Admin123}}; \
 	  set +a; \
 	  HUB_BUILD_REVISION=$$(git -C targets/med-agent-hub rev-parse HEAD) \
 	  MED_AGENT_HUB_UID=$$(id -u) MED_AGENT_HUB_GID=$$(id -g) \

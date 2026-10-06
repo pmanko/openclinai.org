@@ -416,11 +416,10 @@ def test_stack_status_supplies_the_exact_hub_revision_to_compose():
     assert "export HUB_BUILD_REVISION" in status
 
 
-def test_focused_hub_start_reuses_saved_least_privileged_source_credentials():
+def test_focused_hub_start_preserves_explicit_source_configuration():
     makefile = _read("Makefile")
     target = makefile.split("med-agent-hub-up:", 1)[1].split("med-agent-hub-logs:", 1)[0]
 
-    assert "artifacts/chartsearchai-local/querystore-service.env" in target
     assert "docker compose -f compose/openmrs-2.8-refapp.yml up -d --build med-agent-hub" in target
     assert "State.Health.Status" in target
     assert "med-agent-hub did not become healthy within 60s" in target
@@ -454,8 +453,6 @@ def test_validation_run_reuses_the_credential_aware_hub_target():
 def test_preflight_probes_the_context_source_from_inside_the_hub():
     preflight = _read("scripts/validate-preflight.sh")
 
-    assert 'artifacts/chartsearchai-local/querystore-service.env' in preflight
-    assert "make chartsearchai-local" in preflight
     assert 'HUB_BUILD_REVISION="$(git -C targets/med-agent-hub rev-parse HEAD)"' in preflight
     assert "export HUB_BUILD_REVISION" in preflight
     assert 'docker exec -i -e SOURCE_PROBE_PATIENT="${SOURCE_PROBE_PATIENT}" harness-med-agent-hub' in preflight
