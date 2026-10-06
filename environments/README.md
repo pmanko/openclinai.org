@@ -79,6 +79,11 @@ Desktop when available, and starts the model router, OpenMRS and Hub. Local char
 access uses the existing demo administrator login; no generated credential file
 is needed. `LLAMA_MODEL_DIR` is read automatically from your overrides.
 
+For a standalone Hub using inline chart context only, explicitly export
+`QUERYSTORE_BASE_URL`, `QUERYSTORE_USERNAME` and `QUERYSTORE_PASSWORD` as empty
+before `make med-agent-hub-up`. That focused launcher preserves explicit empty
+overrides; without overrides it uses the local demo login.
+
 Stop with `make local-stack-down`. Startup retains the loaded data; repeat
 `make chartsearch-research-setup` only when you want to reload the HIV baseline.
 
