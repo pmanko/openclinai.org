@@ -9,19 +9,11 @@ direction.
 
 ## 1. Current Priorities
 
-1. Prioritize Ross's fresh research setup and instructions through the
-   [HIV OpenMRS setup roadmap](reusable-environments-roadmap.md).
-   Reuse the verified HIV baseline and native tooling, then apply reproducible,
-   ordered scenario additions including all seven evaluation accounts. Carry over
-   useful setup code, not an old database. Deliver the verified ChartSearchAI
-   preview and copyable instructions before Catalyst alignment or broader cleanup.
-   Setup proof is OpenMRS booting, ChartSearchAI available on it and a sample of
-   the intended HIV records. Remove custom
-   Docker ownership/storage auditing and unrelated backup/restore work. Role-context
-   enhancements, broader functionality tests, evaluations and videos follow
-   separately; they are not setup blockers. Leave unrelated installations alone.
-   Report/demo publication and changes to someone else's running environment
-   require their own approval.
+1. Finish review and Ross's fresh installation of the local HIV environment.
+   The [setup guide](../environments/README.md) owns commands, accounts and smoke
+   checks; [agent instructions](../AGENTS.md#local-hiv-environment) own maintenance
+   rules. Role-context enhancements, model evaluation and demonstrations are
+   separate follow-up work, not setup prerequisites.
 2. Use the consolidated documentation and focused website patch. Application
    requirements belong to their maintained product authorities; cross-project
    integration specifications and delivery belong to this umbrella; experiment
@@ -74,19 +66,19 @@ The immediate environment priority is Ross's reproducible fresh setup and usable
 Broader documentation proposals and the existing contribution tracks continue separately.
 The completed split remains under its existing contribution rules; this priority
 change does not reopen its functional acceptance or authorize upstream merges.
-Environment sequence, review points and acceptance live in the linked roadmap.
+Environment operation and smoke checks live in the setup guide.
 
 ## 2. Implementation Status
 
 | Area | Current state | Remaining work |
 | --- | --- | --- |
-| Umbrella repository | [pmanko/openclinai.org](https://github.com/pmanko/openclinai.org) owns product operations, component pins and website sources; PRs #2 and #3 are merged | Verify reusable environments against actual installations under the separate roadmap |
+| Umbrella repository | [pmanko/openclinai.org](https://github.com/pmanko/openclinai.org) owns product operations, component pins and website sources; PRs #2 and #3 are merged | Review the local HIV setup and support fresh installations using the setup guide |
 | Component checkouts | Exactly six direct components have recorded revisions; harness product gitlinks and `openmrs_chatbot` are absent; companion changes are merged | Preserve recorded versions during environment setup and updates |
 | Validation harness | PRs #197 and #198 are merged; runners use configured targets and supplied/observed provenance; required fields/types are checked without treating caller claims as verified revisions | Verify actual product interfaces separately; fixture isolation is not product acceptance |
 | Website | Sources and publication tooling are umbrella-owned; GitHub Pages is configured for Actions and build/deploy pass; browser inspection confirms the documentation loads | Public landing deployment and product/demo publication remain separate |
 | Specifications | Product behavior, shared delivery and validation protocols have maintained owners; duplicate plans and obsolete lane instructions are removed; companion documentation is merged | Follow the maintained owners; broader content proposals retain their own review |
 | Research setup | [Setup guide](../environments/README.md) and `make chartsearch-research-setup` prepare the fresh HIV baseline, ChartSearchAI and seven accounts using existing tools. Local startup, account logins and the patient-chart browser smoke passed on 3 October 2026 | PR review and Ross's fresh install. Account-context enhancements and broader evaluation remain follow-up, not setup gates. |
-| Product delivery | Eight backend and five frontend extractions are published. Applicable hosted checks pass on all recorded heads; no review threads are unresolved. Confirmed findings are fixed. Backend #590 retains the documented local macOS socket-test failure despite passing hosted source-pair checks. Both linear stacks are published and their current hosted builds pass. Combined functional validation passes, and all thirteen contributions are ready for review | Maintainer review and ordered merging; retain integration branches unchanged |
+| Product delivery | Eight backend and five frontend extractions are published. Backend and QueryStore include upstream through 3 October; the frontend already included its latest upstream. The synced source pair passes local Maven builds and tests. Hosted checks must be refreshed for the new heads | Maintainer review and ordered merging; retain backend/frontend integration references unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -99,7 +91,7 @@ publication and deployed acceptance.
 | U0 Ownership and dependencies | Map capabilities, interfaces and consumers to component owners | Each capability has an owner, defined inputs/outputs and verification criteria | Ownership consolidation and its documentation companions are merged |
 | U1 Component and management ownership | Direct umbrella gitlinks and workspace-management tooling; removal of nested product gitlinks and `openmrs_chatbot` | One canonical gitlink per component; fresh umbrella checkout resolves recorded revisions; umbrella tooling manages component selection and checkouts | Implemented and merged; fresh recursive checkout and offline workspace verification are recorded |
 | U2 Independent validation | Modular experiment execution, target adapters, evidence collection, evaluation and reporting | Experiments run against configured targets without Git, submodules, product source trees, product pins or an umbrella installation; offline reports consume captured artifacts only | Implemented and merged; local and hosted harness suites pass; portable reports and isolation tested with doubles; actual product acceptance remains separate |
-| U3 Environment and delivery tooling | Umbrella environment, build, deployment and release orchestration; OpenClinAI website build and publication tooling | Configured workspace operations invoke product-native commands; website build/publication runs from umbrella-owned sources, configuration and workflows; build/run provenance records actual inputs | Ownership move is merged; operational tests and documentation Pages build/deploy pass. Reusable environment implementation and broader deployed acceptance follow their separate roadmap |
+| U3 Environment and delivery tooling | Umbrella environment, build, deployment and release orchestration; OpenClinAI website build and publication tooling | Configured workspace operations invoke product-native commands; website build/publication runs from umbrella-owned sources, configuration and workflows; build/run provenance records actual inputs | Ownership move is merged; operational tests and documentation Pages build/deploy pass. Local HIV setup is documented in the setup guide; broader product acceptance remains separate |
 | U4 Documentation and interfaces | Current specs, instructions, commands, configuration, CI and website consumers aligned with ownership | Consumers resolve directly to current owners; obsolete specs, copied history and unnecessary compatibility entry points are removed | Retained requirements, consumers and cleanup are merged; documentation is published; broader public-content proposals still require their own review |
 | U5 Completion | Remove remaining obsolete code, dependencies and duplicate responsibilities; verify the assembled system | Independent harness checks and umbrella integration checks pass; current requirements have one maintained owner; component and deployed acceptance are explicit | Repository split and documentation closeout are merged and verified; not a claim of Ross handoff, upstream merging or new clinical/product acceptance |
 
@@ -242,14 +234,14 @@ builds must not depend on upstream merging or publishing first.
 
 | Existing work | Published PR | Immediate base | Current head |
 | --- | --- | --- | --- |
-| B1 shared provider contract | [Backend #583](https://github.com/openmrs/openmrs-module-chartsearchai/pull/583) | main | `b89211ce` |
-| B4 exact token counting | [Backend #584](https://github.com/openmrs/openmrs-module-chartsearchai/pull/584) | #583 | `c245fa53` |
-| B3 safety-check execution status | [Backend #585](https://github.com/openmrs/openmrs-module-chartsearchai/pull/585) | #584 | `ddfb4202` |
-| B5 conversation persistence | [Backend #586](https://github.com/openmrs/openmrs-module-chartsearchai/pull/586) | #585 | `7d9056c3` |
-| B4 QueryStore context and budgets | [Backend #587](https://github.com/openmrs/openmrs-module-chartsearchai/pull/587) | #586 | `b1cf5d56` |
-| B3 bundled inference and cancellation | [Backend #588](https://github.com/openmrs/openmrs-module-chartsearchai/pull/588) | #587 | `18e03f6e` |
-| B2 Hub discovery and transport | [Backend #589](https://github.com/openmrs/openmrs-module-chartsearchai/pull/589) | #588 | `b69ea2bb` |
-| B5 conversation endpoints and history | [Backend #590](https://github.com/openmrs/openmrs-module-chartsearchai/pull/590) | #589 | `8622f1b5` |
+| B1 shared provider contract | [Backend #583](https://github.com/openmrs/openmrs-module-chartsearchai/pull/583) | main | `9dbf83de` |
+| B4 exact token counting | [Backend #584](https://github.com/openmrs/openmrs-module-chartsearchai/pull/584) | #583 | `9da939f8` |
+| B3 safety-check execution status | [Backend #585](https://github.com/openmrs/openmrs-module-chartsearchai/pull/585) | #584 | `a9a68d3a` |
+| B5 conversation persistence | [Backend #586](https://github.com/openmrs/openmrs-module-chartsearchai/pull/586) | #585 | `13380038` |
+| B4 QueryStore context and budgets | [Backend #587](https://github.com/openmrs/openmrs-module-chartsearchai/pull/587) | #586 | `50a36f0f` |
+| B3 bundled inference and cancellation | [Backend #588](https://github.com/openmrs/openmrs-module-chartsearchai/pull/588) | #587 | `6430d6a5` |
+| B2 Hub discovery and transport | [Backend #589](https://github.com/openmrs/openmrs-module-chartsearchai/pull/589) | #588 | `1cb16230` |
+| B5 conversation endpoints and history | [Backend #590](https://github.com/openmrs/openmrs-module-chartsearchai/pull/590) | #589 | `08c7fade` |
 | F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55) | main | `fdf262ce` |
 | F1 history client and session state | [Frontend #56](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/56) | #55 | `f6f5cc24` |
 | F3 Markdown, tables and citations | [Frontend #57](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/57) | #56 | `39b5217f` |
@@ -258,19 +250,31 @@ builds must not depend on upstream merging or publishing first.
 
 ### Current execution: review-ready stacks
 
-Recorded 2 October: all thirteen contributions are open and non-draft with
-successful applicable builds. The completed split's review fixes and combined
-functional evidence are recorded in the [acceptance checkpoint](https://github.com/pmanko/openclinai.org/blob/6e048c2ac3d45987922270e6f2e59e5ff444d239/specs/roadmap.md#current-execution-review-ready-stacks).
-Backend #590 retains the recorded local macOS socket-test limitation despite
-passing hosted source-pair builds. QueryStore review and maintainer approval are
-separate. Refresh GitHub before a merge decision; this paragraph is dated evidence.
+The assembled backend `08c7fade` includes upstream `315d10db` and our provider
+changes. QueryStore `286993cc` includes upstream `e12a1de2`; frontend `e60cea9c`
+includes upstream `d0bf8b5b`. These upstream revisions were fetched on 3 October.
+Paired builds install the pinned QueryStore source before building ChartSearchAI.
+
+The assembled pair passed locally on Java 21: 587 QueryStore tests (two skips)
+and 3,277 ChartSearchAI tests (59 skips), with no failures or errors. The HTTP
+error-fixture correction in #588 is included in #589/#590; its 14 tests passed
+on Java 11 and Java 21. Hosted Linux Java 11 source-pair and frontend checks
+passed at umbrella `37b260e`. Check each PR's current head before merging.
+Earlier functional evidence is in the [acceptance checkpoint](https://github.com/pmanko/openclinai.org/blob/6e048c2ac3d45987922270e6f2e59e5ff444d239/specs/roadmap.md#current-execution-review-ready-stacks).
+
+The macOS Java 11 build retains one fixture portability issue:
+`LocalLlmServerAuthTest.aPortHeldByAListenerThatAcceptsNothingFailsTheStart`:
+the probe safely refused an occupied port but reported a listener rather than
+the timeout expected by the fixture. No production behavior or assertion was
+changed for that finding. The research setup guide specifies the verified Java
+21 local build path; Java 11/macOS fixture portability remains a separate issue.
 
 ### QueryStore review (M1 / Q0)
 
 Q0 resolves [QueryStore review #68](https://github.com/openmrs/openmrs-module-querystore/pull/68),
 covering preprocessing documentation, dispatcher link handling, explicit chart-read
 construction and parameter/resource-type validation. The
-[QueryStore API contract](https://github.com/pmanko/openmrs-module-querystore/blob/55bf9971eb293b2155fb72de1e7cadfd6fab3bdd/docs/rest-api.md)
+[QueryStore API contract](https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/rest-api.md)
 and product review own the detailed behavior and any required contract updates.
 
 Delivery requires exact-source reactor and MySQL integration evidence, applicable
@@ -425,10 +429,10 @@ separately scheduled. Designs for follow-ons are reviewed when those efforts sta
 - **Public hosting:** decide repository organization/visibility or hosting changes
   separately from this documentation cleanup.
 
-[backend]: https://github.com/pmanko/openmrs-module-chartsearchai/blob/8622f1b5c8995ac5361dd634705434ba65fe2fae/README.md#provider-integration-contract
+[backend]: https://github.com/pmanko/openmrs-module-chartsearchai/blob/08c7fadea6bf2aff33c48ff3e2b6fbbb2ab91b5e/README.md#provider-integration-contract
 [frontend]: https://github.com/pmanko/openmrs-esm-chartsearchai/blob/e60cea9cf5be41410c2401fe3261cdb712d1b0ee/README.md
-[querystore]: https://github.com/pmanko/openmrs-module-querystore/blob/55bf9971eb293b2155fb72de1e7cadfd6fab3bdd/docs/rest-api.md
-[hub]: https://github.com/pmanko/med-agent-hub/blob/96d0489660c161acdf28f6ace621a29654e48c49/README.md
+[querystore]: https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/rest-api.md
+[hub]: https://github.com/pmanko/med-agent-hub/blob/05a40fb4f074d4a108df0c705b30492d48309d94/README.md
 [conformance]: https://github.com/pmanko/clinical-ai-validation-harness/blob/5f180650aab46e607e5f21595faa4d0dc1620d4c/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md
 [product]: https://github.com/DIGI-UW/catalyst-ai/blob/94742f1af6d634f03b47b9e97f3512829ba265b1/docs/specification.md
 [binding]: https://github.com/DIGI-UW/catalyst-ai/blob/94742f1af6d634f03b47b9e97f3512829ba265b1/docs/dashboard-builder-mvp-design.md

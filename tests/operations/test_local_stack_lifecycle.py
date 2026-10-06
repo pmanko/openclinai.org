@@ -32,6 +32,7 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, dict[str, str]]:
     scripts.mkdir(parents=True)
     fake_bin.mkdir()
     (root / "compose").mkdir()
+    shutil.copy2(ROOT / ".env.chartsearch.example", root / ".env.chartsearch.example")
     (root / "targets" / "med-agent-hub").mkdir(parents=True)
     (root / "compose" / "openmrs-2.8-refapp.yml").write_text(
         "services: {}\n", encoding="utf-8"
@@ -189,9 +190,10 @@ def test_stack_up_rejects_unknown_options(tmp_path: Path) -> None:
     assert "unknown option" in result.stderr
 
 
-def test_local_stack_requires_its_operator_configuration(tmp_path: Path) -> None:
+def test_local_stack_starts_with_defaults_without_private_configuration(tmp_path: Path) -> None:
     root, _docker_log, env = _fixture(tmp_path)
     (root / ".env.chartsearch").unlink()
+    Path(env["FAKE_ROUTER_READY"]).touch()
 
     result = subprocess.run(
         ["bash", str(root / "scripts" / "local-stack-up.sh")],
@@ -202,8 +204,8 @@ def test_local_stack_requires_its_operator_configuration(tmp_path: Path) -> None
         check=False,
     )
 
-    assert result.returncode != 0
-    assert ".env.chartsearch not found" in result.stderr
+    assert result.returncode == 0, result.stderr
+    assert "OpenMRS SPA:   http://localhost:8088" in result.stdout
 
 
 def test_local_stack_does_not_try_to_launch_docker_desktop_off_macos(

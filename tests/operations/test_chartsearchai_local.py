@@ -416,11 +416,10 @@ def test_stack_status_supplies_the_exact_hub_revision_to_compose():
     assert "export HUB_BUILD_REVISION" in status
 
 
-def test_focused_hub_start_reuses_saved_least_privileged_source_credentials():
+def test_focused_hub_start_preserves_explicit_source_configuration():
     makefile = _read("Makefile")
     target = makefile.split("med-agent-hub-up:", 1)[1].split("med-agent-hub-logs:", 1)[0]
 
-    assert "artifacts/chartsearchai-local/querystore-service.env" in target
     assert "docker compose -f compose/openmrs-2.8-refapp.yml up -d --build med-agent-hub" in target
     assert "State.Health.Status" in target
     assert "med-agent-hub did not become healthy within 60s" in target
@@ -430,6 +429,59 @@ def test_focused_hub_start_reuses_saved_least_privileged_source_credentials():
     assert "MED_AGENT_HUB_UID=$$(id -u) MED_AGENT_HUB_GID=$$(id -g)" in target
     assert "Path('/app/trace/.write-probe')" in target
     assert 'if [ "$$(id -u)" = "0" ]' in target
+
+
+@pytest.mark.parametrize(
+    ("overrides", "expected"),
+    [
+        ({}, ["http://backend:8080/openmrs", "admin", "Admin123"]),
+        (
+            dict.fromkeys(
+                ["QUERYSTORE_BASE_URL", "QUERYSTORE_USERNAME", "QUERYSTORE_PASSWORD"], ""
+            ),
+            ["", "", ""],
+        ),
+        (
+            {
+                "QUERYSTORE_BASE_URL": "http://alternate/openmrs",
+                "QUERYSTORE_USERNAME": "test-reader",
+                "QUERYSTORE_PASSWORD": "synthetic-test-password",
+            },
+            ["http://alternate/openmrs", "test-reader", "synthetic-test-password"],
+        ),
+    ],
+    ids=["unset-uses-demo", "empty-disables-source", "configured-is-preserved"],
+)
+def test_focused_hub_source_override_values(tmp_path, overrides, expected):
+    # Execute the launcher's configuration, without starting containers.
+    target = _read("Makefile").split("med-agent-hub-up:\n", 1)[1]
+    configuration = target.split("\t@override_source_set=", 1)[1].split(
+        "\t  set +a;", 1
+    )[0]
+    configuration = ("override_source_set=" + configuration).replace("$$", "$")
+    (tmp_path / ".env.chartsearch.example").write_text(
+        _read(".env.chartsearch.example"), encoding="utf-8"
+    )
+    env = {
+        key: value
+        for key, value in os.environ.items()
+        if not key.startswith("QUERYSTORE_")
+    }
+    env.update(overrides)
+    result = subprocess.run(
+        [
+            "sh",
+            "-ec",
+            configuration
+            + "printf '%s\\0' "
+            '\"$QUERYSTORE_BASE_URL\" \"$QUERYSTORE_USERNAME\" \"$QUERYSTORE_PASSWORD\"',
+        ],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        check=True,
+    )
+    assert result.stdout.decode().split("\0")[:-1] == expected
 
 
 def test_shared_stack_start_maps_hub_trace_writes_to_the_host_user():
@@ -454,8 +506,6 @@ def test_validation_run_reuses_the_credential_aware_hub_target():
 def test_preflight_probes_the_context_source_from_inside_the_hub():
     preflight = _read("scripts/validate-preflight.sh")
 
-    assert 'artifacts/chartsearchai-local/querystore-service.env' in preflight
-    assert "make chartsearchai-local" in preflight
     assert 'HUB_BUILD_REVISION="$(git -C targets/med-agent-hub rev-parse HEAD)"' in preflight
     assert "export HUB_BUILD_REVISION" in preflight
     assert 'docker exec -i -e SOURCE_PROBE_PATIENT="${SOURCE_PROBE_PATIENT}" harness-med-agent-hub' in preflight

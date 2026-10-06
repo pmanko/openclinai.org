@@ -8,7 +8,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ENV_FILE="${ROOT}/.env.chartsearch"
+ENV_FILE="${ROOT}/.env.chartsearch.example"
 COMPOSE_FILE="${ROOT}/compose/openmrs-2.8-refapp.yml"
 cd "${ROOT}"
 
@@ -55,15 +55,16 @@ stop_managed_router() {
   echo "    stopped managed router PID ${pid}"
 }
 
-echo "==> Loading local configuration when available"
-if [[ -f "${ENV_FILE}" ]]; then
-  set -a
+echo "==> Loading local configuration"
+set -a
+# shellcheck disable=SC1090
+. "${ENV_FILE}"
+if [[ -f "${ROOT}/.env.chartsearch" ]]; then
+  ENV_FILE="${ROOT}/.env.chartsearch"
   # shellcheck disable=SC1090
   . "${ENV_FILE}"
-  set +a
-else
-  echo "WARNING: .env.chartsearch is missing; Compose teardown may lack required interpolation values" >&2
 fi
+set +a
 ROUTER_RUNTIME_DIR="${LLAMA_ROUTER_RUNTIME_DIR:-${ROOT}/artifacts/llama-router}"
 ROUTER_PID_FILE="${ROUTER_RUNTIME_DIR}/router.pid"
 

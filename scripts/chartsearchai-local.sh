@@ -224,7 +224,7 @@ if curl -fsS --max-time 3 "${ROUTER_URL}/v1/models" >/dev/null 2>&1; then
 else
   require_command llama-server
   [ -d "${MODEL_DIR}" ] || fail "model directory not found: ${MODEL_DIR}"
-  [ -f "${MODEL_DIR}/gemma-e4b.gguf" ] || fail "default model missing: ${MODEL_DIR}/gemma-e4b.gguf"
+  [ -f "${MODEL_DIR}/gemma-4-12b.gguf" ] || fail "default model missing: ${MODEL_DIR}/gemma-4-12b.gguf"
 fi
 
 if [ "${CHECK_ONLY}" = "1" ]; then
@@ -265,7 +265,7 @@ else
   wait_http "llama.cpp router" "${ROUTER_URL}/v1/models" 60
 fi
 curl -fsS "${ROUTER_URL}/v1/models" \
-  | python3 -c "import json,sys; ids={x.get('id') for x in json.load(sys.stdin).get('data',[])}; assert 'gemma-e4b' in ids, 'router does not advertise gemma-e4b'"
+  | python3 -c "import json,sys; ids={x.get('id') for x in json.load(sys.stdin).get('data',[])}; assert 'gemma-4-12b' in ids, 'router does not advertise gemma-4-12b'"
 
 say "==> OpenMRS core stack"
 "${COMPOSE[@]}" up -d --build db elasticsearch backend frontend gateway proxy
