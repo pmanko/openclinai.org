@@ -50,7 +50,7 @@ release/clinical signoffs are not authorized by this remediation task.
 | Website | Sources and publication tooling are umbrella-owned; GitHub Pages is configured for Actions and build/deploy pass; browser inspection confirms the documentation loads | Public landing deployment and product/demo publication remain separate |
 | Specifications | Product behavior, shared delivery and validation protocols have maintained owners; duplicate plans and obsolete lane instructions are removed; companion documentation is merged | Follow the maintained owners; broader content proposals retain their own review |
 | Research setup | [Setup guide](../environments/README.md) and `make chartsearch-research-setup` prepare the fresh HIV baseline, ChartSearchAI and seven accounts using existing tools. Local startup, account logins and the patient-chart browser smoke passed on 3 October 2026 | PR review and Ross's fresh install. Account-context enhancements and broader evaluation remain follow-up, not setup gates. |
-| Product delivery | Eight backend and five frontend extractions remain open in linear stacks. Frontend rebasing and checks are complete; QueryStore threads are reconciled. Backend review fixes and publication remain in progress | Rebase, address owning-PR findings, restore missing checks, publish revised pins and validate affected behavior; retain integration references unchanged |
+| Product delivery | Eight backend and five frontend extractions remain open in linear stacks. Both rebased stacks and backend code fixes are published; frontend builds pass and QueryStore inline threads are reconciled. Backend checks, review closeout and context evaluation remain in progress | Rebase, address owning-PR findings, restore missing checks, publish revised pins and validate affected behavior; retain integration references unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -206,43 +206,68 @@ builds must not depend on upstream merging or publishing first.
 
 | Existing work | Published PR | Immediate base | Current head |
 | --- | --- | --- | --- |
-| B1 shared provider contract | [Backend #583](https://github.com/openmrs/openmrs-module-chartsearchai/pull/583) | main | `9dbf83de` |
-| B4 exact token counting | [Backend #584](https://github.com/openmrs/openmrs-module-chartsearchai/pull/584) | #583 | `9da939f8` |
-| B3 safety-check execution status | [Backend #585](https://github.com/openmrs/openmrs-module-chartsearchai/pull/585) | #584 | `a9a68d3a` |
-| B5 conversation persistence | [Backend #586](https://github.com/openmrs/openmrs-module-chartsearchai/pull/586) | #585 | `13380038` |
-| B4 QueryStore context and budgets | [Backend #587](https://github.com/openmrs/openmrs-module-chartsearchai/pull/587) | #586 | `50a36f0f` |
-| B3 bundled inference and cancellation | [Backend #588](https://github.com/openmrs/openmrs-module-chartsearchai/pull/588) | #587 | `6430d6a5` |
-| B2 Hub discovery and transport | [Backend #589](https://github.com/openmrs/openmrs-module-chartsearchai/pull/589) | #588 | `1cb16230` |
-| B5 conversation endpoints and history | [Backend #590](https://github.com/openmrs/openmrs-module-chartsearchai/pull/590) | #589 | `08c7fade` |
+| B1 shared provider contract | [Backend #583](https://github.com/openmrs/openmrs-module-chartsearchai/pull/583) | main | `3dafae15` |
+| B4 exact token counting | [Backend #584](https://github.com/openmrs/openmrs-module-chartsearchai/pull/584) | #583 | `ad6117d9` |
+| B3 safety-check execution status | [Backend #585](https://github.com/openmrs/openmrs-module-chartsearchai/pull/585) | #584 | `b28332d6` |
+| B5 conversation persistence | [Backend #586](https://github.com/openmrs/openmrs-module-chartsearchai/pull/586) | #585 | `8139ab9a` |
+| B4 QueryStore context and budgets | [Backend #587](https://github.com/openmrs/openmrs-module-chartsearchai/pull/587) | #586 | `881163df` |
+| B3 bundled inference and cancellation | [Backend #588](https://github.com/openmrs/openmrs-module-chartsearchai/pull/588) | #587 | `4be7c58a` |
+| B2 Hub discovery and transport | [Backend #589](https://github.com/openmrs/openmrs-module-chartsearchai/pull/589) | #588 | `795607f4` |
+| B5 conversation endpoints and history | [Backend #590](https://github.com/openmrs/openmrs-module-chartsearchai/pull/590) | #589 | `20cb84ba` |
 | F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55) | main | `3c0c513b` |
 | F1 history client and session state | [Frontend #56](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/56) | #55 | `8055eaea` |
 | F3 Markdown, tables and citations | [Frontend #57](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/57) | #56 | `04b7f245` |
 | F2 provider/profile selection | [Frontend #58](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/58) | #57 | `071edf86` |
-| F1/F3 conversation lifecycle, staged answers, evidence and streaming toggle | [Frontend #59](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59) | #58 | `f243c4dd` |
+| F1/F3 conversation lifecycle, staged answers, evidence and streaming toggle | [Frontend #59](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59) | #58 | `475f6eb6` |
 
 ### Current execution: rebase and review remediation
 
-Verified on 6 October 2026 during remediation:
+Verified on 7 October 2026 during remediation:
 
 - Frontend #55–#59 are rebased on upstream `37ca2d6` and published in the agreed
   order. All five hosted builds pass on the heads listed above; release jobs are
   correctly skipped for PRs. Each layer passed local tests, lint, type checks,
-  translation generation and build. The top retains the earlier combined
-  revision's behavior; only generated translation ordering and the workflow's
-  all-PR trigger differ. No new runtime acceptance is claimed.
-- Backend #583–#590 are rebased locally on upstream `cf9e2046`, incorporating the
-  earlier combined revision's conflict resolutions. Review fixes are in progress
-  in their owning layers; their published heads above have not yet been updated.
-  The original review identified 46 unresolved threads, and #584–#587 lacked checks.
-  Publication and applicable hosted checks remain required.
-- QueryStore #68 at `286993cc` includes upstream `e12a1de2`; the outstanding review
-  threads are reconciled as described below.
-- Umbrella [#8](https://github.com/pmanko/openclinai.org/pull/8) remains the integration
-  PR. It now pins published frontend top `f243c4dd`; backend remains on combined
-  revision `713b8477` while owning-PR fixes proceed. That backend revision and the
-  earlier frontend `e09ce24` supplied the rebase resolutions. Replace the backend
-  pin after its fixes are published and run affected integration checks; do not
-  create replacement contribution PRs.
+  translation generation and build. #59 now also explains the distinct safety
+  limitation causes from backend #585; its latest local suite passes 658 tests.
+  All eight inline review threads are resolved. The failed-provider-switch concern
+  in the general review is fixed in `475f6eb6`: selection changes only after the new
+  conversation succeeds, and a failed request preserves the previous conversation.
+  The published head passes its hosted build; the review response links the fix
+  and tests. Automated browser review exercised no flows because
+  its environment lacked the application; do not count it as runtime proof.
+- Backend #583–#590 are rebased on upstream `cf9e2046` and published through
+  `gh stack` in the agreed order. Each actual PR base matches its predecessor's
+  published head; the seven upstream prerequisite branches were updated with exact
+  old-revision leases. The earlier combined revision's conflict resolutions are
+  preserved. GitHub still rejects native Stack objects for fork PRs; local stack
+  tracking and actual linear PR bases remain in use.
+  Review fixes cover token-count compatibility, truthful safety coverage,
+  conversation audit/retention, context limits/errors, cancellation, citation
+  provenance, Hub timeouts, stream keep-alives/Unicode and mode validation.
+  The full Linux Java 21 reactor at the pre-readiness-fix stack tip passed 3,300
+  tests with 63 skipped. The final model-path disclosure fix in #588 passed all
+  43 provider/REST contract tests on current stack tip `20cb84ba`. Gateway build
+  and isolated HTTP checks of both stream routes passed; no deployment is claimed.
+  Exact token counting also passed against the supported llama.cpp b8850 binary,
+  and Hub transport passed 32 focused tests on Java 11. The unchanged occupied-port
+  fixture failed on macOS and passed in Linux; its assertions were not weakened.
+  Per-PR checks now run on all eight heads, including the previously missing
+  #584–#587 checks. Ordinary published-dependency and QueryStore-main checks are
+  restored alongside the temporary paired-source build. The ordinary builds on
+  #587–#590 fail to compile against the published/upstream QueryStore API; exact
+  job logs show the missing context-slice/chart-read symbols. Their failures remain
+  visible while paired-source builds validate the proposed API together. All 46 inline threads have evidence-backed responses; 43 are resolved.
+  #587's model-quality/temporal evaluation, temporary dependency-job removal and
+  reviewer disposition of retrieval-versus-safety classification remain open.
+- QueryStore #68 at `286993cc` includes upstream `e12a1de2`; all inline review
+  threads are reconciled as described below. The maintainer's separate request for
+  smaller contributions remains unanswered and needs an explicit disposition.
+- Umbrella [#8](https://github.com/pmanko/openclinai.org/pull/8) records published
+  frontend `475f6eb6` and backend `20cb84ba` and updates their contract references.
+  All 24 umbrella unit tests and 55 affected operational/contract checks passed.
+  Its earlier `444c65f0` hosted checks passed; fresh hosted integration checks are
+  required for the updated pins. Earlier combined frontend `e09ce24` and backend
+  `713b8477` supplied rebase resolutions.
 
 The execution sequence is:
 
@@ -258,9 +283,9 @@ The execution sequence is:
    permanent tests assert temporary stack state. The umbrella continues to build
    the selected QueryStore and ChartSearchAI sources together before upstream merge.
 4. Publish component heads, update umbrella pins and consumers, and run affected
-   native and assembled checks. Clear the current umbrella #8 failures: its
-   configuration-comment assertion and generated frontend translation ordering.
-   Report local tests, hosted checks and live runtime evidence separately.
+   native and assembled checks. The earlier umbrella #8 configuration-comment
+   assertion and generated translation failures are fixed. Report local tests,
+   hosted checks and live runtime evidence separately.
 
 The earlier [combined acceptance checkpoint](https://github.com/pmanko/openclinai.org/blob/6e048c2ac3d45987922270e6f2e59e5ff444d239/specs/roadmap.md#current-execution-review-ready-stacks)
 remains evidence for unaffected behavior. The 3 October paired Java 21 build and
@@ -289,6 +314,21 @@ expansion preserves the question's clinical qualifiers. Fresh native reactor:
 MySQL containers. Hosted Java 8/11/17/21 builds pass; publication jobs are skipped
 for this PR. This is source and HTTP-dispatch evidence, not a new deployed-runtime
 or Elasticsearch integration acceptance.
+
+All 29 inline threads are resolved (27 reconciled in this pass, two already resolved).
+The [29 September request to split #68 into smaller pieces](https://github.com/openmrs/openmrs-module-querystore/pull/68#issuecomment-5893747702)
+is a separate, unanswered discussion comment. Review the current diff and respond
+with a concrete disposition; zero unresolved inline threads does not settle it.
+QueryStore #68 remains open and its new API remains unpublished. Local paired-source
+builds can proceed, but ChartSearchAI's ordinary dependency checks and upstream
+merge readiness depend on that API reaching upstream and its published artifact.
+#587 also requires the native context-composition and temporal evaluation gates,
+or measured substitute evidence acceptable under the product's review process;
+unit tests alone do not satisfy that finding. On 7 October, all five patients
+required by the native scope/temporal cohort returned HTTP 404 from the local HIV
+instance. Do not run that cohort as if it were present or count empty results as
+acceptance; prepare an isolated evaluation with the required data or a measured,
+explicitly documented substitute.
 
 ### Release and owner signoffs (M5)
 
@@ -438,8 +478,8 @@ separately scheduled. Designs for follow-ons are reviewed when those efforts sta
 - **Public hosting:** decide repository organization/visibility or hosting changes
   separately from this documentation cleanup.
 
-[backend]: https://github.com/pmanko/openmrs-module-chartsearchai/blob/713b84772ba1c04a82276bbed1e4f702289fcaec/README.md#provider-integration-contract
-[frontend]: https://github.com/pmanko/openmrs-esm-chartsearchai/blob/f243c4dda90bd94d53ee5a636a2e952e4bdfc9b1/README.md
+[backend]: https://github.com/pmanko/openmrs-module-chartsearchai/blob/20cb84ba97bb76ee97a8745016a6d9bb1546077b/README.md#provider-integration-contract
+[frontend]: https://github.com/pmanko/openmrs-esm-chartsearchai/blob/475f6eb60ea14011f719c861b02d02daf2156390/README.md
 [querystore]: https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/rest-api.md
 [hub]: https://github.com/pmanko/med-agent-hub/blob/05a40fb4f074d4a108df0c705b30492d48309d94/README.md
 [conformance]: https://github.com/pmanko/clinical-ai-validation-harness/blob/5f180650aab46e607e5f21595faa4d0dc1620d4c/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md
