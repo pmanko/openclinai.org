@@ -50,7 +50,7 @@ release/clinical signoffs are not authorized by this remediation task.
 | Website | Sources and publication tooling are umbrella-owned; GitHub Pages is configured for Actions and build/deploy pass; browser inspection confirms the documentation loads | Public landing deployment and product/demo publication remain separate |
 | Specifications | Product behavior, shared delivery and validation protocols have maintained owners; duplicate plans and obsolete lane instructions are removed; companion documentation is merged | Follow the maintained owners; broader content proposals retain their own review |
 | Research setup | [Setup guide](../environments/README.md) and `make chartsearch-research-setup` prepare the fresh HIV baseline, ChartSearchAI and seven accounts using existing tools. Local startup, account logins and the patient-chart browser smoke passed on 3 October 2026 | PR review and Ross's fresh install. Account-context enhancements and broader evaluation remain follow-up, not setup gates. |
-| Product delivery | Eight backend and five frontend extractions remain open in linear stacks. New backend findings and upstream commits require remediation; QueryStore review remains open. Umbrella #8 combines newer upstream with the stack heads but does not update the PR stacks | Rebase, address owning-PR findings, restore missing checks, publish revised pins and validate affected behavior; retain integration references unchanged |
+| Product delivery | Eight backend and five frontend extractions remain open in linear stacks. Frontend rebasing and checks are complete; QueryStore threads are reconciled. Backend review fixes and publication remain in progress | Rebase, address owning-PR findings, restore missing checks, publish revised pins and validate affected behavior; retain integration references unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -214,27 +214,35 @@ builds must not depend on upstream merging or publishing first.
 | B3 bundled inference and cancellation | [Backend #588](https://github.com/openmrs/openmrs-module-chartsearchai/pull/588) | #587 | `6430d6a5` |
 | B2 Hub discovery and transport | [Backend #589](https://github.com/openmrs/openmrs-module-chartsearchai/pull/589) | #588 | `1cb16230` |
 | B5 conversation endpoints and history | [Backend #590](https://github.com/openmrs/openmrs-module-chartsearchai/pull/590) | #589 | `08c7fade` |
-| F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55) | main | `fdf262ce` |
-| F1 history client and session state | [Frontend #56](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/56) | #55 | `f6f5cc24` |
-| F3 Markdown, tables and citations | [Frontend #57](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/57) | #56 | `39b5217f` |
-| F2 provider/profile selection | [Frontend #58](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/58) | #57 | `150c236a` |
-| F1/F3 conversation lifecycle, staged answers, evidence and streaming toggle | [Frontend #59](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59) | #58 | `e60cea9c` |
+| F1 staged stream transport | [Frontend #55](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55) | main | `3c0c513b` |
+| F1 history client and session state | [Frontend #56](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/56) | #55 | `8055eaea` |
+| F3 Markdown, tables and citations | [Frontend #57](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/57) | #56 | `04b7f245` |
+| F2 provider/profile selection | [Frontend #58](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/58) | #57 | `071edf86` |
+| F1/F3 conversation lifecycle, staged answers, evidence and streaming toggle | [Frontend #59](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59) | #58 | `f243c4dd` |
 
 ### Current execution: rebase and review remediation
 
-Verified on 6 October 2026 before remediation: all thirteen extraction PRs are
-open. Backend #583–#590 have 46 unresolved, non-outdated review threads from
-5 October. #584–#587 report no checks on their current heads; the other backend
-PRs and all five frontend PRs report passing build/test checks, with publication
-and some optional jobs skipped. The frontend has no unresolved inline threads.
-These are review observations, not a count of confirmed defects.
+Verified on 6 October 2026 during remediation:
 
-The published backend top `08c7fade` lacks 20 commits from upstream `cf9e2046`;
-the frontend top `e60cea9c` lacks three from upstream `37ca2d6`. QueryStore
-`286993cc` already includes upstream `e12a1de2`. Umbrella
-[#8](https://github.com/pmanko/openclinai.org/pull/8) pins combined backend
-`713b8477` and frontend `e09ce24`. Their merge resolutions are inputs to rebasing
-the existing PRs, not replacement contribution branches or new PRs.
+- Frontend #55–#59 are rebased on upstream `37ca2d6` and published in the agreed
+  order. All five hosted builds pass on the heads listed above; release jobs are
+  correctly skipped for PRs. Each layer passed local tests, lint, type checks,
+  translation generation and build. The top retains the earlier combined
+  revision's behavior; only generated translation ordering and the workflow's
+  all-PR trigger differ. No new runtime acceptance is claimed.
+- Backend #583–#590 are rebased locally on upstream `cf9e2046`, incorporating the
+  earlier combined revision's conflict resolutions. Review fixes are in progress
+  in their owning layers; their published heads above have not yet been updated.
+  The original review identified 46 unresolved threads, and #584–#587 lacked checks.
+  Publication and applicable hosted checks remain required.
+- QueryStore #68 at `286993cc` includes upstream `e12a1de2`; the outstanding review
+  threads are reconciled as described below.
+- Umbrella [#8](https://github.com/pmanko/openclinai.org/pull/8) remains the integration
+  PR. It now pins published frontend top `f243c4dd`; backend remains on combined
+  revision `713b8477` while owning-PR fixes proceed. That backend revision and the
+  earlier frontend `e09ce24` supplied the rebase resolutions. Replace the backend
+  pin after its fixes are published and run affected integration checks; do not
+  create replacement contribution PRs.
 
 The execution sequence is:
 
@@ -273,11 +281,14 @@ construction and parameter/resource-type validation. The
 [QueryStore API contract](https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/rest-api.md)
 and product review own the detailed behavior and any required contract updates.
 
-At the 6 October refresh, 27 threads were unresolved (10 non-outdated), while
-Java 8/11/17/21 builds passed. Thread state alone does not establish whether a
-finding remains in code. Delivery requires exact-source reactor and MySQL integration evidence, applicable
-HTTP-path verification and evidence-linked review dispositions. Skipped tests and
-additional Elasticsearch checks are recorded separately.
+Reconciled on 6 October at published head `286993cc`: all 27 previously unresolved
+threads are resolved after checking the implemented fixes and regression coverage.
+The stopword findings are addressed by removing word stripping entirely; lab-panel
+expansion preserves the question's clinical qualifiers. Fresh native reactor:
+585 passed, two skipped. MySQL integration: all 22 tests passed against temporary
+MySQL containers. Hosted Java 8/11/17/21 builds pass; publication jobs are skipped
+for this PR. This is source and HTTP-dispatch evidence, not a new deployed-runtime
+or Elasticsearch integration acceptance.
 
 ### Release and owner signoffs (M5)
 
@@ -428,7 +439,7 @@ separately scheduled. Designs for follow-ons are reviewed when those efforts sta
   separately from this documentation cleanup.
 
 [backend]: https://github.com/pmanko/openmrs-module-chartsearchai/blob/713b84772ba1c04a82276bbed1e4f702289fcaec/README.md#provider-integration-contract
-[frontend]: https://github.com/pmanko/openmrs-esm-chartsearchai/blob/e09ce241debdb3f6f283687ce1130346a7255836/README.md
+[frontend]: https://github.com/pmanko/openmrs-esm-chartsearchai/blob/f243c4dda90bd94d53ee5a636a2e952e4bdfc9b1/README.md
 [querystore]: https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/rest-api.md
 [hub]: https://github.com/pmanko/med-agent-hub/blob/05a40fb4f074d4a108df0c705b30492d48309d94/README.md
 [conformance]: https://github.com/pmanko/clinical-ai-validation-harness/blob/5f180650aab46e607e5f21595faa4d0dc1620d4c/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md
