@@ -129,6 +129,6 @@ the recorded evidence and evaluation results as its inputs.
 These links identify contracts at the component revisions recorded by the workspace.
 
 - [OpenClinAI provider integration requirements/reference](../docs/openmrs-provider-interface.md)
-- [Native OpenMRS provider contract](https://github.com/pmanko/openmrs-module-chartsearchai/blob/08c7fadea6bf2aff33c48ff3e2b6fbbb2ab91b5e/README.md#provider-integration-contract)
+- [Native OpenMRS provider contract](https://github.com/pmanko/openmrs-module-chartsearchai/blob/713b84772ba1c04a82276bbed1e4f702289fcaec/README.md#provider-integration-contract)
 - [QueryStore API](https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/rest-api.md)
 - [Catalyst–Med Agent Hub contract](https://github.com/DIGI-UW/catalyst-ai/blob/94742f1af6d634f03b47b9e97f3512829ba265b1/docs/med-agent-hub.md)

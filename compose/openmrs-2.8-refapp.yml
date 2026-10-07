@@ -1,12 +1,11 @@
 # Umbrella-owned shared infrastructure: OpenMRS 3.x Reference Application
-# (O3 / modern UI) running on top of OpenMRS Core/Platform 2.8.x.
+# (O3 / modern UI) with the Core version required by ChartSearchAI/QueryStore.
 #
-# Image pins mirror the canonical distro at
-# https://github.com/openmrs/openmrs-distro-referenceapplication (verified
-# 2026-05-13; current stable tag 3.6.0). Bump TAG via environment override.
+# Gateway, frontend and backend share OPENMRS_REFAPP_TAG from the native distro:
+# https://github.com/openmrs/openmrs-distro-referenceapplication.
 #
-# Filename retains "2.8" to identify the OpenMRS Core/Platform line this
-# stack sits on; the RefApp itself is 3.x (latest stable 3.6.0).
+# Filename retains "2.8" for the original HIV import baseline; the distribution
+# and required Core overlay are selected by Dockerfile.backend.
 #
 # Access pattern: a `proxy` service (Caddy) fronts everything. Internal
 # services (gateway, frontend, backend) are NOT exposed on the host. Reach
@@ -57,7 +56,7 @@ services:
       retries: 5
 
   gateway:
-    image: openmrs/openmrs-reference-application-3-gateway:${OPENMRS_REFAPP_TAG:-3.6.0}
+    image: openmrs/openmrs-reference-application-3-gateway:${OPENMRS_REFAPP_TAG:-nightly-chartsearch}
     container_name: harness-openmrs-gateway
     restart: "unless-stopped"
     depends_on:
@@ -79,7 +78,7 @@ services:
       start_period: 60s
 
   frontend:
-    image: openmrs/openmrs-reference-application-3-frontend:${OPENMRS_REFAPP_TAG:-3.6.0}
+    image: openmrs/openmrs-reference-application-3-frontend:${OPENMRS_REFAPP_TAG:-nightly-chartsearch}
     container_name: harness-openmrs-frontend
     restart: "unless-stopped"
     environment:
@@ -98,25 +97,15 @@ services:
         condition: service_healthy
 
   backend:
-    # Backend tag is independent of frontend/gateway so frontend+gateway can run
-    # on `:nightly-chartsearch` (for the ESM UI) while the backend stays on the
-    # stable `:3.6.0` app line. We do NOT use the `:nightly-chartsearch` backend
-    # image: it bakes its own chartsearchai .omod into
-    # /openmrs/distribution/openmrs_modules/, and OpenMRS startup copies
-    # distribution modules over /openmrs/data/modules — clobbering the .omod we
-    # build locally from `targets/chartsearchai/` (which carries our multi-turn
-    # work). So we build our OWN backend image: Dockerfile.backend rebases the
-    # stock `:3.6.0` dist off Amazon Linux 2 (glibc 2.26) onto Ubuntu/temurin
-    # (glibc 2.39) so querystore's onnxruntime embedder native libs load — but
-    # bakes NO module, so the bind-mounted omods below (chartsearchai +
-    # querystore) are the only ones, with no clobber. Only the base OS changes;
-    # the OpenMRS app stays at 3.6.0.
-    image: harness-openmrs-backend:${OPENMRS_BACKEND_TAG:-3.6.0}-temurin
+    # Match frontend/gateway module requirements. The derived image retains
+    # native distribution startup on Temurin and excludes only the two upstream
+    # snapshot omods supplied by our source-pair build.
+    image: harness-openmrs-backend:${OPENMRS_REFAPP_TAG:-nightly-chartsearch}-temurin
     build:
       context: .
       dockerfile: Dockerfile.backend
       args:
-        OPENMRS_BACKEND_TAG: ${OPENMRS_BACKEND_TAG:-3.6.0}
+        OPENMRS_REFAPP_TAG: ${OPENMRS_REFAPP_TAG:-nightly-chartsearch}
     container_name: harness-openmrs-backend
     restart: "unless-stopped"
     depends_on:

@@ -429,8 +429,8 @@ separately scheduled. Designs for follow-ons are reviewed when those efforts sta
 - **Public hosting:** decide repository organization/visibility or hosting changes
   separately from this documentation cleanup.
 
-[backend]: https://github.com/pmanko/openmrs-module-chartsearchai/blob/08c7fadea6bf2aff33c48ff3e2b6fbbb2ab91b5e/README.md#provider-integration-contract
-[frontend]: https://github.com/pmanko/openmrs-esm-chartsearchai/blob/e60cea9cf5be41410c2401fe3261cdb712d1b0ee/README.md
+[backend]: https://github.com/pmanko/openmrs-module-chartsearchai/blob/713b84772ba1c04a82276bbed1e4f702289fcaec/README.md#provider-integration-contract
+[frontend]: https://github.com/pmanko/openmrs-esm-chartsearchai/blob/e09ce241debdb3f6f283687ce1130346a7255836/README.md
 [querystore]: https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/rest-api.md
 [hub]: https://github.com/pmanko/med-agent-hub/blob/05a40fb4f074d4a108df0c705b30492d48309d94/README.md
 [conformance]: https://github.com/pmanko/clinical-ai-validation-harness/blob/5f180650aab46e607e5f21595faa4d0dc1620d4c/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md

@@ -11,12 +11,10 @@
 # chartsearch, so we use chartsearch's own runtime setup. It heals the data
 # volume's ownership, downloads the ONNX embedding model + vocab that BOTH
 # querystore and chartsearchai read, then drops to uid 1001 and runs OpenMRS
-# startup — turning the cloud bring-up into a single step. No module is baked:
-# the umbrella bind-mounts its locally-built omods at /openmrs/data/modules (a
-# baked omod would be clobbered when OpenMRS copies distribution modules on
-# startup). Only the base OS changes; the OpenMRS app stays at the pinned tag.
-ARG OPENMRS_BACKEND_TAG=3.6.0
-FROM openmrs/openmrs-reference-application-3-backend:${OPENMRS_BACKEND_TAG} AS dist
+# startup. The umbrella supplies its source-built ChartSearchAI and QueryStore
+# modules; all other modules come from the same distribution as the frontend.
+ARG OPENMRS_REFAPP_TAG=nightly-chartsearch
+FROM openmrs/openmrs-reference-application-3-backend:${OPENMRS_REFAPP_TAG} AS dist
 
 # The chartsearchai/querystore modules require OpenMRS platform 2.9.0; the base image ships an
 # older core. Fetch the 2.9.0-SNAPSHOT core war, resolving the current snapshot via maven-metadata.
@@ -52,6 +50,10 @@ RUN groupadd -r openmrs && useradd -r -g openmrs -u 1001 openmrs
 WORKDIR /openmrs
 COPY --from=dist /openmrs /openmrs
 COPY --from=dist /usr/local/tomcat /usr/local/tomcat
+# Native startup copies distribution modules over the mounted module directory.
+# Leave these two to our source-pair build, not the upstream snapshots.
+RUN rm -f /openmrs/distribution/openmrs_modules/chartsearchai-*.omod \
+    /openmrs/distribution/openmrs_modules/querystore-*.omod
 # Overlay the fetched core war; startup deploys /openmrs/distribution/openmrs_core/openmrs.war.
 COPY --from=core-war /openmrs.war /openmrs/distribution/openmrs_core/openmrs.war
 RUN chown -R 1001:1001 /openmrs /usr/local/tomcat
