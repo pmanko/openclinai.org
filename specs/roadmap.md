@@ -9,64 +9,36 @@ direction.
 
 ## 1. Current Priorities
 
-1. Finish review and Ross's fresh installation of the local HIV environment.
-   The [setup guide](../environments/README.md) owns commands, accounts and smoke
-   checks; [agent instructions](../AGENTS.md#local-hiv-environment) own maintenance
-   rules. Role-context enhancements, model evaluation and demonstrations are
-   separate follow-up work, not setup prerequisites.
-2. Use the consolidated documentation and focused website patch. Application
-   requirements belong to their maintained product authorities; cross-project
-   integration specifications and delivery belong to this umbrella; experiment
-   protocols and evidence belong to the harness. Keep our coordination material out of
-   OpenMRS-owned repositories and forks; their native module docs remain unchanged.
-   Retain only requirements supported by current code or explicit current direction.
-   Delete obsolete sections, consolidate duplicates and preserve IDs only for
-   retained requirements. Update consumers directly; do not relocate an old backlog.
-   Audit repository documentation and the published website separately, review
-   technical and non-technical visitor journeys, and submit concrete content/UX
-   remediation for owner review. The [2 October audit](reviews/2026-10-02-documentation-audit.md)
-   records findings, proposed dispositions and verification evidence; it does not
-   replace the product authorities or this roadmap.
-   Ownership consolidation, consumer checks and the technical/non-technical site
-   audit are complete and merged. The documentation site is published through the
-   umbrella's GitHub Pages workflow. The separate public landing deployment and
-   broader audit proposals are not implied by that publication; this documentation
-   work changes no product runtime behavior.
-   Merged companions: [Catalyst #140](https://github.com/DIGI-UW/catalyst-ai/pull/140),
-   [Hub #32](https://github.com/pmanko/med-agent-hub/pull/32) and
-   [harness #198](https://github.com/pmanko/clinical-ai-validation-harness/pull/198).
-   OpenMRS module documentation and feature PRs are unchanged. Umbrella
-   [#3](https://github.com/pmanko/openclinai.org/pull/3) contains the integration
-   reference, roadmap and website patch; the closeout records merged component pins.
-3. Complete maintainer review and ordered merging of the ChartSearchAI split.
-   Break the existing ChartSearchAI backend and frontend integration work into the
-   smallest practical reviewable PRs. Extract the existing implementation, tests
-   and documentation together into one linear PR stack per project, rooted
-   in each project's current `main`. The published contributions now follow the
-   exact order defined under Contribution Model. Extraction, recorded review fixes
-   and combined functional validation are complete; maintainer review and merging
-   remain.
-   Carry recorded findings and their fixes with their owning PRs. The complete
-   set must reproduce the integration branches' functionality while preserving
-   newer upstream behavior and apply the approved frontend integration decisions
-   below. Unrelated new features and replacement implementations are outside this
-   task.
-4. The component-ownership slice is merged:
-   [harness #197](https://github.com/pmanko/clinical-ai-validation-harness/pull/197)
-   and [umbrella #2](https://github.com/pmanko/openclinai.org/pull/2).
-   The umbrella implementation and documentation PRs are merged, followed by the
-   harness review corrections and documentation cleanup. Retain separate
-   product-build and deployed-acceptance evidence; this refactor does not complete
-   Ross's fresh environment handoff or authorize OpenMRS upstream merges.
-5. Continue QueryStore review and [Catalyst delivery](roadmap.md#6-catalyst-delivery) through their product contracts.
-   Verify product-native builds and shared environments against recorded revisions;
-   record deployed acceptance separately from source verification.
+1. Refresh the existing OpenMRS contribution stacks for review and merging. Keep
+   backend `main → #583 → #584 → #585 → #586 → #587 → #588 → #589 → #590`
+   and frontend `main → #55 → #56 → #57 → #58 → #59`. Rebase with `gh stack`
+   against current upstream, preserve PR numbers and discussions, and incorporate
+   the conflict resolutions already made in the umbrella's combined revisions.
+2. Address review findings in the PR that owns the affected behavior. Reconcile
+   QueryStore #68 against implemented fixes and actual tests before resolving its
+   threads. Restore applicable checks on every PR; missing or skipped checks are
+   not passing evidence. Publish review responses with the fix and verification.
+3. Publish component changes, then update the umbrella pins and run affected
+   component and integration checks. Preserve the previous one-time split
+   acceptance for unchanged behavior; repeat affected checks after changes or
+   failures. Tests must cover permanent functionality, never PR numbers, temporary
+   branches or the arrangement of this refactor.
+4. Keep the merged umbrella revamp in place: it owns component pins, builds,
+   environments, integration specifications and website publication. Products own
+   application behavior; the independent harness owns experiments and evidence.
+   Our coordination material stays out of OpenMRS repositories and their forks.
+   The [documentation audit](reviews/2026-10-02-documentation-audit.md) remains
+   dated evidence, not another implementation plan.
+5. Continue Ross's fresh HIV installation and [Catalyst delivery](#6-catalyst-delivery)
+   as separate work. The [setup guide](../environments/README.md) owns environment
+   commands and smoke checks. Model evaluations, demonstrations and broader
+   publication remain separate from contribution review readiness.
 
-The immediate environment priority is Ross's reproducible fresh setup and usable handoff.
-Broader documentation proposals and the existing contribution tracks continue separately.
-The completed split remains under its existing contribution rules; this priority
-change does not reopen its functional acceptance or authorize upstream merges.
-Environment operation and smoke checks live in the setup guide.
+The split itself is published. The current task is upstream synchronization,
+review remediation and affected validation, not another extraction or redesign.
+Merged umbrella PRs #2–#4 establish the ownership refactor; they do not establish
+that the OpenMRS PRs are ready to merge. Upstream merging, deployment changes and
+release/clinical signoffs are not authorized by this remediation task.
 
 ## 2. Implementation Status
 
@@ -78,7 +50,7 @@ Environment operation and smoke checks live in the setup guide.
 | Website | Sources and publication tooling are umbrella-owned; GitHub Pages is configured for Actions and build/deploy pass; browser inspection confirms the documentation loads | Public landing deployment and product/demo publication remain separate |
 | Specifications | Product behavior, shared delivery and validation protocols have maintained owners; duplicate plans and obsolete lane instructions are removed; companion documentation is merged | Follow the maintained owners; broader content proposals retain their own review |
 | Research setup | [Setup guide](../environments/README.md) and `make chartsearch-research-setup` prepare the fresh HIV baseline, ChartSearchAI and seven accounts using existing tools. Local startup, account logins and the patient-chart browser smoke passed on 3 October 2026 | PR review and Ross's fresh install. Account-context enhancements and broader evaluation remain follow-up, not setup gates. |
-| Product delivery | Eight backend and five frontend extractions are published. Backend and QueryStore include upstream through 3 October; the frontend already included its latest upstream. The synced source pair passes local Maven builds and tests. Hosted checks must be refreshed for the new heads | Maintainer review and ordered merging; retain backend/frontend integration references unchanged |
+| Product delivery | Eight backend and five frontend extractions remain open in linear stacks. New backend findings and upstream commits require remediation; QueryStore review remains open. Umbrella #8 combines newer upstream with the stack heads but does not update the PR stacks | Rebase, address owning-PR findings, restore missing checks, publish revised pins and validate affected behavior; retain integration references unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -248,43 +220,69 @@ builds must not depend on upstream merging or publishing first.
 | F2 provider/profile selection | [Frontend #58](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/58) | #57 | `150c236a` |
 | F1/F3 conversation lifecycle, staged answers, evidence and streaming toggle | [Frontend #59](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59) | #58 | `e60cea9c` |
 
-### Current execution: review-ready stacks
+### Current execution: rebase and review remediation
 
-The assembled backend `08c7fade` includes upstream `315d10db` and our provider
-changes. QueryStore `286993cc` includes upstream `e12a1de2`; frontend `e60cea9c`
-includes upstream `d0bf8b5b`. These upstream revisions were fetched on 3 October.
-Paired builds install the pinned QueryStore source before building ChartSearchAI.
+Verified on 6 October 2026 before remediation: all thirteen extraction PRs are
+open. Backend #583–#590 have 46 unresolved, non-outdated review threads from
+5 October. #584–#587 report no checks on their current heads; the other backend
+PRs and all five frontend PRs report passing build/test checks, with publication
+and some optional jobs skipped. The frontend has no unresolved inline threads.
+These are review observations, not a count of confirmed defects.
 
-The assembled pair passed locally on Java 21: 587 QueryStore tests (two skips)
-and 3,277 ChartSearchAI tests (59 skips), with no failures or errors. The HTTP
-error-fixture correction in #588 is included in #589/#590; its 14 tests passed
-on Java 11 and Java 21. Hosted Linux Java 11 source-pair and frontend checks
-passed at umbrella `37b260e`. Check each PR's current head before merging.
-Earlier functional evidence is in the [acceptance checkpoint](https://github.com/pmanko/openclinai.org/blob/6e048c2ac3d45987922270e6f2e59e5ff444d239/specs/roadmap.md#current-execution-review-ready-stacks).
+The published backend top `08c7fade` lacks 20 commits from upstream `cf9e2046`;
+the frontend top `e60cea9c` lacks three from upstream `37ca2d6`. QueryStore
+`286993cc` already includes upstream `e12a1de2`. Umbrella
+[#8](https://github.com/pmanko/openclinai.org/pull/8) pins combined backend
+`713b8477` and frontend `e09ce24`. Their merge resolutions are inputs to rebasing
+the existing PRs, not replacement contribution branches or new PRs.
 
-The macOS Java 11 build retains one fixture portability issue:
-`LocalLlmServerAuthTest.aPortHeldByAListenerThatAcceptsNothingFailsTheStart`:
-the probe safely refused an occupied port but reported a listener rather than
-the timeout expected by the fixture. No production behavior or assertion was
-changed for that finding. The research setup guide specifies the verified Java
-21 local build path; Java 11/macOS fixture portability remains a separate issue.
+The execution sequence is:
+
+1. Rebase both stacks with `gh stack`, preserving the declared order and newer
+   upstream behavior. Check actual GitHub bases and heads after publication.
+2. Verify and fix each finding in its owning PR, carrying regression coverage for
+   lasting behavior. Address token-count compatibility, truthful safety coverage,
+   persistence/audit/retention, context budgets, cancellation, Hub timeouts and
+   stream lifecycle findings. Reconcile already-fixed QueryStore threads with
+   evidence; do not repeat fixes merely because a thread remains open.
+3. Restore per-PR validation against declared bases. Resolve reviewer concerns
+   about branch-specific CI and fork dependency substitutions without making
+   permanent tests assert temporary stack state. The umbrella continues to build
+   the selected QueryStore and ChartSearchAI sources together before upstream merge.
+4. Publish component heads, update umbrella pins and consumers, and run affected
+   native and assembled checks. Clear the current umbrella #8 failures: its
+   configuration-comment assertion and generated frontend translation ordering.
+   Report local tests, hosted checks and live runtime evidence separately.
+
+The earlier [combined acceptance checkpoint](https://github.com/pmanko/openclinai.org/blob/6e048c2ac3d45987922270e6f2e59e5ff444d239/specs/roadmap.md#current-execution-review-ready-stacks)
+remains evidence for unaffected behavior. The 3 October paired Java 21 build and
+umbrella `37b260e` hosted checks are earlier revision evidence, not acceptance of
+new heads. The known Java 11/macOS occupied-port fixture issue remains separate;
+use the setup guide's verified Java 21 local path and report platform limitations.
+
+Completion requires disposition of review findings, passing applicable checks on
+the published heads, and matching reachable umbrella pins with affected integration
+verification. The old backend #157/frontend #23 integration PRs remain unchanged;
+their closure and upstream merges require separate decisions.
 
 ### QueryStore review (M1 / Q0)
 
-Q0 resolves [QueryStore review #68](https://github.com/openmrs/openmrs-module-querystore/pull/68),
+Q0 reconciles [QueryStore review #68](https://github.com/openmrs/openmrs-module-querystore/pull/68),
 covering preprocessing documentation, dispatcher link handling, explicit chart-read
 construction and parameter/resource-type validation. The
 [QueryStore API contract](https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/rest-api.md)
 and product review own the detailed behavior and any required contract updates.
 
-Delivery requires exact-source reactor and MySQL integration evidence, applicable
+At the 6 October refresh, 27 threads were unresolved (10 non-outdated), while
+Java 8/11/17/21 builds passed. Thread state alone does not establish whether a
+finding remains in code. Delivery requires exact-source reactor and MySQL integration evidence, applicable
 HTTP-path verification and evidence-linked review dispositions. Skipped tests and
 additional Elasticsearch checks are recorded separately.
 
 ### Release and owner signoffs (M5)
 
-The completed split is source/review readiness, not a deployed release or clinical
-acceptance. Signoff 1 approved the original baseline procedure. Signoff 2 accepts
+Published extraction and its earlier acceptance do not establish current review
+readiness, a deployed release or clinical acceptance. Signoff 1 approved the original baseline procedure. Signoff 2 accepts
 the dual-provider product and authorizes controlled comparison; Signoff 3 accepts
 release, companion merges, curated publication and PR cleanup. Signoffs 2 and 3
 remain open. Reconcile their existing evidence against affected current revisions;
