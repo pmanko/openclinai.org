@@ -8,8 +8,11 @@ or an acceptance decision. It addresses the [scope/temporal evaluation finding o
 
 The changed composition removes off-topic citations in this sample but loses
 on-topic citation coverage. This is a mixed result, **not a clean quality pass**.
-The evaluation thread remains open for review of the regression and the substitute
-cohort's limitations. No model, prompt or selection setting was tuned to these answers.
+A targeted repeat confirms one renal retrieval regression; the other two lower
+scores follow the existing prompt's negative-category citation rule. The evaluation
+thread remains open for the retrieval regression, the metric/prompt disagreement
+and the substitute cohort's limitations. No model, prompt or selection setting
+was tuned to these answers.
 
 | Measurement | Before: #586 `8139ab9a` | After: #587 `881163df` |
 | --- | ---: | ---: |
@@ -129,6 +132,45 @@ clinical claim. It does establish the loss of supporting record coverage under
 the native metric. Accepting that tradeoff or changing composition requires an
 explicit product-review decision; this report does neither.
 
+## Targeted repeat and exact model requests
+
+The three lower-scoring patient-39 questions were repeated in each arm, interleaved
+with three controls: patient 36 / heart, patient 2606 / heart and patient 3666 /
+mental health. Each arm began with an isolated backend restart to clear its
+in-memory state. The same artifacts, database, model and question text were used.
+Only the isolated model endpoint was routed through a temporary loopback recorder,
+which forwarded requests unchanged to the existing model server. All twelve repeat
+responses reproduced their original model-cited record UUID sets.
+
+[diagnostics.json](2026-10-07-context-evaluation/diagnostics.json) preserves the
+actual model requests, raw model responses and native endpoint responses. The
+system message is stored once; prepending it to each recorded request reconstructs
+the complete messages. Canonical request hashes verify that reconstruction. Both
+arms used the identical system message, SHA-256
+`702e89ebd7565edabb3db856cfd2c9f5b08203c97ea49594a9515664fb4289d6`.
+
+| Case | Actual model input and output | Diagnosis |
+| --- | --- | --- |
+| 39 / kidney | Baseline input contains creatinine 72 and 193.7 plus the creatinine test order. Changed input contains none of them. The repeated outputs cite both measurements before and neither after. | Confirmed loss before generation: renal evidence is missing from the changed context. |
+| 39 / heart | Both inputs contain the normal cardiac examination. The changed model returns no citation, as in the primary capture. | The prompt directs negative category answers to cite nothing; the gold counts the normal examination as on-topic. Lower F1 here is not proof of lost retrieval or an instruction violation. |
+| 39 / mental health | Both inputs contain the normal psychiatric examination. The changed model again returns no citation. | The same negative-category rule conflicts with the metric's credit for normal examination evidence. |
+
+The actual system message requires relevant kidney-function measurements after a
+negative kidney-problem verdict, but no citations after a negative verdict about
+a category of conditions. That wording is in
+[LlmProvider.java](https://github.com/pmanko/openmrs-module-chartsearchai/blob/20cb84ba97bb76ee97a8745016a6d9bb1546077b/api/src/main/java/org/openmrs/module/chartsearchai/api/impl/LlmProvider.java#L245).
+The baseline's higher cardiac/psychiatric scores do not demonstrate better
+compliance with this prompt. The frozen gold and all original scores remain
+unchanged; the disagreement is disclosed rather than scored away.
+
+The source comparison also identifies a retrieval-path change: #586 normalizes
+the question through its local stopword stripping before ranked search, whereas
+#587 sends the raw question to QueryStore, whose preprocessing preserves clinical
+qualifiers and expands lab panels. The captured contexts prove the resulting
+renal evidence loss on this case. They do not justify restoring unsafe word
+stripping or adding a patient-specific ranking exception. A general retrieval
+correction belongs to QueryStore and needs broader, qualifier-preserving evidence.
+
 ## Temporal review
 
 Database truth was frozen before capture, retaining source UUIDs, values, dates
@@ -144,9 +186,10 @@ No absent-temporal-record cases are represented in this substitute cohort.
 
 ## Limits and follow-up
 
-- This is one capture per cell, on a small substitute cohort. It is not directly
-  comparable to earlier native-cohort aggregates and does not establish a stable
-  effect size. Repeat affected failures if diagnosing or changing behavior.
+- The primary comparison is one capture per cell on a small substitute cohort;
+  the three lower-scoring cells and three controls subsequently reproduced in both
+  arms. This is not directly comparable to earlier native-cohort aggregates and
+  does not establish a population effect size. Recheck affected behavior after a fix.
 - Eye and fracture topics have no positive cases here. Several other positive
   cells represent normal tests/examinations, so coverage is narrower than a broad
   clinical evaluation.
@@ -155,8 +198,8 @@ No absent-temporal-record cases are represented in this substitute cohort.
   answer consolidated some of them. The metric scores returned reference entries;
   it does not require every returned reference to remain an inline marker after
   answer rendering. Do not read its medication recall as displayed completeness.
-- This supplies measured evidence for #587's review discussion. The reduced
-  citation coverage and tied-value handling remain visible findings; substitute
-  acceptance and remediation/disposition remain open.
+- This supplies measured evidence for #587's review discussion. Renal retrieval,
+  metric/prompt alignment and tied-value handling remain visible findings;
+  substitute acceptance and remediation/disposition remain open.
 - Temporary capture/analysis adapters stayed outside maintained product tooling.
   No permanent test asserts PR identities, stack arrangement or this one-time run.

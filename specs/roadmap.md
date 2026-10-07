@@ -266,8 +266,8 @@ Verified on 7 October 2026 during remediation:
 - Umbrella [#8](https://github.com/pmanko/openclinai.org/pull/8) records published
   frontend `475f6eb6` and backend `20cb84ba` and updates their contract references.
   All 24 umbrella unit tests and 55 affected operational/contract checks passed.
-  At published head `1233cc2c`, all hosted checks pass, including the
-  [assembled OpenMRS source check](https://github.com/pmanko/openclinai.org/actions/runs/37586474985)
+  At published evidence head `2fbee128`, all hosted checks pass, including the
+  [assembled OpenMRS source check](https://github.com/pmanko/openclinai.org/actions/runs/37591362619)
   with the updated pins. This builds the selected QueryStore and backend together
   and checks the frontend; it does not establish compatibility with the unpublished
   dependency artifact or deployment acceptance. Earlier combined frontend `e09ce24`
@@ -342,9 +342,15 @@ one has conflicting weights at the latest timestamp and remains ambiguous. This
 is measured mixed evidence, not a clean quality pass. Keep the review finding open
 for disposition of the coverage regression and substitute-cohort limitations;
 do not tune prompts to individual cells or silently redefine the gate. The
-follow-up ranked read shows a renal retrieval gap as well as examination records
-that were retrieved but not cited. Diagnose or recheck affected behavior before
-any acceptance claim.
+targeted repeat reproduced the same cited-record sets on all twelve repeated
+answers. Exact model requests confirm one renal retrieval regression: creatinine
+records reached the baseline prompt but are absent after #587. The two other
+lower scores reflect the prompt's rule to omit citations after a negative category
+verdict, despite the gold awarding coverage for normal examinations. Keep the
+original scores; settle this metric/prompt disagreement separately from the real
+retrieval loss. A retrieval correction must preserve clinical qualifiers and be
+evaluated beyond this one patient; do not restore unsafe word stripping or add a
+case-specific ranking rule. Recheck affected behavior after a correction.
 
 ### Release and owner signoffs (M5)
 

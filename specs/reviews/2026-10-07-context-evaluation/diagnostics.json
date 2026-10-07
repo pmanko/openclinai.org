@@ -1,0 +1,1823 @@
+{
+  "protocol": {
+    "questions": [
+      [
+        39,
+        "heart",
+        "Does the patient have any heart or cardiac problems?"
+      ],
+      [
+        36,
+        "heart",
+        "Does the patient have any heart or cardiac problems?"
+      ],
+      [
+        39,
+        "kidney",
+        "Does the patient have any kidney problems?"
+      ],
+      [
+        2606,
+        "heart",
+        "Does the patient have any heart or cardiac problems?"
+      ],
+      [
+        39,
+        "mental",
+        "Does the patient have any mental health or psychiatric conditions?"
+      ],
+      [
+        3666,
+        "mental",
+        "Does the patient have any mental health or psychiatric conditions?"
+      ]
+    ],
+    "reason": "Repeat three lost-coverage cells with three interleaved controls; real model request recording through transparent local proxy; no model/prompt/selection changes",
+    "cohort": "same frozen cohort as main evaluation"
+  },
+  "sharedSystemMessage": {
+    "role": "system",
+    "content": "You are a clinical assistant helping a clinician review a patient's chart. Answer ONLY the specific query. Use only the patient records below (sorted most recent first). When the query asks for the latest, current, or most recent value, the relevant record is the FIRST matching one in the list; report that value and do not present an older reading as the current one. Never infer, assume, or add information not explicitly stated in the records. Records beginning with \"Drug reference\" are clinical reference data, not this patient's data; cite them the same way, but never present reference dosing as a value already recorded for the patient. A drug-order record carrying \". Order status: not in force\" is a record of an order that has ended. Whenever your answer names a drug from such a record, say in the same sentence that its order is no longer in force. Records beginning with \"Safety finding\" ARE about this patient \u2014 this module derived them from the patient's own records \u2014 so a safety finding naming the drug asked about means the records DO address that drug: answer the question from that finding and cite it, and never put a sentence saying the records do not address the drug in front of one, which contradicts it in the same breath. Include ALL relevant records in your answer \u2014 never omit any for brevity. Cite EVERY record you reference by its number in brackets (e.g. [1], [3]). Respond with ONLY a JSON object with a \"reasoning\" string, then an \"answer\" string and a \"citations\" array listing every record number you cited. In \"reasoning\", first work out what the query refers to and which records match it by clinical meaning \u2014 not just shared words \u2014 before you write the answer.\nUse plain text only in the answer \u2014 no markdown, no bullet markers like * or -, no headers. Use numbered lines or simple newlines to structure lists.\n\nIf no records are relevant, name what is missing. Name the TOPIC the query asked about, as a noun phrase of your own when the query states it as a verb \u2014 asked \"does the patient drink?\": \"No alcohol use is recorded.\" Reporting only that records are missing names nothing.\nWhen the query is a yes/no question (\"any allergies?\", \"is the patient hypertensive\"), begin the answer with an explicit verdict, then the complete cited evidence. Start with \"Yes\" ONLY when a record explicitly names what is asked \u2014 a diagnosis, condition, allergy, or enrollment naming it. Never answer \"Yes\" from related findings alone: a blood pressure reading is not a hypertension diagnosis. When no record explicitly names it, start with a short sentence naming what is absent, in natural wording \u2014 asked about hypertension: \"No hypertension diagnosis is recorded.\"; asked about fractures: \"No fractures are recorded.\" After a no-record verdict, present only readings of the exact quantity the question names (hypertension \u2192 blood pressure readings; diabetes \u2192 glucose; kidney problems \u2192 kidney-function labs like creatinine and urine tests), with citations. If the question names a category rather than a measurable quantity (\"any heart problems\", \"any eye issues\"), cite nothing after a no-record verdict \u2014 do not list vital signs or unrelated measurements.\nThe same rules apply to safety and suitability questions (\"is it safe to give X\", \"can we start X\"): when no record addresses the drug or intervention asked about, the whole answer is one sentence stating that the records do not address it \u2014 never \"Yes\" or \"No\" \u2014 and cite nothing with it: a record about a different drug or condition is never evidence for or against it, and attaching one only suggests a connection the records do not make. When a safety finding DOES name the drug or intervention asked about, the opposite branch applies, and the finding states how far it goes: begin the answer with the call the finding states, then the finding itself, carrying its own severity, and every record it rests on, cited. A finding that says it is a reason to withhold it is evidence against giving it: open with \"No\" and what to avoid. A finding that says it is a caution to note, not a reason to withhold it, is not evidence against giving the drug: open by stating that the drug can be given, and name the caution in the same sentence so it is never dropped. Where more than one finding names the drug and they state different strengths, the strongest governs: a finding that is a reason to withhold it outranks one that is only a caution to note, so open with \"No\". A finding that says it is a reason to change a medication this patient is already taking is not about a drug anything proposed: open by naming that medication and what the finding relates it to, carry the finding's severity, and never open by refusing to give a drug. A finding that says it is a caution about a medication this patient is already taking, not a reason to change it, is not evidence against that medication: open by naming that medication and what the finding relates it to, say that it is a caution, carry the finding's severity, and never open by refusing to give a drug. Where findings state calls of both kinds, the strongest still governs: a finding that is a reason to withhold it leads, then one that is a reason to change a medication this patient is already taking, then a caution. The finding's mechanism is the evidence for the call it states: it belongs after the call, not in place of it. Never open such an answer with \"Yes\". A finding that says it is a reason against giving it should it be proposed again; this patient's chart records its order as no longer in force, not as a current medication, or that it is a caution to weigh should it be proposed again; this patient's chart records its order as no longer in force, not as a current medication, is not about a medication this patient is taking now: open by naming that medication and saying its order is no longer in force, then what the finding relates it to, carry the finding's severity, and never open by refusing to give a drug.\nYour answer must not vary based on the punctuation or phrasing of the query \u2014 focus only on its semantic meaning.\n\nThe following is a FORMAT DEMONSTRATION ONLY using fake non-medical data. Do NOT use any of this data in your answer.\n\nRecords:\n[1] (2024-03-10) Fruit delivery: 12 apples\n[2] (2024-02-15) Fruit delivery: 8 oranges\n[3] (2024-01-20) Fruit delivery: 5 apples\n[4] Safety finding \u2014 Durian: Durian spoils the oranges in store \u2014 Major. Ethylene released by durian ripens and rots citrus within days. This finding is a reason to withhold it.\n[5] Safety finding \u2014 Lychee: Lychee dulls the oranges in store \u2014 Minor. Lychee husks shed a dust that films citrus rind and wipes off in seconds. This finding is a caution to note, not a reason to withhold it.\n\nClinician's query: How many apples were delivered?\n{\"reasoning\": \"The query is about apples. Records [1] and [3] are apple deliveries; [2] is oranges, a different fruit.\", \"answer\": \"12 apples on 2024-03-10 [1] and 5 apples on 2024-01-20 [3].\", \"citations\": [1, 3]}\n\nClinician's query: any apple deliveries\n{\"reasoning\": \"A yes/no question about apple deliveries. Records [1] and [3] explicitly document apple deliveries, so the verdict is Yes, followed by every matching record.\", \"answer\": \"Yes \u2014 apples were delivered: 12 on 2024-03-10 [1] and 5 on 2024-01-20 [3].\", \"citations\": [1, 3]}\n\nClinician's query: Is it safe to deliver mangoes?\n{\"reasoning\": \"A safety question about mangoes. No record mentions mangoes; the orange delivery [2] concerns a different fruit and is not evidence for or against mango deliveries, so the whole answer states the records do not address it, citing nothing.\", \"answer\": \"The records do not address mango deliveries.\", \"citations\": []}\n\nClinician's query: Is it safe to deliver durian?\n{\"reasoning\": \"A safety question about durian. The safety finding [4] names durian and reports a Major problem with the oranges already in store [2], and says it is a reason to withhold it, so the records DO address durian and that finding is evidence against the delivery. The answer opens with that call, then the finding and the record it rests on, both cited.\", \"answer\": \"No \u2014 durian should not be delivered: it spoils the oranges already in store [2], a Major problem [4].\", \"citations\": [2, 4]}\n\nClinician's query: Is it safe to deliver lychees?\n{\"reasoning\": \"A safety question about lychees. The safety finding [5] names lychee and says it is a caution to note rather than a reason to withhold it, so the records DO address lychees and the call it states is not a refusal. The answer says the delivery can go ahead and carries the caution in the same sentence, with the finding and the record it rests on both cited.\", \"answer\": \"Lychee can be delivered, with one caution: it dulls the oranges already in store [2], a Minor problem [5].\", \"citations\": [2, 5]}\n\nRecords ranked by similarity to the query: 2.\nClinician's query: Were any bananas delivered?\n{\"reasoning\": \"The query is about bananas. The ranked record [2] is oranges and no other record mentions bananas, so nothing matches the query.\", \"answer\": \"There are no records of banana deliveries.\", \"citations\": []}\n\nEND OF FORMAT DEMONSTRATION. Now answer using ONLY the actual patient records below."
+  },
+  "systemMessageSha256": "702e89ebd7565edabb3db856cfd2c9f5b08203c97ea49594a9515664fb4289d6",
+  "requestReconstruction": "Prepend sharedSystemMessage to each requestWithoutSharedSystem.messages array; other request fields are unchanged. Canonical SHA-256 uses JSON with sorted keys and compact separators. Request headers are not recorded.",
+  "modelRequestsAndResponses": [
+    {
+      "arm": "base",
+      "recording": "base-007.json",
+      "path": "/v1/chat/completions",
+      "status": 200,
+      "requestWithoutSharedSystem": {
+        "model": "gemma-4-12b",
+        "temperature": 0.0,
+        "max_tokens": 4096,
+        "stream": false,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "chart_answer",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reasoning": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                },
+                "citations": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "required": [
+                "reasoning",
+                "answer",
+                "citations"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "Patient records (most recent first):\n[1] (2026-01-07) Pulse: 157 beats/min\n[2] (2025-12-31) Pulse: 145 beats/min\n[3] (2025-12-16) Pulse: 111 beats/min\n[4] (2025-11-10) Pulse: 86 beats/min\n[5] (2025-10-26) Pulse: 96 beats/min\n[6] (2025-10-23) Pulse: 113 beats/min\n[7] (2025-10-22) Review of systems, cardiopulmonary: Cough\n[8] (2025-10-22) Review of systems, cardiopulmonary: Productive cough\n[9] (2025-10-22) Pulse: 113 beats/min\n[10] (2025-10-22) Chest exam findings: Normal\n[11] (2025-10-22) Cardiac exam findings: Normal\n[12] (2025-10-22) Tests ordered: X-ray, chest\n[13] Patient: Aloice Beiywa Mukangu. Female. Born 1984-04-09. Address: Sikhendu. Identifiers: OpenMRS Identification Number 38BF-4 (42 years old)\n\nClinician's query: Does the patient have any heart or cardiac problems?"
+          }
+        ]
+      },
+      "completeRequestCanonicalSha256": "72af68a910c3b48688d16b87a908868503c2473ad7f8d2c05d3274acebdf54fd",
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"reasoning\": \"The query asks about heart or cardiac problems. I need to check for diagnoses, symptoms, or exam findings related to the heart. Record [7] and [8] mention a cough (cardiopulmonary review), but these are symptoms, not a heart problem diagnosis. Records [10] and [11] show normal chest and cardiac exam findings. No specific heart or cardiac problem diagnosis is recorded.\", \"answer\": \"No heart or cardiac problems are recorded. Cardiac exam findings were normal on 2025-10-22 [11].\", \"citations\": [11]}"
+            }
+          }
+        ],
+        "created": 1791360709,
+        "model": "gemma-4-12b",
+        "system_fingerprint": "b10809-5266f24da",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 137,
+          "prompt_tokens": 2520,
+          "total_tokens": 2657,
+          "prompt_tokens_details": {
+            "cached_tokens": 2162
+          }
+        },
+        "id": "chatcmpl-ofkjY2mm6gtE2aC1nWElJEQa16qKh2bo",
+        "timings": {
+          "cache_n": 2162,
+          "prompt_n": 358,
+          "prompt_ms": 601.297,
+          "prompt_per_token_ms": 1.679600558659218,
+          "prompt_per_second": 595.3796543139247,
+          "predicted_n": 137,
+          "predicted_ms": 7049.367,
+          "predicted_per_token_ms": 51.83358088235294,
+          "predicted_per_second": 19.292512363166793
+        }
+      }
+    },
+    {
+      "arm": "base",
+      "recording": "base-008.json",
+      "path": "/v1/chat/completions",
+      "status": 200,
+      "requestWithoutSharedSystem": {
+        "model": "gemma-4-12b",
+        "temperature": 0.0,
+        "max_tokens": 4096,
+        "stream": false,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "chart_answer",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reasoning": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                },
+                "citations": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "required": [
+                "reasoning",
+                "answer",
+                "citations"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "Patient records (most recent first):\n[1] (2026-01-27) Diastolic blood pressure: 70 mmHg\n[2] (2026-01-27) Pulse: 66 beats/min\n[3] (2026-01-27) Systolic blood pressure: 110 mmHg\n[4] (2025-12-30) Pulse: 60 beats/min\n[5] (2025-12-30) Systolic blood pressure: 100 mmHg\n[6] (2025-12-14) Pulse: 66 beats/min\n[7] (2025-12-14) Systolic blood pressure: 100 mmHg\n[8] (2025-11-16) Diastolic blood pressure: 60 mmHg\n[9] (2025-11-16) Pulse: 88 beats/min\n[10] (2025-11-16) Systolic blood pressure: 110 mmHg\n[11] (2025-11-09) Pulse: 89 beats/min\n[12] (2025-11-09) Systolic blood pressure: 110 mmHg\n[13] Patient: Kimetto Akimena Ediati. Male. Born 1996-05-08. Address: Esangalo. Identifiers: OpenMRS Identification Number 35TU-9 (30 years old)\n\nClinician's query: Does the patient have any heart or cardiac problems?"
+          }
+        ]
+      },
+      "completeRequestCanonicalSha256": "798e214b61cec2acb6bc88e6bad6b5c38d901cea8e73aaff346b7b1078f964a8",
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"reasoning\": \"The query asks about heart or cardiac problems. I have reviewed the patient records, which include blood pressure and pulse readings, but there are no records explicitly naming a heart or cardiac problem, diagnosis, or condition. According to the instructions, for a category question like 'any heart problems' where no record explicitly names it, I should state that no records are recorded and cite nothing.\", \"answer\": \"No heart or cardiac problems are recorded.\", \"citations\": []}"
+            }
+          }
+        ],
+        "created": 1791360715,
+        "model": "gemma-4-12b",
+        "system_fingerprint": "b10809-5266f24da",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 107,
+          "prompt_tokens": 2534,
+          "total_tokens": 2641,
+          "prompt_tokens_details": {
+            "cached_tokens": 2164
+          }
+        },
+        "id": "chatcmpl-5acN2MWkdNoW67TLnFfJhB199e0zfNjw",
+        "timings": {
+          "cache_n": 2164,
+          "prompt_n": 370,
+          "prompt_ms": 595.25,
+          "prompt_per_token_ms": 1.6087837837837837,
+          "prompt_per_second": 621.5875682486351,
+          "predicted_n": 107,
+          "predicted_ms": 5489.594,
+          "predicted_per_token_ms": 51.788622641509434,
+          "predicted_per_second": 19.30926039339157
+        }
+      }
+    },
+    {
+      "arm": "base",
+      "recording": "base-009.json",
+      "path": "/v1/chat/completions",
+      "status": 200,
+      "requestWithoutSharedSystem": {
+        "model": "gemma-4-12b",
+        "temperature": 0.0,
+        "max_tokens": 4096,
+        "stream": false,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "chart_answer",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reasoning": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                },
+                "citations": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "required": [
+                "reasoning",
+                "answer",
+                "citations"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "Patient records (most recent first):\n[1] (2025-12-16) General exam findings: Jaundice\n[2] (2025-12-14) Serum creatinine (umol/L): 72 umol/L\n[3] (2025-11-10) Condition: Vomiting. Status: ACTIVE. Onset: 2025-11-10\n[4] (2025-10-26) Serum creatinine (umol/L): 193.7 umol/L\n[5] (2025-10-22) Review of systems, gastrointestinal: Abdominal pain\n[6] (2025-10-22) Hospitalized previous year: Yes\n[7] (2025-10-22) Abdominal exam findings: Normal\n[8] (2025-10-22) Urogenital exam findings: Not done\n[9] (2025-10-22) Musculoskeletal exam findings: Normal\n[10] (2025-10-22) Psychiatric exam findings: Normal\n[11] (2025-10-22) Tests ordered: Serum glutamic-pyruvic transaminase\n[12] (2025-10-22) Tests ordered: Serum creatinine (umol/L)\n[13] Patient: Aloice Beiywa Mukangu. Female. Born 1984-04-09. Address: Sikhendu. Identifiers: OpenMRS Identification Number 38BF-4 (42 years old)\n\nClinician's query: Does the patient have any kidney problems?"
+          }
+        ]
+      },
+      "completeRequestCanonicalSha256": "89533762f1cca418463aadece36cdacdce3e89ef623764277c21900c23d09f1e",
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"reasoning\": \"The query asks about kidney problems. The records do not contain a diagnosis of kidney disease or renal failure. However, the records do include serum creatinine measurements, which are relevant labs for kidney function. Following the instructions for a no-record verdict on a category, I must state that no kidney problems are recorded and then provide the specific readings for the quantity named (kidney-function labs like creatinine).\", \"answer\": \"No kidney problems are recorded.\\nSerum creatinine (umol/L): 72 umol/L on 2025-12-14 [2]\\nSerum creatinine (umol/L): 193.7 umol/L on 2025-10-26 [4]\", \"citations\": [2, 4]}"
+            }
+          }
+        ],
+        "created": 1791360725,
+        "model": "gemma-4-12b",
+        "system_fingerprint": "b10809-5266f24da",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 179,
+          "prompt_tokens": 2546,
+          "total_tokens": 2725,
+          "prompt_tokens_details": {
+            "cached_tokens": 2159
+          }
+        },
+        "id": "chatcmpl-O50HPcZzDvGzV3pS5ivUH9cSjfEpyPcz",
+        "timings": {
+          "cache_n": 2159,
+          "prompt_n": 387,
+          "prompt_ms": 604.485,
+          "prompt_per_token_ms": 1.5619767441860466,
+          "prompt_per_second": 640.2143973795876,
+          "predicted_n": 179,
+          "predicted_ms": 9205.787,
+          "predicted_per_token_ms": 51.717904494382026,
+          "predicted_per_second": 19.335663534252962
+        }
+      }
+    },
+    {
+      "arm": "base",
+      "recording": "base-010.json",
+      "path": "/v1/chat/completions",
+      "status": 200,
+      "requestWithoutSharedSystem": {
+        "model": "gemma-4-12b",
+        "temperature": 0.0,
+        "max_tokens": 4096,
+        "stream": false,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "chart_answer",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reasoning": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                },
+                "citations": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "required": [
+                "reasoning",
+                "answer",
+                "citations"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "Patient records (most recent first):\n[1] (2026-01-29) Diastolic blood pressure: 70 mmHg\n[2] (2026-01-29) Pulse: 70 beats/min\n[3] (2026-01-29) Systolic blood pressure: 130 mmHg\n[4] (2025-11-18) Diastolic blood pressure: 70 mmHg\n[5] (2025-11-18) Pulse: 75 beats/min\n[6] (2025-11-18) Systolic blood pressure: 110 mmHg\n[7] (2025-11-03) Diastolic blood pressure: 120 mmHg\n[8] (2025-11-03) Pulse: 99 beats/min\n[9] (2025-11-03) Systolic blood pressure: 140 mmHg\n[10] (2025-10-21) Diastolic blood pressure: 80 mmHg\n[11] (2025-10-21) Pulse: 60 beats/min\n[12] (2025-10-21) Systolic blood pressure: 140 mmHg\n[13] Patient: Ziphora Mbole Karoney. Female. Born 1987-08-26. Address: Migozi. Identifiers: OpenMRS Identification Number 2605BF-8 (39 years old)\n\nClinician's query: Does the patient have any heart or cardiac problems?"
+          }
+        ]
+      },
+      "completeRequestCanonicalSha256": "f58c818bf4273d7c5464d075d46fc3126cc6af35d0663b522322d6ee74951db1",
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"reasoning\": \"The query asks about heart or cardiac problems. I have reviewed the patient records for any explicit diagnosis of heart disease, cardiac issues, or related conditions. Records [1] through [12] contain blood pressure and pulse readings, but no diagnosis of a heart problem is recorded. Record [13] contains demographic information. Since no record explicitly names a heart or cardiac problem, I must state that no such records are found and provide only the relevant measurements (blood pressure and pulse) as per the instructions for a 'no-record' verdict on a category.\", \"answer\": \"No heart or cardiac problems are recorded.\\n1. Systolic blood pressure: 130 mmHg [3], 110 mmHg [6], 140 mmHg [9], 140 mmHg [12]\\n2. Diastolic blood pressure: 70 mmHg [1], 70 mmHg [4], 120 mmHg [7], 80 mmHg [10]\\n3. Pulse: 70 beats/min [2], 75 beats/min [5], 99 beats/min [8], 60 beats/min [11]\", \"citations\": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}"
+            }
+          }
+        ],
+        "created": 1791360741,
+        "model": "gemma-4-12b",
+        "system_fingerprint": "b10809-5266f24da",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 303,
+          "prompt_tokens": 2537,
+          "total_tokens": 2840,
+          "prompt_tokens_details": {
+            "cached_tokens": 2159
+          }
+        },
+        "id": "chatcmpl-yEsxGVn9P7BaYD9MVjf5hMkinWEaDs5r",
+        "timings": {
+          "cache_n": 2159,
+          "prompt_n": 378,
+          "prompt_ms": 600.616,
+          "prompt_per_token_ms": 1.5889312169312169,
+          "prompt_per_second": 629.3538633669433,
+          "predicted_n": 303,
+          "predicted_ms": 15605.906,
+          "predicted_per_token_ms": 51.67518543046358,
+          "predicted_per_second": 19.3516480235111
+        }
+      }
+    },
+    {
+      "arm": "base",
+      "recording": "base-011.json",
+      "path": "/v1/chat/completions",
+      "status": 200,
+      "requestWithoutSharedSystem": {
+        "model": "gemma-4-12b",
+        "temperature": 0.0,
+        "max_tokens": 4096,
+        "stream": false,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "chart_answer",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reasoning": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                },
+                "citations": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "required": [
+                "reasoning",
+                "answer",
+                "citations"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "Patient records (most recent first):\n[1] (2026-01-07) Patient hospitalized location: Moi teaching and referral hospital\n[2] (2025-12-31) Condition: Fever. Status: ACTIVE. Onset: 2025-12-31\n[3] (2025-12-31) Overall drug adherence in last month: No\n[4] (2025-11-10) Condition: Vomiting. Status: ACTIVE. Onset: 2025-11-10\n[5] (2025-11-10) Overall drug adherence in last month: No\n[6] (2025-11-03) Overall drug adherence in last month: No\n[7] (2025-10-26) Patient hospitalized location: Moi teaching and referral hospital\n[8] (2025-10-23) Condition: Fever. Status: ACTIVE. Onset: 2025-10-23\n[9] (2025-10-23) Overall drug adherence in last month: No\n[10] (2025-10-22) Condition: Human immunodeficiency virus. Status: ACTIVE. Onset: 2025-10-22\n[11] (2025-10-22) Condition: Fever. Status: ACTIVE. Onset: 2025-10-22\n[12] (2025-10-22) Condition: Candidiasis, oral. Status: ACTIVE. Onset: 2025-10-22\n[13] (2025-10-22) Chief complaint: Symptomatic\n[14] (2025-10-22) Hospitalized previous year: Yes\n[15] (2025-10-22) Number of hospitalizations in past year: 27 # hospitalizations\n[16] (2025-10-22) HEENT exam findings: Abnormal\n[17] (2025-10-22) Psychiatric exam findings: Normal\n[18] (2025-10-22) Adult WHO condition query: Candidiasis, oral\n[19] Patient: Aloice Beiywa Mukangu. Female. Born 1984-04-09. Address: Sikhendu. Identifiers: OpenMRS Identification Number 38BF-4 (42 years old)\n\nClinician's query: Does the patient have any mental health or psychiatric conditions?"
+          }
+        ]
+      },
+      "completeRequestCanonicalSha256": "71fc9c3b4c326bf0462418a6389c7e2c7e1e1b44018a70cbebebec24d7fd4732",
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"reasoning\": \"The query asks about mental health or psychiatric conditions. Record [17] explicitly states that the psychiatric exam findings are 'Normal'. No other records mention psychiatric conditions or mental health diagnoses.\", \"answer\": \"No mental health or psychiatric conditions are recorded. Psychiatric exam findings: Normal [17].\", \"citations\": [17]}"
+            }
+          }
+        ],
+        "created": 1791360747,
+        "model": "gemma-4-12b",
+        "system_fingerprint": "b10809-5266f24da",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 81,
+          "prompt_tokens": 2760,
+          "total_tokens": 2841,
+          "prompt_tokens_details": {
+            "cached_tokens": 2164
+          }
+        },
+        "id": "chatcmpl-du2cqZ0pD0ANwACZP3fL3c3hf6VTLUZM",
+        "timings": {
+          "cache_n": 2164,
+          "prompt_n": 596,
+          "prompt_ms": 913.303,
+          "prompt_per_token_ms": 1.5323875838926175,
+          "prompt_per_second": 652.576417683945,
+          "predicted_n": 81,
+          "predicted_ms": 4166.661,
+          "predicted_per_token_ms": 52.083262500000004,
+          "predicted_per_second": 19.200026112035513
+        }
+      }
+    },
+    {
+      "arm": "base",
+      "recording": "base-012.json",
+      "path": "/v1/chat/completions",
+      "status": 200,
+      "requestWithoutSharedSystem": {
+        "model": "gemma-4-12b",
+        "temperature": 0.0,
+        "max_tokens": 4096,
+        "stream": false,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "chart_answer",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reasoning": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                },
+                "citations": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "required": [
+                "reasoning",
+                "answer",
+                "citations"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "Patient records (most recent first):\n[1] (2026-02-01) New complaints: Yes\n[2] (2026-02-01) Overall drug adherence in last month: No\n[3] (2026-01-19) Condition: Papular pruritic eruption. Status: ACTIVE. Onset: 2026-01-19\n[4] (2026-01-19) Condition: Fatigue. Status: ACTIVE. Onset: 2026-01-19\n[5] (2026-01-19) New complaints: Yes\n[6] (2026-01-19) Overall drug adherence in last month: No\n[7] (2025-12-22) New complaints: Yes\n[8] (2025-12-22) Overall drug adherence in last month: No\n[9] (2025-12-08) Condition: Herpes zoster. Status: ACTIVE. Onset: 2025-12-08\n[10] (2025-12-08) New complaints: Yes\n[11] (2025-12-08) Overall drug adherence in last month: No\n[12] (2025-11-18) Overall drug adherence in last month: No\n[13] (2025-10-21) Condition: Tinea corporis. Status: ACTIVE. Onset: 2025-10-21\n[14] (2025-10-21) Condition: Depression. Status: ACTIVE. Onset: 2025-10-21\n[15] (2025-10-21) Overall drug adherence in last month: No\n[16] Patient: Maximila Mumo Sielei. Female. Born 1987-03-03. Address: Sergoit. Identifiers: OpenMRS Identification Number 3665CH-6 (39 years old)\n\nClinician's query: Does the patient have any mental health or psychiatric conditions?"
+          }
+        ]
+      },
+      "completeRequestCanonicalSha256": "bd29bc37fc28bc7f2b13a46745b58072538a9e7c29616bad5a36569f2bd58697",
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"reasoning\": \"The query asks about mental health or psychiatric conditions. Record [14] explicitly lists 'Depression' as an active condition, which is a mental health/psychiatric condition. Records [3], [4], [9], and [13] list other conditions (Papular pruritic eruption, Fatigue, Herpes zoster, Tinea corporis) which are not psychiatric.\", \"answer\": \"Yes \u2014 the patient has the following mental health or psychiatric condition: 1. Depression (Active since 2025-10-21) [14].\", \"citations\": [14]}"
+            }
+          }
+        ],
+        "created": 1791360754,
+        "model": "gemma-4-12b",
+        "system_fingerprint": "b10809-5266f24da",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 138,
+          "prompt_tokens": 2658,
+          "total_tokens": 2796,
+          "prompt_tokens_details": {
+            "cached_tokens": 2162
+          }
+        },
+        "id": "chatcmpl-Mx3nq3Sbx2go7nWEqSx3WCeSVcnfAdSU",
+        "timings": {
+          "cache_n": 2162,
+          "prompt_n": 496,
+          "prompt_ms": 741.11,
+          "prompt_per_token_ms": 1.4941733870967742,
+          "prompt_per_second": 669.266370714199,
+          "predicted_n": 138,
+          "predicted_ms": 7072.983,
+          "predicted_per_token_ms": 51.62761313868613,
+          "predicted_per_second": 19.36947960994675
+        }
+      }
+    },
+    {
+      "arm": "changed",
+      "recording": "changed-001.json",
+      "path": "/v1/chat/completions",
+      "status": 200,
+      "requestWithoutSharedSystem": {
+        "model": "gemma-4-12b",
+        "temperature": 0.0,
+        "max_tokens": 4096,
+        "stream": false,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "chart_answer",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reasoning": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                },
+                "citations": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "required": [
+                "reasoning",
+                "answer",
+                "citations"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "Patient records (most recent first):\n[1] (2026-01-07) Pregnancy status: No\n[2] (2025-12-31) Condition: Fever. Status: ACTIVE. Onset: 2025-12-31\n[3] (2025-12-31) Pregnancy status: No\n[4] (2025-11-10) Condition: Vomiting. Status: ACTIVE. Onset: 2025-11-10\n[5] (2025-11-10) Pregnancy status: No\n[6] (2025-11-03) Pregnancy status: No\n[7] (2025-10-23) Condition: Fever. Status: ACTIVE. Onset: 2025-10-23\n[8] Allergy: Penicillins (drug allergen)\n[9] (2025-10-22) Condition: Human immunodeficiency virus. Status: ACTIVE. Onset: 2025-10-22\n[10] (2025-10-22) Condition: Fever. Status: ACTIVE. Onset: 2025-10-22\n[11] (2025-10-22) Condition: Candidiasis, oral. Status: ACTIVE. Onset: 2025-10-22\n[12] (2025-10-22) Patient had sex in last 6mo: No\n[13] (2025-10-22) Pregnancy status: No\n[14] (2025-10-22) Review of systems, cardiopulmonary: Cough\n[15] (2025-10-22) Hospitalized previous year: Yes\n[16] (2025-10-22) Chest exam findings: Normal\n[17] (2025-10-22) Cardiac exam findings: Normal\n[18] (2025-10-22) Adult WHO condition query: Candidiasis, oral\n[19] (2025-10-22) Tests ordered: X-ray, chest\n[20] Patient: Aloice Beiywa Mukangu. Female. Born 1984-04-09. Address: Sikhendu. Identifiers: OpenMRS Identification Number 38BF-4 (42 years old)\n\nClinician's query: Does the patient have any heart or cardiac problems?"
+          }
+        ]
+      },
+      "completeRequestCanonicalSha256": "b3168694bbd997ead09954625ed5002698dce724a579df5313621972e0e8969f",
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"reasoning\": \"The query asks about heart or cardiac problems. Record [17] shows a 'Cardiac exam findings: Normal' on 2025-10-22. Record [14] mentions a 'Review of systems, cardiopulmonary' with a 'Cough', but this is a respiratory symptom. There is no diagnosis of a heart or cardiac problem recorded. Following the instructions for a no-record verdict on a category, I must state that no heart or cardiac problems are recorded and cite nothing.\", \"answer\": \"No heart or cardiac problems are recorded.\", \"citations\": []}"
+            }
+          }
+        ],
+        "created": 1791360607,
+        "model": "gemma-4-12b",
+        "system_fingerprint": "b10809-5266f24da",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 135,
+          "prompt_tokens": 2749,
+          "total_tokens": 2884,
+          "prompt_tokens_details": {
+            "cached_tokens": 2140
+          }
+        },
+        "id": "chatcmpl-CiyEC2YZptPqbXSOUL8g3eNuARKqgxBs",
+        "timings": {
+          "cache_n": 2140,
+          "prompt_n": 609,
+          "prompt_ms": 1119.447,
+          "prompt_per_token_ms": 1.8381724137931033,
+          "prompt_per_second": 544.0186091882867,
+          "predicted_n": 135,
+          "predicted_ms": 7103.612,
+          "predicted_per_token_ms": 53.012029850746266,
+          "predicted_per_second": 18.863642890405615
+        }
+      }
+    },
+    {
+      "arm": "changed",
+      "recording": "changed-002.json",
+      "path": "/v1/chat/completions",
+      "status": 200,
+      "requestWithoutSharedSystem": {
+        "model": "gemma-4-12b",
+        "temperature": 0.0,
+        "max_tokens": 4096,
+        "stream": false,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "chart_answer",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reasoning": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                },
+                "citations": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "required": [
+                "reasoning",
+                "answer",
+                "citations"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "Patient records (most recent first):\n[1] (2026-01-27) Antiretroviral use: Yes\n[2] (2026-01-27) Patient reported current PCP prophylaxis: None\n[3] (2025-12-30) Antiretroviral use: Yes\n[4] (2025-12-30) Overall drug adherence in last month: No\n[5] (2025-12-30) Patient reported current PCP prophylaxis: None\n[6] (2025-12-14) Antiretroviral use: Yes\n[7] (2025-12-14) Patient reported current PCP prophylaxis: None\n[8] (2025-11-16) Antiretroviral use: No\n[9] (2025-11-16) Pulse: 88 beats/min\n[10] (2025-11-16) Patient reported current PCP prophylaxis: None\n[11] (2025-11-09) Antiretroviral use: No\n[12] (2025-11-09) Patient reported current PCP prophylaxis: None\n[13] Patient: Kimetto Akimena Ediati. Male. Born 1996-05-08. Address: Esangalo. Identifiers: OpenMRS Identification Number 35TU-9 (30 years old)\n\nClinician's query: Does the patient have any heart or cardiac problems?"
+          }
+        ]
+      },
+      "completeRequestCanonicalSha256": "5d0aa7a5f41c25e063be76cd035dc00841bf21276fd3843905dc23c7e0671942",
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"reasoning\": \"The query asks about heart or cardiac problems. I have reviewed the patient records for any diagnoses, conditions, or specific mentions of heart or cardiac issues. Record [9] shows a pulse of 88 beats/min, but this is a vital sign and not a diagnosis of a heart problem. No records explicitly name a heart or cardiac problem.\", \"answer\": \"No heart or cardiac problems are recorded.\", \"citations\": []}"
+            }
+          }
+        ],
+        "created": 1791360613,
+        "model": "gemma-4-12b",
+        "system_fingerprint": "b10809-5266f24da",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 101,
+          "prompt_tokens": 2510,
+          "total_tokens": 2611,
+          "prompt_tokens_details": {
+            "cached_tokens": 2164
+          }
+        },
+        "id": "chatcmpl-RciEvn55HBmw26yQSfTwAZMS6pG4a80a",
+        "timings": {
+          "cache_n": 2164,
+          "prompt_n": 346,
+          "prompt_ms": 595.837,
+          "prompt_per_token_ms": 1.72207225433526,
+          "prompt_per_second": 580.6957271871335,
+          "predicted_n": 101,
+          "predicted_ms": 5252.94,
+          "predicted_per_token_ms": 52.529399999999995,
+          "predicted_per_second": 19.03695835094252
+        }
+      }
+    },
+    {
+      "arm": "changed",
+      "recording": "changed-003.json",
+      "path": "/v1/chat/completions",
+      "status": 200,
+      "requestWithoutSharedSystem": {
+        "model": "gemma-4-12b",
+        "temperature": 0.0,
+        "max_tokens": 4096,
+        "stream": false,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "chart_answer",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reasoning": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                },
+                "citations": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "required": [
+                "reasoning",
+                "answer",
+                "citations"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "Patient records (most recent first):\n[1] (2026-01-07) Pregnancy status: No\n[2] (2026-01-07) Patient hospitalized location: Moi teaching and referral hospital\n[3] (2025-12-31) Condition: Fever. Status: ACTIVE. Onset: 2025-12-31\n[4] (2025-12-31) Pregnancy status: No\n[5] (2025-12-16) General exam findings: Jaundice\n[6] (2025-11-10) Condition: Vomiting. Status: ACTIVE. Onset: 2025-11-10\n[7] (2025-11-10) Pregnancy status: No\n[8] (2025-10-26) Pregnancy status: No\n[9] (2025-10-26) Patient hospitalized location: Moi teaching and referral hospital\n[10] (2025-10-23) Condition: Fever. Status: ACTIVE. Onset: 2025-10-23\n[11] Allergy: Penicillins (drug allergen)\n[12] (2025-10-22) Condition: Human immunodeficiency virus. Status: ACTIVE. Onset: 2025-10-22\n[13] (2025-10-22) Condition: Fever. Status: ACTIVE. Onset: 2025-10-22\n[14] (2025-10-22) Condition: Candidiasis, oral. Status: ACTIVE. Onset: 2025-10-22\n[15] (2025-10-22) Patient had sex in last 6mo: No\n[16] (2025-10-22) Hospitalized previous year: Yes\n[17] (2025-10-22) Abdominal exam findings: Normal\n[18] (2025-10-22) Urogenital exam findings: Not done\n[19] (2025-10-22) Adult WHO condition query: Candidiasis, oral\n[20] Patient: Aloice Beiywa Mukangu. Female. Born 1984-04-09. Address: Sikhendu. Identifiers: OpenMRS Identification Number 38BF-4 (42 years old)\n\nClinician's query: Does the patient have any kidney problems?"
+          }
+        ]
+      },
+      "completeRequestCanonicalSha256": "07dc29f12380666d8cd20070231090648585b63b06e0b87e5cc8fb4d913d563c",
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"reasoning\": \"The query asks about kidney problems. I need to check the records for any kidney-related diagnoses or laboratory results (like creatinine or urine tests). Records [3], [6], [10], [12], [13], [14], and [19] list conditions (Fever, Vomiting, HIV, Oral Candidiasis), and [5] lists Jaundice. None of these are kidney problems. There are no kidney-function labs or specific kidney diagnoses recorded.\", \"answer\": \"No kidney problems are recorded.\", \"citations\": []}"
+            }
+          }
+        ],
+        "created": 1791360621,
+        "model": "gemma-4-12b",
+        "system_fingerprint": "b10809-5266f24da",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 129,
+          "prompt_tokens": 2755,
+          "total_tokens": 2884,
+          "prompt_tokens_details": {
+            "cached_tokens": 2164
+          }
+        },
+        "id": "chatcmpl-4Of1vY5AjoFj2HDKhI6b5HeCC4x1O5UR",
+        "timings": {
+          "cache_n": 2164,
+          "prompt_n": 591,
+          "prompt_ms": 944.601,
+          "prompt_per_token_ms": 1.5983096446700507,
+          "prompt_per_second": 625.6609933718046,
+          "predicted_n": 129,
+          "predicted_ms": 6884.633,
+          "predicted_per_token_ms": 53.7861953125,
+          "predicted_per_second": 18.592131200021846
+        }
+      }
+    },
+    {
+      "arm": "changed",
+      "recording": "changed-004.json",
+      "path": "/v1/chat/completions",
+      "status": 200,
+      "requestWithoutSharedSystem": {
+        "model": "gemma-4-12b",
+        "temperature": 0.0,
+        "max_tokens": 4096,
+        "stream": false,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "chart_answer",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reasoning": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                },
+                "citations": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "required": [
+                "reasoning",
+                "answer",
+                "citations"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "Patient records (most recent first):\n[1] (2026-01-29) Condition: Depression. Status: ACTIVE. Onset: 2026-01-29\n[2] (2026-01-29) Pregnancy status: No\n[3] (2026-01-29) Antiretroviral use: Yes\n[4] (2026-01-29) Patient reported current PCP prophylaxis: None\n[5] (2025-11-18) Pregnancy status: No\n[6] (2025-11-18) Pulse: 75 beats/min\n[7] (2025-11-18) Patient reported current PCP prophylaxis: None\n[8] (2025-11-03) Condition: Malaria. Status: ACTIVE. Onset: 2025-11-03\n[9] (2025-11-03) Pregnancy status: No\n[10] (2025-11-03) Antiretroviral use: Yes\n[11] (2025-11-03) Patient reported current PCP prophylaxis: None\n[12] (2025-10-21) Condition: Dermatitis. Status: ACTIVE. Onset: 2025-10-21\n[13] (2025-10-21) Pregnancy status: No\n[14] (2025-10-21) Patient reported current PCP prophylaxis: None\n[15] Patient: Ziphora Mbole Karoney. Female. Born 1987-08-26. Address: Migozi. Identifiers: OpenMRS Identification Number 2605BF-8 (39 years old)\n\nClinician's query: Does the patient have any heart or cardiac problems?"
+          }
+        ]
+      },
+      "completeRequestCanonicalSha256": "4c01f5b181ee0e57499efd8ef7400a086090403280fe7f30aedbb9951f3d9dde",
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"reasoning\": \"The query asks about heart or cardiac problems. I have reviewed the patient records for any mentions of heart disease, cardiac issues, or related conditions. Records [1], [8], and [12] list conditions (Depression, Malaria, and Dermatitis), but none are cardiac in nature. No heart or cardiac problems are recorded.\", \"answer\": \"No heart or cardiac problems are recorded.\", \"citations\": []}"
+            }
+          }
+        ],
+        "created": 1791360628,
+        "model": "gemma-4-12b",
+        "system_fingerprint": "b10809-5266f24da",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 99,
+          "prompt_tokens": 2591,
+          "total_tokens": 2690,
+          "prompt_tokens_details": {
+            "cached_tokens": 2164
+          }
+        },
+        "id": "chatcmpl-E2x7hMyH13OBEF6STkeCpetgrDiM49s4",
+        "timings": {
+          "cache_n": 2164,
+          "prompt_n": 427,
+          "prompt_ms": 742.705,
+          "prompt_per_token_ms": 1.7393559718969556,
+          "prompt_per_second": 574.9254414606067,
+          "predicted_n": 99,
+          "predicted_ms": 5336.334,
+          "predicted_per_token_ms": 54.45238775510204,
+          "predicted_per_second": 18.36466757890342
+        }
+      }
+    },
+    {
+      "arm": "changed",
+      "recording": "changed-005.json",
+      "path": "/v1/chat/completions",
+      "status": 200,
+      "requestWithoutSharedSystem": {
+        "model": "gemma-4-12b",
+        "temperature": 0.0,
+        "max_tokens": 4096,
+        "stream": false,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "chart_answer",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reasoning": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                },
+                "citations": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "required": [
+                "reasoning",
+                "answer",
+                "citations"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "Patient records (most recent first):\n[1] (2026-01-07) Pregnancy status: No\n[2] (2026-01-07) Patient hospitalized location: Moi teaching and referral hospital\n[3] (2025-12-31) Condition: Fever. Status: ACTIVE. Onset: 2025-12-31\n[4] (2025-12-31) Pregnancy status: No\n[5] (2025-11-10) Condition: Vomiting. Status: ACTIVE. Onset: 2025-11-10\n[6] (2025-11-10) Pregnancy status: No\n[7] (2025-11-03) Pregnancy status: No\n[8] (2025-10-26) Patient hospitalized location: Moi teaching and referral hospital\n[9] (2025-10-23) Condition: Fever. Status: ACTIVE. Onset: 2025-10-23\n[10] Allergy: Penicillins (drug allergen)\n[11] (2025-10-22) Condition: Human immunodeficiency virus. Status: ACTIVE. Onset: 2025-10-22\n[12] (2025-10-22) Condition: Fever. Status: ACTIVE. Onset: 2025-10-22\n[13] (2025-10-22) Condition: Candidiasis, oral. Status: ACTIVE. Onset: 2025-10-22\n[14] (2025-10-22) Patient had sex in last 6mo: No\n[15] (2025-10-22) Pregnancy status: No\n[16] (2025-10-22) Hospitalized previous year: Yes\n[17] (2025-10-22) HEENT exam findings: Abnormal\n[18] (2025-10-22) Psychiatric exam findings: Normal\n[19] (2025-10-22) Adult WHO condition query: Candidiasis, oral\n[20] Patient: Aloice Beiywa Mukangu. Female. Born 1984-04-09. Address: Sikhendu. Identifiers: OpenMRS Identification Number 38BF-4 (42 years old)\n\nClinician's query: Does the patient have any mental health or psychiatric conditions?"
+          }
+        ]
+      },
+      "completeRequestCanonicalSha256": "880ea81cc3becff11f03c3f28f743e7ded9bbf321ead8ab9afc8f420d8928d1d",
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"reasoning\": \"The query asks about mental health or psychiatric conditions. Record [18] explicitly states that the psychiatric exam findings are 'Normal'. No other records mention mental health or psychiatric conditions. Since the query is a yes/no question and no diagnosis or condition is recorded, the answer should state that no such conditions are recorded.\", \"answer\": \"No mental health or psychiatric conditions are recorded.\", \"citations\": []}"
+            }
+          }
+        ],
+        "created": 1791360634,
+        "model": "gemma-4-12b",
+        "system_fingerprint": "b10809-5266f24da",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 96,
+          "prompt_tokens": 2753,
+          "total_tokens": 2849,
+          "prompt_tokens_details": {
+            "cached_tokens": 2164
+          }
+        },
+        "id": "chatcmpl-gMqyyFKrncBKeyChnLKGrxx7K0dBvWzv",
+        "timings": {
+          "cache_n": 2164,
+          "prompt_n": 589,
+          "prompt_ms": 920.666,
+          "prompt_per_token_ms": 1.563100169779287,
+          "prompt_per_second": 639.754264847404,
+          "predicted_n": 96,
+          "predicted_ms": 5045.375,
+          "predicted_per_token_ms": 53.10921052631579,
+          "predicted_per_second": 18.829125684413942
+        }
+      }
+    },
+    {
+      "arm": "changed",
+      "recording": "changed-006.json",
+      "path": "/v1/chat/completions",
+      "status": 200,
+      "requestWithoutSharedSystem": {
+        "model": "gemma-4-12b",
+        "temperature": 0.0,
+        "max_tokens": 4096,
+        "stream": false,
+        "response_format": {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "chart_answer",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reasoning": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                },
+                "citations": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "required": [
+                "reasoning",
+                "answer",
+                "citations"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "Patient records (most recent first):\n[1] (2026-02-01) Antiretroviral use: Yes\n[2] (2026-02-01) Patient reported current PCP prophylaxis: None\n[3] (2026-01-19) Condition: Papular pruritic eruption. Status: ACTIVE. Onset: 2026-01-19\n[4] (2026-01-19) Condition: Fatigue. Status: ACTIVE. Onset: 2026-01-19\n[5] (2026-01-19) Antiretroviral use: Yes\n[6] (2025-12-22) Antiretroviral use: Yes\n[7] (2025-12-22) Overall drug adherence in last month: No\n[8] (2025-12-08) Condition: Herpes zoster. Status: ACTIVE. Onset: 2025-12-08\n[9] (2025-12-08) Antiretroviral use: Yes\n[10] (2025-12-08) Overall drug adherence in last month: No\n[11] (2025-11-18) Antiretroviral use: Yes\n[12] (2025-11-18) Overall drug adherence in last month: No\n[13] (2025-10-21) Condition: Tinea corporis. Status: ACTIVE. Onset: 2025-10-21\n[14] (2025-10-21) Condition: Depression. Status: ACTIVE. Onset: 2025-10-21\n[15] (2025-10-21) Antiretroviral use: Yes\n[16] Patient: Maximila Mumo Sielei. Female. Born 1987-03-03. Address: Sergoit. Identifiers: OpenMRS Identification Number 3665CH-6 (39 years old)\n\nClinician's query: Does the patient have any mental health or psychiatric conditions?"
+          }
+        ]
+      },
+      "completeRequestCanonicalSha256": "b1223802f5ff743f1bf9e0bad5d15d485e0d7895f754b789743e3156fd43f49c",
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"reasoning\": \"The query asks about mental health or psychiatric conditions. Record [14] explicitly lists a diagnosis of Depression, which is a mental health condition. No other records mention mental health or psychiatric conditions.\", \"answer\": \"Yes \u2014 the patient has a diagnosis of Depression: ACTIVE since 2025-10-21 [14].\", \"citations\": [14]}"
+            }
+          }
+        ],
+        "created": 1791360639,
+        "model": "gemma-4-12b",
+        "system_fingerprint": "b10809-5266f24da",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 92,
+          "prompt_tokens": 2667,
+          "total_tokens": 2759,
+          "prompt_tokens_details": {
+            "cached_tokens": 2162
+          }
+        },
+        "id": "chatcmpl-ChzW3RMAo4AU8X5q45Cpw1zoThyGEjhI",
+        "timings": {
+          "cache_n": 2162,
+          "prompt_n": 505,
+          "prompt_ms": 746.345,
+          "prompt_per_token_ms": 1.477910891089109,
+          "prompt_per_second": 676.6307806711374,
+          "predicted_n": 92,
+          "predicted_ms": 4737.848,
+          "predicted_per_token_ms": 52.06426373626373,
+          "predicted_per_second": 19.20703239107713
+        }
+      }
+    }
+  ],
+  "chartSearchAiResponses": {
+    "base": {
+      "dd55571f-1691-11df-97a5-7038c432aabf__heart": {
+        "unstatedFindingSeverities": [],
+        "questionId": "119",
+        "references": [],
+        "asksWhetherSheHasTakenADrug": false,
+        "activeOrderClaims": {
+          "stated": 0,
+          "uncited": 0
+        },
+        "unresolvedDrugClass": null,
+        "unfoundedFindingSeverities": [],
+        "misattributedOrderCitations": [],
+        "unsupportedEndedOrderClaims": [],
+        "cautionLedOverWithholding": [],
+        "chartReadForSafety": null,
+        "findingCitations": {
+          "carried": 0,
+          "cited": 0
+        },
+        "interactionPairs": null,
+        "findingsStatedByTheModule": [],
+        "orderStopDates": [],
+        "disclaimer": "This response is AI-generated and may not be accurate. It is not a substitute for clinical judgment. Always verify against the patient's medical records.",
+        "doseCeilingCoverage": "unloaded",
+        "findingPartners": null,
+        "interactionClaimPairs": {
+          "judged": 0,
+          "misattributedCitations": [],
+          "unfounded": 0
+        },
+        "answeredByTheModule": false,
+        "unfaithfullyRenderedCitations": [],
+        "answer": "No heart or cardiac problems are recorded.",
+        "unstatedSignificanceQualifiers": [],
+        "conditionRuleCoverage": "unloaded",
+        "safetyWarnings": [],
+        "unstatedDosingCeilings": [],
+        "_capture": {
+          "arm": "base",
+          "patientId": 36,
+          "question": "Does the patient have any heart or cardiac problems?",
+          "elapsedSeconds": 6.201892915996723
+        }
+      },
+      "dd5558ed-1691-11df-97a5-7038c432aabf__heart": {
+        "unstatedFindingSeverities": [],
+        "questionId": "118",
+        "references": [
+          {
+            "index": 11,
+            "resourceType": "obs",
+            "resourceUuid": "c1aeb84e-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "grounded": null,
+            "group": "chart",
+            "source": null,
+            "withheldInteractions": 0,
+            "attachedByTheModule": false,
+            "attachedFor": []
+          }
+        ],
+        "asksWhetherSheHasTakenADrug": false,
+        "activeOrderClaims": {
+          "stated": 0,
+          "uncited": 0
+        },
+        "unresolvedDrugClass": null,
+        "unfoundedFindingSeverities": [],
+        "misattributedOrderCitations": [],
+        "unsupportedEndedOrderClaims": [],
+        "cautionLedOverWithholding": [],
+        "chartReadForSafety": null,
+        "findingCitations": {
+          "carried": 0,
+          "cited": 0
+        },
+        "interactionPairs": null,
+        "findingsStatedByTheModule": [],
+        "orderStopDates": [],
+        "disclaimer": "This response is AI-generated and may not be accurate. It is not a substitute for clinical judgment. Always verify against the patient's medical records.",
+        "doseCeilingCoverage": "unloaded",
+        "findingPartners": null,
+        "interactionClaimPairs": {
+          "judged": 0,
+          "misattributedCitations": [],
+          "unfounded": 0
+        },
+        "answeredByTheModule": false,
+        "unfaithfullyRenderedCitations": [],
+        "answer": "No heart or cardiac problems are recorded. Cardiac exam findings were normal on 2025-10-22 [11].",
+        "unstatedSignificanceQualifiers": [],
+        "conditionRuleCoverage": "unloaded",
+        "safetyWarnings": [],
+        "unstatedDosingCeilings": [],
+        "_capture": {
+          "arm": "base",
+          "patientId": 39,
+          "question": "Does the patient have any heart or cardiac problems?",
+          "elapsedSeconds": 8.160907082958147
+        }
+      },
+      "dd5558ed-1691-11df-97a5-7038c432aabf__kidney": {
+        "unstatedFindingSeverities": [],
+        "questionId": "120",
+        "references": [
+          {
+            "index": 2,
+            "resourceType": "obs",
+            "resourceUuid": "ccac7083-1691-11df-97a5-7038c432aabf",
+            "date": "2025-12-14",
+            "grounded": null,
+            "group": "chart",
+            "source": null,
+            "withheldInteractions": 0,
+            "attachedByTheModule": false,
+            "attachedFor": []
+          },
+          {
+            "index": 4,
+            "resourceType": "obs",
+            "resourceUuid": "c4c1e455-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-26",
+            "grounded": null,
+            "group": "chart",
+            "source": null,
+            "withheldInteractions": 0,
+            "attachedByTheModule": false,
+            "attachedFor": []
+          }
+        ],
+        "asksWhetherSheHasTakenADrug": false,
+        "activeOrderClaims": {
+          "stated": 0,
+          "uncited": 0
+        },
+        "unresolvedDrugClass": null,
+        "unfoundedFindingSeverities": [],
+        "misattributedOrderCitations": [],
+        "unsupportedEndedOrderClaims": [],
+        "cautionLedOverWithholding": [],
+        "chartReadForSafety": null,
+        "findingCitations": {
+          "carried": 0,
+          "cited": 0
+        },
+        "interactionPairs": null,
+        "findingsStatedByTheModule": [],
+        "orderStopDates": [],
+        "disclaimer": "This response is AI-generated and may not be accurate. It is not a substitute for clinical judgment. Always verify against the patient's medical records.",
+        "doseCeilingCoverage": "unloaded",
+        "findingPartners": null,
+        "interactionClaimPairs": {
+          "judged": 0,
+          "misattributedCitations": [],
+          "unfounded": 0
+        },
+        "answeredByTheModule": false,
+        "unfaithfullyRenderedCitations": [],
+        "answer": "No kidney problems are recorded.\nSerum creatinine (umol/L): 72 umol/L on 2025-12-14 [2]\nSerum creatinine (umol/L): 193.7 umol/L on 2025-10-26 [4]",
+        "unstatedSignificanceQualifiers": [],
+        "conditionRuleCoverage": "unloaded",
+        "safetyWarnings": [],
+        "unstatedDosingCeilings": [],
+        "_capture": {
+          "arm": "base",
+          "patientId": 39,
+          "question": "Does the patient have any kidney problems?",
+          "elapsedSeconds": 9.95113129192032
+        }
+      },
+      "dd5558ed-1691-11df-97a5-7038c432aabf__mental": {
+        "unstatedFindingSeverities": [],
+        "questionId": "122",
+        "references": [
+          {
+            "index": 17,
+            "resourceType": "obs",
+            "resourceUuid": "c1aecc0e-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "grounded": null,
+            "group": "chart",
+            "source": null,
+            "withheldInteractions": 0,
+            "attachedByTheModule": false,
+            "attachedFor": []
+          }
+        ],
+        "asksWhetherSheHasTakenADrug": false,
+        "activeOrderClaims": {
+          "stated": 0,
+          "uncited": 0
+        },
+        "unresolvedDrugClass": null,
+        "unfoundedFindingSeverities": [],
+        "misattributedOrderCitations": [],
+        "unsupportedEndedOrderClaims": [],
+        "cautionLedOverWithholding": [],
+        "chartReadForSafety": null,
+        "findingCitations": {
+          "carried": 0,
+          "cited": 0
+        },
+        "interactionPairs": null,
+        "findingsStatedByTheModule": [],
+        "orderStopDates": [],
+        "disclaimer": "This response is AI-generated and may not be accurate. It is not a substitute for clinical judgment. Always verify against the patient's medical records.",
+        "doseCeilingCoverage": "unloaded",
+        "findingPartners": null,
+        "interactionClaimPairs": {
+          "judged": 0,
+          "misattributedCitations": [],
+          "unfounded": 0
+        },
+        "answeredByTheModule": false,
+        "unfaithfullyRenderedCitations": [],
+        "answer": "No mental health or psychiatric conditions are recorded. Psychiatric exam findings: Normal [17].",
+        "unstatedSignificanceQualifiers": [],
+        "conditionRuleCoverage": "unloaded",
+        "safetyWarnings": [],
+        "unstatedDosingCeilings": [],
+        "_capture": {
+          "arm": "base",
+          "patientId": 39,
+          "question": "Does the patient have any mental health or psychiatric conditions?",
+          "elapsedSeconds": 5.2184024170273915
+        }
+      },
+      "dd780925-1691-11df-97a5-7038c432aabf__heart": {
+        "unstatedFindingSeverities": [],
+        "questionId": "121",
+        "references": [
+          {
+            "index": 1,
+            "resourceType": "obs",
+            "resourceUuid": "da92387a-1691-11df-97a5-7038c432aabf",
+            "date": "2026-01-29",
+            "grounded": null,
+            "group": "chart",
+            "source": null,
+            "withheldInteractions": 0,
+            "attachedByTheModule": false,
+            "attachedFor": []
+          },
+          {
+            "index": 2,
+            "resourceType": "obs",
+            "resourceUuid": "da923ac4-1691-11df-97a5-7038c432aabf",
+            "date": "2026-01-29",
+            "grounded": null,
+            "group": "chart",
+            "source": null,
+            "withheldInteractions": 0,
+            "attachedByTheModule": false,
+            "attachedFor": []
+          },
+          {
+            "index": 3,
+            "resourceType": "obs",
+            "resourceUuid": "da923d30-1691-11df-97a5-7038c432aabf",
+            "date": "2026-01-29",
+            "grounded": null,
+            "group": "chart",
+            "source": null,
+            "withheldInteractions": 0,
+            "attachedByTheModule": false,
+            "attachedFor": []
+          },
+          {
+            "index": 4,
+            "resourceType": "obs",
+            "resourceUuid": "c602d38d-1691-11df-97a5-7038c432aabf",
+            "date": "2025-11-18",
+            "grounded": null,
+            "group": "chart",
+            "source": null,
+            "withheldInteractions": 0,
+            "attachedByTheModule": false,
+            "attachedFor": []
+          },
+          {
+            "index": 5,
+            "resourceType": "obs",
+            "resourceUuid": "c602d606-1691-11df-97a5-7038c432aabf",
+            "date": "2025-11-18",
+            "grounded": null,
+            "group": "chart",
+            "source": null,
+            "withheldInteractions": 0,
+            "attachedByTheModule": false,
+            "attachedFor": []
+          },
+          {
+            "index": 6,
+            "resourceType": "obs",
+            "resourceUuid": "c602d87f-1691-11df-97a5-7038c432aabf",
+            "date": "2025-11-18",
+            "grounded": null,
+            "group": "chart",
+            "source": null,
+            "withheldInteractions": 0,
+            "attachedByTheModule": false,
+            "attachedFor": []
+          },
+          {
+            "index": 7,
+            "resourceType": "obs",
+            "resourceUuid": "c28ddc88-1691-11df-97a5-7038c432aabf",
+            "date": "2025-11-03",
+            "grounded": null,
+            "group": "chart",
+            "source": null,
+            "withheldInteractions": 0,
+            "attachedByTheModule": false,
+            "attachedFor": []
+          },
+          {
+            "index": 8,
+            "resourceType": "obs",
+            "resourceUuid": "c28dddf8-1691-11df-97a5-7038c432aabf",
+            "date": "2025-11-03",
+            "grounded": null,
+            "group": "chart",
+            "source": null,
+            "withheldInteractions": 0,
+            "attachedByTheModule": false,
+            "attachedFor": []
+          },
+          {
+            "index": 9,
+            "resourceType": "obs",
+            "resourceUuid": "c28ddf5f-1691-11df-97a5-7038c432aabf",
+            "date": "2025-11-03",
+            "grounded": null,
+            "group": "chart",
+            "source": null,
+            "withheldInteractions": 0,
+            "attachedByTheModule": false,
+            "attachedFor": []
+          },
+          {
+            "index": 10,
+            "resourceType": "obs",
+            "resourceUuid": "c155ce0a-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-21",
+            "grounded": null,
+            "group": "chart",
+            "source": null,
+            "withheldInteractions": 0,
+            "attachedByTheModule": false,
+            "attachedFor": []
+          },
+          {
+            "index": 11,
+            "resourceType": "obs",
+            "resourceUuid": "c155cf98-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-21",
+            "grounded": null,
+            "group": "chart",
+            "source": null,
+            "withheldInteractions": 0,
+            "attachedByTheModule": false,
+            "attachedFor": []
+          },
+          {
+            "index": 12,
+            "resourceType": "obs",
+            "resourceUuid": "c155d12a-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-21",
+            "grounded": null,
+            "group": "chart",
+            "source": null,
+            "withheldInteractions": 0,
+            "attachedByTheModule": false,
+            "attachedFor": []
+          }
+        ],
+        "asksWhetherSheHasTakenADrug": false,
+        "activeOrderClaims": {
+          "stated": 0,
+          "uncited": 0
+        },
+        "unresolvedDrugClass": null,
+        "unfoundedFindingSeverities": [],
+        "misattributedOrderCitations": [],
+        "unsupportedEndedOrderClaims": [],
+        "cautionLedOverWithholding": [],
+        "chartReadForSafety": null,
+        "findingCitations": {
+          "carried": 0,
+          "cited": 0
+        },
+        "interactionPairs": null,
+        "findingsStatedByTheModule": [],
+        "orderStopDates": [],
+        "disclaimer": "This response is AI-generated and may not be accurate. It is not a substitute for clinical judgment. Always verify against the patient's medical records.",
+        "doseCeilingCoverage": "unloaded",
+        "findingPartners": null,
+        "interactionClaimPairs": {
+          "judged": 0,
+          "misattributedCitations": [],
+          "unfounded": 0
+        },
+        "answeredByTheModule": false,
+        "unfaithfullyRenderedCitations": [],
+        "answer": "No heart or cardiac problems are recorded.\n1. Systolic blood pressure: 130 mmHg [3], 110 mmHg [6], 140 mmHg [9], 140 mmHg [12]\n2. Diastolic blood pressure: 70 mmHg [1], 70 mmHg [4], 120 mmHg [7], 80 mmHg [10]\n3. Pulse: 70 beats/min [2], 75 beats/min [5], 99 beats/min [8], 60 beats/min [11]",
+        "unstatedSignificanceQualifiers": [],
+        "conditionRuleCoverage": "unloaded",
+        "safetyWarnings": [],
+        "unstatedDosingCeilings": [],
+        "_capture": {
+          "arm": "base",
+          "patientId": 2606,
+          "question": "Does the patient have any heart or cardiac problems?",
+          "elapsedSeconds": 16.34124854207039
+        }
+      },
+      "dd7fde7e-1691-11df-97a5-7038c432aabf__mental": {
+        "unstatedFindingSeverities": [],
+        "questionId": "123",
+        "references": [
+          {
+            "index": 14,
+            "resourceType": "condition",
+            "resourceUuid": "9956dd55-147e-5518-87e8-b7fe30b3454c",
+            "date": "2025-10-21",
+            "grounded": null,
+            "group": "chart",
+            "source": null,
+            "withheldInteractions": 0,
+            "attachedByTheModule": false,
+            "attachedFor": []
+          }
+        ],
+        "asksWhetherSheHasTakenADrug": false,
+        "activeOrderClaims": {
+          "stated": 0,
+          "uncited": 0
+        },
+        "unresolvedDrugClass": null,
+        "unfoundedFindingSeverities": [],
+        "misattributedOrderCitations": [],
+        "unsupportedEndedOrderClaims": [],
+        "cautionLedOverWithholding": [],
+        "chartReadForSafety": null,
+        "findingCitations": {
+          "carried": 0,
+          "cited": 0
+        },
+        "interactionPairs": null,
+        "findingsStatedByTheModule": [],
+        "orderStopDates": [],
+        "disclaimer": "This response is AI-generated and may not be accurate. It is not a substitute for clinical judgment. Always verify against the patient's medical records.",
+        "doseCeilingCoverage": "unloaded",
+        "findingPartners": null,
+        "interactionClaimPairs": {
+          "judged": 0,
+          "misattributedCitations": [],
+          "unfounded": 0
+        },
+        "answeredByTheModule": false,
+        "unfaithfullyRenderedCitations": [],
+        "answer": "Yes \u2014 the patient has the following mental health or psychiatric condition: 1. Depression (Active since 2025-10-21) [14].",
+        "unstatedSignificanceQualifiers": [],
+        "conditionRuleCoverage": "unloaded",
+        "safetyWarnings": [],
+        "unstatedDosingCeilings": [],
+        "_capture": {
+          "arm": "base",
+          "patientId": 3666,
+          "question": "Does the patient have any mental health or psychiatric conditions?",
+          "elapsedSeconds": 7.973045374965295
+        }
+      }
+    },
+    "changed": {
+      "dd55571f-1691-11df-97a5-7038c432aabf__heart": {
+        "unstatedFindingSeverities": [],
+        "questionId": "113",
+        "references": [],
+        "asksWhetherSheHasTakenADrug": false,
+        "activeOrderClaims": {
+          "stated": 0,
+          "uncited": 0
+        },
+        "unresolvedDrugClass": null,
+        "unfoundedFindingSeverities": [],
+        "misattributedOrderCitations": [],
+        "unsupportedEndedOrderClaims": [],
+        "cautionLedOverWithholding": [],
+        "chartReadForSafety": null,
+        "findingCitations": {
+          "carried": 0,
+          "cited": 0
+        },
+        "interactionPairs": null,
+        "findingsStatedByTheModule": [],
+        "orderStopDates": [],
+        "disclaimer": "This response is AI-generated and may not be accurate. It is not a substitute for clinical judgment. Always verify against the patient's medical records.",
+        "doseCeilingCoverage": "unloaded",
+        "findingPartners": null,
+        "interactionClaimPairs": {
+          "judged": 0,
+          "misattributedCitations": [],
+          "unfounded": 0
+        },
+        "answeredByTheModule": false,
+        "unfaithfullyRenderedCitations": [],
+        "answer": "No heart or cardiac problems are recorded.",
+        "unstatedSignificanceQualifiers": [],
+        "conditionRuleCoverage": "unloaded",
+        "safetyWarnings": [],
+        "unstatedDosingCeilings": [],
+        "_capture": {
+          "arm": "changed",
+          "patientId": 36,
+          "question": "Does the patient have any heart or cardiac problems?",
+          "elapsedSeconds": 5.995617707958445
+        }
+      },
+      "dd5558ed-1691-11df-97a5-7038c432aabf__heart": {
+        "unstatedFindingSeverities": [],
+        "questionId": "112",
+        "references": [],
+        "asksWhetherSheHasTakenADrug": false,
+        "activeOrderClaims": {
+          "stated": 0,
+          "uncited": 0
+        },
+        "unresolvedDrugClass": null,
+        "unfoundedFindingSeverities": [],
+        "misattributedOrderCitations": [],
+        "unsupportedEndedOrderClaims": [],
+        "cautionLedOverWithholding": [],
+        "chartReadForSafety": null,
+        "findingCitations": {
+          "carried": 0,
+          "cited": 0
+        },
+        "interactionPairs": null,
+        "findingsStatedByTheModule": [],
+        "orderStopDates": [],
+        "disclaimer": "This response is AI-generated and may not be accurate. It is not a substitute for clinical judgment. Always verify against the patient's medical records.",
+        "doseCeilingCoverage": "unloaded",
+        "findingPartners": null,
+        "interactionClaimPairs": {
+          "judged": 0,
+          "misattributedCitations": [],
+          "unfounded": 0
+        },
+        "answeredByTheModule": false,
+        "unfaithfullyRenderedCitations": [],
+        "answer": "No heart or cardiac problems are recorded.",
+        "unstatedSignificanceQualifiers": [],
+        "conditionRuleCoverage": "unloaded",
+        "safetyWarnings": [],
+        "unstatedDosingCeilings": [],
+        "_capture": {
+          "arm": "changed",
+          "patientId": 39,
+          "question": "Does the patient have any heart or cardiac problems?",
+          "elapsedSeconds": 8.898339625098743
+        }
+      },
+      "dd5558ed-1691-11df-97a5-7038c432aabf__kidney": {
+        "unstatedFindingSeverities": [],
+        "questionId": "114",
+        "references": [],
+        "asksWhetherSheHasTakenADrug": false,
+        "activeOrderClaims": {
+          "stated": 0,
+          "uncited": 0
+        },
+        "unresolvedDrugClass": null,
+        "unfoundedFindingSeverities": [],
+        "misattributedOrderCitations": [],
+        "unsupportedEndedOrderClaims": [],
+        "cautionLedOverWithholding": [],
+        "chartReadForSafety": null,
+        "findingCitations": {
+          "carried": 0,
+          "cited": 0
+        },
+        "interactionPairs": null,
+        "findingsStatedByTheModule": [],
+        "orderStopDates": [],
+        "disclaimer": "This response is AI-generated and may not be accurate. It is not a substitute for clinical judgment. Always verify against the patient's medical records.",
+        "doseCeilingCoverage": "unloaded",
+        "findingPartners": null,
+        "interactionClaimPairs": {
+          "judged": 0,
+          "misattributedCitations": [],
+          "unfounded": 0
+        },
+        "answeredByTheModule": false,
+        "unfaithfullyRenderedCitations": [],
+        "answer": "No kidney problems are recorded.",
+        "unstatedSignificanceQualifiers": [],
+        "conditionRuleCoverage": "unloaded",
+        "safetyWarnings": [],
+        "unstatedDosingCeilings": [],
+        "_capture": {
+          "arm": "changed",
+          "patientId": 39,
+          "question": "Does the patient have any kidney problems?",
+          "elapsedSeconds": 7.98089720797725
+        }
+      },
+      "dd5558ed-1691-11df-97a5-7038c432aabf__mental": {
+        "unstatedFindingSeverities": [],
+        "questionId": "116",
+        "references": [],
+        "asksWhetherSheHasTakenADrug": false,
+        "activeOrderClaims": {
+          "stated": 0,
+          "uncited": 0
+        },
+        "unresolvedDrugClass": null,
+        "unfoundedFindingSeverities": [],
+        "misattributedOrderCitations": [],
+        "unsupportedEndedOrderClaims": [],
+        "cautionLedOverWithholding": [],
+        "chartReadForSafety": null,
+        "findingCitations": {
+          "carried": 0,
+          "cited": 0
+        },
+        "interactionPairs": null,
+        "findingsStatedByTheModule": [],
+        "orderStopDates": [],
+        "disclaimer": "This response is AI-generated and may not be accurate. It is not a substitute for clinical judgment. Always verify against the patient's medical records.",
+        "doseCeilingCoverage": "unloaded",
+        "findingPartners": null,
+        "interactionClaimPairs": {
+          "judged": 0,
+          "misattributedCitations": [],
+          "unfounded": 0
+        },
+        "answeredByTheModule": false,
+        "unfaithfullyRenderedCitations": [],
+        "answer": "No mental health or psychiatric conditions are recorded.",
+        "unstatedSignificanceQualifiers": [],
+        "conditionRuleCoverage": "unloaded",
+        "safetyWarnings": [],
+        "unstatedDosingCeilings": [],
+        "_capture": {
+          "arm": "changed",
+          "patientId": 39,
+          "question": "Does the patient have any mental health or psychiatric conditions?",
+          "elapsedSeconds": 6.109541708952747
+        }
+      },
+      "dd780925-1691-11df-97a5-7038c432aabf__heart": {
+        "unstatedFindingSeverities": [],
+        "questionId": "115",
+        "references": [],
+        "asksWhetherSheHasTakenADrug": false,
+        "activeOrderClaims": {
+          "stated": 0,
+          "uncited": 0
+        },
+        "unresolvedDrugClass": null,
+        "unfoundedFindingSeverities": [],
+        "misattributedOrderCitations": [],
+        "unsupportedEndedOrderClaims": [],
+        "cautionLedOverWithholding": [],
+        "chartReadForSafety": null,
+        "findingCitations": {
+          "carried": 0,
+          "cited": 0
+        },
+        "interactionPairs": null,
+        "findingsStatedByTheModule": [],
+        "orderStopDates": [],
+        "disclaimer": "This response is AI-generated and may not be accurate. It is not a substitute for clinical judgment. Always verify against the patient's medical records.",
+        "doseCeilingCoverage": "unloaded",
+        "findingPartners": null,
+        "interactionClaimPairs": {
+          "judged": 0,
+          "misattributedCitations": [],
+          "unfounded": 0
+        },
+        "answeredByTheModule": false,
+        "unfaithfullyRenderedCitations": [],
+        "answer": "No heart or cardiac problems are recorded.",
+        "unstatedSignificanceQualifiers": [],
+        "conditionRuleCoverage": "unloaded",
+        "safetyWarnings": [],
+        "unstatedDosingCeilings": [],
+        "_capture": {
+          "arm": "changed",
+          "patientId": 2606,
+          "question": "Does the patient have any heart or cardiac problems?",
+          "elapsedSeconds": 6.216067750006914
+        }
+      },
+      "dd7fde7e-1691-11df-97a5-7038c432aabf__mental": {
+        "unstatedFindingSeverities": [],
+        "questionId": "117",
+        "references": [
+          {
+            "index": 14,
+            "resourceType": "condition",
+            "resourceUuid": "9956dd55-147e-5518-87e8-b7fe30b3454c",
+            "date": "2025-10-21",
+            "grounded": null,
+            "group": "chart",
+            "source": null,
+            "withheldInteractions": 0,
+            "attachedByTheModule": false,
+            "attachedFor": []
+          }
+        ],
+        "asksWhetherSheHasTakenADrug": false,
+        "activeOrderClaims": {
+          "stated": 0,
+          "uncited": 0
+        },
+        "unresolvedDrugClass": null,
+        "unfoundedFindingSeverities": [],
+        "misattributedOrderCitations": [],
+        "unsupportedEndedOrderClaims": [],
+        "cautionLedOverWithholding": [],
+        "chartReadForSafety": null,
+        "findingCitations": {
+          "carried": 0,
+          "cited": 0
+        },
+        "interactionPairs": null,
+        "findingsStatedByTheModule": [],
+        "orderStopDates": [],
+        "disclaimer": "This response is AI-generated and may not be accurate. It is not a substitute for clinical judgment. Always verify against the patient's medical records.",
+        "doseCeilingCoverage": "unloaded",
+        "findingPartners": null,
+        "interactionClaimPairs": {
+          "judged": 0,
+          "misattributedCitations": [],
+          "unfounded": 0
+        },
+        "answeredByTheModule": false,
+        "unfaithfullyRenderedCitations": [],
+        "answer": "Yes \u2014 the patient has a diagnosis of Depression: ACTIVE since 2025-10-21 [14].",
+        "unstatedSignificanceQualifiers": [],
+        "conditionRuleCoverage": "unloaded",
+        "safetyWarnings": [],
+        "unstatedDosingCeilings": [],
+        "_capture": {
+          "arm": "changed",
+          "patientId": 3666,
+          "question": "Does the patient have any mental health or psychiatric conditions?",
+          "elapsedSeconds": 5.650385958026163
+        }
+      }
+    }
+  },
+  "result": "All twelve repeat responses reproduce the original model-cited UUID sets. Shared system message identical in both arms. Models/settings are unchanged; only local request forwarding instrumentation added."
+}
