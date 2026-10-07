@@ -50,7 +50,7 @@ release/clinical signoffs are not authorized by this remediation task.
 | Website | Sources and publication tooling are umbrella-owned; GitHub Pages is configured for Actions and build/deploy pass; browser inspection confirms the documentation loads | Public landing deployment and product/demo publication remain separate |
 | Specifications | Product behavior, shared delivery and validation protocols have maintained owners; duplicate plans and obsolete lane instructions are removed; companion documentation is merged | Follow the maintained owners; broader content proposals retain their own review |
 | Research setup | [Setup guide](../environments/README.md) and `make chartsearch-research-setup` prepare the fresh HIV baseline, ChartSearchAI and seven accounts using existing tools. Local startup, account logins and the patient-chart browser smoke passed on 3 October 2026 | PR review and Ross's fresh install. Account-context enhancements and broader evaluation remain follow-up, not setup gates. |
-| Product delivery | Eight backend and five frontend extractions remain open in linear stacks. Both rebased stacks and backend code fixes are published; frontend builds pass and QueryStore inline threads are reconciled. Backend checks, review closeout and context evaluation remain in progress | Rebase, address owning-PR findings, restore missing checks, publish revised pins and validate affected behavior; retain integration references unchanged |
+| Product delivery | Both rebased stacks and owning-PR fixes are published; all frontend builds, backend #583–#586 checks and the umbrella's assembled source checks pass. Backend #587–#590 pass paired-source builds but fail against the unpublished QueryStore API. Three #587 review threads and QueryStore's smaller-PR request remain open | Complete and review context-evaluation evidence; settle QueryStore contribution scope; obtain ordinary dependency compatibility and remove temporary paired CI before upstream merging; retain integration references unchanged |
 
 The phases below cover the component layout and validation interfaces defined in
 the architecture. Progress distinguishes implementation, local verification, CI,
@@ -256,8 +256,9 @@ Verified on 7 October 2026 during remediation:
   restored alongside the temporary paired-source build. The ordinary builds on
   #587–#590 fail to compile against the published/upstream QueryStore API; exact
   job logs show the missing context-slice/chart-read symbols. Their failures remain
-  visible while paired-source builds validate the proposed API together. All 46 inline threads have evidence-backed responses; 43 are resolved.
-  #587's model-quality/temporal evaluation, temporary dependency-job removal and
+  visible while all twelve paired-source Java 11/17/21 builds pass on the proposed
+  API together. All 46 inline threads have evidence-backed responses; 43 are resolved.
+  #587's model-quality/temporal evaluation disposition, temporary dependency-job removal and
   reviewer disposition of retrieval-versus-safety classification remain open.
 - QueryStore #68 at `286993cc` includes upstream `e12a1de2`; all inline review
   threads are reconciled as described below. The maintainer's separate request for
@@ -265,9 +266,16 @@ Verified on 7 October 2026 during remediation:
 - Umbrella [#8](https://github.com/pmanko/openclinai.org/pull/8) records published
   frontend `475f6eb6` and backend `20cb84ba` and updates their contract references.
   All 24 umbrella unit tests and 55 affected operational/contract checks passed.
-  Its earlier `444c65f0` hosted checks passed; fresh hosted integration checks are
-  required for the updated pins. Earlier combined frontend `e09ce24` and backend
-  `713b8477` supplied rebase resolutions.
+  At published head `1233cc2c`, all hosted checks pass, including the
+  [assembled OpenMRS source check](https://github.com/pmanko/openclinai.org/actions/runs/37586474985)
+  with the updated pins. This builds the selected QueryStore and backend together
+  and checks the frontend; it does not establish compatibility with the unpublished
+  dependency artifact or deployment acceptance. Earlier combined frontend `e09ce24`
+  and backend `713b8477` supplied rebase resolutions.
+- All thirteen stack PR descriptions now identify their published heads, actual
+  predecessors, owning-PR remediation and current validation limitations. They
+  retain earlier combined acceptance only for unaffected behavior and no longer
+  describe the revised application code as unchanged by remediation.
 
 The execution sequence is:
 
@@ -326,9 +334,17 @@ merge readiness depend on that API reaching upstream and its published artifact.
 or measured substitute evidence acceptable under the product's review process;
 unit tests alone do not satisfy that finding. On 7 October, all five patients
 required by the native scope/temporal cohort returned HTTP 404 from the local HIV
-instance. Do not run that cohort as if it were present or count empty results as
-acceptance; prepare an isolated evaluation with the required data or a measured,
-explicitly documented substitute.
+instance. An [isolated substitute comparison](reviews/2026-10-07-context-evaluation.md)
+now records all 40 scope and 15 temporal questions on both #586 and #587. Off-topic
+citations fall from 14 to zero, but mean citation F1 falls from 0.891 to 0.735:
+three on-topic cells lose supporting citations. Both arms pass 14 temporal cases;
+one has conflicting weights at the latest timestamp and remains ambiguous. This
+is measured mixed evidence, not a clean quality pass. Keep the review finding open
+for disposition of the coverage regression and substitute-cohort limitations;
+do not tune prompts to individual cells or silently redefine the gate. The
+follow-up ranked read shows a renal retrieval gap as well as examination records
+that were retrieved but not cited. Diagnose or recheck affected behavior before
+any acceptance claim.
 
 ### Release and owner signoffs (M5)
 

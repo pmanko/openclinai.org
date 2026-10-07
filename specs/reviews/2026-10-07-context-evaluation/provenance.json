@@ -1,0 +1,2069 @@
+{
+  "purpose": "One-time #587 context-composition before/after evaluation; substitute cohort, not original Decision 28 acceptance",
+  "backendBase": {
+    "sha": "8139ab9a9a0d5dc5edd19aa39320251147602b14",
+    "githubRun": 37585658347
+  },
+  "backendChanged": {
+    "sha": "881163dfbb49ab5638c521d66c0d6588096fb617",
+    "githubRun": 37585660147
+  },
+  "querystore": "286993cc094499ed29f97d4574775cd2c96f5676",
+  "model": "gemma-4-12b",
+  "source": "Consistent dump of existing local synthetic HIV instance; isolated copy only",
+  "sha256": {
+    "openmrs.sql": "88b40da580f723f0fda4aa4a4b289f1b7f2cb23011f3b3ac387e0d60a1978e3e",
+    "data/chartsearchai/model.onnx": "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452",
+    "data/chartsearchai/vocab.txt": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3",
+    "modules/querystore-1.0.0-SNAPSHOT.omod": "851dcdad86c6cb9adaa6d2a156b73b840ff4c481700bf9b4148086b56f3e310e",
+    "base/chartsearchai-1.0.0-SNAPSHOT.omod": "825160e997334fb697c8091dac86ab6e5f8757bb48108d423e15ac8f301a22fc",
+    "changed/chartsearchai-1.0.0-SNAPSHOT.omod": "cb48986e300d23e963df5928555fac8e81c44fb219d6e84d6e0ac24a931e35a1"
+  },
+  "coreWarSha256": "d2dfde3de6d279fe747f06b3f08b82d5916364dadc99d16764c453d4c412246c",
+  "isolation": "Separate Docker project/network/database volume; source runtime configuration copied for existing-installation startup; no source database or environment changes.",
+  "evaluationScope": "Native bundled /search answer-generation context comparison, using the copied grounding=false and drugReference=false settings in both arms. Not Hub checked-profile or safety acceptance.",
+  "rateLimit": "Isolated per-user rate limit raised to 1000 after first ten baseline cells; one HTTP 429 retained as an unscored infrastructure response, remaining cells resumed. Same limit applies to changed arm.",
+  "modelSha256": "f20e7ff1be28c283eeeb18fc895733791c56a5851d5cd3fe9691b7f7d12afa72",
+  "modelQuantization": "Q8_0",
+  "cohortGoldSha256": "ea05ad39ba792a298073613d7e5edf26a87ca36ad83e1228c7690f567c30c87a",
+  "temporalTruthSha256": "617fe48282edcd4cafb54bfc3f7df2623a8ebd8950065594517269e728b6ce1f",
+  "chartReadVerification": {
+    "patients": 5,
+    "missingSourceRecordIdentities": 0,
+    "truncatedCharts": 0,
+    "recordCounts": [
+      320,
+      121,
+      168,
+      157,
+      214
+    ]
+  },
+  "selectedModel": {
+    "id": "gemma-4-12b",
+    "aliases": [],
+    "tags": [],
+    "object": "model",
+    "owned_by": "llamacpp",
+    "created": 1791358710,
+    "status": {
+      "value": "loaded",
+      "args": [
+        "/opt/homebrew/Cellar/llama.cpp/0.4.0/bin/llama-server",
+        "--dry-allowed-length",
+        "8",
+        "--dry-base",
+        "1.75",
+        "--dry-multiplier",
+        "0.8",
+        "--dry-penalty-last-n",
+        "24576",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "60293",
+        "--reasoning-budget",
+        "0",
+        "--temperature",
+        "0",
+        "--alias",
+        "gemma-4-12b",
+        "--batch-size",
+        "4096",
+        "--ctx-size",
+        "24576",
+        "--model",
+        "artifacts/llama-router/models/gemma-4-12b.gguf",
+        "--n-gpu-layers",
+        "99",
+        "--parallel",
+        "1",
+        "--seed",
+        "42",
+        "--ubatch-size",
+        "1024"
+      ],
+      "preset": "[gemma-4-12b]\ndry-allowed-length = 8\ndry-base = 1.75\ndry-multiplier = 0.8\ndry-penalty-last-n = 24576\nreasoning-budget = 0\ntemperature = 0\nbatch-size = 4096\nctx-size = 24576\nmodel = artifacts/llama-router/models/gemma-4-12b.gguf\nn-gpu-layers = 99\nparallel = 1\nseed = 42\nubatch-size = 1024\n\n"
+    },
+    "architecture": {
+      "input_modalities": [
+        "text"
+      ],
+      "output_modalities": [
+        "text"
+      ]
+    },
+    "source": "preset",
+    "can_remove": false,
+    "meta": {
+      "vocab_type": true,
+      "n_vocab": 262144,
+      "n_ctx": 24576,
+      "n_ctx_train": 262144,
+      "n_embd": 3840,
+      "n_params": 11907350576,
+      "size": 12653822144,
+      "ftype": "Q8_0"
+    }
+  },
+  "temporalTruth": [
+    {
+      "patient": "dd5558ed-1691-11df-97a5-7038c432aabf",
+      "patientId": 39,
+      "kind": "weight",
+      "newest": [
+        [
+          "d3ee7c1f-1691-11df-97a5-7038c432aabf",
+          "41",
+          "2026-01-07 00:00:00"
+        ]
+      ],
+      "older": [
+        [
+          "d101a83a-1691-11df-97a5-7038c432aabf",
+          "42",
+          "2025-12-31 00:00:00"
+        ],
+        [
+          "ccac604e-1691-11df-97a5-7038c432aabf",
+          "48",
+          "2025-12-16 00:00:00"
+        ],
+        [
+          "c4c1cb27-1691-11df-97a5-7038c432aabf",
+          "47",
+          "2025-11-10 00:00:00"
+        ],
+        [
+          "c1afde5f-1691-11df-97a5-7038c432aabf",
+          "49.5",
+          "2025-10-26 00:00:00"
+        ],
+        [
+          "c1aef240-1691-11df-97a5-7038c432aabf",
+          "52",
+          "2025-10-23 00:00:00"
+        ],
+        [
+          "c1aeaeaf-1691-11df-97a5-7038c432aabf",
+          "52",
+          "2025-10-22 00:00:00"
+        ]
+      ]
+    },
+    {
+      "patient": "dd5558ed-1691-11df-97a5-7038c432aabf",
+      "patientId": 39,
+      "kind": "systolic",
+      "newest": [
+        [
+          "d3ee78f7-1691-11df-97a5-7038c432aabf",
+          "90",
+          "2026-01-07 00:00:00"
+        ]
+      ],
+      "older": [
+        [
+          "d101a549-1691-11df-97a5-7038c432aabf",
+          "90",
+          "2025-12-31 00:00:00"
+        ],
+        [
+          "ccac5c3e-1691-11df-97a5-7038c432aabf",
+          "90",
+          "2025-12-16 00:00:00"
+        ],
+        [
+          "c4c1c832-1691-11df-97a5-7038c432aabf",
+          "100",
+          "2025-11-10 00:00:00"
+        ],
+        [
+          "c1afdb47-1691-11df-97a5-7038c432aabf",
+          "90",
+          "2025-10-26 00:00:00"
+        ],
+        [
+          "c1aeef54-1691-11df-97a5-7038c432aabf",
+          "100",
+          "2025-10-23 00:00:00"
+        ],
+        [
+          "c1aeab8b-1691-11df-97a5-7038c432aabf",
+          "100",
+          "2025-10-22 00:00:00"
+        ]
+      ]
+    },
+    {
+      "patient": "dd5558ed-1691-11df-97a5-7038c432aabf",
+      "patientId": 39,
+      "kind": "lastvisit",
+      "latestVisit": [
+        [
+          "97e6dd25-e546-5312-81af-4f320810ef97",
+          "2026-01-07 00:00:00"
+        ]
+      ],
+      "latestEncounter": [
+        [
+          "bfaee99d-1691-11df-97a5-7038c432aabf",
+          "2026-01-07 00:00:00"
+        ]
+      ]
+    },
+    {
+      "patient": "dd8e64d8-1691-11df-97a5-7038c432aabf",
+      "patientId": 5587,
+      "kind": "weight",
+      "newest": [
+        [
+          "dcad2eb0-1691-11df-97a5-7038c432aabf",
+          "56",
+          "2026-06-01 00:00:00"
+        ],
+        [
+          "dcad29cb-1691-11df-97a5-7038c432aabf",
+          "54",
+          "2026-06-01 00:00:00"
+        ],
+        [
+          "dcad219b-1691-11df-97a5-7038c432aabf",
+          "55",
+          "2026-06-01 00:00:00"
+        ]
+      ],
+      "older": [
+        [
+          "d435b5d3-1691-11df-97a5-7038c432aabf",
+          "69",
+          "2026-01-13 00:00:00"
+        ],
+        [
+          "ccd8965d-1691-11df-97a5-7038c432aabf",
+          "67",
+          "2025-12-16 00:00:00"
+        ],
+        [
+          "c5e1f6d3-1691-11df-97a5-7038c432aabf",
+          "68",
+          "2025-11-18 00:00:00"
+        ]
+      ]
+    },
+    {
+      "patient": "dd8e64d8-1691-11df-97a5-7038c432aabf",
+      "patientId": 5587,
+      "kind": "systolic",
+      "newest": [
+        [
+          "dcad2004-1691-11df-97a5-7038c432aabf",
+          "112",
+          "2026-06-01 00:00:00"
+        ]
+      ],
+      "older": [
+        [
+          "dcacbe53-1691-11df-97a5-7038c432aabf",
+          "120",
+          "2026-05-26 00:00:00"
+        ],
+        [
+          "d435b2d9-1691-11df-97a5-7038c432aabf",
+          "130",
+          "2026-01-13 00:00:00"
+        ],
+        [
+          "ccd891ab-1691-11df-97a5-7038c432aabf",
+          "120",
+          "2025-12-16 00:00:00"
+        ],
+        [
+          "c5e1e1c5-1691-11df-97a5-7038c432aabf",
+          "120",
+          "2025-11-18 00:00:00"
+        ]
+      ]
+    },
+    {
+      "patient": "dd8e64d8-1691-11df-97a5-7038c432aabf",
+      "patientId": 5587,
+      "kind": "lastvisit",
+      "latestVisit": [
+        [
+          "db974496-730c-5fe0-9bbc-eff979251dfc",
+          "2026-06-01 00:00:00"
+        ]
+      ],
+      "latestEncounter": [
+        [
+          "bfe7c15f-1691-11df-97a5-7038c432aabf",
+          "2026-06-01 00:00:00"
+        ]
+      ]
+    },
+    {
+      "patient": "dd55571f-1691-11df-97a5-7038c432aabf",
+      "patientId": 36,
+      "kind": "weight",
+      "newest": [
+        [
+          "d92355f5-1691-11df-97a5-7038c432aabf",
+          "59.5",
+          "2026-01-27 00:00:00"
+        ]
+      ],
+      "older": [
+        [
+          "d04db774-1691-11df-97a5-7038c432aabf",
+          "60",
+          "2025-12-30 00:00:00"
+        ],
+        [
+          "cbdc9449-1691-11df-97a5-7038c432aabf",
+          "59",
+          "2025-12-14 00:00:00"
+        ],
+        [
+          "c51de1f4-1691-11df-97a5-7038c432aabf",
+          "60.5",
+          "2025-11-16 00:00:00"
+        ],
+        [
+          "c41ed60f-1691-11df-97a5-7038c432aabf",
+          "60",
+          "2025-11-09 00:00:00"
+        ]
+      ]
+    },
+    {
+      "patient": "dd55571f-1691-11df-97a5-7038c432aabf",
+      "patientId": 36,
+      "kind": "systolic",
+      "newest": [
+        [
+          "d92352ab-1691-11df-97a5-7038c432aabf",
+          "110",
+          "2026-01-27 00:00:00"
+        ]
+      ],
+      "older": [
+        [
+          "d04db257-1691-11df-97a5-7038c432aabf",
+          "100",
+          "2025-12-30 00:00:00"
+        ],
+        [
+          "cbdc914b-1691-11df-97a5-7038c432aabf",
+          "100",
+          "2025-12-14 00:00:00"
+        ],
+        [
+          "c51ddf07-1691-11df-97a5-7038c432aabf",
+          "110",
+          "2025-11-16 00:00:00"
+        ],
+        [
+          "c41ed266-1691-11df-97a5-7038c432aabf",
+          "110",
+          "2025-11-09 00:00:00"
+        ]
+      ]
+    },
+    {
+      "patient": "dd55571f-1691-11df-97a5-7038c432aabf",
+      "patientId": 36,
+      "kind": "lastvisit",
+      "latestVisit": [
+        [
+          "fc549b0e-bc53-5770-98f6-3ecfe866a27a",
+          "2026-01-27 00:00:00"
+        ]
+      ],
+      "latestEncounter": [
+        [
+          "bfc52ce2-1691-11df-97a5-7038c432aabf",
+          "2026-01-27 00:00:00"
+        ]
+      ]
+    },
+    {
+      "patient": "dd780925-1691-11df-97a5-7038c432aabf",
+      "patientId": 2606,
+      "kind": "weight",
+      "newest": [
+        [
+          "da9244fa-1691-11df-97a5-7038c432aabf",
+          "59",
+          "2026-01-29 00:00:00"
+        ]
+      ],
+      "older": [
+        [
+          "c602dd82-1691-11df-97a5-7038c432aabf",
+          "59.5",
+          "2025-11-18 00:00:00"
+        ],
+        [
+          "c2932094-1691-11df-97a5-7038c432aabf",
+          "60",
+          "2025-11-03 00:00:00"
+        ],
+        [
+          "c155d479-1691-11df-97a5-7038c432aabf",
+          "59.5",
+          "2025-10-21 00:00:00"
+        ]
+      ]
+    },
+    {
+      "patient": "dd780925-1691-11df-97a5-7038c432aabf",
+      "patientId": 2606,
+      "kind": "systolic",
+      "newest": [
+        [
+          "da923d30-1691-11df-97a5-7038c432aabf",
+          "130",
+          "2026-01-29 00:00:00"
+        ]
+      ],
+      "older": [
+        [
+          "c602d87f-1691-11df-97a5-7038c432aabf",
+          "110",
+          "2025-11-18 00:00:00"
+        ],
+        [
+          "c28ddf5f-1691-11df-97a5-7038c432aabf",
+          "140",
+          "2025-11-03 00:00:00"
+        ],
+        [
+          "c155d12a-1691-11df-97a5-7038c432aabf",
+          "140",
+          "2025-10-21 00:00:00"
+        ]
+      ]
+    },
+    {
+      "patient": "dd780925-1691-11df-97a5-7038c432aabf",
+      "patientId": 2606,
+      "kind": "lastvisit",
+      "latestVisit": [
+        [
+          "6585a545-ead3-56f5-bf0b-f2827ef3da30",
+          "2026-01-29 00:00:00"
+        ]
+      ],
+      "latestEncounter": [
+        [
+          "bfcb800a-1691-11df-97a5-7038c432aabf",
+          "2026-01-29 00:00:00"
+        ]
+      ]
+    },
+    {
+      "patient": "dd7fde7e-1691-11df-97a5-7038c432aabf",
+      "patientId": 3666,
+      "kind": "weight",
+      "newest": [
+        [
+          "dab14a48-1691-11df-97a5-7038c432aabf",
+          "70",
+          "2026-02-01 00:00:00"
+        ]
+      ],
+      "older": [
+        [
+          "d69962d5-1691-11df-97a5-7038c432aabf",
+          "70",
+          "2026-01-19 00:00:00"
+        ],
+        [
+          "cf8ede4f-1691-11df-97a5-7038c432aabf",
+          "69.5",
+          "2025-12-22 00:00:00"
+        ],
+        [
+          "cad553b0-1691-11df-97a5-7038c432aabf",
+          "67",
+          "2025-12-08 00:00:00"
+        ],
+        [
+          "c6309b6d-1691-11df-97a5-7038c432aabf",
+          "70",
+          "2025-11-18 00:00:00"
+        ],
+        [
+          "c14d0a2b-1691-11df-97a5-7038c432aabf",
+          "69",
+          "2025-10-21 00:00:00"
+        ]
+      ]
+    },
+    {
+      "patient": "dd7fde7e-1691-11df-97a5-7038c432aabf",
+      "patientId": 3666,
+      "kind": "systolic",
+      "newest": [
+        [
+          "dab1470f-1691-11df-97a5-7038c432aabf",
+          "110",
+          "2026-02-01 00:00:00"
+        ]
+      ],
+      "older": [
+        [
+          "d6995fa4-1691-11df-97a5-7038c432aabf",
+          "110",
+          "2026-01-19 00:00:00"
+        ],
+        [
+          "cf8eba49-1691-11df-97a5-7038c432aabf",
+          "110",
+          "2025-12-22 00:00:00"
+        ],
+        [
+          "cad55066-1691-11df-97a5-7038c432aabf",
+          "120",
+          "2025-12-08 00:00:00"
+        ],
+        [
+          "c6309880-1691-11df-97a5-7038c432aabf",
+          "100",
+          "2025-11-18 00:00:00"
+        ],
+        [
+          "c14d073e-1691-11df-97a5-7038c432aabf",
+          "110",
+          "2025-10-21 00:00:00"
+        ]
+      ]
+    },
+    {
+      "patient": "dd7fde7e-1691-11df-97a5-7038c432aabf",
+      "patientId": 3666,
+      "kind": "lastvisit",
+      "latestVisit": [
+        [
+          "25ee2ee7-edbe-54c4-a762-9a3353f240db",
+          "2026-02-01 00:00:00"
+        ]
+      ],
+      "latestEncounter": [
+        [
+          "bfcbdbd9-1691-11df-97a5-7038c432aabf",
+          "2026-02-01 00:00:00"
+        ]
+      ]
+    }
+  ],
+  "manifests": {
+    "base": {
+      "arm": "base",
+      "backendSha": "8139ab9a9a0d5dc5edd19aa39320251147602b14",
+      "model": "gemma-4-12b",
+      "cohort": [
+        {
+          "patient_id": 39,
+          "uuid": "dd5558ed-1691-11df-97a5-7038c432aabf",
+          "records": 320,
+          "counts": {
+            "programs": 1,
+            "allergies": 3,
+            "medications": 18,
+            "eye": 0,
+            "heart": 1,
+            "fractures": 0,
+            "kidney": 4,
+            "mental": 1,
+            "drug-allergies": 1
+          }
+        },
+        {
+          "patient_id": 5587,
+          "uuid": "dd8e64d8-1691-11df-97a5-7038c432aabf",
+          "records": 121,
+          "counts": {
+            "programs": 0,
+            "allergies": 1,
+            "medications": 3,
+            "eye": 0,
+            "heart": 0,
+            "fractures": 0,
+            "kidney": 0,
+            "mental": 0,
+            "drug-allergies": 1
+          }
+        },
+        {
+          "patient_id": 36,
+          "uuid": "dd55571f-1691-11df-97a5-7038c432aabf",
+          "records": 168,
+          "counts": {
+            "programs": 1,
+            "allergies": 0,
+            "medications": 12,
+            "eye": 0,
+            "heart": 0,
+            "fractures": 0,
+            "kidney": 2,
+            "mental": 0,
+            "drug-allergies": 0
+          }
+        },
+        {
+          "patient_id": 2606,
+          "uuid": "dd780925-1691-11df-97a5-7038c432aabf",
+          "records": 157,
+          "counts": {
+            "programs": 1,
+            "allergies": 0,
+            "medications": 15,
+            "eye": 0,
+            "heart": 0,
+            "fractures": 0,
+            "kidney": 2,
+            "mental": 1,
+            "drug-allergies": 0
+          }
+        },
+        {
+          "patient_id": 3666,
+          "uuid": "dd7fde7e-1691-11df-97a5-7038c432aabf",
+          "records": 214,
+          "counts": {
+            "programs": 0,
+            "allergies": 0,
+            "medications": 24,
+            "eye": 0,
+            "heart": 0,
+            "fractures": 0,
+            "kidney": 1,
+            "mental": 1,
+            "drug-allergies": 0
+          }
+        }
+      ],
+      "questions": [
+        [
+          "programs",
+          "Is the patient enrolled in any programs?"
+        ],
+        [
+          "allergies",
+          "Does the patient have any allergies?"
+        ],
+        [
+          "medications",
+          "What medications is the patient taking?"
+        ],
+        [
+          "eye",
+          "Does the patient have any eye problems?"
+        ],
+        [
+          "heart",
+          "Does the patient have any heart or cardiac problems?"
+        ],
+        [
+          "fractures",
+          "Has the patient had any fractures or broken bones?"
+        ],
+        [
+          "kidney",
+          "Does the patient have any kidney problems?"
+        ],
+        [
+          "mental",
+          "Does the patient have any mental health or psychiatric conditions?"
+        ],
+        [
+          "temporal-weight",
+          "What is the patient's most recent weight?"
+        ],
+        [
+          "temporal-systolic",
+          "What is the patient's most recent systolic blood pressure?"
+        ],
+        [
+          "temporal-lastvisit",
+          "When was the patient's last visit?"
+        ]
+      ],
+      "goldSha256": "ea05ad39ba792a298073613d7e5edf26a87ca36ad83e1228c7690f567c30c87a",
+      "temporalTruthSha256": "617fe48282edcd4cafb54bfc3f7df2623a8ebd8950065594517269e728b6ce1f",
+      "order": "question first, rotating through all five patients; no consecutive same-patient repetitions",
+      "endpoint": "http://localhost:18089/openmrs/ws/rest/v1/chartsearchai/search"
+    },
+    "changed": {
+      "arm": "changed",
+      "backendSha": "881163dfbb49ab5638c521d66c0d6588096fb617",
+      "model": "gemma-4-12b",
+      "cohort": [
+        {
+          "patient_id": 39,
+          "uuid": "dd5558ed-1691-11df-97a5-7038c432aabf",
+          "records": 320,
+          "counts": {
+            "programs": 1,
+            "allergies": 3,
+            "medications": 18,
+            "eye": 0,
+            "heart": 1,
+            "fractures": 0,
+            "kidney": 4,
+            "mental": 1,
+            "drug-allergies": 1
+          }
+        },
+        {
+          "patient_id": 5587,
+          "uuid": "dd8e64d8-1691-11df-97a5-7038c432aabf",
+          "records": 121,
+          "counts": {
+            "programs": 0,
+            "allergies": 1,
+            "medications": 3,
+            "eye": 0,
+            "heart": 0,
+            "fractures": 0,
+            "kidney": 0,
+            "mental": 0,
+            "drug-allergies": 1
+          }
+        },
+        {
+          "patient_id": 36,
+          "uuid": "dd55571f-1691-11df-97a5-7038c432aabf",
+          "records": 168,
+          "counts": {
+            "programs": 1,
+            "allergies": 0,
+            "medications": 12,
+            "eye": 0,
+            "heart": 0,
+            "fractures": 0,
+            "kidney": 2,
+            "mental": 0,
+            "drug-allergies": 0
+          }
+        },
+        {
+          "patient_id": 2606,
+          "uuid": "dd780925-1691-11df-97a5-7038c432aabf",
+          "records": 157,
+          "counts": {
+            "programs": 1,
+            "allergies": 0,
+            "medications": 15,
+            "eye": 0,
+            "heart": 0,
+            "fractures": 0,
+            "kidney": 2,
+            "mental": 1,
+            "drug-allergies": 0
+          }
+        },
+        {
+          "patient_id": 3666,
+          "uuid": "dd7fde7e-1691-11df-97a5-7038c432aabf",
+          "records": 214,
+          "counts": {
+            "programs": 0,
+            "allergies": 0,
+            "medications": 24,
+            "eye": 0,
+            "heart": 0,
+            "fractures": 0,
+            "kidney": 1,
+            "mental": 1,
+            "drug-allergies": 0
+          }
+        }
+      ],
+      "questions": [
+        [
+          "programs",
+          "Is the patient enrolled in any programs?"
+        ],
+        [
+          "allergies",
+          "Does the patient have any allergies?"
+        ],
+        [
+          "medications",
+          "What medications is the patient taking?"
+        ],
+        [
+          "eye",
+          "Does the patient have any eye problems?"
+        ],
+        [
+          "heart",
+          "Does the patient have any heart or cardiac problems?"
+        ],
+        [
+          "fractures",
+          "Has the patient had any fractures or broken bones?"
+        ],
+        [
+          "kidney",
+          "Does the patient have any kidney problems?"
+        ],
+        [
+          "mental",
+          "Does the patient have any mental health or psychiatric conditions?"
+        ],
+        [
+          "temporal-weight",
+          "What is the patient's most recent weight?"
+        ],
+        [
+          "temporal-systolic",
+          "What is the patient's most recent systolic blood pressure?"
+        ],
+        [
+          "temporal-lastvisit",
+          "When was the patient's last visit?"
+        ]
+      ],
+      "goldSha256": "ea05ad39ba792a298073613d7e5edf26a87ca36ad83e1228c7690f567c30c87a",
+      "temporalTruthSha256": "617fe48282edcd4cafb54bfc3f7df2623a8ebd8950065594517269e728b6ce1f",
+      "order": "question first, rotating through all five patients; no consecutive same-patient repetitions",
+      "endpoint": "http://localhost:18089/openmrs/ws/rest/v1/chartsearchai/search"
+    }
+  },
+  "sourceRecordsAfterRestart": [
+    {
+      "patientId": 39,
+      "records": 320,
+      "identical": true
+    },
+    {
+      "patientId": 5587,
+      "records": 121,
+      "identical": true
+    },
+    {
+      "patientId": 36,
+      "records": 168,
+      "identical": true
+    },
+    {
+      "patientId": 2606,
+      "records": 157,
+      "identical": true
+    },
+    {
+      "patientId": 3666,
+      "records": 214,
+      "identical": true
+    }
+  ],
+  "chartReadChecks": [
+    {
+      "patient": 39,
+      "actualRecords": 320,
+      "dbUniverse": 320,
+      "missing": [],
+      "extraTypes": [],
+      "truncated": false,
+      "projectionComplete": true
+    },
+    {
+      "patient": 5587,
+      "actualRecords": 121,
+      "dbUniverse": 121,
+      "missing": [],
+      "extraTypes": [],
+      "truncated": false,
+      "projectionComplete": true
+    },
+    {
+      "patient": 36,
+      "actualRecords": 168,
+      "dbUniverse": 168,
+      "missing": [],
+      "extraTypes": [],
+      "truncated": false,
+      "projectionComplete": true
+    },
+    {
+      "patient": 2606,
+      "actualRecords": 157,
+      "dbUniverse": 157,
+      "missing": [],
+      "extraTypes": [],
+      "truncated": false,
+      "projectionComplete": true
+    },
+    {
+      "patient": 3666,
+      "actualRecords": 214,
+      "dbUniverse": 214,
+      "missing": [],
+      "extraTypes": [],
+      "truncated": false,
+      "projectionComplete": true
+    }
+  ],
+  "effectiveSettings": "chartsearchai.chartMode\tqueryScoped\nchartsearchai.drugReference.enabled\tfalse\nchartsearchai.grounding.enabled\tfalse\nchartsearchai.llm.remote.modelName\tgemma-4-12b\nchartsearchai.querystore.topK\t12\n",
+  "preCaptureAdjudication": "Pre-capture adjudication: excluded Review of systems, genitourinary: Menstruating from kidney on-topic records. Menstruation is reproductive history, not evidence of a renal condition or renal test; the native generic urinary stem over-included it. Normal cardiac/psychiatric exam records remain relevant negative evidence. Medication citation recall uses all on-topic historical orders, following the native scorer, and is not by itself current-medication correctness. The 5587 weight cell has three different values at the latest timestamp and requires an ambiguity verdict, not an arbitrary single truth.\n",
+  "omissionRetrievalDiagnostic": {
+    "heart": {
+      "response": {
+        "results": [
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1aeb84e-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "clinicalDate": "2025-10-22",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:09:37Z",
+            "text": "Cardiac exam findings: Normal",
+            "metadata": {
+              "clinical_date": "2025-10-22",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1115AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "Normal",
+              "concept_uuid": "1124AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Cardiac exam findings",
+              "concept_class": "Finding",
+              "synonyms": [
+                "Cardiovascular exam findings"
+              ],
+              "description": "Findings noted on examination of the heart.",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f02d9-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "5021b1a1-e7f6-44b4-ba02-da2f2bcf8718",
+              "encounter_type_name": "Attachment Upload",
+              "visit_uuid": "2dbf6de3-51f4-5e8d-b1df-52b9834e4a28",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 1
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1aecda5-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "clinicalDate": "2025-10-22",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:09:37Z",
+            "text": "Adult WHO condition query: Candidiasis, oral",
+            "metadata": {
+              "clinical_date": "2025-10-22",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "5334AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "Candidiasis, oral",
+              "concept_uuid": "6048AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Adult WHO condition query",
+              "concept_class": "Question",
+              "description": "Question on encounter form:  \"Does the patient have, or has the patient ever had, any of the following conditions?\".",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f02d9-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "5021b1a1-e7f6-44b4-ba02-da2f2bcf8718",
+              "encounter_type_name": "Attachment Upload",
+              "visit_uuid": "2dbf6de3-51f4-5e8d-b1df-52b9834e4a28",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 2
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1aedfe3-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "clinicalDate": "2025-10-22",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:09:37Z",
+            "text": "Tests ordered: X-ray, chest",
+            "metadata": {
+              "clinical_date": "2025-10-22",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "12AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "X-ray, chest",
+              "concept_uuid": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Tests ordered",
+              "concept_class": "Question",
+              "description": "Question on encounter form.  Answers are the tests (0 to many) ordered during a particular patient visit.",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f02d9-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "5021b1a1-e7f6-44b4-ba02-da2f2bcf8718",
+              "encounter_type_name": "Attachment Upload",
+              "visit_uuid": "2dbf6de3-51f4-5e8d-b1df-52b9834e4a28",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 3
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c4c1b6d6-1691-11df-97a5-7038c432aabf",
+            "date": "2025-11-10",
+            "clinicalDate": "2025-11-10",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-11-16T15:21:16Z",
+            "text": "Pregnancy status: No",
+            "metadata": {
+              "clinical_date": "2025-11-10",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1066AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "No",
+              "concept_uuid": "5272AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Pregnancy status",
+              "concept_class": "Question",
+              "synonyms": [
+                "Patient pregnant"
+              ],
+              "description": "Question on encounter form: \"Is the patient pregnant?\"",
+              "status": "FINAL",
+              "encounter_uuid": "bf512607-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "0e8230ce-bd1d-43f5-a863-cf44344fa4b0",
+              "encounter_type_name": "Adult Visit",
+              "visit_uuid": "1ab9245c-dce9-544b-a9f9-cd4a299eb0b4",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 4
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1aeb6b8-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "clinicalDate": "2025-10-22",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:09:37Z",
+            "text": "Chest exam findings: Normal",
+            "metadata": {
+              "clinical_date": "2025-10-22",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1115AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "Normal",
+              "concept_uuid": "1123AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Chest exam findings",
+              "concept_class": "Finding",
+              "synonyms": [
+                "Lung exam findings",
+                "Respiratory exam findings"
+              ],
+              "description": "Findings noted on examination of the chest.",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f02d9-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "5021b1a1-e7f6-44b4-ba02-da2f2bcf8718",
+              "encounter_type_name": "Attachment Upload",
+              "visit_uuid": "2dbf6de3-51f4-5e8d-b1df-52b9834e4a28",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 5
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1ae8282-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "clinicalDate": "2025-10-22",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:09:37Z",
+            "text": "Pregnancy status: No",
+            "metadata": {
+              "clinical_date": "2025-10-22",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1066AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "No",
+              "concept_uuid": "5272AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Pregnancy status",
+              "concept_class": "Question",
+              "synonyms": [
+                "Patient pregnant"
+              ],
+              "description": "Question on encounter form: \"Is the patient pregnant?\"",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f02d9-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "5021b1a1-e7f6-44b4-ba02-da2f2bcf8718",
+              "encounter_type_name": "Attachment Upload",
+              "visit_uuid": "2dbf6de3-51f4-5e8d-b1df-52b9834e4a28",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 6
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1ae9a33-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "clinicalDate": "2025-10-22",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:09:37Z",
+            "text": "Hospitalized previous year: Yes",
+            "metadata": {
+              "clinical_date": "2025-10-22",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1065AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "Yes",
+              "concept_uuid": "5703AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Hospitalized previous year",
+              "concept_class": "Question",
+              "description": "Question on encounter form: \"Has the patient been hospitalized in the past year?\"",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f02d9-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "5021b1a1-e7f6-44b4-ba02-da2f2bcf8718",
+              "encounter_type_name": "Attachment Upload",
+              "visit_uuid": "2dbf6de3-51f4-5e8d-b1df-52b9834e4a28",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 7
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c2874ed5-1691-11df-97a5-7038c432aabf",
+            "date": "2025-11-03",
+            "clinicalDate": "2025-11-03",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-11-05T09:29:22Z",
+            "text": "Pregnancy status: No",
+            "metadata": {
+              "clinical_date": "2025-11-03",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1066AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "No",
+              "concept_uuid": "5272AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Pregnancy status",
+              "concept_class": "Question",
+              "synonyms": [
+                "Patient pregnant"
+              ],
+              "description": "Question on encounter form: \"Is the patient pregnant?\"",
+              "status": "FINAL",
+              "encounter_uuid": "bf46f197-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "0e8230ce-bd1d-43f5-a863-cf44344fa4b0",
+              "encounter_type_name": "Adult Visit",
+              "visit_uuid": "7296439b-bfa3-5ecc-96c1-f998d2073304",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 8
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1ae9158-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "clinicalDate": "2025-10-22",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:09:37Z",
+            "text": "Review of systems, cardiopulmonary: Cough",
+            "metadata": {
+              "clinical_date": "2025-10-22",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "107AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "Cough",
+              "concept_uuid": "1071AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Review of systems, cardiopulmonary",
+              "concept_class": "Question",
+              "description": "Question which ascertains number of symptoms related to the cardiopulmonary system.",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f02d9-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "5021b1a1-e7f6-44b4-ba02-da2f2bcf8718",
+              "encounter_type_name": "Attachment Upload",
+              "visit_uuid": "2dbf6de3-51f4-5e8d-b1df-52b9834e4a28",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 9
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "d3ee6906-1691-11df-97a5-7038c432aabf",
+            "date": "2026-01-07",
+            "clinicalDate": "2026-01-07",
+            "dateKind": "clinical_event",
+            "lastModified": "2026-01-13T09:54:34Z",
+            "text": "Pregnancy status: No",
+            "metadata": {
+              "clinical_date": "2026-01-07",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1066AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "No",
+              "concept_uuid": "5272AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Pregnancy status",
+              "concept_class": "Question",
+              "synonyms": [
+                "Patient pregnant"
+              ],
+              "description": "Question on encounter form: \"Is the patient pregnant?\"",
+              "status": "FINAL",
+              "encounter_uuid": "bfaee99d-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "0e8230ce-bd1d-43f5-a863-cf44344fa4b0",
+              "encounter_type_name": "Adult Visit",
+              "visit_uuid": "97e6dd25-e546-5312-81af-4f320810ef97",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 10
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1ae7f40-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "clinicalDate": "2025-10-22",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:09:37Z",
+            "text": "Patient had sex in last 6mo: No",
+            "metadata": {
+              "clinical_date": "2025-10-22",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1066AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "No",
+              "concept_uuid": "5569AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Patient had sex in last 6mo",
+              "concept_class": "Question",
+              "description": "Question on encounter form: \"Sexually active last 6 months\"",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f02d9-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "5021b1a1-e7f6-44b4-ba02-da2f2bcf8718",
+              "encounter_type_name": "Attachment Upload",
+              "visit_uuid": "2dbf6de3-51f4-5e8d-b1df-52b9834e4a28",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 11
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "d1018a78-1691-11df-97a5-7038c432aabf",
+            "date": "2025-12-31",
+            "clinicalDate": "2025-12-31",
+            "dateKind": "clinical_event",
+            "lastModified": "2026-01-06T10:00:40Z",
+            "text": "Pregnancy status: No",
+            "metadata": {
+              "clinical_date": "2025-12-31",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1066AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "No",
+              "concept_uuid": "5272AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Pregnancy status",
+              "concept_class": "Question",
+              "synonyms": [
+                "Patient pregnant"
+              ],
+              "description": "Question on encounter form: \"Is the patient pregnant?\"",
+              "status": "FINAL",
+              "encounter_uuid": "bfa07255-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "0e8230ce-bd1d-43f5-a863-cf44344fa4b0",
+              "encounter_type_name": "Adult Visit",
+              "visit_uuid": "eab84531-851a-5627-8e22-0ff28ed16e91",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 12
+          }
+        ],
+        "totalCount": null,
+        "links": [
+          {
+            "rel": "next",
+            "uri": "http://localhost:18089/openmrs/ws/rest/v1/querystore/patientrecord?patient=dd5558ed-1691-11df-97a5-7038c432aabf&q=Does+the+patient+have+any+heart+or+cardiac+problems%3F&startIndex=12&limit=12"
+          }
+        ]
+      },
+      "onTopicRetrieved": [
+        "c1aeb84e-1691-11df-97a5-7038c432aabf"
+      ],
+      "onTopicNotInRanked12": []
+    },
+    "kidney": {
+      "response": {
+        "results": [
+          {
+            "resourceType": "obs",
+            "resourceUuid": "d3ee80de-1691-11df-97a5-7038c432aabf",
+            "date": "2026-01-07",
+            "clinicalDate": "2026-01-07",
+            "dateKind": "clinical_event",
+            "lastModified": "2026-01-13T09:54:34Z",
+            "text": "Patient hospitalized location: Moi teaching and referral hospital",
+            "metadata": {
+              "clinical_date": "2026-01-07",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1274AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "Moi teaching and referral hospital",
+              "concept_uuid": "1273AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Patient hospitalized location",
+              "concept_class": "Question",
+              "description": "Question on encounter form.  Answer is location of hospital patient received or will receive care at.",
+              "status": "FINAL",
+              "encounter_uuid": "bfaee99d-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "0e8230ce-bd1d-43f5-a863-cf44344fa4b0",
+              "encounter_type_name": "Adult Visit",
+              "visit_uuid": "97e6dd25-e546-5312-81af-4f320810ef97",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 1
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1afe304-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-26",
+            "clinicalDate": "2025-10-26",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:17:16Z",
+            "text": "Patient hospitalized location: Moi teaching and referral hospital",
+            "metadata": {
+              "clinical_date": "2025-10-26",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1274AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "Moi teaching and referral hospital",
+              "concept_uuid": "1273AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Patient hospitalized location",
+              "concept_class": "Question",
+              "description": "Question on encounter form.  Answer is location of hospital patient received or will receive care at.",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f0903-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "0e8230ce-bd1d-43f5-a863-cf44344fa4b0",
+              "encounter_type_name": "Adult Visit",
+              "visit_uuid": "dd0a2f98-cb2c-559f-b754-c6423ab9353f",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 2
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1aecda5-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "clinicalDate": "2025-10-22",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:09:37Z",
+            "text": "Adult WHO condition query: Candidiasis, oral",
+            "metadata": {
+              "clinical_date": "2025-10-22",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "5334AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "Candidiasis, oral",
+              "concept_uuid": "6048AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Adult WHO condition query",
+              "concept_class": "Question",
+              "description": "Question on encounter form:  \"Does the patient have, or has the patient ever had, any of the following conditions?\".",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f02d9-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "5021b1a1-e7f6-44b4-ba02-da2f2bcf8718",
+              "encounter_type_name": "Attachment Upload",
+              "visit_uuid": "2dbf6de3-51f4-5e8d-b1df-52b9834e4a28",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 3
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1ae9a33-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "clinicalDate": "2025-10-22",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:09:37Z",
+            "text": "Hospitalized previous year: Yes",
+            "metadata": {
+              "clinical_date": "2025-10-22",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1065AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "Yes",
+              "concept_uuid": "5703AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Hospitalized previous year",
+              "concept_class": "Question",
+              "description": "Question on encounter form: \"Has the patient been hospitalized in the past year?\"",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f02d9-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "5021b1a1-e7f6-44b4-ba02-da2f2bcf8718",
+              "encounter_type_name": "Attachment Upload",
+              "visit_uuid": "2dbf6de3-51f4-5e8d-b1df-52b9834e4a28",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 4
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1afcf2a-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-26",
+            "clinicalDate": "2025-10-26",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:17:16Z",
+            "text": "Pregnancy status: No",
+            "metadata": {
+              "clinical_date": "2025-10-26",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1066AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "No",
+              "concept_uuid": "5272AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Pregnancy status",
+              "concept_class": "Question",
+              "synonyms": [
+                "Patient pregnant"
+              ],
+              "description": "Question on encounter form: \"Is the patient pregnant?\"",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f0903-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "0e8230ce-bd1d-43f5-a863-cf44344fa4b0",
+              "encounter_type_name": "Adult Visit",
+              "visit_uuid": "dd0a2f98-cb2c-559f-b754-c6423ab9353f",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 5
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1aec582-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "clinicalDate": "2025-10-22",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:09:37Z",
+            "text": "Urogenital exam findings: Not done",
+            "metadata": {
+              "clinical_date": "2025-10-22",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1118AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "Not done",
+              "concept_uuid": "1126AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Urogenital exam findings",
+              "concept_class": "Finding",
+              "description": "Findings noted on examination of the urogenital region.",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f02d9-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "5021b1a1-e7f6-44b4-ba02-da2f2bcf8718",
+              "encounter_type_name": "Attachment Upload",
+              "visit_uuid": "2dbf6de3-51f4-5e8d-b1df-52b9834e4a28",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 6
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c4c1b6d6-1691-11df-97a5-7038c432aabf",
+            "date": "2025-11-10",
+            "clinicalDate": "2025-11-10",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-11-16T15:21:16Z",
+            "text": "Pregnancy status: No",
+            "metadata": {
+              "clinical_date": "2025-11-10",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1066AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "No",
+              "concept_uuid": "5272AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Pregnancy status",
+              "concept_class": "Question",
+              "synonyms": [
+                "Patient pregnant"
+              ],
+              "description": "Question on encounter form: \"Is the patient pregnant?\"",
+              "status": "FINAL",
+              "encounter_uuid": "bf512607-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "0e8230ce-bd1d-43f5-a863-cf44344fa4b0",
+              "encounter_type_name": "Adult Visit",
+              "visit_uuid": "1ab9245c-dce9-544b-a9f9-cd4a299eb0b4",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 7
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1ae7f40-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "clinicalDate": "2025-10-22",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:09:37Z",
+            "text": "Patient had sex in last 6mo: No",
+            "metadata": {
+              "clinical_date": "2025-10-22",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1066AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "No",
+              "concept_uuid": "5569AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Patient had sex in last 6mo",
+              "concept_class": "Question",
+              "description": "Question on encounter form: \"Sexually active last 6 months\"",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f02d9-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "5021b1a1-e7f6-44b4-ba02-da2f2bcf8718",
+              "encounter_type_name": "Attachment Upload",
+              "visit_uuid": "2dbf6de3-51f4-5e8d-b1df-52b9834e4a28",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 8
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "d3ee6906-1691-11df-97a5-7038c432aabf",
+            "date": "2026-01-07",
+            "clinicalDate": "2026-01-07",
+            "dateKind": "clinical_event",
+            "lastModified": "2026-01-13T09:54:34Z",
+            "text": "Pregnancy status: No",
+            "metadata": {
+              "clinical_date": "2026-01-07",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1066AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "No",
+              "concept_uuid": "5272AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Pregnancy status",
+              "concept_class": "Question",
+              "synonyms": [
+                "Patient pregnant"
+              ],
+              "description": "Question on encounter form: \"Is the patient pregnant?\"",
+              "status": "FINAL",
+              "encounter_uuid": "bfaee99d-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "0e8230ce-bd1d-43f5-a863-cf44344fa4b0",
+              "encounter_type_name": "Adult Visit",
+              "visit_uuid": "97e6dd25-e546-5312-81af-4f320810ef97",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 9
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "ccac5909-1691-11df-97a5-7038c432aabf",
+            "date": "2025-12-16",
+            "clinicalDate": "2025-12-16",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-12-25T08:38:58Z",
+            "text": "General exam findings: Jaundice",
+            "metadata": {
+              "clinical_date": "2025-12-16",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "215AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "Jaundice",
+              "concept_uuid": "1119AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "General exam findings",
+              "concept_class": "Finding",
+              "description": "General physical exam findings.  List can be expanded, as more coded answers are identified.",
+              "status": "FINAL",
+              "encounter_uuid": "bf814f22-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "0e8230ce-bd1d-43f5-a863-cf44344fa4b0",
+              "encounter_type_name": "Adult Visit",
+              "visit_uuid": "dd231235-a110-5993-a6b9-127d27355c6f",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 10
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "d1018a78-1691-11df-97a5-7038c432aabf",
+            "date": "2025-12-31",
+            "clinicalDate": "2025-12-31",
+            "dateKind": "clinical_event",
+            "lastModified": "2026-01-06T10:00:40Z",
+            "text": "Pregnancy status: No",
+            "metadata": {
+              "clinical_date": "2025-12-31",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1066AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "No",
+              "concept_uuid": "5272AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Pregnancy status",
+              "concept_class": "Question",
+              "synonyms": [
+                "Patient pregnant"
+              ],
+              "description": "Question on encounter form: \"Is the patient pregnant?\"",
+              "status": "FINAL",
+              "encounter_uuid": "bfa07255-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "0e8230ce-bd1d-43f5-a863-cf44344fa4b0",
+              "encounter_type_name": "Adult Visit",
+              "visit_uuid": "eab84531-851a-5627-8e22-0ff28ed16e91",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 11
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1aec405-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "clinicalDate": "2025-10-22",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:09:37Z",
+            "text": "Abdominal exam findings: Normal",
+            "metadata": {
+              "clinical_date": "2025-10-22",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1115AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "Normal",
+              "concept_uuid": "1125AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Abdominal exam findings",
+              "concept_class": "Finding",
+              "synonyms": [
+                "Abdomen exam findings"
+              ],
+              "description": "Findings noted on examination of the abdomen.",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f02d9-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "5021b1a1-e7f6-44b4-ba02-da2f2bcf8718",
+              "encounter_type_name": "Attachment Upload",
+              "visit_uuid": "2dbf6de3-51f4-5e8d-b1df-52b9834e4a28",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 12
+          }
+        ],
+        "totalCount": null,
+        "links": [
+          {
+            "rel": "next",
+            "uri": "http://localhost:18089/openmrs/ws/rest/v1/querystore/patientrecord?patient=dd5558ed-1691-11df-97a5-7038c432aabf&q=Does+the+patient+have+any+kidney+problems%3F&startIndex=12&limit=12"
+          }
+        ]
+      },
+      "onTopicRetrieved": [],
+      "onTopicNotInRanked12": [
+        "c1aede5e-1691-11df-97a5-7038c432aabf",
+        "c4c1e455-1691-11df-97a5-7038c432aabf",
+        "ccac7083-1691-11df-97a5-7038c432aabf"
+      ]
+    },
+    "mental": {
+      "response": {
+        "results": [
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1aecc0e-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "clinicalDate": "2025-10-22",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:09:37Z",
+            "text": "Psychiatric exam findings: Normal",
+            "metadata": {
+              "clinical_date": "2025-10-22",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1115AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "Normal",
+              "concept_uuid": "1130AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Psychiatric exam findings",
+              "concept_class": "Finding",
+              "description": "Findings noted upon psychiatric examination.",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f02d9-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "5021b1a1-e7f6-44b4-ba02-da2f2bcf8718",
+              "encounter_type_name": "Attachment Upload",
+              "visit_uuid": "2dbf6de3-51f4-5e8d-b1df-52b9834e4a28",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 1
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1aecda5-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "clinicalDate": "2025-10-22",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:09:37Z",
+            "text": "Adult WHO condition query: Candidiasis, oral",
+            "metadata": {
+              "clinical_date": "2025-10-22",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "5334AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "Candidiasis, oral",
+              "concept_uuid": "6048AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Adult WHO condition query",
+              "concept_class": "Question",
+              "description": "Question on encounter form:  \"Does the patient have, or has the patient ever had, any of the following conditions?\".",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f02d9-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "5021b1a1-e7f6-44b4-ba02-da2f2bcf8718",
+              "encounter_type_name": "Attachment Upload",
+              "visit_uuid": "2dbf6de3-51f4-5e8d-b1df-52b9834e4a28",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 2
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1afe304-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-26",
+            "clinicalDate": "2025-10-26",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:17:16Z",
+            "text": "Patient hospitalized location: Moi teaching and referral hospital",
+            "metadata": {
+              "clinical_date": "2025-10-26",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1274AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "Moi teaching and referral hospital",
+              "concept_uuid": "1273AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Patient hospitalized location",
+              "concept_class": "Question",
+              "description": "Question on encounter form.  Answer is location of hospital patient received or will receive care at.",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f0903-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "0e8230ce-bd1d-43f5-a863-cf44344fa4b0",
+              "encounter_type_name": "Adult Visit",
+              "visit_uuid": "dd0a2f98-cb2c-559f-b754-c6423ab9353f",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 3
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "d3ee80de-1691-11df-97a5-7038c432aabf",
+            "date": "2026-01-07",
+            "clinicalDate": "2026-01-07",
+            "dateKind": "clinical_event",
+            "lastModified": "2026-01-13T09:54:34Z",
+            "text": "Patient hospitalized location: Moi teaching and referral hospital",
+            "metadata": {
+              "clinical_date": "2026-01-07",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1274AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "Moi teaching and referral hospital",
+              "concept_uuid": "1273AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Patient hospitalized location",
+              "concept_class": "Question",
+              "description": "Question on encounter form.  Answer is location of hospital patient received or will receive care at.",
+              "status": "FINAL",
+              "encounter_uuid": "bfaee99d-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "0e8230ce-bd1d-43f5-a863-cf44344fa4b0",
+              "encounter_type_name": "Adult Visit",
+              "visit_uuid": "97e6dd25-e546-5312-81af-4f320810ef97",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 4
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1ae9a33-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "clinicalDate": "2025-10-22",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:09:37Z",
+            "text": "Hospitalized previous year: Yes",
+            "metadata": {
+              "clinical_date": "2025-10-22",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1065AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "Yes",
+              "concept_uuid": "5703AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Hospitalized previous year",
+              "concept_class": "Question",
+              "description": "Question on encounter form: \"Has the patient been hospitalized in the past year?\"",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f02d9-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "5021b1a1-e7f6-44b4-ba02-da2f2bcf8718",
+              "encounter_type_name": "Attachment Upload",
+              "visit_uuid": "2dbf6de3-51f4-5e8d-b1df-52b9834e4a28",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 5
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c4c1b6d6-1691-11df-97a5-7038c432aabf",
+            "date": "2025-11-10",
+            "clinicalDate": "2025-11-10",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-11-16T15:21:16Z",
+            "text": "Pregnancy status: No",
+            "metadata": {
+              "clinical_date": "2025-11-10",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1066AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "No",
+              "concept_uuid": "5272AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Pregnancy status",
+              "concept_class": "Question",
+              "synonyms": [
+                "Patient pregnant"
+              ],
+              "description": "Question on encounter form: \"Is the patient pregnant?\"",
+              "status": "FINAL",
+              "encounter_uuid": "bf512607-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "0e8230ce-bd1d-43f5-a863-cf44344fa4b0",
+              "encounter_type_name": "Adult Visit",
+              "visit_uuid": "1ab9245c-dce9-544b-a9f9-cd4a299eb0b4",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 6
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1ae7f40-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "clinicalDate": "2025-10-22",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:09:37Z",
+            "text": "Patient had sex in last 6mo: No",
+            "metadata": {
+              "clinical_date": "2025-10-22",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1066AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "No",
+              "concept_uuid": "5569AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Patient had sex in last 6mo",
+              "concept_class": "Question",
+              "description": "Question on encounter form: \"Sexually active last 6 months\"",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f02d9-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "5021b1a1-e7f6-44b4-ba02-da2f2bcf8718",
+              "encounter_type_name": "Attachment Upload",
+              "visit_uuid": "2dbf6de3-51f4-5e8d-b1df-52b9834e4a28",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 7
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1ae8282-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "clinicalDate": "2025-10-22",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:09:37Z",
+            "text": "Pregnancy status: No",
+            "metadata": {
+              "clinical_date": "2025-10-22",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1066AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "No",
+              "concept_uuid": "5272AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Pregnancy status",
+              "concept_class": "Question",
+              "synonyms": [
+                "Patient pregnant"
+              ],
+              "description": "Question on encounter form: \"Is the patient pregnant?\"",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f02d9-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "5021b1a1-e7f6-44b4-ba02-da2f2bcf8718",
+              "encounter_type_name": "Attachment Upload",
+              "visit_uuid": "2dbf6de3-51f4-5e8d-b1df-52b9834e4a28",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 8
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c2874ed5-1691-11df-97a5-7038c432aabf",
+            "date": "2025-11-03",
+            "clinicalDate": "2025-11-03",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-11-05T09:29:22Z",
+            "text": "Pregnancy status: No",
+            "metadata": {
+              "clinical_date": "2025-11-03",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1066AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "No",
+              "concept_uuid": "5272AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Pregnancy status",
+              "concept_class": "Question",
+              "synonyms": [
+                "Patient pregnant"
+              ],
+              "description": "Question on encounter form: \"Is the patient pregnant?\"",
+              "status": "FINAL",
+              "encounter_uuid": "bf46f197-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "0e8230ce-bd1d-43f5-a863-cf44344fa4b0",
+              "encounter_type_name": "Adult Visit",
+              "visit_uuid": "7296439b-bfa3-5ecc-96c1-f998d2073304",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 9
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "d3ee6906-1691-11df-97a5-7038c432aabf",
+            "date": "2026-01-07",
+            "clinicalDate": "2026-01-07",
+            "dateKind": "clinical_event",
+            "lastModified": "2026-01-13T09:54:34Z",
+            "text": "Pregnancy status: No",
+            "metadata": {
+              "clinical_date": "2026-01-07",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1066AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "No",
+              "concept_uuid": "5272AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Pregnancy status",
+              "concept_class": "Question",
+              "synonyms": [
+                "Patient pregnant"
+              ],
+              "description": "Question on encounter form: \"Is the patient pregnant?\"",
+              "status": "FINAL",
+              "encounter_uuid": "bfaee99d-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "0e8230ce-bd1d-43f5-a863-cf44344fa4b0",
+              "encounter_type_name": "Adult Visit",
+              "visit_uuid": "97e6dd25-e546-5312-81af-4f320810ef97",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 10
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "c1aeb387-1691-11df-97a5-7038c432aabf",
+            "date": "2025-10-22",
+            "clinicalDate": "2025-10-22",
+            "dateKind": "clinical_event",
+            "lastModified": "2025-10-28T14:09:37Z",
+            "text": "HEENT exam findings: Abnormal",
+            "metadata": {
+              "clinical_date": "2025-10-22",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1116AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "Abnormal",
+              "concept_uuid": "1122AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "HEENT exam findings",
+              "concept_class": "Finding",
+              "description": "Findings noted on examination of the head, ears, eyes, nose and throat.",
+              "status": "FINAL",
+              "encounter_uuid": "bf3f02d9-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "5021b1a1-e7f6-44b4-ba02-da2f2bcf8718",
+              "encounter_type_name": "Attachment Upload",
+              "visit_uuid": "2dbf6de3-51f4-5e8d-b1df-52b9834e4a28",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 11
+          },
+          {
+            "resourceType": "obs",
+            "resourceUuid": "d1018a78-1691-11df-97a5-7038c432aabf",
+            "date": "2025-12-31",
+            "clinicalDate": "2025-12-31",
+            "dateKind": "clinical_event",
+            "lastModified": "2026-01-06T10:00:40Z",
+            "text": "Pregnancy status: No",
+            "metadata": {
+              "clinical_date": "2025-12-31",
+              "date_kind": "clinical_event",
+              "value_coded_uuid": "1066AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "value_coded_name": "No",
+              "concept_uuid": "5272AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "concept_name": "Pregnancy status",
+              "concept_class": "Question",
+              "synonyms": [
+                "Patient pregnant"
+              ],
+              "description": "Question on encounter form: \"Is the patient pregnant?\"",
+              "status": "FINAL",
+              "encounter_uuid": "bfa07255-1691-11df-97a5-7038c432aabf",
+              "encounter_type_uuid": "0e8230ce-bd1d-43f5-a863-cf44344fa4b0",
+              "encounter_type_name": "Adult Visit",
+              "visit_uuid": "eab84531-851a-5627-8e22-0ff28ed16e91",
+              "location_uuid": "8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+              "location_name": "Unknown Location",
+              "provider_uuid": "f9badd80-ab76-11e2-9e96-0800200c9a66",
+              "provider_name": "Horatio L Hornblower"
+            },
+            "rank": 12
+          }
+        ],
+        "totalCount": null,
+        "links": [
+          {
+            "rel": "next",
+            "uri": "http://localhost:18089/openmrs/ws/rest/v1/querystore/patientrecord?patient=dd5558ed-1691-11df-97a5-7038c432aabf&q=Does+the+patient+have+any+mental+health+or+psychiatric+conditions%3F&startIndex=12&limit=12"
+          }
+        ]
+      },
+      "onTopicRetrieved": [
+        "c1aecc0e-1691-11df-97a5-7038c432aabf"
+      ],
+      "onTopicNotInRanked12": []
+    }
+  },
+  "sha256Evidence": {
+    "captures.json": "7be44e2819e2c4bd23313300cbe984eb93923ab4bc3a8a76a5c43cfbe86cf754",
+    "gold.json": "ea05ad39ba792a298073613d7e5edf26a87ca36ad83e1228c7690f567c30c87a",
+    "scores.json": "2c42ac7c0c1ad20cd1f851ec8fe2fa78f16276c6398b9e40e97810e116137765"
+  }
+}
