@@ -28,7 +28,7 @@ class OperationOwnershipTests(unittest.TestCase):
 
     def test_required_operations_exist_only_in_umbrella(self):
         for name in (
-            "catalyst-mvp.sh", "catalyst-model-router.sh", "chartsearchai-local.sh",
+            "catalyst-mvp.sh", "catalyst-model-router.sh", "chartsearch-research-setup.sh",
             "stack-up.sh", "stack-down.sh", "local-stack-up.sh", "local-stack-down.sh",
             "openmrs-source-pair-test.sh", "artifact-provenance.py", "seed-local.sh",
             "querystore-recreate-index.sh", "validate-preflight.sh",

@@ -92,6 +92,11 @@ overrides; without overrides it uses the local demo login.
 Stop with `make local-stack-down`. Startup retains the loaded data; repeat
 `make chartsearch-research-setup` only when you want to reload the HIV baseline.
 
+These are the only full-environment setup and start/stop commands. Fresh setup
+uses the same startup path. Focused component build/configuration commands remain
+available for development; model warmup, relay probes and evaluations are explicit
+diagnostics, not part of startup.
+
 ## Setup Acceptance
 
 Check only that OpenMRS opens, ChartSearchAI is available on a patient chart,

@@ -29,10 +29,15 @@ direction.
    Our coordination material stays out of OpenMRS repositories and their forks.
    The [documentation audit](reviews/2026-10-02-documentation-audit.md) remains
    dated evidence, not another implementation plan.
-5. Continue Ross's fresh HIV installation and [Catalyst delivery](#6-catalyst-delivery)
-   as separate work. The [setup guide](../environments/README.md) owns environment
-   commands and smoke checks. Model evaluations, demonstrations and broader
-   publication remain separate from contribution review readiness.
+5. Complete Ross's fresh HIV installation through one setup/start/stop path:
+   resolve the Appointments startup failure, remove duplicate launchers and
+   startup-embedded evaluations, and provide full-rebuild and matching cached-index
+   restore options in the same setup command. Use Elasticsearch's native snapshot
+   API plus QueryStore's completion records; do not re-embed unchanged HIV data on
+   a fast fresh setup. Prove both clean-start paths with the real application and
+   retain ordinary restart without reindexing. [Catalyst delivery](#6-catalyst-delivery)
+   remains separate. The [setup guide](../environments/README.md) owns working commands
+   and smoke checks; model evaluations, demonstrations and publication are separate.
 
 The split itself is published. The current task is upstream synchronization,
 review remediation and affected validation, not another extraction or redesign.
@@ -49,7 +54,7 @@ release/clinical signoffs are not authorized by this remediation task.
 | Validation harness | PRs #197 and #198 are merged; runners use configured targets and supplied/observed provenance; required fields/types are checked without treating caller claims as verified revisions | Verify actual product interfaces separately; fixture isolation is not product acceptance |
 | Website | Sources and publication tooling are umbrella-owned; GitHub Pages is configured for Actions and build/deploy pass; browser inspection confirms the documentation loads | Public landing deployment and product/demo publication remain separate |
 | Specifications | Product behavior, shared delivery and validation protocols have maintained owners; duplicate plans and obsolete lane instructions are removed; companion documentation is merged | Follow the maintained owners; broader content proposals retain their own review |
-| Research setup | [Setup guide](../environments/README.md) and `make chartsearch-research-setup` prepare the fresh HIV baseline, ChartSearchAI and seven accounts using existing tools. Local startup, account logins and the patient-chart browser smoke passed on 3 October 2026 | PR review and Ross's fresh install. Account-context enhancements and broader evaluation remain follow-up, not setup gates. |
+| Research setup | [Setup guide](../environments/README.md) owns `make chartsearch-research-setup` and normal start/stop. The earlier local smoke did not prove Ross's fresh install: Appointments fails before indexing and account setup. Duplicate launchers are being removed. | Resolve module startup and prove fresh setup. Integrate native cached-index restore and explicit full rebuild in the same command; the existing raw-volume cache tool is not accepted restore proof. Account-context enhancements and model evaluation remain separate. |
 | Product delivery | Both rebased stacks and owning-PR fixes are published; all frontend builds, backend #583–#586 checks and the umbrella's assembled source checks pass. Backend #587–#590 pass paired-source builds but fail against the unpublished QueryStore API. Three #587 review threads and QueryStore's smaller-PR request remain open | Complete and review context-evaluation evidence; settle QueryStore contribution scope; obtain ordinary dependency compatibility and remove temporary paired CI before upstream merging; retain integration references unchanged |
 
 The phases below cover the component layout and validation interfaces defined in

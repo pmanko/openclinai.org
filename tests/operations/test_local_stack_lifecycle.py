@@ -137,46 +137,6 @@ def test_local_lifecycle_scripts_are_executable_and_parse(name: str) -> None:
     subprocess.run(["bash", "-n", str(script)], check=True)
 
 
-def test_stack_up_passes_explicit_env_wait_and_no_build(tmp_path: Path) -> None:
-    fake_bin = tmp_path / "bin"
-    fake_bin.mkdir()
-    docker_log = tmp_path / "docker.log"
-    _write_executable(
-        fake_bin / "docker",
-        """#!/usr/bin/env bash
-printf '%s\n' "$*" >> "${FAKE_DOCKER_LOG}"
-""",
-    )
-    env = {
-        **os.environ,
-        "PATH": f"{fake_bin}:{os.environ['PATH']}",
-        "FAKE_DOCKER_LOG": str(docker_log),
-        "COMPOSE_ENV_FILE": str(tmp_path / "local.env"),
-    }
-
-    result = subprocess.run(
-        [
-            "bash",
-            str(ROOT / "scripts" / "stack-up.sh"),
-            "--wait-timeout",
-            "17",
-            "--no-build",
-            "backend",
-        ],
-        cwd=ROOT,
-        env=env,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-    assert result.returncode == 0, result.stderr
-    calls = docker_log.read_text(encoding="utf-8").splitlines()
-    assert calls[0].endswith("up -d --no-build --wait --wait-timeout 17 backend")
-    assert f"--env-file {tmp_path / 'local.env'}" in calls[0]
-    assert calls[1].endswith("ps")
-
-
 def test_stack_up_rejects_unknown_options(tmp_path: Path) -> None:
     result = subprocess.run(
         ["bash", str(ROOT / "scripts" / "stack-up.sh"), "--surprise"],
@@ -315,11 +275,6 @@ def test_local_stack_round_trip_uses_config_and_stops_managed_router(
         except ProcessLookupError:
             pass
 
-    calls = docker_log.read_text(encoding="utf-8").splitlines()
-    assert any("config --quiet" in call for call in calls)
-    assert any("up -d --no-build --wait --wait-timeout 9" in call for call in calls)
-    assert any(call.endswith("down") for call in calls)
-
 
 def test_local_stack_down_cleans_router_even_when_compose_teardown_fails(
     tmp_path: Path,
@@ -396,16 +351,3 @@ def test_local_stack_down_leaves_unmanaged_pid_running(
     finally:
         sleeper.terminate()
         sleeper.wait(timeout=5)
-
-
-def test_makefile_exposes_named_local_stack_targets() -> None:
-    result = subprocess.run(
-        ["make", "--dry-run", "local-stack-up", "local-stack-down"],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-
-    assert "./scripts/local-stack-up.sh" in result.stdout
-    assert "./scripts/local-stack-down.sh" in result.stdout

@@ -81,7 +81,7 @@ echo "    deployed Querystore provenance recorded"
 
 echo "==> starting the local proxy used by Querystore verification"
 if ! docker inspect "${PROXY}" >/dev/null 2>&1; then
-  echo "ERROR: ${PROXY} does not exist; run 'make chartsearchai-local' once before recreating the index" >&2
+  echo "ERROR: ${PROXY} does not exist; run 'make local-stack-up' before recreating the index" >&2
   exit 1
 fi
 docker start "${PROXY}" >/dev/null

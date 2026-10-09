@@ -14,14 +14,6 @@ def _read(relative: str) -> str:
     return (ROOT / relative).read_text(encoding="utf-8")
 
 
-def test_make_exposes_one_canonical_local_entrypoint():
-    makefile = _read("Makefile")
-
-    assert "chartsearchai-local:" in makefile
-    assert "./scripts/chartsearchai-local.sh" in makefile
-    assert "if m.get('visibility') == 'product'" in makefile
-
-
 def test_local_default_configures_only_the_hub_product_service():
     example = _read(".env.chartsearch.example")
 
@@ -30,18 +22,6 @@ def test_local_default_configures_only_the_hub_product_service():
     assert "CHARTSEARCH_REMOTE_ENDPOINTS" not in example
     assert "LM Studio" not in example
     assert "lmstudio" not in example.lower()
-    assert "CHARTSEARCH_LOCAL_WARM=off" in example
-
-
-def test_local_default_declares_two_router_slots_and_live_residency_proof():
-    example = _read(".env.chartsearch.example")
-    local = _read("scripts/chartsearchai-local.sh")
-    makefile = _read("Makefile")
-
-    assert "LLAMA_ROUTER_MODELS_MAX=2" in example
-    assert 'LLAMA_ROUTER_MODELS_MAX="${LLAMA_ROUTER_MODELS_MAX:-2}"' in local
-    assert "llama-router-small-model-proof:" in makefile
-    assert "verify-small-model-residency.py" in makefile
 
 
 def test_router_launcher_forwards_configured_small_model_limit(tmp_path):
@@ -215,9 +195,6 @@ def test_local_router_daemon_uses_launchd_on_macos(
         assert not (runtime_dir / "router.pid").exists()
     else:
         assert (runtime_dir / "router.pid").read_text(encoding="utf-8") == "123\n"
-    local = _read("scripts/chartsearchai-local.sh")
-    assert "./scripts/llama-router-up.sh --daemon" in local
-    assert "nohup env" not in local
 
 
 def test_local_router_daemon_removes_launchd_job_when_readiness_times_out(tmp_path):
@@ -357,15 +334,6 @@ def test_chartsearch_configure_writes_only_current_hub_properties():
     assert "chartsearchai.llm.remote.endpoints" not in configure
 
 
-def test_querystore_configuration_is_an_explicit_optional_step():
-    configure = _read("scripts/querystore-configure.sh")
-    local = _read("scripts/chartsearchai-local.sh")
-
-    assert 'set_openmrs_property "querystore.embedding.modelFilePath"' in configure
-    assert 'set_openmrs_property "querystore.embedding.vocabFilePath"' in configure
-    assert local.index("querystore-configure.sh") < local.index("chartsearch-configure.sh")
-
-
 def test_router_preset_has_no_developer_specific_or_lm_studio_paths():
     preset = _read("scripts/llama-router.ini")
 
@@ -398,14 +366,11 @@ def test_local_hub_is_loopback_addressable_and_has_no_privileged_defaults():
 def test_local_hub_image_is_labeled_with_the_exact_source_revision():
     dockerfile = _read("targets/med-agent-hub/Dockerfile")
     compose = _read("compose/openmrs-2.8-refapp.yml")
-    local = _read("scripts/chartsearchai-local.sh")
     makefile = _read("Makefile")
 
     assert "ARG HUB_BUILD_REVISION" in dockerfile
     assert "org.opencontainers.image.revision" in dockerfile
     assert "HUB_BUILD_REVISION: ${HUB_BUILD_REVISION" in compose
-    assert 'HUB_BUILD_REVISION="$(git -C targets/med-agent-hub rev-parse HEAD)"' in local
-    assert "export HUB_BUILD_REVISION" in local
     assert "HUB_BUILD_REVISION=$$(git -C targets/med-agent-hub rev-parse HEAD)" in makefile
 
 
@@ -556,24 +521,6 @@ def test_querystore_recreate_is_explicit_and_read_store_scoped():
     )
 
 
-def test_local_startup_keeps_optional_test_warmup_before_relay_proof():
-    script = _read("scripts/chartsearchai-local.sh")
-
-    provision = script.index("provision-querystore-service-account.py")
-    hub_start = script.index("make med-agent-hub-up")
-    configure = script.index("chartsearch-configure.sh")
-    warm = script.index("warm-hub-profile.py")
-    relay_probe = script.index("probe-chartsearchai-relay.py")
-
-    assert provision < hub_start < configure < warm < relay_probe
-    assert "QUERYSTORE_BASE_URL=http://backend:8080/openmrs" in script
-    assert '--patient "${DEFAULT_PATIENT}"' in script
-    assert '--question "${WARM_QUESTION}"' in script
-    assert 'WARM_QUESTION="${CHARTSEARCH_LOCAL_WARM_QUESTION:-' in script
-    assert 'WARM_MODE="${CHARTSEARCH_LOCAL_WARM:-off}"' in script
-    assert 'if [ "${WARM_MODE}" != "off" ]; then' in script
-
-
 def test_demo_warmup_primes_the_real_patient_and_exact_first_question():
     script = _read("scripts/demo-warmup-chartsearchai.sh")
 
@@ -583,12 +530,9 @@ def test_demo_warmup_primes_the_real_patient_and_exact_first_question():
     assert '--question "${QUESTION}"' in script
 
 
-def test_local_startup_proves_the_real_openmrs_relay_and_persistence():
-    script = _read("scripts/chartsearchai-local.sh")
+def test_explicit_probe_checks_openmrs_relay_and_persistence():
     probe = _read("scripts/probe-chartsearchai-relay.py")
 
-    assert "--output artifacts/chartsearchai-local/relay-probe.json" in script
-    assert "--clear-after" in script
     assert 'f"{api}/chat/stream"' in probe
     assert 'f"{api}/chat?' in probe
     assert 'row.get("messageId") == streamed["message_id"]' in probe
@@ -603,138 +547,11 @@ def test_local_startup_proves_the_real_openmrs_relay_and_persistence():
 
 def test_local_builds_require_source_bound_artifact_provenance():
     makefile = _read("Makefile")
-    local = _read("scripts/chartsearchai-local.sh")
     probe = _read("scripts/probe-chartsearchai-relay.py")
 
     assert makefile.count("artifact-provenance.py write") >= 3
     assert "artifacts/chartsearchai-local/module-provenance" in makefile
-    assert 'CHARTSEARCH_OMOD_PROVENANCE="artifacts/chartsearchai-local/module-provenance/chartsearchai-1.0.0-SNAPSHOT.omod.provenance.json"' in local
-    assert 'QUERYSTORE_OMOD_PROVENANCE="artifacts/chartsearchai-local/module-provenance/querystore-1.0.0-SNAPSHOT.omod.provenance.json"' in local
     assert "artifacts/chartsearchai-local/module-provenance" in probe
-    assert "remove_legacy_module_manifests" in local
-    assert "artifact-provenance.py verify" in local
-    assert "DEPLOYED_CHARTSEARCH_PROVENANCE" in local
     assert '"mounted_sha256"' in probe
     assert '"served_files"' in probe
     assert '"import_map_target"' in probe
-
-
-def test_local_start_uses_the_single_available_hub_advertised_default():
-    script = _read("scripts/chartsearchai-local.sh")
-
-    assert "x.get('available') and x.get('default')" in script
-    assert "assert len(defaults) == 1" in script
-    assert "print(defaults[0]['id'])" in script
-    assert 'HUB_PROFILE="$(curl' in script
-
-
-def test_repeat_start_preserves_warm_services_and_refreshes_only_changed_module_caches():
-    script = _read("scripts/chartsearchai-local.sh")
-
-    assert "up -d --build --force-recreate" not in script
-    assert 'if [ "${MODULES_CHANGED}" = "1" ]' in script
-    assert "/openmrs/data/.openmrs-lib-cache/chartsearchai" in script
-    assert "/openmrs/data/.openmrs-lib-cache/querystore" in script
-
-
-def test_explicit_environment_values_override_dotenv_defaults():
-    script = _read("scripts/chartsearchai-local.sh")
-
-    assert 'printenv "${name}" >/dev/null 2>&1 && return' in script
-    assert "CHARTSEARCH_HUB_PROFILE_ID" not in script
-    assert "LLAMA_MODEL_DIR" in script
-    assert "CHARTSEARCH_LOCAL_WARM" in script
-    assert "HUB_TIMEZONE" in script
-
-
-def test_local_start_derives_portable_host_timezone_with_utc_fallback():
-    script = _read("scripts/chartsearchai-local.sh")
-
-    assert "readlink /etc/localtime" in script
-    assert '*/zoneinfo/*' in script
-    assert 'HUB_TIMEZONE="UTC"' in script
-    assert "export HUB_TIMEZONE" in script
-
-
-def test_existing_router_is_checked_before_local_binary_and_model_requirements():
-    script = _read("scripts/chartsearchai-local.sh")
-
-    router_probe = script.index("ROUTER_REACHABLE=0")
-    binary_requirement = script.index("require_command llama-server")
-    assert router_probe < binary_requirement
-
-
-def test_check_reuses_existing_router_without_selecting_a_profile(tmp_path):
-    fake_bin = tmp_path / "bin"
-    fake_bin.mkdir()
-    for name in ("curl", "docker", "python3", "git"):
-        command = fake_bin / name
-        command.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
-        command.chmod(0o755)
-    env = {
-        **os.environ,
-        "PATH": f"{fake_bin}:/usr/bin:/bin",
-        "LLAMA_MODEL_DIR": "/definitely/not/a/model/directory",
-        "CHARTSEARCH_LOCAL_BUILD": "never",
-    }
-
-    result = subprocess.run(
-        ["bash", str(ROOT / "scripts/chartsearchai-local.sh"), "--check"],
-        cwd=ROOT,
-        env=env,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-    assert result.returncode == 0, result.stderr
-    assert "router: existing" in result.stdout
-    assert "selected profile" not in result.stdout
-
-
-def test_local_preflight_checks_artifact_specific_build_tools():
-    script = _read("scripts/chartsearchai-local.sh")
-
-    assert "artifact_needs_build" in script
-    for command in ("make", "mvn", "node", "yarn", "rsync"):
-        assert f"require_command {command}" in script
-    assert script.index("require_command mvn") < script.index('"${COMPOSE[@]}" config --quiet')
-    assert script.index("require_command yarn") < script.index('"${COMPOSE[@]}" config --quiet')
-
-
-def test_external_patient_source_uses_its_configured_verification_url():
-    script = _read("scripts/chartsearchai-local.sh")
-
-    assert 'SOURCE_VERIFY_BASE_URL="${QUERYSTORE_VERIFY_BASE_URL:-${QUERYSTORE_BASE_URL}}"' in script
-    assert '"${SOURCE_VERIFY_BASE_URL%/}/ws/rest/v1/querystore/patientrecord' in script
-
-
-def test_local_start_requires_stable_repeated_patient_source_reads():
-    script = _read("scripts/chartsearchai-local.sh")
-
-    assert 'SOURCE_FIRST="$(curl' in script
-    assert 'SOURCE_SECOND="$(curl' in script
-    assert script.count("patientrecord?patient=${DEFAULT_PATIENT}&limit=1") == 2
-    assert 'first["totalCount"] == second["totalCount"]' in script
-    assert 'first["results"] == second["results"]' in script
-    assert 'snapshotId' not in script
-
-
-def test_module_freshness_includes_nested_maven_build_files():
-    script = _read("scripts/chartsearchai-local.sh")
-
-    assert "targets/chartsearchai/api/pom.xml targets/chartsearchai/omod/pom.xml" in script
-    assert "targets/querystore/api/pom.xml targets/querystore/omod/pom.xml" in script
-
-
-def test_local_shell_entrypoint_is_syntactically_valid():
-    script = ROOT / "scripts/chartsearchai-local.sh"
-
-    result = subprocess.run(
-        ["bash", "-n", str(script)],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-    assert result.returncode == 0, result.stderr

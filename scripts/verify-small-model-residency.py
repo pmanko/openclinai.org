@@ -128,7 +128,7 @@ def verify_residency(
         "router_url": normalized_url,
         "configured_default_models_max": configured_max,
         "proof_scope": {
-            "configured_default": "fresh chartsearchai-local launch",
+            "configured_default": "local-stack-up defaults",
             "observed_runtime": (
                 "co-residency; an existing compatible router may have a larger limit"
             ),
@@ -147,8 +147,8 @@ def verify_residency(
                 "sha256": _sha256(ROOT / "scripts/llama-router-up.sh"),
             },
             "local_launcher": {
-                "path": "scripts/chartsearchai-local.sh",
-                "sha256": _sha256(ROOT / "scripts/chartsearchai-local.sh"),
+                "path": "scripts/local-stack-up.sh",
+                "sha256": _sha256(ROOT / "scripts/local-stack-up.sh"),
             },
             "local_defaults": {
                 "path": ".env.chartsearch.example",
