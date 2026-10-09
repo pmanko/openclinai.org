@@ -184,6 +184,15 @@ if ! "${ROOT}/scripts/stack-up.sh" --wait --no-build; then
   fail "Compose startup failed; inspect: docker compose --env-file .env.chartsearch -f compose/openmrs-2.8-refapp.yml logs"
 fi
 
+# Docker can retain a proxy without its host binding after a failed port bind.
+PROXY_ID="$(docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps -q proxy)"
+PROXY_BINDING="$(docker inspect --format '{{range (index .NetworkSettings.Ports "80/tcp")}}{{.HostPort}}{{end}}' "${PROXY_ID}")"
+if [[ -z "${PROXY_BINDING}" ]]; then
+  echo "==> Recreating the proxy to restore its published port"
+  docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" \
+    up -d --no-build --no-deps --force-recreate --wait proxy
+fi
+
 trap - INT TERM
 
 cat <<EOF

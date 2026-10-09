@@ -11,8 +11,12 @@ Use `main` and initialize its pinned submodules. Gateway, frontend and backend
 use the same OpenMRS distribution tag; our source-built ChartSearchAI and
 QueryStore modules replace the distribution's snapshots.
 
-Prerequisites: running Docker with Compose, Java 21/Maven, Python 3, Node.js 18+,
-Yarn 4 and `llama-server` on your PATH. Download
+Prerequisites: running Docker with Compose, Java 21/Maven, Python 3.11+, Node.js 18+,
+Yarn 4 and `llama-server` on your PATH. Check `mvn -version` and
+`python3 --version`; on macOS, the system Python may be older than the Python
+you installed, and Maven uses the Java selected by `JAVA_HOME`.
+
+Download
 [`gemma-4-12b-it-Q8_0.gguf`](https://huggingface.co/unsloth/gemma-4-12b-it-GGUF/resolve/fc034cfff751157913579611efad8462ac1be606/gemma-4-12b-it-Q8_0.gguf)
 from the pinned model revision and save it as
 `~/.cache/llama-router-models/gemma-4-12b.gguf`, or set `LLAMA_MODEL_DIR` in
@@ -101,6 +105,16 @@ provisioning. Model-quality evaluations, reports and videos are not setup gates.
 - If startup fails, read the error printed by `make local-stack-up`. Use
   `make logs` for container logs or `make med-agent-hub-logs` for Hub logs.
   Router logs are in `artifacts/llama-router/router.log` by default.
+- If port 8088 is occupied, identify the owner with
+  `docker ps --filter publish=8088`. Docker Desktop's `welcome-to-docker`
+  container can use this port; stop it if you do not need it. Then repeat the
+  setup or startup command. Startup recreates our proxy if an earlier failed
+  bind left it without a published port; it does not stop unrelated containers.
+- Bahmni Appointments can fail on a fresh import with a Liquibase
+  `patientPastAppointments.sql` resource error. It is optional for this HIV
+  chart workflow, so setup prints a warning and continues with indexing,
+  provider configuration and evaluation accounts. Appointments remains
+  unavailable when this happens; other module startup failures still stop setup.
 - If the model is missing, check the model filename and directory above. Optional
   settings belong in `.env.chartsearch`; no generated credential file is needed.
 - Do not rerun first setup to fix an ordinary startup failure: it replaces the
