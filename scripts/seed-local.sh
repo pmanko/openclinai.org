@@ -129,28 +129,25 @@ for attempt in 1 2 3; do
 done
 [ "$UP" = "1" ] || { echo "ERROR: backend did not become healthy; check 'make logs SERVICE=backend'." >&2; exit 1; }
 
-# Appointments is not used by the HIV chart workflow. Report its startup failure
-# without preventing search indexing and evaluation-account setup.
-echo "==> checking OpenMRS modules (Appointments is optional for this setup)"
+# --- module health: the backend can report healthy via FHIR while an OpenMRS module still failed
+#     to start (e.g. a Liquibase checksum mismatch) — checked here so a broken seed fails loudly at
+#     seed time instead of being discovered later during manual QA. ---
+echo "==> verifying every OpenMRS module started cleanly"
 FAILED_MODULES="$(curl -fsS -u admin:Admin123 \
-  "http://localhost:${PROXY_PORT}/openmrs/ws/rest/v1/module?v=custom:(uuid,name,started,startupErrorMessage)" \
+  "http://localhost:${PROXY_PORT}/openmrs/ws/rest/v1/module?v=custom:(name,started,startupErrorMessage)" \
   | python3 -c "
 import json, sys
 data = json.load(sys.stdin)
 for m in data.get('results', []):
     if not m.get('started'):
-        error = f\"{m.get('name')}: {m.get('startupErrorMessage') or '(no error message)'}\"
-        if m.get('uuid') == 'appointments':
-            print(f'WARNING: optional module unavailable: {error}', file=sys.stderr)
-        else:
-            print(f'  {error}')
+        print(f\"  {m.get('name')}: {m.get('startupErrorMessage') or '(no error message)'}\")
 ")"
 if [[ -n "$FAILED_MODULES" ]]; then
   echo "ERROR: seed completed but the following module(s) did not start:" >&2
   echo "$FAILED_MODULES" >&2
   exit 1
 fi
-echo "    module check passed"
+echo "    all modules started"
 
 # Persist the exact corpus identity consumed by the running local stack. Validation
 # manifests copy this receipt so a published run can be traced back to the dump bytes.

@@ -110,11 +110,6 @@ provisioning. Model-quality evaluations, reports and videos are not setup gates.
   container can use this port; stop it if you do not need it. Then repeat the
   setup or startup command. Startup recreates our proxy if an earlier failed
   bind left it without a published port; it does not stop unrelated containers.
-- Bahmni Appointments can fail on a fresh import with a Liquibase
-  `patientPastAppointments.sql` resource error. It is optional for this HIV
-  chart workflow, so setup prints a warning and continues with indexing,
-  provider configuration and evaluation accounts. Appointments remains
-  unavailable when this happens; other module startup failures still stop setup.
 - If the model is missing, check the model filename and directory above. Optional
   settings belong in `.env.chartsearch`; no generated credential file is needed.
 - Do not rerun first setup to fix an ordinary startup failure: it replaces the
