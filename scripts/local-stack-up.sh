@@ -4,8 +4,8 @@
 # Assumes the one-time setup is already done: Homebrew, Docker Desktop, uv,
 # Maven/Java, Node/yarn, llama.cpp installed; chartsearchai/querystore .omod
 # files and the chartsearchai ESM bundle already built into artifacts/;
-# optional .env.chartsearch overrides; querystore backend already switched to
-# elasticsearch with bootstrap.autostart. This script does NOT rebuild any of
+# optional .env.chartsearch overrides; the QueryStore backend already configured
+# by the research setup. This script does NOT rebuild any of
 # that — it just starts the processes/containers so the stack (and the
 # already-indexed patient data) comes back up as it was.
 #

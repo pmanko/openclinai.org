@@ -7,8 +7,9 @@ validation harness runs experiments afterward; it does not install this stack.
 ## First Setup
 
 Start from the recursive umbrella checkout described in the [README](../README.md#workspace-checkout).
-While [PR #6](https://github.com/pmanko/openclinai.org/pull/6) is open, use
-`codex/openmrs-upstream-sync` for the latest setup and component versions.
+Use `main` and initialize its pinned submodules. Gateway, frontend and backend
+use the same OpenMRS distribution tag; our source-built ChartSearchAI and
+QueryStore modules replace the distribution's snapshots.
 
 Prerequisites: running Docker with Compose, Java 21/Maven, Python 3, Node.js 18+,
 Yarn 4 and `llama-server` on your PATH. Download

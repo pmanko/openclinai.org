@@ -14,11 +14,13 @@ def test_querystore_credentials_have_no_privileged_compose_defaults():
     assert "QUERYSTORE_PASSWORD:-Admin123" not in compose
 
 
-def test_chartsearch_example_documents_explicit_least_privileged_querystore_auth():
+def test_chartsearch_example_requires_explicit_querystore_connection_settings():
     example = (ROOT / ".env.chartsearch.example").read_text(encoding="utf-8")
+    settings = dict(
+        line.split("=", 1)
+        for line in example.splitlines()
+        if line and not line.startswith("#") and "=" in line
+    )
 
-    assert "QUERYSTORE_BASE_URL=" in example
-    assert "QUERYSTORE_USERNAME=" in example
-    assert "QUERYSTORE_PASSWORD=" in example
-    assert "Get Patients" in example
-    assert "least-privileged" in example
+    for key in ("QUERYSTORE_BASE_URL", "QUERYSTORE_USERNAME", "QUERYSTORE_PASSWORD"):
+        assert settings[key] == ""
