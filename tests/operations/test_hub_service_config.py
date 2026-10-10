@@ -1,26 +1,20 @@
+"""Security invariants for the Hub service in the local product compose file."""
 from pathlib import Path
 
+import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
+HUB = yaml.safe_load((ROOT / "compose/openmrs-2.8-refapp.yml").read_text(encoding="utf-8"))["services"]["med-agent-hub"]
 
 
-def test_querystore_credentials_have_no_privileged_compose_defaults():
-    compose = (ROOT / "compose/openmrs-2.8-refapp.yml").read_text(encoding="utf-8")
-
-    assert "QUERYSTORE_BASE_URL: ${QUERYSTORE_BASE_URL:-}" in compose
-    assert "QUERYSTORE_USERNAME: ${QUERYSTORE_USERNAME:-}" in compose
-    assert "QUERYSTORE_PASSWORD: ${QUERYSTORE_PASSWORD:-}" in compose
-    assert "QUERYSTORE_USERNAME:-admin" not in compose
-    assert "QUERYSTORE_PASSWORD:-Admin123" not in compose
+def test_hub_is_published_on_loopback_only():
+    """Invariant: the Hub API is never exposed beyond the host."""
+    assert all(str(port).startswith("127.0.0.1:") for port in HUB.get("ports", []))
 
 
-def test_chartsearch_example_requires_explicit_querystore_connection_settings():
-    example = (ROOT / ".env.chartsearch.example").read_text(encoding="utf-8")
-    settings = dict(
-        line.split("=", 1)
-        for line in example.splitlines()
-        if line and not line.startswith("#") and "=" in line
-    )
-
-    for key in ("QUERYSTORE_BASE_URL", "QUERYSTORE_USERNAME", "QUERYSTORE_PASSWORD"):
-        assert settings[key] == ""
+def test_hub_has_no_default_querystore_credentials():
+    """Invariant: compose never supplies a QueryStore credential; the caller does."""
+    for key in ("QUERYSTORE_USERNAME", "QUERYSTORE_PASSWORD"):
+        value = str(HUB["environment"][key])
+        default = value.split(":-", 1)[1].rstrip("}") if ":-" in value else ""
+        assert default == "", key

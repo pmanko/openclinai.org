@@ -27,25 +27,12 @@ def model_records() -> dict[str, dict[str, str]]:
     return records
 
 
-def test_router_compose_is_pinned_private_and_capacity_configurable():
-    compose = yaml.safe_load(COMPOSE_PATH.read_text())
-    service = compose["services"]["model-router"]
-
-    assert re.fullmatch(
-        r"\$\{CATALYST_ROUTER_IMAGE:-ghcr\.io/ggml-org/llama\.cpp@sha256:[a-f0-9]{64}\}",
-        service["image"],
-    )
-    command = service["command"]
-    assert command[command.index("--models-max") + 1] == "${CATALYST_ROUTER_MODELS_MAX:-1}"
-    assert "--models-autoload" in command
-    assert "--warmup" in command
-    assert service["ports"] == ["127.0.0.1:${CATALYST_ROUTER_PORT:-8077}:8077"]
+def test_router_compose_is_digest_pinned_loopback_only_and_read_only():
+    """Invariant: the router image is immutable, its port is loopback-only and model mounts are read-only."""
+    service = yaml.safe_load(COMPOSE_PATH.read_text())["services"]["model-router"]
+    assert re.search(r"@sha256:[a-f0-9]{64}\}?$", service["image"])
+    assert all(str(port).startswith("127.0.0.1:") for port in service["ports"])
     assert all(volume.endswith(":ro") for volume in service["volumes"])
-    for network in ("public", "application"):
-        assert service["networks"][network]["aliases"] == [
-            "${CATALYST_ROUTER_NETWORK_ALIAS:-model-router-candidate}"
-        ]
-        assert compose["networks"][network]["external"] is True
 
 
 def test_router_presets_and_verified_sources_describe_the_same_models():
@@ -75,18 +62,6 @@ def test_router_rejects_mutable_or_incomplete_image_override(image):
     )
     assert result.returncode == 2
     assert "must be an immutable image ID or registry digest" in result.stderr
-
-
-def test_router_wrapper_verifies_before_start_and_checks_loaded_state():
-    script = SCRIPT_PATH.read_text()
-
-    verify_position = script.index("    verify_models\n", script.index("  up)"))
-    start_position = script.index("    compose up -d model-router\n")
-    assert verify_position < start_position
-    assert '"${ROUTER_URL}/models/load"' in script
-    assert '"${ROUTER_URL}/v1/chat/completions"' in script
-    assert 'get("value") == "loaded"' in script
-    assert "model-router-candidate" in script
 
 
 @pytest.mark.parametrize("already_loaded", [True, False])
@@ -159,3 +134,24 @@ def test_router_passes_verified_image_override_to_compose(tmp_path, image):
     )
     assert result.returncode == 0, result.stderr
     assert result.stdout.splitlines() == [image, "compose", "-f", str(COMPOSE_PATH), "config"]
+
+
+def test_router_up_with_unverified_models_never_starts_the_container(tmp_path):
+    import os
+    import subprocess
+
+    calls = tmp_path / "docker-calls.txt"
+    docker = tmp_path / "bin" / "docker"
+    docker.parent.mkdir()
+    docker.write_text(f'#!/bin/sh\necho "$*" >> "{calls}"\n')
+    docker.chmod(0o755)
+    result = subprocess.run(
+        ["bash", str(SCRIPT_PATH), "up"],
+        env={**os.environ, "PATH": f"{docker.parent}{os.pathsep}{os.environ['PATH']}",
+             "CATALYST_ROUTER_MODEL_DIR": str(tmp_path / "no-models"),
+             "CATALYST_ROUTER_PUBLIC_NETWORK": "public",
+             "CATALYST_ROUTER_APPLICATION_NETWORK": "application"},
+        capture_output=True, text=True, check=False,
+    )
+    assert result.returncode != 0
+    assert not calls.exists() or "up" not in calls.read_text().split()

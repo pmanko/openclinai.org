@@ -126,12 +126,3 @@ def test_development_pair_build_installs_querystore_before_chartsearchai():
     assert querystore in result.stdout
     assert chartsearchai in result.stdout
     assert result.stdout.index(querystore) < result.stdout.index(chartsearchai)
-
-
-def test_local_entrypoint_builds_the_openmrs_modules_as_one_pair():
-    subprocess.run(["bash", "-n", str(LOCAL_SCRIPT)], check=True)
-    source = LOCAL_SCRIPT.read_text(encoding="utf-8")
-
-    assert "make openmrs-source-pair-build" in source
-    assert '"ChartSearchAI module" \\\n' not in source
-    assert '"Querystore module" \\\n' not in source

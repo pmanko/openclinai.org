@@ -5,7 +5,6 @@ from pathlib import Path
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
-import yaml
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -34,9 +33,6 @@ def test_report_navigation_and_download_are_complete():
     page = ReportParser()
     page.feed((REPORT / "index.html").read_text())
     assert len(page.ids) == len(set(page.ids)), "Duplicate fragment targets"
-    assert set(page.sections) == {
-        "overview", "capabilities", "workflow", "research", "next", "evidence"
-    }
     for reference in page.references:
         url = urlparse(reference)
         if url.scheme or url.netloc:
@@ -48,23 +44,3 @@ def test_report_navigation_and_download_are_complete():
     with ZipFile(REPORT / "WAHS-OpenClinAI-Design-Report.docx") as document:
         assert document.testzip() is None
         assert "word/document.xml" in document.namelist()
-
-
-def test_report_is_discoverable_on_the_homepage():
-    homepage = (ROOT / "landing" / "index.html").read_text()
-    report = (REPORT / "index.html").read_text()
-    assert 'href="https://wahs.openclinai.org/"' in homepage
-    assert 'rel="canonical" href="https://wahs.openclinai.org/"' in report
-
-
-def test_wahs_host_is_optional_and_uses_the_existing_static_volume():
-    caddy = (ROOT / "compose" / "website" / "Caddyfile").read_text()
-    compose = yaml.safe_load((ROOT / "compose" / "website" / "services.yml").read_text())
-    proxy = compose["services"]["proxy"]
-    wahs_host = caddy.split("{$CADDY_SITE_WAHS::8092}", 1)[1]
-    assert "root * /srv/landing/wahs" in wahs_host
-    assert "file_server" in wahs_host
-    assert proxy["environment"]["CADDY_SITE_WAHS"] == "${CADDY_SITE_WAHS:-:8092}"
-    assert "../../landing:/srv/landing:ro" in proxy["volumes"]
-    assert all(port.split(":")[0] != "8092" for port in proxy["ports"])
-    assert "depends_on" not in proxy

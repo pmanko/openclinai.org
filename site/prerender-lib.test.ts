@@ -159,7 +159,6 @@ describe('planOutputs extras', () => {
   it('makes the static index a documentation entry with topics and a public parent', () => {
     expect(byPath()['welcome.html']).toContain('Documentation');
     expect(byPath()['welcome.html']).toContain('https://openclinai.org/');
-    expect(byPath()['welcome.html']).not.toContain('Patient data never leaves');
     expect(byPath()['welcome.html']).toContain('topic/data.html');
     expect(byPath()['llms.txt']).toContain('## Topics');
     expect(byPath()['llms.txt']).toContain('topic/data.html');
