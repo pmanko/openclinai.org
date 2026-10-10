@@ -3,7 +3,7 @@
 This OpenClinAI reference describes the interfaces used by our integration.
 The [module contract](https://github.com/pmanko/openmrs-module-chartsearchai/blob/20cb84ba97bb76ee97a8745016a6d9bb1546077b/README.md#provider-integration-contract)
 owns native module behavior. Our cross-project requirements and acceptance live in
-the [umbrella roadmap](../specs/roadmap.md#5-track-a-openmrs-contribution-delivery).
+the [OpenMRS contribution spec](../specs/openmrs-contribution.md).
 The [Hub](https://github.com/pmanko/med-agent-hub/blob/main/README.md) owns its native
 API and the [frontend](https://github.com/pmanko/openmrs-esm-chartsearchai/blob/main/README.md) owns rendering.
 
@@ -60,7 +60,7 @@ Checked. Optional In-Depth is checked before display by its owning provider.
 Native safety-check execution and coverage remain module-owned; shared status does not
 claim identical clinical rule coverage across engines.
 
-Cross-project release acceptance belongs to [OpenClinAI](https://github.com/pmanko/openclinai.org/blob/main/specs/roadmap.md#5-track-a-openmrs-contribution-delivery).
+Cross-project release acceptance belongs to [OpenClinAI](https://github.com/pmanko/openclinai.org/blob/main/specs/openmrs-contribution.md).
 The [harness conformance protocol](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md)
 owns shared fixture distribution and evidence, not application behavior.
 
