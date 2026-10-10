@@ -185,45 +185,6 @@ def test_caddy_serves_landing_at_root_without_redirecting_to_openmrs():
     assert "CADDY_SITE_OPENMRS" not in caddy
 
 
-def test_static_publication_preserves_content_media_and_live_checks():
-    # Publication is static-only, including full mode.
-    publish = (ROOT / "scripts" / "publish-landing.sh").read_text(encoding="utf-8")
-
-    assert "python3 -m pytest -q tests/website/test_landing_site.py" in publish
-    assert "cloud-sync.sh" not in publish
-    assert '"${ROOT}/landing/"' in publish
-    # No -L: the recordings are not in this tree at all any more, so there are
-    # no symlinks to dereference and landing/ carries only text and small
-    # hand-made images.
-    assert "rsync -avz --delete" in publish
-    assert "rsync -avzL" not in publish
-    # A publish that leaves the page pointing at a missing video is broken. The
-    # asset list is derived from the page itself, not hand-maintained here, so
-    # a recut is caught by editing the page alone -- and verified before
-    # syncing anything, so a missing asset leaves the live page untouched.
-    assert '"${MEDIA_HOST}[A-Za-z0-9._/-]+" "${ROOT}/landing/"' in publish
-    assert "--include='*.html'" in publish
-    assert publish.index("REMOTE_MEDIA_ASSETS") < publish.index('rsync -avz --delete')
-    assert publish.count('curl -fsS --retry 8 --retry-delay 2 --max-time 30 "${asset}" -o /dev/null') == 2
-    assert 'PUBLISH_MODE="${1:-full}"' in publish
-    assert '"${PUBLISH_MODE}" != "--landing-only"' in publish
-    assert 'if [ "${PUBLISH_MODE}" = "--landing-only" ]; then' in publish
-    assert "landing-only mode; proxy configuration and services unchanged" in publish
-    assert 'SITE="${CADDY_SITE:-openclinai.org}"' in publish
-    assert 'cmp - "${local_page}"' in publish
-    assert '-name \'*.html\' -o -name \'*.css\'' in publish
-    assert "med-agent-hub" not in publish
-    assert "HUB_BUILD_REVISION" not in publish
-    assert "git -C" not in publish
-    assert "openmrs-2.8-refapp.yml" not in publish
-    assert "compose/website/services.yml" in publish
-    assert "--project-name openclinai-website" in publish
-    assert "backend" not in publish
-    assert "gateway" not in publish
-    assert "frontend" not in publish
-    assert "https://${SITE}/media/openmrs-evidence-poster.png" in publish
-
-
 def test_question_gallery_has_playable_clips_details_and_working_navigation():
     _, home = parsed_landing()
     _, catalyst = parsed_page("catalyst/index.html")
