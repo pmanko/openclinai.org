@@ -4,8 +4,7 @@
   delivery stream has one focused spec in `specs/` written as a target path with
   checkboxes. Tick a box only with a link to its evidence. Record dated
   verification (test counts, hashes, run narratives) in `specs/reviews/`, never in
-  the index or a stream spec; `tests/test_roadmap_shape.py` enforces this. A
-  completed plan becomes a dated closeout record.
+  the index or a stream spec. A completed plan becomes a dated closeout record.
 - `specs/architecture.md` supports design decisions; it is not another task list.
 - Write and review for each document's audience: README, website and repository
   description for new users; roadmap for implementing agents; architecture for

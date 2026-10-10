@@ -75,8 +75,8 @@ review ([audit](reviews/2026-10-02-documentation-audit.md)).
 
 ## Standing checks
 
-- `Workspace` workflow: umbrella unit tests, including the roadmap shape rules, and
-  `scripts/check_workspace.py` on a recursive checkout.
+- `Workspace` workflow: umbrella unit tests and `scripts/check_workspace.py` on a
+  recursive checkout.
 - `operations` workflow: workspace operation tests, the assembled QueryStore and
   ChartSearchAI source build, and ESM verification.
 - Pages workflow: website tests, build, rendered link and asset checks, deploy.
