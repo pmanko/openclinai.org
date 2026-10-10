@@ -159,3 +159,30 @@ def test_verify_dump_cli_reports_all_issues(tmp_path: Path, monkeypatch, capsys)
 
     assert VERIFY_DUMP.main() == 1
     assert "ERROR: dump sha256 mismatch" in capsys.readouterr().out
+
+
+def test_seed_with_an_unverified_dump_never_touches_docker_or_the_database(tmp_path):
+    """Safety: seeding stops at a failed dump verification, before any container or SQL call."""
+    import os
+    import shutil
+    import subprocess
+
+    (tmp_path / "scripts").mkdir()
+    shutil.copy2(ROOT / "scripts" / "seed-local.sh", tmp_path / "scripts" / "seed-local.sh")
+    dump = tmp_path / "artifacts" / "demo-data" / "refapp_28_demo.sql.gz"
+    dump.parent.mkdir(parents=True)
+    dump.write_bytes(gzip.compress(b"-- not verified\n"))
+    stubs = tmp_path / "bin"
+    stubs.mkdir()
+    calls = tmp_path / "docker-calls.txt"
+    (stubs / "python3").write_text("#!/bin/sh\nexit 1\n")
+    (stubs / "docker").write_text(f'#!/bin/sh\necho "$*" >> "{calls}"\n')
+    for stub in stubs.iterdir():
+        stub.chmod(0o755)
+    result = subprocess.run(
+        ["bash", str(tmp_path / "scripts" / "seed-local.sh")],
+        env={**os.environ, "PATH": f"{stubs}:/usr/bin:/bin"},
+        capture_output=True, text=True, check=False,
+    )
+    assert result.returncode != 0
+    assert not calls.exists()

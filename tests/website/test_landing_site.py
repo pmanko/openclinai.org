@@ -19,6 +19,7 @@ class LandingParser(HTMLParser):
         self.sources: list[str] = []
         self.h1_count = 0
         self.scripts: list[dict[str, str | None]] = []
+        self.assets: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         values = dict(attrs)
@@ -36,6 +37,8 @@ class LandingParser(HTMLParser):
             self.h1_count += 1
         elif tag == "script":
             self.scripts.append(values)
+        elif tag == "link" and values.get("href"):
+            self.assets.append(str(values["href"]))
 
 
 def parsed_landing() -> tuple[str, LandingParser]:
@@ -49,7 +52,6 @@ def local_asset(path: str) -> Path:
     return LANDING / path.removeprefix("/")
 
 
-PROJECT_PATHS = ("chartsearchai", "catalyst", "med-agent-hub", "validation-harness")
 MEDIA_HOST = "https://catalyst.openelis-global.org/media/"
 
 
@@ -60,164 +62,75 @@ def parsed_page(relative_path):
     return html, page
 
 
-def test_homepage_introduces_four_projects_without_embedded_walkthroughs():
-    html, home = parsed_landing()
-    assert home.h1_count == 1
-    assert {"main-content", "projects", "about", "openmrs", "catalyst", "hub"} <= home.ids
-    for project in PROJECT_PATHS:
-        assert f"/{project}/" in home.links
-    assert not home.videos
-    assert "https://reports.openclinai.org/" in home.links
-    assert "https://openmrs.openclinai.org/" not in home.links
+def pages():
+    for path in sorted(LANDING.rglob("*.html")):
+        html, page = parsed_page(path.relative_to(LANDING))
+        yield path, page
 
 
-def test_project_pages_have_parents_and_real_next_steps():
-    for project in PROJECT_PATHS:
-        html, page = parsed_page(f"{project}/index.html")
-        assert page.h1_count == 1
-        assert "/#projects" in page.links
-        assert f'https://openclinai.org/{project}/' in html
-        assert any(link.startswith("https://") for link in page.links)
-        assert not page.scripts
-    _, catalyst = parsed_page("catalyst/index.html")
-    assert "/catalyst/reporting-pathways/" in catalyst.links
-    assert "/catalyst/questions/" in catalyst.links
-    assert "/catalyst/hiv-gallery/" in catalyst.links
+def resolve(path: Path, reference: str) -> Path:
+    target = urlparse(reference).path
+    if not target:
+        return path
+    destination = LANDING / target.lstrip("/") if target.startswith("/") else path.parent / target
+    return destination / "index.html" if destination.is_dir() else destination
 
 
-def test_reporting_paths_publish_four_reviewed_recordings_with_clear_limits():
-    html, page = parsed_page("catalyst/reporting-pathways/index.html")
-    assert {f"reporting-path-{number}" for number in range(1, 5)} <= page.ids
-    assert "/catalyst/" in page.links
-    assert len(page.videos) == len(page.sources) == 4
-    for video in page.videos:
-        assert "controls" in video and "playsinline" in video
-        assert "autoplay" not in video
-        assert video.get("preload") == "metadata"
-        assert str(video.get("poster") or "").startswith(MEDIA_HOST)
-        assert video.get("aria-label")
-    for source in page.sources:
-        assert source.startswith(MEDIA_HOST)
+def test_every_page_has_one_top_level_heading():
+    """Accessibility invariant: each page has exactly one h1."""
+    for path, page in pages():
+        assert page.h1_count == 1, path
 
 
-def test_existing_recordings_and_accessible_playback_are_preserved():
-    pages = [parsed_page(f"{project}/index.html") for project in ("chartsearchai", "catalyst")]
-    videos = [video for _, page in pages for video in page.videos]
-    sources = [src for _, page in pages for src in page.sources]
-    assert len(videos) == len(sources) == 4
-    assert any("openelis-local-" in src for src in sources)
-    assert any("openmrs-cd4-monitoring-local-" in src for src in sources)
-    for html, page in pages:
-        for video in page.videos:
-            assert "controls" in video and "playsinline" in video
-            assert "autoplay" not in video
-            assert video.get("preload") == "metadata"
-            assert video.get("aria-label")
-            poster = str(video.get("poster") or "")
-            assert poster.startswith(MEDIA_HOST) or local_asset(poster).is_file()
-    for src in sources:
-        assert src.startswith(MEDIA_HOST)
-    _, catalyst = pages[1]
-    assert {"https://youtu.be/PRs3jAzQk38", "https://youtu.be/7p83cGMhOzw"} <= set(catalyst.links)
-
-
-def test_every_site_local_link_fragment_and_image_resolves():
-    for path in LANDING.rglob("*.html"):
-        _, page = parsed_page(path.relative_to(LANDING))
+def test_every_site_local_link_fragment_asset_and_image_resolves():
+    for path, page in pages():
         for link in page.links:
             parsed = urlparse(link)
             if parsed.scheme or parsed.netloc:
                 continue
-            destination = LANDING / parsed.path.lstrip("/") if parsed.path.startswith("/") else path.parent / parsed.path
-            if not parsed.path:
-                destination = path
-            elif destination.is_dir():
-                destination = destination / "index.html"
+            destination = resolve(path, link)
             assert destination.is_file(), (path, link)
             if parsed.fragment and destination.suffix == ".html":
                 _, target = parsed_page(destination.relative_to(LANDING))
                 assert parsed.fragment in target.ids, (path, link)
+        for asset in page.assets:
+            if not urlparse(asset).scheme:
+                assert resolve(path, asset).is_file(), (path, asset)
         for image in page.images:
-            assert image.get("alt") is not None
+            assert image.get("alt") is not None, (path, image)
             src = str(image.get("src") or "")
             if not urlparse(src).scheme:
-                image_path = LANDING / src.lstrip("/") if src.startswith("/") else path.parent / src
-                assert image_path.is_file(), (path, src)
+                assert resolve(path, src).is_file(), (path, src)
+
+
+def test_every_video_is_accessible_and_streamed_from_the_media_host():
+    """Invariant: recordings live on the media host, never in this repository, and play accessibly."""
+    for path, page in pages():
+        for video in page.videos:
+            assert "controls" in video and "playsinline" in video, path
+            assert "autoplay" not in video, path
+            assert video.get("preload") == "metadata", path
+            assert video.get("aria-label"), path
+            poster = str(video.get("poster") or "")
+            assert poster.startswith(MEDIA_HOST) or local_asset(poster).is_file(), (path, poster)
+        for source in page.sources:
+            assert source.startswith(MEDIA_HOST), (path, source)
 
 
 def test_legacy_homepage_fragments_retain_onward_links():
+    """Public URL stability: fragments that earlier versions of the homepage published keep resolving."""
     _, home = parsed_landing()
     assert {"project", "openmrs", "catalyst", "hub", "evidence", "wahs", "paths", "reporting-pathways", "catalyst-openelis-video", "catalyst-openmrs-video"} <= home.ids
-    assert "/catalyst/#catalyst-openelis-video" in home.links
-    assert "/catalyst/#catalyst-openmrs-video" in home.links
 
 
-def test_landing_is_static_responsive_and_keyboard_visible():
-    html, page = parsed_landing()
-    css = (LANDING / "styles.css").read_text() + (LANDING / "projects.css").read_text()
-    assert page.scripts == []
-    assert "@media (max-width: 720px)" in css
-    assert "@media (prefers-reduced-motion: reduce)" in css
-    assert ":focus-visible" in css
-    assert ".skip-link" in css
-    assert 'href="/favicon.svg"' in html
-    assert (LANDING / "favicon.svg").is_file()
-
-
-def test_caddy_serves_landing_at_root_without_redirecting_to_openmrs():
+def test_website_stack_is_static_and_independent_of_products():
+    """Invariant: the website host serves read-only static content and never builds, proxies or mounts a product."""
     caddy = (ROOT / "compose" / "website" / "Caddyfile").read_text(encoding="utf-8")
     compose = yaml.safe_load((ROOT / "compose" / "website" / "services.yml").read_text(encoding="utf-8"))
-    proxy = compose["services"]["proxy"]
-
-    root_site = caddy.split("{$CADDY_SITE::80}", 1)[1].split("{$CADDY_SITE_REPORTS::8091}", 1)[0]
-    assert "root * /srv/landing" in root_site
-    assert "file_server" in root_site
-    assert "redir /openmrs/spa" not in root_site
-    assert "../../landing:/srv/landing:ro" in proxy["volumes"]
-    assert "./Caddyfile:/etc/caddy/Caddyfile:ro" in proxy["volumes"]
-    assert "../../artifacts/reports:/srv/reports:ro" in proxy["volumes"]
-    assert proxy["environment"]["CADDY_SITE"] == "${CADDY_SITE:-:80}"
-    assert set(compose["services"]) == {"proxy"}
-    assert "depends_on" not in proxy
-    assert "build" not in proxy
-    assert not any("openmrs" in volume or "spa-custom" in volume for volume in proxy["volumes"])
     assert "reverse_proxy" not in caddy
-    assert "CADDY_SITE_OPENMRS" not in caddy
-
-
-def test_question_gallery_has_playable_clips_details_and_working_navigation():
-    _, home = parsed_landing()
-    _, catalyst = parsed_page("catalyst/index.html")
-    gallery_path = LANDING / "catalyst/questions/index.html"
-    gallery = LandingParser()
-    markup = gallery_path.read_text(encoding="utf-8")
-    gallery.feed(markup)
-    assert "/catalyst/questions/" in catalyst.links
-    assert gallery.h1_count == 1
-    assert gallery.videos and len(gallery.videos) == len(gallery.sources)
-    assert markup.count("<details") == len(gallery.videos)
-    assert gallery.scripts == []
-    for video in gallery.videos:
-        assert "controls" in video and "playsinline" in video
-        assert "autoplay" not in video
-        assert video.get("preload") == "metadata"
-        assert video.get("aria-label")
-        assert str(video.get("poster")).startswith(MEDIA_HOST)
-    for source in gallery.sources:
-        assert source.startswith(MEDIA_HOST) and source.endswith(".mp4")
-        assert source in gallery.links
-    for link in gallery.links:
-        if link.startswith("#"):
-            assert link[1:] in gallery.ids
-        elif link.startswith("/#"):
-            assert link[2:] in home.ids
-        elif link.startswith("/") and link.endswith("/"):
-            assert (LANDING / link.lstrip("/") / "index.html").is_file()
-
-
-def test_screenshot_walkthrough_is_easy_to_find_without_browsing_videos():
-    home, parser = parsed_landing()
-    assert "/catalyst/hiv-gallery/" in parser.links
-    catalyst, _ = parsed_page("catalyst/index.html")
-    opening = catalyst.split("<video", 1)[0]
-    assert 'href="/catalyst/hiv-gallery/"' in opening
+    for name, service in compose["services"].items():
+        assert "build" not in service and "depends_on" not in service, name
+        for volume in service.get("volumes", []):
+            assert not any(product in volume for product in ("targets/", "openmrs", "spa-custom")), (name, volume)
+            if volume.startswith((".", "/")):
+                assert volume.endswith(":ro"), (name, volume)

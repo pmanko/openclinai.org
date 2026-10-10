@@ -13,10 +13,11 @@
 
 ## Checklist
 
-- [ ] No new or changed test asserts documentation wording, website copy, status
-      sentences, an exact inventory (Make targets, scripts, workflow or compose
-      text), retired names, PR numbers, branch names or roadmap state.
-- [ ] Any new structural test protects a named permanent invariant (dependency
-      direction, forbidden coupling, resource limit, fixture integrity).
+- [ ] No new or changed test asserts hand-written copy, the text of a script,
+      Makefile, workflow or compose file, an exact inventory, retired names, PR
+      numbers, branch names or roadmap state.
+- [ ] New tests run the code against fixtures, or protect an invariant listed in
+      AGENTS.md and name it in their docstring.
+- [ ] No new tooling marks a requirement satisfied because files contain words.
 - [ ] Stream specs changed only by ticking boxes with evidence links; dated
       narrative went to `specs/reviews/`.

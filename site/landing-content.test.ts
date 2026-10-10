@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { GO_DEEPER, HERO } from './landing-content';
+import { GO_DEEPER } from './landing-content';
 import { topics } from './topics';
 import { canvasModules, repoMd } from './published-content';
 import { flattenLeaves } from './nav';
@@ -7,7 +7,6 @@ import { flattenLeaves } from './nav';
 const links = GO_DEEPER.flatMap(card => card.links);
 describe('documentation entry and public sources', () => {
   it('gives every entry card at least one link', () => {
-    expect(HERO.headline.length).toBeGreaterThan(0);
     expect(GO_DEEPER.every(card => card.links.length > 0)).toBe(true);
   });
 
@@ -28,6 +27,5 @@ describe('documentation entry and public sources', () => {
       const slug = path.slice(3).replace(/\.canvas\.tsx$|\.md$/, '');
       expect(leaves[slug], `Uncurated publication: ${path}`).toBeDefined();
     }
-    expect(repoMd['../specs/008-catalyst-query-workbench/plan.md']).toBeUndefined();
   });
 });

@@ -78,3 +78,26 @@ fi
         assert "Stale extras require" in result.stderr
     else:
         assert "validation drift policy passes" in result.stdout
+
+
+def test_index_reset_requires_explicit_consent_before_any_side_effect(tmp_path):
+    """Safety: recreating the QueryStore index refuses to start without ALLOW_QUERYSTORE_INDEX_RESET=1."""
+    import shutil
+
+    (tmp_path / "scripts").mkdir()
+    shutil.copy2(ROOT / "scripts" / "querystore-recreate-index.sh", tmp_path / "scripts" / "querystore-recreate-index.sh")
+    stubs = tmp_path / "bin"
+    stubs.mkdir()
+    calls = tmp_path / "calls.txt"
+    for name in ("docker", "curl"):
+        stub = stubs / name
+        stub.write_text(f'#!/bin/sh\necho "{name} $*" >> "{calls}"\n')
+        stub.chmod(0o755)
+    env = {key: value for key, value in os.environ.items() if key != "ALLOW_QUERYSTORE_INDEX_RESET"}
+    env["PATH"] = f"{stubs}:/usr/bin:/bin"
+    result = subprocess.run(
+        ["bash", str(tmp_path / "scripts" / "querystore-recreate-index.sh")],
+        env=env, capture_output=True, text=True, check=False,
+    )
+    assert result.returncode != 0
+    assert not calls.exists()

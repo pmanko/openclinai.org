@@ -154,13 +154,13 @@ Workspace source consistency is governed by the umbrella architecture.
 | G21 | Relevant product checks, CI, real-interface smoke and independent review have no unresolved blocker. Record source and deployment identity; temporary PR arrangements are evidence, not permanent tests. |
 | G22 | Harness run evidence identifies supplied/observed provider, mode, snapshot, selected records, gate results, cache state, model/prompt and stage timings; missing provenance stays explicit. |
 
-Use existing owner tests and assembled acceptance tooling. Static file presence,
-regex matches or fixture copies alone do not prove runtime behavior. Live claims
-need artifacts supporting the asserted values and their actual configuration.
-Hash-bound evidence verifies those values, not a self-reported `passed` field. A
-failed or skipped required check remains incomplete; an approved deferral is
-identified separately. The one-time split acceptance is recorded in the dated
-record and is not replaced by recurring branch-state tests.
+Each row is accepted by its owners' tests, the assembled OpenMRS source check and
+real-interface evidence recorded in a dated review, then ticked by owner review.
+Static file presence, regex matches or fixture copies do not prove runtime
+behavior. Live claims need artifacts supporting the asserted values and their
+actual configuration. A failed or skipped required check remains incomplete; an
+approved deferral is identified separately. The one-time split acceptance is
+recorded in the dated record and is not replaced by recurring branch-state tests.
 
 **Controlled comparison after product acceptance.** Hold model, prompt, sampling,
 chart, question and reference date fixed while varying a declared provider,

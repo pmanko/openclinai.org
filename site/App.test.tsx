@@ -43,13 +43,6 @@ describe('documentation entry', () => {
     expect(html).toContain('href="https://openclinai.org/"');
   });
 
-  it('routes into setup, architecture, methods and research', () => {
-    expect(html).toContain('href="/spec/README"');
-    expect(html).toContain('href="/topic/evidence"');
-    expect(html).toContain('href="/spec/specs/architecture"');
-    expect(html).toContain('href="/spec/specs/background/why-local-first-clinical-ai"');
-  });
-
   it('retains search and a keyboard skip destination', () => {
     expect(html).toContain('aria-label="Search documentation"');
     expect(html).toContain('href="#main-content"');
