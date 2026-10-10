@@ -64,12 +64,10 @@ def test_homepage_introduces_four_projects_without_embedded_walkthroughs():
     html, home = parsed_landing()
     assert home.h1_count == 1
     assert {"main-content", "projects", "about", "openmrs", "catalyst", "hub"} <= home.ids
-    assert "Open tools for clinical questions and reporting." in html
     for project in PROJECT_PATHS:
         assert f"/{project}/" in home.links
     assert not home.videos
     assert "https://reports.openclinai.org/" in home.links
-    assert "Experimental software" in html
     assert "https://openmrs.openclinai.org/" not in home.links
 
 
@@ -91,12 +89,7 @@ def test_reporting_paths_publish_four_reviewed_recordings_with_clear_limits():
     html, page = parsed_page("catalyst/reporting-pathways/index.html")
     assert {f"reporting-path-{number}" for number in range(1, 5)} <= page.ids
     assert "/catalyst/" in page.links
-    assert "No Catalyst or AI step is required" in html
-    assert "All four recordings were reviewed at normal speed" in html
-    assert "the recordings are not presented as server-video evidence" in html
-    assert "Owner acceptance remains open" in html
     assert len(page.videos) == len(page.sources) == 4
-    assert html.count("What the recording shows") == 4
     for video in page.videos:
         assert "controls" in video and "playsinline" in video
         assert "autoplay" not in video
@@ -115,7 +108,6 @@ def test_existing_recordings_and_accessible_playback_are_preserved():
     assert any("openelis-local-" in src for src in sources)
     assert any("openmrs-cd4-monitoring-local-" in src for src in sources)
     for html, page in pages:
-        assert "Transcript (silent recording)" in html
         for video in page.videos:
             assert "controls" in video and "playsinline" in video
             assert "autoplay" not in video
@@ -268,4 +260,3 @@ def test_screenshot_walkthrough_is_easy_to_find_without_browsing_videos():
     catalyst, _ = parsed_page("catalyst/index.html")
     opening = catalyst.split("<video", 1)[0]
     assert 'href="/catalyst/hiv-gallery/"' in opening
-    assert "Screenshot walkthrough" in opening

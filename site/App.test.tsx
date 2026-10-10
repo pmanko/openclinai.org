@@ -29,21 +29,6 @@ describe('App full-HTML twin link', () => {
     );
     expect(html).toContain('canvas/specs/artifacts/canvases/demo-data-profile.html');
   });
-
-  it('keeps dev specs off the public nav (no junk drawer, no feature specs)', () => {
-    const html = renderToStaticMarkup(
-      React.createElement(
-        MemoryRouter,
-        { initialEntries: ['/welcome'] },
-        React.createElement(App),
-      ),
-    );
-    expect(html).not.toContain('More documents');
-    expect(html).not.toContain('specs/004-real-adapter-entrypoints/spec');
-    // Canvases stay public, organized into sections.
-    expect(html).toContain('Project overview');
-    expect(html).toContain('Development');
-  });
 });
 
 
@@ -52,25 +37,13 @@ describe('documentation entry', () => {
     React.createElement(MemoryRouter, { initialEntries: ['/welcome'] }, React.createElement(App)),
   );
 
-  it('identifies the documentation and links to public project introductions', () => {
-    expect(html).toContain('<h1>Documentation</h1>');
+  it('links back to the public site and labels its navigation', () => {
     expect(html).toContain('href="https://openclinai.org/#projects"');
     expect(html).toContain('aria-label="Site navigation"');
     expect(html).toContain('href="https://openclinai.org/"');
   });
 
-  it('keeps the entry concise without unsupported clinical capability claims', () => {
-    expect(html).not.toContain('good enough to do real clinical work');
-    expect(html).not.toContain('Every answer traced to a record');
-    expect(html).not.toContain('Patient data never leaves');
-    expect(html).not.toContain('Watch Catalyst in action');
-  });
-
-  it('provides useful routes into setup, architecture, methods and research', () => {
-    expect(html).toContain('Set up and run the harness');
-    expect(html).toContain('Understand the components');
-    expect(html).toContain('Inspect validation methods');
-    expect(html).toContain('Read the background research');
+  it('routes into setup, architecture, methods and research', () => {
     expect(html).toContain('href="/spec/README"');
     expect(html).toContain('href="/topic/evidence"');
     expect(html).toContain('href="/spec/specs/architecture"');

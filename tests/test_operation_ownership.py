@@ -1,7 +1,12 @@
-"""Ownership checks, independent of component checkout and workspace link checks."""
+"""Ownership invariants between the umbrella and the validation harness.
+
+Each test protects one permanent boundary from the architecture: the harness runs
+experiments only, the umbrella owns product operations and publication, and the two
+are coupled through explicit delegation. Tests assert forbidden couplings and
+delegation behavior, never the current inventory of targets, scripts or text.
+"""
 
 import json
-import re
 import subprocess
 import sys
 import tempfile
@@ -14,38 +19,31 @@ HARNESS = ROOT / "targets" / "validation-harness"
 
 
 class OperationOwnershipTests(unittest.TestCase):
-    def test_harness_makefile_has_no_product_or_deployment_commands(self):
+    def test_harness_makefile_does_not_couple_to_products_or_deployment(self):
+        """Invariant: the harness Makefile never invokes Docker, Git or product checkouts."""
         source = (HARNESS / "Makefile").read_text()
-        targets = set(re.findall(r"^([a-z][a-z0-9-]*):", source, re.MULTILINE))
-        self.assertEqual(targets, {
-            "setup", "python-pin", "test", "smoke", "clean-venv",
-            "load-test", "orphan-fk-check", "import-smoke", "completeness-check",
-            "validate-run", "validate-judge-prep", "validate-judge-finalize",
-            "validate-report", "validate-adjudicate",
-        })
-        for coupling in ("docker ", "targets/", "med-agent-hub-up", "dashboard-ensure", "git "):
+        for coupling in ("docker ", "targets/", "git "):
             self.assertNotIn(coupling, source)
 
-    def test_required_operations_exist_only_in_umbrella(self):
-        for name in (
-            "catalyst-mvp.sh", "catalyst-model-router.sh", "chartsearchai-local.sh",
-            "stack-up.sh", "stack-down.sh", "local-stack-up.sh", "local-stack-down.sh",
-            "openmrs-source-pair-test.sh", "artifact-provenance.py", "seed-local.sh",
-            "querystore-recreate-index.sh", "validate-preflight.sh",
-        ):
-            with self.subTest(name=name):
-                self.assertTrue((ROOT / "scripts" / name).is_file())
-                self.assertFalse((HARNESS / "scripts" / name).exists())
+    def test_operation_scripts_live_in_exactly_one_repository(self):
+        """Invariant: an umbrella operation script is never duplicated in the harness."""
+        for script in (ROOT / "scripts").iterdir():
+            if script.is_file():
+                with self.subTest(script=script.name):
+                    self.assertFalse((HARNESS / "scripts" / script.name).exists())
 
-    def test_umbrella_calls_harness_for_validation_and_data(self):
-        source = (ROOT / "Makefile").read_text()
-        self.assertIn("HARNESS := targets/validation-harness", source)
-        self.assertIn("--directory $(HARNESS) run harness-cli validate run", source)
-        for module in ("harness.load", "harness.transform.orphan_fk", "harness.import_smoke", "harness.transform.completeness"):
-            self.assertIn("--directory $(HARNESS) run python -m " + module, source)
-        self.assertNotIn("dashboard-ensure", source)
+    def test_data_and_validation_targets_delegate_to_the_harness_checkout(self):
+        """Invariant: umbrella data targets run the harness from its gitlink checkout."""
+        for target in ("load-test", "orphan-fk-check", "import-smoke", "completeness-check"):
+            with self.subTest(target=target):
+                output = subprocess.run(
+                    ["make", "-n", "--no-print-directory", target, "UV=uv-stub"],
+                    cwd=ROOT, capture_output=True, text=True, check=True, timeout=15,
+                ).stdout
+                self.assertIn("uv-stub --directory targets/validation-harness run", output)
 
     def test_makefile_supplies_absolute_trace_and_corpus_receipt(self):
+        """Behavior: validate-run passes the caller's trace file and corpus receipt through."""
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             trace = root / "traces.jsonl"
@@ -69,19 +67,17 @@ class OperationOwnershipTests(unittest.TestCase):
             self.assertEqual(args[args.index("--corpus-provenance") + 1], str(receipt))
 
     def test_local_compose_does_not_publish_website_or_reports(self):
+        """Invariant: the product compose never mounts publication paths and keeps the Hub on loopback."""
         source = (ROOT / "compose" / "openmrs-2.8-refapp.yml").read_text()
         self.assertNotIn("/srv/landing", source)
         self.assertNotIn("/srv/reports", source)
-        self.assertIn("../targets/med-agent-hub", source)
-        self.assertIn("QUERYSTORE_PASSWORD: ${QUERYSTORE_PASSWORD:-}", source)
-        self.assertIn("127.0.0.1:${MED_AGENT_HUB_PORT:-18081}", source)
+        self.assertRegex(source, r"127\.0\.0\.1:\$\{MED_AGENT_HUB_PORT")
 
-    def test_product_ci_is_not_run_by_harness(self):
+    def test_harness_ci_does_not_check_out_or_build_products(self):
+        """Invariant: harness CI never pulls product submodules or runs the assembled OpenMRS build."""
         source = (HARNESS / ".github" / "workflows" / "harness-ci.yml").read_text()
         self.assertNotIn("submodules: recursive", source)
-        self.assertNotIn("openmrs-integration-source:", source)
         self.assertNotIn("make openmrs-source-pair-test", source)
-        self.assertIn("openmrs-integration-source:", (ROOT / ".github" / "workflows" / "operations.yml").read_text())
 
 
 if __name__ == "__main__":
