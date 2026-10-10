@@ -499,6 +499,9 @@ separately scheduled. Designs for follow-ons are reviewed when those efforts sta
   utilities outside the validation runner.
 - **Public hosting:** decide repository organization/visibility or hosting changes
   separately from this documentation cleanup.
+- **Decision-layer experiment:** the proposed
+  [`DECISION-LAYER-2026-10`](decision-layer-experiment.md) spec awaits owner review;
+  its decisions D1–D4 are recorded there, not here.
 
 [backend]: https://github.com/pmanko/openmrs-module-chartsearchai/blob/20cb84ba97bb76ee97a8745016a6d9bb1546077b/README.md#provider-integration-contract
 [frontend]: https://github.com/pmanko/openmrs-esm-chartsearchai/blob/475f6eb60ea14011f719c861b02d02daf2156390/README.md
