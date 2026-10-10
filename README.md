@@ -44,8 +44,8 @@ To install a project, follow its setup guide in the repositories listed above.
 For product development, use that project's repository and contributor instructions.
 For component integration and shared development tooling, use this workspace.
 The [architecture](specs/architecture.md) explains how the projects fit together;
-the [implementation roadmap](specs/roadmap.md) records priorities, status and
-acceptance criteria. Read the [repository instructions](AGENTS.md) before editing.
+the [roadmap index](specs/roadmap.md) lists current priorities and links each
+delivery stream's focused spec. Read the [repository instructions](AGENTS.md) before editing.
 
 ### Workspace checkout
 
