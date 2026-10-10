@@ -54,6 +54,12 @@
   account logins and troubleshooting. Keep it aligned with the existing Make targets.
 - Reuse the existing build, HIV import, configuration and account tools. Do not
   add an environment framework, migration/backup flow or generated service password.
+- Keep one research setup command and one shared start/stop path. Do not retain
+  alternate full-stack launchers or make model evaluations part of startup.
+- Fresh setup must support both rebuilding the HIV index and restoring a matching
+  prepared index. Use Elasticsearch's snapshot API, not raw data-directory copies;
+  restore the corresponding QueryStore completion records with the index. Ordinary
+  restart must not reindex unchanged data.
 - Fresh setup replaces the local database; ordinary startup retains it. Never
   generate stock patients or silently change the selected inference provider.
 - Leave other installations alone. Changing someone else's running environment

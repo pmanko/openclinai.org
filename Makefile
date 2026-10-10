@@ -10,7 +10,7 @@ CORPUS_PROVENANCE ?= $(wildcard $(CURDIR)/artifacts/chartsearchai-local/corpus-p
 UV_PROJECT_ENVIRONMENT ?= $(CURDIR)/$(HARNESS)/.venv
 export UV_PROJECT_ENVIRONMENT
 
-.PHONY: up down local-stack-up local-stack-down reset status logs catalyst-mvp-up catalyst-mvp-external catalyst-mvp-seed catalyst-mvp-warm catalyst-mvp-health catalyst-mvp-restart catalyst-mvp-down catalyst-mvp-reset catalyst-superset-status catalyst-superset-import reset-transform sqlmesh-status loadtest-up loadtest-down dump-loaded chartsearch-build querystore-build openmrs-source-pair-build openmrs-source-pair-test repository-lines-check repository-lines-pr-check deployed-sources-check chartsearch-esm-build chartsearch-esm-dev llama-router-up llama-router-down llama-router-models llama-router-small-model-proof med-agent-hub-build med-agent-hub-up med-agent-hub-logs med-agent-hub-restart med-agent-hub-test chartsearch-test querystore-test querystore-test-integration chartsearch-configure querystore-configure querystore-reindex querystore-recreate-index chartsearch-backend chartsearchai-local dual-provider-up chartsearch-doctor seed validate-preflight validate-run load-test orphan-fk-check import-smoke completeness-check test
+.PHONY: up down local-stack-up local-stack-down reset status logs catalyst-mvp-up catalyst-mvp-external catalyst-mvp-seed catalyst-mvp-warm catalyst-mvp-health catalyst-mvp-restart catalyst-mvp-down catalyst-mvp-reset catalyst-superset-status catalyst-superset-import reset-transform sqlmesh-status loadtest-up loadtest-down dump-loaded chartsearch-build querystore-build openmrs-source-pair-build openmrs-source-pair-test repository-lines-check repository-lines-pr-check deployed-sources-check chartsearch-esm-build chartsearch-esm-dev llama-router-up llama-router-down llama-router-models llama-router-small-model-proof med-agent-hub-build med-agent-hub-up med-agent-hub-logs med-agent-hub-restart med-agent-hub-test chartsearch-test querystore-test querystore-test-integration chartsearch-configure querystore-configure querystore-reindex querystore-recreate-index chartsearch-backend chartsearch-doctor seed validate-preflight validate-run load-test orphan-fk-check import-smoke completeness-check test
 
 # --- compose lifecycle ---
 up:
@@ -309,19 +309,10 @@ chartsearch-backend:
 	@$(MAKE) querystore-configure chartsearch-configure
 	@echo "==> querystore now on $(BACKEND); open a patient / run a search to (re)index into it"
 
-chartsearchai-local:
-	@./scripts/chartsearchai-local.sh
-
 # Fresh HIV baseline, ChartSearchAI and saved research accounts.
 .PHONY: chartsearch-research-setup
 chartsearch-research-setup:
 	@bash scripts/chartsearch-research-setup.sh $(if $(DUMP),"DUMP=$(DUMP)")
-
-# One command: fresh reset -> working DUAL-provider stack (bundled + hub), restoring the cached
-# Elasticsearch querystore index instead of re-embedding the static demo corpus. Build the cache
-# once with `scripts/querystore-snapshot.sh snapshot <ver>`; thereafter every reset is minutes.
-dual-provider-up:
-	@./scripts/dual-provider-up.sh
 
 chartsearch-doctor:
 	@set -a; . ./.env.chartsearch.example; [ ! -f .env.chartsearch ] || . ./.env.chartsearch; set +a; \

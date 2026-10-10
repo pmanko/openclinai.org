@@ -104,30 +104,21 @@ docker exec "$DB_CONTAINER" mariadb --user=root --password="$DB_ROOT_PASS" "$TAR
   UNION ALL SELECT 'obs', COUNT(*) FROM obs;" || true
 
 # --- start the backend; Liquibase reconciles core and both consumer modules install fresh ---
-# On the very first boot against a just-restored (non-empty) schema, OpenMRS core's own
-# DatabaseUpdater can race into re-running its "empty database" snapshot changelog against
-# tables that already exist ("Table 'allergy' already exists"), then loop retrying that same
-# wrong decision forever within that one JVM. A plain container restart re-evaluates from
-# scratch and clears it — observed reliably, so it's handled here rather than left as a manual
-# step every seed would otherwise require.
 echo "==> starting backend '${BACKEND}' (Liquibase upgrade-in-place + module install)"
 docker start "$BACKEND" >/dev/null
 UP=0
-for attempt in 1 2 3; do
-  echo "    waiting for backend health (first boot runs Liquibase; can take minutes) [attempt ${attempt}/3]..."
-  for i in $(seq 1 100); do
-    code=$(curl -s -o /dev/null -w "%{http_code}" -u admin:Admin123 \
-      "http://localhost:${PROXY_PORT}/openmrs/ws/fhir2/R4/Patient?_count=1" || true)
-    [ "$code" = "200" ] && { echo "    backend up (~$((i*6))s)"; UP=1; break; }
-    sleep 6
-  done
-  [ "$UP" = "1" ] && break
-  if [ "$attempt" -lt 3 ]; then
-    echo "    backend stuck on the known first-boot snapshot race (never resolves within the same JVM); restarting to re-evaluate"
-    docker restart "$BACKEND" >/dev/null
-  fi
+echo "    waiting for backend health (first boot runs Liquibase; can take minutes)..."
+for i in $(seq 1 100); do
+  code=$(curl -s --max-time 5 -o /dev/null -w "%{http_code}" -u admin:Admin123 \
+    "http://localhost:${PROXY_PORT}/openmrs/ws/fhir2/R4/Patient?_count=1" || true)
+  [ "$code" = "200" ] && { echo "    backend up"; UP=1; break; }
+  sleep 6
 done
-[ "$UP" = "1" ] || { echo "ERROR: backend did not become healthy; check 'make logs SERVICE=backend'." >&2; exit 1; }
+if [[ "$UP" != "1" ]]; then
+  docker logs --tail 80 "$BACKEND" >&2
+  echo "ERROR: backend did not become healthy; check 'make logs SERVICE=backend'." >&2
+  exit 1
+fi
 
 # --- module health: the backend can report healthy via FHIR while an OpenMRS module still failed
 #     to start (e.g. a Liquibase checksum mismatch) — checked here so a broken seed fails loudly at
@@ -185,9 +176,8 @@ echo "    corpus receipt: ${CORPUS_RECEIPT}"
 if [[ "$REINDEX" == "1" ]]; then
   echo "==> triggering Hibernate Search reindex (synchronous)"
   curl -fsS -u admin:Admin123 -m 600 -X POST \
-    "http://localhost:${PROXY_PORT}/openmrs/ws/rest/v1/searchindexupdate" >/dev/null \
-    && echo "    reindex complete" \
-    || echo "    WARNING: reindex POST failed — run it manually once the backend settles."
+    "http://localhost:${PROXY_PORT}/openmrs/ws/rest/v1/searchindexupdate" >/dev/null
+  echo "    reindex complete"
 fi
 
 echo ""

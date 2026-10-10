@@ -6,7 +6,7 @@
 #   bundled: chartsearchai.llm.engine=remote -> host.docker.internal:${BUNDLED_TAP_PORT} -> router
 #   hub:     MED_AGENT_LLM_BASE_URL          -> host.docker.internal:${HUB_TAP_PORT}     -> router
 #
-# Requires the dual-provider stack up (make dual-provider-up) and the llama-router
+# Requires the research stack up (make local-stack-up after research setup) and the llama-router
 # serving ${PARITY_MODEL_ID}. Idempotent: reuses a tap that is already listening.
 # After this, run targets/validation-harness/scripts/parity-engine-probe.py
 # --patient <uuid> --question '<q>' from this workspace.
@@ -21,7 +21,6 @@ BUNDLED_TAP_PORT="${BUNDLED_TAP_PORT:-8078}"
 HUB_TAP_PORT="${HUB_TAP_PORT:-8079}"
 ROUTER_URL="${ROUTER_URL:-http://127.0.0.1:8077}"
 CAPTURE_DIR="artifacts/parity-engine/captures"
-SOURCE_ENV="artifacts/chartsearchai-local/querystore-service.env"
 HUB_CONTAINER="harness-med-agent-hub"
 
 say() { printf '\n== %s ==\n' "$*"; }
@@ -61,10 +60,6 @@ set_openmrs_property "chartsearchai.llm.remote.endpointUrl" \
 set_openmrs_property "chartsearchai.llm.remote.modelName" "${PARITY_MODEL_ID}"
 
 say "hub arm: LLM_BASE_URL through the hub tap ingress (recreate med-agent-hub)"
-[ -f "${SOURCE_ENV}" ] || fail "${SOURCE_ENV} missing — run scripts/provision-querystore-service-account.py (or make dual-provider-up) first"
-# shellcheck disable=SC1090
-set -a; . "${SOURCE_ENV}"; set +a
-export QUERYSTORE_BASE_URL QUERYSTORE_USERNAME QUERYSTORE_PASSWORD
 MED_AGENT_LLM_BASE_URL="http://host.docker.internal:${HUB_TAP_PORT}" make med-agent-hub-up
 
 say "AC-1 checks: both arms verifiably on the same engine"
