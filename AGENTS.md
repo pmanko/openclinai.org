@@ -52,6 +52,34 @@
   `python3 scripts/check_workspace.py` for umbrella changes. These checks are
   not component, deployed-runtime or release acceptance.
 
+## Tests and verification
+
+- A test protects behavior or a permanent structural invariant. Behavior: a
+  function, script or renderer given fixtures produces the expected output.
+  Structural invariants, the only ArchUnit-style checks allowed: dependency
+  direction and import boundaries (publication code does not import the harness),
+  forbidden couplings (the harness does not call Docker, Git or product paths),
+  resource limits (no video or oversize binaries in `landing/`), and the integrity
+  of executable fixtures (shared fixture copies stay byte-identical, case IDs stay
+  unique). Each such test names the invariant it protects in its docstring.
+- A test never asserts documentation wording, headings or structure, website copy,
+  status sentences, review conclusions, an exact inventory (Make targets, script
+  lists, workflow, compose or shell text), retired names, PR numbers, branch names
+  or roadmap state. Those change by design; a test that pins them is a stale review
+  dressed as a check. Assert the negative coupling, not the current inventory.
+- Verification of a documentation, specification, website-copy or coordination
+  change is review: the mechanical checks pass (unit tests, `check_workspace.py`,
+  the website build and its link check), a reviewer reads the change for its
+  audience, and the PR is approved. The approval is the verification record; do not
+  add a test to prove the words are present.
+- Verification of a code or configuration change is its behavior tests, CI and
+  review. Product, deployed-runtime and clinical acceptance need real-interface
+  evidence recorded in a dated review under `specs/reviews/`, never a repository test.
+- An agent checking a change against the current acceptance criteria runs those
+  checks once and reports the commands and results in the PR description or a dated
+  review. It commits them as tests only when the criterion is a permanent invariant
+  listed above.
+
 ## Local HIV Environment
 
 - `environments/README.md` owns prerequisites, setup/start/stop instructions,
