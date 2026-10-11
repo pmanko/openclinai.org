@@ -312,47 +312,6 @@ def test_local_router_down_does_not_kill_unrelated_non_macos_pid(tmp_path):
         unrelated.wait(timeout=5)
 
 
-def test_check_reuses_existing_router_without_selecting_a_profile(tmp_path):
-    fake_bin = tmp_path / "bin"
-    fake_bin.mkdir()
-    for name in ("curl", "docker", "python3", "git"):
-        command = fake_bin / name
-        command.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
-        command.chmod(0o755)
-    env = {
-        **os.environ,
-        "PATH": f"{fake_bin}:/usr/bin:/bin",
-        "LLAMA_MODEL_DIR": "/definitely/not/a/model/directory",
-        "CHARTSEARCH_LOCAL_BUILD": "never",
-    }
-
-    result = subprocess.run(
-        ["bash", str(ROOT / "scripts/chartsearchai-local.sh"), "--check"],
-        cwd=ROOT,
-        env=env,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-    assert result.returncode == 0, result.stderr
-    assert "router: existing" in result.stdout
-    assert "selected profile" not in result.stdout
-
-
-def test_local_shell_entrypoint_is_syntactically_valid():
-    script = ROOT / "scripts/chartsearchai-local.sh"
-
-    result = subprocess.run(
-        ["bash", "-n", str(script)],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-    assert result.returncode == 0, result.stderr
-
-
 def _hub_start(tmp_path, uid="1000", **overrides):
     """Run the real `make med-agent-hub-up` recipe in a scratch copy with Docker stubbed."""
     for name in ("Makefile", ".env.chartsearch.example"):

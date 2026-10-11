@@ -31,7 +31,7 @@ authorized by any item here; each stream spec names its signoffs.
 | --- | --- | --- | --- |
 | OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | Thirteen PRs restacked and checked; QueryStore #68 open; #587 finding open | Dispositions for #587 and the #68 split request |
 | Workspace and validation refactor (Track B) | [closeout record](reviews/2026-10-02-refactor-closeout.md) | Complete, 2 October | None |
-| Local HIV research environment | [setup guide](../environments/README.md) and the list below | Setup verified 3 October; fresh install blocked | PR #9 review; Appointments startup root cause |
+| Local HIV research environment | [setup guide](../environments/README.md) and the list below | One setup and start path merged; fresh install blocked | Appointments startup root cause; cached-index restore |
 | Catalyst delivery | [catalyst-delivery.md](catalyst-delivery.md) | Four journeys demonstrated; acceptance open | FP-009 and FP-010 |
 | Website and publication | list below | Documentation site deploys from `main`; landing deployment pending | Publish the reviewed landing content |
 | Decision-layer experiment | [decision-layer-experiment.md](decision-layer-experiment.md) | Proposed | Decisions D1–D4 |
@@ -41,18 +41,20 @@ authorized by any item here; each stream spec names its signoffs.
 The [setup guide](../environments/README.md) owns commands, accounts, acceptance
 smoke and troubleshooting. This list holds only delivery state.
 
-- [x] Fresh HIV baseline, both ChartSearchAI providers and the seven accounts
-      provision from `make chartsearch-research-setup`; the 3 October local smoke
-      passed ([record](reviews/2026-10-02-refactor-closeout.md#status-snapshot)).
-- [ ] One setup, start and stop path: duplicate launchers and startup-embedded
-      evaluations removed ([PR #9](https://github.com/pmanko/openclinai.org/pull/9),
-      open).
-- [ ] The Appointments startup failure during fresh import has a root cause and a
-      fix or an upstream issue; a failed module start stops setup honestly.
+- [x] Local startup, account logins and the patient-chart smoke passed on an
+      existing environment on 3 October
+      ([record](reviews/2026-10-02-refactor-closeout.md#status-snapshot)). This did
+      not prove a fresh installation.
+- [x] One setup command and one start and stop path; duplicate launchers and
+      startup-embedded evaluations removed
+      ([PR #9](https://github.com/pmanko/openclinai.org/pull/9)).
+- [ ] The Appointments module startup failure during fresh import has a root cause
+      and a fix or an upstream issue; a failed module start stops setup honestly.
 - [ ] Fresh setup offers a full rebuild and a matching cached-index restore in the
-      same command, using Elasticsearch's native snapshot API and QueryStore
-      completion records; unchanged HIV data is not re-embedded, and ordinary
-      restart retains data and index without reindexing.
+      same command, using Elasticsearch's snapshot API with the corresponding
+      QueryStore completion records; raw data-directory copies are not restore
+      proof, unchanged HIV data is not re-embedded, and ordinary restart retains
+      data and index without reindexing.
 - [ ] Both clean-start paths are proven with the real application, and Ross
       completes a fresh installation from the guide.
 
