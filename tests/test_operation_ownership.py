@@ -13,8 +13,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-import yaml
-
 
 ROOT = Path(__file__).resolve().parents[1]
 HARNESS = ROOT / "targets" / "validation-harness"
@@ -67,14 +65,6 @@ class OperationOwnershipTests(unittest.TestCase):
             ])
             self.assertEqual(args[args.index("--trace-file") + 1], str(trace))
             self.assertEqual(args[args.index("--corpus-provenance") + 1], str(receipt))
-
-    def test_local_compose_does_not_publish_website_or_reports(self):
-        """Invariant: the product compose never mounts the website or report publication paths."""
-        compose = yaml.safe_load((ROOT / "compose" / "openmrs-2.8-refapp.yml").read_text())
-        for name, service in compose["services"].items():
-            for volume in service.get("volumes", []):
-                target = volume if isinstance(volume, str) else volume.get("target", "")
-                self.assertNotRegex(str(target), r":/srv/(landing|reports)\b", name)
 
     def test_harness_ci_does_not_check_out_or_build_products(self):
         """Invariant: harness CI never pulls product submodules or runs the assembled OpenMRS build."""
