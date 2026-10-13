@@ -27,3 +27,25 @@ def test_product_compose_does_not_mount_publication_paths():
         for volume in service.get("volumes", []):
             target = volume if isinstance(volume, str) else volume.get("target", "")
             assert ":/srv/landing" not in str(target) and ":/srv/reports" not in str(target), (name, volume)
+
+
+def _moving(reference: str) -> bool:
+    if "${" in reference:
+        return True  # a tag chosen by a variable is not a pin
+    name = reference.split("@", 1)[0].rsplit("/", 1)[-1]
+    tag = name.split(":", 1)[1] if ":" in name else "latest"
+    return tag == "latest" or tag.startswith("nightly")
+
+
+def test_images_on_moving_tags_are_pinned_by_digest():
+    """Invariant: images pinned by digest; a pulled or built-from image on a moving tag carries one."""
+    references = []
+    for name, service in COMPOSE["services"].items():
+        if "build" in service:
+            references += [(name, str(value)) for value in (service["build"].get("args") or {}).values()
+                           if "/" in str(value)]
+        elif "image" in service:
+            references.append((name, str(service["image"])))
+    for name, reference in references:
+        if _moving(reference):
+            assert "@sha256:" in reference, (name, reference)

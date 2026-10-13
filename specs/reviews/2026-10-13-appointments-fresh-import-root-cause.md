@@ -4,8 +4,9 @@ Code-trace analysis of the failure that blocks `make chartsearch-research-setup`
 on a fresh HIV import. It is reasoned from the exact sources the stack runs (core
 `master` at `5eb8cba`, Liquibase 4.32.0, Appointments 2.1.0, Billing 2.5.0, the
 reference application distribution at `2806159`) and from this repository's
-history. It is not a reproduction: no Docker daemon or HIV package was available
-to the author. The confirmation steps below turn it into one.
+history. A synthetic [reproduction](#reproduction) on the pinned distribution
+image later the same day confirmed the mechanism and the stopgap fix; the HIV
+package itself was not available to the author.
 
 ## Summary
 
@@ -163,16 +164,45 @@ dump and images can therefore fail on one host and pass on another, which is the
 Proven from source: steps 1 to 7, the version and date facts in the table, the
 Docker Hub push dates (`nightly-chartsearch` re-pushed 13 October 20:21 UTC,
 `nightly` 10 October, `3.6.0` 11 March), and the Appointments changelog shape.
+Proven by the reproduction below: the failure, its dependence on which module
+runs Liquibase first, and the stopgap.
 
-Inferred, to be confirmed by the reproduction: that Billing was the module that
-claimed the scope (PR #9's description of the log is the only evidence); the value
-of `core.version` in the dump; and whether the module thread was created before or
-after the startup thread's first Liquibase use.
+Still inferred for the HIV case: that Billing claimed the scope there (PR #9's
+description of the log is the only evidence) and the value of `core.version` in
+the dump. The clean-start proof on the real HIV package settles both.
+
+## Reproduction
+
+Run on 13 October against the pinned backend image
+`openmrs/openmrs-reference-application-3-backend@sha256:92cd19c4…`, whose war
+reports `openmrs.version.short=2.9.0-4cc6f8` (Core 2.9.0-SNAPSHOT, built
+13 October) with Appointments 2.1.0 and Billing 2.5.0, on MariaDB 10.11.7. The
+distribution's ChartSearchAI and QueryStore snapshots were removed, as the
+umbrella image does. Each run restarted the same database and data volume.
+
+| Run | State before start | Result |
+| --- | --- | --- |
+| First install | Empty database | 31 modules started; six Appointments `sqlFile` changesets recorded |
+| A | Every `module.<id>.version` set to an old value; `core.version=2.9.0` unchanged; image default optimized startup | Appointments not started: `Unable to update data model using liquibase.xml`, caused by `The file patientPastAppointments.sql was not found in the configured search path`, listing only emrapi's `.openmrs-lib-cache` jars and the webapp's libraries |
+| B | Same reset; `OMRS_EXTRA_OPTIMIZED_STARTUP=false` | 31 modules started; no search-path errors; runtime properties contain `optimized.startup=false` |
+| C | Ordinary restart of B, no version change | 31 modules started |
+
+Run A names emrapi rather than Billing: whichever module first runs Liquibase on
+the startup thread claims the scope, which is the order dependence described
+under trigger conditions. Both runs reached a healthy backend within the same
+polling interval, so the stopgap's extra Liquibase checks did not lengthen
+startup measurably on this machine.
+
+The reproduction script and its logs are not retained in the repository; the
+commands are those of an ordinary `docker run` of the image with the compose
+file's backend environment, followed by
+`UPDATE global_property SET property_value='0.0.0-repro' WHERE property LIKE 'module.%.version'`
+before each restart.
 
 ## Confirmation steps
 
-On a host with Docker and the HIV package, after `make chartsearch-research-setup`
-fails:
+On a host with Docker and the HIV package, if `make chartsearch-research-setup`
+still fails with the stopgap removed:
 
 ```sh
 docker logs harness-openmrs-backend 2>&1 | grep -n -A12 "patientPastAppointments.sql was not found"
@@ -198,22 +228,23 @@ host versus a passing one.
   class loader; apply the same to `getUnrunDatabaseChanges` (`:705-711`). This is
   a few lines, has no behavior change for the first-install path, and belongs in
   the [OpenMRS contribution stream](../openmrs-contribution.md) as a TRUNK ticket
-  with the reproduction log attached. Until it lands, the research baseline needs B
-  or C.
+  with the reproduction log attached. Tracked in that stream's target path.
 - **B. Umbrella stopgap: `OMRS_EXTRA_OPTIMIZED_STARTUP: "false"`** on the backend
   service in `compose/openmrs-2.8-refapp.yml` (`startup-init.sh:162-170` maps it to
   `optimized.startup=false`). This restores the `2.8.x` ordering: core lists and
   applies its changelog on every boot before modules, every module runs Liquibase
   on every boot, and the module thread inherits the right scope. Cost: slower
   boots, the same cost the stack paid before 30 September. It also removes the
-  snapshot-drift hazard below. Recommended now, with the reason recorded in the
-  compose comment.
-- **C. Pin the moving parts.** `compose/Dockerfile.backend:17-35` takes the newest
+  snapshot-drift hazard below. **Applied** in the backend service's environment,
+  with the reason in the compose comment; verified by runs B and C above.
+- **C. Pin the moving parts.** `compose/Dockerfile.backend` took the newest
   `2.9.0-SNAPSHOT` war at every build on top of a `nightly-chartsearch` base that
-  moves daily. Pin the base image by digest, pin the core war to one snapshot
-  timestamp with its SHA-256 recorded next to the module pins, and rebuild only on
-  a deliberate bump. This does not fix the defect but makes "fresh install" mean
-  one reproducible artifact set, which Ross's installation needs regardless.
+  moves daily. This does not fix the defect but makes "fresh install" mean one
+  reproducible artifact set, which Ross's installation needs regardless.
+  **Applied:** gateway, frontend and backend base are pinned by digest, and the
+  separate war download is removed because the pinned backend image already ships
+  Core 2.9.0-SNAPSHOT build `4cc6f8`. A bump changes all three digests in one
+  reviewed change.
 - **D. Not fixes.** Stripping Appointments' `liquibasechangelog` rows or version
   markers from the dump would re-execute its changesets against HIV data; retrying
   startup only re-rolls condition 4; and the `2.8.10` core in the distribution is
@@ -228,8 +259,8 @@ is `openmrs.version.shortnumericonly` (`api/pom.xml:361`,
 core changesets is treated as unchanged on an existing database and the changesets
 are never applied, and modules are skipped for the same reason. An unpinned
 overlay therefore produces databases whose schema depends on which snapshot
-happened to be newest when the image was last built. Option B neutralizes this;
-option C makes each change deliberate.
+happened to be newest when the image was last built. Option B neutralizes this,
+and option C makes each change deliberate; both are applied.
 
 ## Sources
 

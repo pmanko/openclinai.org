@@ -155,6 +155,16 @@ export COMPOSE_FILE
 echo "==> Validating the resolved Docker Compose configuration"
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" config --quiet
 
+# The backend image is built locally and its tag names the pinned distribution
+# digest; after a pin change, build it once here instead of failing to start.
+BACKEND_IMAGE="$(docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" config --images \
+  | grep '^harness-openmrs-backend:' || true)"
+if [[ -n "${BACKEND_IMAGE}" ]] && ! docker image inspect "${BACKEND_IMAGE}" >/dev/null 2>&1; then
+  echo "==> Building ${BACKEND_IMAGE} for the pinned OpenMRS distribution (data is kept)"
+  docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" build backend \
+    || fail "could not build the pinned OpenMRS backend image"
+fi
+
 echo "==> Checking llama-router (:8077)"
 if curl --fail --silent --show-error --max-time 3 "${ROUTER_URL}" >/dev/null 2>&1; then
   echo "    already running"

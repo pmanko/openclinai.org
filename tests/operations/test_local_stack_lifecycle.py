@@ -53,11 +53,13 @@ case "${1:-}" in
   compose)
     case "$*" in
       *" config --quiet"*) exit "${FAKE_DOCKER_CONFIG_STATUS:-0}" ;;
+      *" config --images"*) printf '%b' "${FAKE_DOCKER_IMAGES:-}" ;;
       *" up "*) exit "${FAKE_DOCKER_UP_STATUS:-0}" ;;
       *" down"*) exit "${FAKE_DOCKER_DOWN_STATUS:-0}" ;;
       *) exit 0 ;;
     esac
     ;;
+  image) exit "${FAKE_DOCKER_IMAGE_STATUS:-0}" ;;
   *) exit 0 ;;
 esac
 """,
@@ -351,3 +353,25 @@ def test_local_stack_down_leaves_unmanaged_pid_running(
     finally:
         sleeper.terminate()
         sleeper.wait(timeout=5)
+
+
+@pytest.mark.parametrize("image_present", [True, False])
+def test_local_stack_builds_only_a_missing_pinned_backend_image(tmp_path: Path, image_present: bool) -> None:
+    root, docker_log, env = _fixture(tmp_path)
+    Path(env["FAKE_ROUTER_READY"]).touch()
+    env["FAKE_DOCKER_IMAGES"] = "caddy:2.8-alpine\\nharness-openmrs-backend:0123abcd-temurin\\n"
+    env["FAKE_DOCKER_IMAGE_STATUS"] = "0" if image_present else "1"
+
+    result = subprocess.run(
+        ["bash", str(root / "scripts" / "local-stack-up.sh")],
+        cwd=root, env=env, capture_output=True, text=True, check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    calls = docker_log.read_text(encoding="utf-8").splitlines()
+    builds = [index for index, call in enumerate(calls) if call.startswith("compose") and " build backend" in call]
+    ups = [index for index, call in enumerate(calls) if call.startswith("compose") and " up " in call]
+    if image_present:
+        assert builds == []
+    else:
+        assert len(builds) == 1 and builds[0] < ups[0]
