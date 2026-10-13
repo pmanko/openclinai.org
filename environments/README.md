@@ -8,8 +8,9 @@ validation harness runs experiments afterward; it does not install this stack.
 
 Start from the recursive umbrella checkout described in the [README](../README.md#workspace-checkout).
 Use `main` and initialize its pinned submodules. Gateway, frontend and backend
-use the same OpenMRS distribution tag; our source-built ChartSearchAI and
-QueryStore modules replace the distribution's snapshots.
+come from one digest-pinned build of the OpenMRS distribution, which also fixes
+OpenMRS Core; our source-built ChartSearchAI and QueryStore modules replace the
+distribution's snapshots.
 
 Prerequisites: running Docker with Compose, Java 21/Maven, Python 3.11+, Node.js 18+,
 Yarn 4 and `llama-server` on your PATH. Check `mvn -version` and
@@ -32,17 +33,28 @@ and place both files in `artifacts/demo-data/`:
 - `refapp_28_demo.sql.gz`
 - `refapp_28_demo.sql.gz.provenance.json`
 
+Place the prepared QueryStore index for this checkout,
+`refapp_28_demo.querystore-index.tar.gz`, in the same directory. It holds the
+embedded HIV records, so setup restores them in minutes instead of embedding
+them again for several hours. No prepared index has been published for the
+current pins yet; until one is, add `REBUILD_INDEX=1` to the setup command.
+
 Run from the umbrella root:
 
 ```sh
-make chartsearch-research-setup
+make chartsearch-research-setup                 # restore the prepared index
+make chartsearch-research-setup REBUILD_INDEX=1 # rebuild it from the HIV data
 ```
 
-**This replaces the local OpenMRS database with the HIV baseline.** It builds
-the pinned modules and frontend, starts the existing stack and model router,
-imports the HIV data, recreates QueryStore's search index from that baseline,
-configures both ChartSearchAI providers, and creates the
+**This replaces the local OpenMRS database and QueryStore index with the HIV
+baseline.** It builds the pinned modules and frontend, starts the existing stack
+and model router, imports the HIV data, restores or rebuilds QueryStore's
+Elasticsearch index, configures both ChartSearchAI providers, and creates the
 accounts. No stock patients are generated. There is no upgrade or backup flow.
+
+Setup checks the prepared index before building anything. It refuses a package
+built from a different HIV dump, QueryStore source, OpenMRS distribution,
+embedding model or Elasticsearch version, and names the difference.
 
 ChartSearchAI defaults to Hub's checked Gemma 4 12B profile; its bundled provider
 uses the same local Gemma 4 12B router. E4B remains available as an explicit
@@ -89,8 +101,12 @@ For a standalone Hub using inline chart context only, explicitly export
 before `make med-agent-hub-up`. That focused launcher preserves explicit empty
 overrides; without overrides it uses the local demo login.
 
-Stop with `make local-stack-down`. Startup retains the loaded data; repeat
-`make chartsearch-research-setup` only when you want to reload the HIV baseline.
+Stop with `make local-stack-down`. Startup retains the loaded data and index
+and does not re-embed anything.
+
+To reset to a fresh baseline, pull `main`, update submodules, place the matching
+prepared index beside the HIV dump, and run `make chartsearch-research-setup`
+again. It discards local OpenMRS changes, chat history and the old index.
 
 These are the only full-environment setup and start/stop commands. Fresh setup
 uses the same startup path. Focused component build/configuration commands remain
@@ -102,6 +118,23 @@ diagnostics, not part of startup.
 Check only that OpenMRS opens, ChartSearchAI is available on a patient chart,
 and known HIV patient records are loaded. Account logins are checked while
 provisioning. Model-quality evaluations, reports and videos are not setup gates.
+
+## Publishing the Prepared Index
+
+Publish a new prepared index whenever the HIV dump, the QueryStore pin, the
+OpenMRS distribution pin or the embedding model changes. On a machine where
+`make chartsearch-research-setup REBUILD_INDEX=1` has completed for the current
+`main`, run:
+
+```sh
+make querystore-index-export
+```
+
+It confirms the index is complete and was built from this checkout, briefly
+stops OpenMRS, snapshots every QueryStore index with Elasticsearch's snapshot
+API together with QueryStore's completion records, and writes
+`artifacts/demo-data/refapp_28_demo.querystore-index.tar.gz`. Upload that file
+beside the HIV baseline package and link it in First Setup above.
 
 ## Troubleshooting
 

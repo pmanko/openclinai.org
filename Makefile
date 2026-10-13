@@ -312,7 +312,13 @@ chartsearch-backend:
 # Fresh HIV baseline, ChartSearchAI and saved research accounts.
 .PHONY: chartsearch-research-setup
 chartsearch-research-setup:
-	@bash scripts/chartsearch-research-setup.sh $(if $(DUMP),"DUMP=$(DUMP)")
+	@REBUILD_INDEX=$(REBUILD_INDEX) bash scripts/chartsearch-research-setup.sh $(if $(DUMP),"DUMP=$(DUMP)")
+
+# Maintainer step: package the running, fully indexed stack's QueryStore index
+# for publication beside the HIV baseline package. Briefly stops the backend.
+.PHONY: querystore-index-export
+querystore-index-export:
+	@python3 scripts/querystore-index-package.py export $(if $(DUMP),--dump "$(DUMP)")
 
 chartsearch-doctor:
 	@set -a; . ./.env.chartsearch.example; [ ! -f .env.chartsearch ] || . ./.env.chartsearch; set +a; \

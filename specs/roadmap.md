@@ -31,7 +31,7 @@ authorized by any item here; each stream spec names its signoffs.
 | --- | --- | --- | --- |
 | OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | Thirteen PRs restacked and checked; QueryStore #68 open; #587 finding open | Dispositions for #587 and the #68 split request |
 | Workspace and validation refactor (Track B) | [closeout record](reviews/2026-10-02-refactor-closeout.md) | Complete, 2 October | None |
-| Local HIV research environment | [setup guide](../environments/README.md) and the list below | One setup and start path merged; fresh install blocked; Appointments root cause traced | Confirm the root cause on a real fresh import and apply its fix; cached-index restore |
+| Local HIV research environment | [setup guide](../environments/README.md) and the list below | Distribution pinned by digest, Appointments startup fixed, prepared-index restore built; no prepared index published | Rebuild once on the pins, publish the prepared index, Ross's fresh install |
 | Catalyst delivery | [catalyst-delivery.md](catalyst-delivery.md) | Four journeys demonstrated; acceptance open | FP-009 and FP-010 |
 | Website and publication | list below | Documentation site deploys from `main`; landing deployment pending | Publish the reviewed landing content |
 | Decision-layer experiment | [decision-layer-experiment.md](decision-layer-experiment.md) | Proposed | Decisions D1–D4 |
@@ -48,16 +48,24 @@ smoke and troubleshooting. This list holds only delivery state.
 - [x] One setup command and one start and stop path; duplicate launchers and
       startup-embedded evaluations removed
       ([PR #9](https://github.com/pmanko/openclinai.org/pull/9)).
-- [ ] The Appointments module startup failure during fresh import has a root cause
-      and a fix or an upstream issue; a failed module start stops setup honestly.
-      The code-trace root cause and its fix options are recorded in the
-      [13 October record](reviews/2026-10-13-appointments-fresh-import-root-cause.md);
-      the reproduction, the chosen fix and the upstream ticket remain open.
+- [x] The Appointments module startup failure during fresh import has a root cause
+      and a fix; a failed module start stops setup honestly
+      ([root cause, reproduction and fix](reviews/2026-10-13-appointments-fresh-import-root-cause.md#reproduction)).
+      The upstream Core fix is tracked in the
+      [OpenMRS contribution stream](openmrs-contribution.md).
+- [x] Fresh setup uses one digest-pinned OpenMRS distribution build, including Core,
+      instead of a moving tag and a newest-snapshot Core download
+      ([record](reviews/2026-10-13-appointments-fresh-import-root-cause.md#fix-options)).
 - [ ] Fresh setup offers a full rebuild and a matching cached-index restore in the
       same command, using Elasticsearch's snapshot API with the corresponding
       QueryStore completion records; raw data-directory copies are not restore
       proof, unchanged HIV data is not re-embedded, and ordinary restart retains
-      data and index without reindexing.
+      data and index without reindexing. Export and restore are built
+      (`scripts/querystore-index-package.py`) and both paths select QueryStore's
+      Elasticsearch backend; proof with the real HIV index is the next item.
+- [ ] A prepared index for the current pins is exported on a machine that completed
+      the rebuild path and published beside the HIV baseline package, and the
+      setup guide links it.
 - [ ] Both clean-start paths are proven with the real application, and Ross
       completes a fresh installation from the guide.
 

@@ -47,13 +47,14 @@ while IFS= read -r index; do
   echo "    deleted ${index}"
 done <<< "${indexes}"
 
-echo "==> resetting only Querystore bootstrap progress and ensuring autostart"
+echo "==> resetting only Querystore bootstrap progress, selecting Elasticsearch and ensuring autostart"
 docker exec "${DB_CONTAINER}" mariadb \
   --user="${DB_USER}" --password="${DB_PASSWORD}" "${DB_NAME}" -e "
     DELETE FROM querystore_bootstrap_progress;
     INSERT INTO global_property (property, property_value, uuid)
-      VALUES ('querystore.bootstrap.autostart', 'true', UUID())
-      ON DUPLICATE KEY UPDATE property_value='true';"
+      VALUES ('querystore.backend', 'elasticsearch', UUID()),
+             ('querystore.bootstrap.autostart', 'true', UUID())
+      ON DUPLICATE KEY UPDATE property_value=VALUES(property_value);"
 
 echo "==> restarting OpenMRS with the rebuilt Querystore module"
 docker start "${BACKEND}" >/dev/null
