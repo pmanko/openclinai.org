@@ -351,7 +351,7 @@ All recording, editing, and video verification run locally with local inference.
 Keep raw footage and review receipts privately alongside the local recordings,
 outside Git. Server deployment and query-check receipts may live under
 `/home/ubuntu/catalyst-release-evidence/`; the server is not the recorder.
-Delivery priorities are owned by the [umbrella roadmap](../specs/roadmap.md).
+Delivery priorities are owned by the [Catalyst delivery spec](../specs/catalyst-delivery.md).
 The selected baseline retains its
 [recorded Catalyst acceptance evidence](https://github.com/pmanko/clinical-ai-validation-harness/blob/9b5b87ef67397fe7705b37467b98d3550c8d0e47/specs/008-catalyst-query-workbench/tasks.md).
 

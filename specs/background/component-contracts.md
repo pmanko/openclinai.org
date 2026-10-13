@@ -10,7 +10,7 @@ they do not imply an upstream merge or deployed release.
 - **ChartSearchAI frontend:** [source/setup](https://github.com/pmanko/openmrs-esm-chartsearchai/tree/475f6eb60ea14011f719c861b02d02daf2156390).
 - **QueryStore:** [REST API](https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/rest-api.md) and [architecture decisions](https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/adr.md).
 - **Med Agent Hub:** [source/setup](https://github.com/pmanko/med-agent-hub).
-- **Catalyst:** [application specification](https://github.com/DIGI-UW/catalyst-ai/blob/main/docs/specification.md), [Hub integration](https://github.com/DIGI-UW/catalyst-ai/blob/main/docs/med-agent-hub.md) and [cross-project delivery](../roadmap.md#6-catalyst-delivery).
+- **Catalyst:** [application specification](https://github.com/DIGI-UW/catalyst-ai/blob/main/docs/specification.md), [Hub integration](https://github.com/DIGI-UW/catalyst-ai/blob/main/docs/med-agent-hub.md) and [cross-project delivery](../catalyst-delivery.md).
 - **Validation harness:** [setup and experiment commands](https://github.com/pmanko/clinical-ai-validation-harness#readme) and [current validation contract](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/006-validation-harness-mvp/spec.md).
 
 The [workspace roadmap](https://github.com/pmanko/openclinai.org/blob/main/specs/roadmap.md)

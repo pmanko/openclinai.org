@@ -1,6 +1,10 @@
 # Working in OpenClinAI
 
-- Start with `specs/roadmap.md`; it is the umbrella coordination authority.
+- Start with `specs/roadmap.md`; it is the umbrella coordination index. Each
+  delivery stream has one focused spec in `specs/` written as a target path with
+  checkboxes. Tick a box only with a link to its evidence. Record dated
+  verification (test counts, hashes, run narratives) in `specs/reviews/`, never in
+  the index or a stream spec. A completed plan becomes a dated closeout record.
 - `specs/architecture.md` supports design decisions; it is not another task list.
 - Write and review for each document's audience: README, website and repository
   description for new users; roadmap for implementing agents; architecture for
@@ -47,6 +51,42 @@
 - Run `python3 -m unittest discover -s tests -v` and
   `python3 scripts/check_workspace.py` for umbrella changes. These checks are
   not component, deployed-runtime or release acceptance.
+
+## Tests and verification
+
+- A test protects behavior or a permanent invariant. Behavior: a function, script,
+  Make target or renderer runs against fixtures and stubs, and the test checks what
+  it did or produced. Output the code generates for fixture input may be asserted.
+- Static checks of repository files are allowed only for these invariants, each named
+  in the test's docstring: dependency direction and import boundaries (publication
+  code does not import the harness); forbidden couplings (the harness does not call
+  Docker, Git or product paths; the website host does not build, proxy or mount a
+  product); security settings in parsed configuration (images pinned by digest,
+  ports published on loopback, repository content mounted read-only, no default
+  credentials); resource limits (no video or oversize binaries in `landing/`);
+  integrity of executable data (shared fixture copies byte-identical, configuration
+  files that describe the same models agree); accessibility and public URL stability
+  applied to every page that exists.
+- A test never asserts hand-written documentation or website copy, headings, page
+  inventories, status sentences, review conclusions, the text of a script, Makefile,
+  workflow or compose file, an exact inventory of targets, scripts, IDs or links,
+  retired names, PR numbers, branch names or roadmap state. Those change by design;
+  a test that pins them is a stale review dressed as a check. Assert the negative
+  coupling or run the code, never the current text.
+- Tooling follows the same rule: a script that marks a requirement satisfied
+  because files contain certain words is not verification and does not belong here.
+- Verification of a documentation, specification, website-copy or coordination
+  change is review: the mechanical checks pass (unit tests, `check_workspace.py`,
+  the website build and its link check), a reviewer reads the change for its
+  audience, and the PR is approved. The approval is the verification record; do not
+  add a test to prove the words are present.
+- Verification of a code or configuration change is its behavior tests, CI and
+  review. Product, deployed-runtime and clinical acceptance need real-interface
+  evidence recorded in a dated review under `specs/reviews/`, never a repository test.
+- An agent checking a change against the current acceptance criteria runs those
+  checks once and reports the commands and results in the PR description or a dated
+  review. It commits them as tests only when the criterion is a permanent invariant
+  listed above.
 
 ## Local HIV Environment
 

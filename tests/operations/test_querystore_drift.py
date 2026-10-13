@@ -89,15 +89,7 @@ def test_drift_cli_rejects_a_malformed_shape_as_cleanly_as_invalid_json(monkeypa
     assert "invalid Querystore drift response" in capsys.readouterr().err
 
 
-def test_preflight_and_reindex_use_the_same_cli_defaults():
-    preflight = (ROOT / "scripts/validate-preflight.sh").read_text(encoding="utf-8")
-    reindex = (ROOT / "scripts/querystore-reindex.sh").read_text(encoding="utf-8")
-    invocation = "python3 scripts/check-querystore-drift.py"
-    assert invocation in preflight
-    assert invocation in reindex
-    assert "--percent" not in preflight and "--absolute" not in preflight
-    assert "--percent" not in reindex and "--absolute" not in reindex
-
+def test_default_thresholds_reject_material_under_indexing():
     payload = json.dumps(
         {
             "types": [
