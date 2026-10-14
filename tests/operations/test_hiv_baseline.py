@@ -269,5 +269,6 @@ def test_setup_stops_openmrs_and_its_gateway_before_restoring_then_starts_the_st
     restore = calls.index("python3 scripts/hiv-baseline.py restore")
     # The restored database is loaded before OpenMRS first starts, so a new data volume must not create tables.
     start = calls.index("make local-stack-up create_tables=false")
+    restart = calls.index("docker restart harness-openmrs-backend")
     verify = calls.index("python3 scripts/hiv-baseline.py verify")
-    assert stop < restore < start < verify
+    assert stop < restore < start < restart < verify

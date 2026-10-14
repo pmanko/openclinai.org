@@ -59,6 +59,11 @@ else
   docker compose -f "${COMPOSE_FILE}" run --rm --no-deps --entrypoint sh backend -c \
     'rm -rf /openmrs/data/.openmrs-lib-cache/chartsearchai /openmrs/data/.openmrs-lib-cache/querystore'
   OMRS_CONFIG_CREATE_TABLES=false make local-stack-up
+  # On a new data volume that first start is OpenMRS's install wizard, which
+  # starts modules before Core's own Liquibase pass and fails Appointments
+  # (specs/reviews/2026-10-13-appointments-fresh-import-root-cause.md). It leaves
+  # the runtime properties behind, so one restart starts every module.
+  docker restart harness-openmrs-backend
   make chartsearch-esm-build
   python3 scripts/hiv-baseline.py verify
 fi
