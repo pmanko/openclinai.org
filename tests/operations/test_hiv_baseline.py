@@ -226,3 +226,23 @@ def test_rebuild_without_the_hiv_dump_stops_before_building_anything(tmp_path):
     assert result.returncode != 0
     assert "HIV baseline dump not found" in result.stderr
     assert _calls(log) == []
+
+
+def test_setup_stops_openmrs_and_its_gateway_before_restoring_then_starts_the_stack(tmp_path):
+    """The gateway's health check passes through to OpenMRS, so it must not stay up while OpenMRS is down."""
+    log = tmp_path / "calls.log"
+    binaries = _stub_bin(tmp_path, log, None)
+    for name in ("python3", "curl"):
+        stub = binaries / name
+        stub.write_text(f'#!/bin/bash\necho "{name} $*" >> "{log}"\n', encoding="utf-8")
+        stub.chmod(0o755)
+
+    result = _run_setup(tmp_path, binaries, HIV_BASELINE_IMAGE="example/baseline:test")
+
+    assert result.returncode == 0, result.stderr
+    calls = _calls(log)
+    stop = calls.index("docker compose -f compose/openmrs-2.8-refapp.yml stop proxy gateway backend")
+    restore = calls.index("python3 scripts/hiv-baseline.py restore")
+    start = calls.index("make local-stack-up")
+    verify = calls.index("python3 scripts/hiv-baseline.py verify")
+    assert stop < restore < start < verify

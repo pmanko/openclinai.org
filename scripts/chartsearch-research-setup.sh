@@ -50,6 +50,10 @@ if [[ "${REBUILD_BASELINE}" == "1" ]]; then
   ALLOW_QUERYSTORE_INDEX_RESET=1 make querystore-recreate-index
 else
   # Load the baseline before OpenMRS first starts, so it never boots on stale data.
+  # The gateway's health check passes through to OpenMRS; stop it and the proxy
+  # too, so startup brings them back in order instead of failing on a gateway
+  # that turned unhealthy while OpenMRS was down for the restore.
+  docker compose -f "${COMPOSE_FILE}" stop proxy gateway backend
   ./scripts/stack-up.sh --wait db elasticsearch
   python3 scripts/hiv-baseline.py restore
   docker compose -f "${COMPOSE_FILE}" run --rm --no-deps --entrypoint sh backend -c \
