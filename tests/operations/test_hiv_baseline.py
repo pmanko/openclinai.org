@@ -272,3 +272,18 @@ def test_setup_stops_openmrs_and_its_gateway_before_restoring_then_starts_the_st
     restart = calls.index("docker restart harness-openmrs-backend")
     verify = calls.index("python3 scripts/hiv-baseline.py verify")
     assert stop < restore < start < restart < verify
+
+
+@pytest.mark.parametrize("image, pulled", [
+    ("ghcr.io/pmanko/openclinai-hiv-baseline:named", True),
+    ("ghcr.io/pmanko/openclinai-hiv-baseline@sha256:" + "a" * 64, False),
+])
+def test_a_cached_tag_is_pulled_again_but_a_cached_digest_is_not(tmp_path, image, pulled):
+    """A named baseline can be republished under the same tag; a digest cannot change."""
+    log = tmp_path / "calls.log"
+    binaries = _stub_bin(tmp_path, log, _manifest_archive(tmp_path, _manifest()))
+
+    result = _run_tool(tmp_path, binaries, "check", BASELINE=image)
+
+    assert result.returncode == 0, result.stderr
+    assert (f"docker pull {image}" in _calls(log)) is pulled

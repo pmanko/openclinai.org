@@ -114,9 +114,12 @@ class Baseline:
         self.container = ""
 
     def __enter__(self) -> "Baseline":
-        if subprocess.run(["docker", "image", "inspect", self.image], capture_output=True).returncode != 0:
+        # A digest never changes, so a local copy is enough; a tag can be republished, so pull it,
+        # falling back to a local-only image such as openclinai-hiv-baseline:local.
+        cached = subprocess.run(["docker", "image", "inspect", self.image], capture_output=True).returncode == 0
+        if not (cached and "@sha256:" in self.image):
             say(f"==> pulling {self.image}")
-            if subprocess.run(["docker", "pull", self.image]).returncode != 0:
+            if subprocess.run(["docker", "pull", self.image]).returncode != 0 and not cached:
                 raise Unavailable(f"cannot pull {self.image}")
         self.container = docker("create", self.image, "/baseline").strip()
         return self
