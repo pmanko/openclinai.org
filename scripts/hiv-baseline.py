@@ -469,11 +469,6 @@ def cmd_export(args: argparse.Namespace) -> int:
     backend = stack.sql("SELECT property_value FROM global_property WHERE property = 'querystore.backend';").strip()
     if backend != "elasticsearch":
         raise RuntimeError(f"QueryStore uses the {backend or 'default'} backend, not Elasticsearch")
-    used = stack.sql(" + ".join(f"(SELECT COUNT(*) FROM {table})" for table in USAGE_TABLES).join(
-        ("SELECT ", ";"))).strip()
-    if used != "0":
-        raise RuntimeError(f"ChartSearchAI already holds {used} conversation or audit rows; export the "
-                           "baseline straight after REBUILD_BASELINE=1 setup, before anyone uses the stack")
     modules = stack.require_modules_started()
     say("==> checking that the running index is complete")
     stack.wait_index_complete(timeout=60)
@@ -498,13 +493,23 @@ def cmd_export(args: argparse.Namespace) -> int:
         },
     }
 
-    work = EXPORT_DIR.with_name(EXPORT_DIR.name + ".partial")
-    shutil.rmtree(work, ignore_errors=True)
-    work.mkdir(parents=True)
-    say(f"==> stopping {stack.backend} so the database and index agree")
+    work = args.output.with_name(args.output.name + ".partial")
+    say(f"==> stopping {stack.backend} so nothing changes the database or index during the export")
     docker("stop", stack.backend)
     try:
+        # Checked with OpenMRS stopped, so no later write can slip into the published baseline.
+        used = stack.sql(" + ".join(f"(SELECT COUNT(*) FROM {table})" for table in USAGE_TABLES).join(
+            ("SELECT ", ";"))).strip()
+        if used != "0":
+            raise RuntimeError(f"ChartSearchAI already holds {used} conversation or audit rows; export the "
+                               "baseline straight after REBUILD_BASELINE=1 setup, before anyone uses the stack")
+        unfinished = stack.sql("SELECT COUNT(*) FROM querystore_bootstrap_progress "
+                               "WHERE status <> 'COMPLETED';").strip()
+        if unfinished != "0":
+            raise RuntimeError(f"{unfinished} QueryStore resource types are not COMPLETED")
         manifest["indices"] = stack.counts()
+        shutil.rmtree(work, ignore_errors=True)
+        work.mkdir(parents=True)
         stack.prepare_snapshot_dir()
         stack.es_call("PUT", f"_snapshot/{REPOSITORY}", {"type": "fs", "settings": {"location": SNAPSHOT_DIR}})
         say("==> snapshotting querystore_* indices with the Elasticsearch snapshot API")
@@ -546,13 +551,13 @@ def cmd_export(args: argparse.Namespace) -> int:
         f"COPY {DATABASE_FILE} manifest.json /baseline/\n",
         encoding="utf-8",
     )
-    shutil.rmtree(EXPORT_DIR, ignore_errors=True)
-    os.replace(work, EXPORT_DIR)
+    shutil.rmtree(args.output, ignore_errors=True)
+    os.replace(work, args.output)
     say(f"==> building {LOCAL_IMAGE}")
-    if subprocess.run(["docker", "build", "-q", "-t", LOCAL_IMAGE, str(EXPORT_DIR)]).returncode != 0:
+    if subprocess.run(["docker", "build", "-q", "-t", LOCAL_IMAGE, str(args.output)]).returncode != 0:
         raise RuntimeError(f"could not build {LOCAL_IMAGE}")
-    size = sum(path.stat().st_size for path in EXPORT_DIR.rglob("*") if path.is_file())
-    say(f"exported baseline: {EXPORT_DIR} ({size / 1e9:.2f} GB), image {LOCAL_IMAGE}")
+    size = sum(path.stat().st_size for path in args.output.rglob("*") if path.is_file())
+    say(f"exported baseline: {args.output} ({size / 1e9:.2f} GB), image {LOCAL_IMAGE}")
     say(f"database {manifest['database']['bytes'] / 1e6:.1f} MB; "
         f"{sum(manifest['indices'].values())} documents in {len(manifest['indices'])} indices")
     say(f"Test it with HIV_BASELINE_IMAGE={LOCAL_IMAGE} make chartsearch-research-setup, "
@@ -561,9 +566,9 @@ def cmd_export(args: argparse.Namespace) -> int:
 
 
 def cmd_publish(args: argparse.Namespace) -> int:
-    manifest_path = EXPORT_DIR / "manifest.json"
+    manifest_path = args.output / "manifest.json"
     if not manifest_path.is_file():
-        raise RuntimeError(f"no exported baseline in {EXPORT_DIR}; run make hiv-baseline-export first")
+        raise RuntimeError(f"no exported baseline in {args.output}; run make hiv-baseline-export first")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     tag = f"hiv-{manifest['dataset']['sha256'][:12]}-{manifest['created_at'][:10].replace('-', '')}"
     with tempfile.TemporaryDirectory(prefix="hiv-baseline-") as scratch:
@@ -571,7 +576,7 @@ def cmd_publish(args: argparse.Namespace) -> int:
         say(f"==> pushing {REGISTRY}:{tag} for linux/amd64 and linux/arm64")
         pushed = subprocess.run([
             "docker", "buildx", "build", "--platform", "linux/amd64,linux/arm64", "--provenance=false",
-            "--push", "--metadata-file", str(metadata), "-t", f"{REGISTRY}:{tag}", str(EXPORT_DIR),
+            "--push", "--metadata-file", str(metadata), "-t", f"{REGISTRY}:{tag}", str(args.output),
         ])
         if pushed.returncode != 0:
             raise RuntimeError(f"could not push {REGISTRY}:{tag}; log in with docker login ghcr.io first")
@@ -589,6 +594,7 @@ def main() -> int:
     parser.add_argument("--pin", type=Path, default=PIN_FILE, help="file pinning the published baseline")
     parser.add_argument("--querystore-repo", type=Path, default=ROOT / "targets" / "querystore")
     parser.add_argument("--compose", type=Path, default=ROOT / "compose" / "openmrs-2.8-refapp.yml")
+    parser.add_argument("--output", type=Path, default=EXPORT_DIR, help="exported baseline directory")
     parser.add_argument("--local-state", type=Path, default=LOCAL_STATE,
                         help="receipts describing what the running stack holds")
     args = parser.parse_args()

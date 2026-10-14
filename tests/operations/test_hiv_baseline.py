@@ -7,6 +7,7 @@ its index, and a usable one replaces both only after OpenMRS has stopped.
 """
 from __future__ import annotations
 
+import gzip
 import io
 import json
 import os
@@ -61,11 +62,29 @@ echo "docker $*" >> "{log}"
 case "$1 $2" in
   "image inspect") exit {0 if image_present else 1} ;;
 esac
+if [[ " $* " == *" -i "* ]]; then
+  sql="$(cat)"
+  echo "sql: ${{sql//$'\n'/ }}" >> "{log}"
+  case "$sql" in
+    *querystore.backend*) echo elasticsearch ;;
+    *core.version*) echo 2.9.0 ;;
+    *chartsearchai_conversation*) echo "${{STUB_CONVERSATION_ROWS:-0}}" ;;
+    *querystore_bootstrap_progress*) echo 0 ;;
+  esac
+  exit 0
+fi
 case "$1" in
   pull) exit 1 ;;
   create) echo baseline-container ;;
   cp) [[ "$2" == baseline-container:/baseline/manifest.json ]] && cat "{manifest_tar}" ;;
-  inspect) echo true ;;
+  inspect)
+    case "$*" in
+      *Config.Image*) echo harness-openmrs-backend:test ;;
+      *Health.Status*) echo healthy ;;
+      *) echo true ;;
+    esac ;;
+  exec)
+    [[ "$*" == *sha256sum* ]] && printf '%s  %s\n' m /openmrs/data/chartsearchai/model.onnx v /openmrs/data/chartsearchai/vocab.txt ;;
 esac
 exit 0
 """, encoding="utf-8")
@@ -86,8 +105,14 @@ class _Elasticsearch(BaseHTTPRequestHandler):
         with self.log.open("a", encoding="utf-8") as stream:
             stream.write(f"es {self.command} {self.path}\n")
         path = self.path.split("?")[0]
-        if path == "/":
-            body: object = {"version": {"number": self.version}}
+        if path == "/openmrs/ws/rest/v1/module":
+            body: object = {"results": [{"uuid": "m", "name": "M", "version": "1", "started": True}]}
+        elif path == "/openmrs/ws/rest/v1/querystore/indexingstatus":
+            body = {"complete": True, "types": []}
+        elif path == "/openmrs/ws/rest/v1/querystore/drift":
+            body = {"types": [{"resourceType": "obs", "coreCount": 3, "indexedCount": 3}]}
+        elif path == "/":
+            body = {"version": {"number": self.version}}
         elif path.startswith("/_cat/indices"):
             body = [{"index": name} for name in INDICES]
         elif path.endswith("/_restore"):
@@ -246,3 +271,50 @@ def test_setup_stops_openmrs_and_its_gateway_before_restoring_then_starts_the_st
     start = calls.index("make local-stack-up")
     verify = calls.index("python3 scripts/hiv-baseline.py verify")
     assert stop < restore < start < verify
+
+
+def _querystore_checkout(tmp_path: Path) -> tuple[Path, str]:
+    repo = tmp_path / "querystore"
+    repo.mkdir()
+    (repo / "pom.xml").write_text("<project/>\n", encoding="utf-8")
+    env = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.invalid",
+           "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@example.invalid"}
+    for command in (["init", "-q"], ["add", "."], ["commit", "-q", "-m", "fixture"]):
+        subprocess.run(["git", *command], cwd=repo, check=True, env=env)
+    tree = subprocess.run(["git", "rev-parse", "HEAD^{tree}"], cwd=repo, check=True,
+                          capture_output=True, text=True).stdout.strip()
+    return repo, tree
+
+
+def test_export_checks_for_conversations_only_after_openmrs_stops_and_never_snapshots_them(
+        tmp_path, elasticsearch):
+    """A conversation written before OpenMRS stops must not reach a published baseline."""
+    _handler, es_url, log = elasticsearch
+    binaries = _stub_bin(tmp_path, log, None)
+    repo, tree = _querystore_checkout(tmp_path)
+    state = tmp_path / "state"
+    state.mkdir()
+    (state / "deployed-querystore-omod.json").write_text(
+        json.dumps({"source_tree_clean": True, "source_tree": tree}), encoding="utf-8")
+    (state / "corpus-provenance.json").write_text(json.dumps({"dump_sha256": "d" * 64}), encoding="utf-8")
+    compose = tmp_path / "compose.yml"
+    compose.write_text("image: harness-openmrs-backend:test\nOPENMRS_BACKEND_IMAGE: example@sha256:abc\n",
+                       encoding="utf-8")
+    port = es_url.rsplit(":", 1)[1]
+
+    result = subprocess.run(
+        [sys.executable, str(TOOL), "export", "--querystore-repo", str(repo), "--compose", str(compose),
+         "--local-state", str(state), "--output", str(tmp_path / "baseline")],
+        env={**os.environ, "PATH": f"{binaries}:{os.environ['PATH']}", "QUERYSTORE_ES_URL": es_url,
+             "HARNESS_PROXY_HTTP_PORT": port, "STUB_CONVERSATION_ROWS": "2"},
+        capture_output=True, text=True, timeout=60,
+    )
+
+    assert result.returncode == 1
+    assert "conversation" in result.stderr
+    calls = _calls(log)
+    stop = calls.index("docker stop harness-openmrs-backend")
+    usage = next(i for i, call in enumerate(calls) if "chartsearchai_conversation" in call)
+    assert stop < usage < calls.index("docker start harness-openmrs-backend")
+    assert not [call for call in calls if call.startswith("es PUT /_snapshot")]
+    assert not (tmp_path / "baseline").exists()
