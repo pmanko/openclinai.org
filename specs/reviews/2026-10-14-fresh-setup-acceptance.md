@@ -159,17 +159,51 @@ baseline, zero documents written since Elasticsearch started, the drift check
 passed, and the database kept its 5,334 patients, 428,036 obs and the smoke
 conversation.
 
+## Publication
+
+`make hiv-baseline-publish`, 08:31:38 to 08:45:20, exit 0: pushed
+`ghcr.io/pmanko/openclinai-hiv-baseline:hiv-f76619b40b45-20261014` for
+linux/amd64 and linux/arm64 (layer upload 13 min 39 s), digest
+`sha256:43436cc5879308e59b1adc44fe78f25172a4280fbef1b70768072b7061734e25`,
+pinned in `environments/chartsearch-research/hiv-baseline.json`. GitHub created
+the package as private; an anonymous manifest request returned HTTP 403.
+
+## Clean-machine reset from the registry
+
+Before each attempt the stack was stopped, the `db-data`, `es-data` and
+`openmrs-data` volumes were removed and no baseline image was present locally;
+the command was plain `make chartsearch-research-setup` with the owner's
+`ghcr.io` login.
+
+1. 08:46:32, exit 2. Pull, database load (35 s) and index restore (82 s)
+   passed. With no runtime properties, OpenMRS ran its install wizard with
+   `create_tables=true` and failed on the restored schema (`Table 'allergy'
+   already exists`). Fix `e412c27`: the restore path starts OpenMRS with
+   `OMRS_CONFIG_CREATE_TABLES=false`.
+2. 08:52:48, exit 2. The wizard installed onto the restored database, but its
+   boot starts modules before Core's own Liquibase pass, so Appointments failed
+   with the `patientPastAppointments.sql` error from the
+   [13 October root cause](2026-10-13-appointments-fresh-import-root-cause.md).
+   A manual OpenMRS restart then started 33 of 33 modules in 25 s. Fix
+   `7a14d37`: the restore path restarts OpenMRS once after its first start.
+3. 08:58:23 to 09:03:19 (4 min 56 s), exit 0. Pull 47 s, database load 25 s,
+   index restore 77 s; all modules started, `514682 documents match the
+   baseline; nothing was re-embedded`, all seven accounts log in. Smoke: the
+   sample chart shows the same HIV records, and ChartSearchAI answered the
+   antiretroviral question "nevirapine, lamivudine, and stavudine", checked
+   with high confidence, from QueryStore citations.
+
 ## Checks
 
 - `python3 -m unittest discover -s tests -v`: 23 tests passed.
 - `python3 scripts/check_workspace.py`: passed.
-- `tests/operations` with the harness environment: 196 passed before the
-  restore-ordering fix; `tests/operations/test_hiv_baseline.py` 9 passed after it.
+- `tests/operations` with the harness environment: 198 passed at `e412c27`;
+  `tests/operations/test_hiv_baseline.py` 10 passed at `7a14d37`.
+- PR CI at `e73d7b6`: `operational-tests`, `workspace` and GitGuardian passed.
 
 ## Not yet proven
 
-- Publication to GitHub Container Registry and a restore that pulls the pinned
-  digest on a machine without the local image or existing volumes.
+- An anonymous pull: the package is private until its visibility is changed.
 - Ross's installation from the guide.
 - Setup still needs Java, Maven, Node and Yarn on the host, and Maven compiles
   the modules against the newest Core snapshot rather than the pinned Core.
