@@ -206,6 +206,7 @@ def _seed_with_outbox_rows(tmp_path: Path, outbox_rows: int):
     (stubs / "curl").write_text(f'#!/bin/sh\necho "curl $*" >> "{calls}"\necho 200\n')
     (stubs / "docker").write_text(f"""#!/bin/bash
 echo "docker $*" >> "{calls}"
+[[ " $* " == *" -i "* ]] && cat > /dev/null
 case "$*" in
   *information_schema.tables*) echo 1 ;;
   *"COUNT(*) FROM outbox_event"*) echo {outbox_rows} ;;
