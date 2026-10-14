@@ -186,3 +186,55 @@ def test_seed_with_an_unverified_dump_never_touches_docker_or_the_database(tmp_p
     )
     assert result.returncode != 0
     assert not calls.exists()
+
+
+def _seed_with_outbox_rows(tmp_path: Path, outbox_rows: int):
+    """Run seed-local.sh against stubs whose database holds `outbox_event` with the given row count."""
+    import os
+    import shutil
+    import subprocess
+
+    (tmp_path / "scripts").mkdir()
+    shutil.copy2(ROOT / "scripts" / "seed-local.sh", tmp_path / "scripts" / "seed-local.sh")
+    dump = tmp_path / "artifacts" / "demo-data" / "refapp_28_demo.sql.gz"
+    dump.parent.mkdir(parents=True)
+    dump.write_bytes(gzip.compress(b"SELECT 1;\n"))
+    stubs = tmp_path / "bin"
+    stubs.mkdir()
+    calls = tmp_path / "calls.txt"
+    (stubs / "python3").write_text("#!/bin/sh\nexit 0\n")
+    (stubs / "curl").write_text(f'#!/bin/sh\necho "curl $*" >> "{calls}"\necho 200\n')
+    (stubs / "docker").write_text(f"""#!/bin/bash
+echo "docker $*" >> "{calls}"
+[[ " $* " == *" -i "* ]] && cat > /dev/null
+case "$*" in
+  *information_schema.tables*) echo 1 ;;
+  *"COUNT(*) FROM outbox_event"*) echo {outbox_rows} ;;
+esac
+""")
+    for stub in stubs.iterdir():
+        stub.chmod(0o755)
+    result = subprocess.run(
+        ["bash", str(tmp_path / "scripts" / "seed-local.sh"), "--no-reindex"],
+        env={**os.environ, "PATH": f"{stubs}:/usr/bin:/bin"},
+        capture_output=True, text=True, check=False, timeout=60,
+    )
+    return result, calls.read_text(encoding="utf-8")
+
+
+def test_seed_lets_the_pinned_core_recreate_an_empty_outbox_table_before_openmrs_starts(tmp_path):
+    result, calls = _seed_with_outbox_rows(tmp_path, 0)
+
+    assert result.returncode == 0, result.stderr
+    start = calls.index("docker start harness-openmrs-backend")
+    assert calls.index("DROP TABLE outbox_event") < start
+    assert calls.index("WHERE ID = '20260519-create-outbox-event-table'") < start
+
+
+def test_seed_never_drops_outbox_rows_and_stops_before_openmrs_starts(tmp_path):
+    result, calls = _seed_with_outbox_rows(tmp_path, 5)
+
+    assert result.returncode != 0
+    assert "outbox_event" in result.stderr
+    assert "DROP TABLE outbox_event" not in calls
+    assert "docker start" not in calls
