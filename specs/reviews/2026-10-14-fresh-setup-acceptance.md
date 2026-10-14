@@ -166,7 +166,9 @@ conversation.
 linux/amd64 and linux/arm64 (layer upload 13 min 39 s), digest
 `sha256:43436cc5879308e59b1adc44fe78f25172a4280fbef1b70768072b7061734e25`,
 pinned in `environments/chartsearch-research/hiv-baseline.json`. GitHub created
-the package as private; an anonymous manifest request returned HTTP 403.
+the package as private; after the owner made it public, an anonymous manifest
+request returned HTTP 200 and a `docker pull` of the linux/amd64 image with an
+empty Docker configuration (no credentials) succeeded.
 
 ## Clean-machine reset from the registry
 
@@ -203,7 +205,6 @@ the command was plain `make chartsearch-research-setup` with the owner's
 
 ## Not yet proven
 
-- An anonymous pull: the package is private until its visibility is changed.
 - Ross's installation from the guide.
 - Setup still needs Java, Maven, Node and Yarn on the host, and Maven compiles
   the modules against the newest Core snapshot rather than the pinned Core.

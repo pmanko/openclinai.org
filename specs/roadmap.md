@@ -31,7 +31,7 @@ authorized by any item here; each stream spec names its signoffs.
 | --- | --- | --- | --- |
 | OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | Thirteen PRs restacked and checked; QueryStore #68 open; #587 finding open | Dispositions for #587 and the #68 split request |
 | Workspace and validation refactor (Track B) | [closeout record](reviews/2026-10-02-refactor-closeout.md) | Complete, 2 October | None |
-| Local HIV research environment | [setup guide](../environments/README.md) and the list below | Setup and reset restore a published baseline (database and index) in minutes; default baseline being published | Publish the default baseline, Ross's fresh install, Docker-only prerequisites |
+| Local HIV research environment | [setup guide](../environments/README.md) and the list below | Setup and reset restore the published default baseline (database and index) in about 5 minutes | Ross's fresh install, Docker-only prerequisites |
 | Catalyst delivery | [catalyst-delivery.md](catalyst-delivery.md) | Four journeys demonstrated; acceptance open | FP-009 and FP-010 |
 | Website and publication | list below | Documentation site deploys from `main`; landing deployment pending | Publish the reviewed landing content |
 | Decision-layer experiment | [decision-layer-experiment.md](decision-layer-experiment.md) | Proposed | Decisions D1–D4 |
@@ -62,9 +62,10 @@ smoke and troubleshooting. This list holds only delivery state.
       ordinary restart keeps data and index
       ([14 October run](reviews/2026-10-14-fresh-setup-acceptance.md): rebuild
       1 h 31 min, restore 3 min, restart 68 s, on the owner's machine).
-- [ ] The default HIV baseline is published on GitHub Container Registry, pinned
+- [x] The default HIV baseline is published on GitHub Container Registry, pinned
       by digest, and fresh setup pulls it without a login; any state can be
-      exported and published as a named alternate baseline.
+      exported and published as a named alternate baseline
+      ([publication and clean-machine reset](reviews/2026-10-14-fresh-setup-acceptance.md#clean-machine-reset-from-the-registry)).
 - [ ] Both clean-start paths are proven with the real application, and Ross
       completes a fresh installation from the guide.
 - [ ] Setup needs only Docker and the native model router: the pinned modules,
