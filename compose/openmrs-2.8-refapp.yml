@@ -259,9 +259,9 @@ services:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
-      # Snapshot repository location for the prepared QueryStore index
-      # (scripts/querystore-index-package.py). Inside the container only; the
-      # package is copied in and out with `docker cp`.
+      # Snapshot repository location for the HIV baseline's QueryStore index
+      # (scripts/hiv-baseline.py). Inside the container only; the snapshot is
+      # copied in and out with `docker cp`.
       - path.repo=/usr/share/elasticsearch/snapshots
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health || exit 1"]

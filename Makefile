@@ -309,16 +309,20 @@ chartsearch-backend:
 	@$(MAKE) querystore-configure chartsearch-configure
 	@echo "==> querystore now on $(BACKEND); open a patient / run a search to (re)index into it"
 
-# Fresh HIV baseline, ChartSearchAI and saved research accounts.
+# Fresh setup or reset to the HIV baseline, ChartSearchAI and saved research accounts.
 .PHONY: chartsearch-research-setup
 chartsearch-research-setup:
-	@REBUILD_INDEX=$(REBUILD_INDEX) bash scripts/chartsearch-research-setup.sh $(if $(DUMP),"DUMP=$(DUMP)")
+	@REBUILD_BASELINE=$(REBUILD_BASELINE) bash scripts/chartsearch-research-setup.sh $(if $(DUMP),"DUMP=$(DUMP)")
 
-# Maintainer step: package the running, fully indexed stack's QueryStore index
-# for publication beside the HIV baseline package. Briefly stops the backend.
-.PHONY: querystore-index-export
-querystore-index-export:
-	@python3 scripts/querystore-index-package.py export $(if $(DUMP),--dump "$(DUMP)")
+# Maintainer steps after `make chartsearch-research-setup REBUILD_BASELINE=1`:
+# capture the running stack as the HIV baseline image (briefly stops the
+# backend), then push it to GitHub Container Registry and pin its digest.
+.PHONY: hiv-baseline-export hiv-baseline-publish
+hiv-baseline-export:
+	@python3 scripts/hiv-baseline.py export
+
+hiv-baseline-publish:
+	@python3 scripts/hiv-baseline.py publish
 
 chartsearch-doctor:
 	@set -a; . ./.env.chartsearch.example; [ ! -f .env.chartsearch ] || . ./.env.chartsearch; set +a; \

@@ -27,34 +27,32 @@ Its published SHA-256 is
 `f20e7ff1be28c283eeeb18fc895733791c56a5851d5cd3fe9691b7f7d12afa72`.
 The existing router uses this directory.
 
-Download the [HIV baseline package](https://drive.google.com/file/d/1FxuaYxOfthzMHVL4bUPleLj_P7n_EN-X/view)
-and place both files in `artifacts/demo-data/`:
-
-- `refapp_28_demo.sql.gz`
-- `refapp_28_demo.sql.gz.provenance.json`
-
-Place the prepared QueryStore index for this checkout,
-`refapp_28_demo.querystore-index.tar.gz`, in the same directory. It holds the
-embedded HIV records, so setup restores them in minutes instead of embedding
-them again for several hours. No prepared index has been published for the
-current pins yet; until one is, add `REBUILD_INDEX=1` to the setup command.
-
 Run from the umbrella root:
 
 ```sh
-make chartsearch-research-setup                 # restore the prepared index
-make chartsearch-research-setup REBUILD_INDEX=1 # rebuild it from the HIV data
+make chartsearch-research-setup
 ```
 
 **This replaces the local OpenMRS database and QueryStore index with the HIV
-baseline.** It builds the pinned modules and frontend, starts the existing stack
-and model router, imports the HIV data, restores or rebuilds QueryStore's
-Elasticsearch index, configures both ChartSearchAI providers, and creates the
-accounts. No stock patients are generated. There is no upgrade or backup flow.
+baseline.** It builds the pinned modules and frontend, pulls the published HIV
+baseline from GitHub Container Registry, loads its OpenMRS database and restores
+QueryStore's embedded Elasticsearch index before OpenMRS starts, then starts the
+existing stack and model router, configures both ChartSearchAI providers and
+checks the seven accounts. Restoring takes minutes; nothing is embedded again.
+No stock patients are generated. There is no upgrade or backup flow.
 
-Setup checks the prepared index before building anything. It refuses a package
-built from a different HIV dump, QueryStore source, OpenMRS distribution,
-embedding model or Elasticsearch version, and names the difference.
+The baseline is the finished state of one full build from the
+[HIV baseline package](https://drive.google.com/file/d/1FxuaYxOfthzMHVL4bUPleLj_P7n_EN-X/view),
+pinned by digest in `chartsearch-research/hiv-baseline.json`.
+Setup checks it before building anything and stops if it cannot be used.
+No HIV baseline has been published for the current pins yet; until one is,
+download the HIV baseline package, place `refapp_28_demo.sql.gz` and its
+`.provenance.json` in `artifacts/demo-data/`, and build the baseline from it
+(several hours, mostly embedding):
+
+```sh
+make chartsearch-research-setup REBUILD_BASELINE=1
+```
 
 ChartSearchAI defaults to Hub's checked Gemma 4 12B profile; its bundled provider
 uses the same local Gemma 4 12B router. E4B remains available as an explicit
@@ -104,9 +102,9 @@ overrides; without overrides it uses the local demo login.
 Stop with `make local-stack-down`. Startup retains the loaded data and index
 and does not re-embed anything.
 
-To reset to a fresh baseline, pull `main`, update submodules, place the matching
-prepared index beside the HIV dump, and run `make chartsearch-research-setup`
-again. It discards local OpenMRS changes, chat history and the old index.
+To reset to the HIV baseline, pull `main`, update submodules and run
+`make chartsearch-research-setup` again. It discards local OpenMRS changes,
+chat history and the old index, and restores the baseline in minutes.
 
 These are the only full-environment setup and start/stop commands. Fresh setup
 uses the same startup path. Focused component build/configuration commands remain
@@ -119,22 +117,44 @@ Check only that OpenMRS opens, ChartSearchAI is available on a patient chart,
 and known HIV patient records are loaded. Account logins are checked while
 provisioning. Model-quality evaluations, reports and videos are not setup gates.
 
-## Publishing the Prepared Index
+## Publishing the HIV Baseline
 
-Publish a new prepared index whenever the HIV dump, the QueryStore pin, the
-OpenMRS distribution pin or the embedding model changes. On a machine where
-`make chartsearch-research-setup REBUILD_INDEX=1` has completed for the current
-`main`, run:
+The baseline is keyed to what determines its embeddings: the HIV dataset, the
+embedding model and the Elasticsearch major version. A newer OpenMRS
+distribution or module pin does not require a new baseline: OpenMRS migrates the
+restored database at startup and QueryStore's drift check confirms the index.
+Publish a new baseline when one of those inputs changes, when QueryStore changes
+what it embeds, or when setup stops because a pinned Core snapshot edited a
+database change it had already applied.
+
+On a machine with the HIV baseline package in `artifacts/demo-data/`, build the
+baseline and export it straight away, before anyone uses the stack:
 
 ```sh
-make querystore-index-export
+make chartsearch-research-setup REBUILD_BASELINE=1
+make hiv-baseline-export
 ```
 
-It confirms the index is complete and was built from this checkout, briefly
-stops OpenMRS, snapshots every QueryStore index with Elasticsearch's snapshot
-API together with QueryStore's completion records, and writes
-`artifacts/demo-data/refapp_28_demo.querystore-index.tar.gz`. Upload that file
-beside the HIV baseline package and link it in First Setup above.
+The export confirms the index is complete and was built from this checkout,
+briefly stops OpenMRS, snapshots QueryStore's indices with Elasticsearch's
+snapshot API, dumps the OpenMRS database, and builds the local image
+`openclinai-hiv-baseline:local`. It refuses a stack that already holds
+ChartSearchAI conversations. Try the restore before publishing:
+
+```sh
+HIV_BASELINE_IMAGE=openclinai-hiv-baseline:local make chartsearch-research-setup
+```
+
+Then log in to GitHub Container Registry with a token that can write packages
+and publish:
+
+```sh
+make hiv-baseline-publish
+```
+
+It pushes `ghcr.io/pmanko/openclinai-hiv-baseline` for Intel and Apple silicon
+and pins the digest in `chartsearch-research/hiv-baseline.json`; commit that
+file. Keep the package public so setup can pull it without a login.
 
 ## Troubleshooting
 

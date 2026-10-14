@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Fresh HIV research setup; reuse the umbrella's native tools.
+# Fresh HIV research setup and reset; reuse the umbrella's native tools.
 #
-# The QueryStore index comes from the prepared index package beside the HIV dump
-# when one is present and matches this checkout; REBUILD_INDEX=1 rebuilds it from
-# the HIV data instead (several hours). Both paths end with QueryStore on
-# Elasticsearch and a complete index.
+# By default this restores the published HIV baseline (environments/
+# chartsearch-research/hiv-baseline.json): the configured OpenMRS database and
+# QueryStore's embedded Elasticsearch index, in minutes. REBUILD_BASELINE=1
+# builds that state from the HIV dump instead (several hours of embedding);
+# maintainers then publish it with `make hiv-baseline-export hiv-baseline-publish`.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
@@ -21,40 +22,41 @@ for arg in "$@"; do
     DUMP=?*) DUMP="${arg#DUMP=}" ;;
   esac
 done
-INDEX_PACKAGE="${QUERYSTORE_INDEX_PACKAGE:-$(dirname "${DUMP}")/$(basename "${DUMP}" | sed -E 's/\.sql(\.gz)?$//').querystore-index.tar.gz}"
-REBUILD_INDEX="${REBUILD_INDEX:-0}"
+REBUILD_BASELINE="${REBUILD_BASELINE:-0}"
+COMPOSE_FILE="compose/openmrs-2.8-refapp.yml"
 
-if [[ ! -f "${DUMP}" ]]; then
-  echo "ERROR: HIV baseline dump not found at ${DUMP}." >&2
-  echo "       Download the HIV baseline package described in environments/README.md." >&2
+if [[ "${REBUILD_BASELINE}" == "1" ]]; then
+  if [[ ! -f "${DUMP}" ]]; then
+    echo "ERROR: HIV baseline dump not found at ${DUMP}." >&2
+    echo "       Download the HIV baseline package described in environments/README.md." >&2
+    exit 1
+  fi
+elif ! python3 scripts/hiv-baseline.py check; then
+  echo "       Rebuilding the baseline from the HIV dump takes several hours: REBUILD_BASELINE=1." >&2
   exit 1
 fi
-if [[ "${REBUILD_INDEX}" != "1" ]]; then
-  if [[ ! -f "${INDEX_PACKAGE}" ]]; then
-    echo "ERROR: no prepared QueryStore index at ${INDEX_PACKAGE}." >&2
-    echo "       Download it beside the HIV dump (environments/README.md), or rebuild" >&2
-    echo "       the index from the HIV data with REBUILD_INDEX=1 (several hours)." >&2
-    exit 1
-  fi
-  if ! python3 scripts/querystore-index-package.py check --dump "${DUMP}" --package "${INDEX_PACKAGE}"; then
-    echo "       Download the prepared index for this checkout, or rebuild with REBUILD_INDEX=1." >&2
-    exit 1
-  fi
-fi
 
-echo "This imports the HIV baseline into the local OpenMRS database."
+echo "This replaces the local OpenMRS database and QueryStore index."
 make openmrs-source-pair-build med-agent-hub-build
-docker compose -f compose/openmrs-2.8-refapp.yml build backend
-make local-stack-up
-make chartsearch-esm-build
-docker exec harness-openmrs-backend sh -c \
-  'rm -rf /openmrs/data/.openmrs-lib-cache/chartsearchai /openmrs/data/.openmrs-lib-cache/querystore'
-make seed "$@" TARGET="${OMRS_DB_NAME:-openmrs}"
-make querystore-configure
-if [[ "${REBUILD_INDEX}" == "1" ]]; then
+docker compose -f "${COMPOSE_FILE}" build backend
+
+if [[ "${REBUILD_BASELINE}" == "1" ]]; then
+  make local-stack-up
+  make chartsearch-esm-build
+  docker exec harness-openmrs-backend sh -c \
+    'rm -rf /openmrs/data/.openmrs-lib-cache/chartsearchai /openmrs/data/.openmrs-lib-cache/querystore'
+  make seed "$@" TARGET="${OMRS_DB_NAME:-openmrs}"
+  make querystore-configure
   ALLOW_QUERYSTORE_INDEX_RESET=1 make querystore-recreate-index
 else
-  python3 scripts/querystore-index-package.py restore --dump "${DUMP}" --package "${INDEX_PACKAGE}"
+  # Load the baseline before OpenMRS first starts, so it never boots on stale data.
+  ./scripts/stack-up.sh --wait db elasticsearch
+  python3 scripts/hiv-baseline.py restore
+  docker compose -f "${COMPOSE_FILE}" run --rm --no-deps --entrypoint sh backend -c \
+    'rm -rf /openmrs/data/.openmrs-lib-cache/chartsearchai /openmrs/data/.openmrs-lib-cache/querystore'
+  make local-stack-up
+  make chartsearch-esm-build
+  python3 scripts/hiv-baseline.py verify
 fi
 
 . ./scripts/openmrs-settings-lib.sh

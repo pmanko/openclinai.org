@@ -31,7 +31,7 @@ authorized by any item here; each stream spec names its signoffs.
 | --- | --- | --- | --- |
 | OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | Thirteen PRs restacked and checked; QueryStore #68 open; #587 finding open | Dispositions for #587 and the #68 split request |
 | Workspace and validation refactor (Track B) | [closeout record](reviews/2026-10-02-refactor-closeout.md) | Complete, 2 October | None |
-| Local HIV research environment | [setup guide](../environments/README.md) and the list below | Distribution pinned by digest, Appointments startup fixed, prepared-index restore built; no prepared index published | Rebuild once on the pins, publish the prepared index, Ross's fresh install |
+| Local HIV research environment | [setup guide](../environments/README.md) and the list below | Distribution pinned by digest, Appointments startup fixed; setup restores a full HIV baseline (database and index) from GitHub Container Registry; no baseline published yet | Build and publish the baseline, Ross's fresh install, Docker-only prerequisites |
 | Catalyst delivery | [catalyst-delivery.md](catalyst-delivery.md) | Four journeys demonstrated; acceptance open | FP-009 and FP-010 |
 | Website and publication | list below | Documentation site deploys from `main`; landing deployment pending | Publish the reviewed landing content |
 | Decision-layer experiment | [decision-layer-experiment.md](decision-layer-experiment.md) | Proposed | Decisions D1–D4 |
@@ -56,18 +56,30 @@ smoke and troubleshooting. This list holds only delivery state.
 - [x] Fresh setup uses one digest-pinned OpenMRS distribution build, including Core,
       instead of a moving tag and a newest-snapshot Core download
       ([record](reviews/2026-10-13-appointments-fresh-import-root-cause.md#fix-options)).
-- [ ] Fresh setup offers a full rebuild and a matching cached-index restore in the
-      same command, using Elasticsearch's snapshot API with the corresponding
-      QueryStore completion records; raw data-directory copies are not restore
-      proof, unchanged HIV data is not re-embedded, and ordinary restart retains
-      data and index without reindexing. Export and restore are built
-      (`scripts/querystore-index-package.py`) and both paths select QueryStore's
-      Elasticsearch backend; proof with the real HIV index is the next item.
-- [ ] A prepared index for the current pins is exported on a machine that completed
-      the rebuild path and published beside the HIV baseline package, and the
-      setup guide links it.
+- [ ] Fresh setup and reset restore one HIV baseline, the configured OpenMRS
+      database and QueryStore's Elasticsearch snapshot, before OpenMRS starts;
+      nothing is re-embedded, `REBUILD_BASELINE=1` builds the baseline from the
+      HIV dump, and ordinary restart retains data and index without reindexing.
+      The baseline is keyed to the HIV dataset, embedding model and Elasticsearch
+      major version, not to distribution or module pins
+      (`scripts/hiv-baseline.py`).
+- [ ] An HIV baseline built from the current pins is published on GitHub
+      Container Registry, pinned by digest, and fresh setup pulls it without a
+      login.
 - [ ] Both clean-start paths are proven with the real application, and Ross
       completes a fresh installation from the guide.
+- [ ] Setup needs only Docker and the native model router: the pinned modules,
+      frontend bundle and embedding model ship in published images instead of
+      being built on the host with Java, Maven, Node and Yarn. Module builds
+      currently compile against the newest Core snapshot rather than the pinned
+      Core.
+- [ ] QueryStore declares a version for what it embeds, and the baseline records
+      it, so a QueryStore change that alters embeddings requires a new baseline
+      and other changes do not.
+- [ ] A pin bump whose Core snapshot edits an already-applied database change is
+      caught before publication rather than by a failed restore; the HIV dump's
+      `outbox_event` changeset is the first case
+      ([seed reconciliation](../scripts/seed-local.sh)).
 
 Account-context enhancements, model evaluations, demonstrations and publication
 are separate work, not setup gates.
