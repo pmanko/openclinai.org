@@ -186,7 +186,7 @@ the command was plain `make chartsearch-research-setup` with the owner's
    [13 October root cause](2026-10-13-appointments-fresh-import-root-cause.md).
    A manual OpenMRS restart then started 33 of 33 modules in 25 s. Fix
    `7a14d37`: the restore path restarts OpenMRS once after its first start.
-3. 08:58:23 to 09:03:19 (4 min 56 s), exit 0. Pull 47 s, database load 25 s,
+3. 08:58:23 to 09:03:19 (4 min 56 s), exit 0. Pull 21 s, database load 25 s,
    index restore 77 s; all modules started, `514682 documents match the
    baseline; nothing was re-embedded`, all seven accounts log in. Smoke: the
    sample chart shows the same HIV records, and ChartSearchAI answered the
