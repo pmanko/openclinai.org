@@ -56,13 +56,14 @@ smoke and troubleshooting. This list holds only delivery state.
 - [x] Fresh setup uses one digest-pinned OpenMRS distribution build, including Core,
       instead of a moving tag and a newest-snapshot Core download
       ([record](reviews/2026-10-13-appointments-fresh-import-root-cause.md#fix-options)).
-- [ ] Fresh setup and reset restore one HIV baseline, the configured OpenMRS
+- [x] Fresh setup and reset restore one HIV baseline, the configured OpenMRS
       database and QueryStore's Elasticsearch snapshot, before OpenMRS starts;
       nothing is re-embedded, `REBUILD_BASELINE=1` builds the baseline from the
       HIV dump, and ordinary restart retains data and index without reindexing.
       The baseline is keyed to the HIV dataset, embedding model and Elasticsearch
       major version, not to distribution or module pins
-      (`scripts/hiv-baseline.py`).
+      ([14 October run](reviews/2026-10-14-fresh-setup-acceptance.md): rebuild
+      1 h 31 min, restore 3 min, restart 68 s, on the owner's machine).
 - [ ] An HIV baseline built from the current pins is published on GitHub
       Container Registry, pinned by digest, and fresh setup pulls it without a
       login.
@@ -129,6 +130,7 @@ review ([audit](reviews/2026-10-02-documentation-audit.md)).
 - [2 October documentation audit](reviews/2026-10-02-documentation-audit.md)
 - [2 October refactor closeout](reviews/2026-10-02-refactor-closeout.md)
 - [7 October context evaluation](reviews/2026-10-07-context-evaluation.md)
+- [14 October fresh setup acceptance](reviews/2026-10-14-fresh-setup-acceptance.md)
 - [7 October Track A remediation record](reviews/2026-10-07-track-a-remediation.md)
 - [10 October revamp audit and experiment proposal](reviews/2026-10-10-revamp-audit-and-jev-experiment.md)
 - [13 October Appointments fresh-import root cause](reviews/2026-10-13-appointments-fresh-import-root-cause.md)
