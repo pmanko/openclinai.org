@@ -103,6 +103,28 @@ docker exec "$DB_CONTAINER" mariadb --user=root --password="$DB_ROOT_PASS" "$TAR
   UNION ALL SELECT 'encounter', COUNT(*) FROM encounter
   UNION ALL SELECT 'obs', COUNT(*) FROM obs;" || true
 
+# --- the HIV dump was taken on a July 2026 Core 2.9.0-SNAPSHOT. The pinned Core later widened
+#     outbox_event's text columns inside the same changeset, so Liquibase rejects the checksum the
+#     dump recorded and OpenMRS cannot start. The dump holds no outbox rows: drop the table and its
+#     changelog row so the pinned Core creates it from its current definition. Rows are never dropped. ---
+OUTBOX_CHANGESET="20260519-create-outbox-event-table"
+outbox_table="$(docker exec "$DB_CONTAINER" mariadb --user=root --password="$DB_ROOT_PASS" -N "$TARGET_DB" -e "
+  SELECT COUNT(*) FROM information_schema.tables
+  WHERE table_schema = DATABASE() AND table_name = 'outbox_event';")"
+if [[ "${outbox_table}" == "1" ]]; then
+  outbox_rows="$(docker exec "$DB_CONTAINER" mariadb --user=root --password="$DB_ROOT_PASS" -N "$TARGET_DB" \
+    -e "SELECT COUNT(*) FROM outbox_event;")"
+  if [[ "${outbox_rows}" != "0" ]]; then
+    echo "ERROR: the dump's outbox_event table holds ${outbox_rows} rows; the pinned Core changed its" >&2
+    echo "       definition (changeset ${OUTBOX_CHANGESET}). Migrate those rows explicitly." >&2
+    exit 1
+  fi
+  echo "==> letting the pinned Core recreate the dump's empty outbox_event table"
+  docker exec "$DB_CONTAINER" mariadb --user=root --password="$DB_ROOT_PASS" "$TARGET_DB" -e "
+    DROP TABLE outbox_event;
+    DELETE FROM liquibasechangelog WHERE ID = '${OUTBOX_CHANGESET}' AND AUTHOR = 'rkorytkowski';"
+fi
+
 # --- start the backend; Liquibase reconciles core and both consumer modules install fresh ---
 echo "==> starting backend '${BACKEND}' (Liquibase upgrade-in-place + module install)"
 docker start "$BACKEND" >/dev/null
