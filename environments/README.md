@@ -34,25 +34,14 @@ make chartsearch-research-setup
 ```
 
 **This replaces the local OpenMRS database and QueryStore index with the HIV
-baseline.** It builds the pinned modules and frontend, pulls the published HIV
-baseline from GitHub Container Registry, loads its OpenMRS database and restores
-QueryStore's embedded Elasticsearch index before OpenMRS starts, then starts the
-existing stack and model router, configures both ChartSearchAI providers and
-checks the seven accounts. Restoring takes minutes; nothing is embedded again.
-No stock patients are generated. There is no upgrade or backup flow.
+baseline.** It builds the pinned modules and frontend, pulls the default HIV
+baseline from GitHub Container Registry, loads its OpenMRS database and
+QueryStore index before OpenMRS starts, then starts the stack and model router,
+configures both ChartSearchAI providers and checks the seven accounts. It takes
+minutes; nothing is embedded again. No stock patients are generated.
 
-The baseline is the finished state of one full build from the
-[HIV baseline package](https://drive.google.com/file/d/1FxuaYxOfthzMHVL4bUPleLj_P7n_EN-X/view),
-pinned by digest in `chartsearch-research/hiv-baseline.json`.
-Setup checks it before building anything and stops if it cannot be used.
-No HIV baseline has been published for the current pins yet; until one is,
-download the HIV baseline package, place `refapp_28_demo.sql.gz` and its
-`.provenance.json` in `artifacts/demo-data/`, and build the baseline from it
-(several hours, mostly embedding):
-
-```sh
-make chartsearch-research-setup REBUILD_BASELINE=1
-```
+The default baseline is pinned in `chartsearch-research/hiv-baseline.json`;
+[Baselines](#baselines) explains how to reset to another one or publish your own.
 
 ChartSearchAI defaults to Hub's checked Gemma 4 12B profile; its bundled provider
 uses the same local Gemma 4 12B router. E4B remains available as an explicit
@@ -102,9 +91,8 @@ overrides; without overrides it uses the local demo login.
 Stop with `make local-stack-down`. Startup retains the loaded data and index
 and does not re-embed anything.
 
-To reset to the HIV baseline, pull `main`, update submodules and run
-`make chartsearch-research-setup` again. It discards local OpenMRS changes,
-chat history and the old index, and restores the baseline in minutes.
+To reset to the baseline, run `make chartsearch-research-setup` again. It
+discards local OpenMRS changes, chat history and the old index.
 
 These are the only full-environment setup and start/stop commands. Fresh setup
 uses the same startup path. Focused component build/configuration commands remain
@@ -117,44 +105,39 @@ Check only that OpenMRS opens, ChartSearchAI is available on a patient chart,
 and known HIV patient records are loaded. Account logins are checked while
 provisioning. Model-quality evaluations, reports and videos are not setup gates.
 
-## Publishing the HIV Baseline
+## Baselines
 
-The baseline is keyed to what determines its embeddings: the HIV dataset, the
-embedding model and the Elasticsearch major version. A newer OpenMRS
-distribution or module pin does not require a new baseline: OpenMRS migrates the
-restored database at startup and QueryStore's drift check confirms the index.
-Publish a new baseline when one of those inputs changes, when QueryStore changes
-what it embeds, or when setup stops because a pinned Core snapshot edited a
-database change it had already applied.
+A baseline is a saved state of OpenMRS and QueryStore's index, published as a
+container image, for evaluation and testing. Reset to any baseline by name:
 
-On a machine with the HIV baseline package in `artifacts/demo-data/`, build the
-baseline and export it straight away, before anyone uses the stack:
+```sh
+make chartsearch-research-setup BASELINE=ghcr.io/pmanko/openclinai-hiv-baseline:<name>
+```
+
+To save the current state as a baseline, export it, then publish it under a
+name, or without one to make it the default for everyone:
+
+```sh
+make hiv-baseline-export                       # local image openclinai-hiv-baseline:local
+make hiv-baseline-publish NAME=<name>          # alternate baseline
+make hiv-baseline-publish                      # new default; commit hiv-baseline.json
+```
+
+Export waits for QueryStore's index to be complete and briefly stops OpenMRS.
+Try a state before publishing with
+`BASELINE=openclinai-hiv-baseline:local make chartsearch-research-setup`.
+Publishing needs a Docker login to `ghcr.io` with a token that can write
+packages, for example `gh auth refresh -h github.com -s write:packages` then
+`gh auth token | docker login ghcr.io -u <user> --password-stdin`.
+
+To build the default baseline from scratch, download the
+[HIV baseline package](https://drive.google.com/file/d/1FxuaYxOfthzMHVL4bUPleLj_P7n_EN-X/view),
+place `refapp_28_demo.sql.gz` and its `.provenance.json` in
+`artifacts/demo-data/`, and run (several hours, mostly embedding):
 
 ```sh
 make chartsearch-research-setup REBUILD_BASELINE=1
-make hiv-baseline-export
 ```
-
-The export confirms the index is complete and was built from this checkout,
-briefly stops OpenMRS, snapshots QueryStore's indices with Elasticsearch's
-snapshot API, dumps the OpenMRS database, and builds the local image
-`openclinai-hiv-baseline:local`. It refuses a stack that already holds
-ChartSearchAI conversations. Try the restore before publishing:
-
-```sh
-HIV_BASELINE_IMAGE=openclinai-hiv-baseline:local make chartsearch-research-setup
-```
-
-Then log in to GitHub Container Registry with a token that can write packages
-and publish:
-
-```sh
-make hiv-baseline-publish
-```
-
-It pushes `ghcr.io/pmanko/openclinai-hiv-baseline` for Intel and Apple silicon
-and pins the digest in `chartsearch-research/hiv-baseline.json`; commit that
-file. Keep the package public so setup can pull it without a login.
 
 ## Troubleshooting
 

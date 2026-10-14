@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Fresh HIV research setup and reset; reuse the umbrella's native tools.
 #
-# By default this restores the published HIV baseline (environments/
-# chartsearch-research/hiv-baseline.json): the configured OpenMRS database and
-# QueryStore's embedded Elasticsearch index, in minutes. REBUILD_BASELINE=1
-# builds that state from the HIV dump instead (several hours of embedding);
-# maintainers then publish it with `make hiv-baseline-export hiv-baseline-publish`.
+# By default this resets the stack to the published HIV baseline (environments/
+# chartsearch-research/hiv-baseline.json), or to BASELINE=<image>: the OpenMRS
+# database and QueryStore's embedded Elasticsearch index, in minutes.
+# REBUILD_BASELINE=1 builds the state from the HIV dump instead (several hours of
+# embedding); `make hiv-baseline-export hiv-baseline-publish` saves a state.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
@@ -32,7 +32,7 @@ if [[ "${REBUILD_BASELINE}" == "1" ]]; then
     exit 1
   fi
 elif ! python3 scripts/hiv-baseline.py check; then
-  echo "       Rebuilding the baseline from the HIV dump takes several hours: REBUILD_BASELINE=1." >&2
+  echo "       Select a baseline with BASELINE=<image>, or rebuild from the HIV dump with REBUILD_BASELINE=1." >&2
   exit 1
 fi
 

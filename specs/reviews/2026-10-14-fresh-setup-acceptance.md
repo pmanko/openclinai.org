@@ -6,10 +6,12 @@ silicon, OrbStack 29.4.0, 17 CPUs, 48 GB to Docker), from umbrella `main` at
 proves the rebuild path, the baseline export, the restore path and ordinary
 restart with the real HIV data. Ross's installation is not part of this run.
 
-During the run the owner redirected the design: the cache is the whole finished
-setup (OpenMRS database and QueryStore index), restored before OpenMRS starts,
-keyed to the HIV dataset rather than to every pin, and distributed through
-GitHub Container Registry. The commits on the branch carry that change.
+During the run the owner redirected the design: a baseline is a saved state of
+the whole stack (OpenMRS database and QueryStore index) for evaluation and
+testing, restored before OpenMRS starts and distributed through GitHub Container
+Registry, with a pinned default and named alternates. The commits on the branch
+carry that change; the run below used the stricter first version of the tool,
+whose extra checks (drift, source pins, conversations) were later removed.
 
 ## Inputs
 
@@ -107,8 +109,8 @@ test. ChartSearchAI held no conversations or audit rows. The snapshot took
 - 2.96 GB: database `openmrs.sql.gz` 45.7 MB, SHA-256
   `3ce2f2e8286eeacb0d5fd9d17ed69a62cc5860bcb1ffab4c86e503dd89af34ab`;
   Elasticsearch snapshot 2.7 GB
-- Manifest keyed to dataset `f76619b4…`, the embedding hashes above and
-  Elasticsearch 8.13.4; built from umbrella `8494757`
+- Manifest records dataset `f76619b4…`, the embedding hashes above,
+  Elasticsearch 8.13.4, the ten index counts and umbrella `8494757`
 
 ## Acceptance smoke after the rebuild
 
