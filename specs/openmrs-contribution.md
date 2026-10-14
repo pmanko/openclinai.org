@@ -106,6 +106,11 @@ The umbrella gitlinks record the heads under review; the dated record lists them
 - [ ] Signoff 3: accept release, companion merges, curated publication and PR cleanup.
 - [ ] Decide closure of the old integration PRs (backend #157, frontend #23).
 - [ ] Upstream merges, in stack order, by the OpenMRS maintainers.
+- [ ] Report the Core 2.9.0-SNAPSHOT module Liquibase resource-scope defect upstream
+      (a TRUNK ticket with the reproduction and the proposed `DatabaseUpdater` patch
+      from the [13 October record](reviews/2026-10-13-appointments-fresh-import-root-cause.md#fix-options)),
+      then drop the local `optimized.startup=false` override once a fixed Core is
+      in the pinned distribution.
 
 Signoff 1 approved the original baseline procedure. Published extraction and its
 earlier acceptance do not establish current review readiness, a deployed release or

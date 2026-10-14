@@ -1,11 +1,14 @@
 # Umbrella-owned shared infrastructure: OpenMRS 3.x Reference Application
 # (O3 / modern UI) with the Core version required by ChartSearchAI/QueryStore.
 #
-# Gateway, frontend and backend share OPENMRS_REFAPP_TAG from the native distro:
-# https://github.com/openmrs/openmrs-distro-referenceapplication.
+# Gateway, frontend and backend come from one build of the native distro's
+# nightly-chartsearch images (https://github.com/openmrs/openmrs-distro-referenceapplication),
+# pinned by digest so every fresh setup gets the same Core and modules. The tag
+# moves daily; bump all three digests and the backend's local image tag together,
+# in one reviewed change, and publish a prepared QueryStore index for the new pins.
 #
-# Filename retains "2.8" for the original HIV import baseline; the distribution
-# and required Core overlay are selected by Dockerfile.backend.
+# Filename retains "2.8" for the original HIV import baseline; Core comes from
+# the pinned backend distribution image.
 #
 # Access pattern: a `proxy` service (Caddy) fronts everything. Internal
 # services (gateway, frontend, backend) are NOT exposed on the host. Reach
@@ -41,7 +44,7 @@ services:
       - caddy-config:/config
       # Static-file mount for the umbrella-built chartsearchai ESM bundle
       # and a regenerated importmap.json. Caddy serves these to override
-      # the corresponding paths from the :nightly-chartsearch frontend
+      # the corresponding paths from the pinned nightly-chartsearch frontend
       # container without rebuilding that image. See (chartsearch_overrides)
       # in Caddyfile and `make chartsearch-esm-build` for the build step.
       - ../artifacts/openmrs/spa-custom:/srv/spa-custom:ro
@@ -56,7 +59,7 @@ services:
       retries: 5
 
   gateway:
-    image: openmrs/openmrs-reference-application-3-gateway:${OPENMRS_REFAPP_TAG:-nightly-chartsearch}
+    image: openmrs/openmrs-reference-application-3-gateway:nightly-chartsearch@sha256:37b90415f83472106cf18ea0e4ffb2f2978deda1de0af7fbab5994fd0fc49c43
     container_name: harness-openmrs-gateway
     restart: "unless-stopped"
     depends_on:
@@ -78,7 +81,7 @@ services:
       start_period: 60s
 
   frontend:
-    image: openmrs/openmrs-reference-application-3-frontend:${OPENMRS_REFAPP_TAG:-nightly-chartsearch}
+    image: openmrs/openmrs-reference-application-3-frontend:nightly-chartsearch@sha256:7a1810630a979c0df6575125c21690cb2208bba1e41d63c1136acda4f140f2b0
     container_name: harness-openmrs-frontend
     restart: "unless-stopped"
     environment:
@@ -100,12 +103,13 @@ services:
     # Match frontend/gateway module requirements. The derived image retains
     # native distribution startup on Temurin and excludes only the two upstream
     # snapshot omods supplied by our source-pair build.
-    image: harness-openmrs-backend:${OPENMRS_REFAPP_TAG:-nightly-chartsearch}-temurin
+    # The local tag names the pinned digest, so bumping the pin builds a new image.
+    image: harness-openmrs-backend:92cd19c480b5-temurin
     build:
       context: .
       dockerfile: Dockerfile.backend
       args:
-        OPENMRS_REFAPP_TAG: ${OPENMRS_REFAPP_TAG:-nightly-chartsearch}
+        OPENMRS_BACKEND_IMAGE: openmrs/openmrs-reference-application-3-backend:nightly-chartsearch@sha256:92cd19c480b5416a353682d6b3a8a018b21524d9051ce8817b215836328dce70
     container_name: harness-openmrs-backend
     restart: "unless-stopped"
     depends_on:
@@ -119,6 +123,13 @@ services:
       OMRS_CONFIG_MODULE_WEB_ADMIN: "true"
       OMRS_CONFIG_AUTO_UPDATE_DATABASE: "true"
       OMRS_CONFIG_CREATE_TABLES: "true"
+      # Run Core's Liquibase pass, then every module's, on each boot, as Core 2.8 did.
+      # Core 2.9.0-SNAPSHOT's optimized startup skips Core's pass when core.version is
+      # unchanged; a module's Liquibase then binds the startup thread to that module's
+      # class loader and the next module cannot find its own sqlFile resources
+      # (Appointments' patientPastAppointments.sql after an HIV import). See
+      # specs/reviews/2026-10-13-appointments-fresh-import-root-cause.md.
+      OMRS_EXTRA_OPTIMIZED_STARTUP: "false"
       OMRS_CONFIG_CONNECTION_SERVER: db
       # OMRS_DB_NAME defaults to `openmrs` (the canvas baseline). Override to
       # `openmrs_test` to point the backend at the dlt-loaded transformed
@@ -248,6 +259,10 @@ services:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      # Snapshot repository location for the prepared QueryStore index
+      # (scripts/querystore-index-package.py). Inside the container only; the
+      # package is copied in and out with `docker cp`.
+      - path.repo=/usr/share/elasticsearch/snapshots
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health || exit 1"]
       interval: 10s

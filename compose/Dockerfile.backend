@@ -12,26 +12,14 @@
 # volume's ownership, downloads the ONNX embedding model + vocab that BOTH
 # querystore and chartsearchai read, then drops to uid 1001 and runs OpenMRS
 # startup. The umbrella supplies its source-built ChartSearchAI and QueryStore
-# modules; all other modules come from the same distribution as the frontend.
-ARG OPENMRS_REFAPP_TAG=nightly-chartsearch
-FROM openmrs/openmrs-reference-application-3-backend:${OPENMRS_REFAPP_TAG} AS dist
-
-# The chartsearchai/querystore modules require OpenMRS platform 2.9.0; the base image ships an
-# older core. Fetch the 2.9.0-SNAPSHOT core war, resolving the current snapshot via maven-metadata.
-FROM eclipse-temurin:21-jre AS core-war
-ARG CACHE_BUST
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-RUN set -eu; \
-    echo "cache-bust: ${CACHE_BUST:-none}"; \
-    REPO=https://openmrs.jfrog.io/artifactory/public/org/openmrs/web/openmrs-webapp/2.9.0-SNAPSHOT; \
-    curl -fsSL "$REPO/maven-metadata.xml" -o /tmp/md.xml; \
-    WAR_VER=$(grep -A4 '<extension>war</extension>' /tmp/md.xml | grep -m1 '<value>' \
-        | sed -E 's@.*<value>(.*)</value>.*@\1@'); \
-    test -n "$WAR_VER"; \
-    echo "Overlaying core war: openmrs-webapp-$WAR_VER.war"; \
-    curl -fSL "$REPO/openmrs-webapp-$WAR_VER.war" -o /openmrs.war; \
-    test -s /openmrs.war
+# modules; all other modules and OpenMRS Core come from the same distribution
+# as the frontend.
+#
+# OPENMRS_BACKEND_IMAGE is the digest-pinned distribution backend that compose
+# passes in. That image already ships the Core 2.9.0-SNAPSHOT build ChartSearchAI
+# and QueryStore require, so the pin fixes Core as well as every bundled module.
+ARG OPENMRS_BACKEND_IMAGE
+FROM ${OPENMRS_BACKEND_IMAGE} AS dist
 
 FROM eclipse-temurin:21-jre
 
@@ -54,8 +42,6 @@ COPY --from=dist /usr/local/tomcat /usr/local/tomcat
 # Leave these two to our source-pair build, not the upstream snapshots.
 RUN rm -f /openmrs/distribution/openmrs_modules/chartsearchai-*.omod \
     /openmrs/distribution/openmrs_modules/querystore-*.omod
-# Overlay the fetched core war; startup deploys /openmrs/distribution/openmrs_core/openmrs.war.
-COPY --from=core-war /openmrs.war /openmrs/distribution/openmrs_core/openmrs.war
 RUN chown -R 1001:1001 /openmrs /usr/local/tomcat
 
 COPY --chmod=755 backend-init.sh /usr/local/bin/backend-init.sh
