@@ -73,7 +73,8 @@ esac
 exit 0
 """, encoding="utf-8")
     make = binaries / "make"
-    make.write_text(f'#!/bin/bash\necho "make $*" >> "{log}"\n', encoding="utf-8")
+    make.write_text(f'#!/bin/bash\necho "make $* ${{OMRS_CONFIG_CREATE_TABLES:+create_tables=$OMRS_CONFIG_CREATE_TABLES}}" >> "{log}"\n',
+                    encoding="utf-8")
     for stub in (docker, make):
         stub.chmod(0o755)
     return binaries
@@ -266,6 +267,7 @@ def test_setup_stops_openmrs_and_its_gateway_before_restoring_then_starts_the_st
     calls = _calls(log)
     stop = calls.index("docker compose -f compose/openmrs-2.8-refapp.yml stop proxy gateway backend")
     restore = calls.index("python3 scripts/hiv-baseline.py restore")
-    start = calls.index("make local-stack-up")
+    # The restored database is loaded before OpenMRS first starts, so a new data volume must not create tables.
+    start = calls.index("make local-stack-up create_tables=false")
     verify = calls.index("python3 scripts/hiv-baseline.py verify")
     assert stop < restore < start < verify

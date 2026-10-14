@@ -58,7 +58,7 @@ else
   python3 scripts/hiv-baseline.py restore
   docker compose -f "${COMPOSE_FILE}" run --rm --no-deps --entrypoint sh backend -c \
     'rm -rf /openmrs/data/.openmrs-lib-cache/chartsearchai /openmrs/data/.openmrs-lib-cache/querystore'
-  make local-stack-up
+  OMRS_CONFIG_CREATE_TABLES=false make local-stack-up
   make chartsearch-esm-build
   python3 scripts/hiv-baseline.py verify
 fi

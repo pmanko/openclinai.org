@@ -122,7 +122,10 @@ services:
     environment:
       OMRS_CONFIG_MODULE_WEB_ADMIN: "true"
       OMRS_CONFIG_AUTO_UPDATE_DATABASE: "true"
-      OMRS_CONFIG_CREATE_TABLES: "true"
+      # A baseline restore loads the database before OpenMRS first starts and sets
+      # this to false, so a new data volume installs onto it instead of creating
+      # tables; the default initializes an empty database.
+      OMRS_CONFIG_CREATE_TABLES: ${OMRS_CONFIG_CREATE_TABLES:-true}
       # Run Core's Liquibase pass, then every module's, on each boot, as Core 2.8 did.
       # Core 2.9.0-SNAPSHOT's optimized startup skips Core's pass when core.version is
       # unchanged; a module's Liquibase then binds the startup thread to that module's
