@@ -195,6 +195,17 @@ the command was plain `make chartsearch-research-setup` with the owner's
    antiretroviral question "nevirapine, lamivudine, and stavudine", checked
    with high confidence, from QueryStore citations.
 
+## Second machine (15 October)
+
+Ross reported a fresh install on his Mac from `main` at `a28af38` with all six
+submodules at their pins: `make chartsearch-research-setup` finished in 6 minutes,
+restored 514,682 indexed documents with nothing re-embedded, started all 33
+modules, and all seven evaluation accounts log in. As `eval-nurse` on the sample
+chart, the bundled provider answered in 42 s and the Hub checked 12B profile in
+about 20 minutes; both answers were saved and reload. He built with Python 3.11
+and Java 26. A plain `git clone --recurse-submodules` left `targets/chartsearchai`
+empty until `git submodule update --init --recursive --checkout --force`.
+
 ## Checks
 
 - `python3 -m unittest discover -s tests -v`: 23 tests passed.
@@ -205,6 +216,5 @@ the command was plain `make chartsearch-research-setup` with the owner's
 
 ## Not yet proven
 
-- Ross's installation from the guide.
 - Setup still needs Java, Maven, Node and Yarn on the host, and Maven compiles
   the modules against the newest Core snapshot rather than the pinned Core.

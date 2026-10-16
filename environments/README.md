@@ -12,7 +12,7 @@ come from one digest-pinned build of the OpenMRS distribution, which also fixes
 OpenMRS Core; our source-built ChartSearchAI and QueryStore modules replace the
 distribution's snapshots.
 
-Prerequisites: running Docker with Compose, Java 21/Maven, Python 3.11+, Node.js 18+,
+Prerequisites: running Docker with Compose, Java 21 or newer with Maven, Python 3.11+, Node.js 18+,
 Yarn 4 and `llama-server` on your PATH. Check `mvn -version` and
 `python3 --version`; on macOS, the system Python may be older than the Python
 you installed, and Maven uses the Java selected by `JAVA_HOME`.
@@ -141,6 +141,8 @@ make chartsearch-research-setup REBUILD_BASELINE=1
 
 ## Troubleshooting
 
+- If a submodule such as `targets/chartsearchai` is empty after cloning, run
+  `git submodule update --init --recursive --checkout --force`.
 - If a build fails, check the prerequisites above. Components are built from the
   pinned local checkouts; no upstream PR merge is required.
 - If startup fails, read the error printed by `make local-stack-up`. Use
