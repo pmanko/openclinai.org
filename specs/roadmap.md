@@ -13,8 +13,8 @@ experiments. The workspace refactor that created this layout
 1. [OpenMRS contribution delivery](openmrs-contribution.md): dispose of the open
    #587 context-composition finding and the QueryStore #68 split request, then
    obtain ordinary dependency compatibility and remove the temporary paired CI.
-2. [Local HIV research environment](#local-hiv-research-environment): get the
-   signed-in account's roles and location to the model on a clean boot from `main`.
+2. [Local HIV research environment](#local-hiv-research-environment): setup needs
+   only Docker and the native model router.
 3. [Catalyst delivery](catalyst-delivery.md): owner acceptance of the four local and
    server journeys and publication verification.
 4. [Website and publication](#website-and-publication): deploy the reviewed landing
@@ -31,7 +31,7 @@ authorized by any item here; each stream spec names its signoffs.
 | --- | --- | --- | --- |
 | OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | Thirteen PRs restacked and checked; QueryStore #68 open; #587 finding open | Dispositions for #587 and the #68 split request |
 | Workspace and validation refactor (Track B) | [closeout record](reviews/2026-10-02-refactor-closeout.md) | Complete, 2 October | None |
-| Local HIV research environment | [setup guide](../environments/README.md) and the list below | Setup and reset restore the published default baseline in about 5 minutes; Ross's fresh install passed | Account context to the model, Docker-only prerequisites |
+| Local HIV research environment | [setup guide](../environments/README.md) and the list below | Setup and reset restore the published default baseline in about 5 minutes; Ross's fresh install passed; account context reaches the model | Docker-only prerequisites |
 | Catalyst delivery | [catalyst-delivery.md](catalyst-delivery.md) | Four journeys demonstrated; acceptance open | FP-009 and FP-010 |
 | Website and publication | list below | Documentation site deploys from `main`; landing deployment pending | Publish the reviewed landing content |
 | Decision-layer experiment | [decision-layer-experiment.md](decision-layer-experiment.md) | Proposed | Decisions D1–D4 |
@@ -69,15 +69,18 @@ smoke and troubleshooting. This list holds only delivery state.
 - [x] Both clean-start paths are proven with the real application, and Ross
       completes a fresh installation from the guide
       ([record](reviews/2026-10-14-fresh-setup-acceptance.md#second-machine-15-october)).
-- [ ] ChartSearchAI sends the signed-in account's roles and session location to
+- [x] ChartSearchAI sends the signed-in account's roles and session location to
       the Hub: `9416ffa` cherry-picked onto the pinned line as the next slice after
-      Backend #590, superseding fork PR #33.
-- [ ] The Hub reads that context and adds one line, `Requester: <assigned roles>
+      Backend #590, superseding fork PR #33
+      ([fork #35](https://github.com/pmanko/openmrs-module-chartsearchai/pull/35)).
+- [x] The Hub reads that context and adds one line, `Requester: <assigned roles>
       at <session location>`, to the answer and In-Depth prompts and to the turn
-      trace; nothing else about the account is sent to the model.
-- [ ] `main` pins both heads, and a reset with the published baseline followed by
+      trace; nothing else about the account is sent to the model
+      ([Hub #34](https://github.com/pmanko/med-agent-hub/pull/34)).
+- [x] `main` pins both heads, and a reset with the published baseline followed by
       a question as two different evaluation accounts shows each account's line
-      in the Hub trace and `accountContext` on the saved turn.
+      in the Hub trace and `accountContext` on the saved turn
+      ([record](reviews/2026-10-16-account-context.md)).
 - [ ] Setup needs only Docker and the native model router: the pinned modules,
       frontend bundle and embedding model ship in published images instead of
       being built on the host with Java, Maven, Node and Yarn. Module builds
@@ -133,6 +136,7 @@ review ([audit](reviews/2026-10-02-documentation-audit.md)).
 - [2 October refactor closeout](reviews/2026-10-02-refactor-closeout.md)
 - [7 October context evaluation](reviews/2026-10-07-context-evaluation.md)
 - [14 October fresh setup acceptance](reviews/2026-10-14-fresh-setup-acceptance.md)
+- [16 October account context](reviews/2026-10-16-account-context.md)
 - [7 October Track A remediation record](reviews/2026-10-07-track-a-remediation.md)
 - [10 October revamp audit and experiment proposal](reviews/2026-10-10-revamp-audit-and-jev-experiment.md)
 - [13 October Appointments fresh-import root cause](reviews/2026-10-13-appointments-fresh-import-root-cause.md)
