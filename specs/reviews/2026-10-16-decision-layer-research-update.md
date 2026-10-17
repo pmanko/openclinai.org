@@ -24,7 +24,8 @@ any training run.
    benchmark; the published numbers come from fine-tuning. It leaves the grounding
    replay and re-enters as a trained arm on the relevance pairs, where labels exist.
 2. **The relevance replay can run first, from files already committed.** The gold is
-   rule-made, so each disagreement is read before it counts as a model error.
+   rule-made; disputed records are adjudicated blind to arm identity and the corrected
+   gold is frozen before any arm is scored.
 3. **For context admission, Jev's honest competitor is a local cross-encoder
    reranker**, not Gemma. The Hub makes no model call in context preparation today;
    every relevance signal is lexical, a bi-encoder cosine, a type or a date.
@@ -188,8 +189,9 @@ record text, so the relevance replay needs nothing from the workstation:
 
 Two consequences. The labels were produced by the native `build_gold_rc2.py` rules
 with one manual exclusion (see the [7 October review](2026-10-07-context-evaluation.md)),
-not by clinicians, so a disagreement with the gold is read before it counts as a model
-error; the model may be right. And with on-topic pairs near 1%, agreement statistics
+not by clinicians, so a model can be right against the gold. Records any arm disputes
+are adjudicated without arm identities and the corrected gold is frozen before scoring,
+so the reader cannot favour one arm. And with on-topic pairs near 1%, agreement statistics
 are dominated by the easy negatives; recall of on-topic records and precision per
 patient and topic, plus a calibration curve, are the informative measures.
 
@@ -206,12 +208,15 @@ grounding replay runs there.
 - Phase 0 split into 0a (relevance, committed inputs, runs first) and 0b (grounding,
   run packets). Item IDs kept.
 - P0.5 gains three arms: Jev, an untrained local cross-encoder reranker, and Laya
-  fine-tuned leave-one-patient-out; scored as recall and precision per patient and
-  topic with a calibration curve; every disagreement read.
-- G0 added: a routing decision for P3.4, not a stop rule; a local arm that matches
-  Jev is preferred because it can ship.
-- P0.3 and P0.6 drop the zero-shot Laya arm; P0.6 adds the probability bands that
-  reproduce the adjudicators' three labels.
+  fine-tuned leave-one-patient-out, with the Hub's current selection replayed as the
+  baseline; scored as recall and precision per patient and topic with a calibration
+  curve; disputed gold records adjudicated blind and the corrected gold frozen first.
+- G0 added: P3.4 may use an arm only if its recall and precision are at least the
+  current selection's; among qualifying arms a local one that matches Jev is
+  preferred because it can ship.
+- P0.3 and P0.6 drop the zero-shot Laya arm. P0.6 fixes Jev's binary verdict at the
+  prespecified 0.5 threshold, which G1 uses, and fits the three-label probability
+  bands on a calibration split, reporting them on the held-out split.
 - G1 failure now closes Phase 2 and P3.1 to P3.3; Phase 1 and P3.4 do not depend on
   it. The 10 October text closed the whole experiment, which would have discarded the
   evaluation arm for a grounding result.

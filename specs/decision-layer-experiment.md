@@ -31,7 +31,9 @@ link to the evidence (PR, run directory or dated review).
 - A decision-model verdict is a separately attributed actor. It never replaces a
   deterministic result and is never the promoted judge, because it carries no rationale.
 - Rule-made labels are recorded as such. The context-evaluation gold was produced by
-  `build_gold_rc2.py`; a disagreement with it is read before it counts as a model error.
+  `build_gold_rc2.py`. Records any arm disputes are pooled and adjudicated without arm
+  identities; the corrected gold is frozen with its hash before any arm's metrics are
+  computed, and metrics are reported against both the original and the corrected gold.
 - Each phase ends with a dated review in `specs/reviews/`. This spec gets the ticked
   box and the link, nothing else.
 
@@ -57,12 +59,16 @@ topics, 980 records, 7,840 record–topic pairs, 91 on-topic.
       recorded by name and hash.
 - [ ] P0.5 Relevance yes/no for every record and topic of the five patients from three
       arms: Jev; an untrained off-the-shelf local cross-encoder reranker; Laya
-      fine-tuned on four patients' pairs and tested on the fifth, rotating. Scored
-      against the frozen gold as recall of on-topic records and precision per patient
-      and topic, with a calibration curve per arm; report whether patient 39's three
-      dropped renal records are admitted; read every disagreement with the gold.
-- [ ] **G0** Relevance result recorded. Not a stop rule: it decides which arm, if any,
-      P3.4 uses. A local arm that matches Jev's recall at equal precision is preferred
+      fine-tuned on four patients' pairs and tested on the fifth, rotating. The Hub's
+      current selection (QueryStore slice tiers plus the local ranker) replayed over
+      the same ledgers is the baseline. Each arm scored as recall of on-topic records
+      and precision per patient and topic, with a calibration curve; disputed records
+      adjudicated blind and the corrected gold frozen per the rules before scoring;
+      report whether patient 39's three dropped renal records are admitted.
+- [ ] **G0** Relevance result recorded against the frozen corrected gold. P3.4 may use
+      an arm only if its recall of on-topic records is at least the current
+      selection's at no lower precision, per patient and topic; if no arm qualifies,
+      P3.4 closes. Among qualifying arms a local one that matches Jev is preferred
       because it can ship.
 
 #### Phase 0b: grounding replay
@@ -81,12 +87,15 @@ topics, 980 records, 7,840 record–topic pairs, 91 on-topic.
       `unsupported`; Brier score and expected calibration error with at least ten
       observations per bin; Jev agreement conditional on Gemma being right or wrong;
       Gemma's `unchecked` rate versus Jev coverage; latency per batch versus the
-      `ground_verdicts` stage timing; cost per turn; the probability bands that best
-      reproduce the adjudicators' three labels.
+      `ground_verdicts` stage timing; cost per turn. Jev's binary verdict is the
+      prespecified 0.5 threshold on its probability. The probability bands that best
+      reproduce the adjudicators' three labels are fit on a calibration split of the
+      adjudicated pairs and reported on the held-out split; G1 does not use them.
 - [ ] P0.7 Dated review written covering Phases 0a and 0b.
-- [ ] **G1** Jev reaches a kappa within 0.05 of Gemma's, recall of `unsupported` at
-      least Gemma's, and its errors are not a subset of Gemma's. Fail: Phase 2 and
-      P3.1 to P3.3 close with the review. Phase 1 and P3.4 do not depend on G1.
+- [ ] **G1** At the prespecified 0.5 threshold, Jev reaches a kappa within 0.05 of
+      Gemma's, recall of `unsupported` at least Gemma's, and its errors are not a
+      subset of Gemma's. Fail: Phase 2 and P3.1 to P3.3 close with the review.
+      Phase 1 and P3.4 do not depend on G1.
 
 ### Phase 1: second judge actor (harness, evaluation of answers)
 
