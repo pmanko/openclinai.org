@@ -17,7 +17,7 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 | OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | Thirteen PRs restacked and checked, plus the account-context slice; QueryStore #68 open; #587 finding open | Dispositions for #587 and the #68 split request |
 | Catalyst delivery | [catalyst-delivery.md](catalyst-delivery.md) | Four journeys demonstrated; acceptance open | FP-009 and FP-010 |
 | Website and publication | [website-publication.md](website-publication.md) | Documentation site deploys from `main`; landing deployment pending | Publish the reviewed landing content |
-| Decision-layer experiment (Jev, Laya) | [decision-layer-experiment.md](decision-layer-experiment.md) | Proposed | Decisions D1–D4 |
+| Decision-layer experiment (Jev, Laya) | [decision-layer-experiment.md](decision-layer-experiment.md) | Proposed; research updated 16 October | Decisions D1–D5 |
 | Clinical knowledge bases | No umbrella spec yet. The Hub ships one static knowledge-base source; the harness holds the [research notes](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/artifacts/planning/clinical-kb-research.md) and [scope](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/artifacts/planning/kb-scope.md) | Exploration | Owner decides whether to scope a thread |
 | Validation methodology | The [harness](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/README.md) and its [evaluation methodology brief](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/artifacts/planning/eval-methodology-brief.md) | Runs experiments against the local stack; the 7 and 10 October reviews are its latest outputs | Serves the other threads' evaluations |
 | Workspace and validation refactor (Track B) | [closeout record](reviews/2026-10-02-refactor-closeout.md) | Complete, 2 October | None |
@@ -65,7 +65,7 @@ authorized by any item here; each thread spec names its signoffs.
 - **External consumers:** the Hub README and Catalyst documents link roadmap
   section anchors that no longer exist; update them when those components next
   publish.
-- **Decision-layer experiment:** decisions D1 to D4 are recorded in
+- **Decision-layer experiment:** decisions D1 to D5 are recorded in
   [its spec](decision-layer-experiment.md).
 
 ## Evidence
@@ -73,10 +73,11 @@ authorized by any item here; each thread spec names its signoffs.
 - [2 October documentation audit](reviews/2026-10-02-documentation-audit.md)
 - [2 October refactor closeout](reviews/2026-10-02-refactor-closeout.md)
 - [7 October context evaluation](reviews/2026-10-07-context-evaluation.md)
-- [14 October fresh setup acceptance](reviews/2026-10-14-fresh-setup-acceptance.md)
-- [16 October account context](reviews/2026-10-16-account-context.md)
-- [16 October provider parity findings](reviews/2026-10-16-provider-parity-findings.md)
-- [17 October provider parity measurements](reviews/2026-10-17-provider-parity-measurements.md)
 - [7 October Track A remediation record](reviews/2026-10-07-track-a-remediation.md)
 - [10 October revamp audit and experiment proposal](reviews/2026-10-10-revamp-audit-and-jev-experiment.md)
 - [13 October Appointments fresh-import root cause](reviews/2026-10-13-appointments-fresh-import-root-cause.md)
+- [14 October fresh setup acceptance](reviews/2026-10-14-fresh-setup-acceptance.md)
+- [16 October account context](reviews/2026-10-16-account-context.md)
+- [16 October decision-layer research update](reviews/2026-10-16-decision-layer-research-update.md)
+- [16 October provider parity findings](reviews/2026-10-16-provider-parity-findings.md)
+- [17 October provider parity measurements](reviews/2026-10-17-provider-parity-measurements.md)
