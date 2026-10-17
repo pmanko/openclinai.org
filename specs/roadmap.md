@@ -34,7 +34,7 @@ authorized by any item here; each stream spec names its signoffs.
 | Local HIV research environment | [setup guide](../environments/README.md) and the list below | Setup and reset restore the published default baseline in about 5 minutes; Ross's fresh install passed; account context reaches the model | Docker-only prerequisites |
 | Catalyst delivery | [catalyst-delivery.md](catalyst-delivery.md) | Four journeys demonstrated; acceptance open | FP-009 and FP-010 |
 | Website and publication | list below | Documentation site deploys from `main`; landing deployment pending | Publish the reviewed landing content |
-| Decision-layer experiment | [decision-layer-experiment.md](decision-layer-experiment.md) | Proposed | Decisions D1–D4 |
+| Decision-layer experiment | [decision-layer-experiment.md](decision-layer-experiment.md) | Proposed; research updated 16 October | Decisions D1–D5 |
 
 ## Local HIV research environment
 
@@ -127,7 +127,7 @@ review ([audit](reviews/2026-10-02-documentation-audit.md)).
 - **External consumers:** the Hub README and Catalyst documents link roadmap
   section anchors that no longer exist; update them when those components next
   publish.
-- **Decision-layer experiment:** decisions D1 to D4 are recorded in
+- **Decision-layer experiment:** decisions D1 to D5 are recorded in
   [its spec](decision-layer-experiment.md).
 
 ## Evidence
@@ -135,8 +135,9 @@ review ([audit](reviews/2026-10-02-documentation-audit.md)).
 - [2 October documentation audit](reviews/2026-10-02-documentation-audit.md)
 - [2 October refactor closeout](reviews/2026-10-02-refactor-closeout.md)
 - [7 October context evaluation](reviews/2026-10-07-context-evaluation.md)
-- [14 October fresh setup acceptance](reviews/2026-10-14-fresh-setup-acceptance.md)
-- [16 October account context](reviews/2026-10-16-account-context.md)
 - [7 October Track A remediation record](reviews/2026-10-07-track-a-remediation.md)
 - [10 October revamp audit and experiment proposal](reviews/2026-10-10-revamp-audit-and-jev-experiment.md)
 - [13 October Appointments fresh-import root cause](reviews/2026-10-13-appointments-fresh-import-root-cause.md)
+- [14 October fresh setup acceptance](reviews/2026-10-14-fresh-setup-acceptance.md)
+- [16 October account context](reviews/2026-10-16-account-context.md)
+- [16 October decision-layer research update](reviews/2026-10-16-decision-layer-research-update.md)
