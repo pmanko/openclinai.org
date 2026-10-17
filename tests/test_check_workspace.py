@@ -42,12 +42,18 @@ class LinkTests(unittest.TestCase):
                 git.assert_called_once_with(repo, "cat-file", "-e",
                                             f"{sha}:docs/a b.md", check=False)
 
-    def test_managed_component_wrong_pin_and_branch_refs(self):
-        for identity, ref in (("owner/harness", PRODUCT_SHA),
-                              ("owner/harness", "main")):
-            with self.subTest(identity=identity, ref=ref), patch.object(checker, "git") as git:
-                self.assertIn("recorded 40-SHA", self.check(
-                    f"https://github.com/{identity}/blob/{ref}/README.md") or "")
+    def test_managed_component_wrong_pin(self):
+        with patch.object(checker, "git") as git:
+            self.assertIn("not the recorded pin", self.check(
+                f"https://github.com/owner/harness/blob/{PRODUCT_SHA}/README.md") or "")
+            git.assert_not_called()
+
+    def test_managed_component_branch_refs_pass_unchecked(self):
+        """A link to a branch follows the component; only a commit link claims the pin."""
+        for ref in ("main", "v2.1.0"):
+            with self.subTest(ref=ref), patch.object(checker, "git") as git:
+                self.assertIsNone(self.check(
+                    f"https://github.com/owner/harness/blob/{ref}/README.md"))
                 git.assert_not_called()
 
     def test_missing_pinned_file(self):

@@ -125,9 +125,13 @@ def check_link(root, source, link, remotes):
         # locally managed repositories have a recorded source pin to enforce.
         if identity.lower() not in {name for name, _ in remotes}:
             return None
+        # A branch or tag link follows the component as it moves; only a link that
+        # names a commit claims the pinned revision, and that claim is checked.
+        if not re.fullmatch(SHA, sha):
+            return None
         repo = remotes.get((identity.lower(), sha))
-        if not re.fullmatch(SHA, sha) or repo is None:
-            return "GitHub blob link does not match a local remote and recorded 40-SHA pin"
+        if repo is None:
+            return "GitHub blob link names a commit that is not the recorded pin"
         if git(repo, "cat-file", "-e", f"{sha}:{target}", check=False) is None:
             return "GitHub blob path is absent from the pinned commit"
         return None
