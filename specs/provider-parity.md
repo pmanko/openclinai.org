@@ -29,8 +29,8 @@ comparisons in the picker.
       call, the prompt size, read time and how much the router reused.
 - [ ] Configuration only: `swa-full` for the local Gemma 4 12B preset, and the
       query-scoped context mode ChartSearchAI measured as faster and more
-      accurate in July (`chartsearchai.chartMode=queryScoped`, `topK=30`).
-      Re-run the five questions.
+      accurate in July (`chartsearchai.chartMode=queryScoped`, with the module's
+      default `chartsearchai.querystore.topK` of 12). Re-run the five questions.
 - [ ] Hub reads the records once per answer: one selection per answer, the same
       records block first in every stage, instructions after it, so the router's
       cache does the rest. Re-run.
