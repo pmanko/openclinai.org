@@ -159,8 +159,8 @@ the default `single-12b-checked`.
   the one question where it reused them, the fast answer finished in 52 s.
 - So the remaining gap to the built-in provider on this machine is the
   router's cross-question reuse of the 14,800-token temporal facts, plus
-  machine load. Turning on llama-server's verbose logging for one run would
-  show why it re-reads a prefix it reports as 80% shared.
+  machine load. The next section shows why the router re-reads a prefix it
+  reports as 80% shared.
 
 ## Why the router misses across questions
 
