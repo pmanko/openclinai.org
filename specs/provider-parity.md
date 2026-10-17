@@ -25,8 +25,9 @@ comparisons in the picker.
 
 ## Steps
 
-- [ ] Baseline: ask the same five questions of both providers and note, per model
-      call, the prompt size, read time and how much the router reused.
+- [x] Baseline: ask the same five questions of both providers and note, per model
+      call, the prompt size, read time and how much the router reused
+      ([17 October](reviews/2026-10-17-provider-parity-measurements.md#baseline)).
 - [ ] Configuration only: `swa-full` for the local Gemma 4 12B preset, and the
       query-scoped context mode ChartSearchAI measured as faster and more
       accurate in July (`chartsearchai.chartMode=queryScoped`, with the module's
