@@ -79,7 +79,7 @@ topics, 980 records, 7,840 record–topic pairs, 91 on-topic.
       and provenance. The stage timings also show the review stage's share of turn
       latency, which P3.2 depends on.
 - [ ] P0.3 Jev answers the grounding yes/no for every pair, with a probability, using
-      the Hub's criteria from [`_ENTAILMENT_SYSTEM_PROMPT`](https://github.com/pmanko/med-agent-hub/blob/32695025f5ef77e0096aeef2d9b5907776234a82/server/team.py).
+      the Hub's criteria from [`_ENTAILMENT_SYSTEM_PROMPT`](https://github.com/pmanko/med-agent-hub/blob/main/server/team.py).
 - [ ] P0.4 About 120 pairs sampled across cells, adjudicated blind as supported,
       unsupported or unclear, with reviewer id and time per
       [`adjudicate.adjudication_record`](https://github.com/pmanko/clinical-ai-validation-harness/blob/5f180650aab46e607e5f21595faa4d0dc1620d4c/harness/validate/adjudicate.py).
@@ -122,7 +122,7 @@ topics, 980 records, 7,840 record–topic pairs, 91 on-topic.
       [PCCP template](https://github.com/pmanko/clinical-ai-validation-harness/blob/5f180650aab46e607e5f21595faa4d0dc1620d4c/specs/artifacts/planning/pccp-change-record-template.md);
       Hub owner review.
 - [ ] P2.2 One `visibility: evaluation` profile in
-      [`levels.yaml`](https://github.com/pmanko/med-agent-hub/blob/32695025f5ef77e0096aeef2d9b5907776234a82/server/levels.yaml)
+      [`levels.yaml`](https://github.com/pmanko/med-agent-hub/blob/main/server/levels.yaml)
       with a `grounding_backend` knob: both verdicts and probabilities recorded in
       `groundingChecks[].method` and the trace; the shipped verdict unchanged; the P0.6
       probability bands recorded as a proposed threshold policy, not applied; not
@@ -150,7 +150,7 @@ P3.1 to P3.3 are conditional on G3; P3.4 on G0.
       product path.
 - [ ] P3.4 Context admission: per-record relevance probability as the budget drop
       order and a recall net over the Hub's zero-relevance bucket, engine-side beside
-      the local selector in [`context_sources.py`](https://github.com/pmanko/med-agent-hub/blob/32695025f5ef77e0096aeef2d9b5907776234a82/server/context_sources.py);
+      the local selector in [`context_sources.py`](https://github.com/pmanko/med-agent-hub/blob/main/server/context_sources.py);
       arm chosen by G0; QueryStore's selection contract unchanged.
 
 ## Not in scope
