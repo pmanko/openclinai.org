@@ -104,3 +104,36 @@ conversation, both providers.
   three of five, as at baseline.
 - Each Hub answer now finishes within 2–3 times the built-in provider's time,
   inside the thread's two-minute aim on this machine.
+
+## Hub sends less for narrow questions
+
+Hub `4ff82ef` ([Hub #36](https://github.com/pmanko/med-agent-hub/pull/36)) fixes a
+bug that kept the Hub from using QueryStore's question-scoped slice: rebuilding
+records after drug-reference injection dropped each record's slice tier and
+rank, so with drug safety on (every product profile) the selector fell back to
+its own 32-record recent core plus word overlap. With the fix, selection is
+relevance-led: 33–96 records, 1,000–2,800 tokens, no recent core.
+
+| Question | Built-in | Hub first answer | Hub complete | Hub calls | Tokens read / sent | Hub read time |
+| --- | --- | --- | --- | --- | --- | --- |
+| Latest weight | 9 s | 112 s | 133 s | 4 | 18,326 / 50,420 | 112 s |
+| Current medications | 38 s | 164 s | 204 s | 6 | 21,014 / 74,195 | 131 s |
+| Latest CD4 and viral load | 7 s | 114 s | 150 s | 6 | 19,202 / 68,266 | 117 s |
+| Drug allergies | 15 s | 112 s | 129 s | 3 | 19,707 / 54,606 | 115 s |
+| HIV care summary | 51 s | 30 s | 83 s | 6 | 4,598 / 67,174 | 28 s |
+
+- The records were never the large part. What each answer's first prompt still
+  carries is the temporal facts block (14,800 tokens), which is the same for
+  every question on the chart.
+- In this run the router reused that block across questions only once in five,
+  against three times in four in the previous run, with the same prompts and
+  similar match ratios in its log; why is not established. Within an answer,
+  reuse held: later stages read 400–800 tokens each. The router also read at
+  140–170 tokens per second here, against about 400 in the previous run.
+- Cutting the temporal facts to the selected records would leave 8,600–11,200
+  tokens, because the date ledger, appointment and visit summaries are
+  chart-wide by design (temporal facts may cite records the selection left
+  out). The `compact` render would leave 11,600. Neither was adopted.
+- Checked answers were correct on all five; In-Depth was shown on one of five.
+- ChartSearchAI's 40-cell question set could not be run: none of its 30 gold
+  patients exist in the HIV database.
