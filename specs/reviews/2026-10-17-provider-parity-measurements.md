@@ -137,3 +137,27 @@ relevance-led: 33–96 records, 1,000–2,800 tokens, no recent core.
 - Checked answers were correct on all five; In-Depth was shown on one of five.
 - ChartSearchAI's 40-cell question set could not be run: none of its 30 gold
   patients exist in the HIV database.
+
+## Fast checked profile
+
+Hub `49e4201` adds `single-12b-fast`: every Answer check (gates, review,
+reference resolution, grounding) and no In-Depth, as an explicit choice beside
+the default `single-12b-checked`.
+
+| Question | Hub fast first answer | Hub fast complete | Calls | Tokens read / sent |
+| --- | --- | --- | --- | --- |
+| Latest weight | 107 s | 123 s | 3 | 17,564 / 33,688 |
+| Current medications | 162 s | 179 s | 3 | 19,179 / 37,454 |
+| Latest CD4 and viral load | 113 s | 129 s | 3 | 17,876 / 34,282 |
+| Drug allergies | 123 s | 134 s | 2 | 18,961 / 36,410 |
+| HIV care summary | 31 s | 52 s | 3 | 2,832 / 33,612 |
+
+- Answers matched the checked profile's on all five, and no In-Depth events
+  were sent.
+- The time is almost all the first prompt: the router again re-read the
+  temporal facts on four of five questions, at about 160 tokens per second. On
+  the one question where it reused them, the fast answer finished in 52 s.
+- So the remaining gap to the built-in provider on this machine is the
+  router's cross-question reuse of the 14,800-token temporal facts, plus
+  machine load. Turning on llama-server's verbose logging for one run would
+  show why it re-reads a prefix it reports as 80% shared.

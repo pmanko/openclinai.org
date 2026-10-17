@@ -40,8 +40,8 @@ comparisons in the picker.
 - [ ] Hub sends less for narrow questions: a smaller recent core and relevance-led
       admission; each profile's window sized to its model. Re-run, and spot-check
       answers on ChartSearchAI's 40-cell question set.
-- [ ] A "fast checked" profile without In-Depth for live sessions, as an explicit
-      choice.
+- [x] A "fast checked" profile without In-Depth for live sessions, as an explicit
+      choice ([17 October](reviews/2026-10-17-provider-parity-measurements.md#fast-checked-profile)).
 - [ ] An OpenRouter comparison profile with the same context budget, with one
       recorded answer, its time and its cost.
 - [ ] Ross re-measures on his Mac.
