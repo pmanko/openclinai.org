@@ -149,7 +149,7 @@ Workspace source consistency is governed by the umbrella architecture.
 | G10 | QueryStore owns selection invariants; engines preserve protected tiers, stable identity and trace reasons. Harness parity evidence measures actual selected records. |
 | G11 | Engines: budgets are ceilings, with explicit protected-context and full-chart overflow rather than silent truncation. |
 | G12 | Hub: cache isolation, revalidation and no stale-on-error behavior; backend retains its own supported cache contract. |
-| G13 | Deferred Hub full-chart prefix reuse and measured backend timing. The 24 July decision makes this optional for Signoff 2 while query-scoped is the operating default. Activate only when that deployment need is selected. |
+| G13 | Hub prompt reuse and measured backend timing, now owned by the [provider parity](provider-parity.md) thread. The 24 July deferral assumed query-scoped was the operating default; ChartSearchAI #603 (6 October) made full chart the default again. |
 | G14 | Providers: every Checked answer has deterministic temporal/substance evidence; shared fixture expectations agree across adapters. |
 | G15 | Providers: changed answers are checked again, current citations resolve deterministically and grounding evaluates final text; no prior-turn citation leakage. |
 | G16 | Providers/frontend: honest checked/limited/unavailable status and visible coverage/provenance; unreviewed Hub seed rules cannot look clinically approved. |
