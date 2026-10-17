@@ -161,3 +161,30 @@ the default `single-12b-checked`.
   router's cross-question reuse of the 14,800-token temporal facts, plus
   machine load. Turning on llama-server's verbose logging for one run would
   show why it re-reads a prefix it reports as 80% shared.
+
+## Why the router misses across questions
+
+Replayed straight to the router (llama.cpp build 10809, `swa-full`), with
+Hub-built answer prompts whose first 15,200 tokens are identical and
+`timings.cache_n` read from each response:
+
+| Sequence | Tokens taken from cache |
+| --- | --- |
+| Weight prompt, then the same prompt again | 16,969 of 16,970 |
+| Weight prompt, a short prompt, then the medications prompt | 0 of 18,608 |
+| Medications prompt processed in one pass, then the weight prompt | 15,201 of 16,970 |
+| A prompt restored from the saved-prompt cache, then a prompt sharing its start | 0 |
+| CD4 prompt built by partial reuse, then the summary prompt | 0 of 16,821 |
+
+- The router reuses a shared prompt start only when the slot's current prompt
+  was processed in one pass. A prompt that was restored from its saved-prompt
+  cache, or itself built by partial reuse, cannot be partly reused again. That
+  explains the alternating hits and misses in the runs above: each Hub answer
+  ends with a short grounding call, so the next question's first prompt meets a
+  restored state.
+- Two slots sharing one 40,960-token cache kept the big prompt in its own slot
+  but did not help, for the same reason. Checkpoints at every prompt
+  (`checkpoint-min-step = 0`) stopped partial reuse altogether. Both were
+  reverted.
+- Exact or near-exact repeats always restore, which is why every later stage of
+  one answer reads only 400–800 tokens.
