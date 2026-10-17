@@ -42,7 +42,7 @@ with their frozen [gold](reviews/2026-10-07-context-evaluation/gold.json).
       `stage_timing` steps from the packets into a dated run directory with manifest
       and provenance.
 - [ ] P0.3 Jev and Laya answer the grounding yes/no for every pair using the Hub's
-      criteria from [`_ENTAILMENT_SYSTEM_PROMPT`](https://github.com/pmanko/med-agent-hub/blob/32695025f5ef77e0096aeef2d9b5907776234a82/server/team.py).
+      criteria from [`_ENTAILMENT_SYSTEM_PROMPT`](https://github.com/pmanko/med-agent-hub/blob/main/server/team.py).
 - [ ] P0.4 About 120 pairs sampled across cells, adjudicated blind as supported,
       unsupported or unclear, with reviewer id and time per
       [`adjudicate.adjudication_record`](https://github.com/pmanko/clinical-ai-validation-harness/blob/5f180650aab46e607e5f21595faa4d0dc1620d4c/harness/validate/adjudicate.py).
@@ -84,7 +84,7 @@ with their frozen [gold](reviews/2026-10-07-context-evaluation/gold.json).
       [PCCP template](https://github.com/pmanko/clinical-ai-validation-harness/blob/5f180650aab46e607e5f21595faa4d0dc1620d4c/specs/artifacts/planning/pccp-change-record-template.md);
       Hub owner review.
 - [ ] P2.2 One `visibility: evaluation` profile in
-      [`levels.yaml`](https://github.com/pmanko/med-agent-hub/blob/32695025f5ef77e0096aeef2d9b5907776234a82/server/levels.yaml)
+      [`levels.yaml`](https://github.com/pmanko/med-agent-hub/blob/main/server/levels.yaml)
       with a `grounding_backend` knob: both verdicts and probabilities recorded in
       `groundingChecks[].method` and the trace; the shipped verdict unchanged; not
       advertised by `GET /v1/models`.

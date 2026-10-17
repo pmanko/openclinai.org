@@ -186,5 +186,5 @@ execution.
 [backend]: https://github.com/pmanko/openmrs-module-chartsearchai/blob/ca136063556be2d67dc3b638dc06d12a516f5ff9/README.md#provider-integration-contract
 [frontend]: https://github.com/pmanko/openmrs-esm-chartsearchai/blob/475f6eb60ea14011f719c861b02d02daf2156390/README.md
 [querystore]: https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/rest-api.md
-[hub]: https://github.com/pmanko/med-agent-hub/blob/32695025f5ef77e0096aeef2d9b5907776234a82/README.md
+[hub]: https://github.com/pmanko/med-agent-hub/blob/main/README.md
 [conformance]: https://github.com/pmanko/clinical-ai-validation-harness/blob/5f180650aab46e607e5f21595faa4d0dc1620d4c/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md
