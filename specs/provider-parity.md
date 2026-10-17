@@ -33,9 +33,10 @@ comparisons in the picker.
       accurate in July (`chartsearchai.chartMode=queryScoped`, with the module's
       default `chartsearchai.querystore.topK` of 12). Re-run the five questions
       ([17 October](reviews/2026-10-17-provider-parity-measurements.md#configuration-only)).
-- [ ] Hub reads the records once per answer: one selection per answer, the same
+- [x] Hub reads the records once per answer: one selection per answer, the same
       records block first in every stage, instructions after it, so the router's
-      cache does the rest. Re-run.
+      cache does the rest. Re-run
+      ([17 October](reviews/2026-10-17-provider-parity-measurements.md#hub-reads-the-records-once)).
 - [ ] Hub sends less for narrow questions: a smaller recent core and relevance-led
       admission; each profile's window sized to its model. Re-run, and spot-check
       answers on ChartSearchAI's 40-cell question set.

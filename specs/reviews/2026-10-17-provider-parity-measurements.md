@@ -6,8 +6,15 @@ owner's Mac (64 GB), Gemma 4 12B Q8 through the shared llama.cpp router
 sample HIV chart as `eval-nurse` at Outpatient Clinic, through
 `POST /ws/rest/v1/chartsearchai/chat/stream`: the built-in provider
 (`provider=bundled`) and the Hub's `single-12b-checked` profile. Per-call prompt
-size, tokens read and read time come from the router log. A handful of questions
-on one machine: enough to see direction, not a benchmark.
+size, tokens read and read time come from the router log
+(`scripts/time-chart-questions.py`). A handful of questions on one machine:
+enough to see direction, not a benchmark.
+
+ChartSearchAI keeps one conversation per patient, user and provider, so in the
+baseline and configuration runs each question also carried the earlier
+questions as history (up to four turns). Repeated experiment runs later carried
+up to twelve, including an earlier wrong answer the model then copied. From the
+Hub-change run on, each question starts a fresh conversation.
 
 Machine load matters more than expected. With 21 unrelated OpenELIS and Catalyst
 containers running, the router read prompts at 150–210 tokens per second; with
@@ -58,7 +65,7 @@ baseline's rate, so compare tokens read rather than seconds.
 
 - Query-scoped mode cut the built-in provider's prompt from the 12,200-token
   whole chart to 3,000–4,700 tokens per question, of which it read 360–2,900.
-  It gave the same answers as in full-chart mode.
+  It gave the same answers to the four factual questions as in full-chart mode.
 - `swa-full` changed nothing for the Hub: its stages still share no prompt start,
   so it read 317,000 tokens over the five answers against 303,000 at baseline.
   It does let the router reuse an identical prompt start, as the last call of
@@ -68,3 +75,32 @@ baseline's rate, so compare tokens read rather than seconds.
   tokens, the same for every question on this chart, which every stage sent
   after its own instructions. The Hub's `compact` temporal render would cut it
   to about 11,600.
+
+## Hub reads the records once
+
+Hub `1f506b4` ([Hub #36](https://github.com/pmanko/med-agent-hub/pull/36)):
+every stage sends the same context message first (the temporal facts, then the
+selected records) and its instructions after it, and later stages keep the
+answer's records when they fit. Configuration as above; each question in a fresh
+conversation, both providers.
+
+| Question | Built-in | Hub first answer | Hub complete | Hub calls | Tokens read / sent | Hub read time |
+| --- | --- | --- | --- | --- | --- | --- |
+| Latest weight | 11 s | 7 s | 16 s | 4 | 2,705 / 50,429 | 7 s |
+| Current medications | 34 s | 13 s | 29 s | 6 | 5,205 / 74,712 | 14 s |
+| Latest CD4 and viral load | 7 s | 39 s | 56 s | 6 | 18,976 / 67,380 | 40 s |
+| Drug allergies | 7 s | 12 s | 20 s | 3 | 4,642 / 56,283 | 12 s |
+| HIV care summary | 27 s | 12 s | 36 s | 6 | 3,896 / 68,499 | 10 s |
+
+- Over the five answers the Hub read 35,000 tokens, against 303,000 at baseline.
+  After the first answer on the chart, each answer re-read 1,400–3,400 tokens of
+  its first prompt and 400–800 for every later stage.
+- The CD4 answer re-read its whole first prompt although the temporal facts
+  matched the previous answer's; why the router missed that prefix is not
+  established.
+- The Hub's checked answers were correct on all five: 71 kg on 2026-01-26; the
+  three current antiretrovirals; CD4 341 on 2025-11-24 and no viral load; no
+  allergies recorded; a summary of the regimen and stage. In-Depth was shown on
+  three of five, as at baseline.
+- Each Hub answer now finishes within 2–3 times the built-in provider's time,
+  inside the thread's two-minute aim on this machine.
