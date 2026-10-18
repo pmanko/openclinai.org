@@ -7,8 +7,9 @@ acceptance; each OpenMRS PR owns its behavior
 Deliver the extracted ChartSearchAI backend and frontend contributions and the
 QueryStore change to upstream review and merge, with our integration requirements
 kept in this umbrella. Dated evidence: the
-[7 October remediation record](reviews/2026-10-07-track-a-remediation.md) and the
-[7 October context evaluation](reviews/2026-10-07-context-evaluation.md).
+[7 October remediation record](reviews/2026-10-07-track-a-remediation.md), the
+[7 October context evaluation](reviews/2026-10-07-context-evaluation.md) and the
+[18 October upstream sync](reviews/2026-10-18-track-a-upstream-sync.md).
 
 ## Contribution model
 
@@ -89,6 +90,9 @@ The umbrella gitlinks record the heads under review; the dated record lists them
       checks ([umbrella #8](https://github.com/pmanko/openclinai.org/pull/8)).
 - [x] Reconcile all QueryStore #68 inline threads against implemented fixes
       ([record](reviews/2026-10-07-track-a-remediation.md#verified-on-7-october)).
+- [ ] Finish the October review round on #586–#590 in the owning PRs
+      ([open items](reviews/2026-10-18-track-a-upstream-sync.md#review-fixes-still-open)),
+      then restack every layer on current upstream once before requesting re-review.
 - [ ] Answer the QueryStore maintainer's request to split #68 with a concrete
       disposition; zero unresolved inline threads does not settle it.
 - [ ] Dispose of #587's context-composition finding: the renal retrieval regression,
@@ -183,8 +187,8 @@ execution.
       blanket cache prohibition conflicts with bundled preservation; Hub restrictions
       remain Hub-owned. A broader product-policy change requires explicit review.
 
-[backend]: https://github.com/pmanko/openmrs-module-chartsearchai/blob/ca136063556be2d67dc3b638dc06d12a516f5ff9/README.md#provider-integration-contract
-[frontend]: https://github.com/pmanko/openmrs-esm-chartsearchai/blob/475f6eb60ea14011f719c861b02d02daf2156390/README.md
-[querystore]: https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/rest-api.md
+[backend]: https://github.com/pmanko/openmrs-module-chartsearchai/blob/cdba10d25647b5ff0a98a4c3ceb9e3bf7c762658/README.md#provider-integration-contract
+[frontend]: https://github.com/pmanko/openmrs-esm-chartsearchai/blob/3f92411fbaeab83db697473fd0ee62e64b8671ce/README.md
+[querystore]: https://github.com/pmanko/openmrs-module-querystore/blob/844dcd0ccad275831ecfaca6fe6cf4e4d8acaa2c/docs/rest-api.md
 [hub]: https://github.com/pmanko/med-agent-hub/blob/main/README.md
 [conformance]: https://github.com/pmanko/clinical-ai-validation-harness/blob/5f180650aab46e607e5f21595faa4d0dc1620d4c/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md

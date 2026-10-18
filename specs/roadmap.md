@@ -14,7 +14,7 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 | --- | --- | --- | --- |
 | Local HIV research environment | [local-hiv-environment.md](local-hiv-environment.md) | Setup and reset restore the published default baseline in about 5 minutes; Ross's fresh install passed; account context reaches the model | Docker-only prerequisites |
 | Provider parity and local inference efficiency | [provider-parity.md](provider-parity.md) | Hub reads its context once per answer: checked answers take 16–56 s here when the router reuses the chart's temporal facts, 83–204 s when it does not, against 7–51 s built-in | Cross-question reuse; OpenRouter comparison; Ross re-measures |
-| OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | Thirteen PRs restacked and checked, plus the account-context slice; QueryStore #68 open; #587 finding open | Dispositions for #587 and the #68 split request |
+| OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | All stacks rebased on upstream and published on 18 October; QueryStore #68 split into three branches without PRs yet; October review fixes open on #586–#590 | Finish the #586–#590 review fixes; dispositions for #587 and the #68 split request |
 | Catalyst delivery | [catalyst-delivery.md](catalyst-delivery.md) | Four journeys demonstrated; acceptance open | FP-009 and FP-010 |
 | Website and publication | [website-publication.md](website-publication.md) | Documentation site deploys from `main`; landing deployment pending | Publish the reviewed landing content |
 | Decision-layer experiment (Jev, Laya) | [decision-layer-experiment.md](decision-layer-experiment.md) | Proposed; research updated 16 October | Decisions D1–D5 |
@@ -24,8 +24,9 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 
 ## Current priorities
 
-1. [OpenMRS contribution delivery](openmrs-contribution.md): dispose of the open
-   #587 context-composition finding and the QueryStore #68 split request, then
+1. [OpenMRS contribution delivery](openmrs-contribution.md): finish the open
+   review fixes on #586–#590, dispose of the #587 context-composition finding and
+   the QueryStore #68 split request, then
    obtain ordinary dependency compatibility and remove the temporary paired CI.
 2. [Provider parity](provider-parity.md): close the remaining gap, the router's
    reuse of the chart's temporal facts across questions, so Hub answers are at
@@ -81,3 +82,4 @@ authorized by any item here; each thread spec names its signoffs.
 - [16 October decision-layer research update](reviews/2026-10-16-decision-layer-research-update.md)
 - [16 October provider parity findings](reviews/2026-10-16-provider-parity-findings.md)
 - [17 October provider parity measurements](reviews/2026-10-17-provider-parity-measurements.md)
+- [18 October Track A upstream sync](reviews/2026-10-18-track-a-upstream-sync.md)
