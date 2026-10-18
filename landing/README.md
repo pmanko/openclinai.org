@@ -56,3 +56,10 @@ The umbrella roadmap tracks ownership and delivery status. Publish only an
 explicitly reviewed source revision and record local checks, owner review and
 live verification separately. Generated evidence requires review/redaction
 before public disclosure.
+
+`scripts/publish-landing.sh --landing-only` syncs this directory to the website
+VM and then compares every live page with the checkout. While the VM's old
+validation-harness proxy still serves the site, run it with
+`GCP_REMOTE_REPO=clinical-ai-validation-harness` so the files land in the
+directory that proxy serves; see the
+[website publication spec](../specs/website-publication.md).
