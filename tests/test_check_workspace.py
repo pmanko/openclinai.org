@@ -10,13 +10,11 @@ HARNESS = ROOT / "targets/harness"
 PRODUCT = HARNESS / "targets/product"
 HARNESS_SHA = "a" * 40
 PRODUCT_SHA = "b" * 40
-REMOTES = {("owner/harness", HARNESS_SHA): HARNESS,
-           ("owner/product", PRODUCT_SHA): PRODUCT}
 
 
 class LinkTests(unittest.TestCase):
     def check(self, link):
-        return checker.check_link(ROOT, ROOT / "specs/roadmap.md", link, REMOTES)
+        return checker.check_link(ROOT, ROOT / "specs/roadmap.md", link)
 
     def test_local_links_and_fragments(self):
         with patch.object(Path, "exists", return_value=True) as exists:
@@ -33,40 +31,12 @@ class LinkTests(unittest.TestCase):
                 with self.subTest(link=link):
                     self.assertIn("escapes", self.check(link) or "")
 
-    def test_pinned_harness_and_product_links(self):
-        for identity, sha, repo in (("owner/harness", HARNESS_SHA, HARNESS),
-                                    ("owner/product", PRODUCT_SHA, PRODUCT)):
-            with self.subTest(identity=identity), patch.object(checker, "git", return_value="") as git:
-                self.assertIsNone(self.check(
-                    f"https://github.com/{identity}/blob/{sha}/docs/a%20b.md#heading"))
-                git.assert_called_once_with(repo, "cat-file", "-e",
-                                            f"{sha}:docs/a b.md", check=False)
-
-    def test_managed_component_wrong_pin(self):
-        with patch.object(checker, "git") as git:
-            self.assertIn("not the recorded pin", self.check(
-                f"https://github.com/owner/harness/blob/{PRODUCT_SHA}/README.md") or "")
-            git.assert_not_called()
-
-    def test_managed_component_branch_refs_pass_unchecked(self):
-        """A link to a branch follows the component; only a commit link claims the pin."""
-        for ref in ("main", "v2.1.0"):
-            with self.subTest(ref=ref), patch.object(checker, "git") as git:
-                self.assertIsNone(self.check(
-                    f"https://github.com/owner/harness/blob/{ref}/README.md"))
-                git.assert_not_called()
-
-    def test_missing_pinned_file(self):
-        with patch.object(checker, "git", return_value=None):
-            self.assertIn("absent", self.check(
-                f"https://github.com/owner/product/blob/{PRODUCT_SHA}/missing.md") or "")
-
-    def test_other_external_links_are_not_network_checked(self):
+    def test_external_links_are_not_checked(self):
         with patch.object(checker, "git") as git:
             for link in ("https://example.org/docs", "mailto:owner@example.org",
                          "https://github.com/owner/harness/issues/1",
-                         "https://github.com/external/product/blob/main/docs/spec.md",
-                         f"https://github.com/external/product/blob/{PRODUCT_SHA}/README.md"):
+                         "https://github.com/owner/harness/blob/main/docs/spec.md",
+                         f"https://github.com/owner/product/blob/{PRODUCT_SHA}/README.md"):
                 self.assertIsNone(self.check(link))
             git.assert_not_called()
 
@@ -84,14 +54,6 @@ class LinkTests(unittest.TestCase):
 
 
 class GitTests(unittest.TestCase):
-    def test_github_remote_normalization(self):
-        for remote in ("https://github.com/Owner/Repo.git",
-                       "https://github.com/Owner/Repo/", "git@github.com:Owner/Repo.git",
-                       "ssh://git@github.com/Owner/Repo.git"):
-            with self.subTest(remote=remote):
-                self.assertEqual(checker.github_repo(remote), "owner/repo")
-        self.assertIsNone(checker.github_repo("https://example.org/Owner/Repo.git"))
-
     def test_gitlinks_from_tree_and_unborn_index(self):
         for metadata in (f"160000 commit {HARNESS_SHA}", f"160000 {HARNESS_SHA} 0"):
             with self.subTest(metadata=metadata):
@@ -131,35 +93,30 @@ class GitTests(unittest.TestCase):
             if args[0] == "status":
                 self.assertIn("--untracked-files=all", args)
                 return (dirty or "") if repo == PRODUCT else ""
-            if args[0] == "remote":
-                name = "harness" if repo == HARNESS else "product"
-                return f"origin\tgit@github.com:owner/{name}.git (fetch)\n"
             self.fail(f"unexpected git call: {args}")
 
         errors = []
         with patch.object(checker, "git", side_effect=fake_git), patch.object(
                 Path, "exists", return_value=not uninitialized):
-            pins, remotes = checker.repositories(ROOT, errors)
-        return pins, remotes, errors
+            pins = checker.repositories(ROOT, errors)
+        return pins, errors
 
     def test_recursive_committed_and_unborn_pin_discovery(self):
         for unborn in (False, True):
             with self.subTest(unborn=unborn):
-                pins, remotes, errors = self.collect(unborn=unborn)
+                pins, errors = self.collect(unborn=unborn)
                 self.assertEqual(pins, {"targets/harness": HARNESS_SHA,
                                         "targets/harness/targets/product": PRODUCT_SHA})
-                self.assertEqual(remotes, REMOTES)
                 self.assertEqual(errors, [])
 
     def test_tracked_and_untracked_submodule_dirt(self):
         for dirty in (" M README.md\n", "?? new-file.txt\n"):
             with self.subTest(dirty=dirty):
-                self.assertIn("dirty submodule", self.collect(dirty=dirty)[2][0])
+                self.assertIn("dirty submodule", self.collect(dirty=dirty)[1][0])
 
     def test_uninitialized_submodule_not_inspected_as_parent_repository(self):
-        pins, remotes, errors = self.collect(uninitialized=True)
+        pins, errors = self.collect(uninitialized=True)
         self.assertEqual(pins, {"targets/harness": HARNESS_SHA})
-        self.assertEqual(remotes, {})
         self.assertIn("uninitialized", errors[0])
 
     def test_git_commands_disable_optional_index_writes(self):
@@ -198,7 +155,7 @@ class ScopeTests(unittest.TestCase):
             sources.append(source.relative_to(ROOT).as_posix())
             return "[missing](missing.md)"
 
-        with patch.object(checker, "repositories", return_value=({}, {})), \
+        with patch.object(checker, "repositories", return_value={}), \
                 patch.object(checker, "git", return_value=""), \
                 patch.object(Path, "glob", return_value=[ROOT / "specs/roadmap.md"]), \
                 patch.object(Path, "read_text", autospec=True, side_effect=read_text), \
