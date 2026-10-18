@@ -48,6 +48,12 @@ smoke and troubleshooting. This list holds only delivery state.
       a question as two different evaluation accounts shows each account's line
       in the Hub trace and `accountContext` on the saved turn
       ([record](reviews/2026-10-16-account-context.md)).
+- [ ] A default baseline for the 18 October ChartSearchAI heads is rebuilt from the
+      HIV dump, published and pinned before `main` pins those heads. Changeset
+      `chartsearchai-010` dropped the conversation title column on 18 October, so
+      the 14 October baseline's database fails the module's Liquibase validation on
+      the new heads; Ross's 15 October install needs a reset once the new baseline
+      is pinned.
 - [ ] Setup needs only Docker and the native model router: the pinned modules,
       frontend bundle and embedding model ship in published images instead of
       being built on the host with Java, Maven, Node and Yarn. Module builds

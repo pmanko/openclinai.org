@@ -175,3 +175,88 @@ exclusion. Every layer passed with no failures or errors:
 | bundled-provider | `c65f6a21` | 3,330 (63) | 299 |
 | hub-provider | `69600dca` | 3,373 (63) | 300 |
 | conversation-endpoints | `f588d059` | 3,373 (63) | 342 |
+
+## Second restack onto upstream `08138a6b`
+
+Upstream `main` took five more direct commits the same afternoon (ADR Decisions
+323–327, drug-safety answers). `gh stack rebase` raised no conflicts and
+`gh stack push` published the heads below to the fork; GitHub shows every PR on
+them, each with its predecessor's branch as base. The frontend and QueryStore
+upstream mains had not moved.
+
+| PR | Head |
+| --- | --- |
+| #583 | `589633bb` |
+| #584 | `d229f590` |
+| #585 | `587fc80b` |
+| #586 | `8aaab5b1` |
+| #587 | `d06469f7` |
+| #588 | `bd99d624` |
+| #589 | `554db75f` |
+| #590 | `6929cf59` |
+| fork #35 | `6b8858c6` |
+
+The tip `6b8858c6` passed the full `mvn -o test` run with the same occupied-port
+exclusion: 3,389 api tests (63 skipped) and 343 omod tests, no failures or errors.
+The nine new api tests are upstream's. The lower layers were not rerun after this
+second restack. The umbrella ChartSearchAI gitlink records `6b8858c6`.
+
+## Base branches in the OpenMRS repositories
+
+A pull request in an `openmrs/…` repository can only target a branch in that
+repository, so the base of every PR after the first is a copy of its predecessor's
+branch pushed there: seven in the backend repository, four in the frontend
+repository. `gh stack push` updates the fork only. The copies were pushed on
+7 October (`3dafae15` to `795607f4`; `3c0c513b` to `071edf86`) and moved with
+neither 18 October restack, so GitHub computed #584–#590 and #56–#59 against
+7 October bases and reported all eleven as conflicting, with each "Files changed"
+view including the predecessor's newer commits. The earlier statements in this
+record and in the 7 October record that every PR had its predecessor as base were
+true of the base name, not its commit. The copies still need a leased force push
+of the eleven rewritten branches, which was not performed in this session; it is
+the owner's action. Five more branches in the OpenMRS repositories were referenced
+by no PR (`codex/bundled-prerequisites` and `codex/conversation-prerequisites` in
+the backend repository, `codex/conversation-prerequisites` in the frontend
+repository, and a May `harness-integration` copy in each, none of them contained
+in the fork's `harness-integration` or the stack tips). They were deleted on
+18 October at the owner's request, each kept as a local tag
+`backup/openmrs-side/<branch>-20261018` in the matching submodule checkout. Only
+the eleven PR base copies remain in the OpenMRS repositories.
+
+## Hosted checks
+
+Upstream's workflow runs only for pull requests that target `main`. #583 has runs on
+its heads (`f9cde450` passed the Java 11, 17 and 21 builds, the MariaDB demo seed,
+the harness self-tests and the shell lint) and #55 has a passing build on
+`14e9bb8a`. The other eleven PRs have had no upstream run at any head, which is
+what the trigger changes carried in #583 and #55 exist for and why the maintainer
+asked for them as separate PRs. The fork's workflow ran only on the stack tip
+`76e70daf`: the paired-source builds passed on Java 11, 17 and 21 and the ordinary
+builds failed on the missing QueryStore symbols, as on 7 October.
+
+## Review threads checked against the heads
+
+Every unresolved thread was read against the code at the 18 October heads
+(backend `f9cde450` to `f588d059`, frontend `14e9bb8a` to `3f92411f`). No reply
+has been posted and no thread resolved on either repository.
+
+Backend, 19 threads: 14 are addressed on the heads (#583's validator rule; #584's
+removal of the unused `/tokenize` path; #586's refresh under the lock; #587's
+cue comment, bootstrap precondition and, in #588, the budget applied after the
+drug-safety records; #588's test doubles and context-size documentation; #589's
+late-response close and the two logging changes; #590's README placement and
+endpoint listings). Three are not: all on #585's `DrugSafetyValidator`, where
+`no_applicable_check` is still decided before the check's arms run (the one the
+reviewer marked as blocking), a per-kg dose band without a recorded weight still
+reports `no_actionable_dose_reference` rather than `weight_unavailable`, and
+neither `unavailable` exit has a test. Two are process items: the build-trigger
+change in #583 is to go out as its own PR, and #587 still owes the Decision 28
+evidence and the removal of the paired-source job.
+
+Frontend, 25 threads, all the maintainer's: 24 are addressed, in the 17 October
+"Address review feedback" commits on #55–#58 and in #59's head. One is a process
+item: the `ci.yml` trigger change in #55 is to go out as its own PR. Residuals
+noted while checking: a comment in #59's hook still describes the removed session
+header, an explicit profile pick that becomes unavailable reuses the generic
+profiles-unavailable wording, and a bare `unavailable` safety status with no
+issue codes still draws the safety box.

@@ -1,8 +1,10 @@
 # OpenMRS contribution delivery
 
-**Stream:** Track A · **Status:** stacks published and checked; review dispositions
-open; upstream merge awaits maintainers · **Owner:** umbrella for cross-project
-acceptance; each OpenMRS PR owns its behavior
+**Stream:** Track A · **Status:** stacks restacked on upstream and published on
+18 October; the OpenMRS-side base branches lag the restack; #585's three
+medication-safety threads and the two trigger-change PRs are the remaining review
+work; replies not yet posted · **Owner:** umbrella for cross-project acceptance;
+each OpenMRS PR owns its behavior
 
 Deliver the extracted ChartSearchAI backend and frontend contributions and the
 QueryStore change to upstream review and merge, with our integration requirements
@@ -31,14 +33,18 @@ upstream merges to prepare, test or publish the rest of the stack.
 
 Manage both stacks with the installed `github/gh-stack` extension (`gh stack`):
 `gh stack init --base` bottom-to-top against a verified trunk, `gh stack view` to
-inspect, `gh stack rebase` for cascading rebases, `gh stack submit` to update
-existing heads and bases, then `gh stack sync`. GitHub rejects native Stack objects
-for these fork PRs; retain local tracking and the actual linear PR bases rather
-than replacing PRs. Verify fork/upstream remote selection and existing-PR matching
-before any remote update. Preserve draft states; do not use `--open` until the
-readiness requirements pass. Verify both the local stack and actual GitHub bases
-after publication. Never substitute manually maintained assembly branches or create
-replacement PRs.
+inspect, `gh stack rebase` for cascading rebases, `gh stack push` to publish the
+fork heads. GitHub rejects native Stack objects for these fork PRs; retain local
+tracking and the actual linear PR bases rather than replacing PRs. A pull request
+in an OpenMRS repository can only target a branch in that repository, so every
+base after `main` is a copy of the predecessor's branch in the OpenMRS repository,
+and `gh stack push` does not touch those copies. After every restack, push the
+rewritten base copies to the OpenMRS repository with `--force-with-lease` (the
+owner runs or approves that push) and verify the base commits on GitHub, not only
+the base names, before asking for review. `gh stack` reads its trunk from the fork,
+so fast-forward only the local `main` to upstream before rebasing. Preserve draft
+states; do not use `--open` until the readiness requirements pass. Never substitute
+manually maintained assembly branches or create replacement PRs.
 
 Keep the original `harness-integration` branches unchanged as references. Maintain
 newer upstream behavior and confirmed fixes. Each PR must remain understandable and
@@ -90,10 +96,15 @@ The umbrella gitlinks record the heads under review; the dated record lists them
       checks ([umbrella #8](https://github.com/pmanko/openclinai.org/pull/8)).
 - [x] Reconcile all QueryStore #68 inline threads against implemented fixes
       ([record](reviews/2026-10-07-track-a-remediation.md#verified-on-7-october)).
-- [ ] Finish the October review round on #586–#590 in the owning PRs: fixes are
-      published and restacked on upstream
-      ([record](reviews/2026-10-18-track-a-upstream-sync.md#review-fixes)); post the
-      thread replies, restacking with `gh stack rebase` again if upstream has moved.
+- [ ] Refresh the eleven OpenMRS-side base branches to the 18 October heads; the
+      five unreferenced branches there were deleted on 18 October
+      ([record](reviews/2026-10-18-track-a-upstream-sync.md#base-branches-in-the-openmrs-repositories)).
+- [ ] Finish the October review round in the owning PRs. Fixes for 38 of the 44
+      open threads are published and restacked on upstream
+      ([record](reviews/2026-10-18-track-a-upstream-sync.md#review-threads-checked-against-the-heads));
+      still to do: #585's three `DrugSafetyValidator` findings, the build-trigger
+      changes in #583 and #55 as PRs of their own, the stale session-header comment
+      in #59, then one restack, the base-branch refresh and the thread replies.
 - [ ] Answer the QueryStore maintainer's request to split #68 with a concrete
       disposition; zero unresolved inline threads does not settle it.
 - [ ] Dispose of #587's context-composition finding: the renal retrieval regression,
