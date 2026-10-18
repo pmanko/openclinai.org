@@ -21,14 +21,15 @@ remains open.
 | Backend | `74bad089` | #583 `codex/provider-contract` | `7ac2eec8` |
 | | | #584 `codex/local-token-counting` | `ed3ef1a4` |
 | | | #585 `codex/safety-check-status` | `4f44d6ce` |
-| | | #586 `codex/conversation-storage` | `2097455a` |
-| | | #587 `codex/context-budget` | `787cb31c` |
-| | | #588 `codex/bundled-provider` | `dd7ce027` |
-| | | #589 `codex/hub-provider` | `5b271b96` |
-| | | #590 `codex/conversation-endpoints` | `64ad8c7b` |
-| | | fork #35 `codex/account-context` | `cdba10d2` |
+| | | #586 `codex/conversation-storage` | `c809bf8c` |
+| | | #587 `codex/context-budget` | `7a5bf4f8` |
+| | | #588 `codex/bundled-provider` | `a6282486` |
+| | | #589 `codex/hub-provider` | `8b68b2fd` |
+| | | #590 `codex/conversation-endpoints` | `eeef4d84` |
+| | | fork #35 `codex/account-context` | `13f8bd0a` |
 
-On 18 October every backend and frontend PR head on GitHub matched the table, and
+Backend heads #586–#590 and #35 are the review-fix heads described below. On 18
+October every backend and frontend PR head on GitHub matched the table, and
 each PR's base was its predecessor's branch (#583 and #55 on `main`; fork #35 on
 `codex/conversation-endpoints`). QueryStore #68 still points at
 `harness-integration` `286993cc`; the three split branches are pushed but have no
@@ -58,6 +59,7 @@ stack was tested against.
 
 The backend ran `mvn -o test` (api and omod) on macOS against QueryStore
 `844dcd0`, whose installed jar was byte-identical to a build of that checkout.
+These are the rebase heads, before the review fixes below.
 
 | Layer | api tests | omod tests |
 | --- | --- | --- |
@@ -93,34 +95,59 @@ The paired job builds against QueryStore `286993cc`, which lacks only
 `SearchRequest.withLimit` among `844dcd0`'s new public API, and the stack does not
 call it. No deployment or runtime smoke is claimed.
 
-## Review fixes still open
+## Review fixes
 
-An audit of #586–#590 against the reviewer's requests found these addressed:
-retention purge of unfinished turns by `coalesce(completedAt, startedAt)`, audit
-search mode and reference slice from the source answer, checked answers kept for
-interrupted turns, the Hub endpoint property in `config.xml`, mode rejection before
-any conversation change, and no model file path in `unavailable` reasons. Open:
+The open threads on #586–#590 were answered with fixes in the owning layer, each
+test written to fail first where the behavior was wrong:
 
-- **#586:** no test runs Liquibase changeset `chartsearchai-010`; the conversation
-  `title` column is declared but never mapped or used; an interrupted bundled
-  turn's audit records search mode as unknown.
-- **#586 decisions:** answers are withheld until QueryStore's deployment-wide
-  bootstrap completes, even for a patient just projected lazily. The module's
-  safety cue patterns largely copy QueryStore's question-interpretation cues, and
-  `QueryPreprocessor` keeps recency patterns reached only from tests.
-- **#587/#588:** the post-injection prompt check exists (#588), but the selector
-  reserves no room for injected references, so overflow is refused rather than
-  trimmed; the fixed recency anchor of 15 and the no-counter behavior are
-  undocumented.
-- **#589:** a response that arrives after a cancelled header wait is not closed;
-  Hub HTTP failures are not logged by status class; one warn log and the profile
-  listing can still carry remote response text.
-- **#590:** no tests for `/chat/stream`'s pre-stream 400, 404 and 429 responses or
-  `/chat/new` with an unavailable provider; an incomplete chart in chat reports a
-  generic provider failure; the new endpoints are missing from ADR Decision 11,
-  `ONBOARDING.md` and the README privilege table.
-- Temporary PR-process text (the PR #68 note and the paired-build job) is still in
-  the backend README and workflow.
+- **#586:** `startTurn` refreshes a conversation the session already holds under the
+  lock, so one closed by another request is rejected rather than reopened. The unused
+  conversation `title` column is removed from changeset `chartsearchai-010`, and a test
+  checks that every column the conversation tables declare is mapped.
+- **#587:** on the Docker path `backend-init.sh` turns QueryStore autostart on
+  whenever the embedder verifies; the README states that chart search needs a completed
+  bootstrap and how to run one; the incomplete-chart message sends the clinician to an
+  administrator. The allergy-cue comment states its safety reason.
+- **#588:** six test doubles overrode a safety-check overload production no longer
+  calls; they now stub `validateWithStatus`, which a throwing probe showed is reached.
+  Where the module's reference records push a query-scoped prompt over the input
+  budget, the slice is rebuilt with their size reserved, so only optional records give
+  way. The context-size docs state the 4096-token answer reservation.
+- **#589:** a Hub response arriving after a cancel is closed (the Java 11 case);
+  rejected Hub requests log their HTTP status, and Hub or parser text stays at DEBUG.
+- **#590:** the token-counting README section is back in the base's place; the five
+  conversation endpoints are listed in ADR Decision 11, `ONBOARDING.md` and the README
+  privilege table; tests cover `/chat/stream`'s pre-stream 400, 404 and 429 responses
+  and `/chat/new` with an unavailable provider.
+
+Full `mvn -o test` on each published head, with the macOS-only occupied-port test
+excluded as above, 63 api tests skipped on every layer and no failures:
+
+| Layer | api tests | omod tests |
+| --- | --- | --- |
+| #586 `c809bf8c` | 3,261 | 294 |
+| #587 `7a5bf4f8` | 3,261 | 298 |
+| #588 `a6282486` | 3,304 | 299 |
+| #589 `8b68b2fd` | 3,347 | 300 |
+| #590 `eeef4d84` | 3,347 | 342 |
+| #35 `13f8bd0a` | 3,354 | 343 |
+
+Only JDK 21 was available locally, where the JDK already cancels an interrupted
+exchange, so the late-response close is exercised by CI's Java 11 job alone. Hosted
+checks for these heads had not reported when this record was updated. Replies on the
+review threads have not been posted.
+
+Dropping the `title` column changes changeset `chartsearchai-010`, which databases set
+up from the earlier heads already applied, so those databases and any baseline built
+from them need fresh setup.
+
+Still open: #587's Decision 28 finding (the kidney-cell retrieval loss belongs in
+QueryStore's ranked-search preprocessing, with the new composition recorded in Decision
+28), and #587's temporary paired-source job, which waits on a published QueryStore API.
+The audit's remaining non-thread observations (no test running changeset 010 itself,
+an interrupted bundled turn auditing its search mode as unknown, an incomplete chart in
+chat reported as a generic provider failure, and the module's safety cues copying
+QueryStore's interpretation cues) were not changed.
 
 Upstream `main` moved to `981e1f44` during this work (ADR Decisions 304–307). They
 change `DrugReferenceInjector`, one context test and `docs/adr.md`, all of which the
