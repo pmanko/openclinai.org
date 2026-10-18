@@ -18,7 +18,6 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 MEDIA = 'https://catalyst.openelis-global.org/media/'
-FIXTURE_MEDIA = {f'{MEDIA}a.mp4', f'{MEDIA}a-poster.jpg', f'{MEDIA}clips/b.mp4'}
 FULL_SITE = 'full.example.invalid'
 LANDING_ONLY_SITE = 'landing.example.invalid'
 
@@ -46,8 +45,8 @@ if '--itemize-changes' in sys.argv and os.environ.get('CONFIG_CHANGED') == '1': 
 from pathlib import Path
 log(['curl', *sys.argv[1:]])
 url = next(arg for arg in sys.argv if arg.startswith('https://'))
-if os.environ.get('FAIL_MEDIA') == '1' and url.startswith('https://catalyst.openelis-global.org/media/'):
-    raise SystemExit(22)
+if url.startswith('https://catalyst.openelis-global.org/'):
+    raise SystemExit('publication must not depend on the demo host')
 if '-o' not in sys.argv:
     relative = url.split('/', 3)[3]
     body = (Path(os.environ['TEST_ROOT']) / 'landing' / relative).read_bytes()
@@ -136,13 +135,9 @@ def compose_command(calls):
     return shlex.split(remote[0].split('&&')[-1])
 
 
-def test_full_publication_checks_media_first_then_syncs_and_restarts_only_the_proxy(publisher):
+def test_full_publication_syncs_and_restarts_only_the_proxy(publisher):
     result, calls = publisher(CONFIG_CHANGED=1)
     assert result.returncode == 0, result.stdout + result.stderr
-
-    first_mutation = calls.index(remote_mutations(calls)[0])
-    checked_before = {url for url in fetched_urls(calls[:first_mutation]) if url.startswith(MEDIA)}
-    assert checked_before == FIXTURE_MEDIA
 
     landing_sync = [call for call in commands(calls, 'rsync') if call[-1].endswith(':openclinai.org/landing/')]
     assert len(landing_sync) == 1 and '--delete' in landing_sync[0]
@@ -180,12 +175,6 @@ def test_failed_landing_checks_abort_before_any_network_or_remote_call(publisher
     result, calls = publisher(FAIL_CHECKS=1)
     assert result.returncode != 0
     assert not commands(calls, 'curl') and not remote_mutations(calls)
-
-
-def test_missing_remote_media_aborts_before_any_upload_or_remote_mutation(publisher):
-    result, calls = publisher(FAIL_MEDIA=1)
-    assert result.returncode != 0
-    assert not remote_mutations(calls)
 
 
 def test_full_publication_requires_the_website_environment_before_mutating(publisher):
