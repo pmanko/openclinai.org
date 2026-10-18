@@ -161,3 +161,17 @@ conflicts, although `QueryScopeRouter`, `DrugReferenceInjector` and `docs/adr.md
 changed on both sides. The stack tip
 `76e70daf` passed 3,380 api tests (63 skipped) and 343 omod tests with the occupied-port
 test excluded; GitHub showed every PR on the heads above with its predecessor as base.
+
+The full suite then ran on each lower layer at its restacked head, with the same
+exclusion. Every layer passed with no failures or errors:
+
+| Layer | Head | api tests (skipped) | omod tests |
+| --- | --- | --- | --- |
+| provider-contract | `f9cde450` | 3,244 (62) | 294 |
+| local-token-counting | `88eb01d1` | 3,249 (63) | 294 |
+| safety-check-status | `203251b0` | 3,265 (63) | 294 |
+| conversation-storage | `8782a101` | 3,287 (63) | 294 |
+| context-budget | `0c6ea150` | 3,287 (63) | 298 |
+| bundled-provider | `c65f6a21` | 3,330 (63) | 299 |
+| hub-provider | `69600dca` | 3,373 (63) | 300 |
+| conversation-endpoints | `f588d059` | 3,373 (63) | 342 |
