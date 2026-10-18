@@ -18,18 +18,19 @@ remains open.
 | | | #57 `codex/answer-presentation` | `9ee0a596` |
 | | | #58 `codex/provider-selection` | `4b3811c9` |
 | | | #59 `codex/conversation-lifecycle` | `3f92411f` |
-| Backend | `74bad089` | #583 `codex/provider-contract` | `7ac2eec8` |
-| | | #584 `codex/local-token-counting` | `ed3ef1a4` |
-| | | #585 `codex/safety-check-status` | `4f44d6ce` |
-| | | #586 `codex/conversation-storage` | `c809bf8c` |
-| | | #587 `codex/context-budget` | `7a5bf4f8` |
-| | | #588 `codex/bundled-provider` | `a6282486` |
-| | | #589 `codex/hub-provider` | `8b68b2fd` |
-| | | #590 `codex/conversation-endpoints` | `eeef4d84` |
-| | | fork #35 `codex/account-context` | `13f8bd0a` |
+| Backend | `9baba552` | #583 `codex/provider-contract` | `f9cde450` |
+| | | #584 `codex/local-token-counting` | `88eb01d1` |
+| | | #585 `codex/safety-check-status` | `203251b0` |
+| | | #586 `codex/conversation-storage` | `8782a101` |
+| | | #587 `codex/context-budget` | `0c6ea150` |
+| | | #588 `codex/bundled-provider` | `c65f6a21` |
+| | | #589 `codex/hub-provider` | `69600dca` |
+| | | #590 `codex/conversation-endpoints` | `f588d059` |
+| | | fork #35 `codex/account-context` | `76e70daf` |
 
-Backend heads #586–#590 and #35 are the review-fix heads described below. On 18
-October every backend and frontend PR head on GitHub matched the table, and
+The backend heads are the review fixes described below, restacked onto upstream
+`9baba552` (see the last section). On 18 October every backend and frontend PR head on
+GitHub matched the table, and
 each PR's base was its predecessor's branch (#583 and #55 on `main`; fork #35 on
 `codex/conversation-endpoints`). QueryStore #68 still points at
 `harness-integration` `286993cc`; the three split branches are pushed but have no
@@ -149,6 +150,14 @@ an interrupted bundled turn auditing its search mode as unknown, an incomplete c
 chat reported as a generic provider failure, and the module's safety cues copying
 QueryStore's interpretation cues) were not changed.
 
-Upstream `main` moved to `981e1f44` during this work (ADR Decisions 304–307). They
-change `DrugReferenceInjector`, one context test and `docs/adr.md`, all of which the
-stack also changes; restack once before requesting re-review.
+## Restack onto upstream `9baba552`
+
+Upstream `main` took 21 direct commits during this work (ADR Decisions 304–322, all
+drug-safety answers from findings); it carries no merge commits, so it moves about once
+an hour on active days. The stack was then restacked with `gh stack rebase`, after
+fast-forwarding only the local `main` (`gh stack` reads its trunk from the fork, whose
+`main` was left unchanged), and pushed with `gh stack push`. The rebase raised no
+conflicts, although `QueryScopeRouter`, `DrugReferenceInjector` and `docs/adr.md`
+changed on both sides. The stack tip
+`76e70daf` passed 3,380 api tests (63 skipped) and 343 omod tests with the occupied-port
+test excluded; GitHub showed every PR on the heads above with its predecessor as base.
