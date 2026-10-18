@@ -152,7 +152,7 @@ QueryStore's interpretation cues) were not changed.
 
 ## Restack onto upstream `9baba552`
 
-Upstream `main` took 21 direct commits during this work (ADR Decisions 304–322, all
+Upstream `main` took 19 direct commits during this work (ADR Decisions 304–322, all
 drug-safety answers from findings); it carries no merge commits, so it moves about once
 an hour on active days. The stack was then restacked with `gh stack rebase`, after
 fast-forwarding only the local `main` (`gh stack` reads its trunk from the fork, whose
