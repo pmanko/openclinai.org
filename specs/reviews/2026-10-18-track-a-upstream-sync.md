@@ -268,3 +268,47 @@ noted while checking: a comment in #59's hook still describes the removed sessio
 header, an explicit profile pick that becomes unavailable reuses the generic
 profiles-unavailable wording, and a bare `unavailable` safety status with no
 issue codes still draws the safety box.
+
+## Evening fixes and third restack
+
+The remaining code items were fixed in their owning layers the same evening:
+
+- **#585:** `no_applicable_check` is decided after every arm has run, from the
+  order-driven contraindication arm's own answer to whether its subject-matter
+  gate let any of her orders through, so a question about her medications or
+  allergies no longer reports the code beside the allergy chip it raised (or
+  beside an order it compared and cleared). A dose band whose only ceiling is
+  per-kg reports `weight_unavailable` rather than `no_actionable_dose_reference`
+  for a patient without a recorded weight. Both `unavailable` exits of
+  `validateWithStatus` are pinned. The three behavior cases failed on the previous
+  head; the layer then passed 3,279 api tests (63 skipped) and 294 omod tests.
+- **#583 and #55:** the pull-request trigger changes were dropped, restoring
+  upstream's trigger, since every PR now targets `main` and upstream runs its
+  checks for all of them; the split-out PRs the maintainer asked for are not needed.
+- **#59:** the hook comment that still named the removed session header now says
+  the `done` event carries the session.
+
+Upstream `main` had taken seven more commits (ADR Decisions 328–334). The backend
+stack was cascaded onto `70baf6b0` with `gh stack rebase` and pushed; the frontend
+stack was cascaded between its branches (`gh stack rebase --no-trunk`, because the
+fork's `main` is not an ancestor of upstream's in that repository) and pushed.
+
+| PR | Head | | PR | Head |
+| --- | --- | --- | --- | --- |
+| #583 | `b5f58037` | | #55 | `56b41e6e` |
+| #584 | `9175af80` | | #56 | `22f0944e` |
+| #585 | `3b76f561` | | #57 | `8a599e9b` |
+| #586 | `89522817` | | #58 | `71018374` |
+| #587 | `27057db7` | | #59 | `f99b9ebd` |
+| #588 | `0629d311` | | | |
+| #589 | `cabaa13d` | | | |
+| #590 | `38409f0b` | | | |
+| fork #35 | `d32b8c96` | | | |
+
+The backend tip `d32b8c96` passed 3,402 api tests (63 skipped) and 343 omod tests
+with the occupied-port exclusion; the frontend tip `f99b9ebd` passed 701 tests,
+lint, type checks, the production build and translation extraction with a clean
+tree. The lower layers were not rerun after this restack. The umbrella gitlinks
+record `d32b8c96` and `f99b9ebd`. Of the 44 open threads, 42 now have a fix or a
+disposition on the heads; the two remaining are #587's Decision 28 evidence and
+its paired-source job. No reply has been posted.

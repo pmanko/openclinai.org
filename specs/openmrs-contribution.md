@@ -1,9 +1,9 @@
 # OpenMRS contribution delivery
 
 **Stream:** Track A · **Status:** stacks restacked on upstream and published on
-18 October, every PR now targeting `main` from the fork; #585's three
-medication-safety threads and the two trigger-change PRs are the remaining review
-work; replies not yet posted · **Owner:** umbrella for cross-project acceptance;
+18 October, every PR now targeting `main` from the fork; fixes for 42 of 44 open
+review threads on the heads; replies not yet posted · **Owner:** umbrella for
+cross-project acceptance;
 each OpenMRS PR owns its behavior
 
 Deliver the extracted ChartSearchAI backend and frontend contributions and the
@@ -95,12 +95,10 @@ The umbrella gitlinks record the heads under review; the dated record lists them
 - [x] Every stacked PR targets `main` and the base-branch copies in the OpenMRS
       repositories are gone
       ([record](reviews/2026-10-18-track-a-upstream-sync.md#base-branches-in-the-openmrs-repositories)).
-- [ ] Finish the October review round in the owning PRs. Fixes for 38 of the 44
-      open threads are published and restacked on upstream
-      ([record](reviews/2026-10-18-track-a-upstream-sync.md#review-threads-checked-against-the-heads));
-      still to do: #585's three `DrugSafetyValidator` findings, the build-trigger
-      changes in #583 and #55 as PRs of their own, the stale session-header comment
-      in #59, then one restack and the thread replies.
+- [ ] Finish the October review round in the owning PRs. Fixes or dispositions for
+      42 of the 44 open threads are published and restacked on upstream
+      ([record](reviews/2026-10-18-track-a-upstream-sync.md#evening-fixes-and-third-restack));
+      post the thread replies, restacking first if upstream has moved.
 - [ ] Answer the QueryStore maintainer's request to split #68 with a concrete
       disposition; zero unresolved inline threads does not settle it.
 - [ ] Dispose of #587's context-composition finding: the renal retrieval regression,
