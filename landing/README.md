@@ -58,8 +58,7 @@ live verification separately. Generated evidence requires review/redaction
 before public disclosure.
 
 `scripts/publish-landing.sh --landing-only` syncs this directory to the website
-VM and then compares every live page with the checkout. While the VM's old
-validation-harness proxy still serves the site, run it with
-`GCP_REMOTE_REPO=clinical-ai-validation-harness` so the files land in the
-directory that proxy serves; see the
+VM and then compares every live page with the checkout. Without the flag it also
+updates the website proxy configuration from `compose/website/` and `.env.website`
+(copy `.env.website.example`); see the
 [website publication spec](../specs/website-publication.md).

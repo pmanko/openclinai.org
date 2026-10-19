@@ -16,7 +16,7 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 | Provider parity and local inference efficiency | [provider-parity.md](provider-parity.md) | Hub reads its context once per answer: checked answers take 16–56 s here when the router reuses the chart's temporal facts, 83–204 s when it does not, against 7–51 s built-in | Cross-question reuse; OpenRouter comparison; Ross re-measures |
 | OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | All stacks rebased on upstream and published on 18 October; fixes for 38 of 44 open review threads on the heads, replies not posted; the OpenMRS-side base branches still at the 7 October heads; QueryStore #68 split into three branches without PRs yet | Refresh the base branches; fix #585's three findings and split out the trigger changes; post the replies; open the #68 split PRs |
 | Catalyst delivery | [catalyst-delivery.md](catalyst-delivery.md) | Four journeys demonstrated; acceptance open | FP-009 and FP-010 |
-| Website and publication | [website-publication.md](website-publication.md) | Documentation site deploys from `main`; reviewed landing content live since 18 October through the VM's old harness proxy | Switch the VM to the umbrella's website proxy; audit item W04 |
+| Website and publication | [website-publication.md](website-publication.md) | Documentation site deploys from `main`; landing site live from the umbrella's own website proxy since 18 October | Audit item W04 |
 | Decision-layer experiment (Jev, Laya) | [decision-layer-experiment.md](decision-layer-experiment.md) | Proposed; research updated 16 October | Decisions D1–D5 |
 | Clinical knowledge bases | No umbrella spec yet. The Hub ships one static knowledge-base source; the harness holds the [research notes](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/artifacts/planning/clinical-kb-research.md) and [scope](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/artifacts/planning/kb-scope.md) | Exploration | Owner decides whether to scope a thread |
 | Validation methodology | The [harness](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/README.md) and its [evaluation methodology brief](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/artifacts/planning/eval-methodology-brief.md) | Runs experiments against the local stack; the 7 and 10 October reviews are its latest outputs | Serves the other threads' evaluations |
@@ -36,8 +36,7 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
    Docker and the native model router.
 4. [Catalyst delivery](catalyst-delivery.md): owner acceptance of the four local and
    server journeys and publication verification.
-5. [Website and publication](website-publication.md): move the VM to the
-   umbrella's website proxy and close audit item W04.
+5. [Website and publication](website-publication.md): close audit item W04.
 6. [Decision-layer experiment](decision-layer-experiment.md): owner review of the
    proposal.
 
