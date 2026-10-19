@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="The eight backend and five frontend ChartSearchAI pull requests and the QueryStore change we are proposing to OpenMRS, what each one adds, where review stands and what has been checked."
+      content="The eight backend, five frontend and three QueryStore pull requests we are proposing to OpenMRS, what each one adds, where review stands and what has been checked."
     />
     <meta name="theme-color" content="#4b2e83" />
     <meta property="og:title" content="OpenMRS upstream contributions · Open Clinical AI" />
@@ -33,12 +33,12 @@
           <p class="section-kicker">Documentation · OpenMRS integration · updated 18 October 2026</p>
           <h1 id="doc-title">What we are contributing to OpenMRS.</h1>
           <p>
-            We are proposing our ChartSearchAI work to the OpenMRS projects as eight backend and five frontend pull
-            requests, plus one change to QueryStore. Each project has one ordered stack: every pull request targets
-            main, each builds on the one before it, and each description links the diff of its own step.
+            We are proposing our ChartSearchAI work to the OpenMRS projects as eight backend, five frontend and three
+            QueryStore pull requests. Each project has one ordered stack: every pull request targets main, each builds
+            on the one before it, and each description links the diff of its own step.
           </p>
           <div class="doc-meta">
-            <span>GitHub status checked 18 October 2026: all fourteen pull requests are open and under maintainer review; none has merged yet.</span>
+            <span>GitHub status checked 18 October 2026: all sixteen pull requests are open and under maintainer review; none has merged yet.</span>
             <span><a href="https://github.com/pmanko/openclinai.org/blob/main/specs/openmrs-contribution.md">Coordination record and acceptance criteria</a></span>
           </div>
         </div>
@@ -63,13 +63,13 @@
             upstream merge or a published dependency package.
           </p>
           <div class="guarantees">
-            <h3>Shared dependency: <a href="https://github.com/openmrs/openmrs-module-querystore/pull/68">QueryStore #68</a></h3>
-            <p>Patient-record reads over REST, completeness and date semantics, and question-aware context selection. Open
-              since 5 August; all 29 review threads were answered with fixes, and the builds pass on Java 8, 11, 17 and 21.
-              The maintainer asked on 29 September for the change in smaller pieces. That split is prepared as three
-              stacked branches, patient records over REST <span class="sha">c30b660</span>, the tiered context slice
-              <span class="sha">709511f</span> and question interpretation <span class="sha">844dcd0</span>, and the
-              replacement pull requests are the next step. The backend stack is tested against revision
+            <h3>Shared dependency: QueryStore <a href="https://github.com/openmrs/openmrs-module-querystore/pull/85">#85</a>, <a href="https://github.com/openmrs/openmrs-module-querystore/pull/86">#86</a> and <a href="https://github.com/openmrs/openmrs-module-querystore/pull/87">#87</a></h3>
+            <p>Patient-record reads over REST with completeness and date semantics (#85, <span class="sha">c30b660</span>),
+              the tiered context slice (#86, <span class="sha">709511f</span>) and question interpretation with retrieval
+              preprocessing (#87, <span class="sha">844dcd0</span>). They replace the single
+              <a href="https://github.com/openmrs/openmrs-module-querystore/pull/68">#68</a>, open since 5 August, whose
+              29 review threads were all answered with fixes before the maintainer asked on 29 September for smaller
+              pieces; those fixes are carried over unchanged. The backend stack is tested against revision
               <span class="sha">844dcd0</span>.</p>
           </div>
           <h3>Backend review and merge order</h3>
@@ -112,7 +112,7 @@
               <h3>Still open</h3>
               <ul>
                 <li>#587 needs measured evidence for its context selection, and its temporary dependency job must come out before the stack reaches main.</li>
-                <li>QueryStore #68 is to be replaced by the three smaller pull requests described above.</li>
+                <li>QueryStore #68 stays open until the maintainer picks up the three pull requests that replace it.</li>
               </ul>
             </div>
             <div class="group">
@@ -143,7 +143,7 @@
 
       <section class="section doc-section" aria-labelledby="qs-title">
         <div class="page-width">
-          <p class="section-kicker">QueryStore #68</p>
+          <p class="section-kicker">QueryStore #85 to #87</p>
           <h2 id="qs-title">One authorized way to read a patient's records, which says when the set is incomplete.</h2>
           <p class="section-lead">QueryStore takes on record projection, dates, completeness and question-aware selection. It does not compose prompts and knows nothing about models; that stays with the module asking.</p>
           <div class="catalogue">
