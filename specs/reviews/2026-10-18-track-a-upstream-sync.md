@@ -313,6 +313,36 @@ record `d32b8c96` and `f99b9ebd`. Of the 44 open threads, 42 now have a fix or a
 disposition on the heads; the two remaining are #587's Decision 28 evidence and
 its paired-source job. No reply has been posted.
 
+## Boot check of the pinned heads
+
+`make chartsearch-research-setup REBUILD_BASELINE=1` ran on the owner's Mac from
+15:32 to 19:53 (4 h 21 min, with the backend test suites and 21 unrelated
+containers competing for the machine; the 14 October rebuild took 1 h 31 min
+alone) against ChartSearchAI `6b8858c6`, the ESM `3f92411f`, QueryStore `844dcd0`
+and Hub `49e42016`: the morning tip, before the evening validator and comment
+changes. The module started on the changed changeset `chartsearchai-010`, the
+clean QueryStore generation indexed 514,681 documents (patient and obs each one
+to seven short of the core count, reported as drift ok), both providers were
+configured with the Hub as default and `chartMode=queryScoped`, and all seven
+evaluation accounts logged in.
+
+The bundled provider was then asked the first two parity questions as
+`eval-nurse` on the sample chart through `/chat/stream` with
+`provider=bundled`, each in a fresh conversation
+(`scripts/time-chart-questions.py smoke bundled - 0,1`):
+
+| Question | Answer | Time |
+| --- | --- | --- |
+| Most recent weight | 73.5 kg on 2025-11-12, cited | 65 s |
+| Current medications | the antiretroviral list with per-drug citations | 80 s |
+
+Slower than the 17 October built-in figures because of the same machine load;
+no quality judgment is made from two questions. Provider discovery reported
+`bundled` and `hub` both ready. The rebuilt state was exported as the local
+baseline image `openclinai-hiv-baseline:local` (2.95 GB payload, 514,682 indexed
+documents, 4 minutes with OpenMRS stopped for the capture); publishing it to the
+registry and pinning it is the owner's decision.
+
 ## QueryStore split
 
 The three branches prepared on 17 October were opened as pull requests from the

@@ -53,7 +53,10 @@ smoke and troubleshooting. This list holds only delivery state.
       `chartsearchai-010` dropped the conversation title column on 18 October, so
       the 14 October baseline's database fails the module's Liquibase validation on
       the new heads; Ross's 15 October install needs a reset once the new baseline
-      is pinned.
+      is pinned. Rebuilt and booted on the owner's machine on 18 October, with the
+      bundled provider answering on it
+      ([record](reviews/2026-10-18-track-a-upstream-sync.md#boot-check-of-the-pinned-heads));
+      publication and pinning remain.
 - [ ] Setup needs only Docker and the native model router: the pinned modules,
       frontend bundle and embedding model ship in published images instead of
       being built on the host with Java, Maven, Node and Yarn. Module builds
