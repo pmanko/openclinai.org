@@ -1,7 +1,7 @@
 # OpenMRS contribution delivery
 
 **Stream:** Track A · **Status:** stacks restacked on upstream and published on
-18 October; the OpenMRS-side base branches lag the restack; #585's three
+18 October, every PR now targeting `main` from the fork; #585's three
 medication-safety threads and the two trigger-change PRs are the remaining review
 work; replies not yet posted · **Owner:** umbrella for cross-project acceptance;
 each OpenMRS PR owns its behavior
@@ -24,27 +24,23 @@ Use one linear stack per project in this exact review and merge order:
 - **Backend:** `main → #583 → #584 → #585 → #586 → #587 → #588 → #589 → #590`
 - **Frontend:** `main → #55 → #56 → #57 → #58 → #59`
 
-The first PR targets the destination project's current `main`. Every subsequent PR
-targets the immediately preceding PR's branch and contains that predecessor's
-current head, so its diff shows only its own contribution. No separate prerequisite
-assembly branches or branching dependency graphs. Keep the existing PR numbers,
-scopes, review discussions and confirmed fixes while restacking. Do not wait for
-upstream merges to prepare, test or publish the rest of the stack.
+Every branch lives on the pmanko fork and every PR targets the destination
+project's `main`; nothing of ours is pushed to the OpenMRS repositories. Each
+branch contains its predecessor's current head, so a PR's "Files changed" view
+includes the layers below it, and each PR description carries a link to the
+compare view of its own layer against its predecessor's branch. The order is
+stated in the descriptions. Keep the existing PR numbers, scopes, review
+discussions and confirmed fixes while restacking. Do not wait for upstream merges
+to prepare, test or publish the rest of the stack; after a predecessor merges, the
+next PR's diff against `main` becomes exact by itself.
 
 Manage both stacks with the installed `github/gh-stack` extension (`gh stack`):
-`gh stack init --base` bottom-to-top against a verified trunk, `gh stack view` to
-inspect, `gh stack rebase` for cascading rebases, `gh stack push` to publish the
-fork heads. GitHub rejects native Stack objects for these fork PRs; retain local
-tracking and the actual linear PR bases rather than replacing PRs. A pull request
-in an OpenMRS repository can only target a branch in that repository, so every
-base after `main` is a copy of the predecessor's branch in the OpenMRS repository,
-and `gh stack push` does not touch those copies. After every restack, push the
-rewritten base copies to the OpenMRS repository with `--force-with-lease` (the
-owner runs or approves that push) and verify the base commits on GitHub, not only
-the base names, before asking for review. `gh stack` reads its trunk from the fork,
-so fast-forward only the local `main` to upstream before rebasing. Preserve draft
-states; do not use `--open` until the readiness requirements pass. Never substitute
-manually maintained assembly branches or create replacement PRs.
+`gh stack view` to inspect, `gh stack rebase` for the cascading rebase and
+`gh stack push` to publish. `gh stack` reads its trunk from the fork, so
+fast-forward only the local `main` to upstream before rebasing; do not move the
+fork's `main`. Upstream `main` takes direct commits about hourly, so restack right
+before each review round. Never substitute manually maintained assembly branches,
+base-branch copies in the OpenMRS repositories, or replacement PRs.
 
 Keep the original `harness-integration` branches unchanged as references. Maintain
 newer upstream behavior and confirmed fixes. Each PR must remain understandable and
@@ -96,15 +92,15 @@ The umbrella gitlinks record the heads under review; the dated record lists them
       checks ([umbrella #8](https://github.com/pmanko/openclinai.org/pull/8)).
 - [x] Reconcile all QueryStore #68 inline threads against implemented fixes
       ([record](reviews/2026-10-07-track-a-remediation.md#verified-on-7-october)).
-- [ ] Refresh the eleven OpenMRS-side base branches to the 18 October heads; the
-      five unreferenced branches there were deleted on 18 October
+- [x] Every stacked PR targets `main` and the base-branch copies in the OpenMRS
+      repositories are gone
       ([record](reviews/2026-10-18-track-a-upstream-sync.md#base-branches-in-the-openmrs-repositories)).
 - [ ] Finish the October review round in the owning PRs. Fixes for 38 of the 44
       open threads are published and restacked on upstream
       ([record](reviews/2026-10-18-track-a-upstream-sync.md#review-threads-checked-against-the-heads));
       still to do: #585's three `DrugSafetyValidator` findings, the build-trigger
       changes in #583 and #55 as PRs of their own, the stale session-header comment
-      in #59, then one restack, the base-branch refresh and the thread replies.
+      in #59, then one restack and the thread replies.
 - [ ] Answer the QueryStore maintainer's request to split #68 with a concrete
       disposition; zero unresolved inline threads does not settle it.
 - [ ] Dispose of #587's context-composition finding: the renal retrieval regression,

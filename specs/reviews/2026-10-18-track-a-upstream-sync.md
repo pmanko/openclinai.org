@@ -220,8 +220,16 @@ the backend repository, `codex/conversation-prerequisites` in the frontend
 repository, and a May `harness-integration` copy in each, none of them contained
 in the fork's `harness-integration` or the stack tips). They were deleted on
 18 October at the owner's request, each kept as a local tag
-`backup/openmrs-side/<branch>-20261018` in the matching submodule checkout. Only
-the eleven PR base copies remain in the OpenMRS repositories.
+`backup/openmrs-side/<branch>-20261018` in the matching submodule checkout.
+
+The same evening the owner ended the two-place arrangement: #584–#590 and #56–#59
+were retargeted to `main`, each of the thirteen PR descriptions gained a stack
+note with a link to the compare view of its own layer against its predecessor's
+branch on the fork, and the eleven base copies were deleted from the OpenMRS
+repositories (local backup tags as above). Every PR now has its head on the fork
+and its base on `main`; a PR's "Files changed" view includes the layers below it
+until they merge. Nothing of ours remains in the OpenMRS repositories, and a
+restack is `gh stack rebase` and `gh stack push` only.
 
 ## Hosted checks
 
