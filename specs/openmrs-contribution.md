@@ -23,6 +23,7 @@ Use one linear stack per project in this exact review and merge order:
 
 - **Backend:** `main → #583 → #584 → #585 → #586 → #587 → #588 → #589 → #590`
 - **Frontend:** `main → #55 → #56 → #57 → #58 → #59`
+- **QueryStore:** `main → #85 → #86 → #87`
 
 Every branch lives on the pmanko fork and every PR targets the destination
 project's `main`; nothing of ours is pushed to the OpenMRS repositories. Each
@@ -74,7 +75,10 @@ exact-source builds must not depend on upstream merging or publishing first.
 | F3 Markdown, tables and citations | [Frontend #57](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/57) | #56 |
 | F2 provider/profile selection | [Frontend #58](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/58) | #57 |
 | F1/F3 conversation lifecycle, staged answers, evidence and streaming toggle | [Frontend #59](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59) | #58 |
-| M1/Q0 QueryStore preprocessing, dispatcher links, explicit chart reads, validation | [QueryStore #68](https://github.com/openmrs/openmrs-module-querystore/pull/68) | main |
+| Q1 QueryStore patient records over REST, completeness and dates | [QueryStore #85](https://github.com/openmrs/openmrs-module-querystore/pull/85) | main |
+| Q2 QueryStore tiered context slice (ADR 17) | [QueryStore #86](https://github.com/openmrs/openmrs-module-querystore/pull/86) | main |
+| Q3 QueryStore question interpretation and preprocessing (ADR 18) | [QueryStore #87](https://github.com/openmrs/openmrs-module-querystore/pull/87) | main |
+| M1/Q0 original QueryStore integration PR, replaced by Q1–Q3 | [QueryStore #68](https://github.com/openmrs/openmrs-module-querystore/pull/68) | main |
 
 The umbrella gitlinks record the heads under review; the dated record lists them.
 
@@ -99,8 +103,10 @@ The umbrella gitlinks record the heads under review; the dated record lists them
       42 of the 44 open threads are published and restacked on upstream
       ([record](reviews/2026-10-18-track-a-upstream-sync.md#evening-fixes-and-third-restack));
       post the thread replies, restacking first if upstream has moved.
-- [ ] Answer the QueryStore maintainer's request to split #68 with a concrete
-      disposition; zero unresolved inline threads does not settle it.
+- [x] Answer the QueryStore maintainer's request to split #68: #85, #86 and #87
+      opened from the fork against `main` on 18 October, #68 answered
+      ([record](reviews/2026-10-18-track-a-upstream-sync.md#querystore-split)).
+- [ ] Decide closure of #68 once the maintainer has picked up #85–#87.
 - [ ] Dispose of #587's context-composition finding: the renal retrieval regression,
       the metric-versus-prompt disagreement on negative-category citations, and the
       substitute cohort's limits. Keep the original scores; do not tune prompts to

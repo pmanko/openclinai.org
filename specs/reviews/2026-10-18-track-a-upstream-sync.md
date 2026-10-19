@@ -312,3 +312,13 @@ tree. The lower layers were not rerun after this restack. The umbrella gitlinks
 record `d32b8c96` and `f99b9ebd`. Of the 44 open threads, 42 now have a fix or a
 disposition on the heads; the two remaining are #587's Decision 28 evidence and
 its paired-source job. No reply has been posted.
+
+## QueryStore split
+
+The three branches prepared on 17 October were opened as pull requests from the
+fork against upstream `main` (`63b3cef`), each with the same stack note as the
+other stacks: #85 `codex/patient-record-rest` `c30b660` (46 files), #86
+`codex/context-slice` `709511f` (25 files), #87 `codex/question-interpretation`
+`844dcd0` (18 files). The maintainer's 29 September question on #68 was answered
+with the three numbers and the suggestion that #68 be closed in their favour. The
+stack is tracked locally with `gh stack` in the QueryStore checkout.
