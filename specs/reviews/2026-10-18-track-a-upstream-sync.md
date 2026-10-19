@@ -340,8 +340,10 @@ Slower than the 17 October built-in figures because of the same machine load;
 no quality judgment is made from two questions. Provider discovery reported
 `bundled` and `hub` both ready. The rebuilt state was exported as the local
 baseline image `openclinai-hiv-baseline:local` (2.95 GB payload, 514,682 indexed
-documents, 4 minutes with OpenMRS stopped for the capture); publishing it to the
-registry and pinning it is the owner's decision.
+documents, 4 minutes with OpenMRS stopped for the capture) and, on the owner's
+instruction, published to the registry as
+`ghcr.io/pmanko/openclinai-hiv-baseline:hiv-20261019-025659`
+(`sha256:e21883ec…`) and pinned as the default in `hiv-baseline.json`.
 
 ## QueryStore split
 
