@@ -58,8 +58,9 @@ Every review round follows these rules:
 - Before publishing a layer, an independent reviewer reads its diff against the
   threads it answers, without being told the fix is correct. The review covers
   upgrading from the previous head's database and a restart with existing data.
-- Draft each thread reply in the same step as its fix. Replies are posted only on
-  the owner's approval, as one set per round.
+- Draft each thread reply in the same step as its fix. Fill in commit references
+  after the round's final restack, since rebasing rewrites them, and post the set
+  right after that push, only on the owner's approval, as one set per round.
 - A reply states what changed, the commit and how it was verified, and nothing
   else. It is no longer than the comment it answers. No thanks, restatement of the
   finding or narrative.
@@ -95,7 +96,8 @@ exact-source builds must not depend on upstream merging or publishing first.
 | Q3 QueryStore question interpretation and preprocessing (ADR 18) | [QueryStore #87](https://github.com/openmrs/openmrs-module-querystore/pull/87) | main |
 | M1/Q0 original QueryStore integration PR, replaced by Q1–Q3 | [QueryStore #68](https://github.com/openmrs/openmrs-module-querystore/pull/68) | main |
 
-The umbrella gitlinks record the heads under review; the dated record lists them.
+The umbrella gitlinks record the heads under review, the backend at fork #35's
+head above #590; the dated record lists them.
 
 ## Target path
 
@@ -132,8 +134,10 @@ and can run in parallel once the [decisions](#decisions) they depend on are made
 **Stage 1: answer what is already fixed.**
 
 - [ ] Draft replies for the 44 threads open before 19 October: 39 fixed on the
-      heads, 3 reopened by follow-ups (with the stage 2 and 3 fixes), 2 still open.
-      Rewrite the 11 existing drafts to the reply rule above.
+      heads, 3 reopened by follow-ups (with the stage 2 to 4 fixes), 2 still open.
+      Rewrite the 11 existing drafts to the reply rule above: every one cites a
+      commit the 18 October restacks rewrote, and the #587 bootstrap draft
+      describes the autostart change the follow-up found insufficient.
 
 **Stage 2: backend, bottom layer up, each fix with its reply drafted.**
 
@@ -146,7 +150,8 @@ and can run in parallel once the [decisions](#decisions) they depend on are made
       it exists; `finishTurn` accepts the delivered answer; zero counts filed as
       null; ADR Decision 105 and the audit bullet updated; the Mockito test deleted
       (findings 2, 3, 14).
-- [ ] #587: README line on restart behavior; the stale lab-expansion test comment.
+- [ ] #587: README line on restart behavior; the `QueryStoreChartBuilderScopedTest`
+      comment that still names the removed lab-panel expansion (ours, no thread).
 - [ ] #588: `IncompleteChartException` reported as `incomplete_chart`;
       table-of-contents entry (findings 10, 11).
 - [ ] #590: bundled deltas accumulated and the last Hub answer passed to
@@ -168,8 +173,8 @@ and can run in parallel once the [decisions](#decisions) they depend on are made
 
 - [ ] #85: a failed cold touch is reported incomplete; records filtered by each
       type's core read privilege; a completed type stays complete while it tops
-      up; ADR banners deferred; the separator change moved to its own PR
-      (findings 4, 5, 6, 17).
+      up, if the restart decision adopts it; ADR banners deferred; the separator
+      change moved to its own PR (findings 4, 5, 6, 17).
 - [ ] #86: identifier and quote patterns; `rank` and `chartTruncated` docs; the
       mapping-code test; the seven stub overrides removed (findings 7, 17).
 - [ ] #87: the four retrieval changes moved to a new PR with the latest-value
@@ -284,8 +289,8 @@ execution.
 
 ## Decisions
 
-Owner decisions for the [path to mergeable](#path-to-mergeable), with the
-recommended option first:
+Owner decisions, recommended option first. The first seven gate the
+[path to mergeable](#path-to-mergeable); the last is standing:
 
 - [ ] **Changeset 010 (#586):** add the maintainer's `validCheckSum` and an 011
       that drops the title column where an earlier 010 created it; or restore the
@@ -293,12 +298,15 @@ recommended option first:
 - [ ] **Delivered answer on error or disconnect (#586, #590):** keep it on the
       audit row only, so unchecked text never reaches later prompts; or also on the
       saved turn.
-- [ ] **Answers after a restart (QueryStore #85):** a type that has completed before
-      counts as complete while it tops up, with the unchanged-record skip as its
-      own PR; or the skip alone, which still blocks answers during the page scan.
+- [ ] **Answers after a restart (QueryStore #85):** skip records whose stored
+      version matches, as the maintainer asked, as its own PR, and put to the
+      maintainer in the reply that a type completed before should count as complete
+      while it tops up, since the skip alone still blocks answers during the page
+      scan; or change both now without asking.
 - [ ] **QueryStore privileges (#85):** filter records by each type's core read
-      privilege in the service read path and drop cross-patient search from the
-      REST endpoint; or keep cross-patient search behind the same filter.
+      privilege in the service read path, as the maintainer asked, with
+      cross-patient search kept behind the same filter as Decision 14 allows; or
+      also drop cross-patient search from the REST endpoint, which was not asked for.
 - [ ] **QueryStore #87 scope:** split the four retrieval changes into a new PR with
       their fixes and an evaluation; or keep them in #87 and add the evaluation
       there.

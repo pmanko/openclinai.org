@@ -47,7 +47,8 @@ Of the 44, 39 are fixed on the heads and need only a reply. Three were reopened 
 the maintainer's follow-ups on 19 October: #585's `no_applicable_check`, #587's
 bootstrap precondition and #59's backend-version line. Two were never closed out:
 #587's Decision 28 evidence and its temporary paired-source job. Only 11 of the 44
-have a drafted reply, all backend threads from the first fix round.
+have a drafted reply, all backend threads from the first fix round, and each cites
+a commit that the 18 October restacks rewrote.
 
 ## New findings checked against the code
 
