@@ -64,3 +64,31 @@ on 20 October, each citing a commit on the pushed branches. GitHub rewrites the 
   not running).
 - The evaluation behind the retrieval changes in #88.
 - Fresh setup from the baseline, and a rerun of the running-stack check on these heads.
+
+## Rebase onto the 20 October upstream
+
+Upstream `main` moved by four drug-safety commits (`7d052573` to `9827db15`) after the fixes
+above. The nine backend branches were rebased in stack order with `git rebase --onto`, without
+conflicts, and force-pushed to the fork with explicit lease values at 21:40 UTC.
+
+| PR | Branch | Before | After |
+|---|---|---|---|
+| #583 | `codex/provider-contract` | `7ecd5c625` | `cc41d9b7d` |
+| #584 | `codex/local-token-counting` | `4ff5817d7` | `b40421f93` |
+| #585 | `codex/safety-check-status` | `3d2ee3e68` | `124719b8a` |
+| #586 | `codex/conversation-storage` | `fa897901f` | `92a2d429c` |
+| #587 | `codex/context-budget` | `9a8e9ee4a` | `19248d1b2` |
+| #588 | `codex/bundled-provider` | `24c9bb4d6` | `9fafd0659` |
+| #589 | `codex/hub-provider` | `0cbff174c` | `b495a2a1a` |
+| #590 | `codex/conversation-endpoints` | `d40f126b2` | `96cf7ad22` |
+| fork #35 | `codex/account-context` | `c8c8f8abd` | `9ed746a2b` |
+
+Full `mvn -o test` on every rebased layer against QueryStore `d61c14d` (the merge of #88 with
+#91 the umbrella now pins; the macOS-only occupied-port test excluded): all nine layers pass,
+3,636 to 3,859 tests, no failures. The frontend and QueryStore upstreams did not move.
+
+Of the items not checked earlier in this record: the QueryStore `-Pintegration` run against
+MySQL and Elasticsearch ran on #90 (560 tests) and #88 (626 tests), each with the one
+pre-existing `hybridFusesBm25AndKnnViaSpiDefault` zero-vector error that #89 fixes; the #88
+evaluation is in [its own record](2026-10-20-querystore-88-retrieval-diversity.md). Fresh setup
+from the baseline ran on 20 October before that evaluation.
