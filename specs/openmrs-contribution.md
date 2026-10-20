@@ -133,11 +133,11 @@ and run in parallel; the [decisions](#decisions) they depend on were made on
 19 October.
 
 Each stack is changed in one pass per review round, decided 20 October. Every
-fix is a commit on the layer the finding is in, bottom layer up, committed locally
-without pushing between layers; the stack is cascaded once with `gh stack rebase`
-(frontend `--no-trunk`), the full suite runs on every layer, and one `gh stack
-push` publishes the round. Every reviewed PR therefore moves at most once per
-round, and fork #35 moves in the same cascade. A top-of-stack fix PR was
+fix is a commit on the layer the finding is in, bottom layer up; the stack is
+cascaded onto upstream `main`, fork #35 moves in the same cascade, the full suite
+runs on every layer, and the stack is pushed to the fork as soon as it passes.
+Work never waits locally for a later check; a fix found afterwards is another
+commit and another push. A top-of-stack fix PR was
 considered and rejected: the blocking findings sit in #585, #586 and #590, so
 their fixes rewrite the layers above them anyway, and the non-blocking fixes cost
 nothing more in the same cascade. The one structural change is the #87 split in
@@ -154,48 +154,53 @@ stage 4, which the maintainer asked for.
 
 **Stage 2: backend, bottom layer up, each fix with its reply drafted.**
 
-- [ ] #583: README table-of-contents entry (finding 11).
-- [ ] #584: refusal tests, `isAvailable` through the active engine, table-of-contents
+- [x] #583: README table-of-contents entry (finding 11).
+- [x] #584: refusal tests, `isAvailable` through the active engine, table-of-contents
       entry (findings 11, 12).
-- [ ] #585: screening-arm gate with the zorblatine case, one test per
+- [x] #585: screening-arm gate with the zorblatine case, one test per
       `dose_not_assessable` branch, table-of-contents entry (findings 1, 11, 13).
-- [ ] #586: changeset 010 accepts its old checksum and 011 drops the column where
+- [x] #586: changeset 010 accepts its old checksum and 011 drops the column where
       it exists; `finishTurn` accepts the delivered answer; zero counts filed as
       null; ADR Decision 105 and the audit bullet updated; the Mockito test deleted
       (findings 2, 3, 14).
-- [ ] #587: README line on restart behavior; the `QueryStoreChartBuilderScopedTest`
+- [x] #587: README line on restart behavior; the `QueryStoreChartBuilderScopedTest`
       comment that still names the removed lab-panel expansion (ours, no thread).
-- [ ] #588: `IncompleteChartException` reported as `incomplete_chart`;
+- [x] #588: `IncompleteChartException` reported as `incomplete_chart`;
       table-of-contents entry (findings 10, 11).
-- [ ] #590: bundled deltas accumulated and the last Hub answer passed to
+- [x] #590: bundled deltas accumulated and the last Hub answer passed to
       `finishTurn`; `safetyStatus` and `safetyCheck` in the README (findings 3, 15).
-- [ ] One cascade onto upstream `main`; the full suite on every layer, not only
-      the tip; independent review of each layer's diff, including an upgrade from
-      the previous head's database and a restart with data; one push.
+- [x] Cascade onto upstream `main`, the full suite on every layer, an upgrade
+      from the previous head's database and a restart with data, pushed: [20 October](reviews/2026-10-20-track-a-e2e.md).
+- [ ] Independent review of each layer's diff.
 
 **Stage 3: frontend.**
 
-- [ ] #57: carry `main`'s comment wording. #59: no version in the README, one
+- [x] #57: carry `main`'s comment wording. #59: no version in the README, one
       definition of each error code (finding 16).
 - [ ] Decide our own two residuals from the 18 October check: the wording when an
       explicitly picked profile becomes unavailable, and the safety box drawn for a
       bare `unavailable`.
-- [ ] One cascade, test, independent review, one push.
+- [x] Cascade, tests on every layer, pushed: [20 October](reviews/2026-10-20-track-a-e2e.md).
+- [ ] Independent review of each layer's diff.
 
 **Stage 4: QueryStore.**
 
-- [ ] #85: a failed cold touch is reported incomplete; records filtered by each
+- [x] #85: a failed cold touch is reported incomplete; records filtered by each
       type's core read privilege; the completed-type proposal in the reply, not
       in the code; ADR banners deferred; the separator change moved to its own PR
       (findings 4, 5, 6, 17).
-- [ ] #86: identifier and quote patterns; `rank` and `chartTruncated` docs; the
+- [x] #86: identifier and quote patterns; `rank` and `chartTruncated` docs; the
       mapping-code test; the seven stub overrides removed (findings 7, 17).
-- [ ] #87: the four retrieval changes moved to a new PR with the latest-value
-      ordering, the series decision, the Decision 6 and 17 updates, the javadoc
-      placement and an evaluation; #87 keeps the interpreter and Decision 18
+- [x] #87: the four retrieval changes moved to their own branch with the
+      latest-value ordering, the series decision, the Decision 6 and 17 updates and
+      the javadoc placement; #87 keeps the interpreter and Decision 18
       (findings 8, 9, 17).
-- [ ] Skip unchanged records during the bootstrap top-up, as its own PR.
-- [ ] One cascade, test, independent review, one push.
+- [ ] The evaluation behind the moved retrieval changes.
+- [x] Skip unchanged records during the bootstrap top-up, on its own branch.
+- [x] Cascade, tests on every branch, pushed: [20 October](reviews/2026-10-20-track-a-e2e.md).
+- [ ] Open the PRs for the split-out branches (retrieval diversity, the
+      query-cache separator, the bootstrap skip).
+- [ ] Independent review of each branch's diff.
 
 **Stage 5: evidence and the next round.**
 
@@ -211,8 +216,7 @@ stage 4, which the maintainer asked for.
       module upgrade from a database set up on the 18 October heads.
 - [x] End-to-end functional check on the local HIV stack built from the tips of
       all three stacks (backend #590 with fork #35, frontend #59, QueryStore with
-      its split-out PRs), through the chart-search UI with both providers, before
-      the stacks are pushed: [20 October](reviews/2026-10-20-track-a-e2e.md).
+      its split-out branches), through the chart-search UI with both providers: [20 October](reviews/2026-10-20-track-a-e2e.md).
 - [ ] Post the round's replies on the owner's approval and request the next review.
 
 **Stage 6: merge order once approved.**
