@@ -209,6 +209,10 @@ stage 4, which the maintainer asked for.
       not restore word stripping or add a case-specific ranking rule.
 - [ ] Local boot check of the new heads: fresh setup, restart with data, and a
       module upgrade from a database set up on the 18 October heads.
+- [ ] End-to-end functional check on the local HIV stack built from the tips of
+      all three stacks (backend #590 with fork #35, frontend #59, QueryStore with
+      its split-out PRs), through the chart-search UI with both providers, before
+      the stacks are pushed; record it in a dated review.
 - [ ] Post the round's replies on the owner's approval and request the next review.
 
 **Stage 6: merge order once approved.**
