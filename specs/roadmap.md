@@ -86,3 +86,4 @@ authorized by any item here; each thread spec names its signoffs.
 - [19 October Track A review revalidation](reviews/2026-10-19-track-a-review-revalidation.md)
 - [20 October Track A end-to-end check on the stack tips](reviews/2026-10-20-track-a-e2e.md)
 - [20 October Track A independent review and fixes](reviews/2026-10-20-track-a-review-round.md)
+- [20 October QueryStore #88 retrieval diversity evaluation](reviews/2026-10-20-querystore-88-retrieval-diversity.md)

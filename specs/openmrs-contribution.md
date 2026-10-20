@@ -195,7 +195,10 @@ stage 4, which the maintainer asked for.
       latest-value ordering, the series decision, the Decision 6 and 17 updates and
       the javadoc placement; #87 keeps the interpreter and Decision 18
       (findings 8, 9, 17).
-- [ ] The evaluation behind the moved retrieval changes.
+- [x] The evaluation behind the moved retrieval changes: [20 October](reviews/2026-10-20-querystore-88-retrieval-diversity.md),
+      #88 against #87 on the 20 October baseline with the 7 October method.
+- [x] Fix the per-patient reindex that wrote nothing within a minute of a delete on
+      Elasticsearch, found while preparing that evaluation: QueryStore #91, in the same record.
 - [x] Skip unchanged records during the bootstrap top-up, on its own branch.
 - [x] Cascade, tests on every branch, pushed: [20 October](reviews/2026-10-20-track-a-e2e.md).
 - [x] Open the PRs for the split-out branches (retrieval diversity #88, the
