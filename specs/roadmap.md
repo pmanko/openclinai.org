@@ -84,3 +84,4 @@ authorized by any item here; each thread spec names its signoffs.
 - [18 October Track A upstream sync](reviews/2026-10-18-track-a-upstream-sync.md)
 - [18 October landing publication](reviews/2026-10-18-landing-publication.md)
 - [19 October Track A review revalidation](reviews/2026-10-19-track-a-review-revalidation.md)
+- [20 October Track A end-to-end check on the stack tips](reviews/2026-10-20-track-a-e2e.md)
