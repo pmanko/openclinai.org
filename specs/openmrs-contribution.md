@@ -132,6 +132,17 @@ numbers the findings referred to below. Stages 2 to 4 touch separate repositorie
 and run in parallel; the [decisions](#decisions) they depend on were made on
 19 October.
 
+Each stack is changed in one pass per review round, decided 20 October. Every
+fix is a commit on the layer the finding is in, bottom layer up, committed locally
+without pushing between layers; the stack is cascaded once with `gh stack rebase`
+(frontend `--no-trunk`), the full suite runs on every layer, and one `gh stack
+push` publishes the round. Every reviewed PR therefore moves at most once per
+round, and fork #35 moves in the same cascade. A top-of-stack fix PR was
+considered and rejected: the blocking findings sit in #585, #586 and #590, so
+their fixes rewrite the layers above them anyway, and the non-blocking fixes cost
+nothing more in the same cascade. The one structural change is the #87 split in
+stage 4, which the maintainer asked for.
+
 **Stage 1: answer what is already fixed.**
 
 - [x] Reply on the 39 threads fixed on the heads, each checked against the code
@@ -158,9 +169,9 @@ and run in parallel; the [decisions](#decisions) they depend on were made on
       table-of-contents entry (findings 10, 11).
 - [ ] #590: bundled deltas accumulated and the last Hub answer passed to
       `finishTurn`; `safetyStatus` and `safetyCheck` in the README (findings 3, 15).
-- [ ] Restack onto upstream `main`; run the full suite on every layer, not only
+- [ ] One cascade onto upstream `main`; the full suite on every layer, not only
       the tip; independent review of each layer's diff, including an upgrade from
-      the previous head's database and a restart with data; push.
+      the previous head's database and a restart with data; one push.
 
 **Stage 3: frontend.**
 
@@ -169,7 +180,7 @@ and run in parallel; the [decisions](#decisions) they depend on were made on
 - [ ] Decide our own two residuals from the 18 October check: the wording when an
       explicitly picked profile becomes unavailable, and the safety box drawn for a
       bare `unavailable`.
-- [ ] Test, independent review, push.
+- [ ] One cascade, test, independent review, one push.
 
 **Stage 4: QueryStore.**
 
@@ -184,7 +195,7 @@ and run in parallel; the [decisions](#decisions) they depend on were made on
       placement and an evaluation; #87 keeps the interpreter and Decision 18
       (findings 8, 9, 17).
 - [ ] Skip unchanged records during the bootstrap top-up, as its own PR.
-- [ ] Restack, test, independent review, push.
+- [ ] One cascade, test, independent review, one push.
 
 **Stage 5: evidence and the next round.**
 
