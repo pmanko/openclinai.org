@@ -85,6 +85,14 @@ documents before the change and pass after it; the older-write guard passes befo
 deploying it, two consecutive reindexes of patient 39 both wrote all 320 documents with no failed writes,
 and the #88 arm's five re-projections each succeeded on their single attempt.
 
+## Baseline published from this QueryStore
+
+After the evaluation, every obs was re-projected under #88's serializer (`POST /querystore/reindex
+{"scope":"type","resourceType":"obs"}`, 427,890 documents, 21:32 to 23:10 UTC, index complete, drift
+zero for encounters and visits), and the stack was exported and published as the new default baseline
+`hiv-20261020-231108` (514,682 indexed documents, built from umbrella commit 9e05629 with QueryStore
+d61c14d). The database carries the evaluation's 116 audit-log rows from this day and no conversations.
+
 ## Limits
 
 - One capture per cell on the same small substitute cohort as October; the three changed cells are
