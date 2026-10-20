@@ -78,12 +78,12 @@ regexes in items 7 and 17 and the sort in item 8 were run.
 
 ## Why the remediation left these open
 
-Of the 29 new threads, 7 concern code or omissions from our own 17 and 18 October
+Of the 32 comments, 7 concern code or omissions from our own 17 and 18 October
 fixes: 010 edited in place, autostart turned on every start, the half-fixed
 `no_applicable_check`, removed tests that left the new refusals untested, and three
-frontend leftovers from the move and rebase. Eleven concern code from 1 to
-6 October that the maintainer had not raised before. The 15 QueryStore threads are
-the first review of the split opened on 18 October.
+frontend leftovers from the move and rebase. Ten concern code from 1 to 6 October
+that the maintainer had not raised before. The 15 QueryStore comments are the first
+review of the split opened on 18 October.
 
 - Fixes answered each comment's literal ask and were not checked for the same
   pattern nearby. The `no_applicable_check` fix covered the arm the maintainer
