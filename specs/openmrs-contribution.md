@@ -134,11 +134,12 @@ and run in parallel; the [decisions](#decisions) they depend on were made on
 
 **Stage 1: answer what is already fixed.**
 
-- [ ] Draft replies for the 44 threads open before 19 October: 39 fixed on the
-      heads, 3 reopened by follow-ups (with the stage 2 to 4 fixes), 2 still open.
-      Rewrite the 11 existing drafts to the reply rule above: every one cites a
-      commit the 18 October restacks rewrote, and the #587 bootstrap draft
-      describes the autostart change the follow-up found insufficient.
+- [x] Reply on the 39 threads fixed on the heads, each checked against the code
+      and posted 20 October
+      ([record](reviews/2026-10-19-track-a-review-revalidation.md#replies-posted-20-october-0214-utc)).
+- [ ] Reply on the other 5 of the 44 threads open before 19 October with their
+      fixes: the 3 reopened by follow-ups (stages 2 to 4) and #587's Decision 28
+      evidence and paired-source job (stage 5).
 
 **Stage 2: backend, bottom layer up, each fix with its reply drafted.**
 

@@ -14,7 +14,7 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 | --- | --- | --- | --- |
 | Local HIV research environment | [local-hiv-environment.md](local-hiv-environment.md) | Setup and reset restore the published default baseline in about 5 minutes; Ross's fresh install passed; account context reaches the model; the 18 October module heads need a rebuilt baseline | New default baseline for the 18 October heads; Docker-only prerequisites |
 | Provider parity and local inference efficiency | [provider-parity.md](provider-parity.md) | Hub reads its context once per answer: checked answers take 16–56 s here when the router reuses the chart's temporal facts, 83–204 s when it does not, against 7–51 s built-in | Cross-question reuse; OpenRouter comparison; Ross re-measures |
-| OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | Every PR targets `main` from the fork; the maintainer re-reviewed all heads on 19 October and 73 threads are open, 39 fixed and awaiting replies; QueryStore #68 replaced by #85–#87 | Stages 1 to 4 of the [path to mergeable](openmrs-contribution.md#path-to-mergeable), decided 19 October; then the evidence and one reply set |
+| OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | Every PR targets `main` from the fork; the maintainer re-reviewed all heads on 19 October and 73 threads are open, the 39 fixed ones answered on 20 October; QueryStore #68 replaced by #85–#87 | Stages 2 to 4 of the [path to mergeable](openmrs-contribution.md#path-to-mergeable), decided 19 October; then the evidence and the next reply set |
 | Catalyst delivery | [catalyst-delivery.md](catalyst-delivery.md) | Four journeys demonstrated; acceptance open | FP-009 and FP-010 |
 | Website and publication | [website-publication.md](website-publication.md) | Documentation site deploys from `main`; landing site live from the umbrella's own website proxy since 18 October | Audit item W04 |
 | Decision-layer experiment (Jev, Laya) | [decision-layer-experiment.md](decision-layer-experiment.md) | Proposed; research updated 16 October | Decisions D1–D5 |
@@ -26,8 +26,8 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 
 1. [OpenMRS contribution delivery](openmrs-contribution.md): the
    [path to mergeable](openmrs-contribution.md#path-to-mergeable), with its seven
-   decisions made on 19 October: replies for the fixed threads, the 19 October
-   findings in their owning layers, the Decision 28 evidence and the merge order.
+   decisions made on 19 October: the 19 October findings in their owning layers,
+   each with its reply, the Decision 28 evidence and the merge order.
 2. [Provider parity](provider-parity.md): close the remaining gap, the router's
    reuse of the chart's temporal facts across questions, so Hub answers are at
    least as fast as the built-in provider.

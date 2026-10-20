@@ -106,3 +106,17 @@ review of the split opened on 18 October.
 The contribution model now requires a drafted reply with each fix, an independent
 review of each layer's diff before publishing, and deferred findings listed as open
 items.
+
+## Replies posted, 20 October 02:14 UTC
+
+The 39 threads fixed on the heads were answered on the owner's instruction, one
+reply each, through the GraphQL `addPullRequestReviewThreadReply` mutation. Each
+reply names what changed, the commit on the current head and the test that pins it,
+and every claim was checked against the code at the heads before posting (the
+earlier drafts were rewritten, not reused). Counts by PR, read back from the API
+after posting with each thread's last comment the new reply: #583 2, #584 1, #585 2,
+#586 1, #587 2, #588 2, #589 3, #590 2, #55 5, #56 3, #57 5, #58 2, #59 9. No thread
+was resolved. The five remaining older threads (the three reopened on 19 October,
+#587's Decision 28 evidence and its paired-source job) are answered with their fixes.
+The commits cited are the heads of this date; the stage 2 to 4 restacks will move
+them, so the next reply set cites the restacked commits.
