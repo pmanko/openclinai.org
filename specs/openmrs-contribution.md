@@ -171,7 +171,7 @@ stage 4, which the maintainer asked for.
       `finishTurn`; `safetyStatus` and `safetyCheck` in the README (findings 3, 15).
 - [x] Cascade onto upstream `main`, the full suite on every layer, an upgrade
       from the previous head's database and a restart with data, pushed: [20 October](reviews/2026-10-20-track-a-e2e.md).
-- [ ] Independent review of each layer's diff.
+- [x] Independent review of each layer's diff, findings fixed: [20 October](reviews/2026-10-20-track-a-review-round.md).
 
 **Stage 3: frontend.**
 
@@ -181,7 +181,7 @@ stage 4, which the maintainer asked for.
       explicitly picked profile becomes unavailable, and the safety box drawn for a
       bare `unavailable`.
 - [x] Cascade, tests on every layer, pushed: [20 October](reviews/2026-10-20-track-a-e2e.md).
-- [ ] Independent review of each layer's diff.
+- [x] Independent review of each layer's diff, findings fixed: [20 October](reviews/2026-10-20-track-a-review-round.md).
 
 **Stage 4: QueryStore.**
 
@@ -198,9 +198,10 @@ stage 4, which the maintainer asked for.
 - [ ] The evaluation behind the moved retrieval changes.
 - [x] Skip unchanged records during the bootstrap top-up, on its own branch.
 - [x] Cascade, tests on every branch, pushed: [20 October](reviews/2026-10-20-track-a-e2e.md).
-- [ ] Open the PRs for the split-out branches (retrieval diversity, the
-      query-cache separator, the bootstrap skip).
-- [ ] Independent review of each branch's diff.
+- [x] Open the PRs for the split-out branches (retrieval diversity #88, the
+      query-cache separator #89, the bootstrap skip #90):
+      [20 October](reviews/2026-10-20-track-a-review-round.md).
+- [x] Independent review of each branch's diff, findings fixed: [20 October](reviews/2026-10-20-track-a-review-round.md).
 
 **Stage 5: evidence and the next round.**
 
@@ -217,7 +218,8 @@ stage 4, which the maintainer asked for.
 - [x] End-to-end functional check on the local HIV stack built from the tips of
       all three stacks (backend #590 with fork #35, frontend #59, QueryStore with
       its split-out branches), through the chart-search UI with both providers: [20 October](reviews/2026-10-20-track-a-e2e.md).
-- [ ] Post the round's replies on the owner's approval and request the next review.
+- [x] Post the round's replies: [20 October](reviews/2026-10-20-track-a-review-round.md).
+- [ ] Request the next review once the integration run and the #88 evaluation are in.
 
 **Stage 6: merge order once approved.**
 
