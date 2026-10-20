@@ -115,8 +115,14 @@ reply names what changed, the commit on the current head and the test that pins 
 and every claim was checked against the code at the heads before posting (the
 earlier drafts were rewritten, not reused). Counts by PR, read back from the API
 after posting with each thread's last comment the new reply: #583 2, #584 1, #585 2,
-#586 1, #587 2, #588 2, #589 3, #590 2, #55 5, #56 3, #57 5, #58 2, #59 9. No thread
-was resolved. The five remaining older threads (the three reopened on 19 October,
+#586 1, #587 2, #588 2, #589 3, #590 2, #55 5, #56 3, #57 5, #58 2, #59 9. Under
+decision 7, the 13 mechanical threads were then resolved by us (confirmed
+`isResolved` on each): #587's cue javadoc, #588's context-size docs, #590's README
+placement and endpoint lists, #55's conformance file and header read, #56's three,
+#57's README move, #58's `onSwitched`, and #59's citation details and labels. The
+other 26 answered threads (design, behaviour and the two trigger threads, where the
+change was dropped rather than split out as asked) stay open for the maintainer. The
+five remaining older threads (the three reopened on 19 October,
 #587's Decision 28 evidence and its paired-source job) are answered with their fixes.
 The commits cited are the heads of this date; the stage 2 to 4 restacks will move
 them, so the next reply set cites the restacked commits.
