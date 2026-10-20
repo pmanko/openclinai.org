@@ -129,7 +129,8 @@ A PR is mergeable when the maintainer has approved it, every thread is answered
 and closed, its required checks pass and it applies cleanly to `main`. The
 [revalidation record](reviews/2026-10-19-track-a-review-revalidation.md#new-findings-checked-against-the-code)
 numbers the findings referred to below. Stages 2 to 4 touch separate repositories
-and can run in parallel once the [decisions](#decisions) they depend on are made.
+and run in parallel; the [decisions](#decisions) they depend on were made on
+19 October.
 
 **Stage 1: answer what is already fixed.**
 
@@ -172,9 +173,9 @@ and can run in parallel once the [decisions](#decisions) they depend on are made
 **Stage 4: QueryStore.**
 
 - [ ] #85: a failed cold touch is reported incomplete; records filtered by each
-      type's core read privilege; a completed type stays complete while it tops
-      up, if the restart decision adopts it; ADR banners deferred; the separator
-      change moved to its own PR (findings 4, 5, 6, 17).
+      type's core read privilege; the completed-type proposal in the reply, not
+      in the code; ADR banners deferred; the separator change moved to its own PR
+      (findings 4, 5, 6, 17).
 - [ ] #86: identifier and quote patterns; `rank` and `chartTruncated` docs; the
       mapping-code test; the seven stub overrides removed (findings 7, 17).
 - [ ] #87: the four retrieval changes moved to a new PR with the latest-value
@@ -289,31 +290,32 @@ execution.
 
 ## Decisions
 
-Owner decisions, recommended option first. The first seven gate the
+Owner decisions. The first seven were made on 19 October and gate the
 [path to mergeable](#path-to-mergeable); the last is standing:
 
-- [ ] **Changeset 010 (#586):** add the maintainer's `validCheckSum` and an 011
-      that drops the title column where an earlier 010 created it; or restore the
-      original 010 and drop the column in 011.
-- [ ] **Delivered answer on error or disconnect (#586, #590):** keep it on the
-      audit row only, so unchecked text never reaches later prompts; or also on the
-      saved turn.
-- [ ] **Answers after a restart (QueryStore #85):** skip records whose stored
-      version matches, as the maintainer asked, as its own PR, and put to the
-      maintainer in the reply that a type completed before should count as complete
-      while it tops up, since the skip alone still blocks answers during the page
-      scan; or change both now without asking.
-- [ ] **QueryStore privileges (#85):** filter records by each type's core read
-      privilege in the service read path, as the maintainer asked, with
-      cross-patient search kept behind the same filter as Decision 14 allows; or
-      also drop cross-patient search from the REST endpoint, which was not asked for.
-- [ ] **QueryStore #87 scope:** split the four retrieval changes into a new PR with
-      their fixes and an evaluation; or keep them in #87 and add the evaluation
-      there.
-- [ ] **Decision 28 evidence (#587):** run the two mandated gates; or a documented
-      substitute where they cannot run.
-- [ ] **Resolving threads:** we resolve threads whose fix is mechanical and leave
-      design threads for the maintainer; or leave every thread for the maintainer.
+- [x] **Changeset 010 (#586), 19 October:** 010 accepts its old checksum through
+      `validCheckSum`, and an 011 drops the title column where an earlier 010
+      created it. Not chosen: restoring the original 010.
+- [x] **Delivered answer on error or disconnect (#586, #590), 19 October:**
+      `finishTurn` takes the last delivered envelope with the error result and keeps
+      it on the audit row only; the saved turn stays empty, so unchecked text never
+      reaches later prompts.
+- [x] **Answers after a restart (QueryStore #85), 19 October:** skip records whose
+      stored version matches, as its own PR. The reply proposes that a type
+      completed before counts as complete while it tops up; that changes only if
+      the maintainer agrees.
+- [x] **QueryStore privileges (#85), 19 October:** filter records by each type's
+      core read privilege in the service read path; cross-patient search stays
+      behind the same filter, as Decision 14 allows.
+- [x] **QueryStore #87 scope, 19 October:** the four retrieval changes move to a new
+      PR with their fixes and an evaluation; #87 keeps the interpreter and
+      Decision 18.
+- [x] **Decision 28 evidence (#587), 19 October:** run both gates as written; where
+      one cannot run, record why and the substitute measured, as #318 did. Original
+      scores kept; no tuning to individual cells.
+- [x] **Resolving threads, 19 October:** we resolve threads whose fix is mechanical
+      and verifiable from the reply; design and blocking threads stay open for the
+      maintainer.
 - [ ] **OpenMRS caches:** preserve existing bundled caching. The old harness plan's
       blanket cache prohibition conflicts with bundled preservation; Hub restrictions
       remain Hub-owned. A broader product-policy change requires explicit review.
