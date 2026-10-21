@@ -16,14 +16,17 @@ answer, and where given a read-only checkout of the consumer repository at its s
 1. **Gather.** Read the PR body, the ticket and every thread, including the replaced
    PR's threads: an ask made there and not answered here is still open, and goes in your
    answer with its original link. A thread marked fixed is a claim: read the code at the
-   head and run the test that would show it. Diff the head against the base
+   head and run the test that would show it. A carried ask the author marked done is a
+   claim too: diff what was asked against what changed, and a sub-point left undone, or a
+   change beyond the ask, is a question. Diff the head against the base
    (`git diff <base>...HEAD`) and read the whole changed files.
 2. **Breadth before depth.** Walk every changed file top to bottom and list every
    candidate before you reproduce anything: a comment or javadoc the change makes false
    or misplaced, documentation that still describes code the change removed, a second
    copy of logic that has drifted from the first, a branch or symbol nothing reaches any
    more, a rule applied to inputs it was not written for, a link to a closed PR, a
-   rewrite that changes nothing. Each goes in the answer as a question with the one-line
+   rewrite that changes nothing, and a limitation, cap or loss the PR itself writes into
+   a comment or the ADR, which is a candidate finding until the PR justifies it. Each goes in the answer as a question with the one-line
    change you would make, unless step 4 turns it into a finding. Budget the reproductions
    so this walk completes for every file.
 3. **Is this the right fix?** Does it resolve the problem the ticket or the PR body
@@ -46,18 +49,23 @@ answer, and where given a read-only checkout of the consumer repository at its s
 6. **The states around the diff.** Where the change touches a walk, a cursor, a
    cache, a sync or an endpoint, walk these cases explicitly and say which you ran:
    a restart in the middle of the work and the resume after it; a failed page or a
-   permanently failing record; an empty or blank parameter; a store that was never
-   created; a backend cap reached (Elasticsearch's 10 000 window); a dependency that
-   recovers after an outage; two callers at once.
+   permanently failing record; a blank, empty, malformed or out-of-range parameter and
+   what a client sends by mistake; a store that was never created; a backend cap reached
+   (Elasticsearch's 10 000 window); a dependency that recovers after an outage; two
+   callers at once. Each case gets one line in your answer: ran, and what it showed, or
+   not run, and why. A case not run is a question.
 7. **The consumer.** When a consumer checkout is given and the change touches what it
    sends or reads (a request parameter, an interpretation rule, an event, a stored
    row), open the consumer's side (its router, its ADR decisions, its client) and check
-   the two still agree. Name the file and line on each side.
+   the two still agree. Name the file and line on each side. A rule set the consumer also
+   keeps (cues, idioms, families, mappings, wire names, enum values) is diffed entry by
+   entry: list both sides and report every entry present on one side only, and read the
+   consumer's ADR decisions that touch that rule.
 8. **Sweep again** until a pass finds nothing new. Do not invent findings.
 
 ## Effort
 
-- `low`: steps 1, 2, 4 and 5 on the diff.
+- `low`: steps 1, 2, 4 and 5 on the diff, and the parameter cases of step 6.
 - `medium`: all steps; trace one level out: unchanged neighbours whose comments the
   change makes false, consumers of what the code emits (REST, SSE, stored rows,
   events), lifecycle and ordering, the merged result of the branch against the current

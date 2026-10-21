@@ -265,8 +265,10 @@ threads and no consumer checkout, and ran once.
       and the brief's step 7 checks the two sides of the contract.
 - [ ] The states around the diff: the brief's step 6 names the restart, resume,
       blank-input, missing-store, cap and recovery cases.
-- [ ] Measured: the changed reviewer run on the same heads with `THREADS_UNTIL` set
-      before the maintainer's round, scored against the inventory in a dated record.
+- [x] Measured: the changed reviewer run on the same heads with `THREADS_UNTIL` set
+      before the maintainer's round reproduces 25 of his 32 threads; the four brief
+      changes for the misses are in, their re-run pending
+      ([record](reviews/2026-10-21-harness-reproduction.md)).
 - [ ] A second run after fixes and after every cascade is part of the procedure in
       `openmrs-contribution.md`.
 
