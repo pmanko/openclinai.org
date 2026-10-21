@@ -405,6 +405,8 @@ REVIEW_ARGS = $(if $(PR),--pr $(PR)) $(if $(REPO),--repo $(REPO)) $(if $(AGENT),
 	$(if $(THREADS_UNTIL),--threads-until $(THREADS_UNTIL)) $(if $(NO_CONSUMER),--no-consumer) \
 	$(if $(HEAD),--head $(HEAD)) $(if $(BASE),--base $(BASE))
 
+review: export REVIEW_MODEL ?= $(MODEL)
+review: export REVIEW_REASONING ?= $(REASONING)
 review:
 	review/bin/review.py $(REVIEW_ARGS)
 

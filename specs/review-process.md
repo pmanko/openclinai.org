@@ -59,6 +59,7 @@ make review PR=<n> [REPO=chartsearchai|esm|querystore] [AGENT=claude|codex|gemin
             [EFFORT=low|medium|high] [ROUNDS=1] [STACK=1] [SCENARIOS=<set>] [GATE=<name>]
             [FULL=1] [SET=full-default] [PROFILES=<advertised Hub profiles>] [BASELINE=<run id>]
             [HEAD=<local ref> BASE=<local ref>]  review the layer before it is pushed
+            [MODEL=gpt-6.1-sol REASONING=medium]  the reviewer's model and effort (never a personal config's)
 make review MEASURE=<set> GOLD=<gold file>      a gate's baseline, before the gate is written
 make review FULL=1 [SET=] [PROFILES=]           the full evaluation without a PR
 make review-replies PR=<n> [REPO=]              draft thread replies from the last round
