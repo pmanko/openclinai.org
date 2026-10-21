@@ -387,6 +387,7 @@ def main() -> int:
     meta = json.loads(threads.read_text())
 
     if args.replies:
+        fetch_pr(checkout, remote, args.pr)
         rounds = sorted(out_dir.glob("findings-*.json"))
         ledger = work_dir() / "ledger"
         prompt = (BRIEFS / "reply.md").read_text() + (
