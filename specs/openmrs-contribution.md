@@ -118,7 +118,8 @@ dated records and no longer listed here.
       the reviewer run again on the fixed heads before the push, replies drafted
       (inventory: `specs/reviews/2026-10-21-maintainer-round-on-the-stacks.md`;
       measurement: [record](reviews/2026-10-21-harness-reproduction.md)):
-  - [ ] QueryStore first. The five blocking threads (#94 skip only on a COMPLETED row;
+  - [ ] QueryStore first ([fixes, restack and push](reviews/2026-10-21-querystore-remediation.md);
+        the reviewer re-run and the maintainer's re-review are open). The five blocking threads (#94 skip only on a COMPLETED row;
         #95 the per-patient walk filters stored records and a blank `patient` is a 400;
         #97 the `at last` idiom and the medication cues mirrored on ChartSearchAI's
         router and Decision 180), his three tests, five doc fixes and seven code changes
