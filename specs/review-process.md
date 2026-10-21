@@ -42,20 +42,19 @@ agent runs it. What the maintainer's process is, and where ours fell short on th
 | L2 Review | on request | 100 to 300k tokens per PR per pass | a fresh session per role runs the brief at the chosen effort and returns findings as JSON; a stack pass reads the merged top for contracts between layers |
 | L3 Scenarios | on request, optional | one harness run | the validation harness replays a comparison set against the deployed head and checks machine-readable expectations; the umbrella builds and deploys the head first |
 | L4 Model gate | on request, optional, slice changes only | two harness runs | a pre-registered gate (comparison set, dataset, baseline, threshold) run on base and head; the record quotes the number |
-| L5 Full evaluation | per milestone: a stack head ready to merge, a baseline rebuild, a model or provider change | hours of model time | every comparison set against every configured backend through the harness, judge and adjudication recorded, the clinical report produced; compared with the previous milestone's report against thresholds written before the run |
+| L5 Full evaluation | per milestone: a stack head ready to merge, a baseline rebuild, a model or provider change | hours of model time | the harness runs a default matrix (the `full-default` comparison set: its scenarios against the bundled provider arm and the default Hub profiles), scores it and produces its own report; the backends are overridable to any Hub profile or provider arm; a previous run is cited only when a comparison is wanted |
 
 L0 and L1 are the default on every push. L2 to L5 run through `make review`. L0 to L2
 answer whether the code is right, L3 and L4 whether a change behaves or retrieves as
-claimed, L5 whether the assembled stack performs as well as the last milestone. L5 is
-never a merge gate for one PR; its report is the validation thread's output and feeds
-publication.
+claimed, L5 how the assembled stack performs. L5 is never a merge gate for one PR; its
+report is the validation thread's output and feeds publication.
 
 ## Parameters
 
 ```
 make review PR=<n> [REPO=chartsearchai|esm|querystore] [AGENT=claude|codex|gemini|human]
             [EFFORT=low|medium|high] [ROUNDS=1] [STACK=1] [SCENARIOS=<set>] [GATE=<name>]
-            [FULL=<milestone>]
+            [FULL=1] [SET=full-default] [BACKENDS=<backend ids>] [BASELINE=<run id>]
 ```
 
 | Effort | Sweep |
@@ -68,9 +67,12 @@ make review PR=<n> [REPO=chartsearchai|esm|querystore] [AGENT=claude|codex|gemin
 above and below consume) and reads the stack's merged top. `ROUNDS` above 1 repeats
 review and fix until the reviewer records zero blocking findings on the pushed head,
 and every round after a clean one is blocking-only. `SCENARIOS`, `GATE` and `FULL` are off
-unless named. `FULL=<milestone>` names the gate file under `review/gates/` that holds the
-milestone's comparison sets, backends, the previous report it is compared with and the
-thresholds.
+unless named. `FULL=1` runs the harness on `SET` (default `full-default`, the checked-in
+matrix) against `BACKENDS` (default the set's own: the bundled provider arm and the
+default Hub profiles; any ids from the harness's `backends.json` override it, so one run
+can target a single Hub profile or a `speed-*` arm) and produces that run's report.
+`BASELINE=<run id>` adds a comparison with an earlier run's report; without it the report
+stands on its own.
 
 ## Layout
 
@@ -182,11 +184,14 @@ and a person at a terminal.
 - A gate file is written before the run: comparison set, dataset, baseline run id and
   number, threshold, date, who signed off. A threshold set after seeing the number is not
   a gate. The result goes in a dated record under `reviews/`.
-- A full evaluation (L5) is the same contract at milestone scale: its gate file lists
-  every comparison set and backend, names the previous milestone's report as the baseline
-  and sets thresholds per set. The harness runs, the judge scores, the adjudication is
-  recorded, the report is produced, and the dated record compares the two reports. The
-  report, not the score, is what publication consumes.
+- A full evaluation (L5) is a harness run of a matrix, not a gate. The `full-default`
+  comparison set in the harness is the default matrix: its scenario ids against the
+  bundled provider arm (`engine-parity-bundled-12b`, which pins ChartSearchAI's bundled
+  provider through the parity tap) and the default Hub profiles. Backend ids override
+  it per run. The run produces its own report with the judge's scores and the captured
+  evidence; the dated record under `reviews/` cites the run directory and, when
+  `BASELINE` was given, the earlier report it was compared with. The report, not the
+  score, is what publication consumes.
 
 ## Mapping to the maintainer's checks
 
@@ -213,8 +218,8 @@ and a person at a terminal.
       PR); a `review-smoke` comparison set; `SCENARIOS=`.
 - [ ] Gates: the cohort and the maintainer's gold as harness datasets, the citation
       scorer path, `review/gates/`, `GATE=`; `work/eval-88/` retired.
-- [ ] Full evaluation: a milestone gate file, `FULL=`, the previous report as baseline,
-      the comparison recorded under `reviews/`.
+- [ ] Full evaluation: the `full-default` comparison set in the harness, `FULL=`,
+      `SET=`, `BACKENDS=`, optional `BASELINE=`; the report recorded under `reviews/`.
 - [ ] Applied to the open round: the twelve blocking findings fixed under L0 to L2 with
       probes and replies from the ledger; recorded under `reviews/`.
 - [ ] `openmrs-contribution.md` review-round rules point here instead of restating them.
@@ -228,8 +233,9 @@ and a person at a terminal.
   are optional inside it; scenarios are an optional review layer.
 - Guards are proven by hand-named mutations in the commit, not by PIT or Stryker.
 - Default on a push is L0 and L1 only; L2 to L5 are flags.
-- A full harness evaluation is a rung of the ladder (L5), run per milestone with
-  thresholds written first, never a per-PR gate.
+- A full harness evaluation is a rung of the ladder (L5), run per milestone on a default
+  matrix with overridable backends, producing its own report; never a per-PR gate, and a
+  comparison with an earlier run only when asked.
 - No branch naming convention; nothing reads branch names.
 
 ## Open
