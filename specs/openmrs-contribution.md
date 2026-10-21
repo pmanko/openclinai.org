@@ -59,7 +59,8 @@ Working rules:
 Every review round runs under the [review process](review-process.md): the commit
 and push hooks with their revert and mutation probes, a fresh-session review with
 `make review` (`AGENT=codex` so the reviewer is not the model that wrote the fix,
-`STACK=1` for a stack), and replies drafted by its reply brief. These stacks add:
+`HEAD=`/`BASE=` on the local layer before each round is pushed, `STACK=1` for a pushed
+stack), and replies drafted by its reply brief. These stacks add:
 
 - Fix the finding's pattern, not only the line named: check sibling code paths
   with the same shape.
