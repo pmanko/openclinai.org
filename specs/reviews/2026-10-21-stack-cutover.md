@@ -69,6 +69,16 @@ mutation probes; the layers above were rebased and resubmitted.
 | backend #616 | the startup idle timer unloads the server right after a first call longer than the interval | fixed: the callback re-checks inactivity under the lock, d8f5da3ee |
 | backend #617 | a dose with no frequency reads as a checked daily ceiling; a damaged allergen entry never limits the check | both fixed, 604de3906 (Greptile raised the same two) |
 | backend #618 (Greptile) | a stale turn copy reopens a settled turn; concurrent opens split history; the fallback audit loses bundled measurements; an audit purge failure skips the chat purge | all fixed, 2a7a2fd42 |
+| backend #619 | the prewarm sweep stops at one truncated chart as if the index were unfinished | fixed: the exception carries its reason, 137af6661 |
+| backend #619 | optional records are not rebuilt with the injected size reserved | declined: the composed-path tests in `LlmInferenceServiceModuleBudgetContextTest` drive the rebuild; the probe wired the counter into the builder only |
+| backend #620 (Greptile) | a client gone at answer_done loses the retained answer | fixed, 20c27ba75 |
+| backend #620 (Greptile) | the stored payload lacks references and statements | handled by #622's `withTurnMetadata` before storage |
+| backend #621 (Greptile) | a cancelled turn whose stream ends cleanly loses its answer; profile discovery can block forever past the headers | both fixed, 18529e8fc |
+| backend #622 (Greptile) | a failed checked-answer save is handled as a disconnect and the client gets nothing; an older turn registering late cancels a newer one | both fixed, a540ea99b |
+| backend #622 (Codex question) | the discovery handlers are tested only through their payload helper | handler test added, 0f0734b87 |
+| backend #623 (Codex, Greptile) | the bundled provider does not pass the account snapshot into inference, though the description says "the model" | open item for the owner in the contribution spec |
+| backend #623 (Codex) | a test added on #622 did not compile against this layer's signature | fixed inside the layer's commit |
+| backend #616, #619, #620, #621, #622, #623 (Greptile) | tests use fakes against the repository's "real pipeline" rule | owner's call; reply drafts hold the composed-path coverage each layer has |
 | QueryStore #92, backend #615 | no findings | |
 
 GitHub's Greptile bot also commented on the new PRs. Its findings on frontend #75 and

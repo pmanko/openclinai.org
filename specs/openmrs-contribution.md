@@ -107,9 +107,18 @@ dated records and no longer listed here.
 - [x] Cut over to one gh-stack stack per repository on the OpenMRS repositories,
       one squashed commit per layer, suites green on every layer, old PRs closed
       with pointers ([record](reviews/2026-10-21-stack-cutover.md)).
-- [ ] Fix the fresh-reviewer (Codex) round in the owning layers: frontend done,
-      QueryStore #93 to #96 done, #97 and #98 and the backend layers in progress
+- [x] Fix the fresh-reviewer round (Codex, and GitHub's Greptile bot) in the owning
+      layers: every blocking finding fixed or declined on record, the three owner
+      decisions below carried out of it
       ([record](reviews/2026-10-21-stack-cutover.md#fresh-reviewer-round)).
+- [ ] Post the bot-thread replies drafted in `work/review/greptile-replies.md` on the
+      owner's approval.
+- [ ] Owner decision: backend #623 carries the account snapshot on the turn, to the Hub
+      and onto the stored answer, but bundled inference does not read it. Narrow the
+      description to that, or add the snapshot to the bundled prompt as its own layer.
+- [ ] Owner decision: the repository's "tests call the production pipeline, no mocks"
+      rule against the scripted-provider and fake-counter tests the bots flag on #616,
+      #619 to #623; the composed-path coverage each layer has is listed in the reply drafts.
 - [ ] Owner decision: QueryStore #95's completeness signal (a COMPLETED type can
       hide skipped records; flipping the flag on any skipped record would withhold
       every answer for a type with one poison record).
