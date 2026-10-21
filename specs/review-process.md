@@ -241,9 +241,10 @@ and a person at a terminal.
 - [ ] Gates: the October cohort as a harness dataset, the citation scorer path,
       `review/gates/`, `MEASURE=`, `GATE=`; the cohort's harness baseline replaces
       `work/eval-88/`; the first gate signed by the owner and run.
-- [ ] Full evaluation: the `full-default` comparison set in the harness, `FULL=`,
+- [x] Full evaluation: the `full-default` comparison set in the harness, `FULL=`,
       `SET=`, `PROFILES=` from the Hub's advertised profiles, optional `BASELINE=`; tap
-      setup and property restore in the run step; the report recorded under `reviews/`.
+      setup and property restore in the run step; the report recorded under `reviews/`
+      ([record](reviews/2026-10-20-review-layers.md#l5-full-evaluation)).
 - [ ] Applied to the open round: the twelve blocking findings fixed under L0 to L2 with
       probes and replies from the ledger; recorded under `reviews/`.
 - [x] `openmrs-contribution.md` review-round rules point here instead of restating them
