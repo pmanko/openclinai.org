@@ -20,7 +20,9 @@ and where to write your answer.
    only the example? Does it do only that? Is there a nearer, existing way in this
    codebase (`git grep`, `git log -S`)? An approach objection names the alternative
    and the concrete cost of what is here, or it is a question.
-3. **Verify by running.** For each candidate finding, build and run: the tests, a
+3. **Verify by running.** Build and test only inside your checkout: `mvn test`, `mvn
+   package` or `mvn verify`, never `mvn install`, which overwrites the shared Maven cache
+   other builds and checkouts compile against. For each candidate finding, build and run: the tests, a
    reproduction, the revert of the fix (`git stash` style edits are fine in your
    checkout as long as you restore it), a mutation of the guard. Read dependencies'
    sources (OpenMRS core, Elasticsearch, Spring) before claiming what they do. A claim

@@ -15,4 +15,6 @@ Whoever writes the fix follows this: a person, or an agent session on the PR bra
    the test does not prove the fix. Fix the test, never `--no-verify`.
 6. **Decline on the record.** A finding you do not implement gets a failure-mode
    sentence for why the code is right, with the evidence, in the round's ledger.
-7. Run the full suite of the layer and restack the layers above before handing back.
+7. Run the full suite of the layer and restack the layers above before handing back. Never
+   `mvn install` from a feature branch: the shared Maven cache is what the other repositories
+   compile against; install only the umbrella's pinned checkout.
