@@ -86,6 +86,43 @@ categories under the table.
   recovery. The reviewer brief asks for the upgrade and restart cases, but the reviewer
   reads the diff rather than the state machine around it.
 
+## What the reviewer runs actually did
+
+Measured from the Codex transcripts under `work/review/<repo>-<pr>/` (reasoning is not
+logged by Codex; only the commands it ran and its final answer are).
+
+| Run | Wall time | Builds run | Reported |
+| --- | --- | --- | --- |
+| QueryStore #93 to #98 | 6 to 10 min each | 4 to 5 Maven runs each, 30 to 194 s of build time | 0 to 3 blocking, 0 or 1 question |
+| Frontend #72 to #76 | 2 to 10 min each | up to 34 vitest runs | 0 to 3 blocking, 0 or 1 question |
+
+- **It read the files Daniel's findings are in.** The transcripts show it opened
+  `QueryStoreRestController` (the blank `patient`), `BootstrapServiceImpl` (`walkAfresh`),
+  `TypeBootstrapper.runForPatient`, `PatientRecordView.sliceId`, `ConceptNameUtil`'s cap,
+  the interpreter's idiom list, `model-picker`'s status branches and `isStartingSession`.
+  It reported none of them. Each run converged on one to three findings it could
+  reproduce, spent its time on those reproductions, and stopped; nothing in the brief or
+  the driver makes it exhaust the file it has open. Daniel's pass is the opposite shape:
+  breadth first, twenty items on one stack, most of them one sentence with a suggestion.
+- **It never reasoned about four sites at all.** `dispatchPrepared` timing, `withheldTypes`,
+  `continuesIdentifier`, `regimen`, `QueryScopeRouter`, `scheduleRetry` and the store's
+  reset do not occur in the transcripts outside file dumps.
+- **The brief filters out most of what Daniel writes.** A finding is blocking only with a
+  failure mode and a run; "style and taste are not findings"; "checked-and-fine gets no
+  words"; only `high` effort says to return uncertain findings as questions. Twenty-seven
+  of Daniel's thirty-two threads are non-blocking by his own word: javadoc, a test he
+  wrote, an ADR sentence, dead code, a design preference. Our medium-effort reviewer is
+  told, in effect, not to report that class.
+- **It had no prior threads.** `threads.json` held zero threads for every QueryStore PR
+  (Daniel reviewed after the run) and one to three bot threads for the frontend PRs.
+  `review/bin/threads.py` collects the PR's own threads only; the rounds-two-and-three
+  asks on the fork PRs were in no input. The tasks that tracked those asks (#9 to #11)
+  were deleted during the cutover on the assumption the new stack subsumed them.
+- **It had one repository.** The probe worktree is the PR's repository; the consumer's
+  router and ADR were not reachable, and the brief does not name them.
+- **It ran once.** `ROUNDS` defaults to 1 and each stack was reviewed once at its first
+  pushed head; no run looked at the fixed layers or at the cascaded commits.
+
 ## What follows from this
 
 - Carry the open asks with the code: a checklist file per stack layer (or the PR
