@@ -1,0 +1,48 @@
+# Review tooling
+
+The procedure in [specs/review-process.md](../specs/review-process.md), as plain git
+hooks, scripts and briefs that a person or any agent runs the same way.
+
+## Hooks (L0 and L1)
+
+`make review-hooks-install` points `core.hooksPath` of the umbrella and the three
+OpenMRS component checkouts (and their worktrees) at `review/hooks/`, and records the
+component commits already pushed to the forks as the baseline, so only new work is
+probed. Remove with `git -C <checkout> config --unset core.hooksPath`.
+
+| Hook | Refuses |
+| --- | --- |
+| pre-commit | a likely secret; a focused or disabled test; a new test file with tests and no assertion. Prints narrative comments and a test that mocks its own unit |
+| commit-msg | a malformed `Tests:`, `Mutation:` or `Probe:` trailer, or one outside the final trailer paragraph |
+| pre-push, component | a push to an `github.com/openmrs/` remote; a push to the fork's default branch; a non-fast-forward over remote commits you have not fetched; a pushed commit that changes main code and fails its probe |
+| pre-push, umbrella | the umbrella's unit tests or `scripts/check_workspace.py` failing |
+
+## Probes
+
+Every commit a push adds (not already on any remote) that changes main code is probed
+in a persistent worktree, `work/review/wt/<repo>`:
+
+1. **Revert:** the commit's main-code files go back to the parent; the tests must fail.
+2. **Green:** at the commit the same tests must pass.
+3. **Mutation:** each `Mutation:` trailer is applied at the commit; the tests must fail.
+
+The tests are the `Tests:` trailer, otherwise the test files the commit adds or
+changes. A main-code commit with neither is refused unless it carries
+`Probe: skip (<reason>)`. The red and green lines go to stderr and to
+`work/review/ledger/<repo>.jsonl`; quote them in replies. A commit whose patch was
+already probed with the same trailers (a rebase) is not probed again. Logs are in
+`work/review/logs/<repo>/`.
+
+```
+Tests: ContextSliceTest#overFetchIsBoundedByTheLimit, ContextSliceTest
+Mutation: api/src/main/java/org/x/Store.java "candidateLimit" -> "request.getLimit()"
+Probe: skip (generated migration; covered by the next commit's test)
+```
+
+`Mutation:` strings use JSON escapes (`\"`, `\n`); the old text must occur exactly once
+in the file at the commit. Probe by hand with `review/bin/probe --repo <checkout>
+<commit>...`. The runner is chosen from the checkout's build files (`pom.xml`: Maven,
+offline; `package.json` with Vitest; pytest) or `git config review.runner`.
+
+`git commit --no-verify` and `git push --no-verify` skip the hooks; the ledger then has
+no record for that work, and a reply cannot quote one.

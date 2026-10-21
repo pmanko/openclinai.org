@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+"""Probe commits by hand, or record a checkout's pushed commits as the baseline.
+
+  probe [--repo DIR] <commit>...    revert and mutation probes, printed and ledgered
+  probe [--repo DIR] --baseline     record commits on non-OpenMRS remotes as pushed
+                                    before the probes were installed
+"""
+import argparse
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
+from reviewkit.hooks import baseline  # noqa: E402
+from reviewkit.probes import probe_commit  # noqa: E402
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--repo", default=".")
+parser.add_argument("--baseline", action="store_true")
+parser.add_argument("commits", nargs="*")
+args = parser.parse_args()
+repo = Path(args.repo).resolve()
+if args.baseline:
+    print(f"{repo.name}: {baseline(repo)} commits recorded as baseline")
+    sys.exit(0)
+ok = True
+for commit in args.commits:
+    outcome = probe_commit(repo, commit)
+    print("\n".join(outcome.lines) or f"{outcome.sha[:7]} {outcome.status}")
+    ok &= outcome.ok
+sys.exit(0 if ok else 1)

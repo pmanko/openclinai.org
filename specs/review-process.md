@@ -1,7 +1,7 @@
 # Review process and gates
 
-**Stream:** review rigor · **Status:** designed 20 October 2026, nothing built; the
-owner is marking this up · **Owner:** umbrella; each component repository keeps its
+**Stream:** review rigor · **Status:** hooks and probes built and installed; later
+layers in progress · **Owner:** umbrella; each component repository keeps its
 own instructions and CI
 
 Give every contribution the rigor the OpenMRS maintainer applies, so a stack passes
@@ -88,13 +88,13 @@ review/
     stack.md             the cross-layer dimension for STACK=1
   bin/
     threads.py           open threads per PR into work/review/<repo>-<pr>/threads.json
-    probe-revert.sh      <repo> <commit>: split main and test files, revert main files to
-                         the parent, run the tests, expect red, restore, expect green
-    probe-mutate.sh      <repo> <commit>: apply each Mutation: trailer, run Tests:,
-                         expect red, restore
-    runners/             maven.sh, jest.sh, pytest.sh: "run these tests, exit non-zero on
-                         failure" for each build system; the umbrella's own tests use the
-                         pytest runner on a fixture project
+    probe                [--repo] <commit>...: revert the main files, expect red; restore,
+                         expect green; apply each Mutation:, expect red; --baseline records
+                         already-pushed commits
+    hook                 the hooks' entry point
+    runners/             maven.sh, vitest.sh, pytest.sh: run the named tests, report RAN and
+                         FAILED lines, exit 0 pass, 1 fail, 2 build error, 3 none ran
+  lib/reviewkit/         the hooks, guards, probes and ledger in Python
     role.sh              --agent --role --pr --effort: starts a fresh session with the
                          brief and the inputs, collects the JSON
     deploy-head.sh       build the PR head, deploy to the local stack, check the loaded
@@ -135,8 +135,11 @@ Mutation: api/src/main/java/.../QueryStoreServiceImpl.java "candidateLimit" -> "
   several.
 - `Probe: skip` is the escape, visible in the message, never silent.
 
-The pre-push hook probes every commit the push adds that touches main code, in a
-persistent probe worktree under `work/review/wt/<repo>` so Maven compiles incrementally.
+The pre-push hook probes every commit the push adds (not on any remote yet) that
+touches main code, in a persistent probe worktree under `work/review/wt/<repo>` so Maven
+compiles incrementally. A patch already probed with the same trailers is not probed again
+after a rebase; commits pushed before the hooks were installed are recorded as the
+baseline. Mutation strings use JSON escapes, so a multi-line edit is one trailer.
 
 ## Roles
 
@@ -163,9 +166,9 @@ through `core.hooksPath`. Plain shell and Python; no agent involved.
 
 | Hook | Repo | Blocks | Prints |
 | --- | --- | --- | --- |
-| pre-commit | all | a likely secret; a focused or disabled test; a new test file with no assertion; malformed `Tests:` or `Mutation:` trailer | a mocked unit under test; narrative comments |
-| commit-msg | all | trailer syntax | |
-| pre-push | components | a push to any `openmrs/` remote; a force push without lease; a probed commit whose tests stay green under revert or mutation; a main-code commit with no tests, no `Tests:` and no `Probe: skip` | the red and green lines, into the ledger |
+| pre-commit | all | a likely secret; a focused or disabled test; a new test file with no assertion | a mocked unit under test; narrative comments |
+| commit-msg | all | trailer syntax, or a trailer outside the final paragraph | |
+| pre-push | components | a push to any `openmrs/` remote; a push to the fork's default branch; a non-fast-forward over remote commits not yet fetched; a probed commit whose tests stay green under revert or mutation; a main-code commit with no tests, no `Tests:` and no `Probe: skip` | the red and green lines, into the ledger |
 | pre-push | umbrella | `python3 -m unittest` or `check_workspace.py` failing | |
 
 The existing agent-side guards (`claude-code-guards`, PreToolUse on Bash) stay for the
@@ -217,10 +220,10 @@ and a person at a terminal.
 
 ## Target path
 
-- [ ] Hooks and probes: `review/hooks/`, `review/bin/probe-revert.sh`,
-      `probe-mutate.sh`, the three runners, `make review-hooks-install`; behaviour tests
-      on a pytest fixture project under `tests/`; installed in the three component
-      checkouts and the umbrella.
+- [x] Hooks and probes: `review/hooks/`, `review/bin/probe`, the three runners,
+      `make review-hooks-install`; behaviour tests on a pytest fixture project under
+      `tests/review/`; installed in the three component checkouts and the umbrella
+      ([record](reviews/2026-10-20-review-hooks-and-probes.md)).
 - [ ] Threads, briefs and roles: `threads.py`, the four briefs, `role.sh` for claude,
       codex, gemini and human, `review.py` and `make review` with `EFFORT`, `ROUNDS`,
       `STACK`.
@@ -254,5 +257,3 @@ and a person at a terminal.
 
 - Whether the umbrella's own repository gets the probe at push or only its unit tests.
 - The harness change for checkable expectations: scope and who reviews it.
-- Whether a mutation that cannot be expressed as one textual replacement gets a patch
-  file form, or stays out of the hook and in the fixer's record.
