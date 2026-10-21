@@ -65,10 +65,18 @@ mutation probes; the layers above were rebased and resubmitted.
 | QueryStore #95 | `COMPLETED` can hide skipped records | open item for the owner in the contribution spec |
 | QueryStore #96 | a one-character namespaced code is rejected; an identifier prefix takes the exact tier | both fixed, fd97a9b |
 | QueryStore #97 | standalone "recent" is not a recency cue; the panel test passes on unchanged input | both fixed, 84b1676 |
-| QueryStore #92, #98, backend #615 | no findings | |
+| QueryStore #98 | the simulated backend ignores the requested limit, so dropping the deeper fetch passes | test fixed, 4d49961 |
+| backend #616 | the startup idle timer unloads the server right after a first call longer than the interval | fixed: the callback re-checks inactivity under the lock, d8f5da3ee |
+| backend #617 | a dose with no frequency reads as a checked daily ceiling; a damaged allergen entry never limits the check | both fixed, 604de3906 (Greptile raised the same two) |
+| backend #618 (Greptile) | a stale turn copy reopens a settled turn; concurrent opens split history; the fallback audit loses bundled measurements; an audit purge failure skips the chat purge | all fixed, 2a7a2fd42 |
+| QueryStore #92, backend #615 | no findings | |
 
-The backend layers #616 to #623 are still under review at the time of this record; their
-findings and fixes will be added to this table.
+GitHub's Greptile bot also commented on the new PRs. Its findings on frontend #75 and
+#76 duplicated Codex's; on #74 it found wide tables spilling out of the bubble, fixed in
+374daf6; on #72, #73 and #75 it reported the chat, model and provider routes missing from
+the published backend, which backend #622 adds. Reply drafts for every bot thread are in
+`work/review/greptile-replies.md`, to be posted on the owner's approval. The backend
+layers #619 to #623 are still under review at the time of this record.
 
 ## State at the end of the record
 
