@@ -51,19 +51,18 @@ behavior and publish the response with the fix and its verification. After a
 predecessor merges, rebase and retarget dependents in order. Existing integration
 PR closure is a separate decision, not implied by the split.
 
-Every review round follows these rules:
+Every review round runs under the [review process](review-process.md): the commit
+and push hooks with their revert and mutation probes, a fresh-session review with
+`make review` (`STACK=1` for a stack), and replies drafted by its reply brief. These
+stacks add:
 
 - Fix the finding's pattern, not only the line named: check sibling code paths
   with the same shape.
-- Before publishing a layer, an independent reviewer reads its diff against the
-  threads it answers, without being told the fix is correct. The review covers
-  upgrading from the previous head's database and a restart with existing data.
-- Draft each thread reply in the same step as its fix. Fill in commit references
-  after the round's final restack, since rebasing rewrites them, and post the set
-  right after that push, only on the owner's approval, as one set per round.
-- A reply states what changed, the commit and how it was verified, and nothing
-  else. It is no longer than the comment it answers. No thanks, restatement of the
-  finding or narrative.
+- The review covers upgrading from the previous head's database and a restart with
+  existing data.
+- Fill in commit references after the round's final restack, since rebasing
+  rewrites them, and post the replies right after that push, only on the owner's
+  approval, as one set per round.
 - A finding we notice and do not fix becomes an open item in this spec for the
   owner to decide, not a note in a dated record.
 
