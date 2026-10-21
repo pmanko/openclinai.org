@@ -12,6 +12,7 @@ from __future__ import annotations
 import fcntl
 import json
 import os
+import re
 import subprocess
 import time
 from dataclasses import dataclass, field
@@ -25,7 +26,7 @@ RUNNERS = UMBRELLA / "review" / "bin" / "runners"
 
 
 def work_dir() -> Path:
-    return Path(os.environ.get("REVIEW_WORK", UMBRELLA / "work" / "review"))
+    return Path(os.environ.get("REVIEW_WORK") or UMBRELLA / "work" / "review")
 
 
 @dataclass
@@ -107,13 +108,16 @@ def _run(runner: str, wt: Path, tests: list[str], log: Path) -> Run:
     return Run(proc.returncode, ran, failed, log)
 
 
-def _first(run: Run) -> str:
-    return (run.failed[0][:160] if run.failed else "")
+def _first(run: Run, tests: list[str] = ()) -> str:
+    """The failure to quote: one from a named test when there is one, else the first."""
+    names = [re.split(r"#|::", t)[-1] for t in tests]
+    named = [f for f in run.failed if any(n and n in f for n in names)]
+    return ((named or run.failed or [""])[0])[:160]
 
 
-def _expect_red(run: Run, sha7: str, what: str) -> tuple[bool, str]:
+def _expect_red(run: Run, sha7: str, what: str, tests: list[str] = ()) -> tuple[bool, str]:
     if run.code == 1:
-        return True, f"red   {sha7} {what}: {len(run.failed)} of {run.ran} failed: {_first(run)}"
+        return True, f"red   {sha7} {what}: {len(run.failed)} of {run.ran} failed: {_first(run, tests)}"
     if run.code == 2:
         return True, f"red   {sha7} {what}: the build fails (see {run.log})"
     if run.code == 0:
@@ -132,7 +136,7 @@ def _expect_green(run: Run, sha7: str) -> tuple[bool, str]:
     return False, f"BLOCK {sha7} at the commit: {reason} (see {run.log})"
 
 
-def probe_commit(repo: Path, sha: str) -> Outcome:
+def probe_commit(repo: Path, sha: str, force: bool = False) -> Outcome:
     sha = git(repo, "rev-parse", sha).strip()
     sha7 = sha[:7]
     changes = commit_changes(repo, sha)
@@ -146,7 +150,7 @@ def probe_commit(repo: Path, sha: str) -> Outcome:
     ledger = Ledger(repo)
     pid = patch_id(repo, sha) or sha
     key = trailers.key()
-    previous = ledger.find(pid, key)
+    previous = None if force else ledger.find(pid, key)
     if previous:
         what = ("pushed before the probes were installed" if previous["status"] == "baseline"
                 else f"same patch as {previous['sha'][:7]}")
@@ -179,7 +183,7 @@ def probe_commit(repo: Path, sha: str) -> Outcome:
                 else:
                     git(wt, "checkout", "-q", f"{sha}^", "--", change.path)
             good, line = _expect_red(_run(runner, wt, tests, logs / f"{sha7}-revert.log"),
-                                     sha7, f"revert of {len(main)} main file(s)")
+                                     sha7, f"revert of {len(main)} main file(s)", tests)
             ok &= good
             lines.append(line)
             _reset(wt, sha)
@@ -198,7 +202,7 @@ def probe_commit(repo: Path, sha: str) -> Outcome:
                 target.write_text(text.replace(mutation.old, mutation.new), encoding="utf-8")
                 good, line = _expect_red(
                     _run(runner, wt, tests, logs / f"{sha7}-mutation{n}.log"),
-                    sha7, f"mutation {mutation.label()}")
+                    sha7, f"mutation {mutation.label()}", tests)
                 ok &= good
                 lines.append(line)
                 _reset(wt, sha)

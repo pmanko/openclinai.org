@@ -98,6 +98,9 @@ def settle(findings: list[dict]) -> list[dict]:
 
 def run_role(args, role: str, workdir: Path, prompt: str, out: Path) -> str:
     prompt_file = out.with_suffix(".prompt.md")
+    if role != "fixer":
+        prompt += ("\nYour final message is saved as your answer: do not write it to a file, and "
+                   "leave the repository as you found it.\n")
     prompt_file.write_text(prompt)
     rc = subprocess.run([str(BIN / "role.sh"), args.agent, role, str(workdir),
                          str(prompt_file), str(out)]).returncode

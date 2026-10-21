@@ -175,3 +175,12 @@ def test_a_well_formed_commit_passes_the_guards(project):
                     'Fine\n\nTests: tests/test_calc.py::test_inside\n'
                     'Mutation: calc.py "max(low, " -> "("')
     assert result.returncode == 0, result.stderr
+
+
+def test_the_red_line_quotes_a_failure_of_a_named_test_first():
+    sys.path.insert(0, str(ROOT / "review" / "lib"))
+    from reviewkit.probes import Run, _first
+
+    run = Run(1, 5, ["OtherTest.old:12 expected 1", "PagingTest.slices:30 expected [R]"], Path("log"))
+    assert _first(run, ["PagingTest#slices"]).startswith("PagingTest.slices")
+    assert _first(run, ["tests/test_x.py::missing"]).startswith("OtherTest.old")

@@ -44,3 +44,18 @@ scored the same stack at 0.761 with its own runner and the module's scorer, so t
 path reproduces it. The run step brought the parity taps up and restored the module's three
 `chartsearchai.llm.*` properties and the Hub's engine afterwards. No gate is signed yet; the
 owner sets the threshold.
+
+## Live runs of the remaining roles
+
+| Run | Result |
+| --- | --- |
+| `make review PR=86 REPO=querystore EFFORT=low STACK=1` | The stack was found from the open PRs' heads (#85 to #88) and the reviewer read the merged top 9a25d89. One blocking finding: the panel-completion tests only make the group parent the hit; it mutated the member check in `completePanelFamilies` and the api and omod suites stayed green. The maintainer raised the same gap on #86 with the same mutation |
+| `role.sh codex reviewer` on a fixed prompt | Answered with the JSON contract in 6 s |
+| `role.sh gemini reviewer` on a fixed prompt | Refused at sign-in: the Gemini CLI no longer serves the free individual tier. The Gemini runner is unproven until a supported account is configured |
+| `make review-replies PR=85 REPO=querystore` | Drafted replies for the two fixed threads with the commit, test and the ledger's red and green lines, and listed the three unanswered threads it had nothing for. Nothing posted |
+
+The reply run exposed three defects, fixed in the same change: roles were not told their
+final message is the saved answer; a red line could quote another test than the one the
+commit names; the Maven runner counted its "resume with" hint as a failure, so earlier
+ledger lines read "2 of 1 failed". `probe --force` re-probed the two #85 commits with the
+corrected runner.
