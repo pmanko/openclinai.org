@@ -257,17 +257,21 @@ Evidence: the inventory in `specs/reviews/2026-10-21-maintainer-round-on-the-sta
 reviewer read the files, reported only what it could reproduce as blocking, had no prior
 threads and no consumer checkout, and ran once.
 
-- [ ] Breadth before depth, and every non-blocking item returned as a question with a
-      one-line suggestion: the reviewer brief's steps 2 and 5 and its "what counts".
-- [ ] Carried threads: `threads.py` attaches the replaced PR's threads under
-      `previous`; the brief treats an unanswered ask there as open.
-- [ ] The consumer checkout: `review.py` adds the other repository at its stack top
-      and the brief's step 7 checks the two sides of the contract.
-- [ ] The states around the diff: the brief's step 6 names the restart, resume,
-      blank-input, missing-store, cap and recovery cases.
+- [x] Breadth before depth, and every non-blocking item returned as a question with a
+      one-line suggestion: the reviewer brief's steps 2 and 5 and its "what counts"
+      ([record](reviews/2026-10-21-harness-reproduction.md#result)).
+- [x] Carried threads: `threads.py` attaches the replaced PR's threads under
+      `previous`; the brief treats an unanswered ask there as open
+      ([record](reviews/2026-10-21-harness-reproduction.md#reproduced-25)).
+- [x] The consumer checkout: `review.py` adds the other repository at its stack top
+      and the brief's step 7 checks the two sides of the contract
+      ([record](reviews/2026-10-21-harness-reproduction.md#third-run-on-the-missed-cases)).
+- [x] The states around the diff: the brief's step 6 names the restart, resume,
+      blank-input, missing-store, cap and recovery cases
+      ([record](reviews/2026-10-21-harness-reproduction.md#third-run-on-the-missed-cases)).
 - [x] Measured: the changed reviewer run on the same heads with `THREADS_UNTIL` set
-      before the maintainer's round reproduces 25 of his 32 threads; the four brief
-      changes for the misses are in, their re-run pending
+      before the maintainer's round reproduces 25 of his 32 threads, and the third run
+      under the four brief changes 28
       ([record](reviews/2026-10-21-harness-reproduction.md)).
 - [ ] A second run after fixes and after every cascade is part of the procedure in
       `openmrs-contribution.md`.

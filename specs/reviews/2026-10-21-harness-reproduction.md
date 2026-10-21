@@ -70,4 +70,21 @@ These are not scored here and go to the owner with the fixes.
 
 ## Third run on the missed cases
 
-Pending.
+The same command on QueryStore #94, #95, #97 and #98 under the changed brief, run serially
+between 10:05 and 11:20 on the same heads (outputs in `work/review/querystore-<pr>/`, log
+`work/review/codex-round3-missed-cases.log`).
+
+| Missed thread | Third run |
+| --- | --- |
+| #95 blank `patient` runs a cross-patient search | reproduced, blocking, with an HTTP probe (`BLANK_PATIENT status=200 records=record-patient-A,record-patient-B`) |
+| #97 medication cues | reproduced as a question, from the router's lines 34 to 37 and its Decision 180 |
+| #98 hits past the cap take a slot | reproduced as a question against Decision 3's new sentence, with a limit-1 reproduction |
+| #97 `at last` idiom | missed again: the reviewer diffed the cue families and not the idiom list, which the router has no counterpart of |
+| #94 the dropped ADR sentence | missed again: the carried #90 ask was read as done, and the dropped sentence is not in the ask's text |
+
+With the third run, 28 of the 32 threads are reproduced (QueryStore 18 of 20, frontend 10
+of 12); the four left are the two above and the two frontend items of taste. The third run
+also raised, beyond the second, on #98 the similarity-limit multiplication overflowing at
+`Integer.MAX_VALUE / 3` and the newest-record promise holding only within the fetched
+candidates, and on #95 a `PatientRecordEndpointTest` assertion that watches the legacy
+read method; these go to the owner with the rest.
