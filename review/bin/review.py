@@ -375,7 +375,13 @@ def main() -> int:
     ap.add_argument("--checkout", help="a checkout other than the umbrella's for --repo")
     ap.add_argument("--threads-until", help="ISO instant: review the PR as it stood then")
     ap.add_argument("--no-consumer", action="store_true", help="omit the other repository's checkout")
+    ap.add_argument("--head", help="review this local ref instead of the PR's pushed head (review before the push)")
+    ap.add_argument("--base", help="with --head: the local ref of the layer below, instead of the remote base branch")
     args = ap.parse_args()
+    if args.base and not args.head:
+        ap.error("--base needs --head")
+    if args.head and args.stack:
+        ap.error("--head reviews one local layer; --stack reads the pushed stack")
     if args.measure:
         return measure(args.measure, args.gold)
     if args.full and not args.pr:
@@ -405,11 +411,15 @@ def main() -> int:
         return 0
 
     for k in range(1, 0 if args.no_review else args.rounds + 1):
-        head = fetch_pr(checkout, remote, args.pr)
+        # A local head is the round before the push: the PR's threads and body still apply, the
+        # code under review is the checkout's own ref, and the base is the local layer below.
+        head = (git(checkout, "rev-parse", "--verify", f"{args.head}^{{commit}}").strip() if args.head
+                else fetch_pr(checkout, remote, args.pr))
+        base = args.base if args.base else f"{remote}/{meta['base']}"
         wt = work_dir() / "wt-review" / args.repo
         brief = (BRIEFS / "reviewer.md").read_text()
-        inputs = [f"- Repository checkout at the PR head {head}: {wt}",
-                  f"- Base: {remote}/{meta['base']}", f"- Threads and ticket: {threads}",
+        inputs = [f"- Repository checkout at the {'local, not yet pushed' if args.head else 'PR'} head {head}: {wt}",
+                  f"- Base: {base}", f"- Threads and ticket: {threads}",
                   f"- Effort: {args.effort}" + (" (from round 2 on, blocking findings only)"
                                                if k > 1 else "")]
         previous = out_dir / f"findings-{k - 1}.json"

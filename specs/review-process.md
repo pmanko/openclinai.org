@@ -46,7 +46,10 @@ agent runs it. What the maintainer's process is, and where ours fell short on th
 
 L0 and L1 are the default on every push. L2 to L5 run through `make review`. L0 to L2
 answer whether the code is right, L3 and L4 whether a change behaves or retrieves as
-claimed, L5 how the assembled stack performs. L5 is never a merge gate for one PR; its
+claimed, L5 how the assembled stack performs. L2 runs on the local head of a round
+(`HEAD=` and `BASE=` name the layer and the layer below in the checkout) before the round
+is pushed, so what it finds is fixed or declined locally and does not become a thread
+upstream; the PR's threads and body still feed it, and `STACK=1` stays for pushed stacks. L5 is never a merge gate for one PR; its
 report is the validation thread's output and feeds publication.
 
 ## Parameters
@@ -55,6 +58,7 @@ report is the validation thread's output and feeds publication.
 make review PR=<n> [REPO=chartsearchai|esm|querystore] [AGENT=claude|codex|gemini|human]
             [EFFORT=low|medium|high] [ROUNDS=1] [STACK=1] [SCENARIOS=<set>] [GATE=<name>]
             [FULL=1] [SET=full-default] [PROFILES=<advertised Hub profiles>] [BASELINE=<run id>]
+            [HEAD=<local ref> BASE=<local ref>]  review the layer before it is pushed
 make review MEASURE=<set> GOLD=<gold file>      a gate's baseline, before the gate is written
 make review FULL=1 [SET=] [PROFILES=]           the full evaluation without a PR
 make review-replies PR=<n> [REPO=]              draft thread replies from the last round
