@@ -113,6 +113,24 @@ dated records and no longer listed here.
       ([record](reviews/2026-10-21-stack-cutover.md#fresh-reviewer-round)).
 - [ ] Post the bot-thread replies drafted in `work/review/greptile-replies.md` on the
       owner's approval.
+- [ ] Remediate the maintainer's 21 October round and our own breadth round, in this
+      order, each fix in its owning layer with a fail-first test, one cascade per stack,
+      the reviewer run again on the fixed heads before the push, replies drafted
+      (inventory: `specs/reviews/2026-10-21-maintainer-round-on-the-stacks.md`;
+      measurement: [record](reviews/2026-10-21-harness-reproduction.md)):
+  - [ ] QueryStore first. The five blocking threads (#94 skip only on a COMPLETED row;
+        #95 the per-patient walk filters stored records and a blank `patient` is a 400;
+        #97 the `at last` idiom and the medication cues mirrored on ChartSearchAI's
+        router and Decision 180), his three tests, five doc fixes and seven code changes
+        including `withheldTypes`; from our round the `numCandidates` cap and
+        "patient-reported", with the projector fallback timestamp, the Lucene skipped-index
+        race and the bulk-delete accounting verified before they are taken on. Then the
+        restack onto main, the backend pin, and Daniel's re-review.
+  - [ ] Frontend: ten of his twelve (live links and a comment line break are taste), plus
+        the footnote citation, the unrefreshed provider, the safety notice lost on reload
+        and the pending New chat surviving logout, verified first.
+  - [ ] Backend: the new-brief reviewer on #615 to #623 before the maintainer's first
+        pass, and its findings fixed.
 - [ ] Owner decision: backend #623 carries the account snapshot on the turn, to the Hub
       and onto the stored answer, but bundled inference does not read it. Narrow the
       description to that, or add the snapshot to the bundled prompt as its own layer.
