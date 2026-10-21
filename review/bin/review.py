@@ -26,6 +26,9 @@ BIN = UMBRELLA / "review" / "bin"
 BRIEFS = UMBRELLA / "review" / "briefs"
 REPOS = {"chartsearchai": "targets/chartsearchai", "esm": "targets/chartsearchai-esm",
          "querystore": "targets/querystore"}
+# The repository on the other side of each one's contract, checked out at the umbrella's
+# gitlink (the stack top) so a reviewer can read what the consumer sends and expects.
+CONSUMERS = {"querystore": "chartsearchai", "chartsearchai": "querystore", "esm": "chartsearchai"}
 OPENMRS = re.compile(r"github\.com[:/]+(openmrs/[^/\s]+?)(\.git)?$")
 
 
@@ -370,6 +373,8 @@ def main() -> int:
     ap.add_argument("--measure", help="run a set on the deployed stack and score it against --gold")
     ap.add_argument("--gold", help="gold file under the harness's datasets/validation/")
     ap.add_argument("--checkout", help="a checkout other than the umbrella's for --repo")
+    ap.add_argument("--threads-until", help="ISO instant: review the PR as it stood then")
+    ap.add_argument("--no-consumer", action="store_true", help="omit the other repository's checkout")
     args = ap.parse_args()
     if args.measure:
         return measure(args.measure, args.gold)
@@ -383,7 +388,8 @@ def main() -> int:
     out_dir = work_dir() / f"{args.repo}-{args.pr}"
     out_dir.mkdir(parents=True, exist_ok=True)
     threads = out_dir / "threads.json"
-    subprocess.run([str(BIN / "threads.py"), slug, str(args.pr), str(threads)], check=True)
+    subprocess.run([str(BIN / "threads.py"), slug, str(args.pr), str(threads)]
+                   + (["--until", args.threads_until] if args.threads_until else []), check=True)
     meta = json.loads(threads.read_text())
 
     if args.replies:
@@ -418,6 +424,13 @@ def main() -> int:
                           f"{target[:7]}):\n" + "\n".join(
                               f"  - #{l['number']} {l['title']} ({l['head'][:7]})" for l in layers))
         worktree(checkout, wt, target)
+        consumer = None if args.no_consumer else CONSUMERS.get(args.repo)
+        if consumer:
+            consumer_checkout = UMBRELLA / REPOS[consumer]
+            consumer_sha = git(consumer_checkout, "rev-parse", "HEAD").strip()
+            consumer_wt = worktree(consumer_checkout, work_dir() / "wt-consumer" / consumer, consumer_sha)
+            inputs.append(f"- Consumer repository ({consumer}) at its stack top {consumer_sha[:7]}, read-only: "
+                          f"{consumer_wt}")
         answer = run_role(args, "reviewer", wt, brief + "\n## Inputs\n\n" + "\n".join(inputs) + "\n",
                           out_dir / f"reviewer-{k}.md")
         data = last_json(answer)

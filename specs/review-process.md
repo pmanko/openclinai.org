@@ -250,6 +250,26 @@ and a person at a terminal.
 - [x] `openmrs-contribution.md` review-round rules point here instead of restating them
       ([the contribution spec's round rules](openmrs-contribution.md)).
 
+## Gaps the maintainer's 21 October round showed
+
+Evidence: the inventory in `specs/reviews/2026-10-21-maintainer-round-on-the-stacks.md`
+(on the remediation branch, PR #19). The
+reviewer read the files, reported only what it could reproduce as blocking, had no prior
+threads and no consumer checkout, and ran once.
+
+- [ ] Breadth before depth, and every non-blocking item returned as a question with a
+      one-line suggestion: the reviewer brief's steps 2 and 5 and its "what counts".
+- [ ] Carried threads: `threads.py` attaches the replaced PR's threads under
+      `previous`; the brief treats an unanswered ask there as open.
+- [ ] The consumer checkout: `review.py` adds the other repository at its stack top
+      and the brief's step 7 checks the two sides of the contract.
+- [ ] The states around the diff: the brief's step 6 names the restart, resume,
+      blank-input, missing-store, cap and recovery cases.
+- [ ] Measured: the changed reviewer run on the same heads with `THREADS_UNTIL` set
+      before the maintainer's round, scored against the inventory in a dated record.
+- [ ] A second run after fixes and after every cascade is part of the procedure in
+      `openmrs-contribution.md`.
+
 ## Decisions taken 20 October
 
 - Pre-push probes block; pre-commit keeps only the fast static guards.

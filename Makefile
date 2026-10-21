@@ -401,7 +401,8 @@ REVIEW_ARGS = $(if $(PR),--pr $(PR)) $(if $(REPO),--repo $(REPO)) $(if $(AGENT),
 	$(if $(GATE),--gate $(GATE)) $(if $(GATE_BASE),--gate-base $(GATE_BASE)) \
 	$(if $(FULL),--full $(if $(filter command line,$(origin SET)),--set $(SET))) \
 	$(if $(PROFILES),--profiles $(PROFILES)) $(if $(BASELINE),--baseline $(BASELINE)) \
-	$(if $(MEASURE),--measure $(MEASURE) --gold $(GOLD))
+	$(if $(MEASURE),--measure $(MEASURE) --gold $(GOLD)) \
+	$(if $(THREADS_UNTIL),--threads-until $(THREADS_UNTIL)) $(if $(NO_CONSUMER),--no-consumer)
 
 review:
 	review/bin/review.py $(REVIEW_ARGS)
