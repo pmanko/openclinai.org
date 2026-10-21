@@ -125,12 +125,13 @@ def test_a_patch_already_probed_is_not_probed_again_after_a_rebase(project):
     assert "same patch as" in result.stderr
 
 
-def test_pushes_to_openmrs_the_default_branch_or_over_unseen_work_are_refused(project, tmp_path):
+def test_pushes_to_a_default_branch_or_over_unseen_work_are_refused(project, tmp_path):
     commit(project, {"tests/test_calc.py": FIXED_TEST}, "More tests")
     openmrs = tmp_path / "github.com" / "openmrs" / "calc.git"
-    git(tmp_path, "init", "-q", "--bare", str(openmrs))
+    git(tmp_path, "init", "-q", "--bare", "-b", "main", str(openmrs))
     git(project, "remote", "add", "upstream", str(openmrs))
-    assert "OpenMRS organisation" in git(project, "push", "upstream", "HEAD:fix", check=False).stderr
+    assert git(project, "push", "upstream", "HEAD:fix", check=False).returncode == 0
+    assert "default branch" in git(project, "push", "upstream", "HEAD:main", check=False).stderr
     assert "default branch" in git(project, "push", "origin", "HEAD:main", check=False).stderr
 
     assert push(project).returncode == 0

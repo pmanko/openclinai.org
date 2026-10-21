@@ -14,7 +14,7 @@ probed. Remove with `git -C <checkout> config --unset core.hooksPath`.
 | --- | --- |
 | pre-commit | a likely secret; a focused or disabled test; a new test file with tests and no assertion. Prints narrative comments and a test that mocks its own unit |
 | commit-msg | a malformed `Tests:`, `Mutation:` or `Probe:` trailer, or one outside the final trailer paragraph |
-| pre-push, component | a push to an `github.com/openmrs/` remote; a push to the fork's default branch; a non-fast-forward over remote commits you have not fetched; a pushed commit that changes main code and fails its probe |
+| pre-push, component | a push to any remote's default branch; a non-fast-forward over remote commits you have not fetched; a pushed commit that changes main code and fails its probe |
 | pre-push, umbrella | the umbrella's unit tests or `scripts/check_workspace.py` failing |
 
 ## Probes

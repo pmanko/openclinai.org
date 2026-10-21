@@ -174,7 +174,7 @@ through `core.hooksPath`. Plain shell and Python; no agent involved.
 | --- | --- | --- | --- |
 | pre-commit | all | a likely secret; a focused or disabled test; a new test file with no assertion | a mocked unit under test; narrative comments |
 | commit-msg | all | trailer syntax, or a trailer outside the final paragraph | |
-| pre-push | components | a push to any `openmrs/` remote; a push to the fork's default branch; a non-fast-forward over remote commits not yet fetched; a probed commit whose tests stay green under revert or mutation; a main-code commit with no tests, no `Tests:` and no `Probe: skip` | the red and green lines, into the ledger |
+| pre-push | components | a push to any remote's default branch; a non-fast-forward over remote commits not yet fetched; a probed commit whose tests stay green under revert or mutation; a main-code commit with no tests, no `Tests:` and no `Probe: skip` | the red and green lines, into the ledger |
 | pre-push | umbrella | `python3 -m unittest` or `check_workspace.py` failing | |
 
 The existing agent-side guards (`claude-code-guards`, PreToolUse on Bash) stay for the

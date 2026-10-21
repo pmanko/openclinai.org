@@ -47,9 +47,6 @@ def _default_branch(repo: Path, remote: str) -> str:
 
 
 def pre_push(repo: Path, remote: str, url: str, updates: list[str]) -> int:
-    if OPENMRS_URL.search(url):
-        _say(f"push refused: {url} is an OpenMRS organisation repository; push to the fork")
-        return 1
     if _is_umbrella(repo):
         for cmd in (["python3", "-m", "unittest", "discover", "-s", "tests"],
                     ["python3", "scripts/check_workspace.py"]):
@@ -68,7 +65,7 @@ def pre_push(repo: Path, remote: str, url: str, updates: list[str]) -> int:
             continue
         branch = remote_ref.removeprefix("refs/heads/")
         if branch == _default_branch(repo, remote):
-            refused.append(f"{remote_ref}: never push the fork's default branch")
+            refused.append(f"{remote_ref}: never push a repository's default branch; open a PR")
             continue
         if remote_sha != ZERO and not git_ok(repo, "merge-base", "--is-ancestor",
                                              remote_sha, local_sha):
