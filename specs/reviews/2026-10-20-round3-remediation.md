@@ -58,6 +58,30 @@ and 2606 one of two in both; patient 3666 one of one in both. Patient 39's heart
 the same five drugs, and the second cites one order per drug instead of every repeat. One
 capture per cell; the temporal probe was not re-run.
 
+## Replies
+
+Fifteen thread replies and one top-level comment on ChartSearchAI #590 are drafted in
+`work/review/round3-replies.md`, collated from `make review-replies` per PR. Every heading URL
+was checked against the PR's threads; one draft carried a mistyped discussion id, corrected by
+hand. The top-level comment corrects the 20 October review request on #590, which was posted
+before the maintainer's comments of that evening had been read.
+
+## Defects the round found in the tooling
+
+Each was fixed on the review-process branch with a behaviour test where one applies:
+
+- a fresh reviewer ran `mvn install` on QueryStore #85 and replaced the shared Maven cache's
+  `querystore-api`, so the ChartSearchAI stack stopped compiling; the reviewer and fixer briefs
+  now forbid it, and the pinned QueryStore was reinstalled;
+- the pre-push lease check compared against tracking refs a fork checkout never updates (its
+  fetch refspec covers only `main`) and refused a restack over heads it had pushed; a remote
+  head in the branch's own reflog now counts as seen;
+- the Maven runner counted its "resume with" hint as a failure, and a red line could quote a
+  test the commit does not name;
+- an empty `REVIEW_WORK` resolved to the current directory and put a probe worktree inside the
+  QueryStore checkout, since removed;
+- the reply step did not fetch the PR head it names.
+
 ## Not done
 
 - The non-blocking threads of the round, for the remediation PR on top of each stack.
