@@ -243,7 +243,8 @@ and a person at a terminal.
       setup and property restore in the run step; the report recorded under `reviews/`.
 - [ ] Applied to the open round: the twelve blocking findings fixed under L0 to L2 with
       probes and replies from the ledger; recorded under `reviews/`.
-- [ ] `openmrs-contribution.md` review-round rules point here instead of restating them.
+- [x] `openmrs-contribution.md` review-round rules point here instead of restating them
+      ([the contribution spec's round rules](openmrs-contribution.md)).
 
 ## Decisions taken 20 October
 
