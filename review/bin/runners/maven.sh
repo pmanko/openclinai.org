@@ -8,7 +8,8 @@ rc=$?
 ran=$(grep -E '^\[(INFO|WARNING|ERROR)\] Tests run: [0-9]+, Failures: [0-9]+, Errors: [0-9]+, Skipped: [0-9]+$' "$log" \
   | awk -F'[:,]' '{n += $2 - $8} END {print n + 0}')
 echo "RAN $ran"
-grep -E '^\[ERROR\]   [A-Za-z]' "$log" | sed 's/^\[ERROR\]   /FAILED /' | head -20
+fails='^\[ERROR\]   [A-Z][A-Za-z0-9_$]*\.[A-Za-z0-9_$]+'
+grep -E "$fails" "$log" | sed 's/^\[ERROR\]   /FAILED /' | head -20
 if [ $rc -eq 0 ]; then [ "$ran" -gt 0 ] && exit 0 || exit 3; fi
-grep -qE '^\[ERROR\]   [A-Za-z]' "$log" && exit 1
+grep -qE "$fails" "$log" && exit 1
 exit 2
