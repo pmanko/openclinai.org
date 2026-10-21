@@ -91,3 +91,4 @@ authorized by any item here; each thread spec names its signoffs.
 - [20 October Track A independent review and fixes](reviews/2026-10-20-track-a-review-round.md)
 - [20 October QueryStore #88 retrieval diversity evaluation](reviews/2026-10-20-querystore-88-retrieval-diversity.md)
 - [21 October cutover to gh-stack stacks on the OpenMRS repositories](reviews/2026-10-21-stack-cutover.md)
+- [21 October maintainer round on the new stacks: inventory and harness gaps](reviews/2026-10-21-maintainer-round-on-the-stacks.md)
