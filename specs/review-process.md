@@ -187,9 +187,11 @@ and a person at a terminal.
   checkable: records that must be cited or present in the context, abstention, a refusal.
   Today the harness's expectations are notes for a human adjudicator; adding checkable
   expectations is a harness change in its own repository under its constitution.
-- The maintainer's cohort (chartsearchai `eval/drift-metric/` gold files) and his
-  citation-F1 scorer become an optional dataset and scoring path in the harness, beside
-  our five-chart cohort. `work/eval-88/` retires into that.
+- The harness scores citations with the maintainer's drift-metric cell rule
+  (`validate score-citations`) against a gold file; the October five-patient cohort is
+  its dataset (`context-cohort`). The maintainer's own gold covers four patients that are
+  not in the HIV dataset, so it is not imported; the scorer reads its format if those
+  patients are ever loaded. `work/eval-88/` is superseded by this path.
 - A gate file is written before the run: comparison set, dataset, baseline run id and
   number, threshold, date, who signed off. A threshold set after seeing the number is not
   a gate. The result goes in a dated record under `reviews/`.
@@ -236,8 +238,9 @@ and a person at a terminal.
 - [x] Deployed-head scenarios: `deploy-head.sh`; harness checkable expectations (harness
       PR); a `review-smoke` comparison set; `SCENARIOS=`
       ([record](reviews/2026-10-20-review-layers.md)).
-- [ ] Gates: the cohort and the maintainer's gold as harness datasets, the citation
-      scorer path, `review/gates/`, `GATE=`; `work/eval-88/` retired.
+- [ ] Gates: the October cohort as a harness dataset, the citation scorer path,
+      `review/gates/`, `MEASURE=`, `GATE=`; the cohort's harness baseline replaces
+      `work/eval-88/`; the first gate signed by the owner and run.
 - [ ] Full evaluation: the `full-default` comparison set in the harness, `FULL=`,
       `SET=`, `PROFILES=` from the Hub's advertised profiles, optional `BASELINE=`; tap
       setup and property restore in the run step; the report recorded under `reviews/`.
