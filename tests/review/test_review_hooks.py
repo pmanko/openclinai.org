@@ -142,7 +142,7 @@ def test_pushes_to_openmrs_the_default_branch_or_over_unseen_work_are_refused(pr
     git(other, "push", "-q", "--no-verify", "origin", "fix")
     git(project, "commit", "-q", "--amend", "-m", "More tests, reworded")
     refused = git(project, "push", "--force", "origin", "HEAD:fix", check=False)
-    assert refused.returncode != 0 and "remote moved" in refused.stderr
+    assert refused.returncode != 0 and "fetch and look" in refused.stderr
 
 
 def test_commits_already_pushed_are_recorded_as_baseline_and_skipped(project):
@@ -184,3 +184,13 @@ def test_the_red_line_quotes_a_failure_of_a_named_test_first():
     run = Run(1, 5, ["OtherTest.old:12 expected 1", "PagingTest.slices:30 expected [R]"], Path("log"))
     assert _first(run, ["PagingTest#slices"]).startswith("PagingTest.slices")
     assert _first(run, ["tests/test_x.py::missing"]).startswith("OtherTest.old")
+
+
+def test_a_rewrite_over_a_head_this_branch_pushed_is_allowed_when_fetch_skips_the_branch(project):
+    commit(project, {"tests/test_calc.py": FIXED_TEST}, "More tests")
+    assert push(project).returncode == 0
+    git(project, "config", "--replace-all", "remote.origin.fetch", "+refs/heads/main:refs/remotes/origin/main")
+    git(project, "update-ref", "-d", "refs/remotes/origin/fix")
+    git(project, "commit", "-q", "--amend", "-m", "More tests, reworded")
+    result = push(project, "--force")
+    assert result.returncode == 0, result.stderr

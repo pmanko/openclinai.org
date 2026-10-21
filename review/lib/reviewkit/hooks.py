@@ -74,9 +74,11 @@ def pre_push(repo: Path, remote: str, url: str, updates: list[str]) -> int:
                                              remote_sha, local_sha):
             tracking = git(repo, "rev-parse", "-q", "--verify",
                            f"refs/remotes/{remote}/{branch}", check=False).strip()
-            if tracking != remote_sha:
-                refused.append(f"{remote_ref}: the remote moved to {remote_sha[:7]} since "
-                               "your last fetch; fetch and look before overwriting it")
+            seen = git(repo, "reflog", "show", "--format=%H", local_ref, check=False).split()
+            if tracking != remote_sha and remote_sha not in seen:
+                refused.append(f"{remote_ref}: the remote is at {remote_sha[:7]}, which neither your "
+                               "last fetch nor this branch's history has; fetch and look before "
+                               "overwriting it")
                 continue
         revs = git(repo, "rev-list", "--no-merges", "--reverse", local_sha,
                    "--not", "--remotes").split()
