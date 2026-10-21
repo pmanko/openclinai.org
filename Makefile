@@ -10,7 +10,7 @@ CORPUS_PROVENANCE ?= $(wildcard $(CURDIR)/artifacts/chartsearchai-local/corpus-p
 UV_PROJECT_ENVIRONMENT ?= $(CURDIR)/$(HARNESS)/.venv
 export UV_PROJECT_ENVIRONMENT
 
-.PHONY: review-hooks-install up down local-stack-up local-stack-down reset status logs catalyst-mvp-up catalyst-mvp-external catalyst-mvp-seed catalyst-mvp-warm catalyst-mvp-health catalyst-mvp-restart catalyst-mvp-down catalyst-mvp-reset catalyst-superset-status catalyst-superset-import reset-transform sqlmesh-status loadtest-up loadtest-down dump-loaded chartsearch-build querystore-build openmrs-source-pair-build openmrs-source-pair-test repository-lines-check repository-lines-pr-check deployed-sources-check chartsearch-esm-build chartsearch-esm-dev llama-router-up llama-router-down llama-router-models llama-router-small-model-proof med-agent-hub-build med-agent-hub-up med-agent-hub-logs med-agent-hub-restart med-agent-hub-test chartsearch-test querystore-test querystore-test-integration chartsearch-configure querystore-configure querystore-reindex querystore-recreate-index chartsearch-backend chartsearch-doctor seed validate-preflight validate-run load-test orphan-fk-check import-smoke completeness-check test
+.PHONY: review review-replies review-hooks-install up down local-stack-up local-stack-down reset status logs catalyst-mvp-up catalyst-mvp-external catalyst-mvp-seed catalyst-mvp-warm catalyst-mvp-health catalyst-mvp-restart catalyst-mvp-down catalyst-mvp-reset catalyst-superset-status catalyst-superset-import reset-transform sqlmesh-status loadtest-up loadtest-down dump-loaded chartsearch-build querystore-build openmrs-source-pair-build openmrs-source-pair-test repository-lines-check repository-lines-pr-check deployed-sources-check chartsearch-esm-build chartsearch-esm-dev llama-router-up llama-router-down llama-router-models llama-router-small-model-proof med-agent-hub-build med-agent-hub-up med-agent-hub-logs med-agent-hub-restart med-agent-hub-test chartsearch-test querystore-test querystore-test-integration chartsearch-configure querystore-configure querystore-reindex querystore-recreate-index chartsearch-backend chartsearch-doctor seed validate-preflight validate-run load-test orphan-fk-check import-smoke completeness-check test
 
 # --- compose lifecycle ---
 up:
@@ -351,7 +351,7 @@ RESUME ?=
 validate-run:
 	HUB_ANCHOR=$(REFERENCE_DATE) $(MAKE) med-agent-hub-up
 	$(UV) --directory $(HARNESS) run harness-cli validate run $(SET) --reference-date $(REFERENCE_DATE) \
-		--trace-file "$(TRACE_FILE)" \
+		--trace-file "$(TRACE_FILE)" $(if $(VALIDATE_DATA_ROOT),--data-root "$(VALIDATE_DATA_ROOT)") \
 		$(if $(CORPUS_PROVENANCE),--corpus-provenance "$(CORPUS_PROVENANCE)",) \
 		$(if $(RESUME),--resume "$(abspath $(RESUME))",)
 
@@ -394,3 +394,17 @@ review-hooks-install:
 	  git -C $$d config core.hooksPath $(CURDIR)/review/hooks && echo "$$d: hooks from review/hooks"; \
 	  [ "$$d" = . ] || review/bin/probe --repo $$d --baseline; \
 	done
+
+REVIEW_ARGS = $(if $(PR),--pr $(PR)) $(if $(REPO),--repo $(REPO)) $(if $(AGENT),--agent $(AGENT)) \
+	$(if $(EFFORT),--effort $(EFFORT)) $(if $(ROUNDS),--rounds $(ROUNDS)) $(if $(STACK),--stack) \
+	$(if $(SCENARIOS),--scenarios $(SCENARIOS)) $(if $(NO_REVIEW),--no-review) \
+	$(if $(GATE),--gate $(GATE)) $(if $(GATE_BASE),--gate-base $(GATE_BASE)) \
+	$(if $(FULL),--full $(if $(filter command line,$(origin SET)),--set $(SET))) \
+	$(if $(PROFILES),--profiles $(PROFILES)) $(if $(BASELINE),--baseline $(BASELINE)) \
+	$(if $(MEASURE),--measure $(MEASURE) --gold $(GOLD))
+
+review:
+	review/bin/review.py $(REVIEW_ARGS)
+
+review-replies:
+	review/bin/review.py $(REVIEW_ARGS) --replies

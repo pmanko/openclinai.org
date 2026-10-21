@@ -55,6 +55,9 @@ report is the validation thread's output and feeds publication.
 make review PR=<n> [REPO=chartsearchai|esm|querystore] [AGENT=claude|codex|gemini|human]
             [EFFORT=low|medium|high] [ROUNDS=1] [STACK=1] [SCENARIOS=<set>] [GATE=<name>]
             [FULL=1] [SET=full-default] [PROFILES=<advertised Hub profiles>] [BASELINE=<run id>]
+make review MEASURE=<set> GOLD=<gold file>      a gate's baseline, before the gate is written
+make review FULL=1 [SET=] [PROFILES=]           the full evaluation without a PR
+make review-replies PR=<n> [REPO=]              draft thread replies from the last round
 ```
 
 | Effort | Sweep |
@@ -86,6 +89,7 @@ review/
     reply.md             what changed, commit, test, red and green lines, no longer than
                          the comment answered, no thanks, no acknowledgment of a fix
     stack.md             the cross-layer dimension for STACK=1
+    judge.md             the harness rubric, for FULL=1
   bin/
     threads.py           open threads per PR into work/review/<repo>-<pr>/threads.json
     probe                [--repo] <commit>...: revert the main files, expect red; restore,
@@ -95,12 +99,14 @@ review/
     runners/             maven.sh, vitest.sh, pytest.sh: run the named tests, report RAN and
                          FAILED lines, exit 0 pass, 1 fail, 2 build error, 3 none ran
   lib/reviewkit/         the hooks, guards, probes and ledger in Python
-    role.sh              --agent --role --pr --effort: starts a fresh session with the
-                         brief and the inputs, collects the JSON
+    threads.py           the PR, its tickets and every thread into threads.json
+    role.sh              <agent> <role> <workdir> <prompt> <out>: one fresh session of
+                         claude, codex or gemini (or instructions for a person)
     deploy-head.sh       build the PR head, deploy to the local stack, check the loaded
                          class hash against the build, print the module version
-    review.py            drives `make review`: threads, role runs, probes, scenarios,
-                         gate, the round record
+    review.py            drives `make review`: threads, rounds, scenarios, MEASURE, gates,
+                         the full evaluation, and the shared run step (parity taps up,
+                         chartsearchai.llm.* settings and the Hub restored as found)
   hooks/
     pre-commit, commit-msg, pre-push   plain git hooks; installed per checkout by
                                        `make review-hooks-install`
@@ -224,11 +230,12 @@ and a person at a terminal.
       `make review-hooks-install`; behaviour tests on a pytest fixture project under
       `tests/review/`; installed in the three component checkouts and the umbrella
       ([record](reviews/2026-10-20-review-hooks-and-probes.md)).
-- [ ] Threads, briefs and roles: `threads.py`, the four briefs, `role.sh` for claude,
+- [x] Threads, briefs and roles: `threads.py`, the four briefs, `role.sh` for claude,
       codex, gemini and human, `review.py` and `make review` with `EFFORT`, `ROUNDS`,
-      `STACK`.
-- [ ] Deployed-head scenarios: `deploy-head.sh`; harness checkable expectations (harness
-      PR); a `review-smoke` comparison set; `SCENARIOS=`.
+      `STACK` ([record](reviews/2026-10-20-review-layers.md)).
+- [x] Deployed-head scenarios: `deploy-head.sh`; harness checkable expectations (harness
+      PR); a `review-smoke` comparison set; `SCENARIOS=`
+      ([record](reviews/2026-10-20-review-layers.md)).
 - [ ] Gates: the cohort and the maintainer's gold as harness datasets, the citation
       scorer path, `review/gates/`, `GATE=`; `work/eval-88/` retired.
 - [ ] Full evaluation: the `full-default` comparison set in the harness, `FULL=`,
