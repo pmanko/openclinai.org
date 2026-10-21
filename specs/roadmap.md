@@ -12,11 +12,11 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 
 | Thread | Spec | State | Next |
 | --- | --- | --- | --- |
-| Local HIV research environment | [local-hiv-environment.md](local-hiv-environment.md) | Setup and reset restore the published default baseline in about 5 minutes; Ross's fresh install passed; account context reaches the model | Docker-only prerequisites |
-| Provider parity and local inference efficiency | [provider-parity.md](provider-parity.md) | Hub checked answers take 5–8 minutes here and about 20 on Ross's machine, against 42 s for ChartSearchAI's built-in provider; causes identified, nothing fixed yet | Measured baseline, then configuration fixes |
-| OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | Thirteen PRs restacked and checked, plus the account-context slice; QueryStore #68 open; #587 finding open | Dispositions for #587 and the #68 split request |
+| Local HIV research environment | [local-hiv-environment.md](local-hiv-environment.md) | Setup and reset restore the published default baseline in about 5 minutes; Ross's fresh install passed; account context reaches the model; the 18 October module heads need a rebuilt baseline | New default baseline for the 18 October heads; Docker-only prerequisites |
+| Provider parity and local inference efficiency | [provider-parity.md](provider-parity.md) | Hub reads its context once per answer: checked answers take 16–56 s here when the router reuses the chart's temporal facts, 83–204 s when it does not, against 7–51 s built-in | Cross-question reuse; OpenRouter comparison; Ross re-measures |
+| OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | Every PR targets `main` from the fork; the maintainer re-reviewed all heads on 19 October and 73 threads are open, the 39 fixed ones answered on 20 October; QueryStore #68 replaced by #85–#87 | Stages 2 to 4 are fixed, independently reviewed, pushed and answered on 20 October ([record](reviews/2026-10-20-track-a-review-round.md)); next the QueryStore integration run, the #88 retrieval evaluation, fresh setup, then the next review request |
 | Catalyst delivery | [catalyst-delivery.md](catalyst-delivery.md) | Four journeys demonstrated; acceptance open | FP-009 and FP-010 |
-| Website and publication | [website-publication.md](website-publication.md) | Documentation site deploys from `main`; landing deployment pending | Publish the reviewed landing content |
+| Website and publication | [website-publication.md](website-publication.md) | Documentation site deploys from `main`; landing site live from the umbrella's own website proxy since 18 October | Audit item W04 |
 | Decision-layer experiment (Jev, Laya) | [decision-layer-experiment.md](decision-layer-experiment.md) | Proposed; research updated 16 October | Decisions D1–D5 |
 | Clinical knowledge bases | No umbrella spec yet. The Hub ships one static knowledge-base source; the harness holds the [research notes](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/artifacts/planning/clinical-kb-research.md) and [scope](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/artifacts/planning/kb-scope.md) | Exploration | Owner decides whether to scope a thread |
 | Validation methodology | The [harness](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/README.md) and its [evaluation methodology brief](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/artifacts/planning/eval-methodology-brief.md) | Runs experiments against the local stack; the 7 and 10 October reviews are its latest outputs | Serves the other threads' evaluations |
@@ -24,18 +24,18 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 
 ## Current priorities
 
-1. [OpenMRS contribution delivery](openmrs-contribution.md): dispose of the open
-   #587 context-composition finding and the QueryStore #68 split request, then
-   obtain ordinary dependency compatibility and remove the temporary paired CI.
-2. [Provider parity](provider-parity.md): measure both providers on one question
-   set, then close the gap so Hub answers are at least as fast as the built-in
-   provider.
+1. [OpenMRS contribution delivery](openmrs-contribution.md): the
+   [path to mergeable](openmrs-contribution.md#path-to-mergeable), with its seven
+   decisions made on 19 October: the 19 October findings in their owning layers,
+   each with its reply, the Decision 28 evidence and the merge order.
+2. [Provider parity](provider-parity.md): close the remaining gap, the router's
+   reuse of the chart's temporal facts across questions, so Hub answers are at
+   least as fast as the built-in provider.
 3. [Local HIV research environment](local-hiv-environment.md): setup needs only
    Docker and the native model router.
 4. [Catalyst delivery](catalyst-delivery.md): owner acceptance of the four local and
    server journeys and publication verification.
-5. [Website and publication](website-publication.md): deploy the reviewed landing
-   content and close the public findings from the documentation audit.
+5. [Website and publication](website-publication.md): close audit item W04.
 6. [Decision-layer experiment](decision-layer-experiment.md): owner review of the
    proposal.
 
@@ -80,3 +80,10 @@ authorized by any item here; each thread spec names its signoffs.
 - [16 October account context](reviews/2026-10-16-account-context.md)
 - [16 October decision-layer research update](reviews/2026-10-16-decision-layer-research-update.md)
 - [16 October provider parity findings](reviews/2026-10-16-provider-parity-findings.md)
+- [17 October provider parity measurements](reviews/2026-10-17-provider-parity-measurements.md)
+- [18 October Track A upstream sync](reviews/2026-10-18-track-a-upstream-sync.md)
+- [18 October landing publication](reviews/2026-10-18-landing-publication.md)
+- [19 October Track A review revalidation](reviews/2026-10-19-track-a-review-revalidation.md)
+- [20 October Track A end-to-end check on the stack tips](reviews/2026-10-20-track-a-e2e.md)
+- [20 October Track A independent review and fixes](reviews/2026-10-20-track-a-review-round.md)
+- [20 October QueryStore #88 retrieval diversity evaluation](reviews/2026-10-20-querystore-88-retrieval-diversity.md)

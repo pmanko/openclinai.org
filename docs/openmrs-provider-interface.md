@@ -1,7 +1,7 @@
 # OpenMRS provider interface reference
 
 This OpenClinAI reference describes the interfaces used by our integration.
-The [module contract](https://github.com/pmanko/openmrs-module-chartsearchai/blob/ca136063556be2d67dc3b638dc06d12a516f5ff9/README.md#provider-integration-contract)
+The [module contract](https://github.com/pmanko/openmrs-module-chartsearchai/blob/76e70dafd6fabcde7673fc8fe5cb765d640d6093/README.md#provider-integration-contract)
 owns native module behavior. Our cross-project requirements and acceptance live in
 the [OpenMRS contribution spec](../specs/openmrs-contribution.md).
 The [Hub](https://github.com/pmanko/med-agent-hub/blob/main/README.md) owns its native

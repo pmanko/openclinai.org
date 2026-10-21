@@ -29,27 +29,8 @@ if [ "${PUBLISH_MODE}" = "full" ] && [ ! -f "${ROOT}/.env.website" ]; then
   exit 1
 fi
 
-# The published pages are the source of truth for their demo-host assets.
-# Include subpages and nested asset directories so galleries receive the same
-# missing-media protection as the homepage recordings. Extract before any
-# deployment mutation: a page referencing missing media must fail here and
-# leave the currently published page untouched.
-MEDIA_HOST="https://catalyst.openelis-global.org/media/"
-REMOTE_MEDIA_ASSETS=()
-while IFS= read -r asset; do
-  REMOTE_MEDIA_ASSETS+=("${asset}")
-done < <(
-  grep -rhoE --include='*.html' "${MEDIA_HOST}[A-Za-z0-9._/-]+" "${ROOT}/landing/" | sort -u
-)
-if [ "${#REMOTE_MEDIA_ASSETS[@]}" -eq 0 ]; then
-  echo "error: no ${MEDIA_HOST}<asset> references found in landing HTML" >&2
-  exit 1
-fi
-echo "==> verifying ${#REMOTE_MEDIA_ASSETS[@]} demo-host asset(s) referenced by landing HTML"
-for asset in "${REMOTE_MEDIA_ASSETS[@]}"; do
-  curl -fsS --retry 8 --retry-delay 2 --max-time 30 "${asset}" -o /dev/null
-done
-
+# Recordings and screenshots are linked on the Catalyst demo host, which is
+# often stopped; its availability is not a condition for publishing these pages.
 IP="$(gcp_vm_ip)"
 gcp_ssh_keygen_once
 if [ "${PUBLISH_MODE}" = "--landing-only" ]; then
@@ -104,13 +85,5 @@ while IFS= read -r local_page; do
 done < <(find "${ROOT}/landing" -type f \( -name '*.html' -o -name '*.css' -o -name 'sitemap.xml' \) | sort)
 curl -fsS --retry 8 --retry-connrefused --retry-delay 2 --max-time 20 "https://${SITE}/media/openmrs-evidence-poster.png" \
   -o /dev/null
-# Separate post-publish verification: the demo-host assets were already
-# confirmed reachable above, before this deploy touched anything, but the
-# published landing/index.html on the VM is what the pre-publish check read
-# from THIS checkout -- re-check the same list against the now-live page so a
-# transport failure during rsync is not mistaken for success.
-for asset in "${REMOTE_MEDIA_ASSETS[@]}"; do
-  curl -fsS --retry 8 --retry-delay 2 --max-time 30 "${asset}" -o /dev/null
-done
 
 echo "==> published: https://${SITE}/"

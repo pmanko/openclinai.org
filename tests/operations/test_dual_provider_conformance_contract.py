@@ -33,8 +33,23 @@ def test_dual_provider_fixture_has_stable_non_overlapping_case_ids():
 
 
 
-def test_every_consumer_uses_the_canonical_conformance_fixture_bytes():
-    canonical = FIXTURE.read_bytes()
+def test_every_consumer_copy_carries_canonical_cases_unchanged():
+    """Integrity of executable data: a consumer may keep only the cases its own tests read, but
+    every case it keeps must be the canonical case with that id, unchanged."""
+    canonical = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    canonical_cases = {
+        case["id"]: case
+        for family, cases in canonical.items()
+        if isinstance(cases, list)
+        for case in cases
+    }
 
     for copy in FIXTURE_COPIES:
-        assert copy.read_bytes() == canonical, f"stale conformance fixture copy: {copy}"
+        payload = json.loads(copy.read_text(encoding="utf-8"))
+        assert payload["schema_version"] == canonical["schema_version"], f"schema drift: {copy}"
+        for family, cases in payload.items():
+            if not isinstance(cases, list):
+                continue
+            assert family in canonical, f"unknown family {family} in {copy}"
+            for case in cases:
+                assert case == canonical_cases.get(case["id"]), f"stale case {case['id']} in {copy}"

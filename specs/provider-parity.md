@@ -1,17 +1,21 @@
 # Provider parity and local inference efficiency
 
 **Thread:** make Hub answers about as fast as ChartSearchAI's built-in provider on
-the same machine · **Status:** causes identified, nothing changed yet ·
+the same machine · **Status:** the Hub reads its context once per answer; reuse across
+questions is the open gap ·
 **Owners:** Med Agent Hub (prompts, selection, profiles), umbrella (router preset,
 setup settings, measurement)
 
 The external provider should not be much slower than the product it extends.
 On Ross's Mac the built-in provider answered in 42 s and the Hub's checked 12B
-profile took about 20 minutes; here the Hub takes 5–8 minutes. The
-[16 October findings](reviews/2026-10-16-provider-parity-findings.md) say why:
-every Hub stage re-reads a 16,500-token prompt, the stages share no prompt
-start, the router cannot reuse Gemma's prompt without `swa-full`, and the
-default model and ChartSearchAI's default context mode both changed in October.
+profile took about 20 minutes. The
+[16 October findings](reviews/2026-10-16-provider-parity-findings.md) traced it
+to every Hub stage re-reading a prompt of about 17,000 tokens. Since the
+[17 October changes](reviews/2026-10-17-provider-parity-measurements.md) the Hub
+sends one context message first in every stage, so each later stage reads only
+a few hundred tokens. A checked answer took 16–56 s here when the router reused
+the chart's temporal facts from the previous question, and 83–204 s when it did
+not.
 
 ## Direction
 
@@ -25,20 +29,29 @@ comparisons in the picker.
 
 ## Steps
 
-- [ ] Baseline: ask the same five questions of both providers and note, per model
-      call, the prompt size, read time and how much the router reused.
-- [ ] Configuration only: `swa-full` for the local Gemma 4 12B preset, and the
+- [x] Baseline: ask the same five questions of both providers and note, per model
+      call, the prompt size, read time and how much the router reused
+      ([17 October](reviews/2026-10-17-provider-parity-measurements.md#baseline)).
+- [x] Configuration only: `swa-full` for the local Gemma 4 12B preset, and the
       query-scoped context mode ChartSearchAI measured as faster and more
-      accurate in July (`chartsearchai.chartMode=queryScoped`, `topK=30`).
-      Re-run the five questions.
-- [ ] Hub reads the records once per answer: one selection per answer, the same
+      accurate in July (`chartsearchai.chartMode=queryScoped`, with the module's
+      default `chartsearchai.querystore.topK` of 12). Re-run the five questions
+      ([17 October](reviews/2026-10-17-provider-parity-measurements.md#configuration-only)).
+- [x] Hub reads the records once per answer: one selection per answer, the same
       records block first in every stage, instructions after it, so the router's
-      cache does the rest. Re-run.
+      cache does the rest. Re-run
+      ([17 October](reviews/2026-10-17-provider-parity-measurements.md#hub-reads-the-records-once)).
 - [ ] Hub sends less for narrow questions: a smaller recent core and relevance-led
       admission; each profile's window sized to its model. Re-run, and spot-check
-      answers on ChartSearchAI's 40-cell question set.
-- [ ] A "fast checked" profile without In-Depth for live sessions, as an explicit
-      choice.
+      answers on ChartSearchAI's 40-cell question set, which needs its demo
+      patients loaded (none are in the HIV database).
+- [x] A "fast checked" profile without In-Depth for live sessions, as an explicit
+      choice ([17 October](reviews/2026-10-17-provider-parity-measurements.md#fast-checked-profile)).
+- [ ] Reuse the chart's temporal facts across questions. llama.cpp build 10809
+      reuses a shared prompt start only from a prompt it processed in one pass
+      ([17 October](reviews/2026-10-17-provider-parity-measurements.md#why-the-router-misses-across-questions)).
+      Options: a newer llama.cpp build, or a per-chart prompt holding only the
+      temporal facts that the router can restore whole.
 - [ ] An OpenRouter comparison profile with the same context budget, with one
       recorded answer, its time and its cost.
 - [ ] Ross re-measures on his Mac.

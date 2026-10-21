@@ -1,14 +1,17 @@
 # OpenMRS contribution delivery
 
-**Stream:** Track A · **Status:** stacks published and checked; review dispositions
-open; upstream merge awaits maintainers · **Owner:** umbrella for cross-project
-acceptance; each OpenMRS PR owns its behavior
+**Stream:** Track A · **Status:** every PR targets `main` from the fork; the
+maintainer re-reviewed all heads on 19 October and 73 threads are open, 39 of
+them fixed and awaiting replies; no reply posted since 7 October · **Owner:**
+umbrella for cross-project acceptance; each OpenMRS PR owns its behavior
 
 Deliver the extracted ChartSearchAI backend and frontend contributions and the
 QueryStore change to upstream review and merge, with our integration requirements
 kept in this umbrella. Dated evidence: the
-[7 October remediation record](reviews/2026-10-07-track-a-remediation.md) and the
-[7 October context evaluation](reviews/2026-10-07-context-evaluation.md).
+[7 October remediation record](reviews/2026-10-07-track-a-remediation.md), the
+[7 October context evaluation](reviews/2026-10-07-context-evaluation.md), the
+[18 October upstream sync](reviews/2026-10-18-track-a-upstream-sync.md) and the
+[19 October review revalidation](reviews/2026-10-19-track-a-review-revalidation.md).
 
 ## Contribution model
 
@@ -20,24 +23,25 @@ Use one linear stack per project in this exact review and merge order:
 
 - **Backend:** `main → #583 → #584 → #585 → #586 → #587 → #588 → #589 → #590`
 - **Frontend:** `main → #55 → #56 → #57 → #58 → #59`
+- **QueryStore:** `main → #85 → #86 → #87`
 
-The first PR targets the destination project's current `main`. Every subsequent PR
-targets the immediately preceding PR's branch and contains that predecessor's
-current head, so its diff shows only its own contribution. No separate prerequisite
-assembly branches or branching dependency graphs. Keep the existing PR numbers,
-scopes, review discussions and confirmed fixes while restacking. Do not wait for
-upstream merges to prepare, test or publish the rest of the stack.
+Every branch lives on the pmanko fork and every PR targets the destination
+project's `main`; nothing of ours is pushed to the OpenMRS repositories. Each
+branch contains its predecessor's current head, so a PR's "Files changed" view
+includes the layers below it, and each PR description carries a link to the
+compare view of its own layer against its predecessor's branch. The order is
+stated in the descriptions. Keep the existing PR numbers, scopes, review
+discussions and confirmed fixes while restacking. Do not wait for upstream merges
+to prepare, test or publish the rest of the stack; after a predecessor merges, the
+next PR's diff against `main` becomes exact by itself.
 
 Manage both stacks with the installed `github/gh-stack` extension (`gh stack`):
-`gh stack init --base` bottom-to-top against a verified trunk, `gh stack view` to
-inspect, `gh stack rebase` for cascading rebases, `gh stack submit` to update
-existing heads and bases, then `gh stack sync`. GitHub rejects native Stack objects
-for these fork PRs; retain local tracking and the actual linear PR bases rather
-than replacing PRs. Verify fork/upstream remote selection and existing-PR matching
-before any remote update. Preserve draft states; do not use `--open` until the
-readiness requirements pass. Verify both the local stack and actual GitHub bases
-after publication. Never substitute manually maintained assembly branches or create
-replacement PRs.
+`gh stack view` to inspect, `gh stack rebase` for the cascading rebase and
+`gh stack push` to publish. `gh stack` reads its trunk from the fork, so
+fast-forward only the local `main` to upstream before rebasing; do not move the
+fork's `main`. Upstream `main` takes direct commits about hourly, so restack right
+before each review round. Never substitute manually maintained assembly branches,
+base-branch copies in the OpenMRS repositories, or replacement PRs.
 
 Keep the original `harness-integration` branches unchanged as references. Maintain
 newer upstream behavior and confirmed fixes. Each PR must remain understandable and
@@ -46,6 +50,22 @@ not passing evidence. Address review findings in the PR that owns the affected
 behavior and publish the response with the fix and its verification. After a
 predecessor merges, rebase and retarget dependents in order. Existing integration
 PR closure is a separate decision, not implied by the split.
+
+Every review round follows these rules:
+
+- Fix the finding's pattern, not only the line named: check sibling code paths
+  with the same shape.
+- Before publishing a layer, an independent reviewer reads its diff against the
+  threads it answers, without being told the fix is correct. The review covers
+  upgrading from the previous head's database and a restart with existing data.
+- Draft each thread reply in the same step as its fix. Fill in commit references
+  after the round's final restack, since rebasing rewrites them, and post the set
+  right after that push, only on the owner's approval, as one set per round.
+- A reply states what changed, the commit and how it was verified, and nothing
+  else. It is no longer than the comment it answers. No thanks, restatement of the
+  finding or narrative.
+- A finding we notice and do not fix becomes an open item in this spec for the
+  owner to decide, not a note in a dated record.
 
 The completed stack received combined functional validation once. If a relevant
 change or failure requires another check, rerun the affected existing checks and
@@ -71,9 +91,13 @@ exact-source builds must not depend on upstream merging or publishing first.
 | F3 Markdown, tables and citations | [Frontend #57](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/57) | #56 |
 | F2 provider/profile selection | [Frontend #58](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/58) | #57 |
 | F1/F3 conversation lifecycle, staged answers, evidence and streaming toggle | [Frontend #59](https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59) | #58 |
-| M1/Q0 QueryStore preprocessing, dispatcher links, explicit chart reads, validation | [QueryStore #68](https://github.com/openmrs/openmrs-module-querystore/pull/68) | main |
+| Q1 QueryStore patient records over REST, completeness and dates | [QueryStore #85](https://github.com/openmrs/openmrs-module-querystore/pull/85) | main |
+| Q2 QueryStore tiered context slice (ADR 17) | [QueryStore #86](https://github.com/openmrs/openmrs-module-querystore/pull/86) | main |
+| Q3 QueryStore question interpretation and preprocessing (ADR 18) | [QueryStore #87](https://github.com/openmrs/openmrs-module-querystore/pull/87) | main |
+| M1/Q0 original QueryStore integration PR, replaced by Q1–Q3 | [QueryStore #68](https://github.com/openmrs/openmrs-module-querystore/pull/68) | main |
 
-The umbrella gitlinks record the heads under review; the dated record lists them.
+The umbrella gitlinks record the heads under review, the backend at fork #35's
+head above #590; the dated record lists them.
 
 ## Target path
 
@@ -89,24 +113,136 @@ The umbrella gitlinks record the heads under review; the dated record lists them
       checks ([umbrella #8](https://github.com/pmanko/openclinai.org/pull/8)).
 - [x] Reconcile all QueryStore #68 inline threads against implemented fixes
       ([record](reviews/2026-10-07-track-a-remediation.md#verified-on-7-october)).
-- [ ] Answer the QueryStore maintainer's request to split #68 with a concrete
-      disposition; zero unresolved inline threads does not settle it.
-- [ ] Dispose of #587's context-composition finding: the renal retrieval regression,
-      the metric-versus-prompt disagreement on negative-category citations, and the
-      substitute cohort's limits. Keep the original scores; do not tune prompts to
-      individual cells or silently redefine the gate. A retrieval correction belongs
-      to QueryStore, must preserve clinical qualifiers, must be evaluated beyond one
-      patient, and must not restore word stripping or add a case-specific ranking
-      rule. Recheck affected behavior after any correction.
-- [ ] Close #587's two remaining review threads: temporary dependency-job removal
-      and the reviewer's retrieval-versus-safety classification.
-- [ ] Obtain ordinary dependency compatibility: the QueryStore API reaches upstream
-      and a published artifact, ordinary builds of #587–#590 pass against it, and the
-      temporary paired-source CI is removed.
+- [x] Every stacked PR targets `main` and the base-branch copies in the OpenMRS
+      repositories are gone
+      ([record](reviews/2026-10-18-track-a-upstream-sync.md#base-branches-in-the-openmrs-repositories)).
+- [x] Answer the QueryStore maintainer's request to split #68: #85, #86 and #87
+      opened from the fork against `main` on 18 October, #68 answered
+      ([record](reviews/2026-10-18-track-a-upstream-sync.md#querystore-split)).
+- [x] Check every open thread against the heads after the maintainer's 19 October
+      round: 73 open, all 29 new findings hold
+      ([record](reviews/2026-10-19-track-a-review-revalidation.md)).
+
+### Path to mergeable
+
+A PR is mergeable when the maintainer has approved it, every thread is answered
+and closed, its required checks pass and it applies cleanly to `main`. The
+[revalidation record](reviews/2026-10-19-track-a-review-revalidation.md#new-findings-checked-against-the-code)
+numbers the findings referred to below. Stages 2 to 4 touch separate repositories
+and run in parallel; the [decisions](#decisions) they depend on were made on
+19 October.
+
+Each stack is changed in one pass per review round, decided 20 October. Every
+fix is a commit on the layer the finding is in, bottom layer up; the stack is
+cascaded onto upstream `main`, fork #35 moves in the same cascade, the full suite
+runs on every layer, and the stack is pushed to the fork as soon as it passes.
+Work never waits locally for a later check; a fix found afterwards is another
+commit and another push. A top-of-stack fix PR was
+considered and rejected: the blocking findings sit in #585, #586 and #590, so
+their fixes rewrite the layers above them anyway, and the non-blocking fixes cost
+nothing more in the same cascade. The one structural change is the #87 split in
+stage 4, which the maintainer asked for.
+
+**Stage 1: answer what is already fixed.**
+
+- [x] Reply on the 39 threads fixed on the heads, each checked against the code
+      and posted 20 October
+      ([record](reviews/2026-10-19-track-a-review-revalidation.md#replies-posted-20-october-0214-utc)).
+- [ ] Reply on the other 5 of the 44 threads open before 19 October with their
+      fixes: the 3 reopened by follow-ups (stages 2 to 4) and #587's Decision 28
+      evidence and paired-source job (stage 5).
+
+**Stage 2: backend, bottom layer up, each fix with its reply drafted.**
+
+- [x] #583: README table-of-contents entry (finding 11).
+- [x] #584: refusal tests, `isAvailable` through the active engine, table-of-contents
+      entry (findings 11, 12).
+- [x] #585: screening-arm gate with the zorblatine case, one test per
+      `dose_not_assessable` branch, table-of-contents entry (findings 1, 11, 13).
+- [x] #586: changeset 010 accepts its old checksum and 011 drops the column where
+      it exists; `finishTurn` accepts the delivered answer; zero counts filed as
+      null; ADR Decision 105 and the audit bullet updated; the Mockito test deleted
+      (findings 2, 3, 14).
+- [x] #587: README line on restart behavior; the `QueryStoreChartBuilderScopedTest`
+      comment that still names the removed lab-panel expansion (ours, no thread).
+- [x] #588: `IncompleteChartException` reported as `incomplete_chart`;
+      table-of-contents entry (findings 10, 11).
+- [x] #590: bundled deltas accumulated and the last Hub answer passed to
+      `finishTurn`; `safetyStatus` and `safetyCheck` in the README (findings 3, 15).
+- [x] Cascade onto upstream `main`, the full suite on every layer, an upgrade
+      from the previous head's database and a restart with data, pushed: [20 October](reviews/2026-10-20-track-a-e2e.md).
+- [x] Independent review of each layer's diff, findings fixed: [20 October](reviews/2026-10-20-track-a-review-round.md).
+
+**Stage 3: frontend.**
+
+- [x] #57: carry `main`'s comment wording. #59: no version in the README, one
+      definition of each error code (finding 16).
+- [ ] Decide our own two residuals from the 18 October check: the wording when an
+      explicitly picked profile becomes unavailable, and the safety box drawn for a
+      bare `unavailable`.
+- [x] Cascade, tests on every layer, pushed: [20 October](reviews/2026-10-20-track-a-e2e.md).
+- [x] Independent review of each layer's diff, findings fixed: [20 October](reviews/2026-10-20-track-a-review-round.md).
+
+**Stage 4: QueryStore.**
+
+- [x] #85: a failed cold touch is reported incomplete; records filtered by each
+      type's core read privilege; the completed-type proposal in the reply, not
+      in the code; ADR banners deferred; the separator change moved to its own PR
+      (findings 4, 5, 6, 17).
+- [x] #86: identifier and quote patterns; `rank` and `chartTruncated` docs; the
+      mapping-code test; the seven stub overrides removed (findings 7, 17).
+- [x] #87: the four retrieval changes moved to their own branch with the
+      latest-value ordering, the series decision, the Decision 6 and 17 updates and
+      the javadoc placement; #87 keeps the interpreter and Decision 18
+      (findings 8, 9, 17).
+- [x] The evaluation behind the moved retrieval changes: [20 October](reviews/2026-10-20-querystore-88-retrieval-diversity.md),
+      #88 against #87 on the 20 October baseline with the 7 October method.
+- [x] Fix the per-patient reindex that wrote nothing within a minute of a delete on
+      Elasticsearch, found while preparing that evaluation: QueryStore #91, in the same record.
+- [x] Skip unchanged records during the bootstrap top-up, on its own branch.
+- [x] Cascade, tests on every branch, pushed: [20 October](reviews/2026-10-20-track-a-e2e.md).
+- [x] Open the PRs for the split-out branches (retrieval diversity #88, the
+      query-cache separator #89, the bootstrap skip #90):
+      [20 October](reviews/2026-10-20-track-a-review-round.md).
+- [x] Independent review of each branch's diff, findings fixed: [20 October](reviews/2026-10-20-track-a-review-round.md).
+
+**Stage 5: evidence and the next round.**
+
+- [ ] Dispose of #587's context-composition finding with the two Decision 28
+      gates, the 40-cell scope evaluation and the temporal probe, or a documented
+      substitute: the renal retrieval regression, the metric-versus-prompt
+      disagreement on negative-category citations, and the substitute cohort's
+      limits. Keep the original scores; do not tune prompts to individual cells or
+      silently redefine the gate. A retrieval correction belongs to QueryStore, must
+      preserve clinical qualifiers, must be evaluated beyond one patient, and must
+      not restore word stripping or add a case-specific ranking rule.
+- [ ] Local boot check of the new heads: fresh setup, restart with data, and a
+      module upgrade from a database set up on the 18 October heads.
+- [x] End-to-end functional check on the local HIV stack built from the tips of
+      all three stacks (backend #590 with fork #35, frontend #59, QueryStore with
+      its split-out branches), through the chart-search UI with both providers: [20 October](reviews/2026-10-20-track-a-e2e.md).
+- [x] Post the round's replies: [20 October](reviews/2026-10-20-track-a-review-round.md).
+- [ ] Request the next review once the integration run and the #88 evaluation are in.
+
+**Stage 6: merge order once approved.**
+
+- [ ] Backend #583 to #586 and frontend #55 to #58, whose checks pass today; after
+      each merge, `gh stack rebase` reduces the next PR to its own layer.
+- [ ] QueryStore #85, #86, #87 and the split-out PRs; QueryStore publishes a
+      snapshot with the API.
+- [ ] Ordinary dependency compatibility: ordinary builds of #587 to #590 pass
+      against the published QueryStore API and the temporary paired-source job is
+      removed; then #587 to #590.
+- [ ] Frontend #59 after #590.
+- [ ] Decide closure of #68 once #85 to #87 are accepted.
+- [ ] The umbrella pins the merged `main` heads; the baseline is rebuilt only if
+      the schema changed.
+
+### Standing items
+
 - [ ] Signoff 2: accept the dual-provider product and authorize controlled comparison.
 - [ ] Signoff 3: accept release, companion merges, curated publication and PR cleanup.
 - [ ] Decide closure of the old integration PRs (backend #157, frontend #23).
-- [ ] Upstream merges, in stack order, by the OpenMRS maintainers.
 - [ ] Report the Core 2.9.0-SNAPSHOT module Liquibase resource-scope defect upstream
       (a TRUNK ticket with the reproduction and the proposed `DatabaseUpdater` patch
       from the [13 October record](reviews/2026-10-13-appointments-fresh-import-root-cause.md#fix-options)),
@@ -179,12 +315,38 @@ execution.
 
 ## Decisions
 
+Owner decisions. The first seven were made on 19 October and gate the
+[path to mergeable](#path-to-mergeable); the last is standing:
+
+- [x] **Changeset 010 (#586), 19 October:** 010 accepts its old checksum through
+      `validCheckSum`, and an 011 drops the title column where an earlier 010
+      created it. Not chosen: restoring the original 010.
+- [x] **Delivered answer on error or disconnect (#586, #590), 19 October:**
+      `finishTurn` takes the last delivered envelope with the error result and keeps
+      it on the audit row only; the saved turn stays empty, so unchecked text never
+      reaches later prompts.
+- [x] **Answers after a restart (QueryStore #85), 19 October:** skip records whose
+      stored version matches, as its own PR. The reply proposes that a type
+      completed before counts as complete while it tops up; that changes only if
+      the maintainer agrees.
+- [x] **QueryStore privileges (#85), 19 October:** filter records by each type's
+      core read privilege in the service read path; cross-patient search stays
+      behind the same filter, as Decision 14 allows.
+- [x] **QueryStore #87 scope, 19 October:** the four retrieval changes move to a new
+      PR with their fixes and an evaluation; #87 keeps the interpreter and
+      Decision 18.
+- [x] **Decision 28 evidence (#587), 19 October:** run both gates as written; where
+      one cannot run, record why and the substitute measured, as #318 did. Original
+      scores kept; no tuning to individual cells.
+- [x] **Resolving threads, 19 October:** we resolve threads whose fix is mechanical
+      and verifiable from the reply; design and blocking threads stay open for the
+      maintainer.
 - [ ] **OpenMRS caches:** preserve existing bundled caching. The old harness plan's
       blanket cache prohibition conflicts with bundled preservation; Hub restrictions
       remain Hub-owned. A broader product-policy change requires explicit review.
 
-[backend]: https://github.com/pmanko/openmrs-module-chartsearchai/blob/ca136063556be2d67dc3b638dc06d12a516f5ff9/README.md#provider-integration-contract
-[frontend]: https://github.com/pmanko/openmrs-esm-chartsearchai/blob/475f6eb60ea14011f719c861b02d02daf2156390/README.md
-[querystore]: https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/rest-api.md
-[hub]: https://github.com/pmanko/med-agent-hub/blob/32695025f5ef77e0096aeef2d9b5907776234a82/README.md
+[backend]: https://github.com/pmanko/openmrs-module-chartsearchai/blob/76e70dafd6fabcde7673fc8fe5cb765d640d6093/README.md#provider-integration-contract
+[frontend]: https://github.com/pmanko/openmrs-esm-chartsearchai/blob/3f92411fbaeab83db697473fd0ee62e64b8671ce/README.md
+[querystore]: https://github.com/pmanko/openmrs-module-querystore/blob/844dcd0ccad275831ecfaca6fe6cf4e4d8acaa2c/docs/rest-api.md
+[hub]: https://github.com/pmanko/med-agent-hub/blob/main/README.md
 [conformance]: https://github.com/pmanko/clinical-ai-validation-harness/blob/5f180650aab46e607e5f21595faa4d0dc1620d4c/specs/artifacts/planning/openmrs-dual-provider-conformance-contract.md

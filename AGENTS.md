@@ -29,6 +29,9 @@
   evidence retention does not justify retaining obsolete specifications.
 - Update the roadmap's current focus when priorities change. Separate
   implementation, verification and publication.
+- Keep agent working files (reply drafts, reused scripts, backups, run logs) in
+  the git-ignored `work/` folder at the umbrella root, never in `/tmp` or a
+  session scratchpad, which are cleared without notice.
 - Use `targets/validation-harness` for this umbrella's implementation checkout;
   never reset or import unrelated changes from dirty sibling worktrees.
 - The umbrella owns component gitlinks, version pins, checkouts, builds,

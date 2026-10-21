@@ -6,9 +6,9 @@ interfaces and current application behavior. The public website does not redefin
 those contracts. The OpenMRS links below identify the reviewed assembled revisions;
 they do not imply an upstream merge or deployed release.
 
-- **ChartSearchAI:** [project documentation](https://github.com/pmanko/openmrs-module-chartsearchai/tree/ca136063556be2d67dc3b638dc06d12a516f5ff9/docs) and [source/setup](https://github.com/pmanko/openmrs-module-chartsearchai/tree/ca136063556be2d67dc3b638dc06d12a516f5ff9).
-- **ChartSearchAI frontend:** [source/setup](https://github.com/pmanko/openmrs-esm-chartsearchai/tree/475f6eb60ea14011f719c861b02d02daf2156390).
-- **QueryStore:** [REST API](https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/rest-api.md) and [architecture decisions](https://github.com/pmanko/openmrs-module-querystore/blob/286993cc094499ed29f97d4574775cd2c96f5676/docs/adr.md).
+- **ChartSearchAI:** [project documentation](https://github.com/pmanko/openmrs-module-chartsearchai/tree/76e70dafd6fabcde7673fc8fe5cb765d640d6093/docs) and [source/setup](https://github.com/pmanko/openmrs-module-chartsearchai/tree/76e70dafd6fabcde7673fc8fe5cb765d640d6093).
+- **ChartSearchAI frontend:** [source/setup](https://github.com/pmanko/openmrs-esm-chartsearchai/tree/3f92411fbaeab83db697473fd0ee62e64b8671ce).
+- **QueryStore:** [REST API](https://github.com/pmanko/openmrs-module-querystore/blob/844dcd0ccad275831ecfaca6fe6cf4e4d8acaa2c/docs/rest-api.md) and [architecture decisions](https://github.com/pmanko/openmrs-module-querystore/blob/844dcd0ccad275831ecfaca6fe6cf4e4d8acaa2c/docs/adr.md).
 - **Med Agent Hub:** [source/setup](https://github.com/pmanko/med-agent-hub).
 - **Catalyst:** [application specification](https://github.com/DIGI-UW/catalyst-ai/blob/main/docs/specification.md), [Hub integration](https://github.com/DIGI-UW/catalyst-ai/blob/main/docs/med-agent-hub.md) and [cross-project delivery](../catalyst-delivery.md).
 - **Validation harness:** [setup and experiment commands](https://github.com/pmanko/clinical-ai-validation-harness#readme) and [current validation contract](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/006-validation-harness-mvp/spec.md).
