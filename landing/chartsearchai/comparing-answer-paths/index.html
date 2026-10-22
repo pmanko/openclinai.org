@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Comparing answer paths · Open Clinical AI</title>
+<meta name="description" content="How we compare ChartSearchAI's built-in answers with Med Agent Hub answers fairly, and what each path can do." />
+<link rel="canonical" href="https://openclinai.org/chartsearchai/comparing-answer-paths/" />
+<meta property="og:url" content="https://openclinai.org/chartsearchai/comparing-answer-paths/" />
+<meta property="og:title" content="Comparing ChartSearchAI answer paths" />
+<meta property="og:description" content="How we compare ChartSearchAI's built-in answers with Med Agent Hub answers fairly, and what each path can do." />
+<meta property="og:image" content="https://openclinai.org/media/openmrs-evidence-poster.webp" />
+<meta name="theme-color" content="#4b2e83" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="/styles.css?v=20260915-projects" />
+<link rel="stylesheet" href="/projects.css?v=20261022-compare" />
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header project-header">
+<a class="brand" href="/" aria-label="Open Clinical AI home">
+<span class="brand-mark" aria-hidden="true">
+<span>
+</span>
+</span>
+<span>Open Clinical AI</span>
+</a>
+<nav class="primary-nav" aria-label="Primary navigation">
+<a href="/#projects">Projects</a>
+<a href="https://reports.openclinai.org/">Evidence</a>
+<a href="/#about">About</a>
+</nav>
+<details class="nav-toggle">
+<summary>Menu</summary>
+<nav aria-label="Mobile navigation">
+<a href="/#projects">Projects</a>
+<a href="https://reports.openclinai.org/">Evidence</a>
+<a href="/#about">About</a>
+</nav>
+</details>
+</header>
+<main id="main-content" tabindex="-1">
+<section class="project-intro page-width">
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+<a href="/chartsearchai/">ChartSearchAI</a>
+</nav>
+<div class="overview-grid ">
+<div>
+<p class="section-kicker">Comparing answer paths</p>
+<h1>Two ways to answer a chart question, compared fairly.</h1>
+<p class="overview-lead">ChartSearchAI can answer a clinician&rsquo;s question itself or hand it to Med Agent Hub. We compare the two on the same model and the same charts, with ChartSearchAI set up the way an OpenMRS site gets it, so a difference in the results reflects what each path can do rather than how we configured it.</p>
+<div class="project-actions">
+<a class="button button-primary" href="https://reports.openclinai.org/">Inspect published evaluations <span aria-hidden="true">→</span>
+</a>
+<a class="button button-secondary" href="https://pmanko.github.io/openclinai.org/spec/specs/background/evaluating-the-chart-search-providers">Read the technical detail <span aria-hidden="true">→</span>
+</a>
+</div>
+</div>
+</div>
+</section>
+<section class="page-width project-workflow">
+<h2>Two answer paths</h2>
+<div class="workflow-grid">
+<article>
+<span>01</span>
+<h3>ChartSearchAI on its own</h3>
+<p>ChartSearchAI reads the chart, writes the prompt, asks a language model once, runs its drug-safety checks and turns the reply into an answer with links to the records it used.</p>
+</article>
+<article>
+<span>02</span>
+<h3>Through Med Agent Hub</h3>
+<p>ChartSearchAI passes the question to <a href="/med-agent-hub/">Med Agent Hub</a> and shows what comes back. The Hub reads the chart itself, can call the model several times and checks the answer before and after it is shown.</p>
+</article>
+<article>
+<span>03</span>
+<h3>The same safeguards around both</h3>
+<p>Either way, OpenMRS decides who may ask about which patient, keeps the conversation and records which path answered.</p>
+</article>
+</div>
+</section>
+<section class="section page-width">
+<h2>Where the model runs is a separate choice</h2>
+<p>ChartSearchAI on its own normally starts the language model inside the OpenMRS server, a Gemma 4 E4B model of about 5 GB. A site can instead point it at a separate model server. That changes where the one model call goes, not who builds the answer: the answer is still ChartSearchAI&rsquo;s own.</p>
+<p>In ChartSearchAI&rsquo;s Docker installation the model runs on the computer&rsquo;s processor, because a container cannot use a Mac&rsquo;s graphics chip. Its macOS installation uses the graphics chip directly.</p>
+</section>
+<section class="section page-width">
+<h2>How we keep the comparison fair</h2>
+<div class="workflow-grid">
+<article>
+<h3>Shipped settings</h3>
+<p>ChartSearchAI runs on its own default settings, including the whole chart in every prompt. Only the location of its model changes.</p>
+</article>
+<article>
+<h3>One model for both</h3>
+<p>Both paths call the same model on one model server with access to the graphics chip, so neither gets a stronger model.</p>
+</article>
+<article>
+<h3>Every request recorded</h3>
+<p>Each model request either path sends is kept with the results, so a reviewer can see exactly what each was given.</p>
+</article>
+</div>
+<p class="scope-note">Running the model on a shared server means our comparisons do not exercise how ChartSearchAI starts, warms and stops its own model inside OpenMRS. A separate check on the shipped setup is planned to cover that.</p>
+</section>
+<section class="section page-width">
+<h2>What each path can do</h2>
+<p>With both paths on their shipped settings, these differences remain. They are capabilities, not configuration.</p>
+<div class="table-scroll">
+<table class="comparison-table">
+<thead>
+<tr><th scope="col">Capability</th><th scope="col">ChartSearchAI on its own</th><th scope="col">Through Med Agent Hub</th></tr>
+</thead>
+<tbody>
+<tr><th scope="row">Knows today&rsquo;s date</th><td>No. Questions about upcoming visits or the past year rely on the model guessing.</td><td>Yes, with each chart date&rsquo;s distance from today.</td></tr>
+<tr><th scope="row">Checks dates in the answer against the chart</th><td>No</td><td>Yes. A wrong date is corrected from the chart or marked.</td></tr>
+<tr><th scope="row">Checks that each cited record supports the answer</th><td>Not by default</td><td>Yes. Unsupported citations are labelled.</td></tr>
+<tr><th scope="row">Guideline knowledge</th><td>No guideline sources</td><td>Can cite WHO guidance records</td></tr>
+<tr><th scope="row">Drug-safety checks</th><td>Yes</td><td>Yes</td></tr>
+<tr><th scope="row">A second model review and a deeper &ldquo;In Depth&rdquo; section</th><td>No</td><td>In its checked profile, shown with labels rather than hidden</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<section class="page-width project-callout">
+<div>
+<p class="section-kicker">Reading the results</p>
+<h2>What a comparison can and cannot tell you</h2>
+<p>Each evaluation asks the same questions and conversations of both paths on three HIV patient charts, and a separate AI reviewer, working from a fixed scoring guide, scores every answer against the chart for accuracy, completeness, relevance and possible harm.</p>
+<p class="scope-note">Scoring the same answers twice has moved averages by up to about half a point, so small differences are not meaningful. These are research findings, not product certifications, and every AI answer still needs a clinician&rsquo;s review.</p>
+</div>
+<div class="resource-panel">
+<a class="text-link" href="https://reports.openclinai.org/">Browse published evaluations <span aria-hidden="true">→</span>
+</a>
+<a class="text-link" href="/validation-harness/">How evaluations are run <span aria-hidden="true">→</span>
+</a>
+<a class="text-link" href="https://github.com/openmrs/openmrs-module-chartsearchai#readme">ChartSearchAI installation guide <span aria-hidden="true">→</span>
+</a>
+</div>
+</section>
+</main>
+<footer class="site-footer">
+<div class="page-width footer-grid">
+<div>
+<a class="brand footer-brand" href="/">
+<span class="brand-mark" aria-hidden="true">
+<span>
+</span>
+</span>
+<span>Open Clinical AI</span>
+</a>
+<p>Open-source tools for clinical questions, reporting and reproducible evaluation.</p>
+</div>
+<nav aria-label="Project links">
+<a href="/chartsearchai/">ChartSearchAI</a>
+<a href="/catalyst/">Catalyst</a>
+<a href="/med-agent-hub/">Med Agent Hub</a>
+<a href="/validation-harness/">Validation Harness</a>
+</nav>
+<p class="footer-disclaimer">For research and demonstration. AI output can be inaccurate and requires review.<br />
+<a href="https://digi.uw.edu/">DIGI at the University of Washington</a>
+</p>
+</div>
+</footer>
+</body>
+</html>
