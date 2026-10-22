@@ -218,6 +218,13 @@ and a person at a terminal.
   the judge's scores and the captured evidence; the dated record under `reviews/` cites
   the run directory and, when `BASELINE` was given, the earlier report it was compared
   with. The report, not the score, is what publication consumes.
+- Every harness run starts the live dashboard (`make validate-dashboard`,
+  http://localhost:8099), which follows the newest run. When an L5 run is judged, the run
+  step freezes that dashboard beside the report and publishes both to the reports site
+  (`scripts/publish-report.sh`), so a PR or record can link the published page;
+  `NO_PUBLISH=1` keeps them local, `PUBLISH=<run dir>` publishes a judged run later, and
+  `L5_RESUME=<run dir>` with `PROFILES=` adds arms to a finished run without re-running
+  the cells it already completed.
 
 ## Mapping to the maintainer's checks
 

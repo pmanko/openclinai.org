@@ -177,11 +177,17 @@ def run_environment(data_root: Path, set_id: str, record: Path):
 
 
 def run_set(make_target: str, comparison_set: str, out: Path, env: dict | None = None,
-            data_root: Path | None = None) -> Path:
-    """Run a comparison set through the umbrella's make target; return the run directory."""
+            data_root: Path | None = None, resume: str | None = None) -> Path:
+    """Run a comparison set through the umbrella's make target; return the run directory.
+
+    With ``resume``, the cells that run completed cleanly are carried over and only the rest
+    run, so arms added since are the only new work.
+    """
     cmd = ["make", "-C", str(UMBRELLA), make_target, f"SET={comparison_set}"]
     if data_root:
         cmd.append(f"VALIDATE_DATA_ROOT={data_root}")
+    if resume:
+        cmd.append(f"RESUME={Path(resume).resolve()}")
     proc = subprocess.run(cmd, capture_output=True, text=True, env={**os.environ, **(env or {})})
     out.write_text(proc.stdout + proc.stderr)
     m = re.search(r"results -> (\S+)/results\.jsonl", proc.stdout)
@@ -326,7 +332,7 @@ def run_full(args) -> int:
         cset_path.write_text(json.dumps(cset, indent=1))
     with run_environment(data_root, args.set, out_dir / "settings-as-found.json") as env:
         run_dir = run_set("validate-run", args.set, out_dir / "run.log", env,
-                          data_root if data_root != DATA else None)
+                          data_root if data_root != DATA else None, args.resume)
     subprocess.run(["make", "-C", str(HARNESS), "validate-judge-prep", f"RUN={run_dir}"], check=True,
                    capture_output=True)
     answer = run_role(args, "judge", run_dir, (BRIEFS / "judge.md").read_text() +
@@ -336,21 +342,77 @@ def run_full(args) -> int:
     subprocess.run(["make", "-C", str(HARNESS), "validate-judge-finalize", f"RUN={run_dir}",
                     f"ROWS={rows}"], check=True, capture_output=True)
     report = harness("validate", "report", "--run-dir", str(run_dir))
-    judged = [json.loads(l) for l in (run_dir / "judge.jsonl").read_text().splitlines() if l.strip()]
     lines = [f"# Full evaluation {args.set} ({stamp})", "", f"Run: {run_dir}",
-             f"Report: {report.stdout.strip()}", "", "| Arm | Cells | Accuracy | Completeness | "
-             "Relevance | Harm |", "| --- | ---: | ---: | ---: | ---: | ---: |"]
-    for arm in sorted({r["backend_id"] for r in judged}):
-        rs = [r for r in judged if r["backend_id"] == arm]
-        mean = lambda k: round(sum(r[k] for r in rs) / len(rs), 2)
-        lines.append(f"| {arm} | {len(rs)} | {mean('accuracy')} | {mean('completeness')} | "
-                     f"{mean('relevance')} | {sum(r['harm'] for r in rs)} |")
+             f"Report: {report.stdout.strip()}", ""] + arm_table(run_dir)
     if args.baseline:
         lines += ["", f"Compared with run {args.baseline}: "
                   f"{HARNESS / 'artifacts/validate' / args.baseline / 'report.html'}"]
+    if not args.no_publish:
+        lines += ["", f"Published: {publish_full(run_dir, args.set)}"]
     (out_dir / "summary.md").write_text("\n".join(lines) + "\n")
     print("\n".join(lines))
     return 0
+
+
+def arm_means(run_dir: Path) -> dict[str, dict]:
+    """Each arm's judged cell count, mean scores and harm flags."""
+    judged = [json.loads(l) for l in (run_dir / "judge.jsonl").read_text().splitlines() if l.strip()]
+    out = {}
+    for arm in sorted({r["backend_id"] for r in judged}):
+        rs = [r for r in judged if r["backend_id"] == arm]
+        mean = lambda k: round(sum(r[k] for r in rs) / len(rs), 2)
+        out[arm] = {"cells": len(rs), "accuracy": mean("accuracy"), "completeness": mean("completeness"),
+                    "relevance": mean("relevance"), "harm": sum(r["harm"] for r in rs)}
+    return out
+
+
+def arm_table(run_dir: Path) -> list[str]:
+    lines = ["| Arm | Cells | Accuracy | Completeness | Relevance | Harm |",
+             "| --- | ---: | ---: | ---: | ---: | ---: |"]
+    for arm, m in arm_means(run_dir).items():
+        lines.append(f"| {arm} | {m['cells']} | {m['accuracy']} | {m['completeness']} | "
+                     f"{m['relevance']} | {m['harm']} |")
+    return lines
+
+
+def publish_full(run_dir: Path, set_id: str) -> str:
+    """Freeze the run's dashboard beside its report and publish both to the reports site.
+
+    The frozen dashboard is the live one with every cell embedded, so the published page
+    drills into each turn as the live page did. Returns the published URL.
+    """
+    subprocess.run(["uv", "--directory", str(HARNESS), "run", "python", "scripts/validate-dashboard.py",
+                    "--freeze", str(run_dir / "dashboard.html"), "--run", str(run_dir)],
+                   check=True, capture_output=True)
+    day = time.strftime("%Y-%m-%d", time.localtime(run_dir.stat().st_mtime))
+    slug = f"l5-{set_id}-{day}-{run_dir.name[:8]}"
+    means = arm_means(run_dir)
+    summary = (f"Full evaluation (L5) of the {set_id} matrix on the assembled local stack: "
+               f"{len(means)} arms, {sum(m['cells'] for m in means.values())} judged cells.")
+    takeaway = "; ".join(f"{arm}: accuracy {m['accuracy']}, completeness {m['completeness']}, "
+                         f"relevance {m['relevance']}, {m['harm']} harm flags" for arm, m in means.items())
+    proc = subprocess.run([str(UMBRELLA / "scripts/publish-report.sh"), "chartsearchai", str(run_dir), slug,
+                           f"Full evaluation {set_id}, {day}", summary, takeaway],
+                          cwd=UMBRELLA, capture_output=True, text=True)
+    (run_dir.parent / f"{run_dir.name}-publish.log").write_text(proc.stdout + proc.stderr)
+    log = run_dir.parent / f"{run_dir.name}-publish.log"
+    m = re.search(r"==> published: (\S+)", proc.stdout)
+    if not proc.returncode and m:
+        return m.group(1)
+    # The site copy can be live while the mandatory bucket backup failed; say both.
+    m = re.search(r"report already published at (\S+?);", proc.stderr)
+    if m:
+        return f"{m.group(1)} (bucket backup failed; see {log})"
+    raise SystemExit(f"publishing {slug} failed; see {log}")
+
+
+def run_set_id(run_dir: Path) -> str:
+    """The comparison set a run recorded in its run event."""
+    for line in (run_dir / "events.jsonl").read_text().splitlines():
+        event = json.loads(line) if line.strip() else {}
+        if event.get("event_type") == "run" and event.get("comparison_set"):
+            return event["comparison_set"]
+    raise SystemExit(f"{run_dir}: no comparison_set in its run event")
 
 
 def main() -> int:
@@ -370,6 +432,11 @@ def main() -> int:
     ap.add_argument("--set", default="full-default")
     ap.add_argument("--profiles", help="extra arms: comma-separated profiles the Hub advertises")
     ap.add_argument("--baseline", help="an earlier full run id to cite for comparison")
+    ap.add_argument("--no-publish", action="store_true",
+                    help="L5: keep the report and dashboard local instead of publishing them")
+    ap.add_argument("--publish", metavar="RUN_DIR", help="publish an already judged L5 run")
+    ap.add_argument("--resume", metavar="RUN_DIR",
+                    help="L5: carry that run's clean cells over and run only the rest (an added arm)")
     ap.add_argument("--measure", help="run a set on the deployed stack and score it against --gold")
     ap.add_argument("--gold", help="gold file under the harness's datasets/validation/")
     ap.add_argument("--checkout", help="a checkout other than the umbrella's for --repo")
@@ -384,6 +451,10 @@ def main() -> int:
         ap.error("--head reviews one local layer; --stack reads the pushed stack")
     if args.measure:
         return measure(args.measure, args.gold)
+    if args.publish:
+        run_dir = Path(args.publish).resolve()
+        print(f"Published: {publish_full(run_dir, run_set_id(run_dir))}")
+        return 0
     if args.full and not args.pr:
         return run_full(args)
     if not args.pr:
