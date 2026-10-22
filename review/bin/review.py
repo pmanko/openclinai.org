@@ -397,7 +397,7 @@ def publish_full(run_dir: Path, set_id: str) -> str:
     (run_dir / "meta.json").write_text(json.dumps({"scout": json.loads(scout)}, indent=2) + "\n")
     # The index shows the judged scores as a table; the catalog's editor writes the takeaway.
     # A run already in the catalog keeps the copy written for it.
-    listed = {r["slug"] for r in json.loads((UMBRELLA / "reports-index.json").read_text())["runs"]}
+    listed = {r["slug"] for r in json.loads((UMBRELLA / "reports/reports-index.json").read_text())["runs"]}
     title = "" if slug in listed else f"Full evaluation {set_id}, {day} ({run_dir.name[:8]})"
     summary = "" if slug in listed else (
         f"Full evaluation (L5) of the {set_id} comparison on the assembled local stack: "

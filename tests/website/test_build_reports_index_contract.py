@@ -178,6 +178,24 @@ def test_main_writes_curated_index_and_warns_on_staged_but_unlisted(tmp_path, mo
     assert "ghost-run is staged" in capsys.readouterr().err
 
 
+def test_index_lists_newest_first_by_recorded_date_and_keeps_undated_entries_in_place(tmp_path, monkeypatch):
+    bri = _load()
+    reports = tmp_path / "reports"
+    for slug, meta in (("june", {"date": "7 Jun 2026"}), ("august", {"date": "25 Aug 2026"}),
+                       ("undated", {}), ("october", {"date": "22 Oct 2026"})):
+        (_packet(reports, slug) / "meta.json").write_text(json.dumps(meta), encoding="utf-8")
+    manifest = tmp_path / "reports-index.json"
+    manifest.write_text(json.dumps({"runs": [
+        {"slug": "june", "title": "June"}, {"slug": "august", "title": "August"},
+        {"slug": "undated", "title": "Undated"}, {"slug": "october", "title": "October"}]}), encoding="utf-8")
+    monkeypatch.setattr(bri, "REPORTS", reports)
+    monkeypatch.setattr(bri, "MANIFEST", manifest)
+    bri.main()
+    html = (reports / "index.html").read_text(encoding="utf-8")
+    titles = sorted(("October", "August", "Undated", "June"), key=html.index)
+    assert titles == ["October", "August", "Undated", "June"]
+
+
 def test_index_offers_a_family_filter_when_both_families_are_listed(tmp_path, monkeypatch):
     bri = _load()
     reports = tmp_path / "reports"

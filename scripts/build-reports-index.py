@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Regenerate reports/index.html from the CURATED manifest reports-index.json.
+"""Regenerate reports/index.html from the curated manifest reports/reports-index.json.
 
 This is a hand-curated showcase, not an auto-discovered listing: only the runs named in
-reports-index.json appear, in the order given, with human-written titles/summaries. Scores
-and counts are read from staged evidence. Optional precomputed scout tables are
-read from meta.json; publication does not evaluate runs or resolve model sources.
+the manifest appear, with human-written titles/summaries, newest first by each report's
+recorded date. Scores and counts are read from the staged packet and its frozen meta.json;
+publication does not evaluate runs or resolve model sources.
 
-Edit reports-index.json to add/remove/reorder runs or change the copy, then rerun:
+Edit reports/reports-index.json to add/remove runs or change the copy, then rerun:
   python3 scripts/build-reports-index.py
 """
 
@@ -69,7 +69,8 @@ def theme_toggle_js(storage_key: str) -> str:
 
 
 REPORTS = ROOT / "reports"
-MANIFEST = ROOT / "reports-index.json"
+MANIFEST = REPORTS / "reports-index.json"
+DATE_FORMAT = "%-d %b %Y"
 
 
 def validate_archive(runs: list[dict], reports_root: Path, *, pending_slug: str | None = None) -> None:
@@ -166,9 +167,9 @@ def gather(slug: str) -> dict:
         results = json.loads((rdir / "results.json").read_text(encoding="utf-8"))
         rows = list(results.get("results") or [])
         out["cells"] = int(results.get("resultCount") or len(rows))
-        out["date"] = datetime.fromtimestamp(
+        out["date"] = out["date"] or datetime.fromtimestamp(
             (rdir / "results.json").stat().st_mtime, timezone.utc
-        ).strftime("%-d %b %Y")
+        ).strftime(DATE_FORMAT)
         teams: dict[str, list[dict]] = {}
         for row in rows:
             team = row.get("profileId")
@@ -236,9 +237,25 @@ def gather(slug: str) -> dict:
     pts = {(r.get("request") or {}).get("patient") for r in rows if (r.get("request") or {}).get("patient")}
     out["cells"] = len(rows)
     out["patients"] = _patient_names(rdir, pts)
-    out["date"] = datetime.fromtimestamp(
-        (rdir / "results.jsonl").stat().st_mtime, timezone.utc).strftime("%-d %b %Y")
+    out["date"] = out["date"] or datetime.fromtimestamp(
+        (rdir / "results.jsonl").stat().st_mtime, timezone.utc).strftime(DATE_FORMAT)
     return out
+
+
+def _newest_first(runs: list[dict]) -> list[dict]:
+    """Order the catalog by each report's recorded date, newest first.
+
+    An undated entry keeps its place beside the entry listed before it, so ties and
+    gaps follow the manifest instead of the editor having to keep the list sorted.
+    """
+    keyed, last = [], datetime.max
+    for position, entry in enumerate(runs):
+        try:
+            last = datetime.strptime(str(gather(entry["slug"]).get("date") or ""), "%d %b %Y")
+        except ValueError:
+            pass
+        keyed.append((-last.toordinal(), position, entry))
+    return [entry for _, _, entry in sorted(keyed, key=lambda k: k[:2])]
 
 
 def _https(link) -> dict | None:
@@ -505,9 +522,9 @@ def main(
         pending_slug = args.pending_slug
         ROOT = args.root.resolve()
         REPORTS = (args.reports_root or ROOT / "reports").resolve()
-        MANIFEST = (args.manifest or ROOT / "reports-index.json").resolve()
+        MANIFEST = (args.manifest or REPORTS / "reports-index.json").resolve()
     manifest = json.loads(MANIFEST.read_text())
-    runs = manifest.get("runs", [])
+    runs = _newest_first(manifest.get("runs", []))
     earlier = [e for r in runs for e in r.get("earlier") or [] if isinstance(e, dict)]
     validate_archive(runs + earlier, REPORTS, pending_slug=pending_slug)
     if check_archive:

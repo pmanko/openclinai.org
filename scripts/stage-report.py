@@ -200,8 +200,12 @@ def stage_report(
     index_path = temporary / "index.html"
     rendered.replace(index_path)
     recorded = _load_json(run_dir / "meta.json") if (run_dir / "meta.json").is_file() else {}
+    # The run's date is frozen here: a checkout's file times are not the run's.
+    results = run_dir / ("results.json" if family == "catalyst" else "results.jsonl")
+    recorded_at = results.stat().st_mtime if results.is_file() else run_dir.stat().st_mtime
     meta = {
         **{key: recorded[key] for key in ("scout", "scoreline") if key in recorded},
+        "date": recorded.get("date") or datetime.fromtimestamp(recorded_at, timezone.utc).strftime("%-d %b %Y"),
         "slug": slug,
         "report_family": family,
         "run_path": run_path,
