@@ -138,10 +138,13 @@ def _upsert_manifest(
             },
         )
     else:
+        # Supplied copy replaces; omitted copy keeps what the catalog's editor wrote.
         if title:
             existing["title"] = title
-        existing["summary"] = summary
-        existing["takeaway"] = takeaway
+        if summary:
+            existing["summary"] = summary
+        if takeaway:
+            existing["takeaway"] = takeaway
         existing["family"] = family
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 

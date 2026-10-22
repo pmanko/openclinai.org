@@ -4,24 +4,32 @@
   "runs": [
     {
       "slug": "l5-full-default-2026-10-22-d0e4e2d8",
-      "title": "Full evaluation full-default, 2026-10-22",
-      "summary": "Full evaluation (L5) of the full-default matrix on the assembled local stack: 3 arms, 51 judged cells.",
-      "takeaway": "engine-parity-bundled-12b: accuracy 6.65, completeness 6.0, relevance 7.59, 0 harm flags; engine-parity-hub-answer-12b: accuracy 8.24, completeness 7.41, relevance 8.71, 1 harm flags; hub-profile-single-12b-checked: accuracy 7.88, completeness 8.24, relevance 8.35, 1 harm flags",
-      "family": "chartsearchai"
-    },
-    {
-      "slug": "l5-full-default-2026-10-22-208d8dbb",
-      "title": "Full evaluation full-default, 2026-10-22",
-      "summary": "Full evaluation (L5) of the full-default matrix on the assembled local stack: 3 arms, 51 judged cells.",
-      "takeaway": "engine-parity-bundled-12b: accuracy 7.06, completeness 5.94, relevance 7.94, 0 harm flags; engine-parity-hub-answer-12b: accuracy 8.71, completeness 7.94, relevance 8.88, 0 harm flags; hub-profile-single-12b-checked: accuracy 8.47, completeness 8.76, relevance 8.65, 0 harm flags",
-      "family": "chartsearchai"
-    },
-    {
-      "slug": "l5-full-default-2026-10-22-70d791d3",
-      "title": "Full evaluation full-default, 2026-10-22",
-      "summary": "Full evaluation (L5) of the full-default matrix on the assembled local stack: 3 arms, 51 judged cells.",
-      "takeaway": "engine-parity-bundled-12b: accuracy 7.29, completeness 6.35, relevance 8.0, 1 harm flags; engine-parity-hub-answer-only-12b: accuracy 0.0, completeness 0.0, relevance 0.0, 0 harm flags; hub-profile-single-12b-checked: accuracy 9.06, completeness 8.29, relevance 8.94, 0 harm flags",
-      "family": "chartsearchai"
+      "title": "Bundled ChartSearchAI or the Hub, on one shared 12B engine",
+      "summary": "Thirty-five questions in seventeen conversations about three HIV patients, asked through three setups that all send their model calls to the same Gemma 4 12B engine: ChartSearchAI's bundled answer path on its default settings, the Hub's plain answer path, and the Hub's checked profile, which reviews each answer and labels what its checks found. One automated judge graded each conversation.",
+      "takeaway": "On the same engine, the Hub's plain answer path was more accurate than bundled ChartSearchAI (8.2 against 6.6). The gap comes from things the bundled path does not have: it does not tell the model today's date, it has no guideline knowledge base or date checks, and its repetition penalty garbles long lists when it reads the whole chart. The checked profile was the most complete (8.2) but marked most In-Depth sections red, mostly guideline statements that cite a chart record which does not back them.",
+      "family": "chartsearchai",
+      "arms": {
+        "engine-parity-bundled-12b": "Bundled ChartSearchAI",
+        "engine-parity-hub-answer-12b": "Hub, answer only",
+        "engine-parity-hub-answer-only-12b": "Hub, answer only",
+        "hub-profile-single-12b-checked": "Hub, checked"
+      },
+      "guide": {
+        "label": "How the answer paths differ",
+        "url": "https://openclinai.org/chartsearchai/comparing-answer-paths/"
+      },
+      "earlier": [
+        {
+          "slug": "l5-full-default-2026-10-22-208d8dbb",
+          "label": "22 Oct, second run",
+          "note": "Bundled was set to read only a question-scoped slice of the chart instead of its default full chart. Accuracy: bundled 7.06, Hub answer only 8.71, Hub checked 8.47."
+        },
+        {
+          "slug": "l5-full-default-2026-10-22-70d791d3",
+          "label": "22 Oct, first run",
+          "note": "The Hub answer-only setup failed every question on a profile error, so its zero scores are not a result. Bundled also read the question-scoped slice."
+        }
+      ]
     },
     {
       "slug": "small-model-answer-paths-2026-07-15",

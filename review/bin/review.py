@@ -387,12 +387,15 @@ def publish_full(run_dir: Path, set_id: str) -> str:
     day = time.strftime("%Y-%m-%d", time.localtime(run_dir.stat().st_mtime))
     slug = f"l5-{set_id}-{day}-{run_dir.name[:8]}"
     means = arm_means(run_dir)
-    summary = (f"Full evaluation (L5) of the {set_id} matrix on the assembled local stack: "
-               f"{len(means)} arms, {sum(m['cells'] for m in means.values())} judged cells.")
-    takeaway = "; ".join(f"{arm}: accuracy {m['accuracy']}, completeness {m['completeness']}, "
-                         f"relevance {m['relevance']}, {m['harm']} harm flags" for arm, m in means.items())
+    # The index shows the judged scores as a table; the catalog's editor writes the takeaway.
+    # A run already in the catalog keeps the copy written for it.
+    listed = {r["slug"] for r in json.loads((UMBRELLA / "reports-index.json").read_text())["runs"]}
+    title = "" if slug in listed else f"Full evaluation {set_id}, {day} ({run_dir.name[:8]})"
+    summary = "" if slug in listed else (
+        f"Full evaluation (L5) of the {set_id} comparison on the assembled local stack: "
+        f"{len(means)} setups, {sum(m['cells'] for m in means.values())} graded conversations.")
     proc = subprocess.run([str(UMBRELLA / "scripts/publish-report.sh"), "chartsearchai", str(run_dir), slug,
-                           f"Full evaluation {set_id}, {day}", summary, takeaway],
+                           title, summary],
                           cwd=UMBRELLA, capture_output=True, text=True)
     (run_dir.parent / f"{run_dir.name}-publish.log").write_text(proc.stdout + proc.stderr)
     log = run_dir.parent / f"{run_dir.name}-publish.log"

@@ -237,10 +237,44 @@ def gather(slug: str) -> dict:
     out["patients"] = _patient_names(rdir, pts)
     out["date"] = datetime.fromtimestamp(
         (rdir / "results.jsonl").stat().st_mtime, timezone.utc).strftime("%-d %b %Y")
+    judged = _judged_rows(rdir / "judge.jsonl")
+    if judged:
+        out["graded"] = len(judged)
+        if not out["scout"]:
+            out["scout"] = _judged_means(judged)
+            out["counted"] = "Conversations"
     return out
 
 
-def _scout_table(scout: list[dict]) -> str:
+def _judged_rows(path: Path) -> list[dict]:
+    """The staged judge's per-conversation grades, when the packet carries them."""
+    if not path.is_file():
+        return []
+    rows = [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
+    return [r for r in rows if r.get("backend_id") and isinstance(r.get("accuracy"), (int, float))]
+
+
+def _judged_means(judged: list[dict]) -> list[dict]:
+    """Each setup's mean grades and harm count, in the score-table shape."""
+    table = []
+    for arm in dict.fromkeys(r["backend_id"] for r in judged):
+        rs = [r for r in judged if r["backend_id"] == arm]
+        mean = lambda key: sum(float(r.get(key) or 0) for r in rs) / len(rs)
+        table.append({"backend": arm, "n": len(rs), "accuracy_mean": mean("accuracy"),
+                      "completeness_mean": mean("completeness"), "relevance_mean": mean("relevance"),
+                      "harm_count": sum(bool(r.get("harm")) for r in rs)})
+    return table
+
+
+def _https(link) -> dict | None:
+    """A reader link from the manifest, accepted only as an https URL with a label."""
+    if (isinstance(link, dict) and isinstance(link.get("label"), str)
+            and str(link.get("url", "")).startswith("https://")):
+        return link
+    return None
+
+
+def _scout_table(scout: list[dict], labels: dict | None = None, counted: str = "Questions") -> str:
     if not scout:
         return '<div class="unscored">This run is an answer comparison only — not yet scored.</div>'
     # best (max) per column, to highlight the winner. Benchmark is the headline.
@@ -248,14 +282,18 @@ def _scout_table(scout: list[dict]) -> str:
     for key in ("benchmark_score", "accuracy_mean", "completeness_mean", "relevance_mean"):
         vals = [s[key] for s in scout if isinstance(s.get(key), (int, float))]
         best[key] = max(vals) if vals else None
+    # A run judged without the aggregate shows its dimensions only, not a column of dashes.
+    benchmarked = best["benchmark_score"] is not None
     head = ('<table class="scout"><thead><tr>'
-            '<th class="arm">AI setup</th><th>Questions</th>'
-            '<th class="bench">Benchmark<br>/100</th>'
+            f'<th class="arm">AI setup</th><th>{esc(counted)}</th>'
+            + ('<th class="bench">Benchmark<br>/100</th>' if benchmarked else '') +
             '<th>Accuracy</th><th>Completeness</th><th>Relevance</th>'
             '<th>Unsafe<br>answers</th></tr></thead><tbody>')
     body = []
     for s in scout:
         name, detail = human_arm(s["backend"])
+        if (labels or {}).get(s["backend"]):
+            name, detail = labels[s["backend"]], s["backend"]
 
         def cell(key):
             v = s.get(key)
@@ -272,7 +310,7 @@ def _scout_table(scout: list[dict]) -> str:
         harm_cell = f'<td{harm_cls} title="{esc(flags)}">{harm}</td>'
         body.append(
             f'<tr><td class="arm" title="{esc(detail)}">{esc(name)}</td>'
-            f'<td>{s["n"]}</td>{cell("benchmark_score")}{cell("accuracy_mean")}'
+            f'<td>{s["n"]}</td>{cell("benchmark_score") if benchmarked else ""}{cell("accuracy_mean")}'
             f'{cell("completeness_mean")}{cell("relevance_mean")}{harm_cell}</tr>'
         )
     table = head + "".join(body) + "</tbody></table>"
@@ -306,7 +344,9 @@ def _card(entry: dict) -> str:
     facts = []
     if g["patients"]:
         facts.append(esc(g["patients"]))
-    if g["cells"] is not None:
+    if g["cells"] is not None and g.get("graded") and g["graded"] != g["cells"]:
+        facts.append(f'{g["cells"]} answers in {g["graded"]} graded conversations')
+    elif g["cells"] is not None:
         unit = "conversations" if g.get("family") == "catalyst" else "graded answers"
         facts.append(f'{g["cells"]} {unit}')
     if g["date"]:
@@ -329,18 +369,29 @@ def _card(entry: dict) -> str:
             links.append(f'<a class="btn ghost" href="{esc(slug)}/comparison.html">Team comparison</a>')
         if (REPORTS / slug / "dashboard.html").exists():
             links.append(f'<a class="btn ghost" href="{esc(slug)}/dashboard.html">Interactive dashboard</a>')
+    guide = _https(entry.get("guide"))
+    if guide:
+        links.append(f'<a class="btn ghost" href="{esc(guide["url"])}">{esc(guide["label"])}</a>')
     unavailable = entry.get("availability") == "unavailable"
     if unavailable:
         links = ['<span class="unscored">Report unavailable</span>']
     statistics = "" if unavailable else (
         f'<div class="unscored">{esc(g["scoreline"])}</div>' if g.get("scoreline") and not g["scout"]
-        else _scout_table(g["scout"]) if g["scout"]
+        else _scout_table(g["scout"], entry.get("arms"), g.get("counted") or "Questions") if g["scout"]
         else '<div class="unscored">Open the report for its recorded methods and results.</div>'
     )
     if g["scout"] and not unavailable:
         statistics = '<div class="report-table-scroll" role="region" aria-label="Recorded score tables" tabindex="0">' + statistics + '</div>'
     takeaway = (f'<p class="takeaway"><span class="tk">Takeaway</span>{esc(entry["takeaway"])}</p>'
                 if entry.get("takeaway") else "")
+    # Earlier runs of the same comparison stay published but are listed under the
+    # current one, each with what was different, instead of as identical cards.
+    earlier = [e for e in entry.get("earlier") or [] if isinstance(e, dict) and e.get("slug")]
+    earlier_html = ("" if not earlier else
+                    '<div class="earlier"><b>Earlier runs of this comparison</b><ul>' + "".join(
+                        f'<li><a href="{esc(e["slug"])}/index.html">{esc(e.get("label") or e["slug"])}</a>'
+                        f'{" " + esc(e["note"]) if e.get("note") else ""}</li>' for e in earlier)
+                    + '</ul></div>')
     family_label = "Catalyst SQL" if family == "catalyst" else "ChartSearchAI"
     return f"""  <article class="card">
   <header class="card-head">
@@ -351,6 +402,7 @@ def _card(entry: dict) -> str:
   <p class="summary">{esc(entry.get("summary", ""))}</p>
   {statistics}
   {takeaway}
+  {earlier_html}
   </article>"""
 
 
@@ -411,6 +463,10 @@ _STYLE_CORE = """
     border-left:3px solid var(--accent);padding:10px 14px;border-radius:0 6px 6px 0;}
   .takeaway .tk{display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;
     color:var(--accent);font-weight:700;margin-right:8px;}
+  .earlier{font-size:13.5px;color:var(--muted);margin:16px 0 0;}
+  .earlier b{color:var(--text);font-weight:600;}
+  .earlier ul{margin:4px 0 0;padding-left:20px;}
+  .earlier a{color:var(--accent);}
   footer.page{color:var(--muted);font-size:12px;margin-top:36px;text-align:center;}
 """
 
@@ -440,14 +496,15 @@ def main(
         MANIFEST = (args.manifest or ROOT / "reports-index.json").resolve()
     manifest = json.loads(MANIFEST.read_text())
     runs = manifest.get("runs", [])
-    validate_archive(runs, REPORTS, pending_slug=pending_slug)
+    earlier = [e for r in runs for e in r.get("earlier") or [] if isinstance(e, dict)]
+    validate_archive(runs + earlier, REPORTS, pending_slug=pending_slug)
     if check_archive:
         print("Staged report archive is complete for the curated catalog.")
         return
     # Loud, not silent: a run whose report is staged under reports/ but absent from the
     # curated manifest gets DEPLOYED (rsync, no --delete) yet never LISTED. Warn so a missed
     # publish-time upsert is visible instead of quietly producing a deployed-but-unlisted run.
-    listed = {r.get("slug") for r in runs}
+    listed = {r.get("slug") for r in runs + earlier}
     staged = {p.parent.name for p in REPORTS.glob("*/meta.json")}
     for slug in sorted(staged - listed):
         print(f"warn: {slug} is staged under reports/ but NOT in reports-index.json "
@@ -502,7 +559,7 @@ def main(
 """
     sitemap = Element('urlset', xmlns='http://www.sitemaps.org/schemas/sitemap/0.9')
     urls = ['https://reports.openclinai.org/'] + [
-        f"https://reports.openclinai.org/{r['slug']}/index.html" for r in runs
+        f"https://reports.openclinai.org/{r['slug']}/index.html" for r in runs + earlier
         if r.get('availability') != 'unavailable']
     for url in urls:
         SubElement(SubElement(sitemap, 'url'), 'loc').text = url

@@ -424,3 +424,58 @@ def test_explicitly_unavailable_report_stays_unlinked_even_if_staged(tmp_path, s
     assert "Report unavailable" in (reports / "index.html").read_text()
     assert 'href="unavailable/index.html"' not in (reports / "index.html").read_text()
     assert "/unavailable/index.html" not in (reports / "sitemap.xml").read_text()
+
+
+def test_card_scores_setups_from_the_staged_judge_and_lists_earlier_runs(tmp_path, monkeypatch):
+    bri = _load()
+    reports = tmp_path / "reports"
+    packet = _packet(reports, "current-run")
+    _packet(reports, "earlier-run")
+    (packet / "results.jsonl").write_text("".join(
+        json.dumps({"backend_id": arm, "request": {"patient": "p1"}}) + "\n"
+        for arm in ("bundled-arm", "bundled-arm", "hub-arm", "hub-arm")), encoding="utf-8")
+    (packet / "judge.jsonl").write_text("".join(json.dumps(row) + "\n" for row in (
+        {"backend_id": "bundled-arm", "accuracy": 6, "completeness": 5, "relevance": 7, "harm": False},
+        {"backend_id": "hub-arm", "accuracy": 9, "completeness": 8, "relevance": 9, "harm": True},
+    )), encoding="utf-8")
+    monkeypatch.setattr(bri, "REPORTS", reports)
+    html = bri._card({
+        "slug": "current-run", "title": "Current",
+        "arms": {"bundled-arm": "Bundled"},
+        "guide": {"label": "How the paths differ", "url": "https://example.org/paths/"},
+        "earlier": [{"slug": "earlier-run", "label": "First run", "note": "One setup failed."}],
+    })
+    assert "4 answers in 2 graded conversations" in html
+    assert "<th>Conversations</th>" in html
+    assert 'title="bundled-arm">Bundled</td>' in html
+    assert 'class="best">9.0' in html and 'class="harm"' in html
+    assert "Benchmark" not in html
+    assert 'href="https://example.org/paths/"' in html
+    assert 'href="earlier-run/index.html">First run</a> One setup failed.' in html
+
+
+def test_card_drops_a_guide_link_that_is_not_https(tmp_path, monkeypatch):
+    bri = _load()
+    reports = tmp_path / "reports"
+    _packet(reports, "run")
+    monkeypatch.setattr(bri, "REPORTS", reports)
+    html = bri._card({"slug": "run", "title": "T", "guide": {"label": "x", "url": "javascript:alert(1)"}})
+    assert "javascript:" not in html
+
+
+def test_earlier_runs_count_as_listed_and_enter_the_sitemap(tmp_path, monkeypatch, capsys):
+    bri = _load()
+    reports = tmp_path / "reports"
+    for slug in ("current-run", "earlier-run"):
+        (_packet(reports, slug) / "meta.json").write_text("{}", encoding="utf-8")
+    manifest = tmp_path / "reports-index.json"
+    manifest.write_text(json.dumps({"intro": "i", "scoring_note": "n", "runs": [
+        {"slug": "current-run", "title": "Current", "earlier": [{"slug": "earlier-run"}]}]}), encoding="utf-8")
+    monkeypatch.setattr(bri, "REPORTS", reports)
+    monkeypatch.setattr(bri, "MANIFEST", manifest)
+    bri.main()
+    assert "earlier-run is staged" not in capsys.readouterr().err
+    assert "earlier-run/index.html" in (reports / "sitemap.xml").read_text(encoding="utf-8")
+    (reports / "earlier-run" / "index.html").unlink()
+    with pytest.raises(ValueError, match="earlier-run"):
+        bri.main()
