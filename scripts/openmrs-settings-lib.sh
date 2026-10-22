@@ -45,3 +45,12 @@ set_openmrs_property() {
       -d "${body_create}"
   fi
 }
+
+# Remove a setting so the module's own default applies again; absent is fine.
+delete_openmrs_property() {
+  local name="$1"
+  echo "  ${name} = (module default)"
+  openmrs_curl -sS -o /dev/null \
+    -u "${OPENMRS_SETTINGS_USER}:${OPENMRS_SETTINGS_PASS}" \
+    -X DELETE "${OPENMRS_SETTINGS_BASE_URL}/ws/rest/v1/systemsetting/${name}?purge=true" || true
+}

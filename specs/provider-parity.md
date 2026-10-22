@@ -32,11 +32,12 @@ comparisons in the picker.
 - [x] Baseline: ask the same five questions of both providers and note, per model
       call, the prompt size, read time and how much the router reused
       ([17 October](reviews/2026-10-17-provider-parity-measurements.md#baseline)).
-- [x] Configuration only: `swa-full` for the local Gemma 4 12B preset, and the
-      query-scoped context mode ChartSearchAI measured as faster and more
-      accurate in July (`chartsearchai.chartMode=queryScoped`, with the module's
-      default `chartsearchai.querystore.topK` of 12). Re-run the five questions
-      ([17 October](reviews/2026-10-17-provider-parity-measurements.md#configuration-only)).
+- [x] Configuration only: `swa-full` for the local Gemma 4 12B preset. Re-run the
+      five questions
+      ([17 October](reviews/2026-10-17-provider-parity-measurements.md#configuration-only),
+      measured with query-scoped context). ChartSearchAI otherwise runs on its
+      module defaults, full chart since #603, as an OpenMRS install runs it, so a
+      gap between the providers comes from what each can do, not from settings.
 - [x] Hub reads the records once per answer: one selection per answer, the same
       records block first in every stage, instructions after it, so the router's
       cache does the rest. Re-run
