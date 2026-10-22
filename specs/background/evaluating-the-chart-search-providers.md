@@ -57,13 +57,13 @@ The research stack runs OpenMRS in Docker on a Mac.
 module default except the engine: the bundled provider uses the remote engine,
 pointed at the llama-router that runs natively on the Mac with GPU access. The
 Hub uses the same router. During a full evaluation, both providers' model calls
-pass through a small recording proxy to the same model on that router, so every
-request each provider sent is kept with the run.
+pass through a small recording proxy to the same model on that router, which
+records every request each provider sends.
 
-Reports published before 22 October 2026 ran the bundled provider with
-query-scoped context (`chartsearchai.chartMode=queryScoped`, 12 similarity
-records) instead of its whole-chart default, which left some records out of its
-prompts.
+Bundled results in reports published before 22 October 2026 used query-scoped
+context (`chartsearchai.chartMode=queryScoped`, 12 similarity records), which was
+the module default until October and then a setting of ours. It left some records
+out of the bundled provider's prompts.
 
 ### What this tests and what it does not
 
@@ -72,10 +72,10 @@ prompts.
 | Chart retrieval, prompt, drug-safety checks, answer and citation handling | Yes |
 | The model | Yes, but the shared model on the router, not the E4B file on the server's CPU |
 | Starting, authenticating and stopping its own llama-server | No |
-| Its own context size (`chartsearchai.llm.contextSize`) | No; the router's context size applies |
+| Its own context size (`chartsearchai.llm.contextSize`) and the check that refuses a prompt too large for it | No; that setting applies to the local engine only, so the router's context size is the limit |
 | Per-chart warmup and saved chart caches | No |
 | Unloading the model when idle | No |
-| Exact prompt-token counting with its local engine | Not confirmed |
+| Exact prompt-token counting | No; ChartSearchAI counts tokens only through its local engine and skips the count with a remote one |
 
 ### Differences that are real
 
