@@ -120,12 +120,16 @@ Ordered by impact on what a clinician sees. None of these is implemented.
   complete and empty (`validation.status` "no_claims"), and a reviewed claim whose citation could
   not be checked ships with a yellow caution.
 - Items 3, 4 and 9 are taken together as one principle: validators label, they do not hide or
-  regenerate. The In-Depth and answer reviewers' verdicts become confidence levels and notes on
-  content that stays visible; no claim is dropped, no answer is rewritten by a model, and the
-  In-Depth returns to guideline and knowledge-base context rather than chart restatement. The
-  deterministic temporal gate keeps its ledger-based patch, and the reviewer is told which
-  endpoint statements the ledger already confirms.
-- Item 5 needs a replay of the ek-growth claim before any change.
+  regenerate. In med-agent-hub 99a7a0d the answer reviewer's verdict leaves the answer as written
+  with a yellow note, and an error it reports on an earliest or latest statement the dated series
+  confirm is set aside (the weight-endpoints case). The In-Depth is written and reviewed once;
+  every claim is shown, and a claim a check questions carries a note naming the check, red for a
+  date or grounding contradiction or a citation outside the chart, yellow for a review flag, an
+  unchecked citation or uncited general guidance. The In-Depth prompt again asks for knowledge-base
+  and guideline context applied to the patient. The deterministic date gate keeps its patch.
+- Item 5: the replay showed citation grounding split "from 65.5 cm [253], [214] to 67.0 cm [20],
+  [71]" at the second citation, so the two 65.5 cm records were asked alone to support an upward
+  trend. med-agent-hub 169dd8f checks a range or change cited at both ends against both ends.
 - Item 10 is deferred and flagged as a future security and parity fix: the Hub reads QueryStore
   with its own account, so QueryStore's per-user withholding does not apply on the Hub path.
 - QueryStore's top-up behaviour (answers withheld, or a chart read before the top-up has
