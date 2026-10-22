@@ -1,0 +1,551 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "POST",
+    "path": "/v1/catalyst/workbench/sessions",
+    "body": {
+      "contractVersion": "catalyst.workbench.session.request.v1",
+      "deploymentMode": "demo",
+      "question": "Show the prescribing clinician's name for every medication request.",
+      "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+      "dataSourceId": "openmrs-hiv"
+    }
+  },
+  "response": {
+    "httpStatus": 201,
+    "body": {
+      "contractVersion": "catalyst.workbench.session.v1",
+      "sessionId": "e23cb339-6315-4750-9cf2-c77ca40724f6",
+      "question": "Show the prescribing clinician's name for every medication request.",
+      "name": "Show the prescribing clinician's name for every medication request.",
+      "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+      "datasetId": "hiv-20260731T000741Z",
+      "datasetVersion": "hiv-20260731T000741Z",
+      "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+      "currentVersionId": "97ffd2ee-e1d8-4748-84cb-dfa90fddd720",
+      "browserState": {},
+      "provenance": {
+        "dataSourceId": "openmrs-hiv",
+        "catalogContextSourceId": "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+        "catalystTraceId": "40e17554-1f5d-420c-8b4e-bc83c9dec242",
+        "profileSnapshot": {
+          "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+          "profileLabel": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b-q4"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b-q4",
+            "query_review": "gemma-4-12b-q4"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            },
+            "query_review": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "dbfe5a9c13a1269a5ed8b269a8d5c82506419f8515efe33e236770a90e571ffa",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_review",
+            "query_finalize"
+          ],
+          "unavailableReasons": []
+        },
+        "datasetSnapshot": {
+          "datasetId": "hiv-20260731T000741Z",
+          "dataSource": "openmrs-hiv-fhir-postgresql",
+          "pipelineRunId": "hiv-20260731T000741Z",
+          "synthetic": null,
+          "patients": 5285,
+          "results": 427915,
+          "testTypes": 143,
+          "firstObservedAt": "2022-11-07T21:50:36Z",
+          "lastObservedAt": "2026-08-11T00:00:00Z"
+        },
+        "generationHttpStatus": 200,
+        "generationOutcome": {
+          "contractVersion": "catalyst.query.v1",
+          "deploymentMode": "demo",
+          "status": "rejected",
+          "question": "Show the prescribing clinician's name for every medication request.",
+          "message": "The query returns the patient's name (family_name, given_name) instead of the prescribing clinician's name. To find the clinician's name, you should join the medication request's practitioner ID (req_practitioner_id) with a table containing practitioner names, or use the encounter's practitioner information.",
+          "validation": {
+            "status": "rejected",
+            "checks": [
+              {
+                "name": "status_correctness",
+                "status": "passed"
+              },
+              {
+                "name": "approved_view_and_field_grounding",
+                "status": "failed",
+                "message": "The query joins medication requests to the patient dimension to retrieve the patient's name, but the question asks for the prescribing clinician's name. The candidate should join with a table containing practitioner information (e.g., public.encounter_flat or public.patient_flat) or use the practitioner ID from the medication request to find the clinician's name."
+              },
+              {
+                "name": "one_statement_read_only_select",
+                "status": "passed"
+              },
+              {
+                "name": "dialect_compatibility",
+                "status": "passed"
+              },
+              {
+                "name": "typed_parameter_binding",
+                "status": "passed"
+              },
+              {
+                "name": "output_column_agreement",
+                "status": "passed"
+              },
+              {
+                "name": "row_limit_policy",
+                "status": "passed"
+              },
+              {
+                "name": "absence_of_invented_identifiers",
+                "status": "passed"
+              }
+            ]
+          },
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+            "traceId": "40e17554-1f5d-420c-8b4e-bc83c9dec242",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ]
+          },
+          "diagnosticCandidate": {
+            "executable": false,
+            "candidate": {
+              "status": "ready",
+              "target": {
+                "dataSource": "openmrs-hiv-fhir-postgresql",
+                "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+                "dialect": "postgresql",
+                "approvedViews": [
+                  "analytics.hiv_concept_mapping_v1",
+                  "analytics.hiv_medication_request_fact_v1",
+                  "analytics.hiv_observation_fact_v1",
+                  "analytics.hiv_patient_dim_v1",
+                  "analytics.hiv_visit_fact_v1",
+                  "analytics.pipeline_freshness_v1",
+                  "analytics.pipeline_run_v1",
+                  "public.condition_flat",
+                  "public.encounter_flat",
+                  "public.medication_flat",
+                  "public.medication_request_flat",
+                  "public.observation_flat",
+                  "public.patient_flat"
+                ]
+              },
+              "sql": "SELECT t2.family_name, t2.given_name FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id",
+              "parameters": [],
+              "expectedColumns": [
+                {
+                  "name": "family_name",
+                  "logicalType": "string",
+                  "nullable": true
+                },
+                {
+                  "name": "given_name",
+                  "logicalType": "string",
+                  "nullable": true
+                }
+              ]
+            }
+          }
+        }
+      },
+      "status": "active",
+      "createdAt": "2026-08-25T00:46:18.507716Z",
+      "updatedAt": "2026-08-25T00:47:08.128541Z",
+      "versions": [
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "97ffd2ee-e1d8-4748-84cb-dfa90fddd720",
+          "sessionId": "e23cb339-6315-4750-9cf2-c77ca40724f6",
+          "parentVersionId": null,
+          "ordinal": 1,
+          "authorType": "model",
+          "sql": "SELECT t2.family_name, t2.given_name FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id",
+          "parameters": [],
+          "expectedColumns": [
+            {
+              "name": "family_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "given_name",
+              "logicalType": "string",
+              "nullable": true
+            }
+          ],
+          "queryDigest": "0a5f1e31cbfccdead36e6915cf695c4f07729165b2fa1b479acb7818fcdba5a3",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+            "traceId": "40e17554-1f5d-420c-8b4e-bc83c9dec242",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "rejected",
+            "hubTraceId": "40e17554-1f5d-420c-8b4e-bc83c9dec242",
+            "generationAttempts": [],
+            "generationValidation": {
+              "status": "rejected",
+              "checks": [
+                {
+                  "name": "status_correctness",
+                  "status": "passed"
+                },
+                {
+                  "name": "approved_view_and_field_grounding",
+                  "status": "failed",
+                  "message": "The query joins medication requests to the patient dimension to retrieve the patient's name, but the question asks for the prescribing clinician's name. The candidate should join with a table containing practitioner information (e.g., public.encounter_flat or public.patient_flat) or use the practitioner ID from the medication request to find the clinician's name."
+                },
+                {
+                  "name": "one_statement_read_only_select",
+                  "status": "passed"
+                },
+                {
+                  "name": "dialect_compatibility",
+                  "status": "passed"
+                },
+                {
+                  "name": "typed_parameter_binding",
+                  "status": "passed"
+                },
+                {
+                  "name": "output_column_agreement",
+                  "status": "passed"
+                },
+                {
+                  "name": "row_limit_policy",
+                  "status": "passed"
+                },
+                {
+                  "name": "absence_of_invented_identifiers",
+                  "status": "passed"
+                }
+              ]
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b-q4"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b-q4",
+              "query_review": "gemma-4-12b-q4"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "query_review": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "dbfe5a9c13a1269a5ed8b269a8d5c82506419f8515efe33e236770a90e571ffa",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_review",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "catalystTraceId": "40e17554-1f5d-420c-8b4e-bc83c9dec242",
+            "turnId": "a9e0e62b-94f3-46d5-af2b-2f5e7e52e244",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": null,
+            "effectiveBaseVersion": null,
+            "manualVersion": null,
+            "editorSnapshotDigest": null,
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "7e2efede-ef76-47a2-8233-3034c16a6875",
+              "evidenceDigest": "b380bdcf65ba00dd1bc5b47cc5e498ff401a712589cf04152257c52322d228da",
+              "detailPath": "/v1/catalyst/workbench/sessions/e23cb339-6315-4750-9cf2-c77ca40724f6/turns/a9e0e62b-94f3-46d5-af2b-2f5e7e52e244/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+              "profileName": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+              "profileDigest": "aef9d8a8267afde55578eb35019be744fa85cf02648d4db674aaa4a6d993a647",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4-q4",
+                "modelId": "gemma-4-12b-q4",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": [],
+              "reviewer": {
+                "role": "reviewer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4-q4",
+                "modelId": "gemma-4-12b-q4",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-review",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                  "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+                }
+              }
+            },
+            "hubRequestDigest": "46c3e3cf8601ece0e051cde2d031807363fa2c08d07a72b90ea5f5f6bb6c85a8"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T00:47:08.128541Z"
+        }
+      ],
+      "currentVersion": {
+        "contractVersion": "catalyst.workbench.query-version.v1",
+        "versionId": "97ffd2ee-e1d8-4748-84cb-dfa90fddd720",
+        "sessionId": "e23cb339-6315-4750-9cf2-c77ca40724f6",
+        "parentVersionId": null,
+        "ordinal": 1,
+        "authorType": "model",
+        "sql": "SELECT t2.family_name, t2.given_name FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id",
+        "parameters": [],
+        "expectedColumns": [
+          {
+            "name": "family_name",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "given_name",
+            "logicalType": "string",
+            "nullable": true
+          }
+        ],
+        "queryDigest": "0a5f1e31cbfccdead36e6915cf695c4f07729165b2fa1b479acb7818fcdba5a3",
+        "provenance": {
+          "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+          "traceId": "40e17554-1f5d-420c-8b4e-bc83c9dec242",
+          "contextSourceIds": [
+            "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+          ],
+          "sourceContract": "catalyst.query.v1",
+          "sourceStatus": "rejected",
+          "hubTraceId": "40e17554-1f5d-420c-8b4e-bc83c9dec242",
+          "generationAttempts": [],
+          "generationValidation": {
+            "status": "rejected",
+            "checks": [
+              {
+                "name": "status_correctness",
+                "status": "passed"
+              },
+              {
+                "name": "approved_view_and_field_grounding",
+                "status": "failed",
+                "message": "The query joins medication requests to the patient dimension to retrieve the patient's name, but the question asks for the prescribing clinician's name. The candidate should join with a table containing practitioner information (e.g., public.encounter_flat or public.patient_flat) or use the practitioner ID from the medication request to find the clinician's name."
+              },
+              {
+                "name": "one_statement_read_only_select",
+                "status": "passed"
+              },
+              {
+                "name": "dialect_compatibility",
+                "status": "passed"
+              },
+              {
+                "name": "typed_parameter_binding",
+                "status": "passed"
+              },
+              {
+                "name": "output_column_agreement",
+                "status": "passed"
+              },
+              {
+                "name": "row_limit_policy",
+                "status": "passed"
+              },
+              {
+                "name": "absence_of_invented_identifiers",
+                "status": "passed"
+              }
+            ]
+          },
+          "profileLabel": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b-q4"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b-q4",
+            "query_review": "gemma-4-12b-q4"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            },
+            "query_review": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "dbfe5a9c13a1269a5ed8b269a8d5c82506419f8515efe33e236770a90e571ffa",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_review",
+            "query_finalize"
+          ],
+          "unavailableReasons": [],
+          "catalystTraceId": "40e17554-1f5d-420c-8b4e-bc83c9dec242",
+          "turnId": "a9e0e62b-94f3-46d5-af2b-2f5e7e52e244",
+          "dataSourceId": "openmrs-hiv",
+          "observedBase": null,
+          "effectiveBaseVersion": null,
+          "manualVersion": null,
+          "editorSnapshotDigest": null,
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "7e2efede-ef76-47a2-8233-3034c16a6875",
+            "evidenceDigest": "b380bdcf65ba00dd1bc5b47cc5e498ff401a712589cf04152257c52322d228da",
+            "detailPath": "/v1/catalyst/workbench/sessions/e23cb339-6315-4750-9cf2-c77ca40724f6/turns/a9e0e62b-94f3-46d5-af2b-2f5e7e52e244/generation-evidence"
+          },
+          "profileSnapshot": {
+            "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+            "profileName": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+            "profileDigest": "aef9d8a8267afde55578eb35019be744fa85cf02648d4db674aaa4a6d993a647",
+            "writer": {
+              "role": "writer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4-q4",
+              "modelId": "gemma-4-12b-q4",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-generate",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+              }
+            },
+            "omissions": [],
+            "reviewer": {
+              "role": "reviewer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4-q4",
+              "modelId": "gemma-4-12b-q4",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-review",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+              }
+            }
+          },
+          "hubRequestDigest": "46c3e3cf8601ece0e051cde2d031807363fa2c08d07a72b90ea5f5f6bb6c85a8"
+        },
+        "sourceFindingIds": [],
+        "repairProposalId": null,
+        "createdAt": "2026-08-25T00:47:08.128541Z"
+      },
+      "validations": [
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "0a5f1e31cbfccdead36e6915cf695c4f07729165b2fa1b479acb7818fcdba5a3",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 0,
+          "validationId": "444083da-67c6-4be4-8d02-6dace3a995ce",
+          "sessionId": "e23cb339-6315-4750-9cf2-c77ca40724f6",
+          "versionId": "97ffd2ee-e1d8-4748-84cb-dfa90fddd720",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T00:47:08.128541Z"
+        }
+      ],
+      "latestValidation": {
+        "contractVersion": "catalyst.workbench.validation.v1",
+        "queryDigest": "0a5f1e31cbfccdead36e6915cf695c4f07729165b2fa1b479acb7818fcdba5a3",
+        "validatorRevision": "catalyst.workbench.validator.v1",
+        "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+        "status": "valid",
+        "advisory": true,
+        "checks": [],
+        "findings": [],
+        "durationMs": 0,
+        "validationId": "444083da-67c6-4be4-8d02-6dace3a995ce",
+        "sessionId": "e23cb339-6315-4750-9cf2-c77ca40724f6",
+        "versionId": "97ffd2ee-e1d8-4748-84cb-dfa90fddd720",
+        "ordinal": 1,
+        "createdAt": "2026-08-25T00:47:08.128541Z"
+      },
+      "executions": [],
+      "guidance": [],
+      "dataSourceId": "openmrs-hiv",
+      "draftSeed": null
+    }
+  },
+  "elapsedMs": 51871
+}

@@ -1,0 +1,923 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "POST",
+    "path": "/v1/catalyst/workbench/sessions",
+    "body": {
+      "contractVersion": "catalyst.workbench.session.request.v1",
+      "deploymentMode": "demo",
+      "question": "Count HIV visits by encounter type since 2025-01-01, highest count first.",
+      "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+      "dataSourceId": "openmrs-hiv"
+    }
+  },
+  "response": {
+    "httpStatus": 201,
+    "body": {
+      "contractVersion": "catalyst.workbench.session.v1",
+      "sessionId": "6c6f8313-d5b2-44dc-a8a5-b4f328021274",
+      "question": "Count HIV visits by encounter type since 2025-01-01, highest count first.",
+      "name": "Count HIV visits by encounter type since 2025-01-01, highest count first.",
+      "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+      "datasetId": "hiv-20260731T000741Z",
+      "datasetVersion": "hiv-20260731T000741Z",
+      "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+      "currentVersionId": "807c2af7-13e7-4753-a869-47e8f2e74a33",
+      "browserState": {},
+      "provenance": {
+        "dataSourceId": "openmrs-hiv",
+        "catalogContextSourceId": "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+        "catalystTraceId": "05f3d129-0827-42d4-8e9e-a8e2fac751d0",
+        "profileSnapshot": {
+          "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+          "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b",
+            "qwen2.5-14b"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b",
+            "query_review": "qwen2.5-14b"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            },
+            "query_review": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_review",
+            "query_finalize"
+          ],
+          "unavailableReasons": []
+        },
+        "datasetSnapshot": {
+          "datasetId": "hiv-20260731T000741Z",
+          "dataSource": "openmrs-hiv-fhir-postgresql",
+          "pipelineRunId": "hiv-20260731T000741Z",
+          "synthetic": null,
+          "patients": 5285,
+          "results": 427915,
+          "testTypes": 143,
+          "firstObservedAt": "2022-11-07T21:50:36Z",
+          "lastObservedAt": "2026-08-11T00:00:00Z"
+        },
+        "generationHttpStatus": 200,
+        "generationOutcome": {
+          "contractVersion": "catalyst.query.v1",
+          "deploymentMode": "demo",
+          "status": "ready",
+          "question": "Count HIV visits by encounter type since 2025-01-01, highest count first.",
+          "target": {
+            "dataSource": "openmrs-hiv-fhir-postgresql",
+            "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+            "dialect": "postgresql",
+            "approvedViews": [
+              "analytics.hiv_concept_mapping_v1",
+              "analytics.hiv_medication_request_fact_v1",
+              "analytics.hiv_observation_fact_v1",
+              "analytics.hiv_patient_dim_v1",
+              "analytics.hiv_visit_fact_v1",
+              "analytics.pipeline_freshness_v1",
+              "analytics.pipeline_run_v1",
+              "public.condition_flat",
+              "public.encounter_flat",
+              "public.medication_flat",
+              "public.medication_request_flat",
+              "public.observation_flat",
+              "public.patient_flat"
+            ]
+          },
+          "sql": "SELECT encounter_type, COUNT(*) AS visit_count FROM analytics.hiv_visit_fact_v1 WHERE started_at >= :start_date GROUP BY encounter_type ORDER BY visit_count DESC",
+          "parameters": [
+            {
+              "name": "start_date",
+              "type": "date",
+              "source": "question",
+              "value": "2025-01-01"
+            }
+          ],
+          "expectedColumns": [
+            {
+              "name": "encounter_type",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "visit_count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "validation": {
+            "status": "passed",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              },
+              {
+                "name": "status",
+                "status": "passed",
+                "message": "The candidate's status is 'ready', which is correct."
+              },
+              {
+                "name": "approved-view",
+                "status": "passed",
+                "message": "The candidate uses the approved view 'analytics.hiv_visit_fact_v1'."
+              },
+              {
+                "name": "field-grounding",
+                "status": "passed",
+                "message": "The candidate correctly grounds 'encounter_type' and 'started_at' from 'analytics.hiv_visit_fact_v1'."
+              },
+              {
+                "name": "one-statement-read-only",
+                "status": "passed",
+                "message": "The candidate uses a single SELECT statement with no write operations."
+              },
+              {
+                "name": "dialect-compatibility",
+                "status": "passed",
+                "message": "The candidate's SQL is compatible with PostgreSQL."
+              },
+              {
+                "name": "typed-parameter-binding",
+                "status": "passed",
+                "message": "The candidate correctly binds the 'start_date' parameter with a date type."
+              },
+              {
+                "name": "output-column-agreement",
+                "status": "passed",
+                "message": "The candidate's output columns match the expected schema."
+              },
+              {
+                "name": "row-limit-policy",
+                "status": "passed",
+                "message": "The candidate does not exceed the row limit policy."
+              },
+              {
+                "name": "absence-of-invented-identifiers",
+                "status": "passed",
+                "message": "The candidate does not use any invented identifiers."
+              }
+            ]
+          },
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "traceId": "05f3d129-0827-42d4-8e9e-a8e2fac751d0",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ]
+          },
+          "modelCollaboration": {
+            "writer": {
+              "model": "gemma-4-12b",
+              "candidate": {
+                "status": "ready",
+                "target": {
+                  "dataSource": "openmrs-hiv-fhir-postgresql",
+                  "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+                  "dialect": "postgresql",
+                  "approvedViews": [
+                    "analytics.hiv_concept_mapping_v1",
+                    "analytics.hiv_medication_request_fact_v1",
+                    "analytics.hiv_observation_fact_v1",
+                    "analytics.hiv_patient_dim_v1",
+                    "analytics.hiv_visit_fact_v1",
+                    "analytics.pipeline_freshness_v1",
+                    "analytics.pipeline_run_v1",
+                    "public.condition_flat",
+                    "public.encounter_flat",
+                    "public.medication_flat",
+                    "public.medication_request_flat",
+                    "public.observation_flat",
+                    "public.patient_flat"
+                  ]
+                },
+                "sql": "SELECT encounter_type, COUNT(*) AS visit_count FROM analytics.hiv_visit_fact_v1 WHERE started_at >= :start_date GROUP BY encounter_type ORDER BY visit_count DESC",
+                "parameters": [
+                  {
+                    "name": "start_date",
+                    "type": "date",
+                    "source": "question",
+                    "value": "2025-01-01"
+                  }
+                ],
+                "expectedColumns": [
+                  {
+                    "name": "encounter_type",
+                    "logicalType": "string",
+                    "nullable": true
+                  },
+                  {
+                    "name": "visit_count",
+                    "logicalType": "integer",
+                    "nullable": false
+                  }
+                ]
+              },
+              "lintFindings": []
+            },
+            "reviewer": {
+              "model": "qwen2.5-14b",
+              "decision": "approve",
+              "checks": [
+                {
+                  "name": "status",
+                  "status": "passed",
+                  "message": "The candidate's status is 'ready', which is correct."
+                },
+                {
+                  "name": "approved-view",
+                  "status": "passed",
+                  "message": "The candidate uses the approved view 'analytics.hiv_visit_fact_v1'."
+                },
+                {
+                  "name": "field-grounding",
+                  "status": "passed",
+                  "message": "The candidate correctly grounds 'encounter_type' and 'started_at' from 'analytics.hiv_visit_fact_v1'."
+                },
+                {
+                  "name": "one-statement-read-only",
+                  "status": "passed",
+                  "message": "The candidate uses a single SELECT statement with no write operations."
+                },
+                {
+                  "name": "dialect-compatibility",
+                  "status": "passed",
+                  "message": "The candidate's SQL is compatible with PostgreSQL."
+                },
+                {
+                  "name": "typed-parameter-binding",
+                  "status": "passed",
+                  "message": "The candidate correctly binds the 'start_date' parameter with a date type."
+                },
+                {
+                  "name": "output-column-agreement",
+                  "status": "passed",
+                  "message": "The candidate's output columns match the expected schema."
+                },
+                {
+                  "name": "row-limit-policy",
+                  "status": "passed",
+                  "message": "The candidate does not exceed the row limit policy."
+                },
+                {
+                  "name": "absence-of-invented-identifiers",
+                  "status": "passed",
+                  "message": "The candidate does not use any invented identifiers."
+                }
+              ]
+            },
+            "finalLintFindings": []
+          }
+        }
+      },
+      "status": "active",
+      "createdAt": "2026-08-25T00:48:52.353054Z",
+      "updatedAt": "2026-08-25T00:49:56.390655Z",
+      "versions": [
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "807c2af7-13e7-4753-a869-47e8f2e74a33",
+          "sessionId": "6c6f8313-d5b2-44dc-a8a5-b4f328021274",
+          "parentVersionId": null,
+          "ordinal": 1,
+          "authorType": "model",
+          "sql": "SELECT encounter_type, COUNT(*) AS visit_count FROM analytics.hiv_visit_fact_v1 WHERE started_at >= :start_date GROUP BY encounter_type ORDER BY visit_count DESC",
+          "parameters": [
+            {
+              "name": "start_date",
+              "type": "date",
+              "source": "question",
+              "value": "2025-01-01"
+            }
+          ],
+          "expectedColumns": [
+            {
+              "name": "encounter_type",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "visit_count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "queryDigest": "1f23bd92f342c2f2cc34c0764ab6253ebd515b3eb30127c2571b22670dc15924",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "traceId": "05f3d129-0827-42d4-8e9e-a8e2fac751d0",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "ready",
+            "hubTraceId": "05f3d129-0827-42d4-8e9e-a8e2fac751d0",
+            "generationValidation": {
+              "status": "passed",
+              "checks": [
+                {
+                  "name": "query_lint_attempt_1",
+                  "status": "passed",
+                  "message": "Candidate passed deterministic SQL lint."
+                },
+                {
+                  "name": "status",
+                  "status": "passed",
+                  "message": "The candidate's status is 'ready', which is correct."
+                },
+                {
+                  "name": "approved-view",
+                  "status": "passed",
+                  "message": "The candidate uses the approved view 'analytics.hiv_visit_fact_v1'."
+                },
+                {
+                  "name": "field-grounding",
+                  "status": "passed",
+                  "message": "The candidate correctly grounds 'encounter_type' and 'started_at' from 'analytics.hiv_visit_fact_v1'."
+                },
+                {
+                  "name": "one-statement-read-only",
+                  "status": "passed",
+                  "message": "The candidate uses a single SELECT statement with no write operations."
+                },
+                {
+                  "name": "dialect-compatibility",
+                  "status": "passed",
+                  "message": "The candidate's SQL is compatible with PostgreSQL."
+                },
+                {
+                  "name": "typed-parameter-binding",
+                  "status": "passed",
+                  "message": "The candidate correctly binds the 'start_date' parameter with a date type."
+                },
+                {
+                  "name": "output-column-agreement",
+                  "status": "passed",
+                  "message": "The candidate's output columns match the expected schema."
+                },
+                {
+                  "name": "row-limit-policy",
+                  "status": "passed",
+                  "message": "The candidate does not exceed the row limit policy."
+                },
+                {
+                  "name": "absence-of-invented-identifiers",
+                  "status": "passed",
+                  "message": "The candidate does not use any invented identifiers."
+                }
+              ]
+            },
+            "modelCollaboration": {
+              "writer": {
+                "model": "gemma-4-12b",
+                "candidate": {
+                  "status": "ready",
+                  "target": {
+                    "dataSource": "openmrs-hiv-fhir-postgresql",
+                    "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+                    "dialect": "postgresql",
+                    "approvedViews": [
+                      "analytics.hiv_concept_mapping_v1",
+                      "analytics.hiv_medication_request_fact_v1",
+                      "analytics.hiv_observation_fact_v1",
+                      "analytics.hiv_patient_dim_v1",
+                      "analytics.hiv_visit_fact_v1",
+                      "analytics.pipeline_freshness_v1",
+                      "analytics.pipeline_run_v1",
+                      "public.condition_flat",
+                      "public.encounter_flat",
+                      "public.medication_flat",
+                      "public.medication_request_flat",
+                      "public.observation_flat",
+                      "public.patient_flat"
+                    ]
+                  },
+                  "sql": "SELECT encounter_type, COUNT(*) AS visit_count FROM analytics.hiv_visit_fact_v1 WHERE started_at >= :start_date GROUP BY encounter_type ORDER BY visit_count DESC",
+                  "parameters": [
+                    {
+                      "name": "start_date",
+                      "type": "date",
+                      "source": "question",
+                      "value": "2025-01-01"
+                    }
+                  ],
+                  "expectedColumns": [
+                    {
+                      "name": "encounter_type",
+                      "logicalType": "string",
+                      "nullable": true
+                    },
+                    {
+                      "name": "visit_count",
+                      "logicalType": "integer",
+                      "nullable": false
+                    }
+                  ]
+                },
+                "lintFindings": []
+              },
+              "reviewer": {
+                "model": "qwen2.5-14b",
+                "decision": "approve",
+                "checks": [
+                  {
+                    "name": "status",
+                    "status": "passed",
+                    "message": "The candidate's status is 'ready', which is correct."
+                  },
+                  {
+                    "name": "approved-view",
+                    "status": "passed",
+                    "message": "The candidate uses the approved view 'analytics.hiv_visit_fact_v1'."
+                  },
+                  {
+                    "name": "field-grounding",
+                    "status": "passed",
+                    "message": "The candidate correctly grounds 'encounter_type' and 'started_at' from 'analytics.hiv_visit_fact_v1'."
+                  },
+                  {
+                    "name": "one-statement-read-only",
+                    "status": "passed",
+                    "message": "The candidate uses a single SELECT statement with no write operations."
+                  },
+                  {
+                    "name": "dialect-compatibility",
+                    "status": "passed",
+                    "message": "The candidate's SQL is compatible with PostgreSQL."
+                  },
+                  {
+                    "name": "typed-parameter-binding",
+                    "status": "passed",
+                    "message": "The candidate correctly binds the 'start_date' parameter with a date type."
+                  },
+                  {
+                    "name": "output-column-agreement",
+                    "status": "passed",
+                    "message": "The candidate's output columns match the expected schema."
+                  },
+                  {
+                    "name": "row-limit-policy",
+                    "status": "passed",
+                    "message": "The candidate does not exceed the row limit policy."
+                  },
+                  {
+                    "name": "absence-of-invented-identifiers",
+                    "status": "passed",
+                    "message": "The candidate does not use any invented identifiers."
+                  }
+                ]
+              },
+              "finalLintFindings": []
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b",
+              "qwen2.5-14b"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b",
+              "query_review": "qwen2.5-14b"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "query_review": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_review",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "catalystTraceId": "05f3d129-0827-42d4-8e9e-a8e2fac751d0",
+            "turnId": "3b92e884-bbf9-4b7c-8cff-af03f694cf20",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": null,
+            "effectiveBaseVersion": null,
+            "manualVersion": null,
+            "editorSnapshotDigest": null,
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "3a869c4f-30ca-4986-83c4-71773a1a1f95",
+              "evidenceDigest": "943eb0b0abe34d15adef23638e625013d4f38a67ae045c7249017cf5b07cdbda",
+              "detailPath": "/v1/catalyst/workbench/sessions/6c6f8313-d5b2-44dc-a8a5-b4f328021274/turns/3b92e884-bbf9-4b7c-8cff-af03f694cf20/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+              "profileName": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+              "profileDigest": "ed71b2719f421b3edb7ad17a47ae1aea290f8b1d079a633ce23e4dea369565ab",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4",
+                "modelId": "gemma-4-12b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": [],
+              "reviewer": {
+                "role": "reviewer",
+                "providerId": "med-agent-hub",
+                "modelClass": "qwen2.5",
+                "modelId": "qwen2.5-14b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-review",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                  "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+                }
+              }
+            },
+            "hubRequestDigest": "c811c402e13c8d91907726e0676dc8fca2f044b7aa2cc7364799c43bffa51741"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T00:49:56.390655Z"
+        }
+      ],
+      "currentVersion": {
+        "contractVersion": "catalyst.workbench.query-version.v1",
+        "versionId": "807c2af7-13e7-4753-a869-47e8f2e74a33",
+        "sessionId": "6c6f8313-d5b2-44dc-a8a5-b4f328021274",
+        "parentVersionId": null,
+        "ordinal": 1,
+        "authorType": "model",
+        "sql": "SELECT encounter_type, COUNT(*) AS visit_count FROM analytics.hiv_visit_fact_v1 WHERE started_at >= :start_date GROUP BY encounter_type ORDER BY visit_count DESC",
+        "parameters": [
+          {
+            "name": "start_date",
+            "type": "date",
+            "source": "question",
+            "value": "2025-01-01"
+          }
+        ],
+        "expectedColumns": [
+          {
+            "name": "encounter_type",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "visit_count",
+            "logicalType": "integer",
+            "nullable": false
+          }
+        ],
+        "queryDigest": "1f23bd92f342c2f2cc34c0764ab6253ebd515b3eb30127c2571b22670dc15924",
+        "provenance": {
+          "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+          "traceId": "05f3d129-0827-42d4-8e9e-a8e2fac751d0",
+          "contextSourceIds": [
+            "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+          ],
+          "sourceContract": "catalyst.query.v1",
+          "sourceStatus": "ready",
+          "hubTraceId": "05f3d129-0827-42d4-8e9e-a8e2fac751d0",
+          "generationValidation": {
+            "status": "passed",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              },
+              {
+                "name": "status",
+                "status": "passed",
+                "message": "The candidate's status is 'ready', which is correct."
+              },
+              {
+                "name": "approved-view",
+                "status": "passed",
+                "message": "The candidate uses the approved view 'analytics.hiv_visit_fact_v1'."
+              },
+              {
+                "name": "field-grounding",
+                "status": "passed",
+                "message": "The candidate correctly grounds 'encounter_type' and 'started_at' from 'analytics.hiv_visit_fact_v1'."
+              },
+              {
+                "name": "one-statement-read-only",
+                "status": "passed",
+                "message": "The candidate uses a single SELECT statement with no write operations."
+              },
+              {
+                "name": "dialect-compatibility",
+                "status": "passed",
+                "message": "The candidate's SQL is compatible with PostgreSQL."
+              },
+              {
+                "name": "typed-parameter-binding",
+                "status": "passed",
+                "message": "The candidate correctly binds the 'start_date' parameter with a date type."
+              },
+              {
+                "name": "output-column-agreement",
+                "status": "passed",
+                "message": "The candidate's output columns match the expected schema."
+              },
+              {
+                "name": "row-limit-policy",
+                "status": "passed",
+                "message": "The candidate does not exceed the row limit policy."
+              },
+              {
+                "name": "absence-of-invented-identifiers",
+                "status": "passed",
+                "message": "The candidate does not use any invented identifiers."
+              }
+            ]
+          },
+          "modelCollaboration": {
+            "writer": {
+              "model": "gemma-4-12b",
+              "candidate": {
+                "status": "ready",
+                "target": {
+                  "dataSource": "openmrs-hiv-fhir-postgresql",
+                  "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+                  "dialect": "postgresql",
+                  "approvedViews": [
+                    "analytics.hiv_concept_mapping_v1",
+                    "analytics.hiv_medication_request_fact_v1",
+                    "analytics.hiv_observation_fact_v1",
+                    "analytics.hiv_patient_dim_v1",
+                    "analytics.hiv_visit_fact_v1",
+                    "analytics.pipeline_freshness_v1",
+                    "analytics.pipeline_run_v1",
+                    "public.condition_flat",
+                    "public.encounter_flat",
+                    "public.medication_flat",
+                    "public.medication_request_flat",
+                    "public.observation_flat",
+                    "public.patient_flat"
+                  ]
+                },
+                "sql": "SELECT encounter_type, COUNT(*) AS visit_count FROM analytics.hiv_visit_fact_v1 WHERE started_at >= :start_date GROUP BY encounter_type ORDER BY visit_count DESC",
+                "parameters": [
+                  {
+                    "name": "start_date",
+                    "type": "date",
+                    "source": "question",
+                    "value": "2025-01-01"
+                  }
+                ],
+                "expectedColumns": [
+                  {
+                    "name": "encounter_type",
+                    "logicalType": "string",
+                    "nullable": true
+                  },
+                  {
+                    "name": "visit_count",
+                    "logicalType": "integer",
+                    "nullable": false
+                  }
+                ]
+              },
+              "lintFindings": []
+            },
+            "reviewer": {
+              "model": "qwen2.5-14b",
+              "decision": "approve",
+              "checks": [
+                {
+                  "name": "status",
+                  "status": "passed",
+                  "message": "The candidate's status is 'ready', which is correct."
+                },
+                {
+                  "name": "approved-view",
+                  "status": "passed",
+                  "message": "The candidate uses the approved view 'analytics.hiv_visit_fact_v1'."
+                },
+                {
+                  "name": "field-grounding",
+                  "status": "passed",
+                  "message": "The candidate correctly grounds 'encounter_type' and 'started_at' from 'analytics.hiv_visit_fact_v1'."
+                },
+                {
+                  "name": "one-statement-read-only",
+                  "status": "passed",
+                  "message": "The candidate uses a single SELECT statement with no write operations."
+                },
+                {
+                  "name": "dialect-compatibility",
+                  "status": "passed",
+                  "message": "The candidate's SQL is compatible with PostgreSQL."
+                },
+                {
+                  "name": "typed-parameter-binding",
+                  "status": "passed",
+                  "message": "The candidate correctly binds the 'start_date' parameter with a date type."
+                },
+                {
+                  "name": "output-column-agreement",
+                  "status": "passed",
+                  "message": "The candidate's output columns match the expected schema."
+                },
+                {
+                  "name": "row-limit-policy",
+                  "status": "passed",
+                  "message": "The candidate does not exceed the row limit policy."
+                },
+                {
+                  "name": "absence-of-invented-identifiers",
+                  "status": "passed",
+                  "message": "The candidate does not use any invented identifiers."
+                }
+              ]
+            },
+            "finalLintFindings": []
+          },
+          "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b",
+            "qwen2.5-14b"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b",
+            "query_review": "qwen2.5-14b"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            },
+            "query_review": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_review",
+            "query_finalize"
+          ],
+          "unavailableReasons": [],
+          "catalystTraceId": "05f3d129-0827-42d4-8e9e-a8e2fac751d0",
+          "turnId": "3b92e884-bbf9-4b7c-8cff-af03f694cf20",
+          "dataSourceId": "openmrs-hiv",
+          "observedBase": null,
+          "effectiveBaseVersion": null,
+          "manualVersion": null,
+          "editorSnapshotDigest": null,
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "3a869c4f-30ca-4986-83c4-71773a1a1f95",
+            "evidenceDigest": "943eb0b0abe34d15adef23638e625013d4f38a67ae045c7249017cf5b07cdbda",
+            "detailPath": "/v1/catalyst/workbench/sessions/6c6f8313-d5b2-44dc-a8a5-b4f328021274/turns/3b92e884-bbf9-4b7c-8cff-af03f694cf20/generation-evidence"
+          },
+          "profileSnapshot": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "profileName": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+            "profileDigest": "ed71b2719f421b3edb7ad17a47ae1aea290f8b1d079a633ce23e4dea369565ab",
+            "writer": {
+              "role": "writer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4",
+              "modelId": "gemma-4-12b",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-generate",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+              }
+            },
+            "omissions": [],
+            "reviewer": {
+              "role": "reviewer",
+              "providerId": "med-agent-hub",
+              "modelClass": "qwen2.5",
+              "modelId": "qwen2.5-14b",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-review",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+              }
+            }
+          },
+          "hubRequestDigest": "c811c402e13c8d91907726e0676dc8fca2f044b7aa2cc7364799c43bffa51741"
+        },
+        "sourceFindingIds": [],
+        "repairProposalId": null,
+        "createdAt": "2026-08-25T00:49:56.390655Z"
+      },
+      "validations": [
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "1f23bd92f342c2f2cc34c0764ab6253ebd515b3eb30127c2571b22670dc15924",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 3,
+          "validationId": "aea4ca08-8a3f-44b3-b1dc-61e602bfd08c",
+          "sessionId": "6c6f8313-d5b2-44dc-a8a5-b4f328021274",
+          "versionId": "807c2af7-13e7-4753-a869-47e8f2e74a33",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T00:49:56.390655Z"
+        }
+      ],
+      "latestValidation": {
+        "contractVersion": "catalyst.workbench.validation.v1",
+        "queryDigest": "1f23bd92f342c2f2cc34c0764ab6253ebd515b3eb30127c2571b22670dc15924",
+        "validatorRevision": "catalyst.workbench.validator.v1",
+        "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+        "status": "valid",
+        "advisory": true,
+        "checks": [],
+        "findings": [],
+        "durationMs": 3,
+        "validationId": "aea4ca08-8a3f-44b3-b1dc-61e602bfd08c",
+        "sessionId": "6c6f8313-d5b2-44dc-a8a5-b4f328021274",
+        "versionId": "807c2af7-13e7-4753-a869-47e8f2e74a33",
+        "ordinal": 1,
+        "createdAt": "2026-08-25T00:49:56.390655Z"
+      },
+      "executions": [],
+      "guidance": [],
+      "dataSourceId": "openmrs-hiv",
+      "draftSeed": null
+    }
+  },
+  "elapsedMs": 66445
+}

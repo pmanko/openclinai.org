@@ -1,0 +1,329 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "GET",
+    "path": "/v1/catalyst/workbench/sessions/1345d401-75f2-4067-bfbc-0b9a9512cbc8",
+    "body": null
+  },
+  "response": {
+    "httpStatus": 200,
+    "body": {
+      "contractVersion": "catalyst.workbench.session.v1",
+      "sessionId": "1345d401-75f2-4067-bfbc-0b9a9512cbc8",
+      "question": "Show recent HIV results.",
+      "name": "Show recent HIV results.",
+      "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+      "datasetId": "hiv-20260731T000741Z",
+      "datasetVersion": "hiv-20260731T000741Z",
+      "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+      "currentVersionId": null,
+      "browserState": {},
+      "provenance": {
+        "dataSourceId": "openmrs-hiv",
+        "catalogContextSourceId": "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+        "catalystTraceId": "26e24a6c-bb0e-440c-8520-129a086bed1c",
+        "profileSnapshot": {
+          "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+          "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b",
+            "qwen2.5-14b"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b",
+            "query_review": "qwen2.5-14b"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            },
+            "query_review": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_review",
+            "query_finalize"
+          ],
+          "unavailableReasons": []
+        },
+        "datasetSnapshot": {
+          "datasetId": "hiv-20260731T000741Z",
+          "dataSource": "openmrs-hiv-fhir-postgresql",
+          "pipelineRunId": "hiv-20260731T000741Z",
+          "synthetic": null,
+          "patients": 5285,
+          "results": 427915,
+          "testTypes": 143,
+          "firstObservedAt": "2022-11-07T21:50:36Z",
+          "lastObservedAt": "2026-08-11T00:00:00Z"
+        },
+        "generationHttpStatus": 200,
+        "generationOutcome": {
+          "contractVersion": "catalyst.query.v1",
+          "deploymentMode": "demo",
+          "status": "needs_clarification",
+          "question": "Show recent HIV results.",
+          "clarification": "'HIV' is not one of the recorded result names. Did you mean Current WHO HIV stage, HIV viral load, or something else?",
+          "validation": {
+            "status": "warned",
+            "checks": [
+              {
+                "name": "catalog_scope",
+                "status": "warned",
+                "message": "'HIV' is not one of the recorded result names. Did you mean Current WHO HIV stage, HIV viral load, or something else?"
+              }
+            ]
+          },
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "traceId": "26e24a6c-bb0e-440c-8520-129a086bed1c",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ]
+          }
+        }
+      },
+      "status": "active",
+      "createdAt": "2026-08-25T01:03:23.020059Z",
+      "updatedAt": "2026-08-25T01:04:35.042175Z",
+      "versions": [
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "b9b04f19-f987-4826-93a8-166455df7a88",
+          "sessionId": "1345d401-75f2-4067-bfbc-0b9a9512cbc8",
+          "parentVersionId": null,
+          "ordinal": 1,
+          "authorType": "model",
+          "sql": "SELECT \n  concept_name, \n  value_numeric, \n  value_unit \nFROM analytics.hiv_observation_fact_v1 \nWHERE observed_at >= CURRENT_DATE - INTERVAL '90 days' \n  AND concept_name IN (:concept_names)",
+          "parameters": [
+            {
+              "name": "concept_names",
+              "type": "string",
+              "source": "question",
+              "value": "HIV viral load"
+            }
+          ],
+          "expectedColumns": [
+            {
+              "name": "concept_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "value_numeric",
+              "logicalType": "decimal",
+              "nullable": true
+            },
+            {
+              "name": "value_unit",
+              "logicalType": "string",
+              "nullable": true
+            }
+          ],
+          "queryDigest": "52c103ae49ded555342e113f13193bc240923ae9509ed6c592d37f3472b94509",
+          "provenance": {
+            "turnId": "eb770193-2da1-4c16-924f-76383c06314b",
+            "collaborationRole": "writer",
+            "lintFindings": [
+              {
+                "code": "semantic.named_analyte_constraint",
+                "stage": "semantic_constraints",
+                "severity": "error",
+                "path": "sql",
+                "message": "The named analyte 'CD4 count' is not bound as a parameter.",
+                "evidence": "field=concept_name; canonical=CD4 count",
+                "suggestedAction": "Add a predicate on concept_name using a named parameter and bind its string value exactly as 'CD4 count'."
+              },
+              {
+                "code": "semantic.named_analyte_constraint",
+                "stage": "semantic_constraints",
+                "severity": "error",
+                "path": "sql",
+                "message": "The named analyte 'CD4%' is not bound as a parameter.",
+                "evidence": "field=concept_name; canonical=CD4%",
+                "suggestedAction": "Add a predicate on concept_name using a named parameter and bind its string value exactly as 'CD4%'."
+              }
+            ],
+            "dataSourceId": "openmrs-hiv",
+            "selected": false,
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "8fda8f8f-9e98-4907-a4ac-c19e1c544b76",
+              "evidenceDigest": "32a00ae768f896ba3312545dddb564ce6814a42f15f3e2441d9a434dbe8ddfad",
+              "detailPath": "/v1/catalyst/workbench/sessions/1345d401-75f2-4067-bfbc-0b9a9512cbc8/turns/eb770193-2da1-4c16-924f-76383c06314b/generation-evidence"
+            },
+            "observedBase": null,
+            "effectiveBaseVersion": null,
+            "manualVersion": null,
+            "editorSnapshotDigest": null,
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+              "profileName": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+              "profileDigest": "ed71b2719f421b3edb7ad17a47ae1aea290f8b1d079a633ce23e4dea369565ab",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4",
+                "modelId": "gemma-4-12b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": [],
+              "reviewer": {
+                "role": "reviewer",
+                "providerId": "med-agent-hub",
+                "modelClass": "qwen2.5",
+                "modelId": "qwen2.5-14b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-review",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                  "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+                }
+              }
+            },
+            "hubRequestDigest": "2513e3f8c565c0fd59db534abc40d6c34592176b2c543f2d1ecc7e2b752656eb",
+            "catalystTraceId": "46dcaaa2-948a-4b79-bcc5-8f7480eaee6f",
+            "hubTraceId": "46dcaaa2-948a-4b79-bcc5-8f7480eaee6f"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T01:04:35.042175Z"
+        }
+      ],
+      "currentVersion": null,
+      "validations": [
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "52c103ae49ded555342e113f13193bc240923ae9509ed6c592d37f3472b94509",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "invalid",
+          "advisory": true,
+          "checks": [
+            {
+              "name": "gateway_invariant",
+              "status": "failed",
+              "findingIds": [
+                "finding-e8b5b10aea1dbdf2456bd171",
+                "finding-be864ea7363261f6b45b6e72"
+              ]
+            },
+            {
+              "name": "semantic_constraints",
+              "status": "failed",
+              "findingIds": [
+                "finding-e8ad740789aa662288bec3b0",
+                "finding-8d6f698e019769ade6ed3713"
+              ]
+            }
+          ],
+          "findings": [
+            {
+              "contractVersion": "catalyst.workbench.finding.v1",
+              "findingId": "finding-e8b5b10aea1dbdf2456bd171",
+              "ruleCode": "gateway_invariant.missing_semantic_filter",
+              "severity": "error",
+              "stage": "gateway_invariant",
+              "message": "The named analyte 'CD4 count' must be constrained by concept_name using its canonical bound value.",
+              "path": "$.sql",
+              "astUnit": null,
+              "span": null,
+              "evidence": null,
+              "suggestedAction": null,
+              "repairability": "manual",
+              "validatorRevision": "catalyst.workbench.validator.v1"
+            },
+            {
+              "contractVersion": "catalyst.workbench.finding.v1",
+              "findingId": "finding-be864ea7363261f6b45b6e72",
+              "ruleCode": "gateway_invariant.missing_semantic_filter",
+              "severity": "error",
+              "stage": "gateway_invariant",
+              "message": "The named analyte 'CD4%' must be constrained by concept_name using its canonical bound value.",
+              "path": "$.sql",
+              "astUnit": null,
+              "span": null,
+              "evidence": null,
+              "suggestedAction": null,
+              "repairability": "manual",
+              "validatorRevision": "catalyst.workbench.validator.v1"
+            },
+            {
+              "contractVersion": "catalyst.workbench.finding.v1",
+              "findingId": "finding-e8ad740789aa662288bec3b0",
+              "ruleCode": "semantic.named_analyte_constraint",
+              "severity": "error",
+              "stage": "semantic_constraints",
+              "message": "The named analyte 'CD4 count' is not bound as a parameter.",
+              "path": "sql",
+              "astUnit": null,
+              "span": null,
+              "evidence": "field=concept_name; canonical=CD4 count",
+              "suggestedAction": "Add a predicate on concept_name using a named parameter and bind its string value exactly as 'CD4 count'.",
+              "repairability": "manual",
+              "validatorRevision": "catalyst.workbench.validator.v1"
+            },
+            {
+              "contractVersion": "catalyst.workbench.finding.v1",
+              "findingId": "finding-8d6f698e019769ade6ed3713",
+              "ruleCode": "semantic.named_analyte_constraint",
+              "severity": "error",
+              "stage": "semantic_constraints",
+              "message": "The named analyte 'CD4%' is not bound as a parameter.",
+              "path": "sql",
+              "astUnit": null,
+              "span": null,
+              "evidence": "field=concept_name; canonical=CD4%",
+              "suggestedAction": "Add a predicate on concept_name using a named parameter and bind its string value exactly as 'CD4%'.",
+              "repairability": "manual",
+              "validatorRevision": "catalyst.workbench.validator.v1"
+            }
+          ],
+          "durationMs": 2,
+          "validationId": "a97f0d49-e79c-4466-b205-4ba52699bb17",
+          "sessionId": "1345d401-75f2-4067-bfbc-0b9a9512cbc8",
+          "versionId": "b9b04f19-f987-4826-93a8-166455df7a88",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T01:04:35.042175Z"
+        }
+      ],
+      "latestValidation": null,
+      "executions": [],
+      "guidance": [],
+      "dataSourceId": "openmrs-hiv",
+      "draftSeed": null
+    }
+  },
+  "elapsedMs": 4
+}

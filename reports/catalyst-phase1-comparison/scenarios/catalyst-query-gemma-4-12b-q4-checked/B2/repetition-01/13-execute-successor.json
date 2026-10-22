@@ -1,0 +1,1379 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "POST",
+    "path": "/v1/catalyst/workbench/versions/f37ec15e-2f1e-4ae0-b316-ade6ed18d50c/execute",
+    "body": {
+      "contractVersion": "catalyst.workbench.execute.request.v1",
+      "versionId": "f37ec15e-2f1e-4ae0-b316-ade6ed18d50c",
+      "queryDigest": "edaa875f8cec98d0d2a44639b924bc2fd53266c2fe7fd59b9762423eb1a2457b",
+      "idempotencyKey": "harness-notebook-f38e463f-a49f-4228-b720-a6fae8876b5b"
+    }
+  },
+  "response": {
+    "httpStatus": 200,
+    "body": {
+      "contractVersion": "catalyst.workbench.execution.v1",
+      "queryDigest": "edaa875f8cec98d0d2a44639b924bc2fd53266c2fe7fd59b9762423eb1a2457b",
+      "idempotencyKey": "harness-notebook-f38e463f-a49f-4228-b720-a6fae8876b5b",
+      "validationStatus": "valid",
+      "query": {
+        "sql": "SELECT t1.patient_id, t1.family_name, t1.given_name FROM analytics.hiv_patient_dim_v1 AS t1 JOIN (SELECT DISTINCT ON (patient_id) patient_id, value_coded_name AS latest_adherence FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :concept_name AND obs_status = 'final' ORDER BY patient_id, observed_at DESC) AS t2 ON t1.patient_id = t2.patient_id WHERE t2.latest_adherence <> 'All'",
+        "parameters": [
+          {
+            "name": "concept_name",
+            "type": "string",
+            "source": "question",
+            "value": "Antiretroviral adherence in past week"
+          }
+        ]
+      },
+      "statementTimeoutMs": 10000,
+      "maxRows": 100,
+      "replayed": false,
+      "status": "succeeded",
+      "result": {
+        "columns": [
+          {
+            "ordinal": 0,
+            "name": "patient_id",
+            "databaseType": "varchar",
+            "typeOid": 1043,
+            "logicalType": "string"
+          },
+          {
+            "ordinal": 1,
+            "name": "family_name",
+            "databaseType": "text",
+            "typeOid": 25,
+            "logicalType": "string"
+          },
+          {
+            "ordinal": 2,
+            "name": "given_name",
+            "databaseType": "text",
+            "typeOid": 25,
+            "logicalType": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "dd5558ed-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Mukangu"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd555f6c-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Oure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd557c29-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Tipape"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd558b5e-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Matey"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd55b1fb-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Jepkemei"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd55c67f-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Karabor"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd661e0e-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Okila"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd668fb0-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Mung'Ugny"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd66c80f-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Lagat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd66eef9-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Albert"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd670080-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Butu"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd6f3685-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Suiter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd707b69-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Keter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd714970-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Kaila"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd73fee9-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Chemutai"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd753d67-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Alele"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd754232-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Mwanji"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd7556b3-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Tiong'Igk"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd759516-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Mbae"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd75ab71-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Mitei"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd75c020-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Halambe"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd77acc0-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Tormoi"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd77b51b-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Litakwo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd79bc47-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Atuka"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd7ba772-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Mwigei"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd7bc6d3-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Kosgei"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd7be8a9-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Bindooi"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd7fa88b-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Kimaiwa"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd7fb094-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Ngati"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd80f7e0-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Toet"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd8171e5-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Sabul"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd81945d-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Ombati"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd839d17-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Chemuit"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd846f77-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Amsei"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd84dbbb-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Towett"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd873d94-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Mwallo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd873fde-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Motoo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd882ced-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Tue"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd883cb7-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Ndeva"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd883f56-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Marindany"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd8aad66-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Murango"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd8abd0e-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Bururu"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd8ac72e-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Keregei"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd8afcc3-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Barmel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd8b0b4c-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Masinde"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd8b2e2f-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Alulu"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd8c0574-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Kimngich"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd8c3850-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Kuchwa"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd8c5601-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Jumanne"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd8c9a2c-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Sugt"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd8ef2b2-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Chemasa"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd8f647b-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Sirtich"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd8fd0d9-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Andawa"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd8fdd50-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Atoti"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd8feacc-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Andege"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd8ffd02-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Kipchichir"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd901aaa-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Sego"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd901f3a-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Cheboror"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd9206db-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Ombati"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd924e0c-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Bulungu"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd92d57c-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Sinoh"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd92f2cf-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Komo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd939c4c-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Ogal"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd96bd49-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Malaba"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd975cf3-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Ikey"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd97c1fb-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Ngotie"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd98271e-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Mego"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd9a383f-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Kisa"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd9b4269-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Keneck"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd9b8b5b-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Tionyik"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd9b9f4e-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Tuitoek"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd9db228-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Olekorio"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd9ddd55-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Kendagor"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd9de314-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Mesamba"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd9e50d6-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Kechigei"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd9efa4a-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Machanga"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd9f291b-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Dieleman"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dd9f57d7-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Javan"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda144d0-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Mwanji"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda1869c-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Msee"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda1982b-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Seii"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda19aa9-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Maswai"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda19be9-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Wajala"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda1a82d-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Leeli"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda1d438-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Nyenze"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda1e7bc-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Rirei"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda204f9-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Ken"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda2d61c-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Chelulei"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda2daf9-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Tulus"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda2dc2d-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Mboi"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda3772d-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Halambe"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda37cb9-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Obatsa"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda39929-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Mohammed"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda58c04-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Siwonei"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda5d0bd-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Benard"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda5db8c-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Toet"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda5df39-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Morio"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda5e794-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Imala"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda6c985-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Agai"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "dda71281-1691-11df-97a5-7038c432aabf"
+            },
+            {
+              "type": "string",
+              "value": "Oromoo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        ],
+        "rowCount": {
+          "returned": 100,
+          "truncated": true,
+          "truncationReason": "configured_limit"
+        },
+        "warnings": [
+          "`given_name` was blank or NULL in all 100 displayed rows. Select a populated column or revise the SQL expression. This check covers displayed rows only because results were truncated."
+        ]
+      },
+      "durationMs": 1884,
+      "executionId": "e914e905-9b24-4370-82af-415d366a4afb",
+      "sessionId": "98248bb9-39ab-4a95-ac55-9cd7a0414c12",
+      "versionId": "f37ec15e-2f1e-4ae0-b316-ade6ed18d50c",
+      "ordinal": 1,
+      "completedAt": "2026-08-25T00:44:28.905747Z"
+    }
+  },
+  "elapsedMs": 1912
+}

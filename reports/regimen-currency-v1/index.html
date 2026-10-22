@@ -1,0 +1,363 @@
+<!doctype html><html><head><meta charset='utf-8'><title>validation report · d2eb76b6-0bd6-4ba0-ba69-35c4c39f45c8</title><style>
+:root { --fg:#1a1a1a; --mut:#666; --line:#e2e2e2; --bg:#fafafa; }
+* { box-sizing: border-box; }
+body { font: 14px/1.5 -apple-system, system-ui, sans-serif; color: var(--fg); margin: 0; background: var(--bg); }
+.topbar { position: sticky; top: 0; z-index: 30; background: #fff; border-bottom: 1px solid var(--line); padding: 12px 24px; }
+.topbar h1 { font-size: 18px; margin: 0 0 8px; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.controls label { font-size: 12px; color: var(--mut); }
+.controls select, .controls input[type=search], .controls input { font: inherit; padding: 3px 6px; }
+.controls button { font: inherit; font-weight: 600; padding: 5px 12px; cursor: pointer; }
+.controls .spacer { flex: 1; }
+.toggles { display: flex; gap: 8px; align-items: center; border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px; margin: 0; }
+.toggles legend { font-size: 11px; color: var(--mut); padding: 0 4px; }
+.toggles label { font-size: 12px; color: var(--fg); display: inline-flex; gap: 3px; align-items: center; }
+.meta { color: var(--mut); font-size: 12px; font-family: ui-monospace, monospace; }
+main { max-width: 1500px; margin: 0 auto; padding: 16px 24px 120px; }
+h2 { font-size: 15px; margin: 28px 0 8px; font-family: ui-monospace, monospace; }
+table { border-collapse: collapse; width: 100%; background: #fff; }
+th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+th { background: #f3f3f3; font-weight: 600; font-size: 12px; }
+.summary td, .summary th { text-align: center; }
+.summary td.b { text-align: left; font-family: ui-monospace, monospace; }
+.summary .model { display: block; color: var(--mut); font-size: 11px; }
+.qband { display: grid; grid-template-columns: var(--qcol, 240px) 1fr; gap: 12px; align-items: start; border-top: 1px solid var(--line); padding: 12px 0; }
+.qhead { position: sticky; left: 0; z-index: 1; background: var(--bg); align-self: start; }
+.qhead .n { font-family: ui-monospace, monospace; font-weight: 700; color: var(--mut); }
+.qhead .q { margin-top: 2px; }
+.tiles { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(280px, 1fr); gap: 12px; align-items: stretch; overflow-x: auto; min-height: 60px; }
+.tile { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 10px 12px; cursor: grab; user-select: none; }
+.tile.dragging { opacity: .4; cursor: grabbing; }
+.tile.empty { color: #bbb; align-items: center; justify-content: center; cursor: default; }
+.tile-head { display: flex; gap: 6px; align-items: baseline; margin-bottom: 6px; }
+.rank-badge { font: 11px ui-monospace, monospace; background: #eef3ff; color: #2748a0; border-radius: 4px; padding: 0 5px; }
+.tile-head .backend { font-family: ui-monospace, monospace; font-weight: 700; font-size: 12px; }
+.tile-head .label { color: var(--mut); font-size: 11px; }
+.expand { font-size: 11px; color: #2748a0; cursor: pointer; background: none; border: none; padding: 0; align-self: flex-start; margin-top: 4px; }
+.ans { white-space: pre-wrap; max-height: 20em; overflow: auto; }
+.tile.expanded .ans { max-height: none; }
+.refs { margin-top: 6px; }
+.ref { display: inline-block; font-size: 10px; font-family: ui-monospace, monospace; background: #eef3ff; color: #2748a0; padding: 1px 4px; border-radius: 3px; margin: 1px; }
+.more { color: var(--mut); font-size: 10px; }
+.err { color: #a01; font-family: ui-monospace, monospace; font-size: 12px; }
+.chips { margin-top: 6px; }
+.chip { display: inline-block; font-size: 10px; font-family: ui-monospace, monospace; background: #eee; color: #444; padding: 1px 5px; border-radius: 3px; margin: 1px; }
+.chip.warm { background: #fff3d6; color: #8a5a00; }
+.chip.none { background: #fde8e8; color: #a01; }
+.chip.bad { background: #a01; color: #fff; }
+.adj { margin-top: 8px; font-size: 12px; }
+.adj summary { cursor: pointer; color: #2748a0; font-size: 11px; }
+.cell-form { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+.cell-form .scores { display: flex; gap: 6px; }
+.cell-form label { font-size: 11px; color: var(--mut); }
+.cell-form input[type=number] { width: 38px; }
+.cell-form select { font-size: 11px; }
+.cell-form textarea { width: 100%; height: 36px; font: inherit; font-size: 11px; }
+.cell-form .decision { display: flex; gap: 10px; }
+.block { margin-top: 8px; }
+.block-title { font-weight: 600; font-size: 12px; margin-bottom: 2px; }
+.block-tbl th, .block-tbl td { font-size: 12px; padding: 4px 6px; }
+.legend { color: var(--mut); font-size: 12px; margin-top: 24px; border-top: 1px solid var(--line); padding-top: 12px; }
+[data-hidden="1"] { display: none !important; }
+
+/* Print / Save-as-PDF: drop the interactive chrome, expand answers, keep tiles whole. */
+@media print {
+  .controls label, .controls select, .controls input, .controls button, .controls fieldset, .controls .spacer { display: none !important; }
+  .adj, .expand { display: none !important; }
+  .topbar { position: static; }
+  .tiles { overflow: visible; }
+  .tile { break-inside: avoid; }
+  .ans { max-height: none !important; overflow: visible !important; }
+  body { background: #fff; }
+}
+</style></head><body><header class='topbar'><h1>Validation report</h1><div class='controls'><label>run <select id='run-select'></select></label><div id='run-meta' class='meta'></div><label>scenario <select id='scenario-filter'></select></label><input id='q-search' type='search' placeholder='filter questions… (Esc clears)'><fieldset id='backend-toggles' class='toggles'></fieldset><span class='spacer'></span><button id='reset-rank' title='restore default backend order'>reset ranking</button><button id='export-rankings'>Export rankings.json</button><input id='rev' placeholder='you@example.org'><button id='export-feedback'>Download feedback.jsonl</button><button id='print-pdf' title='print / save as PDF'>Download PDF</button></div></header><main id='report'></main><template id='rubric-template'><details class='adj'><summary>adjudicate</summary><div class='cell-form'><div class='scores'><label>acc<input type='number' min='0' max='10' step='1' name='accuracy'></label><label>com<input type='number' min='0' max='10' step='1' name='completeness'></label><label>rel<input type='number' min='0' max='10' step='1' name='relevance'></label></div><label>abstention<select name='abstention_outcome'><option value='n-a'>n/a</option><option value='correct'>correct</option><option value='over-abstained'>over-abstained</option><option value='failed-to-abstain'>failed-to-abstain</option></select></label><label>citations<select name='citation_groundedness'><option value='n-a'>n/a</option><option value='supported'>supported</option><option value='partly'>partly</option><option value='unsupported'>unsupported</option></select></label><label class='harm'><input type='checkbox' name='harm_fail'> harm hard-fail</label><div class='decision'><label><input type='radio' name='decision' value='pass'> pass</label><label><input type='radio' name='decision' value='fail'> fail</label></div><textarea name='free_text' placeholder='notes'></textarea></div></details></template><div class='legend'>⏱ latency (orange = first turn per backend, carries model warmup). chart refs = count of chart records cited — a COUNT, not a grounding/quality signal; the authoritative call is the human adjudication on each tile. tokens / finish_reasons / response model are not surfaced by /chat (OTel-deferred). Deterministic metrics only — no LLM judge. Drag tiles within a question to rank backends; rank + adjudication export to separate files.</div><script type='application/json' id='report-data'>{"generated_at": "2026-06-03T04:45:42.839861+00:00", "runs": [{"run_id": "d2eb76b6-0bd6-4ba0-ba69-35c4c39f45c8", "meta": {"run_id": "d2eb76b6-0bd6-4ba0-ba69-35c4c39f45c8", "component": "validate", "git_sha": "2349b5a5f3", "dataset_id": "large-demo-data-2-7-0", "provider": "lmstudio", "generated_at": "2026-06-03T03:21:14.301392+00:00"}, "backends": ["gemma-local", "med-agent-team-low", "med-agent-team-med"], "labels": {"gemma-local": "Gemma 4-E4B (LM Studio direct)", "med-agent-team-low": "Med Agent Team — LOW (qwen2.5-14b synth, medgemma-1.5 expert)", "med-agent-team-med": "Med Agent Team — MED (qwen2.5-32b synth, medgemma-1.5 expert)"}, "scenarios": [{"scenario_id": "convo-regimen-currency", "turns": [{"turn": 1, "question": "What antiretroviral medications is this patient on?", "cells": {"gemma-local": {"error": null, "http_status": 200, "answer_html": "The patient has been prescribed Lamivudine [29], [62], [117], [120], [148], [151], [187], [218], [221], [251], [284], [311], [341]], Nevirapine [30], [63], [118], [153], [189], [219], [252], [285], [312], [342]], Stavudine [31], [64], [119], [122], [150], [152], [188], [220], [253], [286], [313], [343]], and Efavirenz [121], [149], [118] (Note: Efavirenz was ordered on 2006-04-25, but the record index 118 is Nevirapine. The correct indices for Efavirenz are [121] and [149]).", "refs_html": "\u003cdiv class='refs'\u003e\u003cspan class='ref'\u003e[29] order\u003c/span\u003e \u003cspan class='ref'\u003e[30] order\u003c/span\u003e \u003cspan class='ref'\u003e[31] order\u003c/span\u003e \u003cspan class='ref'\u003e[62] order\u003c/span\u003e \u003cspan class='ref'\u003e[63] order\u003c/span\u003e \u003cspan class='ref'\u003e[117] order\u003c/span\u003e \u003cspan class='ref'\u003e[118] order\u003c/span\u003e \u003cspan class='ref'\u003e[119] order\u003c/span\u003e \u003cspan class='more'\u003e+28\u003c/span\u003e\u003c/div\u003e", "blocks_html": "\u003cdiv class='block'\u003e\u003cdiv class='block-title'\u003eAntiretroviral Medications Ordered\u003c/div\u003e\u003ctable class='block-tbl'\u003e\u003cthead\u003e\u003ctr\u003e\u003cth\u003eDrug\u003c/th\u003e\u003cth\u003eAction\u003c/th\u003e\u003cth\u003eUrgency\u003c/th\u003e\u003c/tr\u003e\u003c/thead\u003e\u003ctbody\u003e\u003ctr\u003e\u003ctd\u003eLamivudine \u003cspan class='ref'\u003e[29]\u003c/span\u003e\u003cspan class='ref'\u003e[62]\u003c/span\u003e\u003cspan class='ref'\u003e[117]\u003c/span\u003e\u003cspan class='ref'\u003e[120]\u003c/span\u003e\u003cspan class='ref'\u003e[148]\u003c/span\u003e\u003cspan class='ref'\u003e[151]\u003c/span\u003e\u003cspan class='ref'\u003e[187]\u003c/span\u003e\u003cspan class='ref'\u003e[218]\u003c/span\u003e\u003cspan class='ref'\u003e[221]\u003c/span\u003e\u003cspan class='ref'\u003e[251]\u003c/span\u003e\u003cspan class='ref'\u003e[284]\u003c/span\u003e\u003cspan class='ref'\u003e[311]\u003c/span\u003e\u003cspan class='ref'\u003e[341]\u003c/span\u003e\u003c/td\u003e\u003ctd\u003eNEW \u003cspan class='ref'\u003e[29]\u003c/span\u003e\u003cspan class='ref'\u003e[62]\u003c/span\u003e\u003cspan class='ref'\u003e[117]\u003c/span\u003e\u003cspan class='ref'\u003e[120]\u003c/span\u003e\u003cspan class='ref'\u003e[148]\u003c/span\u003e\u003cspan class='ref'\u003e[151]\u003c/span\u003e\u003cspan class='ref'\u003e[187]\u003c/span\u003e\u003cspan class='ref'\u003e[218]\u003c/span\u003e\u003cspan class='ref'\u003e[221]\u003c/span\u003e\u003cspan class='ref'\u003e[251]\u003c/span\u003e\u003cspan class='ref'\u003e[284]\u003c/span\u003e\u003cspan class='ref'\u003e[311]\u003c/span\u003e\u003cspan class='ref'\u003e[341]\u003c/span\u003e\u003c/td\u003e\u003ctd\u003eROUTINE \u003cspan class='ref'\u003e[29]\u003c/span\u003e\u003cspan class='ref'\u003e[62]\u003c/span\u003e\u003cspan class='ref'\u003e[117]\u003c/span\u003e\u003cspan class='ref'\u003e[120]\u003c/span\u003e\u003cspan class='ref'\u003e[148]\u003c/span\u003e\u003cspan class='ref'\u003e[151]\u003c/span\u003e\u003cspan class='ref'\u003e[187]\u003c/span\u003e\u003cspan class='ref'\u003e[218]\u003c/span\u003e\u003cspan class='ref'\u003e[221]\u003c/span\u003e\u003cspan class='ref'\u003e[251]\u003c/span\u003e\u003cspan class='ref'\u003e[284]\u003c/span\u003e\u003cspan class='ref'\u003e[311]\u003c/span\u003e\u003cspan class='ref'\u003e[341]\u003c/span\u003e\u003c/td\u003e\u003c/tr\u003e\u003ctr\u003e\u003ctd\u003eNevirapine \u003cspan class='ref'\u003e[30]\u003c/span\u003e\u003cspan class='ref'\u003e[63]\u003c/span\u003e\u003cspan class='ref'\u003e[118]\u003c/span\u003e\u003cspan class='ref'\u003e[153]\u003c/span\u003e\u003cspan class='ref'\u003e[189]\u003c/span\u003e\u003cspan class='ref'\u003e[219]\u003c/span\u003e\u003cspan class='ref'\u003e[252]\u003c/span\u003e\u003cspan class='ref'\u003e[285]\u003c/span\u003e\u003cspan class='ref'\u003e[312]\u003c/span\u003e\u003cspan class='ref'\u003e[342]\u003c/span\u003e\u003c/td\u003e\u003ctd\u003eNEW \u003cspan class='ref'\u003e[30]\u003c/span\u003e\u003cspan class='ref'\u003e[63]\u003c/span\u003e\u003cspan class='ref'\u003e[118]\u003c/span\u003e\u003cspan class='ref'\u003e[153]\u003c/span\u003e\u003cspan class='ref'\u003e[189]\u003c/span\u003e\u003cspan class='ref'\u003e[219]\u003c/span\u003e\u003cspan class='ref'\u003e[252]\u003c/span\u003e\u003cspan class='ref'\u003e[285]\u003c/span\u003e\u003cspan class='ref'\u003e[312]\u003c/span\u003e\u003cspan class='ref'\u003e[342]\u003c/span\u003e\u003c/td\u003e\u003ctd\u003eROUTINE \u003cspan class='ref'\u003e[30]\u003c/span\u003e\u003cspan class='ref'\u003e[63]\u003c/span\u003e\u003cspan class='ref'\u003e[118]\u003c/span\u003e\u003cspan class='ref'\u003e[153]\u003c/span\u003e\u003cspan class='ref'\u003e[189]\u003c/span\u003e\u003cspan class='ref'\u003e[219]\u003c/span\u003e\u003cspan class='ref'\u003e[252]\u003c/span\u003e\u003cspan class='ref'\u003e[285]\u003c/span\u003e\u003cspan class='ref'\u003e[312]\u003c/span\u003e\u003cspan class='ref'\u003e[342]\u003c/span\u003e\u003c/td\u003e\u003c/tr\u003e\u003ctr\u003e\u003ctd\u003eStavudine \u003cspan class='ref'\u003e[31]\u003c/span\u003e\u003cspan class='ref'\u003e[64]\u003c/span\u003e\u003cspan class='ref'\u003e[119]\u003c/span\u003e\u003cspan class='ref'\u003e[122]\u003c/span\u003e\u003cspan class='ref'\u003e[150]\u003c/span\u003e\u003cspan class='ref'\u003e[152]\u003c/span\u003e\u003cspan class='ref'\u003e[188]\u003c/span\u003e\u003cspan class='ref'\u003e[220]\u003c/span\u003e\u003cspan class='ref'\u003e[253]\u003c/span\u003e\u003cspan class='ref'\u003e[286]\u003c/span\u003e\u003cspan class='ref'\u003e[313]\u003c/span\u003e\u003cspan class='ref'\u003e[343]\u003c/span\u003e\u003c/td\u003e\u003ctd\u003eNEW \u003cspan class='ref'\u003e[31]\u003c/span\u003e\u003cspan class='ref'\u003e[64]\u003c/span\u003e\u003cspan class='ref'\u003e[119]\u003c/span\u003e\u003cspan class='ref'\u003e[122]\u003c/span\u003e\u003cspan class='ref'\u003e[150]\u003c/span\u003e\u003cspan class='ref'\u003e[152]\u003c/span\u003e\u003cspan class='ref'\u003e[188]\u003c/span\u003e\u003cspan class='ref'\u003e[220]\u003c/span\u003e\u003cspan class='ref'\u003e[253]\u003c/span\u003e\u003cspan class='ref'\u003e[286]\u003c/span\u003e\u003cspan class='ref'\u003e[313]\u003c/span\u003e\u003cspan class='ref'\u003e[343]\u003c/span\u003e\u003c/td\u003e\u003ctd\u003eROUTINE \u003cspan class='ref'\u003e[31]\u003c/span\u003e\u003cspan class='ref'\u003e[64]\u003c/span\u003e\u003cspan class='ref'\u003e[119]\u003c/span\u003e\u003cspan class='ref'\u003e[122]\u003c/span\u003e\u003cspan class='ref'\u003e[150]\u003c/span\u003e\u003cspan class='ref'\u003e[152]\u003c/span\u003e\u003cspan class='ref'\u003e[188]\u003c/span\u003e\u003cspan class='ref'\u003e[220]\u003c/span\u003e\u003cspan class='ref'\u003e[253]\u003c/span\u003e\u003cspan class='ref'\u003e[286]\u003c/span\u003e\u003cspan class='ref'\u003e[313]\u003c/span\u003e\u003cspan class='ref'\u003e[343]\u003c/span\u003e\u003c/td\u003e\u003c/tr\u003e\u003ctr\u003e\u003ctd\u003eEfavirenz \u003cspan class='ref'\u003e[121]\u003c/span\u003e\u003cspan class='ref'\u003e[149]\u003c/span\u003e\u003c/td\u003e\u003ctd\u003eNEW \u003cspan class='ref'\u003e[121]\u003c/span\u003e\u003cspan class='ref'\u003e[149]\u003c/span\u003e\u003c/td\u003e\u003ctd\u003eROUTINE \u003cspan class='ref'\u003e[121]\u003c/span\u003e\u003cspan class='ref'\u003e[149]\u003c/span\u003e\u003c/td\u003e\u003c/tr\u003e\u003c/tbody\u003e\u003c/table\u003e\u003c/div\u003e", "chips_html": "\u003cspan class='chip warm'\u003e⏱ 34451ms\u003c/span\u003e\u003cspan class='chip'\u003e36 chart refs\u003c/span\u003e", "degraded": false, "metrics": {"latency_ms": 34451, "http_status": 200, "citation_count": 36, "first_turn": true, "json_valid": true}}, "med-agent-team-low": {"error": null, "http_status": 200, "answer_html": "\u003cstrong\u003eAnswer\u003c/strong\u003e\n[N] The patient is on Lamivudine, Nevirapine, and Stavudine as part of their antiretroviral regimen. Cite [29][30][31]. \n[\\", "refs_html": "\u003cdiv class='refs'\u003e\u003cspan class='ref'\u003e[29] order\u003c/span\u003e \u003cspan class='ref'\u003e[30] order\u003c/span\u003e \u003cspan class='ref'\u003e[31] order\u003c/span\u003e\u003c/div\u003e", "blocks_html": "", "chips_html": "\u003cspan class='chip warm'\u003e⏱ 75076ms\u003c/span\u003e\u003cspan class='chip'\u003e3 chart refs\u003c/span\u003e", "degraded": false, "metrics": {"latency_ms": 75076, "http_status": 200, "citation_count": 3, "first_turn": true, "json_valid": true}}, "med-agent-team-med": {"error": null, "http_status": 200, "answer_html": "\u003cstrong\u003eAnswer\u003c/strong\u003e\u0026quot;\u0026gt;\u0026quot;\u0026gt;The patient\u0026#x27;s regimen includes Lamivudine, Nevirapine, and Stavudine [29-31].\u0026quot;\u0026gt;\u0026quot;\u0026gt;\u003cstrong\u003eIn Depth\u003c/strong\u003e\u0026quot;\u0026gt;\u0026quot;\u0026gt;The patient\u0026#x27;s current antiretroviral regimen consists of Lamivudine, Nevirapine, and Stavudine. According to WHO guidelines, stavudine (d4T) is no longer recommended due to frequent mitochondrial toxicity. Tenofovir or Zidovudine are the preferred nucleoside backbones instead, making the current regimen suboptimal based on current guidelines.\u0026quot;", "refs_html": "\u003cdiv class='refs'\u003e\u003cspan class='ref'\u003e[29] order\u003c/span\u003e \u003cspan class='ref'\u003e[30] order\u003c/span\u003e \u003cspan class='ref'\u003e[31] order\u003c/span\u003e\u003c/div\u003e", "blocks_html": "\u003cdiv class='block'\u003e\u003cdiv class='block-title'\u003eAntiretroviral Medications\u003c/div\u003e\u003ctable class='block-tbl'\u003e\u003cthead\u003e\u003ctr\u003e\u003cth\u003eMedication\u003c/th\u003e\u003c/tr\u003e\u003c/thead\u003e\u003ctbody\u003e\u003ctr\u003e\u003ctd\u003eLamivudine \u003cspan class='ref'\u003e[29]\u003c/span\u003e\u003cspan class='ref'\u003e[30]\u003c/span\u003e\u003cspan class='ref'\u003e[62]\u003c/span\u003e\u003cspan class='ref'\u003e[117]\u003c/span\u003e\u003cspan class='ref'\u003e[148]\u003c/span\u003e\u003cspan class='ref'\u003e[150]\u003c/span\u003e\u003cspan class='ref'\u003e[153]\u003c/span\u003e\u003cspan class='ref'\u003e[221]\u003c/span\u003e\u003c/td\u003e\u003c/tr\u003e\u003ctr\u003e\u003ctd\u003eNevirapine \u003cspan class='ref'\u003e[30]\u003c/span\u003e\u003cspan class='ref'\u003e[63]\u003c/span\u003e\u003cspan class='ref'\u003e[118]\u003c/span\u003e\u003cspan class='ref'\u003e[153]\u003c/span\u003e\u003c/td\u003e\u003c/tr\u003e\u003ctr\u003e\u003ctd\u003eStavudine \u003cspan class='ref'\u003e[31]\u003c/span\u003e\u003cspan class='ref'\u003e[64]\u003c/span\u003e\u003cspan class='ref'\u003e[119]\u003c/span\u003e\u003cspan class='ref'\u003e[120]\u003c/span\u003e\u003cspan class='ref'\u003e[150]\u003c/span\u003e\u003c/td\u003e\u003c/tr\u003e\u003c/tbody\u003e\u003c/table\u003e\u003c/div\u003e", "chips_html": "\u003cspan class='chip warm'\u003e⏱ 105649ms\u003c/span\u003e\u003cspan class='chip'\u003e3 chart refs\u003c/span\u003e", "degraded": false, "metrics": {"latency_ms": 105649, "http_status": 200, "citation_count": 3, "first_turn": true, "json_valid": true}}}}, {"turn": 2, "question": "Is this regimen still recommended under current WHO guidance?", "cells": {"gemma-local": {"error": null, "http_status": 200, "answer_html": "The records do not contain information regarding whether the patient\u0026#x27;s current antiretroviral regimen is recommended under current WHO guidance.", "refs_html": "", "blocks_html": "", "chips_html": "\u003cspan class='chip'\u003e⏱ 1257ms\u003c/span\u003e\u003cspan class='chip'\u003e0 chart refs\u003c/span\u003e", "degraded": false, "metrics": {"latency_ms": 1257, "http_status": 200, "citation_count": 0, "first_turn": false, "json_valid": true}}, "med-agent-team-low": {"error": null, "http_status": 200, "answer_html": "\u003cstrong\u003eAnswer\u003c/strong\u003e\\[N] The current antiretroviral regimen of Lamivudine, Nevirapine, and Stavudine is still recommended under current WHO guidance for HIV treatment. [29][30][31].\\[N]\n[N]\u003cstrong\u003eIn Depth\u003c/strong\u003e\\[N] Per WHO HIV guidelines, a regimen of Lamivudine and Stavudine with either Nevirapine or Efavirenz is still recommended for HIV treatment. The patient\u0026#x27;s current regimen matches this guidance as of the most recent assessment. [29][30][31].\\[N]", "refs_html": "\u003cdiv class='refs'\u003e\u003cspan class='ref'\u003e[29] order\u003c/span\u003e \u003cspan class='ref'\u003e[30] order\u003c/span\u003e \u003cspan class='ref'\u003e[31] order\u003c/span\u003e\u003c/div\u003e", "blocks_html": "", "chips_html": "\u003cspan class='chip'\u003e⏱ 12662ms\u003c/span\u003e\u003cspan class='chip'\u003e3 chart refs\u003c/span\u003e", "degraded": false, "metrics": {"latency_ms": 12662, "http_status": 200, "citation_count": 3, "first_turn": false, "json_valid": true}}, "med-agent-team-med": {"error": null, "http_status": 200, "answer_html": "\u003cstrong\u003eAnswer\u003c/strong\u003e\u0026quot;\u0026gt;\u0026quot;\u0026gt;The patient\u0026#x27;s current regimen of Lamivudine, Nevirapine, and Stavudine is no longer recommended under current WHO guidance. [29-31]\u0026quot;\u0026gt;\u0026quot;\u0026gt;\u003cstrong\u003eIn Depth\u003c/strong\u003e\u0026quot;\u0026gt;\u0026quot;\u0026gt;The current regimen includes stavudine (d4T), which is no longer recommended by the WHO due to frequent mitochondrial toxicity, including peripheral neuropathy, lipoatrophy, and lactic acidosis. The preferred nucleoside backbone alternatives are tenofovir (TDF) or zidovudine (AZT). The WHO recommends a dolutegravir-based regimen as the first-line treatment for adults, typically involving tenofovir + lamivudine + dolutegravir (TLD). [WHO Consolidated guidelines on HIV prevention, testing, treatment, service delivery and monitoring, 2021]\u0026quot;\u0026gt;\u0026quot;\u0026gt;", "refs_html": "\u003cdiv class='refs'\u003e\u003cspan class='ref'\u003e[29] order\u003c/span\u003e \u003cspan class='ref'\u003e[30] order\u003c/span\u003e \u003cspan class='ref'\u003e[31] order\u003c/span\u003e\u003c/div\u003e", "blocks_html": "\u003cdiv class='block'\u003e\u003cdiv class='block-title'\u003eAntiretroviral Medications\u003c/div\u003e\u003ctable class='block-tbl'\u003e\u003cthead\u003e\u003ctr\u003e\u003cth\u003eMedication\u003c/th\u003e\u003cth\u003eRoute\u003c/th\u003e\u003cth\u003eDose\u003c/th\u003e\u003cth\u003eStart Date\u003c/th\u003e\u003c/tr\u003e\u003c/thead\u003e\u003ctbody\u003e\u003ctr\u003e\u003ctd\u003eLamivudine \u003cspan class='ref'\u003e[29]\u003c/span\u003e\u003cspan class='ref'\u003e[62]\u003c/span\u003e\u003cspan class='ref'\u003e[148]\u003c/span\u003e\u003cspan class='ref'\u003e[311]\u003c/span\u003e\u003cspan class='ref'\u003e[341]\u003c/span\u003e\u003c/td\u003e\u003ctd\u003eOral\u003c/td\u003e\u003ctd\u003eNot specified\u003c/td\u003e\u003ctd\u003e2006-06-06 \u003cspan class='ref'\u003e[29]\u003c/span\u003e\u003c/td\u003e\u003c/tr\u003e\u003ctr\u003e\u003ctd\u003eNevirapine \u003cspan class='ref'\u003e[30]\u003c/span\u003e\u003cspan class='ref'\u003e[63]\u003c/span\u003e\u003cspan class='ref'\u003e[149]\u003c/span\u003e\u003cspan class='ref'\u003e[312]\u003c/span\u003e\u003cspan class='ref'\u003e[342]\u003c/span\u003e\u003c/td\u003e\u003ctd\u003eOral\u003c/td\u003e\u003ctd\u003eNot specified\u003c/td\u003e\u003ctd\u003e2006-06-06 \u003cspan class='ref'\u003e[30]\u003c/span\u003e\u003c/td\u003e\u003c/tr\u003e\u003ctr\u003e\u003ctd\u003eStavudine \u003cspan class='ref'\u003e[31]\u003c/span\u003e\u003cspan class='ref'\u003e[64]\u003c/span\u003e\u003cspan class='ref'\u003e[150]\u003c/span\u003e\u003cspan class='ref'\u003e[313]\u003c/span\u003e\u003cspan class='ref'\u003e[343]\u003c/span\u003e\u003c/td\u003e\u003ctd\u003eOral\u003c/td\u003e\u003ctd\u003eNot specified\u003c/td\u003e\u003ctd\u003e2006-06-06 \u003cspan class='ref'\u003e[31]\u003c/span\u003e\u003c/td\u003e\u003c/tr\u003e\u003c/tbody\u003e\u003c/table\u003e\u003c/div\u003e", "chips_html": "\u003cspan class='chip'\u003e⏱ 114252ms\u003c/span\u003e\u003cspan class='chip'\u003e3 chart refs\u003c/span\u003e", "degraded": false, "metrics": {"latency_ms": 114252, "http_status": 200, "citation_count": 3, "first_turn": false, "json_valid": true}}}}, {"turn": 3, "question": "If it's not preferred, what would be recommended instead?", "cells": {"gemma-local": {"error": null, "http_status": 200, "answer_html": "The records do not provide recommendations for alternative antiretroviral regimens.", "refs_html": "", "blocks_html": "", "chips_html": "\u003cspan class='chip'\u003e⏱ 806ms\u003c/span\u003e\u003cspan class='chip'\u003e0 chart refs\u003c/span\u003e", "degraded": false, "metrics": {"latency_ms": 806, "http_status": 200, "citation_count": 0, "first_turn": false, "json_valid": true}}, "med-agent-team-low": {"error": null, "http_status": 200, "answer_html": "\u003cstrong\u003eAnswer\u003c/strong\u003e\\[N] According to current WHO guidelines, the regimen of Lamivudine (3TC), Nevirapine (NVP), and Stavudine (d4T) is not preferred. Recommended alternatives include a regimen with efavirenz (EFV) combined with a boosted protease inhibitor like atazanavir (ATV), such as ATV/3TC/EFV or a dolutegravir-based regimen like ATV/3TC/DTG. [29][30][31].\\[N]\u003cstrong\u003eIn Depth\u003c/strong\u003e\\[N] Per WHO HIV guidelines, a regimen of Lamivudine and Stavudine with either Nevirapine or Efavirenz is not the preferred first-line therapy. The guidelines recommend a dolutegravir (DTG)-based regimen, such as tenofovir + lamivudine + dolutegravir (TLD). After confirmed failure of a first-line regimen, the guidelines suggest changing to a second-line regimen with a different nucleoside backbone and using either dolutegravir or a boosted protease inhibitor. Given the patient\u0026#x27;s history, an alternative regimen like ATV/3TC/EFV or ATV/3TC/DTG is recommended. [29][30][31].\\[N]", "refs_html": "\u003cdiv class='refs'\u003e\u003cspan class='ref'\u003e[29] order\u003c/span\u003e \u003cspan class='ref'\u003e[30] order\u003c/span\u003e \u003cspan class='ref'\u003e[31] order\u003c/span\u003e\u003c/div\u003e", "blocks_html": "", "chips_html": "\u003cspan class='chip'\u003e⏱ 68311ms\u003c/span\u003e\u003cspan class='chip'\u003e3 chart refs\u003c/span\u003e", "degraded": false, "metrics": {"latency_ms": 68311, "http_status": 200, "citation_count": 3, "first_turn": false, "json_valid": true}}, "med-agent-team-med": {"error": null, "http_status": 200, "answer_html": "The patient\u0026#x27;s current regimen of Lamivudine, Nevirapine, and Stavudine is no longer recommended under current WHO guidance.\u0026quot;,", "refs_html": "\u003cdiv class='refs'\u003e\u003cspan class='ref'\u003e[29] order\u003c/span\u003e \u003cspan class='ref'\u003e[30] order\u003c/span\u003e \u003cspan class='ref'\u003e[31] order\u003c/span\u003e\u003c/div\u003e", "blocks_html": "\u003cdiv class='block'\u003e\u003cdiv class='block-title'\u003eAntiretroviral Medications\u003c/div\u003e\u003ctable class='block-tbl'\u003e\u003cthead\u003e\u003ctr\u003e\u003cth\u003eMedication\u003c/th\u003e\u003cth\u003eAction\u003c/th\u003e\u003c/tr\u003e\u003c/thead\u003e\u003ctbody\u003e\u003ctr\u003e\u003ctd\u003eLamivudine \u003cspan class='ref'\u003e[29]\u003c/span\u003e\u003c/td\u003e\u003ctd\u003eNEW \u003cspan class='ref'\u003e[29]\u003c/span\u003e\u003c/td\u003e\u003c/tr\u003e\u003ctr\u003e\u003ctd\u003eNevirapine \u003cspan class='ref'\u003e[30]\u003c/span\u003e\u003c/td\u003e\u003ctd\u003eNEW \u003cspan class='ref'\u003e[30]\u003c/span\u003e\u003c/td\u003e\u003c/tr\u003e\u003ctr\u003e\u003ctd\u003eStavudine \u003cspan class='ref'\u003e[31]\u003c/span\u003e\u003c/td\u003e\u003ctd\u003eNEW \u003cspan class='ref'\u003e[31]\u003c/span\u003e\u003c/td\u003e\u003c/tr\u003e\u003c/tbody\u003e\u003c/table\u003e\u003c/div\u003e", "chips_html": "\u003cspan class='chip'\u003e⏱ 27765ms\u003c/span\u003e\u003cspan class='chip'\u003e3 chart refs\u003c/span\u003e", "degraded": false, "metrics": {"latency_ms": 27765, "http_status": 200, "citation_count": 3, "first_turn": false, "json_valid": true}}}}]}], "summary": [{"backend_id": "gemma-local", "label": "Gemma 4-E4B (LM Studio direct)", "turns": 3, "avg_latency_ms": 12171, "max_latency_ms": 34451, "total_chart_refs": 36, "degraded": 0, "errors": 0}, {"backend_id": "med-agent-team-low", "label": "Med Agent Team — LOW (qwen2.5-14b synth, medgemma-1.5 expert)", "turns": 3, "avg_latency_ms": 52016, "max_latency_ms": 75076, "total_chart_refs": 9, "degraded": 0, "errors": 0}, {"backend_id": "med-agent-team-med", "label": "Med Agent Team — MED (qwen2.5-32b synth, medgemma-1.5 expert)", "turns": 3, "avg_latency_ms": 82555, "max_latency_ms": 114252, "total_chart_refs": 9, "degraded": 0, "errors": 0}]}]}</script><script>
+const DATA = JSON.parse(document.getElementById('report-data').textContent);
+const RANK_KEY = 'validate-rankings';
+// Optional feedback-capture endpoint. Empty = client-side download (default, never blocks). Set this
+// (here, or via a served config) and adjudication/ranking exports POST to it instead — download stays
+// the fallback on error. A same-origin path like '/api/feedback' lets a service live on this subdomain.
+const FEEDBACK_ENDPOINT = '';
+let activeRunId = (DATA.runs[0] || {}).run_id;
+
+function runById(id){ return DATA.runs.find(r => r.run_id === id); }
+function el(tag, cls){ const e = document.createElement(tag); if(cls) e.className = cls; return e; }
+
+function loadAllRanks(){ try { return JSON.parse(localStorage.getItem(RANK_KEY)) || {}; } catch(e) { return {}; } }
+function saveAllRanks(o){ localStorage.setItem(RANK_KEY, JSON.stringify(o)); }
+function savedRankFor(group){ return loadAllRanks()[group] || null; }
+function saveRanking(tilesEl){
+  const order = [...tilesEl.querySelectorAll('.tile')].map(t => t.dataset.backend).filter(Boolean);
+  const all = loadAllRanks(); all[tilesEl.dataset.rankgroup] = order; saveAllRanks(all);
+}
+
+function renderRunMeta(run){
+  const m = run.meta;
+  return 'run ' + m.run_id + ' · ' + m.component + ' · git ' + m.git_sha +
+         ' · ' + m.dataset_id + ' · provider ' + m.provider + ' · ' + m.generated_at;
+}
+
+function renderSummary(run){
+  const sec = el('section', 'summary-section');
+  sec.innerHTML = '<h2>comparison summary</h2>';
+  const rows = run.summary.map(s =>
+    "<tr><td class='b'>" + s.backend_id + "<span class='model'>" + s.label + "</span></td>" +
+    '<td>' + s.turns + '</td><td>' + s.avg_latency_ms + ' ms</td><td>' + s.max_latency_ms + ' ms</td>' +
+    '<td>' + s.total_chart_refs + '</td><td>' + s.degraded + '</td><td>' + s.errors + '</td></tr>'
+  ).join('');
+  const tbl = el('table', 'summary');
+  tbl.innerHTML = '<thead><tr><th>backend</th><th>turns</th><th>avg latency</th>' +
+    '<th>max latency</th><th>total chart refs</th><th>degraded</th><th>errors</th></tr></thead>' +
+    '<tbody>' + rows + '</tbody>';
+  sec.appendChild(tbl);
+  return sec;
+}
+
+function buildTile(run, backend, cell, turn, scenarioId){
+  const tile = el('article', 'tile');
+  tile.draggable = true;
+  tile.dataset.backend = backend;
+  tile.dataset.run = run.run_id;
+  tile.dataset.scenario = scenarioId;
+  tile.dataset.turn = turn;
+
+  const head = el('div', 'tile-head');
+  head.innerHTML = "<span class='rank-badge'></span><span class='backend'></span><span class='label'></span>";
+  head.querySelector('.backend').textContent = backend;
+  head.querySelector('.label').textContent = run.labels[backend] || '';
+  tile.appendChild(head);
+
+  if (!cell){
+    tile.classList.add('empty');
+    tile.draggable = false;
+    const dash = el('div'); dash.textContent = '—'; tile.appendChild(dash);
+    return tile;
+  }
+
+  const body = el('div');
+  if (cell.error){
+    body.innerHTML = "<div class='err'></div>";
+    body.querySelector('.err').textContent = 'HTTP ' + (cell.http_status == null ? '' : cell.http_status) +
+                                             ': ' + String(cell.error).slice(0, 400);
+  } else {
+    body.innerHTML = "<div class='ans'>" + cell.answer_html + '</div>' + cell.refs_html + cell.blocks_html;
+  }
+  tile.appendChild(body);
+
+  const expand = el('button', 'expand');
+  expand.textContent = 'expand';
+  expand.addEventListener('click', () => {
+    tile.classList.toggle('expanded');
+    expand.textContent = tile.classList.contains('expanded') ? 'collapse' : 'expand';
+  });
+  tile.appendChild(expand);
+
+  const chips = el('div', 'chips');
+  chips.innerHTML = cell.chips_html;
+  tile.appendChild(chips);
+
+  const tmpl = document.getElementById('rubric-template');
+  tile.appendChild(tmpl.content.cloneNode(true));
+  wireTile(tile);
+  return tile;
+}
+
+function renderRun(runId){
+  const run = runById(runId);
+  if (!run) return;
+  document.getElementById('run-meta').textContent = renderRunMeta(run);
+
+  // scenario filter options
+  const sf = document.getElementById('scenario-filter');
+  sf.innerHTML = "<option value=''>all scenarios</option>" +
+    run.scenarios.map(s => "<option></option>").join('');
+  run.scenarios.forEach((s, i) => { const o = sf.options[i + 1]; o.value = s.scenario_id; o.textContent = s.scenario_id; });
+
+  // backend toggle checkboxes (all on)
+  const tg = document.getElementById('backend-toggles');
+  tg.innerHTML = '<legend>backends</legend>';
+  run.backends.forEach(b => {
+    const lab = el('label');
+    const cb = el('input'); cb.type = 'checkbox'; cb.checked = true; cb.value = b;
+    cb.addEventListener('change', () => applyBackendToggle(b, cb.checked));
+    lab.appendChild(cb); lab.appendChild(document.createTextNode(b));
+    tg.appendChild(lab);
+  });
+
+  const main = document.getElementById('report');
+  main.innerHTML = '';
+  main.appendChild(renderSummary(run));
+
+  run.scenarios.forEach(sc => {
+    const sec = el('section', 'scenario');
+    sec.dataset.scenario = sc.scenario_id;
+    const h = el('h2'); h.textContent = sc.scenario_id; sec.appendChild(h);
+
+    sc.turns.forEach(tn => {
+      const band = el('div', 'qband');
+      band.dataset.run = run.run_id; band.dataset.scenario = sc.scenario_id; band.dataset.turn = tn.turn;
+
+      const qhead = el('div', 'qhead');
+      qhead.innerHTML = "<span class='n'></span><div class='q'></div>";
+      qhead.querySelector('.n').textContent = 'T' + tn.turn;
+      qhead.querySelector('.q').textContent = tn.question || '';
+      band.appendChild(qhead);
+
+      const tilesEl = el('div', 'tiles');
+      const group = run.run_id + '|' + sc.scenario_id + '|' + tn.turn;
+      tilesEl.dataset.rankgroup = group;
+
+      const saved = savedRankFor(group);
+      const ordered = saved
+        ? saved.filter(b => run.backends.includes(b)).concat(run.backends.filter(b => !saved.includes(b)))
+        : run.backends.slice();
+      ordered.forEach(b => tilesEl.appendChild(buildTile(run, b, tn.cells[b], tn.turn, sc.scenario_id)));
+
+      wireGroup(tilesEl);
+      renumber(tilesEl);
+      band.appendChild(tilesEl);
+      sec.appendChild(band);
+    });
+    main.appendChild(sec);
+  });
+
+  applyFilters();
+}
+
+/* ---- filter + toggle (attribute flips, no re-render) ---- */
+function applyScenarioFilter(){
+  const v = document.getElementById('scenario-filter').value;
+  document.querySelectorAll('#report .scenario').forEach(sec => {
+    sec.dataset.hidden = (v && sec.dataset.scenario !== v) ? '1' : '0';
+  });
+}
+function applyQuestionSearch(){
+  const raw = document.getElementById('q-search').value.trim();
+  let re = null;
+  if (raw){ try { re = new RegExp(raw, 'i'); } catch(e) { re = null; } }
+  document.querySelectorAll('#report .qband').forEach(band => {
+    if (!raw){ band.dataset.hidden = '0'; return; }
+    const q = band.querySelector('.qhead .q').textContent || '';
+    const tiles = [...band.querySelectorAll('.tile')].map(t => t.textContent).join(' ');
+    const hay = q + ' ' + tiles;
+    const hit = re ? re.test(hay) : hay.toLowerCase().includes(raw.toLowerCase());
+    band.dataset.hidden = hit ? '0' : '1';
+  });
+}
+function applyBackendToggle(backend, on){
+  document.querySelectorAll("#report .tile[data-backend='" + cssEsc(backend) + "']").forEach(t => {
+    t.dataset.hidden = on ? '0' : '1';
+  });
+}
+function cssEsc(s){ return (window.CSS && CSS.escape) ? CSS.escape(s) : s.replace(/'/g, "\\'"); }
+function applyFilters(){
+  applyScenarioFilter();
+  applyQuestionSearch();
+  document.querySelectorAll('#backend-toggles input[type=checkbox]').forEach(cb => applyBackendToggle(cb.value, cb.checked));
+}
+
+/* ---- drag-rank (native DnD, constrained within one band) ---- */
+let dragged = null;
+function wireTile(tile){
+  tile.addEventListener('dragstart', () => { dragged = tile; requestAnimationFrame(() => tile.classList.add('dragging')); });
+  tile.addEventListener('dragend', () => {
+    tile.classList.remove('dragging'); const g = tile.closest('.tiles'); dragged = null;
+    if (g){ renumber(g); saveRanking(g); }
+  });
+}
+function wireGroup(tilesEl){
+  tilesEl.addEventListener('dragover', e => {
+    e.preventDefault();
+    if (!dragged || dragged.closest('.tiles') !== tilesEl) return;
+    const after = getDragAfterElementX(tilesEl, e.clientX);
+    if (after == null) tilesEl.appendChild(dragged); else tilesEl.insertBefore(dragged, after);
+  });
+}
+function getDragAfterElementX(container, x){
+  const tiles = [...container.querySelectorAll('.tile:not(.dragging)')];
+  return tiles.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = x - box.left - box.width / 2;
+    return (offset < 0 && offset > closest.offset) ? { offset, element: child } : closest;
+  }, { offset: -Infinity, element: null }).element;
+}
+function renumber(tilesEl){
+  [...tilesEl.querySelectorAll('.tile')].forEach((t, i) => {
+    const b = t.querySelector('.rank-badge'); if (b) b.textContent = (i + 1);
+  });
+}
+
+/* ---- exports: two files, two grains ---- */
+function n(v){ v = (v || '').trim(); return v === '' ? null : Number(v); }
+function collectFeedback(){
+  const out = [];
+  const reviewer = document.getElementById('rev').value || 'unknown';
+  document.querySelectorAll("#report .tile:not(.empty)").forEach(tile => {
+    const f = tile.querySelector('.cell-form'); if (!f) return;
+    const g = s => f.querySelector(s);
+    const acc = g('[name=accuracy]').value, comp = g('[name=completeness]').value, rel = g('[name=relevance]').value;
+    const abst = g('[name=abstention_outcome]').value, grnd = g('[name=citation_groundedness]').value;
+    const harm = g('[name=harm_fail]').checked;
+    const dec = f.querySelector('input[name=decision]:checked');
+    const txt = g('[name=free_text]').value.trim();
+    const touched = acc || comp || rel || txt || harm || dec || abst !== 'n-a' || grnd !== 'n-a';
+    if (!touched) return;
+    out.push(JSON.stringify({
+      run_id: activeRunId, scenario_id: tile.dataset.scenario, turn: Number(tile.dataset.turn),
+      backend_id: tile.dataset.backend, reviewer: reviewer,
+      scores: { accuracy: n(acc), completeness: n(comp), relevance: n(rel) },
+      abstention_outcome: abst, citation_groundedness: grnd, harm_fail: harm,
+      decision: dec ? dec.value : null, free_text: txt, created_at: new Date().toISOString()
+    }));
+  });
+  if (!out.length){ alert('No adjudications filled in yet.'); return; }
+  submit(out.join('\n') + '\n', 'feedback.jsonl', 'application/x-ndjson');
+}
+function exportRankings(){
+  const payload = {
+    run_set: DATA.runs.map(r => r.run_id),
+    exported_at: new Date().toISOString(),
+    rankings: loadAllRanks()
+  };
+  submit(JSON.stringify(payload, null, 2), 'rankings.json', 'application/json');
+}
+function resetRanking(){
+  const all = loadAllRanks();
+  Object.keys(all).forEach(k => { if (k.startsWith(activeRunId + '|')) delete all[k]; });
+  saveAllRanks(all);
+  renderRun(activeRunId);
+}
+function download(text, name, mime){
+  const b = new Blob([text], { type: mime });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+}
+function submit(text, name, mime){
+  // Feedback-capture seam: POST to the configured endpoint if set, else fall back to the download.
+  if (!FEEDBACK_ENDPOINT){ download(text, name, mime); return; }
+  fetch(FEEDBACK_ENDPOINT, { method: 'POST', headers: { 'Content-Type': mime, 'X-Report-Artifact': name }, body: text })
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); alert(name + ' submitted'); })
+    .catch(e => { alert('submit failed (' + e + ') — downloading instead'); download(text, name, mime); });
+}
+
+/* ---- boot ---- */
+function boot(){
+  const rs = document.getElementById('run-select');
+  rs.innerHTML = DATA.runs.map(() => '<option></option>').join('');
+  DATA.runs.forEach((r, i) => { const o = rs.options[i]; o.value = r.run_id; o.textContent = r.run_id; });
+  rs.value = activeRunId;
+  rs.addEventListener('change', () => { activeRunId = rs.value; renderRun(activeRunId); });
+
+  document.getElementById('scenario-filter').addEventListener('change', applyScenarioFilter);
+  const search = document.getElementById('q-search');
+  search.addEventListener('input', applyQuestionSearch);
+  search.addEventListener('keydown', e => { if (e.key === 'Escape'){ search.value = ''; applyQuestionSearch(); } });
+  document.getElementById('reset-rank').addEventListener('click', resetRanking);
+  document.getElementById('export-rankings').addEventListener('click', exportRankings);
+  document.getElementById('export-feedback').addEventListener('click', collectFeedback);
+  document.getElementById('print-pdf').addEventListener('click', () => window.print());
+
+  if (activeRunId) renderRun(activeRunId);
+}
+boot();
+</script></body></html>

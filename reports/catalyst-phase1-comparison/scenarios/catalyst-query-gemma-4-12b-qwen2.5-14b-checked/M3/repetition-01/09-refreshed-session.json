@@ -1,0 +1,2404 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "GET",
+    "path": "/v1/catalyst/workbench/sessions/bff945ac-4b7a-4703-8db5-ecd01562acc8",
+    "body": null
+  },
+  "response": {
+    "httpStatus": 200,
+    "body": {
+      "contractVersion": "catalyst.workbench.session.v1",
+      "sessionId": "bff945ac-4b7a-4703-8db5-ecd01562acc8",
+      "question": "Count CD4 count results by patient.",
+      "name": "Count CD4 count results by patient.",
+      "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+      "datasetId": "hiv-20260731T000741Z",
+      "datasetVersion": "hiv-20260731T000741Z",
+      "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+      "currentVersionId": "9fecf9b9-70a4-4eb9-a83f-41310f621178",
+      "browserState": {},
+      "provenance": {
+        "dataSourceId": "openmrs-hiv",
+        "catalogContextSourceId": "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+        "catalystTraceId": "556abe19-0f8c-416f-bd4b-c094869365b4",
+        "profileSnapshot": {
+          "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+          "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b",
+            "qwen2.5-14b"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b",
+            "query_review": "qwen2.5-14b"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            },
+            "query_review": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_review",
+            "query_finalize"
+          ],
+          "unavailableReasons": []
+        },
+        "datasetSnapshot": {
+          "datasetId": "hiv-20260731T000741Z",
+          "dataSource": "openmrs-hiv-fhir-postgresql",
+          "pipelineRunId": "hiv-20260731T000741Z",
+          "synthetic": null,
+          "patients": 5285,
+          "results": 427915,
+          "testTypes": 143,
+          "firstObservedAt": "2022-11-07T21:50:36Z",
+          "lastObservedAt": "2026-08-11T00:00:00Z"
+        },
+        "generationHttpStatus": 200,
+        "generationOutcome": {
+          "contractVersion": "catalyst.query.v1",
+          "deploymentMode": "demo",
+          "status": "ready",
+          "question": "Count CD4 count results by patient.",
+          "target": {
+            "dataSource": "openmrs-hiv-fhir-postgresql",
+            "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+            "dialect": "postgresql",
+            "approvedViews": [
+              "analytics.hiv_concept_mapping_v1",
+              "analytics.hiv_medication_request_fact_v1",
+              "analytics.hiv_observation_fact_v1",
+              "analytics.hiv_patient_dim_v1",
+              "analytics.hiv_visit_fact_v1",
+              "analytics.pipeline_freshness_v1",
+              "analytics.pipeline_run_v1",
+              "public.condition_flat",
+              "public.encounter_flat",
+              "public.medication_flat",
+              "public.medication_request_flat",
+              "public.observation_flat",
+              "public.patient_flat"
+            ]
+          },
+          "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :cd4_count_name GROUP BY patient_id",
+          "parameters": [
+            {
+              "name": "cd4_count_name",
+              "type": "string",
+              "source": "question",
+              "value": "CD4 count"
+            }
+          ],
+          "expectedColumns": [
+            {
+              "name": "patient_id",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "validation": {
+            "status": "passed",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              },
+              {
+                "name": "status",
+                "status": "passed",
+                "message": "The candidate's status is 'ready', which is correct."
+              },
+              {
+                "name": "approved-view",
+                "status": "passed",
+                "message": "The candidate uses the approved view 'analytics.hiv_observation_fact_v1'."
+              },
+              {
+                "name": "field-grounding",
+                "status": "passed",
+                "message": "The candidate correctly constrains the concept_name field to 'CD4 count' using a parameter."
+              },
+              {
+                "name": "one-statement-read-only",
+                "status": "passed",
+                "message": "The candidate uses a single SELECT statement without any destructive operations."
+              },
+              {
+                "name": "dialect-compatibility",
+                "status": "passed",
+                "message": "The candidate's SQL is compatible with PostgreSQL."
+              },
+              {
+                "name": "typed-parameter-binding",
+                "status": "passed",
+                "message": "The candidate uses a named parameter ':cd4_count_name' with the correct type 'string'."
+              },
+              {
+                "name": "output-column-agreement",
+                "status": "passed",
+                "message": "The candidate's output columns match the expected schema."
+              },
+              {
+                "name": "row-limit-policy",
+                "status": "passed",
+                "message": "The candidate does not exceed the row limit policy."
+              },
+              {
+                "name": "absence-of-invented-identifiers",
+                "status": "passed",
+                "message": "The candidate does not use any invented identifiers."
+              },
+              {
+                "name": "named_analyte_constraint",
+                "status": "passed",
+                "message": "Every analyte named in the question is constrained by its catalog semantic dimension and canonical bound value."
+              }
+            ]
+          },
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "traceId": "556abe19-0f8c-416f-bd4b-c094869365b4",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ]
+          },
+          "modelCollaboration": {
+            "writer": {
+              "model": "gemma-4-12b",
+              "candidate": {
+                "status": "ready",
+                "target": {
+                  "dataSource": "openmrs-hiv-fhir-postgresql",
+                  "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+                  "dialect": "postgresql",
+                  "approvedViews": [
+                    "analytics.hiv_concept_mapping_v1",
+                    "analytics.hiv_medication_request_fact_v1",
+                    "analytics.hiv_observation_fact_v1",
+                    "analytics.hiv_patient_dim_v1",
+                    "analytics.hiv_visit_fact_v1",
+                    "analytics.pipeline_freshness_v1",
+                    "analytics.pipeline_run_v1",
+                    "public.condition_flat",
+                    "public.encounter_flat",
+                    "public.medication_flat",
+                    "public.medication_request_flat",
+                    "public.observation_flat",
+                    "public.patient_flat"
+                  ]
+                },
+                "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :cd4_count_name GROUP BY patient_id",
+                "parameters": [
+                  {
+                    "name": "cd4_count_name",
+                    "type": "string",
+                    "source": "question",
+                    "value": "CD4 count"
+                  }
+                ],
+                "expectedColumns": [
+                  {
+                    "name": "patient_id",
+                    "logicalType": "string",
+                    "nullable": true
+                  },
+                  {
+                    "name": "count",
+                    "logicalType": "integer",
+                    "nullable": false
+                  }
+                ]
+              },
+              "lintFindings": []
+            },
+            "reviewer": {
+              "model": "qwen2.5-14b",
+              "decision": "approve",
+              "checks": [
+                {
+                  "name": "status",
+                  "status": "passed",
+                  "message": "The candidate's status is 'ready', which is correct."
+                },
+                {
+                  "name": "approved-view",
+                  "status": "passed",
+                  "message": "The candidate uses the approved view 'analytics.hiv_observation_fact_v1'."
+                },
+                {
+                  "name": "field-grounding",
+                  "status": "passed",
+                  "message": "The candidate correctly constrains the concept_name field to 'CD4 count' using a parameter."
+                },
+                {
+                  "name": "one-statement-read-only",
+                  "status": "passed",
+                  "message": "The candidate uses a single SELECT statement without any destructive operations."
+                },
+                {
+                  "name": "dialect-compatibility",
+                  "status": "passed",
+                  "message": "The candidate's SQL is compatible with PostgreSQL."
+                },
+                {
+                  "name": "typed-parameter-binding",
+                  "status": "passed",
+                  "message": "The candidate uses a named parameter ':cd4_count_name' with the correct type 'string'."
+                },
+                {
+                  "name": "output-column-agreement",
+                  "status": "passed",
+                  "message": "The candidate's output columns match the expected schema."
+                },
+                {
+                  "name": "row-limit-policy",
+                  "status": "passed",
+                  "message": "The candidate does not exceed the row limit policy."
+                },
+                {
+                  "name": "absence-of-invented-identifiers",
+                  "status": "passed",
+                  "message": "The candidate does not use any invented identifiers."
+                }
+              ]
+            },
+            "finalLintFindings": []
+          }
+        }
+      },
+      "status": "active",
+      "createdAt": "2026-08-25T00:59:36.281957Z",
+      "updatedAt": "2026-08-25T01:02:03.060937Z",
+      "versions": [
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+          "sessionId": "bff945ac-4b7a-4703-8db5-ecd01562acc8",
+          "parentVersionId": null,
+          "ordinal": 1,
+          "authorType": "model",
+          "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :cd4_count_name GROUP BY patient_id",
+          "parameters": [
+            {
+              "name": "cd4_count_name",
+              "type": "string",
+              "source": "question",
+              "value": "CD4 count"
+            }
+          ],
+          "expectedColumns": [
+            {
+              "name": "patient_id",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "queryDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "traceId": "556abe19-0f8c-416f-bd4b-c094869365b4",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "ready",
+            "hubTraceId": "556abe19-0f8c-416f-bd4b-c094869365b4",
+            "generationValidation": {
+              "status": "passed",
+              "checks": [
+                {
+                  "name": "query_lint_attempt_1",
+                  "status": "passed",
+                  "message": "Candidate passed deterministic SQL lint."
+                },
+                {
+                  "name": "status",
+                  "status": "passed",
+                  "message": "The candidate's status is 'ready', which is correct."
+                },
+                {
+                  "name": "approved-view",
+                  "status": "passed",
+                  "message": "The candidate uses the approved view 'analytics.hiv_observation_fact_v1'."
+                },
+                {
+                  "name": "field-grounding",
+                  "status": "passed",
+                  "message": "The candidate correctly constrains the concept_name field to 'CD4 count' using a parameter."
+                },
+                {
+                  "name": "one-statement-read-only",
+                  "status": "passed",
+                  "message": "The candidate uses a single SELECT statement without any destructive operations."
+                },
+                {
+                  "name": "dialect-compatibility",
+                  "status": "passed",
+                  "message": "The candidate's SQL is compatible with PostgreSQL."
+                },
+                {
+                  "name": "typed-parameter-binding",
+                  "status": "passed",
+                  "message": "The candidate uses a named parameter ':cd4_count_name' with the correct type 'string'."
+                },
+                {
+                  "name": "output-column-agreement",
+                  "status": "passed",
+                  "message": "The candidate's output columns match the expected schema."
+                },
+                {
+                  "name": "row-limit-policy",
+                  "status": "passed",
+                  "message": "The candidate does not exceed the row limit policy."
+                },
+                {
+                  "name": "absence-of-invented-identifiers",
+                  "status": "passed",
+                  "message": "The candidate does not use any invented identifiers."
+                },
+                {
+                  "name": "named_analyte_constraint",
+                  "status": "passed",
+                  "message": "Every analyte named in the question is constrained by its catalog semantic dimension and canonical bound value."
+                }
+              ]
+            },
+            "modelCollaboration": {
+              "writer": {
+                "model": "gemma-4-12b",
+                "candidate": {
+                  "status": "ready",
+                  "target": {
+                    "dataSource": "openmrs-hiv-fhir-postgresql",
+                    "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+                    "dialect": "postgresql",
+                    "approvedViews": [
+                      "analytics.hiv_concept_mapping_v1",
+                      "analytics.hiv_medication_request_fact_v1",
+                      "analytics.hiv_observation_fact_v1",
+                      "analytics.hiv_patient_dim_v1",
+                      "analytics.hiv_visit_fact_v1",
+                      "analytics.pipeline_freshness_v1",
+                      "analytics.pipeline_run_v1",
+                      "public.condition_flat",
+                      "public.encounter_flat",
+                      "public.medication_flat",
+                      "public.medication_request_flat",
+                      "public.observation_flat",
+                      "public.patient_flat"
+                    ]
+                  },
+                  "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :cd4_count_name GROUP BY patient_id",
+                  "parameters": [
+                    {
+                      "name": "cd4_count_name",
+                      "type": "string",
+                      "source": "question",
+                      "value": "CD4 count"
+                    }
+                  ],
+                  "expectedColumns": [
+                    {
+                      "name": "patient_id",
+                      "logicalType": "string",
+                      "nullable": true
+                    },
+                    {
+                      "name": "count",
+                      "logicalType": "integer",
+                      "nullable": false
+                    }
+                  ]
+                },
+                "lintFindings": []
+              },
+              "reviewer": {
+                "model": "qwen2.5-14b",
+                "decision": "approve",
+                "checks": [
+                  {
+                    "name": "status",
+                    "status": "passed",
+                    "message": "The candidate's status is 'ready', which is correct."
+                  },
+                  {
+                    "name": "approved-view",
+                    "status": "passed",
+                    "message": "The candidate uses the approved view 'analytics.hiv_observation_fact_v1'."
+                  },
+                  {
+                    "name": "field-grounding",
+                    "status": "passed",
+                    "message": "The candidate correctly constrains the concept_name field to 'CD4 count' using a parameter."
+                  },
+                  {
+                    "name": "one-statement-read-only",
+                    "status": "passed",
+                    "message": "The candidate uses a single SELECT statement without any destructive operations."
+                  },
+                  {
+                    "name": "dialect-compatibility",
+                    "status": "passed",
+                    "message": "The candidate's SQL is compatible with PostgreSQL."
+                  },
+                  {
+                    "name": "typed-parameter-binding",
+                    "status": "passed",
+                    "message": "The candidate uses a named parameter ':cd4_count_name' with the correct type 'string'."
+                  },
+                  {
+                    "name": "output-column-agreement",
+                    "status": "passed",
+                    "message": "The candidate's output columns match the expected schema."
+                  },
+                  {
+                    "name": "row-limit-policy",
+                    "status": "passed",
+                    "message": "The candidate does not exceed the row limit policy."
+                  },
+                  {
+                    "name": "absence-of-invented-identifiers",
+                    "status": "passed",
+                    "message": "The candidate does not use any invented identifiers."
+                  }
+                ]
+              },
+              "finalLintFindings": []
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b",
+              "qwen2.5-14b"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b",
+              "query_review": "qwen2.5-14b"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "query_review": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_review",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "catalystTraceId": "556abe19-0f8c-416f-bd4b-c094869365b4",
+            "turnId": "e289a554-c4d9-46b8-bdd5-ba64a380f2ac",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": null,
+            "effectiveBaseVersion": null,
+            "manualVersion": null,
+            "editorSnapshotDigest": null,
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "c71057b2-6c5f-4971-8d2e-7ee4acd3aa63",
+              "evidenceDigest": "c7d6038ef10d815fe644dd6c9948206c4676c787bb2773f6111180e999a9b137",
+              "detailPath": "/v1/catalyst/workbench/sessions/bff945ac-4b7a-4703-8db5-ecd01562acc8/turns/e289a554-c4d9-46b8-bdd5-ba64a380f2ac/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+              "profileName": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+              "profileDigest": "ed71b2719f421b3edb7ad17a47ae1aea290f8b1d079a633ce23e4dea369565ab",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4",
+                "modelId": "gemma-4-12b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": [],
+              "reviewer": {
+                "role": "reviewer",
+                "providerId": "med-agent-hub",
+                "modelClass": "qwen2.5",
+                "modelId": "qwen2.5-14b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-review",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                  "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+                }
+              }
+            },
+            "hubRequestDigest": "df0a8b6c0073c50f96f067f44e3d5d08e49009bb01043aa6548929b83adebd89"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T01:00:46.814600Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "9fecf9b9-70a4-4eb9-a83f-41310f621178",
+          "sessionId": "bff945ac-4b7a-4703-8db5-ecd01562acc8",
+          "parentVersionId": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+          "ordinal": 2,
+          "authorType": "model",
+          "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :cd4_percentage_name GROUP BY patient_id",
+          "parameters": [
+            {
+              "name": "cd4_percentage_name",
+              "type": "string",
+              "source": "question",
+              "value": "CD4%"
+            }
+          ],
+          "expectedColumns": [
+            {
+              "name": "patient_id",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "queryDigest": "c8c0643130587ed72113cf52120de1d591927ff1327095308ad899461c404980",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "traceId": "9c8087a1-05f1-4b3b-9f6b-b4e45a0a677c",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "ready",
+            "hubTraceId": "9c8087a1-05f1-4b3b-9f6b-b4e45a0a677c",
+            "generationValidation": {
+              "status": "passed",
+              "checks": [
+                {
+                  "name": "query_lint_attempt_1",
+                  "status": "passed",
+                  "message": "Candidate passed deterministic SQL lint."
+                },
+                {
+                  "name": "status",
+                  "status": "passed",
+                  "message": "The candidate's status is 'ready', which is correct."
+                },
+                {
+                  "name": "approved-view",
+                  "status": "passed",
+                  "message": "The candidate uses the approved view 'analytics.hiv_observation_fact_v1'."
+                },
+                {
+                  "name": "field-grounding",
+                  "status": "passed",
+                  "message": "The candidate correctly constrains the concept_name field to 'CD4%', which is the correct field for selecting CD4 percentage results."
+                },
+                {
+                  "name": "one-statement-read-only",
+                  "status": "passed",
+                  "message": "The candidate uses a single SELECT statement without any destructive operations."
+                },
+                {
+                  "name": "dialect-compatibility",
+                  "status": "passed",
+                  "message": "The candidate's SQL is compatible with PostgreSQL."
+                },
+                {
+                  "name": "typed-parameter-binding",
+                  "status": "passed",
+                  "message": "The candidate correctly binds the parameter ':cd4_percentage_name' with a string type."
+                },
+                {
+                  "name": "output-column-agreement",
+                  "status": "passed",
+                  "message": "The candidate's output columns match the expected columns."
+                },
+                {
+                  "name": "row-limit-policy",
+                  "status": "passed",
+                  "message": "The candidate does not exceed the row limit policy."
+                },
+                {
+                  "name": "absence-of-invented-identifiers",
+                  "status": "passed",
+                  "message": "The candidate does not use any invented identifiers."
+                },
+                {
+                  "name": "named_analyte_constraint",
+                  "status": "passed",
+                  "message": "Every analyte named in the question is constrained by its catalog semantic dimension and canonical bound value."
+                }
+              ]
+            },
+            "modelCollaboration": {
+              "writer": {
+                "model": "gemma-4-12b",
+                "candidate": {
+                  "status": "ready",
+                  "target": {
+                    "dataSource": "openmrs-hiv-fhir-postgresql",
+                    "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+                    "dialect": "postgresql",
+                    "approvedViews": [
+                      "analytics.hiv_concept_mapping_v1",
+                      "analytics.hiv_medication_request_fact_v1",
+                      "analytics.hiv_observation_fact_v1",
+                      "analytics.hiv_patient_dim_v1",
+                      "analytics.hiv_visit_fact_v1",
+                      "analytics.pipeline_freshness_v1",
+                      "analytics.pipeline_run_v1",
+                      "public.condition_flat",
+                      "public.encounter_flat",
+                      "public.medication_flat",
+                      "public.medication_request_flat",
+                      "public.observation_flat",
+                      "public.patient_flat"
+                    ]
+                  },
+                  "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :cd4_percentage_name GROUP BY patient_id",
+                  "parameters": [
+                    {
+                      "name": "cd4_percentage_name",
+                      "type": "string",
+                      "source": "question",
+                      "value": "CD4%"
+                    }
+                  ],
+                  "expectedColumns": [
+                    {
+                      "name": "patient_id",
+                      "logicalType": "string",
+                      "nullable": true
+                    },
+                    {
+                      "name": "count",
+                      "logicalType": "integer",
+                      "nullable": false
+                    }
+                  ]
+                },
+                "lintFindings": [],
+                "disposition": "selected"
+              },
+              "reviewer": {
+                "model": "qwen2.5-14b",
+                "decision": "approve",
+                "checks": [
+                  {
+                    "name": "status",
+                    "status": "passed",
+                    "message": "The candidate's status is 'ready', which is correct."
+                  },
+                  {
+                    "name": "approved-view",
+                    "status": "passed",
+                    "message": "The candidate uses the approved view 'analytics.hiv_observation_fact_v1'."
+                  },
+                  {
+                    "name": "field-grounding",
+                    "status": "passed",
+                    "message": "The candidate correctly constrains the concept_name field to 'CD4%', which is the correct field for selecting CD4 percentage results."
+                  },
+                  {
+                    "name": "one-statement-read-only",
+                    "status": "passed",
+                    "message": "The candidate uses a single SELECT statement without any destructive operations."
+                  },
+                  {
+                    "name": "dialect-compatibility",
+                    "status": "passed",
+                    "message": "The candidate's SQL is compatible with PostgreSQL."
+                  },
+                  {
+                    "name": "typed-parameter-binding",
+                    "status": "passed",
+                    "message": "The candidate correctly binds the parameter ':cd4_percentage_name' with a string type."
+                  },
+                  {
+                    "name": "output-column-agreement",
+                    "status": "passed",
+                    "message": "The candidate's output columns match the expected columns."
+                  },
+                  {
+                    "name": "row-limit-policy",
+                    "status": "passed",
+                    "message": "The candidate does not exceed the row limit policy."
+                  },
+                  {
+                    "name": "absence-of-invented-identifiers",
+                    "status": "passed",
+                    "message": "The candidate does not use any invented identifiers."
+                  }
+                ],
+                "disposition": "selected"
+              },
+              "finalLintFindings": [],
+              "base": {
+                "baseClassification": "reused",
+                "observedBase": {
+                  "versionId": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+                  "queryDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056"
+                },
+                "effectiveBaseVersion": {
+                  "versionId": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+                  "queryDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056"
+                },
+                "editorDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056"
+              }
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b",
+              "qwen2.5-14b"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b",
+              "query_review": "qwen2.5-14b"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "query_review": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_review",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "turnId": "8c4ae6b9-4bb3-42a6-b2ff-17cba1db5300",
+            "catalystTraceId": "9c8087a1-05f1-4b3b-9f6b-b4e45a0a677c",
+            "revisionContextDigest": "ed7ab1d77a267712c0ba86f0fdf548aa2037d7a889066ac76e88969af450d08e",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": {
+              "versionId": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+              "queryDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056"
+            },
+            "effectiveBaseVersion": {
+              "versionId": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+              "queryDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056"
+            },
+            "manualVersion": null,
+            "editorSnapshotDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056",
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "1b606483-ff44-40a2-bc76-74d3d5e1654a",
+              "evidenceDigest": "8f239a5238d45697858850f4d1befad58463df54b3e23c9a33edc1f4c27ccd3c",
+              "detailPath": "/v1/catalyst/workbench/sessions/bff945ac-4b7a-4703-8db5-ecd01562acc8/turns/8c4ae6b9-4bb3-42a6-b2ff-17cba1db5300/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+              "profileName": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+              "profileDigest": "ed71b2719f421b3edb7ad17a47ae1aea290f8b1d079a633ce23e4dea369565ab",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4",
+                "modelId": "gemma-4-12b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": [],
+              "reviewer": {
+                "role": "reviewer",
+                "providerId": "med-agent-hub",
+                "modelClass": "qwen2.5",
+                "modelId": "qwen2.5-14b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-review",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                  "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+                }
+              }
+            },
+            "hubRequestDigest": "8c4f8181bb29f6fe9e8c4b53dfe1f365bf4185d15e89ca58fe71737bd079680b"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T01:02:03.060937Z"
+        }
+      ],
+      "currentVersion": {
+        "contractVersion": "catalyst.workbench.query-version.v1",
+        "versionId": "9fecf9b9-70a4-4eb9-a83f-41310f621178",
+        "sessionId": "bff945ac-4b7a-4703-8db5-ecd01562acc8",
+        "parentVersionId": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+        "ordinal": 2,
+        "authorType": "model",
+        "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :cd4_percentage_name GROUP BY patient_id",
+        "parameters": [
+          {
+            "name": "cd4_percentage_name",
+            "type": "string",
+            "source": "question",
+            "value": "CD4%"
+          }
+        ],
+        "expectedColumns": [
+          {
+            "name": "patient_id",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "count",
+            "logicalType": "integer",
+            "nullable": false
+          }
+        ],
+        "queryDigest": "c8c0643130587ed72113cf52120de1d591927ff1327095308ad899461c404980",
+        "provenance": {
+          "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+          "traceId": "9c8087a1-05f1-4b3b-9f6b-b4e45a0a677c",
+          "contextSourceIds": [
+            "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+          ],
+          "sourceContract": "catalyst.query.v1",
+          "sourceStatus": "ready",
+          "hubTraceId": "9c8087a1-05f1-4b3b-9f6b-b4e45a0a677c",
+          "generationValidation": {
+            "status": "passed",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              },
+              {
+                "name": "status",
+                "status": "passed",
+                "message": "The candidate's status is 'ready', which is correct."
+              },
+              {
+                "name": "approved-view",
+                "status": "passed",
+                "message": "The candidate uses the approved view 'analytics.hiv_observation_fact_v1'."
+              },
+              {
+                "name": "field-grounding",
+                "status": "passed",
+                "message": "The candidate correctly constrains the concept_name field to 'CD4%', which is the correct field for selecting CD4 percentage results."
+              },
+              {
+                "name": "one-statement-read-only",
+                "status": "passed",
+                "message": "The candidate uses a single SELECT statement without any destructive operations."
+              },
+              {
+                "name": "dialect-compatibility",
+                "status": "passed",
+                "message": "The candidate's SQL is compatible with PostgreSQL."
+              },
+              {
+                "name": "typed-parameter-binding",
+                "status": "passed",
+                "message": "The candidate correctly binds the parameter ':cd4_percentage_name' with a string type."
+              },
+              {
+                "name": "output-column-agreement",
+                "status": "passed",
+                "message": "The candidate's output columns match the expected columns."
+              },
+              {
+                "name": "row-limit-policy",
+                "status": "passed",
+                "message": "The candidate does not exceed the row limit policy."
+              },
+              {
+                "name": "absence-of-invented-identifiers",
+                "status": "passed",
+                "message": "The candidate does not use any invented identifiers."
+              },
+              {
+                "name": "named_analyte_constraint",
+                "status": "passed",
+                "message": "Every analyte named in the question is constrained by its catalog semantic dimension and canonical bound value."
+              }
+            ]
+          },
+          "modelCollaboration": {
+            "writer": {
+              "model": "gemma-4-12b",
+              "candidate": {
+                "status": "ready",
+                "target": {
+                  "dataSource": "openmrs-hiv-fhir-postgresql",
+                  "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+                  "dialect": "postgresql",
+                  "approvedViews": [
+                    "analytics.hiv_concept_mapping_v1",
+                    "analytics.hiv_medication_request_fact_v1",
+                    "analytics.hiv_observation_fact_v1",
+                    "analytics.hiv_patient_dim_v1",
+                    "analytics.hiv_visit_fact_v1",
+                    "analytics.pipeline_freshness_v1",
+                    "analytics.pipeline_run_v1",
+                    "public.condition_flat",
+                    "public.encounter_flat",
+                    "public.medication_flat",
+                    "public.medication_request_flat",
+                    "public.observation_flat",
+                    "public.patient_flat"
+                  ]
+                },
+                "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :cd4_percentage_name GROUP BY patient_id",
+                "parameters": [
+                  {
+                    "name": "cd4_percentage_name",
+                    "type": "string",
+                    "source": "question",
+                    "value": "CD4%"
+                  }
+                ],
+                "expectedColumns": [
+                  {
+                    "name": "patient_id",
+                    "logicalType": "string",
+                    "nullable": true
+                  },
+                  {
+                    "name": "count",
+                    "logicalType": "integer",
+                    "nullable": false
+                  }
+                ]
+              },
+              "lintFindings": [],
+              "disposition": "selected"
+            },
+            "reviewer": {
+              "model": "qwen2.5-14b",
+              "decision": "approve",
+              "checks": [
+                {
+                  "name": "status",
+                  "status": "passed",
+                  "message": "The candidate's status is 'ready', which is correct."
+                },
+                {
+                  "name": "approved-view",
+                  "status": "passed",
+                  "message": "The candidate uses the approved view 'analytics.hiv_observation_fact_v1'."
+                },
+                {
+                  "name": "field-grounding",
+                  "status": "passed",
+                  "message": "The candidate correctly constrains the concept_name field to 'CD4%', which is the correct field for selecting CD4 percentage results."
+                },
+                {
+                  "name": "one-statement-read-only",
+                  "status": "passed",
+                  "message": "The candidate uses a single SELECT statement without any destructive operations."
+                },
+                {
+                  "name": "dialect-compatibility",
+                  "status": "passed",
+                  "message": "The candidate's SQL is compatible with PostgreSQL."
+                },
+                {
+                  "name": "typed-parameter-binding",
+                  "status": "passed",
+                  "message": "The candidate correctly binds the parameter ':cd4_percentage_name' with a string type."
+                },
+                {
+                  "name": "output-column-agreement",
+                  "status": "passed",
+                  "message": "The candidate's output columns match the expected columns."
+                },
+                {
+                  "name": "row-limit-policy",
+                  "status": "passed",
+                  "message": "The candidate does not exceed the row limit policy."
+                },
+                {
+                  "name": "absence-of-invented-identifiers",
+                  "status": "passed",
+                  "message": "The candidate does not use any invented identifiers."
+                }
+              ],
+              "disposition": "selected"
+            },
+            "finalLintFindings": [],
+            "base": {
+              "baseClassification": "reused",
+              "observedBase": {
+                "versionId": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+                "queryDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056"
+              },
+              "effectiveBaseVersion": {
+                "versionId": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+                "queryDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056"
+              },
+              "editorDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056"
+            }
+          },
+          "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b",
+            "qwen2.5-14b"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b",
+            "query_review": "qwen2.5-14b"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            },
+            "query_review": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_review",
+            "query_finalize"
+          ],
+          "unavailableReasons": [],
+          "turnId": "8c4ae6b9-4bb3-42a6-b2ff-17cba1db5300",
+          "catalystTraceId": "9c8087a1-05f1-4b3b-9f6b-b4e45a0a677c",
+          "revisionContextDigest": "ed7ab1d77a267712c0ba86f0fdf548aa2037d7a889066ac76e88969af450d08e",
+          "dataSourceId": "openmrs-hiv",
+          "observedBase": {
+            "versionId": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+            "queryDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056"
+          },
+          "effectiveBaseVersion": {
+            "versionId": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+            "queryDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056"
+          },
+          "manualVersion": null,
+          "editorSnapshotDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056",
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "1b606483-ff44-40a2-bc76-74d3d5e1654a",
+            "evidenceDigest": "8f239a5238d45697858850f4d1befad58463df54b3e23c9a33edc1f4c27ccd3c",
+            "detailPath": "/v1/catalyst/workbench/sessions/bff945ac-4b7a-4703-8db5-ecd01562acc8/turns/8c4ae6b9-4bb3-42a6-b2ff-17cba1db5300/generation-evidence"
+          },
+          "profileSnapshot": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "profileName": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+            "profileDigest": "ed71b2719f421b3edb7ad17a47ae1aea290f8b1d079a633ce23e4dea369565ab",
+            "writer": {
+              "role": "writer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4",
+              "modelId": "gemma-4-12b",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-generate",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+              }
+            },
+            "omissions": [],
+            "reviewer": {
+              "role": "reviewer",
+              "providerId": "med-agent-hub",
+              "modelClass": "qwen2.5",
+              "modelId": "qwen2.5-14b",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-review",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+              }
+            }
+          },
+          "hubRequestDigest": "8c4f8181bb29f6fe9e8c4b53dfe1f365bf4185d15e89ca58fe71737bd079680b"
+        },
+        "sourceFindingIds": [],
+        "repairProposalId": null,
+        "createdAt": "2026-08-25T01:02:03.060937Z"
+      },
+      "validations": [
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 0,
+          "validationId": "c43394a1-a0c4-4b48-8718-b69f27d11a9d",
+          "sessionId": "bff945ac-4b7a-4703-8db5-ecd01562acc8",
+          "versionId": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T01:00:46.814600Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 0,
+          "validationId": "cfc81e86-7eb6-4323-91a0-86fa23ea61f3",
+          "sessionId": "bff945ac-4b7a-4703-8db5-ecd01562acc8",
+          "versionId": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+          "ordinal": 2,
+          "createdAt": "2026-08-25T01:00:46.916333Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "c8c0643130587ed72113cf52120de1d591927ff1327095308ad899461c404980",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "invalid",
+          "advisory": true,
+          "checks": [
+            {
+              "name": "gateway_invariant",
+              "status": "failed",
+              "findingIds": [
+                "finding-b567d0f775d0575dbfb1672a"
+              ]
+            }
+          ],
+          "findings": [
+            {
+              "contractVersion": "catalyst.workbench.finding.v1",
+              "findingId": "finding-b567d0f775d0575dbfb1672a",
+              "ruleCode": "gateway_invariant.missing_semantic_filter",
+              "severity": "error",
+              "stage": "gateway_invariant",
+              "message": "The named analyte 'CD4 count' must be constrained by concept_name using its canonical bound value.",
+              "path": "$.sql",
+              "astUnit": null,
+              "span": null,
+              "evidence": null,
+              "suggestedAction": null,
+              "repairability": "manual",
+              "validatorRevision": "catalyst.workbench.validator.v1"
+            }
+          ],
+          "durationMs": 2,
+          "validationId": "610b5558-c7ff-4ea5-b4da-8a51fdf1c3e0",
+          "sessionId": "bff945ac-4b7a-4703-8db5-ecd01562acc8",
+          "versionId": "9fecf9b9-70a4-4eb9-a83f-41310f621178",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T01:02:03.060937Z"
+        }
+      ],
+      "latestValidation": {
+        "contractVersion": "catalyst.workbench.validation.v1",
+        "queryDigest": "c8c0643130587ed72113cf52120de1d591927ff1327095308ad899461c404980",
+        "validatorRevision": "catalyst.workbench.validator.v1",
+        "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+        "status": "invalid",
+        "advisory": true,
+        "checks": [
+          {
+            "name": "gateway_invariant",
+            "status": "failed",
+            "findingIds": [
+              "finding-b567d0f775d0575dbfb1672a"
+            ]
+          }
+        ],
+        "findings": [
+          {
+            "contractVersion": "catalyst.workbench.finding.v1",
+            "findingId": "finding-b567d0f775d0575dbfb1672a",
+            "ruleCode": "gateway_invariant.missing_semantic_filter",
+            "severity": "error",
+            "stage": "gateway_invariant",
+            "message": "The named analyte 'CD4 count' must be constrained by concept_name using its canonical bound value.",
+            "path": "$.sql",
+            "astUnit": null,
+            "span": null,
+            "evidence": null,
+            "suggestedAction": null,
+            "repairability": "manual",
+            "validatorRevision": "catalyst.workbench.validator.v1"
+          }
+        ],
+        "durationMs": 2,
+        "validationId": "610b5558-c7ff-4ea5-b4da-8a51fdf1c3e0",
+        "sessionId": "bff945ac-4b7a-4703-8db5-ecd01562acc8",
+        "versionId": "9fecf9b9-70a4-4eb9-a83f-41310f621178",
+        "ordinal": 1,
+        "createdAt": "2026-08-25T01:02:03.060937Z"
+      },
+      "executions": [
+        {
+          "contractVersion": "catalyst.workbench.execution.v1",
+          "queryDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056",
+          "idempotencyKey": "harness-notebook-285b3d7d-ab00-401d-93cf-bfe05e662838",
+          "validationStatus": "valid",
+          "query": {
+            "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :cd4_count_name GROUP BY patient_id",
+            "parameters": [
+              {
+                "name": "cd4_count_name",
+                "type": "string",
+                "source": "question",
+                "value": "CD4 count"
+              }
+            ]
+          },
+          "statementTimeoutMs": 10000,
+          "maxRows": 100,
+          "replayed": false,
+          "status": "succeeded",
+          "result": {
+            "columns": [
+              {
+                "ordinal": 0,
+                "name": "patient_id",
+                "databaseType": "text",
+                "typeOid": 25,
+                "logicalType": "string"
+              },
+              {
+                "ordinal": 1,
+                "name": "count",
+                "databaseType": "int8",
+                "typeOid": 20,
+                "logicalType": "integer"
+              }
+            ],
+            "rows": [
+              [
+                {
+                  "type": "string",
+                  "value": "dd553355-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5536fd-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5538dc-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd553c85-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55401d-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5541e2-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5543ac-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55571f-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5558ed-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd555c84-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd555e4a-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5561a5-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd556725-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd556955-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd556a73-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd556b89-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd556dcb-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd557008-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd557241-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd557357-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd557476-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55758c-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5579f9-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd557b13-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd557d3f-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd557e62-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd557f89-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5580a4-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5583ea-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd558797-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd558a32-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd558c78-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd558ead-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd558fcb-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5590e1-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5591fc-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd559316-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd559553-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5598a2-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5599bc-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd559d0b-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd559e2a-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd559f44-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55a293-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55a3ad-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55a6f4-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55a812-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55aa42-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55ab61-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55ac77-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55b319-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55b42f-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55b664-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55b77a-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55b898-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55bf65-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55c08c-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55c420-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55d609-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55d958-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55dbeb-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55df82-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55e0ae-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55e456-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55e586-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55e6b1-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55e7e5-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55eb70-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd652779-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd6529a1-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd652afc-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd652d7d-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd652fff-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd653274-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd65360b-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd653748-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd653880-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd653aec-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd653d65-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd653fd6-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd65410a-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd654242-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd654376-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd654998-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd654fc6-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd656a02-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd656c47-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd656d6a-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd656e91-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd656fb0-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd6571f1-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd657310-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd657440-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd65891e-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd658b1b-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd658cc7-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd659852-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd65b439-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd65c5de-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd65c792-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ]
+            ],
+            "rowCount": {
+              "returned": 100,
+              "truncated": true,
+              "truncationReason": "configured_limit"
+            },
+            "warnings": []
+          },
+          "durationMs": 1722,
+          "executionId": "1d8c2328-587b-4fa2-878b-5afa0a308435",
+          "sessionId": "bff945ac-4b7a-4703-8db5-ecd01562acc8",
+          "versionId": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+          "ordinal": 1,
+          "completedAt": "2026-08-25T01:00:48.665068Z"
+        }
+      ],
+      "guidance": [],
+      "dataSourceId": "openmrs-hiv",
+      "draftSeed": null
+    }
+  },
+  "elapsedMs": 5
+}

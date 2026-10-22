@@ -1,0 +1,390 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "GET",
+    "path": "/v1/catalyst/workbench/sessions/0a977653-8130-4f08-823e-f939e5688f0a",
+    "body": null
+  },
+  "response": {
+    "httpStatus": 200,
+    "body": {
+      "contractVersion": "catalyst.workbench.session.v1",
+      "sessionId": "0a977653-8130-4f08-823e-f939e5688f0a",
+      "question": "Show patients overdue for follow-up.",
+      "name": "Show patients overdue for follow-up.",
+      "profileId": "catalyst-query-gemma-4-12b",
+      "datasetId": "hiv-20260731T000741Z",
+      "datasetVersion": "hiv-20260731T000741Z",
+      "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+      "currentVersionId": "19cdbf25-ecae-47bc-bc67-51533e28ffee",
+      "browserState": {},
+      "provenance": {
+        "dataSourceId": "openmrs-hiv",
+        "catalogContextSourceId": "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+        "catalystTraceId": "0c30f117-0b52-42d1-b2cd-88410ac7fa87",
+        "profileSnapshot": {
+          "profileId": "catalyst-query-gemma-4-12b",
+          "profileLabel": "Catalyst query — Gemma 4 12B writer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b-q4"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b-q4"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "561bb714d7f82dffc2789f302c0871684cb57cbe57f505da85d27e7db0494f9e",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": null
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_finalize"
+          ],
+          "unavailableReasons": []
+        },
+        "datasetSnapshot": {
+          "datasetId": "hiv-20260731T000741Z",
+          "dataSource": "openmrs-hiv-fhir-postgresql",
+          "pipelineRunId": "hiv-20260731T000741Z",
+          "synthetic": null,
+          "patients": 5285,
+          "results": 427915,
+          "testTypes": 143,
+          "firstObservedAt": "2022-11-07T21:50:36Z",
+          "lastObservedAt": "2026-08-11T00:00:00Z"
+        },
+        "generationHttpStatus": 200,
+        "generationOutcome": {
+          "contractVersion": "catalyst.query.v1",
+          "deploymentMode": "demo",
+          "status": "needs_clarification",
+          "question": "Show patients overdue for follow-up.",
+          "clarification": "What is the specific time window or number of days for a follow-up to be considered 'overdue'?",
+          "validation": {
+            "status": "warned",
+            "checks": [
+              {
+                "name": "query_status",
+                "status": "warned",
+                "message": "The query requires clarification."
+              }
+            ]
+          },
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b",
+            "traceId": "0c30f117-0b52-42d1-b2cd-88410ac7fa87",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ]
+          }
+        }
+      },
+      "status": "active",
+      "createdAt": "2026-08-25T00:23:09.217846Z",
+      "updatedAt": "2026-08-25T00:23:56.234358Z",
+      "versions": [
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "19cdbf25-ecae-47bc-bc67-51533e28ffee",
+          "sessionId": "0a977653-8130-4f08-823e-f939e5688f0a",
+          "parentVersionId": null,
+          "ordinal": 1,
+          "authorType": "model",
+          "sql": "SELECT \n  p.patient_id, \n  p.family_name, \n  p.given_name \nFROM analytics.hiv_patient_dim_v1 p \nWHERE p.patient_id IN (\n  SELECT \n    v.patient_id \n  FROM analytics.hiv_visit_fact_v1 v \n  WHERE v.started_at < :reference_date \n    AND NOT EXISTS (\n      SELECT 1 \n      FROM analytics.hiv_visit_fact_v1 v2 \n      WHERE v2.patient_id = v.patient_id \n        AND v2.started_at >= :reference_date \n    )\n)",
+          "parameters": [
+            {
+              "name": "reference_date",
+              "type": "date",
+              "source": "question",
+              "value": "2026-03-01"
+            }
+          ],
+          "expectedColumns": [
+            {
+              "name": "patient_id",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "family_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "given_name",
+              "logicalType": "string",
+              "nullable": true
+            }
+          ],
+          "queryDigest": "4097ca7772232dffb1c78ad36e563754496417af78cd9743f85882f317ab0ad5",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b",
+            "traceId": "34cd670c-cc41-4dd9-956e-9ac398df2393",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "ready",
+            "hubTraceId": "34cd670c-cc41-4dd9-956e-9ac398df2393",
+            "generationValidation": {
+              "status": "passed",
+              "checks": [
+                {
+                  "name": "query_lint_attempt_1",
+                  "status": "passed",
+                  "message": "Candidate passed deterministic SQL lint."
+                }
+              ]
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B writer",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b-q4"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b-q4"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "561bb714d7f82dffc2789f302c0871684cb57cbe57f505da85d27e7db0494f9e",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": null
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "turnId": "7955c15c-eba5-411e-adee-8520b1f36235",
+            "catalystTraceId": "34cd670c-cc41-4dd9-956e-9ac398df2393",
+            "revisionContextDigest": "ffba44089f2f5931b2f1f85cd6a89c9d5ce146f3b1e5dee52ee69b78a89c10c7",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": null,
+            "effectiveBaseVersion": null,
+            "manualVersion": null,
+            "editorSnapshotDigest": null,
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "a59f727c-43c6-4f5b-9788-7e30a2c6ea43",
+              "evidenceDigest": "7650a7353fc0f3cb6cfad628b55928ac3e78aa0b0f31b5328893357f1efeb389",
+              "detailPath": "/v1/catalyst/workbench/sessions/0a977653-8130-4f08-823e-f939e5688f0a/turns/7955c15c-eba5-411e-adee-8520b1f36235/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b",
+              "profileName": "Catalyst query — Gemma 4 12B writer",
+              "profileDigest": "002e1be68707ffffb325de559d06d065b605a9b228c72d1b3f0b7122c1a34957",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4-12b",
+                "modelId": "gemma-4-12b-q4",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": []
+            },
+            "hubRequestDigest": "5b43ab8343c5f1a52075f9002f1c2ce41863e1b12ddc6a29d22b77681af2046f"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T00:23:56.234358Z"
+        }
+      ],
+      "currentVersion": {
+        "contractVersion": "catalyst.workbench.query-version.v1",
+        "versionId": "19cdbf25-ecae-47bc-bc67-51533e28ffee",
+        "sessionId": "0a977653-8130-4f08-823e-f939e5688f0a",
+        "parentVersionId": null,
+        "ordinal": 1,
+        "authorType": "model",
+        "sql": "SELECT \n  p.patient_id, \n  p.family_name, \n  p.given_name \nFROM analytics.hiv_patient_dim_v1 p \nWHERE p.patient_id IN (\n  SELECT \n    v.patient_id \n  FROM analytics.hiv_visit_fact_v1 v \n  WHERE v.started_at < :reference_date \n    AND NOT EXISTS (\n      SELECT 1 \n      FROM analytics.hiv_visit_fact_v1 v2 \n      WHERE v2.patient_id = v.patient_id \n        AND v2.started_at >= :reference_date \n    )\n)",
+        "parameters": [
+          {
+            "name": "reference_date",
+            "type": "date",
+            "source": "question",
+            "value": "2026-03-01"
+          }
+        ],
+        "expectedColumns": [
+          {
+            "name": "patient_id",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "family_name",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "given_name",
+            "logicalType": "string",
+            "nullable": true
+          }
+        ],
+        "queryDigest": "4097ca7772232dffb1c78ad36e563754496417af78cd9743f85882f317ab0ad5",
+        "provenance": {
+          "profileId": "catalyst-query-gemma-4-12b",
+          "traceId": "34cd670c-cc41-4dd9-956e-9ac398df2393",
+          "contextSourceIds": [
+            "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+          ],
+          "sourceContract": "catalyst.query.v1",
+          "sourceStatus": "ready",
+          "hubTraceId": "34cd670c-cc41-4dd9-956e-9ac398df2393",
+          "generationValidation": {
+            "status": "passed",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              }
+            ]
+          },
+          "profileLabel": "Catalyst query — Gemma 4 12B writer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b-q4"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b-q4"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "561bb714d7f82dffc2789f302c0871684cb57cbe57f505da85d27e7db0494f9e",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": null
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_finalize"
+          ],
+          "unavailableReasons": [],
+          "turnId": "7955c15c-eba5-411e-adee-8520b1f36235",
+          "catalystTraceId": "34cd670c-cc41-4dd9-956e-9ac398df2393",
+          "revisionContextDigest": "ffba44089f2f5931b2f1f85cd6a89c9d5ce146f3b1e5dee52ee69b78a89c10c7",
+          "dataSourceId": "openmrs-hiv",
+          "observedBase": null,
+          "effectiveBaseVersion": null,
+          "manualVersion": null,
+          "editorSnapshotDigest": null,
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "a59f727c-43c6-4f5b-9788-7e30a2c6ea43",
+            "evidenceDigest": "7650a7353fc0f3cb6cfad628b55928ac3e78aa0b0f31b5328893357f1efeb389",
+            "detailPath": "/v1/catalyst/workbench/sessions/0a977653-8130-4f08-823e-f939e5688f0a/turns/7955c15c-eba5-411e-adee-8520b1f36235/generation-evidence"
+          },
+          "profileSnapshot": {
+            "profileId": "catalyst-query-gemma-4-12b",
+            "profileName": "Catalyst query — Gemma 4 12B writer",
+            "profileDigest": "002e1be68707ffffb325de559d06d065b605a9b228c72d1b3f0b7122c1a34957",
+            "writer": {
+              "role": "writer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4-12b",
+              "modelId": "gemma-4-12b-q4",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-generate",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+              }
+            },
+            "omissions": []
+          },
+          "hubRequestDigest": "5b43ab8343c5f1a52075f9002f1c2ce41863e1b12ddc6a29d22b77681af2046f"
+        },
+        "sourceFindingIds": [],
+        "repairProposalId": null,
+        "createdAt": "2026-08-25T00:23:56.234358Z"
+      },
+      "validations": [
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "4097ca7772232dffb1c78ad36e563754496417af78cd9743f85882f317ab0ad5",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 1,
+          "validationId": "5c528ad6-78d7-457f-9d44-8d33a93e744e",
+          "sessionId": "0a977653-8130-4f08-823e-f939e5688f0a",
+          "versionId": "19cdbf25-ecae-47bc-bc67-51533e28ffee",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T00:23:56.234358Z"
+        }
+      ],
+      "latestValidation": {
+        "contractVersion": "catalyst.workbench.validation.v1",
+        "queryDigest": "4097ca7772232dffb1c78ad36e563754496417af78cd9743f85882f317ab0ad5",
+        "validatorRevision": "catalyst.workbench.validator.v1",
+        "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+        "status": "valid",
+        "advisory": true,
+        "checks": [],
+        "findings": [],
+        "durationMs": 1,
+        "validationId": "5c528ad6-78d7-457f-9d44-8d33a93e744e",
+        "sessionId": "0a977653-8130-4f08-823e-f939e5688f0a",
+        "versionId": "19cdbf25-ecae-47bc-bc67-51533e28ffee",
+        "ordinal": 1,
+        "createdAt": "2026-08-25T00:23:56.234358Z"
+      },
+      "executions": [],
+      "guidance": [],
+      "dataSourceId": "openmrs-hiv",
+      "draftSeed": null
+    }
+  },
+  "elapsedMs": 2
+}

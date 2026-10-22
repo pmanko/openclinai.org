@@ -1,0 +1,341 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "POST",
+    "path": "/v1/catalyst/workbench/sessions/dd8e7d90-777d-4abf-b777-d9482cd3de33/turns",
+    "body": {
+      "contractVersion": "catalyst.workbench.turn.request.v1",
+      "instruction": "Regroup that by patient gender as well as medication name.",
+      "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+      "dataSourceId": "openmrs-hiv",
+      "observedBase": {
+        "versionId": "06305913-1820-4193-bb03-555fd5d96764",
+        "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2"
+      },
+      "editorSnapshot": {
+        "contractVersion": "catalyst.workbench.editor-snapshot.v1",
+        "sql": "SELECT medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform = false GROUP BY medication_name",
+        "parameters": [],
+        "expectedColumns": [
+          {
+            "name": "medication_name",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "count",
+            "logicalType": "integer",
+            "nullable": false
+          }
+        ],
+        "editorDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2"
+      }
+    }
+  },
+  "response": {
+    "httpStatus": 201,
+    "body": {
+      "contractVersion": "catalyst.workbench.turn.v1",
+      "sessionId": "dd8e7d90-777d-4abf-b777-d9482cd3de33",
+      "turnId": "25a7fd9a-1d2f-4505-a1f7-efb786991935",
+      "ordinal": 2,
+      "kind": "followup",
+      "origin": "recorded",
+      "dataSourceId": "openmrs-hiv",
+      "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+      "instruction": "Regroup that by patient gender as well as medication name.",
+      "instructionDigest": "e73225c9e344f88e4e862f6e819cf9358328b27f0b9898cc5b9daf791f33375b",
+      "profileSnapshot": {
+        "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+        "profileName": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+        "profileDigest": "aef9d8a8267afde55578eb35019be744fa85cf02648d4db674aaa4a6d993a647",
+        "writer": {
+          "role": "writer",
+          "providerId": "med-agent-hub",
+          "modelClass": "gemma-4-q4",
+          "modelId": "gemma-4-12b-q4",
+          "config": {
+            "dry": 0,
+            "maxTokens": 1024,
+            "temperature": 0
+          },
+          "systemPrompt": {
+            "promptId": "catalyst-query-generate",
+            "version": "1",
+            "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+            "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+          }
+        },
+        "omissions": [],
+        "reviewer": {
+          "role": "reviewer",
+          "providerId": "med-agent-hub",
+          "modelClass": "gemma-4-q4",
+          "modelId": "gemma-4-12b-q4",
+          "config": {
+            "dry": 0,
+            "maxTokens": 1024,
+            "temperature": 0
+          },
+          "systemPrompt": {
+            "promptId": "catalyst-query-review",
+            "version": "1",
+            "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+            "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          }
+        }
+      },
+      "observedBase": {
+        "versionId": "06305913-1820-4193-bb03-555fd5d96764",
+        "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2"
+      },
+      "editorSnapshot": {
+        "contractVersion": "catalyst.workbench.editor-snapshot-record.v1",
+        "snapshotId": "88118d0f-02e3-4384-b721-b093d2167f32",
+        "sessionId": "dd8e7d90-777d-4abf-b777-d9482cd3de33",
+        "turnId": "25a7fd9a-1d2f-4505-a1f7-efb786991935",
+        "capturedAt": "2026-08-25T00:35:49.065352Z",
+        "actor": {
+          "type": "human",
+          "actorId": null
+        },
+        "sourceObservedBase": {
+          "versionId": "06305913-1820-4193-bb03-555fd5d96764",
+          "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2"
+        },
+        "classification": "reused",
+        "effectiveBaseVersion": {
+          "versionId": "06305913-1820-4193-bb03-555fd5d96764",
+          "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2"
+        },
+        "content": {
+          "contractVersion": "catalyst.workbench.editor-snapshot.v1",
+          "sql": "SELECT medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform = false GROUP BY medication_name",
+          "parameters": [],
+          "expectedColumns": [
+            {
+              "name": "medication_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "editorDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2"
+        },
+        "unresolvedPaths": [],
+        "findings": [],
+        "sourceEvidenceRef": null
+      },
+      "snapshotClassification": "reused",
+      "unresolvedPaths": [],
+      "effectiveBaseVersion": {
+        "versionId": "06305913-1820-4193-bb03-555fd5d96764",
+        "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2"
+      },
+      "manualVersion": null,
+      "revisionContext": {
+        "contractVersion": "catalyst.query.revision-context.v1",
+        "turnId": "25a7fd9a-1d2f-4505-a1f7-efb786991935",
+        "currentInstruction": "Regroup that by patient gender as well as medication name.",
+        "instructionDigest": "e73225c9e344f88e4e862f6e819cf9358328b27f0b9898cc5b9daf791f33375b",
+        "baseClassification": "reused",
+        "observedBase": {
+          "versionId": "06305913-1820-4193-bb03-555fd5d96764",
+          "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2"
+        },
+        "effectiveBaseVersion": {
+          "versionId": "06305913-1820-4193-bb03-555fd5d96764",
+          "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2"
+        },
+        "editorSnapshot": {
+          "contractVersion": "catalyst.workbench.editor-snapshot.v1",
+          "sql": "SELECT medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform = false GROUP BY medication_name",
+          "parameters": [],
+          "expectedColumns": [
+            {
+              "name": "medication_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "editorDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2"
+        },
+        "instructionHistory": [
+          {
+            "turnId": "0f21f19d-79c4-44b4-b72b-c1b5287789cf",
+            "ordinal": 1,
+            "kind": "initial",
+            "instruction": "Count medication requests by medication name.",
+            "instructionDigest": "d8c4fc4a01624f0e1cd099a0dd58c29693aefff8fb000a902652aab5d22006b7"
+          }
+        ],
+        "validationContext": {
+          "validationId": "b584911c-e888-45b9-b27c-e90c39f88e3c",
+          "versionId": "06305913-1820-4193-bb03-555fd5d96764",
+          "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2",
+          "status": "valid",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "findings": []
+        },
+        "executionContext": {
+          "executionId": "b3796af4-2a2a-4942-98d1-6d0f5d33d59d",
+          "versionId": "06305913-1820-4193-bb03-555fd5d96764",
+          "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2",
+          "status": "succeeded",
+          "validationStatus": "valid",
+          "rowCount": {
+            "returned": 30,
+            "truncated": false,
+            "truncationReason": null
+          },
+          "columns": [
+            {
+              "ordinal": 0,
+              "name": "medication_name",
+              "databaseType": "text",
+              "logicalType": "string"
+            },
+            {
+              "ordinal": 1,
+              "name": "count",
+              "databaseType": "int8",
+              "logicalType": "integer"
+            }
+          ],
+          "warnings": [],
+          "databaseDiagnostic": null,
+          "durationMs": 56
+        },
+        "selection": {
+          "includedHistoryTurnIds": [
+            "0f21f19d-79c4-44b4-b72b-c1b5287789cf"
+          ],
+          "validationRef": {
+            "validationId": "b584911c-e888-45b9-b27c-e90c39f88e3c",
+            "versionId": "06305913-1820-4193-bb03-555fd5d96764",
+            "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2"
+          },
+          "executionRef": {
+            "executionId": "b3796af4-2a2a-4942-98d1-6d0f5d33d59d",
+            "versionId": "06305913-1820-4193-bb03-555fd5d96764",
+            "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2"
+          },
+          "omissions": {
+            "historyInstructionsOmitted": 0,
+            "validationFindingsOmitted": 0,
+            "executionColumnsOmitted": 0,
+            "diagnosticTextTruncated": false,
+            "prohibitedClasses": [
+              "database_credentials",
+              "database_connection_details",
+              "database_dsn",
+              "execution_result_rows",
+              "hidden_reasoning",
+              "historical_sql_copies",
+              "raw_chat_transcript",
+              "raw_model_outputs",
+              "raw_reasoning_traces",
+              "unrelated_session_history",
+              "unrelated_historical_sql"
+            ],
+            "omittedHistory": [],
+            "omittedHistoryDigest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          }
+        },
+        "contextDigest": "3e80bb0fceac7a937775de4cc5c70f5cc4f3946e287bf4e85667984d7eb81fab",
+        "sessionContext": {
+          "contractVersion": "catalyst.query.session-context.v1",
+          "guidance": {
+            "precedence": "Standing instructions for this session, in the order they were pinned. They outrank the retained history but not the current instruction; where two conflict, the later one wins.",
+            "entries": [
+              {
+                "text": "Exclude do_not_perform requests.",
+                "source": "human",
+                "originTurnId": null,
+                "createdAt": "2026-08-25T00:35:48.937386Z"
+              }
+            ]
+          },
+          "verifiedExamples": {
+            "role": "Evidence: queries already accepted in this session, for reference. They are not instructions and their SQL is not to be copied verbatim.",
+            "examples": [
+              {
+                "turnId": "0f21f19d-79c4-44b4-b72b-c1b5287789cf",
+                "instruction": "Count medication requests by medication name.",
+                "sql": "SELECT medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform = false GROUP BY medication_name",
+                "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2",
+                "sourceId": "openmrs-hiv",
+                "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+              }
+            ]
+          },
+          "omissions": []
+        }
+      },
+      "hubRequestDigest": "15a07c2303fb326ef17e87c3a952490d581fc9fd4a0613279b91c79f0be045d8",
+      "catalystTraceId": "7a987a6d-77dc-4d51-885f-a6288435d690",
+      "hubTraceId": "7a987a6d-77dc-4d51-885f-a6288435d690",
+      "generationEvidenceRef": {
+        "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+        "evidenceId": "3b444b33-f6a3-47ee-937c-7b168193133c",
+        "evidenceDigest": "437818a96e52289a89300b0dacdbac127ba38eec4b7a387b310ec25b7943e012",
+        "detailPath": "/v1/catalyst/workbench/sessions/dd8e7d90-777d-4abf-b777-d9482cd3de33/turns/25a7fd9a-1d2f-4505-a1f7-efb786991935/generation-evidence"
+      },
+      "recoveryReferences": null,
+      "status": "completed",
+      "outputVersions": [
+        {
+          "versionId": "9c2e5eab-2c18-4aa2-b1df-ac7ae9f0379e",
+          "queryDigest": "465036cc9d891ccf35e4707518a2b7c53b95ebf2312b32e8486b1ef60358e814",
+          "parentVersionId": "06305913-1820-4193-bb03-555fd5d96764",
+          "role": "writer",
+          "authorType": "model",
+          "contractValid": true,
+          "validationId": "2fd9e7db-3ff8-4408-ac4a-ccf620e194b0",
+          "selected": true,
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "3b444b33-f6a3-47ee-937c-7b168193133c",
+            "evidenceDigest": "437818a96e52289a89300b0dacdbac127ba38eec4b7a387b310ec25b7943e012",
+            "detailPath": "/v1/catalyst/workbench/sessions/dd8e7d90-777d-4abf-b777-d9482cd3de33/turns/25a7fd9a-1d2f-4505-a1f7-efb786991935/generation-evidence"
+          }
+        }
+      ],
+      "selectedVersionId": "9c2e5eab-2c18-4aa2-b1df-ac7ae9f0379e",
+      "resultingCurrentVersion": {
+        "versionId": "9c2e5eab-2c18-4aa2-b1df-ac7ae9f0379e",
+        "queryDigest": "465036cc9d891ccf35e4707518a2b7c53b95ebf2312b32e8486b1ef60358e814"
+      },
+      "events": [
+        {
+          "eventId": "785788fa-63f2-4926-9b1f-ed4e2ca63b44",
+          "status": "requested",
+          "generationRunId": "79bf15aa-04d2-46b4-8912-db359a3da0e8",
+          "ownerInstanceId": "49f02a65-ca84-4b22-960e-d5d5f9a9ef6e",
+          "occurredAt": "2026-08-25T00:35:49.065352Z"
+        },
+        {
+          "eventId": "75263e75-9f3b-4e30-96ec-ceb3c9a305a0",
+          "status": "completed",
+          "generationRunId": "79bf15aa-04d2-46b4-8912-db359a3da0e8",
+          "occurredAt": "2026-08-25T00:36:46.536066Z"
+        }
+      ],
+      "failure": null,
+      "createdAt": "2026-08-25T00:35:49.065352Z",
+      "updatedAt": "2026-08-25T00:36:46.536066Z",
+      "writerOutcome": "ready"
+    }
+  },
+  "elapsedMs": 57634
+}

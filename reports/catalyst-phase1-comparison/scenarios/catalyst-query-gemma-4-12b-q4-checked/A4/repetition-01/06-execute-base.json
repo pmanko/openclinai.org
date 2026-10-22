@@ -1,0 +1,83 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "POST",
+    "path": "/v1/catalyst/workbench/versions/7a9523ff-0a32-4e44-8e45-4d69c28fc24b/execute",
+    "body": {
+      "contractVersion": "catalyst.workbench.execute.request.v1",
+      "versionId": "7a9523ff-0a32-4e44-8e45-4d69c28fc24b",
+      "queryDigest": "939bc347e7f77b90bf165903bf7d8c7dd88a38f3775edae01526afd49936fabe",
+      "idempotencyKey": "harness-notebook-32706f35-0e33-42f4-ba79-91f254e13784"
+    }
+  },
+  "response": {
+    "httpStatus": 200,
+    "body": {
+      "contractVersion": "catalyst.workbench.execution.v1",
+      "queryDigest": "939bc347e7f77b90bf165903bf7d8c7dd88a38f3775edae01526afd49936fabe",
+      "idempotencyKey": "harness-notebook-32706f35-0e33-42f4-ba79-91f254e13784",
+      "validationStatus": "valid",
+      "query": {
+        "sql": "SELECT concept_name, observation_count FROM analytics.hiv_concept_mapping_v1 WHERE ciel_code IS NULL ORDER BY observation_count DESC",
+        "parameters": []
+      },
+      "statementTimeoutMs": 10000,
+      "maxRows": 100,
+      "replayed": false,
+      "status": "succeeded",
+      "result": {
+        "columns": [
+          {
+            "ordinal": 0,
+            "name": "concept_name",
+            "databaseType": "text",
+            "typeOid": 25,
+            "logicalType": "string"
+          },
+          {
+            "ordinal": 1,
+            "name": "observation_count",
+            "databaseType": "int8",
+            "typeOid": 20,
+            "logicalType": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "Number of weeks pregnant"
+            },
+            {
+              "type": "integer",
+              "value": 283
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Allergy to penicillin"
+            },
+            {
+              "type": "integer",
+              "value": 1
+            }
+          ]
+        ],
+        "rowCount": {
+          "returned": 2,
+          "truncated": false,
+          "truncationReason": null
+        },
+        "warnings": []
+      },
+      "durationMs": 1118,
+      "executionId": "debfb9c4-c079-47ab-a8d0-bbb2d58414c0",
+      "sessionId": "7e7f6e22-5346-40d0-8c7c-e172e089cf60",
+      "versionId": "7a9523ff-0a32-4e44-8e45-4d69c28fc24b",
+      "ordinal": 1,
+      "completedAt": "2026-08-25T00:31:40.123687Z"
+    }
+  },
+  "elapsedMs": 1159
+}

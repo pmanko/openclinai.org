@@ -1,0 +1,83 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "POST",
+    "path": "/v1/catalyst/workbench/versions/826f816a-1441-4aec-a250-67a7786f0f34/execute",
+    "body": {
+      "contractVersion": "catalyst.workbench.execute.request.v1",
+      "versionId": "826f816a-1441-4aec-a250-67a7786f0f34",
+      "queryDigest": "e7146d194c0b9b9a92afca8c8448ce4077371301e32d171a74f968cbb0938da0",
+      "idempotencyKey": "harness-notebook-be38ff32-c04d-4956-8a9d-f67bec10c50c"
+    }
+  },
+  "response": {
+    "httpStatus": 200,
+    "body": {
+      "contractVersion": "catalyst.workbench.execution.v1",
+      "queryDigest": "e7146d194c0b9b9a92afca8c8448ce4077371301e32d171a74f968cbb0938da0",
+      "idempotencyKey": "harness-notebook-be38ff32-c04d-4956-8a9d-f67bec10c50c",
+      "validationStatus": "valid",
+      "query": {
+        "sql": "SELECT \n  t1.concept_name, \n  SUM(t1.observation_count) AS total_observation_count\nFROM analytics.hiv_concept_mapping_v1 AS t1\nWHERE t1.ciel_code IS NULL\nGROUP BY \n  t1.concept_name\nORDER BY \n  total_observation_count DESC",
+        "parameters": []
+      },
+      "statementTimeoutMs": 10000,
+      "maxRows": 100,
+      "replayed": false,
+      "status": "succeeded",
+      "result": {
+        "columns": [
+          {
+            "ordinal": 0,
+            "name": "concept_name",
+            "databaseType": "text",
+            "typeOid": 25,
+            "logicalType": "string"
+          },
+          {
+            "ordinal": 1,
+            "name": "total_observation_count",
+            "databaseType": "numeric",
+            "typeOid": 1700,
+            "logicalType": "decimal"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "Number of weeks pregnant"
+            },
+            {
+              "type": "decimal",
+              "value": "283"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Allergy to penicillin"
+            },
+            {
+              "type": "decimal",
+              "value": "1"
+            }
+          ]
+        ],
+        "rowCount": {
+          "returned": 2,
+          "truncated": false,
+          "truncationReason": null
+        },
+        "warnings": []
+      },
+      "durationMs": 1100,
+      "executionId": "b080fa57-6057-48d6-8ab0-07ef49ad23ff",
+      "sessionId": "251a69f6-f30c-4def-aee5-80f1231b8a88",
+      "versionId": "826f816a-1441-4aec-a250-67a7786f0f34",
+      "ordinal": 1,
+      "completedAt": "2026-08-25T00:52:17.286048Z"
+    }
+  },
+  "elapsedMs": 1130
+}
