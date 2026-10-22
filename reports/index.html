@@ -99,6 +99,39 @@
   <p class="takeaway"><span class="tk">Takeaway</span>On the same engine, the Hub&#x27;s plain answer path scored 78.9 and bundled ChartSearchAI 59.8. The gap comes from things the bundled path does not have: it does not tell the model today&#x27;s date, it has no guideline knowledge base or date checks, and its repetition penalty garbles long lists when it reads the whole chart. The checked profile (78.4) was the most complete but marked most In-Depth sections red, mostly guideline statements that cite a chart record which does not back them.</p>
   <div class="earlier"><b>Earlier runs of this comparison</b><ul><li><a href="l5-full-default-2026-10-22-208d8dbb/index.html">22 Oct, second run</a> Bundled was set to read only a question-scoped slice of the chart instead of its default full chart. Benchmark: bundled 64.6, Hub answer only 84.0, Hub checked 84.5.</li><li><a href="l5-full-default-2026-10-22-70d791d3/index.html">22 Oct, first run</a> The Hub answer-only setup failed every question on a profile error, so its zero scores are not a result. Bundled also read the question-scoped slice.</li></ul></div>
   </article>
+  <article class="card" data-family="catalyst">
+  <header class="card-head">
+    <div class="titles"><span class="family catalyst">Catalyst SQL</span><h2>Catalyst Phase 1: three model teams on the locked HIV suite</h2><div class="slug">36 conversations · 25 Aug 2026</div></div>
+    <div class="links"><a class="btn" href="catalyst-phase1-comparison/index.html">Read the report</a><a class="btn ghost" href="catalyst-phase1-comparison/comparison.html">Compare the teams</a><a class="btn ghost" href="catalyst-phase1-comparison/dashboard.html">Inspect every conversation</a><a class="btn ghost" href="catalyst-phase1-comparison/run-config.json">Run seed (JSON)</a></div>
+  </header>
+  <p class="report-context">Historical development report. Its methods, acceptance rules and conclusions apply to that recorded run, not the current release.</p>
+  <p class="summary">Catalyst turns plain-English clinical questions into database queries it runs itself. Three AI team configurations each faced the same twelve questions about an HIV dataset — including vague ones they had to ask about, and impossible ones they had to refuse — with every answer checked row-for-row against an independently written reference.</p>
+  <div class="unscored">3 teams · gemma-4-12b 7/12 · gemma-4-12b-q4-checked 7/12 · gemma-4-12b-qwen2.5-14b-checked 8/12 · Advisory judge median: 100/100</div>
+  <p class="takeaway"><span class="tk">Takeaway</span>No team cleared the acceptance bar (≥90% overall, ≥80% per scenario). Best: the qwen-reviewed team at 8/12. An independent AI judge rated the SQL itself consistently well-built (median 100/100 across 44 queries) — the failures came from misreading ambiguous questions, the same two follow-ups for every team. Next lever: question understanding, not query craft.</p>
+  
+  </article>
+  <article class="card" data-family="catalyst">
+  <header class="card-head">
+    <div class="titles"><span class="family catalyst">Catalyst SQL</span><h2>Catalyst notebook acceptance: can an AI-drafted SQL conversation survive real refinement?</h2><div class="slug">22 Jul 2026</div></div>
+    <div class="links"><a class="btn" href="catalyst-notebook-t094-2026-07-22/index.html">Read the report</a></div>
+  </header>
+  <p class="report-context">Historical development report. Its methods, acceptance rules and conclusions apply to that recorded run, not the current release.</p>
+  <p class="summary">A different validation family from the chart-QA runs above: Catalyst turns a plain-language clinical question into governed SQL (a Gemma 4 12B writer drafted, a Qwen 2.5 14B reviewer checked, a deterministic policy enforcing read-only execution), then a follow-up instruction refines the exact current query. Four scenario families × 3 repetitions against the live stack and a real PostgreSQL: narrowing an unchanged base, aggregating from a dirty editor with a mid-session profile switch, correcting an unresolved parameter, and a semantic distinct-patient review. Every executed result is re-checked two ways — against an independently-run gold query (byte-level execution match) and by an independent read-only PostgreSQL cross-check.</p>
+  <div class="unscored">12/12 scenario repetitions passed · 384 assertions · gold execution-match + independent PostgreSQL cross-checks · 22 Jul 2026</div>
+  <p class="takeaway"><span class="tk">Takeaway</span>All 12 scenario repetitions passed — 384/384 assertions, including every gold execution-match: the SQL the models produced returned exactly the rows an independently-authored gold query returns, on every repetition. This is an acceptance gate on one synthetic 96-patient laboratory cohort, not a benchmark — it demonstrates the governed notebook loop (draft → review → validate → execute → refine) is reliable end-to-end on real infrastructure, not that the models never err (the advisory validator and deterministic policy exist precisely because they do).</p>
+  
+  </article>
+  <article class="card" data-family="catalyst">
+  <header class="card-head">
+    <div class="titles"><span class="family catalyst">Catalyst SQL</span><h2>Catalyst T094 validation</h2><div class="slug"></div></div>
+    <div class="links"><span class="unscored">Report unavailable</span></div>
+  </header>
+  <p class="report-context">Historical catalog entry. The linked report was unavailable when checked on 15 September 2026; no original summary was supplied.</p>
+  <p class="summary"></p>
+  
+  
+  
+  </article>
   <article class="card" data-family="chartsearchai">
   <header class="card-head">
     <div class="titles"><span class="family chartsearchai">ChartSearchAI</span><h2>Small-model answer paths: E4B and 12B</h2><div class="slug">Aloice Beiywa Mukangu + Zabella Talai Halambe + Ellcky Ikatwa Minayo · 72 graded answers · 16 Jul 2026</div></div>
@@ -273,39 +306,6 @@
   <p class="summary">An earlier, broader sweep of 22 scenarios on the same patient, comparing the Gemma 12B single model with several AI-team configurations. This run predates our safety cross-checker and the temporal-reasoning fixes.</p>
   <div class="report-table-scroll" role="region" aria-label="Recorded score tables" tabindex="0"><table class="scout"><thead><tr><th class="arm">AI setup</th><th>Questions</th><th class="bench">Benchmark<br>/100</th><th>Accuracy</th><th>Completeness</th><th>Relevance</th><th>Unsafe<br>answers</th></tr></thead><tbody><tr><td class="arm" title="AI team — Advanced">AI team — Advanced</td><td>36</td><td class="bench best">70.4</td><td class="best">7.3</td><td class="best">7.3</td><td class="best">7.6</td><td title="harm: 0 · confabulations: 0 · fabricated citations: 0">0</td></tr><tr><td class="arm" title="12b-baseline">12b-baseline</td><td>36</td><td class="bench">67.0</td><td>7.2</td><td>6.1</td><td>7.5</td><td title="harm: 0 · confabulations: 0 · fabricated citations: 1">0</td></tr><tr><td class="arm" title="AI team — Basic">AI team — Basic</td><td>36</td><td class="bench">62.0</td><td>6.6</td><td>6.3</td><td>7.1</td><td class="harm" title="harm: 5 · confabulations: 1 · fabricated citations: 4">5</td></tr><tr><td class="arm" title="AI team — 12B">AI team — 12B</td><td>36</td><td class="bench">58.8</td><td>6.3</td><td>6.3</td><td>7.1</td><td class="harm" title="harm: 4 · confabulations: 1 · fabricated citations: 4">4</td></tr><tr><td class="arm" title="AI team — Standard">AI team — Standard</td><td>36</td><td class="bench">54.8</td><td>5.8</td><td>6.0</td><td>6.6</td><td class="harm" title="harm: 2 · confabulations: 3 · fabricated citations: 4">2</td></tr></tbody></table></div>
   <p class="takeaway"><span class="tk">Takeaway</span>The Advanced AI team led on both accuracy and completeness — but the smaller team tiers produced several unsafe answers (Basic tier: 5). That&#x27;s exactly what motivated the cross-checking &#x27;validator&#x27; added in the later runs.</p>
-  
-  </article>
-  <article class="card" data-family="catalyst">
-  <header class="card-head">
-    <div class="titles"><span class="family catalyst">Catalyst SQL</span><h2>Catalyst Phase 1: three model teams on the locked HIV suite</h2><div class="slug">36 conversations · 25 Aug 2026</div></div>
-    <div class="links"><a class="btn" href="catalyst-phase1-comparison/index.html">Read the report</a><a class="btn ghost" href="catalyst-phase1-comparison/comparison.html">Compare the teams</a><a class="btn ghost" href="catalyst-phase1-comparison/dashboard.html">Inspect every conversation</a><a class="btn ghost" href="catalyst-phase1-comparison/run-config.json">Run seed (JSON)</a></div>
-  </header>
-  <p class="report-context">Historical development report. Its methods, acceptance rules and conclusions apply to that recorded run, not the current release.</p>
-  <p class="summary">Catalyst turns plain-English clinical questions into database queries it runs itself. Three AI team configurations each faced the same twelve questions about an HIV dataset — including vague ones they had to ask about, and impossible ones they had to refuse — with every answer checked row-for-row against an independently written reference.</p>
-  <div class="unscored">3 teams · gemma-4-12b 7/12 · gemma-4-12b-q4-checked 7/12 · gemma-4-12b-qwen2.5-14b-checked 8/12 · Advisory judge median: 100/100</div>
-  <p class="takeaway"><span class="tk">Takeaway</span>No team cleared the acceptance bar (≥90% overall, ≥80% per scenario). Best: the qwen-reviewed team at 8/12. An independent AI judge rated the SQL itself consistently well-built (median 100/100 across 44 queries) — the failures came from misreading ambiguous questions, the same two follow-ups for every team. Next lever: question understanding, not query craft.</p>
-  
-  </article>
-  <article class="card" data-family="catalyst">
-  <header class="card-head">
-    <div class="titles"><span class="family catalyst">Catalyst SQL</span><h2>Catalyst T094 validation</h2><div class="slug"></div></div>
-    <div class="links"><span class="unscored">Report unavailable</span></div>
-  </header>
-  <p class="report-context">Historical catalog entry. The linked report was unavailable when checked on 15 September 2026; no original summary was supplied.</p>
-  <p class="summary"></p>
-  
-  
-  
-  </article>
-  <article class="card" data-family="catalyst">
-  <header class="card-head">
-    <div class="titles"><span class="family catalyst">Catalyst SQL</span><h2>Catalyst notebook acceptance: can an AI-drafted SQL conversation survive real refinement?</h2><div class="slug">22 Jul 2026</div></div>
-    <div class="links"><a class="btn" href="catalyst-notebook-t094-2026-07-22/index.html">Read the report</a></div>
-  </header>
-  <p class="report-context">Historical development report. Its methods, acceptance rules and conclusions apply to that recorded run, not the current release.</p>
-  <p class="summary">A different validation family from the chart-QA runs above: Catalyst turns a plain-language clinical question into governed SQL (a Gemma 4 12B writer drafted, a Qwen 2.5 14B reviewer checked, a deterministic policy enforcing read-only execution), then a follow-up instruction refines the exact current query. Four scenario families × 3 repetitions against the live stack and a real PostgreSQL: narrowing an unchanged base, aggregating from a dirty editor with a mid-session profile switch, correcting an unresolved parameter, and a semantic distinct-patient review. Every executed result is re-checked two ways — against an independently-run gold query (byte-level execution match) and by an independent read-only PostgreSQL cross-check.</p>
-  <div class="unscored">12/12 scenario repetitions passed · 384 assertions · gold execution-match + independent PostgreSQL cross-checks · 22 Jul 2026</div>
-  <p class="takeaway"><span class="tk">Takeaway</span>All 12 scenario repetitions passed — 384/384 assertions, including every gold execution-match: the SQL the models produced returned exactly the rows an independently-authored gold query returns, on every repetition. This is an acceptance gate on one synthetic 96-patient laboratory cohort, not a benchmark — it demonstrates the governed notebook loop (draft → review → validate → execute → refine) is reliable end-to-end on real infrastructure, not that the models never err (the advisory validator and deterministic policy exist precisely because they do).</p>
   
   </article>
   <footer class="page">These reports describe dated runs, not current deployment or release acceptance. Hover an AI setup name for its model lineup.</footer>
