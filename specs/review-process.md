@@ -42,7 +42,7 @@ agent runs it. What the maintainer's process is, and where ours fell short on th
 | L2 Review | on request | 100 to 300k tokens per PR per pass | a fresh session per role runs the brief at the chosen effort and returns findings as JSON; a stack pass reads the merged top for contracts between layers |
 | L3 Scenarios | on request, optional | one harness run | the validation harness replays a comparison set against the deployed head and checks machine-readable expectations; the umbrella builds and deploys the head first |
 | L4 Model gate | on request, optional, slice changes only | two harness runs | a pre-registered gate (comparison set, dataset, baseline, threshold) run on base and head; the record quotes the number |
-| L5 Full evaluation | per milestone: a stack head ready to merge, a baseline rebuild, a model or provider change | about an hour of 12B time for the default | the harness runs the default matrix (`full-default`: 17 scenarios against the bundled arm and the Hub's answer-only parity arm on one engine), scores it and produces its own report; further arms are the profiles the Hub advertises at run time; a previous run is cited only when a comparison is wanted |
+| L5 Full evaluation | per milestone: a stack head ready to merge, a baseline rebuild, a model or provider change | about an hour of 12B time for the default | the harness runs the default matrix (`full-default`: 17 scenarios against the bundled arm and the Hub's answer parity arm on one engine), scores it and produces its own report; further arms are the profiles the Hub advertises at run time; a previous run is cited only when a comparison is wanted |
 
 L0 and L1 are the default on every push. L2 to L5 run through `make review`. L0 to L2
 answer whether the code is right, L3 and L4 whether a change behaves or retrieves as
@@ -202,11 +202,13 @@ and a person at a terminal.
   a gate. The result goes in a dated record under `reviews/`.
 - A full evaluation (L5) is a harness run of a matrix, not a gate. The `full-default`
   comparison set in the harness is the default matrix, approved 20 October, its Hub arm
-  made the answer-only parity profile on 22 October:
+  made the answer parity profile on 22 October:
   - arms: `engine-parity-bundled-12b` (ChartSearchAI alone, `provider=bundled`, the 12B
-    engine through the bundled tap) and `engine-parity-hub-answer-only-12b` (the same request
-    with `provider=hub` and the Hub's `eval-12b-answer-only` profile, the same engine through
-    the Hub tap), so the two differ by the Hub being in the loop and not by the Hub's checks.
+    engine through the bundled tap) and `engine-parity-hub-answer-12b` (the same request
+    with `provider=hub` and the Hub's `single-12b-answer` product profile, one answer call with
+    deterministic checks and no review or In-Depth, the same engine through the Hub tap), so
+    the two differ by the Hub being in the loop and not by the Hub's model review.
+    ChartSearchAI accepts only product profiles, so an evaluation profile cannot be an arm.
     A checked profile such as `single-12b-checked` (review, gates and In-Depth) is an added arm
     through `PROFILES=`;
   - scenarios: the twelve single-turn scenarios of `hub-profile-candidate` (three
