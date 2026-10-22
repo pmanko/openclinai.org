@@ -313,6 +313,39 @@ def _scout_table(scout: list[dict], labels: dict | None = None) -> str:
     return table
 
 
+FAMILY_LABELS = {"chartsearchai": "ChartSearchAI", "catalyst": "Catalyst SQL"}
+
+
+def _family(entry: dict, gathered: dict) -> str:
+    return str(entry.get("family") or gathered.get("family") or "chartsearchai")
+
+
+def _filter_bar(families: list[str]) -> str:
+    """Buttons that show one report family at a time; without script every card shows."""
+    counts = {f: families.count(f) for f in dict.fromkeys(families)}
+    if len(counts) < 2:
+        return ""
+    buttons = [f'<button type="button" data-family="all" aria-pressed="true">All reports ({len(families)})</button>']
+    buttons += [f'<button type="button" data-family="{esc(f)}" aria-pressed="false">'
+                f'{esc(FAMILY_LABELS.get(f, f))} ({n})</button>' for f, n in counts.items()]
+    return ('  <div class="filter" id="family-filter" role="group" aria-label="Show reports for">'
+            + "".join(buttons) + '</div>')
+
+
+FILTER_JS = (
+    "(function(){var g=document.getElementById('family-filter');if(!g)return;"
+    "var bs=g.querySelectorAll('button');"
+    "function apply(f){document.body.dataset.filter=f;"
+    "bs.forEach(function(b){b.setAttribute('aria-pressed',b.dataset.family===f?'true':'false');});}"
+    "g.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;"
+    "apply(b.dataset.family);"
+    "history.replaceState(null,'',b.dataset.family==='all'?location.pathname:'#'+b.dataset.family);});"
+    "var h=location.hash.slice(1),known=false;"
+    "bs.forEach(function(b){if(b.dataset.family===h)known=true;});"
+    "apply(known?h:'all');})();"
+)
+
+
 def _card(entry: dict) -> str:
     slug = entry["slug"]
     g = gather(slug)
@@ -325,7 +358,7 @@ def _card(entry: dict) -> str:
     if g["date"]:
         facts.append(esc(g["date"]))
     subtitle = " · ".join(facts)
-    family = str(entry.get("family") or g.get("family") or "chartsearchai")
+    family = _family(entry, g)
     if family == "catalyst":
         # Labels name the question each page answers, not the artifact kind.
         links = [f'<a class="btn" href="{esc(slug)}/index.html">Read the report</a>']
@@ -365,8 +398,8 @@ def _card(entry: dict) -> str:
                         f'<li><a href="{esc(e["slug"])}/index.html">{esc(e.get("label") or e["slug"])}</a>'
                         f'{" " + esc(e["note"]) if e.get("note") else ""}</li>' for e in earlier)
                     + '</ul></div>')
-    family_label = "Catalyst SQL" if family == "catalyst" else "ChartSearchAI"
-    return f"""  <article class="card">
+    family_label = FAMILY_LABELS.get(family, family)
+    return f"""  <article class="card" data-family="{esc(family)}">
   <header class="card-head">
     <div class="titles"><span class="family {esc(family)}">{esc(family_label)}</span><h2>{esc(entry["title"])}</h2><div class="slug">{subtitle}</div></div>
     <div class="links">{"".join(links)}</div>
@@ -401,6 +434,12 @@ _STYLE_CORE = """
   .legend{background:var(--panel2);border:1px solid var(--border);border-radius:10px;
     padding:14px 18px;font-size:13.5px;color:var(--muted);margin-bottom:30px;max-width:760px;}
   .legend b{color:var(--text);}
+  .filter{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 22px;}
+  .filter button{font:inherit;font-size:13px;font-weight:600;padding:6px 14px;border-radius:999px;
+    border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;}
+  .filter button[aria-pressed="true"]{background:var(--accent);color:var(--btn-fg);border-color:var(--accent);}
+  body[data-filter="chartsearchai"] .card:not([data-family="chartsearchai"]),
+  body[data-filter="catalyst"] .card:not([data-family="catalyst"]){display:none;}
   .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px 24px;margin-bottom:22px;}
   .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:6px;}
   .titles h2{margin:0;font-size:20px;color:var(--ink);font-weight:600;line-height:1.3;}
@@ -484,6 +523,7 @@ def main(
               f"(deployed but unlisted) — add it to the manifest to list it.", file=sys.stderr)
     cards = "\n".join(_card(r) for r in runs)
     run_summaries = [gather(r["slug"]) for r in runs]
+    filter_bar = _filter_bar([_family(r, g) for r, g in zip(runs, run_summaries)])
     has_reader_led = any(summary.get("reader_led") for summary in run_summaries)
     has_other_reports = any(
         not summary.get("reader_led") for summary in run_summaries
@@ -523,10 +563,12 @@ def main(
     <p class="intro">{manifest.get("intro", "")}</p>
   </header>
   <div class="legend"><b>How to read these reports.</b> {scoring_note}</div>
+{filter_bar}
 {cards}
   <footer class="page">These reports describe dated runs, not current deployment or release acceptance. Hover an AI setup name for its model lineup.</footer>
 </div>
 <script>{theme_toggle_js("oc-theme-index")}</script>
+<script>{FILTER_JS}</script>
 </body>
 </html>
 """

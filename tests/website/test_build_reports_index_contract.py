@@ -178,6 +178,30 @@ def test_main_writes_curated_index_and_warns_on_staged_but_unlisted(tmp_path, mo
     assert "ghost-run is staged" in capsys.readouterr().err
 
 
+def test_index_offers_a_family_filter_when_both_families_are_listed(tmp_path, monkeypatch):
+    bri = _load()
+    reports = tmp_path / "reports"
+    for slug in ("chart-a", "chart-b", "sql-run"):
+        (_packet(reports, slug) / "meta.json").write_text("{}", encoding="utf-8")
+    manifest = tmp_path / "reports-index.json"
+    manifest.write_text(json.dumps({"runs": [
+        {"slug": "chart-a", "title": "A"}, {"slug": "chart-b", "title": "B"},
+        {"slug": "sql-run", "title": "S", "family": "catalyst"}]}), encoding="utf-8")
+    monkeypatch.setattr(bri, "REPORTS", reports)
+    monkeypatch.setattr(bri, "MANIFEST", manifest)
+    bri.main()
+    html = (reports / "index.html").read_text(encoding="utf-8")
+    assert 'data-family="all" aria-pressed="true">All reports (3)' in html
+    assert 'data-family="chartsearchai" aria-pressed="false">ChartSearchAI (2)' in html
+    assert 'data-family="catalyst" aria-pressed="false">Catalyst SQL (1)' in html
+    assert html.count('<article class="card" data-family="chartsearchai">') == 2
+    assert html.count('<article class="card" data-family="catalyst">') == 1
+    # One family alone needs no filter.
+    manifest.write_text(json.dumps({"runs": [{"slug": "chart-a", "title": "A"}]}), encoding="utf-8")
+    bri.main()
+    assert '<div class="filter"' not in (reports / "index.html").read_text(encoding="utf-8")
+
+
 def test_card_includes_gather_facts_and_dashboard_link(tmp_path, monkeypatch):
     bri = _load()
     reports = tmp_path / "reports"
