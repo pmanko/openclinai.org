@@ -58,6 +58,7 @@ export const navTree: NavSection[] = [
     intro: 'Current component boundaries and native product documentation.',
     items: [
       { kind: 'spec', slug: 'specs/architecture', title: 'Workspace architecture', blurb: 'Components, independent validation and website publication boundaries.' },
+      { kind: 'spec', slug: 'specs/background/evaluating-the-chart-search-providers', title: 'Evaluating the chart search providers', blurb: 'Bundled and Hub providers, local and remote engines, and what each evaluation setup compares.' },
     ],
   },
   {

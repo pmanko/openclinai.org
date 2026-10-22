@@ -11,6 +11,7 @@ export const repoMd = import.meta.glob([
   '../README.md',
   '../specs/architecture.md',
   '../specs/background/component-contracts.md',
+  '../specs/background/evaluating-the-chart-search-providers.md',
   '../specs/background/why-local-first-clinical-ai.md',
   '../specs/artifacts/planning/global-health-ai-background-research-2026-06-14.md',
   '../specs/artifacts/planning/guardrails-methodology-research.md',
