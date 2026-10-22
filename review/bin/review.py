@@ -399,10 +399,6 @@ def publish_full(run_dir: Path, set_id: str) -> str:
     m = re.search(r"==> published: (\S+)", proc.stdout)
     if not proc.returncode and m:
         return m.group(1)
-    # The site copy can be live while the mandatory bucket backup failed; say both.
-    m = re.search(r"report already published at (\S+?);", proc.stderr)
-    if m:
-        return f"{m.group(1)} (bucket backup failed; see {log})"
     raise SystemExit(f"publishing {slug} failed; see {log}")
 
 

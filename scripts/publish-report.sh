@@ -10,7 +10,7 @@ SLUG="${3:?usage: publish-report.sh <family> <run_dir> <slug> [title] [summary] 
 TITLE="${4:-}"
 SUMMARY="${5:-}"
 TAKEAWAY="${6:-}"
-REPORTS_ROOT="${REPORTS_ROOT:-${ROOT}/artifacts/reports}"
+REPORTS_ROOT="${REPORTS_ROOT:-${ROOT}/reports}"
 DRY_RUN="${PUBLISH_DRY_RUN:-0}"
 
 MANIFEST="${ROOT}/reports-index.json"
@@ -71,10 +71,6 @@ gcp_ssh "chmod -R a+rX ${GCP_REMOTE_REPO}/artifacts/reports"
 
 SITE="${CADDY_SITE_REPORTS:-reports.openclinai.org}"
 
-# The VM is a serving copy, not the archive: every publish also lands in the versioned bucket.
-"${ROOT}/scripts/reports-backup.sh" || {
-  BACKUP_STATUS=$?
-  echo "error: report already published at https://${SITE}/${SLUG}/; mandatory backup failed (exit ${BACKUP_STATUS})." >&2
-  exit "${BACKUP_STATUS}"
-}
+# The VM is a serving copy. The archive is the committed reports/ folder in this repository.
 echo "==> published: https://${SITE}/${SLUG}/"
+echo "==> commit ${REPORTS_ROOT#"${ROOT}/"}/${SLUG} and the catalog files to keep the archive copy."

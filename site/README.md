@@ -6,7 +6,7 @@ The umbrella owns the public website sources, assets, configuration and delivery
 - `site/`: documentation, searchable static HTML twins, status interface and reviewed Catalyst design assets.
 - `site/published-content.ts`: the explicit public source allowlist. Navigation and topics must resolve to these sources. Product contracts are linked, not copied.
 - `compose/website/`: independent Caddy static hosting; it contains no product services.
-- `scripts/publish-landing.sh`, `scripts/publish-report.sh`, `scripts/reports-backup.sh`: static publication to an existing VM and versioned report backup.
+- `scripts/publish-landing.sh`, `scripts/publish-report.sh`: static publication to an existing VM. The report archive is the committed `reports/` folder.
 - `.github/workflows/pages.yml`: configured documentation/status GitHub Pages publication from this repository.
 
 ## Local verification
@@ -68,10 +68,10 @@ run the renderer or freeze dashboards. Optional `comparison.html` and
 PUBLISH_DRY_RUN=1 scripts/publish-report.sh catalyst /path/to/reviewed-run example-report
 ```
 
-Dry-run staging changes only `REPORTS_ROOT` (default `artifacts/reports/`). Omit
+Dry-run staging changes only `REPORTS_ROOT` (default `reports/`). Omit
 `PUBLISH_DRY_RUN=1` only when deliberately uploading. Set `CADDY_SITE_REPORTS`
-(default `reports.openclinai.org`) and a pre-created, versioned
-`REPORTS_BACKUP_BUCKET`. Successful upload requires a successful additive backup.
+(default `reports.openclinai.org`). The VM is a serving copy; commit the staged
+report and the catalog files in `reports/` after each publish to keep the archive.
 The catalog reads staged evidence and optional recorded `meta.json` summaries;
 it never resolves live models, product Git revisions or the original run tree.
 Review/redaction is required before publishing any clinical evidence.

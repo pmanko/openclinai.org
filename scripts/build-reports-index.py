@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate artifacts/reports/index.html from the CURATED manifest reports-index.json.
+"""Regenerate reports/index.html from the CURATED manifest reports-index.json.
 
 This is a hand-curated showcase, not an auto-discovered listing: only the runs named in
 reports-index.json appear, in the order given, with human-written titles/summaries. Scores
@@ -68,7 +68,7 @@ def theme_toggle_js(storage_key: str) -> str:
     )
 
 
-REPORTS = ROOT / "artifacts" / "reports"
+REPORTS = ROOT / "reports"
 MANIFEST = ROOT / "reports-index.json"
 
 
@@ -436,7 +436,7 @@ def main(
         check_archive = args.check_archive
         pending_slug = args.pending_slug
         ROOT = args.root.resolve()
-        REPORTS = (args.reports_root or ROOT / "artifacts" / "reports").resolve()
+        REPORTS = (args.reports_root or ROOT / "reports").resolve()
         MANIFEST = (args.manifest or ROOT / "reports-index.json").resolve()
     manifest = json.loads(MANIFEST.read_text())
     runs = manifest.get("runs", [])
@@ -444,13 +444,13 @@ def main(
     if check_archive:
         print("Staged report archive is complete for the curated catalog.")
         return
-    # Loud, not silent: a run whose report is staged under artifacts/reports/ but absent from the
+    # Loud, not silent: a run whose report is staged under reports/ but absent from the
     # curated manifest gets DEPLOYED (rsync, no --delete) yet never LISTED. Warn so a missed
     # publish-time upsert is visible instead of quietly producing a deployed-but-unlisted run.
     listed = {r.get("slug") for r in runs}
     staged = {p.parent.name for p in REPORTS.glob("*/meta.json")}
     for slug in sorted(staged - listed):
-        print(f"warn: {slug} is staged under artifacts/reports/ but NOT in reports-index.json "
+        print(f"warn: {slug} is staged under reports/ but NOT in reports-index.json "
               f"(deployed but unlisted) — add it to the manifest to list it.", file=sys.stderr)
     cards = "\n".join(_card(r) for r in runs)
     run_summaries = [gather(r["slug"]) for r in runs]
