@@ -38,7 +38,7 @@ agent runs it. What the maintainer's process is, and where ours fell short on th
 | Layer | When | Cost | What it does |
 | --- | --- | --- | --- |
 | L0 Guards | every commit, blocking | none | secrets (hard block), focused or disabled tests, a new test file with no assertion, a mocked unit under test, trailer syntax |
-| L1 Probes | every push, blocking | one test run per probed commit | revert probe: the commit's tests fail with its main-code change reverted and pass with it restored; mutation probe: the tests fail under the mutation the commit names |
+| L1 Probes | every push, blocking | one test run per probed commit | revert probe: the commit's tests fail with its main-code change reverted and pass with it restored (a file changed only in comments or blank lines is not reverted); mutation probe: the tests fail under the mutation the commit names |
 | L2 Review | on request | 100 to 300k tokens per PR per pass | a fresh session per role runs the brief at the chosen effort and returns findings as JSON; a stack pass reads the merged top for contracts between layers |
 | L3 Scenarios | on request, optional | one harness run | the validation harness replays a comparison set against the deployed head and checks machine-readable expectations; the umbrella builds and deploys the head first |
 | L4 Model gate | on request, optional, slice changes only | two harness runs | a pre-registered gate (comparison set, dataset, baseline, threshold) run on base and head; the record quotes the number |

@@ -48,6 +48,54 @@ class Change:
         return classify(self.path)
 
 
+_LINE_COMMENT = {".py": "#", ".sh": "#"}
+
+
+def strip_comments(text: str, suffix: str) -> str:
+    """The code of a source file: comments and blank lines dropped, string literals kept whole.
+
+    A `//`, `#` or `/*` inside a string literal is text, not a comment, so a change to a
+    URL or a label in a string still counts as a code change.
+    """
+    marker = _LINE_COMMENT.get(suffix, "//")
+    blocks = marker == "//"
+    out: list[str] = []
+    i, n = 0, len(text)
+    while i < n:
+        ch = text[i]
+        if ch in "\"'`":
+            j = i + 1
+            while j < n and text[j] != ch:
+                if text[j] == "\\":
+                    j += 1
+                elif text[j] == "\n" and ch != "`":
+                    break
+                j += 1
+            out.append(text[i:j + 1])
+            i = j + 1
+        elif text.startswith(marker, i):
+            j = text.find("\n", i)
+            i = n if j < 0 else j
+        elif blocks and text.startswith("/*", i):
+            j = text.find("*/", i + 2)
+            i = n if j < 0 else j + 2
+        else:
+            out.append(ch)
+            i += 1
+    lines = (line.rstrip() for line in "".join(out).splitlines())
+    return "\n".join(line for line in lines if line)
+
+
+def code_changed(repo: Path, sha: str, change: Change) -> bool:
+    """Whether a main-file change alters anything beyond comments and blank lines."""
+    if change.status != "M":
+        return True
+    suffix = Path(change.path).suffix
+    before = git(repo, "show", f"{sha}^:{change.path}")
+    after = git(repo, "show", f"{sha}:{change.path}")
+    return strip_comments(before, suffix) != strip_comments(after, suffix)
+
+
 def commit_changes(repo: Path, sha: str) -> list[Change]:
     out = git(repo, "diff-tree", "--no-commit-id", "-r", "--no-renames",
               "--name-status", "--root", sha)

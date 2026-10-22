@@ -94,6 +94,34 @@ def test_a_fix_whose_test_passes_without_it_is_refused(project):
     assert "the tests do not detect it" in result.stderr
 
 
+def test_a_comment_only_change_in_main_code_is_not_reverted(project):
+    documented = CALC.replace("def clamp", "# Clamp value to [low, high].\ndef clamp")
+    commit(project, {"calc.py": documented, "tests/test_calc.py": FIXED_TEST}, "Document clamp")
+    result = push(project)
+    assert result.returncode == 0, result.stderr
+    assert "only in comments" in result.stderr and "revert" not in result.stderr
+
+
+def test_a_comment_only_change_still_runs_its_mutation(project):
+    documented = CALC.replace("def clamp", "# Clamp value to [low, high].\ndef clamp")
+    commit(project, {"calc.py": documented, "tests/test_calc.py": FIXED_TEST},
+           'Document clamp\n\nMutation: calc.py "max(low, min(value, high))" -> "min(value, high)"')
+    result = push(project)
+    assert result.returncode == 0, result.stderr
+    assert "skip" in result.stderr and "red" in result.stderr and "mutation calc.py" in result.stderr
+    commit(project, {"calc.py": documented + "\n# Another note.\n"},
+           'Note\n\nTests: tests/test_calc.py\nMutation: calc.py "min(value, high)" -> "min(value, 10)"')
+    missed = push(project)
+    assert missed.returncode != 0 and "do not detect it" in missed.stderr
+
+
+def test_a_change_inside_a_string_counts_as_code(project):
+    commit(project, {"calc.py": CALC + "\nLABEL = 'a # b'\n"}, "Label\n\nProbe: skip (constant)")
+    commit(project, {"calc.py": CALC + "\nLABEL = 'a # c'\n"}, "Relabel")
+    result = push(project)
+    assert result.returncode != 0 and "with no test" in result.stderr
+
+
 def test_a_mutation_the_tests_miss_is_refused(project):
     commit(project, {"calc.py": BROKEN}, "Simplify\n\nProbe: skip (setup)")
     commit(project, {"calc.py": CALC, "tests/test_calc.py": FIXED_TEST},

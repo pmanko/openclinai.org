@@ -23,6 +23,8 @@ Every commit a push adds (not already on any remote) that changes main code is p
 in a persistent worktree, `work/review/wt/<repo>`:
 
 1. **Revert:** the commit's main-code files go back to the parent; the tests must fail.
+   A file whose change is only comments or blank lines is not reverted, and a commit
+   with no other main-code change and no mutation is not probed.
 2. **Green:** at the commit the same tests must pass.
 3. **Mutation:** each `Mutation:` trailer is applied at the commit; the tests must fail.
 
