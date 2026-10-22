@@ -426,18 +426,15 @@ def test_explicitly_unavailable_report_stays_unlinked_even_if_staged(tmp_path, s
     assert "/unavailable/index.html" not in (reports / "sitemap.xml").read_text()
 
 
-def test_card_scores_setups_from_the_staged_judge_and_lists_earlier_runs(tmp_path, monkeypatch):
+def test_card_labels_setups_and_lists_earlier_runs(tmp_path, monkeypatch):
     bri = _load()
     reports = tmp_path / "reports"
     packet = _packet(reports, "current-run")
     _packet(reports, "earlier-run")
-    (packet / "results.jsonl").write_text("".join(
-        json.dumps({"backend_id": arm, "request": {"patient": "p1"}}) + "\n"
-        for arm in ("bundled-arm", "bundled-arm", "hub-arm", "hub-arm")), encoding="utf-8")
-    (packet / "judge.jsonl").write_text("".join(json.dumps(row) + "\n" for row in (
-        {"backend_id": "bundled-arm", "accuracy": 6, "completeness": 5, "relevance": 7, "harm": False},
-        {"backend_id": "hub-arm", "accuracy": 9, "completeness": 8, "relevance": 9, "harm": True},
-    )), encoding="utf-8")
+    (packet / "meta.json").write_text(json.dumps({"scout": [
+        {"backend": "bundled-arm", "n": 1, "benchmark_score": 59.8, "accuracy_mean": 6.0},
+        {"backend": "hub-arm", "n": 1, "benchmark_score": 78.9, "accuracy_mean": 9.0, "harm_count": 1},
+    ]}), encoding="utf-8")
     monkeypatch.setattr(bri, "REPORTS", reports)
     html = bri._card({
         "slug": "current-run", "title": "Current",
@@ -445,11 +442,8 @@ def test_card_scores_setups_from_the_staged_judge_and_lists_earlier_runs(tmp_pat
         "guide": {"label": "How the paths differ", "url": "https://example.org/paths/"},
         "earlier": [{"slug": "earlier-run", "label": "First run", "note": "One setup failed."}],
     })
-    assert "4 answers in 2 graded conversations" in html
-    assert "<th>Conversations</th>" in html
     assert 'title="bundled-arm">Bundled</td>' in html
-    assert 'class="best">9.0' in html and 'class="harm"' in html
-    assert "Benchmark" not in html
+    assert 'class="bench best">78.9' in html and 'class="harm"' in html
     assert 'href="https://example.org/paths/"' in html
     assert 'href="earlier-run/index.html">First run</a> One setup failed.' in html
 

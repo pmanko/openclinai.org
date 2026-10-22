@@ -387,6 +387,14 @@ def publish_full(run_dir: Path, set_id: str) -> str:
     day = time.strftime("%Y-%m-%d", time.localtime(run_dir.stat().st_mtime))
     slug = f"l5-{set_id}-{day}-{run_dir.name[:8]}"
     means = arm_means(run_dir)
+    # The index's score table is the report's own judge summary, frozen beside the report.
+    scout = subprocess.run(
+        ["uv", "--directory", str(HARNESS), "run", "python", "-c",
+         "import json, sys\nfrom harness.validate.reconcile import scout_summary\n"
+         "rows = [json.loads(l) for l in open(sys.argv[1]) if l.strip()]\n"
+         "print(json.dumps(scout_summary(rows, list(dict.fromkeys(r['backend_id'] for r in rows)))))",
+         str(run_dir / "judge.jsonl")], check=True, capture_output=True, text=True).stdout
+    (run_dir / "meta.json").write_text(json.dumps({"scout": json.loads(scout)}, indent=2) + "\n")
     # The index shows the judged scores as a table; the catalog's editor writes the takeaway.
     # A run already in the catalog keeps the copy written for it.
     listed = {r["slug"] for r in json.loads((UMBRELLA / "reports-index.json").read_text())["runs"]}

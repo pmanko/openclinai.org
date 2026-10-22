@@ -144,9 +144,10 @@ def gather(slug: str) -> dict:
     out: dict = {
         "family": family,
         "reader_led": False,
-        "cells": None,
-        "patients": "",
-        "date": None,
+        # Facts frozen beside a report whose packet no longer carries its results.
+        "cells": meta.get("cells"),
+        "patients": str(meta.get("patients") or ""),
+        "date": meta.get("date"),
         "scout": list(meta.get("scout") or []),
         "scoreline": str(meta.get("scoreline") or ""),
     }
@@ -237,33 +238,7 @@ def gather(slug: str) -> dict:
     out["patients"] = _patient_names(rdir, pts)
     out["date"] = datetime.fromtimestamp(
         (rdir / "results.jsonl").stat().st_mtime, timezone.utc).strftime("%-d %b %Y")
-    judged = _judged_rows(rdir / "judge.jsonl")
-    if judged:
-        out["graded"] = len(judged)
-        if not out["scout"]:
-            out["scout"] = _judged_means(judged)
-            out["counted"] = "Conversations"
     return out
-
-
-def _judged_rows(path: Path) -> list[dict]:
-    """The staged judge's per-conversation grades, when the packet carries them."""
-    if not path.is_file():
-        return []
-    rows = [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
-    return [r for r in rows if r.get("backend_id") and isinstance(r.get("accuracy"), (int, float))]
-
-
-def _judged_means(judged: list[dict]) -> list[dict]:
-    """Each setup's mean grades and harm count, in the score-table shape."""
-    table = []
-    for arm in dict.fromkeys(r["backend_id"] for r in judged):
-        rs = [r for r in judged if r["backend_id"] == arm]
-        mean = lambda key: sum(float(r.get(key) or 0) for r in rs) / len(rs)
-        table.append({"backend": arm, "n": len(rs), "accuracy_mean": mean("accuracy"),
-                      "completeness_mean": mean("completeness"), "relevance_mean": mean("relevance"),
-                      "harm_count": sum(bool(r.get("harm")) for r in rs)})
-    return table
 
 
 def _https(link) -> dict | None:
@@ -274,7 +249,7 @@ def _https(link) -> dict | None:
     return None
 
 
-def _scout_table(scout: list[dict], labels: dict | None = None, counted: str = "Questions") -> str:
+def _scout_table(scout: list[dict], labels: dict | None = None) -> str:
     if not scout:
         return '<div class="unscored">This run is an answer comparison only — not yet scored.</div>'
     # best (max) per column, to highlight the winner. Benchmark is the headline.
@@ -285,7 +260,7 @@ def _scout_table(scout: list[dict], labels: dict | None = None, counted: str = "
     # A run judged without the aggregate shows its dimensions only, not a column of dashes.
     benchmarked = best["benchmark_score"] is not None
     head = ('<table class="scout"><thead><tr>'
-            f'<th class="arm">AI setup</th><th>{esc(counted)}</th>'
+            '<th class="arm">AI setup</th><th>Questions</th>'
             + ('<th class="bench">Benchmark<br>/100</th>' if benchmarked else '') +
             '<th>Accuracy</th><th>Completeness</th><th>Relevance</th>'
             '<th>Unsafe<br>answers</th></tr></thead><tbody>')
@@ -344,9 +319,7 @@ def _card(entry: dict) -> str:
     facts = []
     if g["patients"]:
         facts.append(esc(g["patients"]))
-    if g["cells"] is not None and g.get("graded") and g["graded"] != g["cells"]:
-        facts.append(f'{g["cells"]} answers in {g["graded"]} graded conversations')
-    elif g["cells"] is not None:
+    if g["cells"] is not None:
         unit = "conversations" if g.get("family") == "catalyst" else "graded answers"
         facts.append(f'{g["cells"]} {unit}')
     if g["date"]:
@@ -377,7 +350,7 @@ def _card(entry: dict) -> str:
         links = ['<span class="unscored">Report unavailable</span>']
     statistics = "" if unavailable else (
         f'<div class="unscored">{esc(g["scoreline"])}</div>' if g.get("scoreline") and not g["scout"]
-        else _scout_table(g["scout"], entry.get("arms"), g.get("counted") or "Questions") if g["scout"]
+        else _scout_table(g["scout"], entry.get("arms")) if g["scout"]
         else '<div class="unscored">Open the report for its recorded methods and results.</div>'
     )
     if g["scout"] and not unavailable:
