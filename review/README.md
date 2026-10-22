@@ -19,8 +19,9 @@ probed. Remove with `git -C <checkout> config --unset core.hooksPath`.
 
 ## Probes
 
-Every commit a push adds (not already on any remote) that changes main code is probed
-in a persistent worktree, `work/review/wt/<repo>`:
+Every commit a push adds (not already on any remote) that changes main code, or changes
+only tests and carries a `Mutation:` trailer, is probed in a persistent worktree,
+`work/review/wt/<repo>`:
 
 1. **Revert:** the commit's main-code files go back to the parent; the tests must fail.
    A file whose change is only comments or blank lines is not reverted, and a commit

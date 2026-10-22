@@ -141,9 +141,10 @@ def probe_commit(repo: Path, sha: str, force: bool = False) -> Outcome:
     sha7 = sha[:7]
     changes = commit_changes(repo, sha)
     main = [c for c in changes if c.kind == "main"]
-    if not main:
-        return Outcome(sha, True, "no-main")
     trailers = commit_trailers(repo, sha)
+    # A test-only commit is probed only for its mutations, which show the new test catches them.
+    if not main and not trailers.mutations:
+        return Outcome(sha, True, "no-main")
     if trailers.errors:
         return Outcome(sha, False, "blocked", [f"BLOCK {sha7} {e}" for e in trailers.errors])
     # A comment or blank-line edit in main code cannot turn a test red, so only files whose
@@ -195,7 +196,8 @@ def probe_commit(repo: Path, sha: str, force: bool = False) -> Outcome:
                 lines.append(line)
                 _reset(wt, sha)
             else:
-                lines.append(f"skip  {sha7} revert: main code changes only in comments or blank lines")
+                lines.append(f"skip  {sha7} revert: " + ("main code changes only in comments or blank lines"
+                             if main else "no main code changed"))
             good, line = _expect_green(_run(runner, wt, tests, logs / f"{sha7}-green.log"), sha7)
             ok &= good
             lines.append(line)

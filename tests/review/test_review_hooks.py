@@ -115,6 +115,18 @@ def test_a_comment_only_change_still_runs_its_mutation(project):
     assert missed.returncode != 0 and "do not detect it" in missed.stderr
 
 
+def test_a_test_only_change_runs_its_mutation(project):
+    commit(project, {"tests/test_calc.py": FIXED_TEST},
+           'Test the low bound\n\nMutation: calc.py "max(low, min(value, high))" -> "min(value, high)"')
+    result = push(project)
+    assert result.returncode == 0, result.stderr
+    assert "no main code changed" in result.stderr and "mutation calc.py" in result.stderr
+    commit(project, {"tests/test_calc.py": FIXED_TEST + "\n"},
+           'Tidy\n\nMutation: calc.py "min(value, high)" -> "min(value, 10)"')
+    missed = push(project)
+    assert missed.returncode != 0 and "do not detect it" in missed.stderr
+
+
 def test_a_change_inside_a_string_counts_as_code(project):
     commit(project, {"calc.py": CALC + "\nLABEL = 'a # b'\n"}, "Label\n\nProbe: skip (constant)")
     commit(project, {"calc.py": CALC + "\nLABEL = 'a # c'\n"}, "Relabel")
