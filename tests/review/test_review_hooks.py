@@ -203,6 +203,7 @@ def test_commits_already_pushed_are_recorded_as_baseline_and_skipped(project):
     ({"settings.py": 'TOKEN = "ghp_' + "a" * 36 + '"\n'}, "Token", "[secret] GitHub token"),
     ({"calc.py": CALC + "\n"}, 'Bad\n\nMutation: calc.py max -> min', "Mutation:"),
     ({"calc.py": CALC + "\n"}, "Bad\n\nTests: tests/test calc.py", "Tests:"),
+    ({"calc.py": CALC + "\n"}, "Bad\n\nTests: CalcTest#below CalcTest#above", "Tests:"),
     ({"calc.py": CALC + "\n"}, "Bad\n\nProbe: later", "Probe:"),
 ])
 def test_commit_guards_refuse(project, files, message, refusal):

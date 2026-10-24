@@ -153,8 +153,9 @@ def parse_trailers(message: str, repo: Path | str = ".") -> Trailers:
         if key == "Tests":
             items = [t.strip() for t in value.split(",")]
             for item in items:
-                target = re.split(r"#|::", item, maxsplit=1)[0]
-                if not item or re.search(r"\s", target):
+                # Whitespace anywhere is two ids run together: a test runner reads it as one id and
+                # runs nothing, which the probe then reports as no named test.
+                if not item or re.search(r"\s", item):
                     result.errors.append(f"Tests: '{value}' needs comma-separated test ids")
                     break
             else:
