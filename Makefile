@@ -1,4 +1,5 @@
 UV ?= uv
+DASHBOARD_UP ?= ./scripts/validate-dashboard-up.sh
 HARNESS := targets/validation-harness
 LLAMA_ROUTER_TIER ?= med
 SET ?= demo
@@ -350,7 +351,7 @@ REFERENCE_DATE ?= 2026-06-20
 RESUME ?=
 # The live dashboard (http://localhost:8099) follows the newest run; every run starts it if needed.
 validate-dashboard:
-	@UV=$(UV) ./scripts/validate-dashboard-up.sh
+	@UV=$(UV) $(DASHBOARD_UP)
 
 validate-run: validate-dashboard
 	HUB_ANCHOR=$(REFERENCE_DATE) $(MAKE) med-agent-hub-up
