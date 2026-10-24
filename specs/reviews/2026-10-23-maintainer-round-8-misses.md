@@ -50,3 +50,23 @@ fix, a reply or a decision.
    `webservices.rest.maxResultsAbsolute`), read on every run.
 
 None of these is built yet; this round's remediation comes first.
+
+## Local review of this round's heads
+
+Run once on 23 October with the Codex reviewer at medium effort, on every layer this round
+changed (QueryStore #93 to #98, backend #617 to #620 and #625, frontend #72 to #74 and #76),
+each against the layer below; outputs under `work/review/<repo>-<pr>/round-1.md`. Every
+finding got a decision before the push, per process change 1.
+
+| Finding | Decision |
+| --- | --- |
+| QueryStore #93: a duplicate delete returns before the other delete's refresh | Not changed: the maintainer judged it non-blocking, and the ADR now records it |
+| QueryStore #94: a same-second edit is skipped by the top-up | Not changed: kept by design with the maintainer, recorded in the ADR |
+| QueryStore #94 question: the ADR's skip paragraph does not mention orders | Fixed: the sentence had been lost from the order commit and is now in |
+| QueryStore #95: four completeness cases (top-up, restart, concurrent reindex, failed embedding) | Not changed: the open #95 completeness question the owner kept for further QueryStore work |
+| Backend #617: a dose in mg/kg is read as a total and reported checked | Fixed: such a dose is now not assessed |
+| Backend #620: the remote readiness probe waits for the whole body | Fixed: it answers on the headers |
+| Backend #625: a waiting idle callback uses its own captured timeout | Fixed: it uses the last arming's, and does nothing when unloading was turned off |
+| Backend #619 questions on the new withheld-types notice: stated twice after the drug-reference rebuild, left out of the budget, dropped on an empty chart | Fixed |
+| Frontend #76 question: the failed-turn test held no citation at Checking, so its cleanup was untested | Fixed |
+| The other questions: test gaps and wording on code older than this round, the inherited integration-coverage asks, and merge previews against the remote bases | Deferred: recorded here; none is a defect in this round's changes |
