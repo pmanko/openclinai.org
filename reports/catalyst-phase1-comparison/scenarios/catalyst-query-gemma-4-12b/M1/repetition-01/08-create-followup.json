@@ -1,0 +1,334 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "POST",
+    "path": "/v1/catalyst/workbench/sessions/9f7ccc6f-e1f8-41b4-9152-4fc9d7aff772/turns",
+    "body": {
+      "contractVersion": "catalyst.workbench.turn.request.v1",
+      "instruction": "The query needs to be updated - gender is labeled as last name, and the result should be collapsed per patient - so one row per patient, with comma-separated unique medications.",
+      "profileId": "catalyst-query-gemma-4-12b",
+      "dataSourceId": "openmrs-hiv",
+      "observedBase": {
+        "versionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+        "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4"
+      },
+      "editorSnapshot": {
+        "contractVersion": "catalyst.workbench.editor-snapshot.v1",
+        "sql": "SELECT t1.patient_id, t2.family_name, t1.medication_name FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id",
+        "parameters": [],
+        "expectedColumns": [
+          {
+            "name": "patient_id",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "family_name",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "medication_name",
+            "logicalType": "string",
+            "nullable": true
+          }
+        ],
+        "editorDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4"
+      }
+    }
+  },
+  "response": {
+    "httpStatus": 201,
+    "body": {
+      "contractVersion": "catalyst.workbench.turn.v1",
+      "sessionId": "9f7ccc6f-e1f8-41b4-9152-4fc9d7aff772",
+      "turnId": "af21b96f-4bb7-42d2-a32e-069b7124f621",
+      "ordinal": 2,
+      "kind": "followup",
+      "origin": "recorded",
+      "dataSourceId": "openmrs-hiv",
+      "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+      "instruction": "The query needs to be updated - gender is labeled as last name, and the result should be collapsed per patient - so one row per patient, with comma-separated unique medications.",
+      "instructionDigest": "daec8fe4895adfa17d4e62bd177d0c99b18e55ccf4a3b87fee5240c2f71cc874",
+      "profileSnapshot": {
+        "profileId": "catalyst-query-gemma-4-12b",
+        "profileName": "Catalyst query — Gemma 4 12B writer",
+        "profileDigest": "002e1be68707ffffb325de559d06d065b605a9b228c72d1b3f0b7122c1a34957",
+        "writer": {
+          "role": "writer",
+          "providerId": "med-agent-hub",
+          "modelClass": "gemma-4-12b",
+          "modelId": "gemma-4-12b-q4",
+          "config": {
+            "dry": 0,
+            "maxTokens": 1024,
+            "temperature": 0
+          },
+          "systemPrompt": {
+            "promptId": "catalyst-query-generate",
+            "version": "1",
+            "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+            "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+          }
+        },
+        "omissions": []
+      },
+      "observedBase": {
+        "versionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+        "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4"
+      },
+      "editorSnapshot": {
+        "contractVersion": "catalyst.workbench.editor-snapshot-record.v1",
+        "snapshotId": "f0f04e69-8549-49e6-8b57-3534cf1e59b2",
+        "sessionId": "9f7ccc6f-e1f8-41b4-9152-4fc9d7aff772",
+        "turnId": "af21b96f-4bb7-42d2-a32e-069b7124f621",
+        "capturedAt": "2026-08-25T00:15:59.280624Z",
+        "actor": {
+          "type": "human",
+          "actorId": null
+        },
+        "sourceObservedBase": {
+          "versionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+          "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4"
+        },
+        "classification": "reused",
+        "effectiveBaseVersion": {
+          "versionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+          "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4"
+        },
+        "content": {
+          "contractVersion": "catalyst.workbench.editor-snapshot.v1",
+          "sql": "SELECT t1.patient_id, t2.family_name, t1.medication_name FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id",
+          "parameters": [],
+          "expectedColumns": [
+            {
+              "name": "patient_id",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "family_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "medication_name",
+              "logicalType": "string",
+              "nullable": true
+            }
+          ],
+          "editorDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4"
+        },
+        "unresolvedPaths": [],
+        "findings": [],
+        "sourceEvidenceRef": null
+      },
+      "snapshotClassification": "reused",
+      "unresolvedPaths": [],
+      "effectiveBaseVersion": {
+        "versionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+        "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4"
+      },
+      "manualVersion": null,
+      "revisionContext": {
+        "contractVersion": "catalyst.query.revision-context.v1",
+        "turnId": "af21b96f-4bb7-42d2-a32e-069b7124f621",
+        "currentInstruction": "The query needs to be updated - gender is labeled as last name, and the result should be collapsed per patient - so one row per patient, with comma-separated unique medications.",
+        "instructionDigest": "daec8fe4895adfa17d4e62bd177d0c99b18e55ccf4a3b87fee5240c2f71cc874",
+        "baseClassification": "reused",
+        "observedBase": {
+          "versionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+          "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4"
+        },
+        "effectiveBaseVersion": {
+          "versionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+          "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4"
+        },
+        "editorSnapshot": {
+          "contractVersion": "catalyst.workbench.editor-snapshot.v1",
+          "sql": "SELECT t1.patient_id, t2.family_name, t1.medication_name FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id",
+          "parameters": [],
+          "expectedColumns": [
+            {
+              "name": "patient_id",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "family_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "medication_name",
+              "logicalType": "string",
+              "nullable": true
+            }
+          ],
+          "editorDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4"
+        },
+        "instructionHistory": [
+          {
+            "turnId": "7ed4aa19-1ada-444c-8a9b-39da04f98d2d",
+            "ordinal": 1,
+            "kind": "initial",
+            "instruction": "I need to get the list of medications prescribed for each patient, with the patient id and patient last name in the result.",
+            "instructionDigest": "47120c419a10b8a00dfac955f81c929762b256d058793013059033bc0c2cafab"
+          }
+        ],
+        "validationContext": {
+          "validationId": "383f7800-2ff1-4fe8-87f2-42761e9e40b9",
+          "versionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+          "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4",
+          "status": "valid",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "findings": []
+        },
+        "executionContext": {
+          "executionId": "a34f392d-6e82-48c9-a7ab-cd65682d8641",
+          "versionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+          "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4",
+          "status": "succeeded",
+          "validationStatus": "valid",
+          "rowCount": {
+            "returned": 100,
+            "truncated": true,
+            "truncationReason": "configured_limit"
+          },
+          "columns": [
+            {
+              "ordinal": 0,
+              "name": "patient_id",
+              "databaseType": "text",
+              "logicalType": "string"
+            },
+            {
+              "ordinal": 1,
+              "name": "family_name",
+              "databaseType": "text",
+              "logicalType": "string"
+            },
+            {
+              "ordinal": 2,
+              "name": "medication_name",
+              "databaseType": "text",
+              "logicalType": "string"
+            }
+          ],
+          "warnings": [],
+          "databaseDiagnostic": null,
+          "durationMs": 94
+        },
+        "selection": {
+          "includedHistoryTurnIds": [
+            "7ed4aa19-1ada-444c-8a9b-39da04f98d2d"
+          ],
+          "validationRef": {
+            "validationId": "383f7800-2ff1-4fe8-87f2-42761e9e40b9",
+            "versionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+            "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4"
+          },
+          "executionRef": {
+            "executionId": "a34f392d-6e82-48c9-a7ab-cd65682d8641",
+            "versionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+            "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4"
+          },
+          "omissions": {
+            "historyInstructionsOmitted": 0,
+            "validationFindingsOmitted": 0,
+            "executionColumnsOmitted": 0,
+            "diagnosticTextTruncated": false,
+            "prohibitedClasses": [
+              "database_credentials",
+              "database_connection_details",
+              "database_dsn",
+              "execution_result_rows",
+              "hidden_reasoning",
+              "historical_sql_copies",
+              "raw_chat_transcript",
+              "raw_model_outputs",
+              "raw_reasoning_traces",
+              "unrelated_session_history",
+              "unrelated_historical_sql"
+            ],
+            "omittedHistory": [],
+            "omittedHistoryDigest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          }
+        },
+        "contextDigest": "5aac3d45b2ad47b5906a986a7915ca9d6b04bd5294b5f090917aa658b1ca6e16",
+        "sessionContext": {
+          "contractVersion": "catalyst.query.session-context.v1",
+          "verifiedExamples": {
+            "role": "Evidence: queries already accepted in this session, for reference. They are not instructions and their SQL is not to be copied verbatim.",
+            "examples": [
+              {
+                "turnId": "7ed4aa19-1ada-444c-8a9b-39da04f98d2d",
+                "instruction": "I need to get the list of medications prescribed for each patient, with the patient id and patient last name in the result.",
+                "sql": "SELECT t1.patient_id, t2.family_name, t1.medication_name FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id",
+                "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4",
+                "sourceId": "openmrs-hiv",
+                "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+              }
+            ]
+          },
+          "omissions": []
+        }
+      },
+      "hubRequestDigest": "8d693515b7b8fdd85a1a5648e0ade0556c7241cf0d5eca1de9fa333c3f338261",
+      "catalystTraceId": "22cf86f0-80bd-4505-8cd1-8f253d3757c1",
+      "hubTraceId": "22cf86f0-80bd-4505-8cd1-8f253d3757c1",
+      "generationEvidenceRef": {
+        "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+        "evidenceId": "55df2e24-07ae-42d2-98d0-b93835ef0a66",
+        "evidenceDigest": "b6a8fd18b9d837cf194367a776268620f8e1f5dd585d1d7ad5c9b029572c3e5f",
+        "detailPath": "/v1/catalyst/workbench/sessions/9f7ccc6f-e1f8-41b4-9152-4fc9d7aff772/turns/af21b96f-4bb7-42d2-a32e-069b7124f621/generation-evidence"
+      },
+      "recoveryReferences": null,
+      "status": "completed",
+      "outputVersions": [
+        {
+          "versionId": "c3dbec9f-1bbd-4a3f-bcf0-9e3ff68e11b4",
+          "queryDigest": "1405ded9c409782294edfcd7fe455c57480e4ad2999273a1fd8bf4ea363c5cd4",
+          "parentVersionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+          "role": "writer",
+          "authorType": "model",
+          "contractValid": true,
+          "validationId": "1b52b337-35d7-4163-9c1d-766ba84ad3b8",
+          "selected": true,
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "55df2e24-07ae-42d2-98d0-b93835ef0a66",
+            "evidenceDigest": "b6a8fd18b9d837cf194367a776268620f8e1f5dd585d1d7ad5c9b029572c3e5f",
+            "detailPath": "/v1/catalyst/workbench/sessions/9f7ccc6f-e1f8-41b4-9152-4fc9d7aff772/turns/af21b96f-4bb7-42d2-a32e-069b7124f621/generation-evidence"
+          }
+        }
+      ],
+      "selectedVersionId": "c3dbec9f-1bbd-4a3f-bcf0-9e3ff68e11b4",
+      "resultingCurrentVersion": {
+        "versionId": "c3dbec9f-1bbd-4a3f-bcf0-9e3ff68e11b4",
+        "queryDigest": "1405ded9c409782294edfcd7fe455c57480e4ad2999273a1fd8bf4ea363c5cd4"
+      },
+      "events": [
+        {
+          "eventId": "3dfa394a-44f4-4bf8-8288-a4429d07bc0a",
+          "status": "requested",
+          "generationRunId": "d4cc1d2a-3e13-4bc7-94f5-ded5b97c66ca",
+          "ownerInstanceId": "49f02a65-ca84-4b22-960e-d5d5f9a9ef6e",
+          "occurredAt": "2026-08-25T00:15:59.280624Z"
+        },
+        {
+          "eventId": "20655809-f6f1-4318-829e-d3eb52eb4a22",
+          "status": "completed",
+          "generationRunId": "d4cc1d2a-3e13-4bc7-94f5-ded5b97c66ca",
+          "occurredAt": "2026-08-25T00:16:30.047065Z"
+        }
+      ],
+      "failure": null,
+      "createdAt": "2026-08-25T00:15:59.280624Z",
+      "updatedAt": "2026-08-25T00:16:30.047065Z",
+      "writerOutcome": "ready"
+    }
+  },
+  "elapsedMs": 30914
+}

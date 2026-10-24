@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ChartSearchAI answer paths · Open Clinical AI</title>
+<meta name="description" content="How OpenClinAI evaluations compare ChartSearchAI's built-in answers with Med Agent Hub answers, and which differences reflect capability." />
+<link rel="canonical" href="https://openclinai.org/chartsearchai/comparing-answer-paths/" />
+<meta property="og:url" content="https://openclinai.org/chartsearchai/comparing-answer-paths/" />
+<meta property="og:title" content="ChartSearchAI answer paths" />
+<meta property="og:description" content="How OpenClinAI evaluations compare ChartSearchAI's built-in answers with Med Agent Hub answers, and which differences reflect capability." />
+<meta property="og:image" content="https://openclinai.org/media/openmrs-evidence-poster.webp" />
+<meta name="theme-color" content="#4b2e83" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="/styles.css?v=20260915-projects" />
+<link rel="stylesheet" href="/projects.css?v=20261022-diagram" />
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header project-header">
+<a class="brand" href="/" aria-label="Open Clinical AI home">
+<span class="brand-mark" aria-hidden="true">
+<span>
+</span>
+</span>
+<span>Open Clinical AI</span>
+</a>
+<nav class="primary-nav" aria-label="Primary navigation">
+<a href="/#projects">Projects</a>
+<a href="https://reports.openclinai.org/">Evidence</a>
+<a href="/#about">About</a>
+</nav>
+<details class="nav-toggle">
+<summary>Menu</summary>
+<nav aria-label="Mobile navigation">
+<a href="/#projects">Projects</a>
+<a href="https://reports.openclinai.org/">Evidence</a>
+<a href="/#about">About</a>
+</nav>
+</details>
+</header>
+<main id="main-content" tabindex="-1">
+<section class="project-intro page-width">
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+<a href="/chartsearchai/">ChartSearchAI</a>
+</nav>
+<div class="overview-grid ">
+<div>
+<p class="section-kicker">ChartSearchAI</p>
+<h1>Answer paths and their evaluation</h1>
+<p class="overview-lead">ChartSearchAI can answer a clinician&rsquo;s question about a patient chart with its own built-in pipeline, or it can pass the question to Med Agent Hub. This page explains how the two approaches differ, how our evaluations configure them so that the comparison is fair, and which differences in the results reflect genuine differences in capability.</p>
+<div class="project-actions">
+<a class="button button-primary" href="https://reports.openclinai.org/">Inspect published evaluations <span aria-hidden="true">→</span>
+</a>
+</div>
+</div>
+</div>
+</section>
+<section class="section page-width">
+<h2>Architecture</h2>
+<figure class="diagram-figure">
+<div class="table-scroll">
+<svg class="architecture-diagram" viewBox="0 0 960 500" role="img" aria-labelledby="arch-title arch-desc" xmlns="http://www.w3.org/2000/svg">
+<title id="arch-title">ChartSearchAI answer paths</title>
+<desc id="arch-desc">A clinician's question reaches the ChartSearchAI module in OpenMRS, which sends it either to the built-in pipeline or to Med Agent Hub. Both read patient records from QueryStore and call a language model; the Hub also uses WHO guidance and checks dates, citations and drug safety. A default installation runs the model inside the OpenMRS server; our evaluations run it on one shared server for both paths.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5f6368"/></marker></defs>
+<rect class="step" x="330" y="10" width="300" height="44" rx="6"/>
+<text class="step-text" x="480.0" y="37.2" text-anchor="middle" font-size="15">A clinician asks about a patient</text>
+<line class="flow" x1="480" y1="54" x2="480" y2="78" marker-end="url(#arrow)"/>
+<rect class="frame" x="80" y="80" width="800" height="58" rx="6"/>
+<text class="step-text" x="480.0" y="104.9" text-anchor="middle" font-size="14">ChartSearchAI module in OpenMRS</text>
+<text class="step-text" x="480.0" y="122.9" text-anchor="middle" font-size="14">Checks access, keeps the conversation and sends the question to one answer path</text>
+<line class="flow" x1="205" y1="138" x2="205" y2="158" marker-end="url(#arrow)"/>
+<line class="flow" x1="755" y1="138" x2="755" y2="158" marker-end="url(#arrow)"/>
+<rect class="head" x="40" y="160" width="330" height="38" rx="6"/>
+<text class="head-text" x="205.0" y="184.2" text-anchor="middle" font-size="15">Built-in ChartSearchAI pipeline</text>
+<rect class="head" x="590" y="160" width="330" height="38" rx="6"/>
+<text class="head-text" x="755.0" y="184.2" text-anchor="middle" font-size="15">Med Agent Hub</text>
+<rect class="step" x="40" y="212" width="330" height="40" rx="6"/>
+<text class="step-text" x="205.0" y="236.9" text-anchor="middle" font-size="14">Retrieve the chart from QueryStore</text>
+<rect class="step" x="40" y="264" width="330" height="40" rx="6"/>
+<text class="step-text" x="205.0" y="288.9" text-anchor="middle" font-size="14">Build one prompt</text>
+<line class="flow" x1="205" y1="252" x2="205" y2="264" marker-end="url(#arrow)"/>
+<rect class="step" x="40" y="316" width="330" height="40" rx="6"/>
+<text class="step-text" x="205.0" y="340.9" text-anchor="middle" font-size="14">Call the language model once</text>
+<line class="flow" x1="205" y1="304" x2="205" y2="316" marker-end="url(#arrow)"/>
+<rect class="step" x="40" y="368" width="330" height="40" rx="6"/>
+<text class="step-text" x="205.0" y="392.9" text-anchor="middle" font-size="14">Apply drug-safety checks and cite records</text>
+<line class="flow" x1="205" y1="356" x2="205" y2="368" marker-end="url(#arrow)"/>
+<rect class="step" x="590" y="212" width="330" height="40" rx="6"/>
+<text class="step-text" x="755.0" y="236.9" text-anchor="middle" font-size="14">Retrieve records and WHO guidance</text>
+<rect class="step" x="590" y="264" width="330" height="40" rx="6"/>
+<text class="step-text" x="755.0" y="288.9" text-anchor="middle" font-size="14">Call the language model one or more times</text>
+<line class="flow" x1="755" y1="252" x2="755" y2="264" marker-end="url(#arrow)"/>
+<rect class="step" x="590" y="316" width="330" height="40" rx="6"/>
+<text class="step-text" x="755.0" y="340.9" text-anchor="middle" font-size="14">Check dates, citations and drug safety</text>
+<line class="flow" x1="755" y1="304" x2="755" y2="316" marker-end="url(#arrow)"/>
+<rect class="step" x="590" y="368" width="330" height="40" rx="6"/>
+<text class="step-text" x="755.0" y="392.9" text-anchor="middle" font-size="14">Return the answer, confidence and In-Depth</text>
+<line class="flow" x1="755" y1="356" x2="755" y2="368" marker-end="url(#arrow)"/>
+<rect class="store" x="405" y="212" width="150" height="64" rx="6"/>
+<text class="step-text" x="480.0" y="239.9" text-anchor="middle" font-size="14">QueryStore</text>
+<text class="step-text" x="480.0" y="257.9" text-anchor="middle" font-size="14">patient records</text>
+<line class="flow" x1="370" y1="232" x2="403" y2="240" marker-end="url(#arrow)"/>
+<line class="flow" x1="590" y1="232" x2="557" y2="240" marker-end="url(#arrow)"/>
+<rect class="store" x="405" y="300" width="150" height="64" rx="6"/>
+<text class="step-text" x="480.0" y="327.9" text-anchor="middle" font-size="14">Language</text>
+<text class="step-text" x="480.0" y="345.9" text-anchor="middle" font-size="14">model</text>
+<line class="flow" x1="370" y1="336" x2="403" y2="334" marker-end="url(#arrow)"/>
+<line class="flow" x1="590" y1="284" x2="557" y2="322" marker-end="url(#arrow)"/>
+<line class="flow" x1="480" y1="364" x2="480" y2="420" marker-end="url(#arrow)"/>
+<rect class="note" x="40" y="422" width="880" height="70" rx="6"/>
+<text class="note-text" x="480.0" y="452.9" text-anchor="middle" font-size="14">Where the model runs: a default installation starts it inside the OpenMRS server (Gemma 4 E4B).</text>
+<text class="note-text" x="480.0" y="470.9" text-anchor="middle" font-size="14">In our evaluations both paths call one shared model server with a graphics chip, and every request is recorded.</text>
+</svg>
+</div>
+<figcaption>The two answer paths, the shared record source and where the language model runs.</figcaption>
+</figure>
+<p>When ChartSearchAI answers a question with its built-in pipeline, it retrieves the patient&rsquo;s records, writes a single prompt for a language model, sends that prompt once, applies its drug-safety checks to the reply and returns an answer that cites the records it used.</p>
+<p>When ChartSearchAI uses <a href="/med-agent-hub/">Med Agent Hub</a>, it passes the question to the Hub and displays the Hub&rsquo;s response. The Hub retrieves the records itself, may call the model several times and checks the answer before and after it is shown. ChartSearchAI&rsquo;s own answer pipeline is not involved.</p>
+<p>In both cases OpenMRS controls which users may ask about which patients, keeps the conversation history and records which path produced each answer.</p>
+</section>
+<section class="section page-width">
+<h2>Model hosting</h2>
+<p>Where the built-in pipeline&rsquo;s language model runs is a separate setting from which path answers. By default, ChartSearchAI starts the model inside the OpenMRS server; the recommended model is Gemma 4 E4B, a file of about 5 GB. A site can instead direct ChartSearchAI to a separate model server. This changes only where the single model call is sent. The answer is still produced by ChartSearchAI&rsquo;s own pipeline.</p>
+<p>ChartSearchAI&rsquo;s Docker installation runs the model on the computer&rsquo;s processor, because, as its documentation notes, Docker cannot use a graphics chip, even on a Mac. Its macOS installation runs natively and uses the Mac&rsquo;s graphics chip.</p>
+</section>
+<section class="section page-width">
+<h2>Evaluation configuration</h2>
+<p>ChartSearchAI runs with its default settings, as an OpenMRS site receives it, including sending the whole patient chart with every question. The only setting we change is the location of its language model.</p>
+<p>Both paths use the same language model on the same model server, which runs on a computer with a graphics chip, so neither path benefits from a stronger model or faster hardware.</p>
+<p>Every request that either path sends to the model is recorded, so that we can verify exactly what information each path gave the model.</p>
+<p class="scope-note">Because the model runs on a shared server, these evaluations do not test how ChartSearchAI starts, sizes, warms and stops its own model inside OpenMRS. Testing that requires a separate run of the installation as shipped.</p>
+</section>
+<section class="section page-width">
+<h2>Capability differences</h2>
+<p>With both paths on their shipped settings, the following differences remain. They reflect what each path is able to do, not how we configured it.</p>
+<div class="table-scroll">
+<table class="comparison-table">
+<thead>
+<tr><th scope="col">Capability</th><th scope="col">Built-in ChartSearchAI pipeline</th><th scope="col">Med Agent Hub</th></tr>
+</thead>
+<tbody>
+<tr><th scope="row">Awareness of the current date</th><td>The prompt does not state the current date, so questions about upcoming visits or the past year depend on the model inferring it.</td><td>The model receives the current date and each chart date&rsquo;s distance from it.</td></tr>
+<tr><th scope="row">Checking dates in the answer</th><td>Dates in the answer are not checked against the chart.</td><td>Dates in the answer are checked against the chart&rsquo;s dated records; an incorrect date is corrected or marked.</td></tr>
+<tr><th scope="row">Checking that citations support the answer</th><td>This check is available but turned off by default.</td><td>Each cited record is checked, and an unsupported citation is labelled.</td></tr>
+<tr><th scope="row">Clinical guideline sources</th><td>No guideline sources are available to the model.</td><td>The Hub can cite records of WHO guidance from its knowledge base.</td></tr>
+<tr><th scope="row">Drug-safety checks</th><td>Drug-safety checks are applied.</td><td>Drug-safety checks are applied.</td></tr>
+<tr><th scope="row">Second review and supporting detail</th><td>Neither is available.</td><td>The checked configuration adds a second model review and an &ldquo;In Depth&rdquo; section, and labels its findings rather than hiding them.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<section class="page-width project-callout">
+<div>
+<h2>Scoring and limitations</h2>
+<p>Each evaluation asks both paths the same questions and conversations about three HIV patient charts. A separate AI reviewer, working from a fixed scoring guide, scores every answer against the chart for accuracy, completeness, relevance and potential harm.</p>
+<p class="scope-note">When the same answers have been scored twice, the averages have moved by up to about 0.6 points, so small differences between the paths should not be treated as meaningful. These are research findings, not product certifications, and every AI-generated answer requires review by a clinician.</p>
+</div>
+<div class="resource-panel">
+<a class="text-link" href="https://reports.openclinai.org/">Browse published evaluations <span aria-hidden="true">→</span>
+</a>
+<a class="text-link" href="/validation-harness/">Read how evaluations are run <span aria-hidden="true">→</span>
+</a>
+<a class="text-link" href="https://github.com/openmrs/openmrs-module-chartsearchai#readme">Read the ChartSearchAI installation guide <span aria-hidden="true">→</span>
+</a>
+</div>
+</section>
+</main>
+<footer class="site-footer">
+<div class="page-width footer-grid">
+<div>
+<a class="brand footer-brand" href="/">
+<span class="brand-mark" aria-hidden="true">
+<span>
+</span>
+</span>
+<span>Open Clinical AI</span>
+</a>
+<p>Open-source tools for clinical questions, reporting and reproducible evaluation.</p>
+</div>
+<nav aria-label="Project links">
+<a href="/chartsearchai/">ChartSearchAI</a>
+<a href="/catalyst/">Catalyst</a>
+<a href="/med-agent-hub/">Med Agent Hub</a>
+<a href="/validation-harness/">Validation Harness</a>
+</nav>
+<p class="footer-disclaimer">For research and demonstration. AI output can be inaccurate and requires review.<br />
+<a href="https://digi.uw.edu/">DIGI at the University of Washington</a>
+</p>
+</div>
+</footer>
+</body>
+</html>

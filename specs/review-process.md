@@ -38,11 +38,11 @@ agent runs it. What the maintainer's process is, and where ours fell short on th
 | Layer | When | Cost | What it does |
 | --- | --- | --- | --- |
 | L0 Guards | every commit, blocking | none | secrets (hard block), focused or disabled tests, a new test file with no assertion, a mocked unit under test, trailer syntax |
-| L1 Probes | every push, blocking | one test run per probed commit | revert probe: the commit's tests fail with its main-code change reverted and pass with it restored; mutation probe: the tests fail under the mutation the commit names |
+| L1 Probes | every push, blocking | one test run per probed commit | revert probe: the commit's tests fail with its main-code change reverted and pass with it restored (a file changed only in comments or blank lines is not reverted); mutation probe: the tests fail under the mutation the commit names |
 | L2 Review | on request | 100 to 300k tokens per PR per pass | a fresh session per role runs the brief at the chosen effort and returns findings as JSON; a stack pass reads the merged top for contracts between layers |
 | L3 Scenarios | on request, optional | one harness run | the validation harness replays a comparison set against the deployed head and checks machine-readable expectations; the umbrella builds and deploys the head first |
 | L4 Model gate | on request, optional, slice changes only | two harness runs | a pre-registered gate (comparison set, dataset, baseline, threshold) run on base and head; the record quotes the number |
-| L5 Full evaluation | per milestone: a stack head ready to merge, a baseline rebuild, a model or provider change | about an hour of 12B time for the default | the harness runs the default matrix (`full-default`: 17 scenarios against the bundled arm and the Hub parity arm on one engine), scores it and produces its own report; further arms are the profiles the Hub advertises at run time; a previous run is cited only when a comparison is wanted |
+| L5 Full evaluation | per milestone: a stack head ready to merge, a baseline rebuild, a model or provider change | about an hour of 12B time for the default | the harness runs the default matrix (`full-default`: 17 scenarios against the bundled arm and the Hub's answer parity arm on one engine), scores it and produces its own report; further arms are the profiles the Hub advertises at run time; a previous run is cited only when a comparison is wanted |
 
 L0 and L1 are the default on every push. L2 to L5 run through `make review`. L0 to L2
 answer whether the code is right, L3 and L4 whether a change behaves or retrieves as
@@ -59,6 +59,7 @@ make review PR=<n> [REPO=chartsearchai|esm|querystore] [AGENT=claude|codex|gemin
             [EFFORT=low|medium|high] [ROUNDS=1] [STACK=1] [SCENARIOS=<set>] [GATE=<name>]
             [FULL=1] [SET=full-default] [PROFILES=<advertised Hub profiles>] [BASELINE=<run id>]
             [HEAD=<local ref> BASE=<local ref>]  review the layer before it is pushed
+            [MODEL=gpt-6.1-sol REASONING=medium]  the reviewer's model and effort (never a personal config's)
 make review MEASURE=<set> GOLD=<gold file>      a gate's baseline, before the gate is written
 make review FULL=1 [SET=] [PROFILES=]           the full evaluation without a PR
 make review-replies PR=<n> [REPO=]              draft thread replies from the last round
@@ -200,11 +201,16 @@ and a person at a terminal.
   number, threshold, date, who signed off. A threshold set after seeing the number is not
   a gate. The result goes in a dated record under `reviews/`.
 - A full evaluation (L5) is a harness run of a matrix, not a gate. The `full-default`
-  comparison set in the harness is the default matrix, approved 20 October:
+  comparison set in the harness is the default matrix, approved 20 October, its Hub arm
+  made the answer parity profile on 22 October:
   - arms: `engine-parity-bundled-12b` (ChartSearchAI alone, `provider=bundled`, the 12B
-    engine through the bundled tap) and `engine-parity-hub-12b` (the same request with
-    `provider=hub`, the Hub's single-12B checked profile, the same engine through the
-    Hub tap), so the two differ only by the Hub being in the loop;
+    engine through the bundled tap) and `engine-parity-hub-answer-12b` (the same request
+    with `provider=hub` and the Hub's `single-12b-answer` product profile, one answer call with
+    deterministic checks and no review or In-Depth, the same engine through the Hub tap), so
+    the two differ by the Hub being in the loop and not by the Hub's model review.
+    ChartSearchAI accepts only product profiles, so an evaluation profile cannot be an arm.
+    A checked profile such as `single-12b-checked` (review, gates and In-Depth) is an added arm
+    through `PROFILES=`;
   - scenarios: the twelve single-turn scenarios of `hub-profile-candidate` (three
     patients; dates, tables, trends, appointments, labs, one out-of-chart abstention)
     and the five `convo-*` conversations (medications-adherence, diagnosis-evidence,
@@ -217,6 +223,13 @@ and a person at a terminal.
   the judge's scores and the captured evidence; the dated record under `reviews/` cites
   the run directory and, when `BASELINE` was given, the earlier report it was compared
   with. The report, not the score, is what publication consumes.
+- Every harness run starts the live dashboard (`make validate-dashboard`,
+  http://localhost:8099), which follows the newest run. When an L5 run is judged, the run
+  step freezes that dashboard beside the report and publishes both to the reports site
+  (`scripts/publish-report.sh`), so a PR or record can link the published page;
+  `NO_PUBLISH=1` keeps them local, `PUBLISH=<run dir>` publishes a judged run later, and
+  `L5_RESUME=<run dir>` with `PROFILES=` adds arms to a finished run without re-running
+  the cells it already completed.
 
 ## Mapping to the maintainer's checks
 
@@ -249,8 +262,9 @@ and a person at a terminal.
       `SET=`, `PROFILES=` from the Hub's advertised profiles, optional `BASELINE=`; tap
       setup and property restore in the run step; the report recorded under `reviews/`
       ([record](reviews/2026-10-20-review-layers.md#l5-full-evaluation)).
-- [ ] Applied to the open round: the twelve blocking findings fixed under L0 to L2 with
-      probes and replies from the ledger; recorded under `reviews/`.
+- [x] Applied to the open round: the twelve blocking findings fixed under L0 to L2 with
+      probes and replies from the ledger; recorded under `reviews/`
+      ([record](reviews/2026-10-20-round3-remediation.md)).
 - [x] `openmrs-contribution.md` review-round rules point here instead of restating them
       ([the contribution spec's round rules](openmrs-contribution.md)).
 

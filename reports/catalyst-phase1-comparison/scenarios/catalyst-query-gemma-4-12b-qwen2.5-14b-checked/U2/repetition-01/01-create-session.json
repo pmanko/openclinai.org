@@ -1,0 +1,960 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "POST",
+    "path": "/v1/catalyst/workbench/sessions",
+    "body": {
+      "contractVersion": "catalyst.workbench.session.request.v1",
+      "deploymentMode": "demo",
+      "question": "Show the prescribing clinician's name for every medication request.",
+      "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+      "dataSourceId": "openmrs-hiv"
+    }
+  },
+  "response": {
+    "httpStatus": 201,
+    "body": {
+      "contractVersion": "catalyst.workbench.session.v1",
+      "sessionId": "b971bb0f-5aa5-471f-80c4-fd3bccfbacc3",
+      "question": "Show the prescribing clinician's name for every medication request.",
+      "name": "Show the prescribing clinician's name for every medication request.",
+      "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+      "datasetId": "hiv-20260731T000741Z",
+      "datasetVersion": "hiv-20260731T000741Z",
+      "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+      "currentVersionId": "866a1bf8-468d-42c3-8f00-743188b1547d",
+      "browserState": {},
+      "provenance": {
+        "dataSourceId": "openmrs-hiv",
+        "catalogContextSourceId": "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+        "catalystTraceId": "890775f9-ed76-47dd-bd75-bb7915a7784c",
+        "profileSnapshot": {
+          "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+          "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b",
+            "qwen2.5-14b"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b",
+            "query_review": "qwen2.5-14b"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            },
+            "query_review": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_review",
+            "query_finalize"
+          ],
+          "unavailableReasons": []
+        },
+        "datasetSnapshot": {
+          "datasetId": "hiv-20260731T000741Z",
+          "dataSource": "openmrs-hiv-fhir-postgresql",
+          "pipelineRunId": "hiv-20260731T000741Z",
+          "synthetic": null,
+          "patients": 5285,
+          "results": 427915,
+          "testTypes": 143,
+          "firstObservedAt": "2022-11-07T21:50:36Z",
+          "lastObservedAt": "2026-08-11T00:00:00Z"
+        },
+        "generationHttpStatus": 200,
+        "generationOutcome": {
+          "contractVersion": "catalyst.query.v1",
+          "deploymentMode": "demo",
+          "status": "rejected",
+          "question": "Show the prescribing clinician's name for every medication request.",
+          "message": "Query review failed: review repair failed deterministic lint",
+          "validation": {
+            "status": "rejected",
+            "checks": [
+              {
+                "name": "query_review",
+                "status": "failed",
+                "message": "Query review failed: review repair failed deterministic lint"
+              }
+            ]
+          },
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "traceId": "890775f9-ed76-47dd-bd75-bb7915a7784c",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ]
+          },
+          "diagnosticCandidate": {
+            "executable": false,
+            "candidate": {
+              "status": "ready",
+              "target": {
+                "dataSource": "openmrs-hiv-fhir-postgresql",
+                "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+                "dialect": "postgresql",
+                "approvedViews": [
+                  "analytics.hiv_concept_mapping_v1",
+                  "analytics.hiv_medication_request_fact_v1",
+                  "analytics.hiv_observation_fact_v1",
+                  "analytics.hiv_patient_dim_v1",
+                  "analytics.hiv_visit_fact_v1",
+                  "analytics.pipeline_freshness_v1",
+                  "analytics.pipeline_run_v1",
+                  "public.condition_flat",
+                  "public.encounter_flat",
+                  "public.medication_flat",
+                  "public.medication_request_flat",
+                  "public.observation_flat",
+                  "public.patient_flat"
+                ]
+              },
+              "sql": "SELECT t2.family_name, t2.given_name FROM public.medication_request_flat AS t1 JOIN public.patient_flat AS t2 ON t1.req_practitioner_id = t2.id",
+              "parameters": [],
+              "expectedColumns": [
+                {
+                  "name": "family_name",
+                  "logicalType": "string",
+                  "nullable": true
+                },
+                {
+                  "name": "given_name",
+                  "logicalType": "string",
+                  "nullable": true
+                }
+              ]
+            }
+          },
+          "modelCollaboration": {
+            "writer": {
+              "model": "gemma-4-12b",
+              "candidate": {
+                "status": "ready",
+                "target": {
+                  "dataSource": "openmrs-hiv-fhir-postgresql",
+                  "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+                  "dialect": "postgresql",
+                  "approvedViews": [
+                    "analytics.hiv_concept_mapping_v1",
+                    "analytics.hiv_medication_request_fact_v1",
+                    "analytics.hiv_observation_fact_v1",
+                    "analytics.hiv_patient_dim_v1",
+                    "analytics.hiv_visit_fact_v1",
+                    "analytics.pipeline_freshness_v1",
+                    "analytics.pipeline_run_v1",
+                    "public.condition_flat",
+                    "public.encounter_flat",
+                    "public.medication_flat",
+                    "public.medication_request_flat",
+                    "public.observation_flat",
+                    "public.patient_flat"
+                  ]
+                },
+                "sql": "SELECT t2.family_name, t2.given_name FROM public.medication_request_flat AS t1 JOIN public.patient_flat AS t2 ON t1.req_practitioner_id = t2.id",
+                "parameters": [],
+                "expectedColumns": [
+                  {
+                    "name": "family_name",
+                    "logicalType": "string",
+                    "nullable": true
+                  },
+                  {
+                    "name": "given_name",
+                    "logicalType": "string",
+                    "nullable": true
+                  }
+                ]
+              },
+              "lintFindings": [
+                {
+                  "code": "catalog.unknown_column",
+                  "stage": "catalog_identifiers",
+                  "severity": "error",
+                  "path": "sql",
+                  "message": "SQL references fields absent from the approved catalog.",
+                  "evidence": "t2.family_name, t2.given_name",
+                  "suggestedAction": "Replace or remove every field not present in the catalog."
+                }
+              ]
+            },
+            "reviewer": {
+              "model": "qwen2.5-14b",
+              "decision": "repair",
+              "candidate": {
+                "status": "ready",
+                "target": {
+                  "dataSource": "openmrs-hiv-fhir-postgresql",
+                  "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+                  "dialect": "postgresql",
+                  "approvedViews": [
+                    "analytics.hiv_concept_mapping_v1",
+                    "analytics.hiv_medication_request_fact_v1",
+                    "analytics.hiv_observation_fact_v1",
+                    "analytics.hiv_patient_dim_v1",
+                    "analytics.hiv_visit_fact_v1",
+                    "analytics.pipeline_freshness_v1",
+                    "analytics.pipeline_run_v1",
+                    "public.condition_flat",
+                    "public.encounter_flat",
+                    "public.medication_flat",
+                    "public.medication_request_flat",
+                    "public.observation_flat",
+                    "public.patient_flat"
+                  ]
+                },
+                "sql": "SELECT t2.family_name, t2.given_name FROM public.medication_request_flat AS t1 JOIN public.patient_flat AS t2 ON t1.req_practitioner_id = t2.id",
+                "parameters": [],
+                "expectedColumns": [
+                  {
+                    "name": "family_name",
+                    "logicalType": "string",
+                    "nullable": true
+                  },
+                  {
+                    "name": "given_name",
+                    "logicalType": "string",
+                    "nullable": true
+                  }
+                ]
+              },
+              "checks": [
+                {
+                  "name": "status",
+                  "status": "passed"
+                },
+                {
+                  "name": "approved-view",
+                  "status": "failed"
+                },
+                {
+                  "name": "field-grounding",
+                  "status": "failed"
+                },
+                {
+                  "name": "one-statement-read-only",
+                  "status": "passed"
+                },
+                {
+                  "name": "dialect-compatibility",
+                  "status": "passed"
+                },
+                {
+                  "name": "typed-parameter-binding",
+                  "status": "passed"
+                },
+                {
+                  "name": "output-column-agreement",
+                  "status": "failed"
+                },
+                {
+                  "name": "row-limit-policy",
+                  "status": "passed"
+                },
+                {
+                  "name": "absence-of-invented-identifiers",
+                  "status": "failed"
+                }
+              ]
+            },
+            "finalLintFindings": [
+              {
+                "code": "catalog.unknown_column",
+                "stage": "catalog_identifiers",
+                "severity": "error",
+                "path": "sql",
+                "message": "SQL references fields absent from the approved catalog.",
+                "evidence": "t2.family_name, t2.given_name",
+                "suggestedAction": "Replace or remove every field not present in the catalog."
+              }
+            ]
+          }
+        }
+      },
+      "status": "active",
+      "createdAt": "2026-08-25T01:08:15.962996Z",
+      "updatedAt": "2026-08-25T01:09:22.764750Z",
+      "versions": [
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "3628bf5a-4ac6-4051-94b4-374190122380",
+          "sessionId": "b971bb0f-5aa5-471f-80c4-fd3bccfbacc3",
+          "parentVersionId": null,
+          "ordinal": 1,
+          "authorType": "model",
+          "sql": "SELECT t2.family_name, t2.given_name FROM public.medication_request_flat AS t1 JOIN public.patient_flat AS t2 ON t1.req_practitioner_id = t2.id",
+          "parameters": [],
+          "expectedColumns": [
+            {
+              "name": "family_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "given_name",
+              "logicalType": "string",
+              "nullable": true
+            }
+          ],
+          "queryDigest": "2f67797b35dd47a974476034873cdbca916207d9cf6895ac1eee14de3d3249e7",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "traceId": "890775f9-ed76-47dd-bd75-bb7915a7784c",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "rejected",
+            "hubTraceId": "890775f9-ed76-47dd-bd75-bb7915a7784c",
+            "generationAttempts": [],
+            "generationValidation": {
+              "status": "rejected",
+              "checks": [
+                {
+                  "name": "query_review",
+                  "status": "failed",
+                  "message": "Query review failed: review repair failed deterministic lint"
+                }
+              ]
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b",
+              "qwen2.5-14b"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b",
+              "query_review": "qwen2.5-14b"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "query_review": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_review",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "catalystTraceId": "890775f9-ed76-47dd-bd75-bb7915a7784c",
+            "collaborationRole": "writer",
+            "model": "gemma-4-12b",
+            "lintFindings": [
+              {
+                "code": "catalog.unknown_column",
+                "stage": "catalog_identifiers",
+                "severity": "error",
+                "path": "sql",
+                "message": "SQL references fields absent from the approved catalog.",
+                "evidence": "t2.family_name, t2.given_name",
+                "suggestedAction": "Replace or remove every field not present in the catalog."
+              }
+            ],
+            "turnId": "67fd6824-4fda-47fc-9d07-d466619557ed",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": null,
+            "effectiveBaseVersion": null,
+            "manualVersion": null,
+            "editorSnapshotDigest": null,
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "6467d03e-efd8-442a-b5f6-d66cc0f164f5",
+              "evidenceDigest": "49fe65a2b5146dff4ea5f6fd7c73872a3a9deb964723d74097510a894ce5e66c",
+              "detailPath": "/v1/catalyst/workbench/sessions/b971bb0f-5aa5-471f-80c4-fd3bccfbacc3/turns/67fd6824-4fda-47fc-9d07-d466619557ed/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+              "profileName": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+              "profileDigest": "ed71b2719f421b3edb7ad17a47ae1aea290f8b1d079a633ce23e4dea369565ab",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4",
+                "modelId": "gemma-4-12b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": [],
+              "reviewer": {
+                "role": "reviewer",
+                "providerId": "med-agent-hub",
+                "modelClass": "qwen2.5",
+                "modelId": "qwen2.5-14b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-review",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                  "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+                }
+              }
+            },
+            "hubRequestDigest": "5db179e26c5a5aca3acda6b950ede3d2623ead38bdf4c1d3b05928f6bf06e953"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T01:09:22.764750Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "866a1bf8-468d-42c3-8f00-743188b1547d",
+          "sessionId": "b971bb0f-5aa5-471f-80c4-fd3bccfbacc3",
+          "parentVersionId": "3628bf5a-4ac6-4051-94b4-374190122380",
+          "ordinal": 2,
+          "authorType": "model_repair",
+          "sql": "SELECT t2.family_name, t2.given_name FROM public.medication_request_flat AS t1 JOIN public.patient_flat AS t2 ON t1.req_practitioner_id = t2.id",
+          "parameters": [],
+          "expectedColumns": [
+            {
+              "name": "family_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "given_name",
+              "logicalType": "string",
+              "nullable": true
+            }
+          ],
+          "queryDigest": "2f67797b35dd47a974476034873cdbca916207d9cf6895ac1eee14de3d3249e7",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "traceId": "890775f9-ed76-47dd-bd75-bb7915a7784c",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "rejected",
+            "hubTraceId": "890775f9-ed76-47dd-bd75-bb7915a7784c",
+            "generationAttempts": [],
+            "generationValidation": {
+              "status": "rejected",
+              "checks": [
+                {
+                  "name": "query_review",
+                  "status": "failed",
+                  "message": "Query review failed: review repair failed deterministic lint"
+                }
+              ]
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b",
+              "qwen2.5-14b"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b",
+              "query_review": "qwen2.5-14b"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "query_review": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_review",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "catalystTraceId": "890775f9-ed76-47dd-bd75-bb7915a7784c",
+            "collaborationRole": "reviewer",
+            "model": "qwen2.5-14b",
+            "decision": "repair",
+            "checks": [
+              {
+                "name": "status",
+                "status": "passed"
+              },
+              {
+                "name": "approved-view",
+                "status": "failed"
+              },
+              {
+                "name": "field-grounding",
+                "status": "failed"
+              },
+              {
+                "name": "one-statement-read-only",
+                "status": "passed"
+              },
+              {
+                "name": "dialect-compatibility",
+                "status": "passed"
+              },
+              {
+                "name": "typed-parameter-binding",
+                "status": "passed"
+              },
+              {
+                "name": "output-column-agreement",
+                "status": "failed"
+              },
+              {
+                "name": "row-limit-policy",
+                "status": "passed"
+              },
+              {
+                "name": "absence-of-invented-identifiers",
+                "status": "failed"
+              }
+            ],
+            "finalDecision": null,
+            "finalChecks": [],
+            "finalLintFindings": [
+              {
+                "code": "catalog.unknown_column",
+                "stage": "catalog_identifiers",
+                "severity": "error",
+                "path": "sql",
+                "message": "SQL references fields absent from the approved catalog.",
+                "evidence": "t2.family_name, t2.given_name",
+                "suggestedAction": "Replace or remove every field not present in the catalog."
+              }
+            ],
+            "turnId": "67fd6824-4fda-47fc-9d07-d466619557ed",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": null,
+            "effectiveBaseVersion": null,
+            "manualVersion": null,
+            "editorSnapshotDigest": null,
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "6467d03e-efd8-442a-b5f6-d66cc0f164f5",
+              "evidenceDigest": "49fe65a2b5146dff4ea5f6fd7c73872a3a9deb964723d74097510a894ce5e66c",
+              "detailPath": "/v1/catalyst/workbench/sessions/b971bb0f-5aa5-471f-80c4-fd3bccfbacc3/turns/67fd6824-4fda-47fc-9d07-d466619557ed/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+              "profileName": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+              "profileDigest": "ed71b2719f421b3edb7ad17a47ae1aea290f8b1d079a633ce23e4dea369565ab",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4",
+                "modelId": "gemma-4-12b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": [],
+              "reviewer": {
+                "role": "reviewer",
+                "providerId": "med-agent-hub",
+                "modelClass": "qwen2.5",
+                "modelId": "qwen2.5-14b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-review",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                  "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+                }
+              }
+            },
+            "hubRequestDigest": "5db179e26c5a5aca3acda6b950ede3d2623ead38bdf4c1d3b05928f6bf06e953"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T01:09:22.764750Z"
+        }
+      ],
+      "currentVersion": {
+        "contractVersion": "catalyst.workbench.query-version.v1",
+        "versionId": "866a1bf8-468d-42c3-8f00-743188b1547d",
+        "sessionId": "b971bb0f-5aa5-471f-80c4-fd3bccfbacc3",
+        "parentVersionId": "3628bf5a-4ac6-4051-94b4-374190122380",
+        "ordinal": 2,
+        "authorType": "model_repair",
+        "sql": "SELECT t2.family_name, t2.given_name FROM public.medication_request_flat AS t1 JOIN public.patient_flat AS t2 ON t1.req_practitioner_id = t2.id",
+        "parameters": [],
+        "expectedColumns": [
+          {
+            "name": "family_name",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "given_name",
+            "logicalType": "string",
+            "nullable": true
+          }
+        ],
+        "queryDigest": "2f67797b35dd47a974476034873cdbca916207d9cf6895ac1eee14de3d3249e7",
+        "provenance": {
+          "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+          "traceId": "890775f9-ed76-47dd-bd75-bb7915a7784c",
+          "contextSourceIds": [
+            "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+          ],
+          "sourceContract": "catalyst.query.v1",
+          "sourceStatus": "rejected",
+          "hubTraceId": "890775f9-ed76-47dd-bd75-bb7915a7784c",
+          "generationAttempts": [],
+          "generationValidation": {
+            "status": "rejected",
+            "checks": [
+              {
+                "name": "query_review",
+                "status": "failed",
+                "message": "Query review failed: review repair failed deterministic lint"
+              }
+            ]
+          },
+          "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b",
+            "qwen2.5-14b"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b",
+            "query_review": "qwen2.5-14b"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            },
+            "query_review": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_review",
+            "query_finalize"
+          ],
+          "unavailableReasons": [],
+          "catalystTraceId": "890775f9-ed76-47dd-bd75-bb7915a7784c",
+          "collaborationRole": "reviewer",
+          "model": "qwen2.5-14b",
+          "decision": "repair",
+          "checks": [
+            {
+              "name": "status",
+              "status": "passed"
+            },
+            {
+              "name": "approved-view",
+              "status": "failed"
+            },
+            {
+              "name": "field-grounding",
+              "status": "failed"
+            },
+            {
+              "name": "one-statement-read-only",
+              "status": "passed"
+            },
+            {
+              "name": "dialect-compatibility",
+              "status": "passed"
+            },
+            {
+              "name": "typed-parameter-binding",
+              "status": "passed"
+            },
+            {
+              "name": "output-column-agreement",
+              "status": "failed"
+            },
+            {
+              "name": "row-limit-policy",
+              "status": "passed"
+            },
+            {
+              "name": "absence-of-invented-identifiers",
+              "status": "failed"
+            }
+          ],
+          "finalDecision": null,
+          "finalChecks": [],
+          "finalLintFindings": [
+            {
+              "code": "catalog.unknown_column",
+              "stage": "catalog_identifiers",
+              "severity": "error",
+              "path": "sql",
+              "message": "SQL references fields absent from the approved catalog.",
+              "evidence": "t2.family_name, t2.given_name",
+              "suggestedAction": "Replace or remove every field not present in the catalog."
+            }
+          ],
+          "turnId": "67fd6824-4fda-47fc-9d07-d466619557ed",
+          "dataSourceId": "openmrs-hiv",
+          "observedBase": null,
+          "effectiveBaseVersion": null,
+          "manualVersion": null,
+          "editorSnapshotDigest": null,
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "6467d03e-efd8-442a-b5f6-d66cc0f164f5",
+            "evidenceDigest": "49fe65a2b5146dff4ea5f6fd7c73872a3a9deb964723d74097510a894ce5e66c",
+            "detailPath": "/v1/catalyst/workbench/sessions/b971bb0f-5aa5-471f-80c4-fd3bccfbacc3/turns/67fd6824-4fda-47fc-9d07-d466619557ed/generation-evidence"
+          },
+          "profileSnapshot": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "profileName": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+            "profileDigest": "ed71b2719f421b3edb7ad17a47ae1aea290f8b1d079a633ce23e4dea369565ab",
+            "writer": {
+              "role": "writer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4",
+              "modelId": "gemma-4-12b",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-generate",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+              }
+            },
+            "omissions": [],
+            "reviewer": {
+              "role": "reviewer",
+              "providerId": "med-agent-hub",
+              "modelClass": "qwen2.5",
+              "modelId": "qwen2.5-14b",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-review",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+              }
+            }
+          },
+          "hubRequestDigest": "5db179e26c5a5aca3acda6b950ede3d2623ead38bdf4c1d3b05928f6bf06e953"
+        },
+        "sourceFindingIds": [],
+        "repairProposalId": null,
+        "createdAt": "2026-08-25T01:09:22.764750Z"
+      },
+      "validations": [
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "2f67797b35dd47a974476034873cdbca916207d9cf6895ac1eee14de3d3249e7",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "invalid",
+          "advisory": true,
+          "checks": [
+            {
+              "name": "catalog_identifiers",
+              "status": "failed",
+              "findingIds": [
+                "finding-646bd48cc17265c9312f96f5"
+              ]
+            }
+          ],
+          "findings": [
+            {
+              "contractVersion": "catalyst.workbench.finding.v1",
+              "findingId": "finding-646bd48cc17265c9312f96f5",
+              "ruleCode": "catalog.unknown_column",
+              "severity": "error",
+              "stage": "catalog_identifiers",
+              "message": "SQL references fields absent from the approved catalog.",
+              "path": "sql",
+              "astUnit": null,
+              "span": null,
+              "evidence": "t2.family_name, t2.given_name",
+              "suggestedAction": "Replace or remove every field not present in the catalog.",
+              "repairability": "manual",
+              "validatorRevision": "catalyst.workbench.validator.v1"
+            }
+          ],
+          "durationMs": 0,
+          "validationId": "6d571c75-7396-4632-86ed-8e7553b4f300",
+          "sessionId": "b971bb0f-5aa5-471f-80c4-fd3bccfbacc3",
+          "versionId": "3628bf5a-4ac6-4051-94b4-374190122380",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T01:09:22.764750Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "2f67797b35dd47a974476034873cdbca916207d9cf6895ac1eee14de3d3249e7",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "invalid",
+          "advisory": true,
+          "checks": [
+            {
+              "name": "catalog_identifiers",
+              "status": "failed",
+              "findingIds": [
+                "finding-646bd48cc17265c9312f96f5"
+              ]
+            }
+          ],
+          "findings": [
+            {
+              "contractVersion": "catalyst.workbench.finding.v1",
+              "findingId": "finding-646bd48cc17265c9312f96f5",
+              "ruleCode": "catalog.unknown_column",
+              "severity": "error",
+              "stage": "catalog_identifiers",
+              "message": "SQL references fields absent from the approved catalog.",
+              "path": "sql",
+              "astUnit": null,
+              "span": null,
+              "evidence": "t2.family_name, t2.given_name",
+              "suggestedAction": "Replace or remove every field not present in the catalog.",
+              "repairability": "manual",
+              "validatorRevision": "catalyst.workbench.validator.v1"
+            }
+          ],
+          "durationMs": 0,
+          "validationId": "e38efe70-7501-4553-86c2-32d8549287d3",
+          "sessionId": "b971bb0f-5aa5-471f-80c4-fd3bccfbacc3",
+          "versionId": "866a1bf8-468d-42c3-8f00-743188b1547d",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T01:09:22.764750Z"
+        }
+      ],
+      "latestValidation": {
+        "contractVersion": "catalyst.workbench.validation.v1",
+        "queryDigest": "2f67797b35dd47a974476034873cdbca916207d9cf6895ac1eee14de3d3249e7",
+        "validatorRevision": "catalyst.workbench.validator.v1",
+        "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+        "status": "invalid",
+        "advisory": true,
+        "checks": [
+          {
+            "name": "catalog_identifiers",
+            "status": "failed",
+            "findingIds": [
+              "finding-646bd48cc17265c9312f96f5"
+            ]
+          }
+        ],
+        "findings": [
+          {
+            "contractVersion": "catalyst.workbench.finding.v1",
+            "findingId": "finding-646bd48cc17265c9312f96f5",
+            "ruleCode": "catalog.unknown_column",
+            "severity": "error",
+            "stage": "catalog_identifiers",
+            "message": "SQL references fields absent from the approved catalog.",
+            "path": "sql",
+            "astUnit": null,
+            "span": null,
+            "evidence": "t2.family_name, t2.given_name",
+            "suggestedAction": "Replace or remove every field not present in the catalog.",
+            "repairability": "manual",
+            "validatorRevision": "catalyst.workbench.validator.v1"
+          }
+        ],
+        "durationMs": 0,
+        "validationId": "e38efe70-7501-4553-86c2-32d8549287d3",
+        "sessionId": "b971bb0f-5aa5-471f-80c4-fd3bccfbacc3",
+        "versionId": "866a1bf8-468d-42c3-8f00-743188b1547d",
+        "ordinal": 1,
+        "createdAt": "2026-08-25T01:09:22.764750Z"
+      },
+      "executions": [],
+      "guidance": [],
+      "dataSourceId": "openmrs-hiv",
+      "draftSeed": null
+    }
+  },
+  "elapsedMs": 69258
+}

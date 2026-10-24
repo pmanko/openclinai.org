@@ -1,0 +1,1705 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "GET",
+    "path": "/v1/catalyst/workbench/sessions/352ecad4-9ce9-414e-9687-5aaab198bd0c",
+    "body": null
+  },
+  "response": {
+    "httpStatus": 200,
+    "body": {
+      "contractVersion": "catalyst.workbench.session.v1",
+      "sessionId": "352ecad4-9ce9-414e-9687-5aaab198bd0c",
+      "question": "Count CD4 count results by patient.",
+      "name": "Count CD4 count results by patient.",
+      "profileId": "catalyst-query-gemma-4-12b",
+      "datasetId": "hiv-20260731T000741Z",
+      "datasetVersion": "hiv-20260731T000741Z",
+      "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+      "currentVersionId": "0c323a0f-6aca-4181-acd8-1482bb6c07d0",
+      "browserState": {},
+      "provenance": {
+        "dataSourceId": "openmrs-hiv",
+        "catalogContextSourceId": "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+        "catalystTraceId": "b055a112-2175-44f2-973f-8bdbbd1be645",
+        "profileSnapshot": {
+          "profileId": "catalyst-query-gemma-4-12b",
+          "profileLabel": "Catalyst query — Gemma 4 12B writer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b-q4"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b-q4"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "561bb714d7f82dffc2789f302c0871684cb57cbe57f505da85d27e7db0494f9e",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": null
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_finalize"
+          ],
+          "unavailableReasons": []
+        },
+        "datasetSnapshot": {
+          "datasetId": "hiv-20260731T000741Z",
+          "dataSource": "openmrs-hiv-fhir-postgresql",
+          "pipelineRunId": "hiv-20260731T000741Z",
+          "synthetic": null,
+          "patients": 5285,
+          "results": 427915,
+          "testTypes": 143,
+          "firstObservedAt": "2022-11-07T21:50:36Z",
+          "lastObservedAt": "2026-08-11T00:00:00Z"
+        },
+        "generationHttpStatus": 200,
+        "generationOutcome": {
+          "contractVersion": "catalyst.query.v1",
+          "deploymentMode": "demo",
+          "status": "ready",
+          "question": "Count CD4 count results by patient.",
+          "target": {
+            "dataSource": "openmrs-hiv-fhir-postgresql",
+            "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+            "dialect": "postgresql",
+            "approvedViews": [
+              "analytics.hiv_concept_mapping_v1",
+              "analytics.hiv_medication_request_fact_v1",
+              "analytics.hiv_observation_fact_v1",
+              "analytics.hiv_patient_dim_v1",
+              "analytics.hiv_visit_fact_v1",
+              "analytics.pipeline_freshness_v1",
+              "analytics.pipeline_run_v1",
+              "public.condition_flat",
+              "public.encounter_flat",
+              "public.medication_flat",
+              "public.medication_request_flat",
+              "public.observation_flat",
+              "public.patient_flat"
+            ]
+          },
+          "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :concept_name GROUP BY patient_id",
+          "parameters": [
+            {
+              "name": "concept_name",
+              "type": "string",
+              "source": "question",
+              "value": "CD4 count"
+            }
+          ],
+          "expectedColumns": [
+            {
+              "name": "patient_id",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "validation": {
+            "status": "passed",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              },
+              {
+                "name": "named_analyte_constraint",
+                "status": "passed",
+                "message": "Every analyte named in the question is constrained by its catalog semantic dimension and canonical bound value."
+              }
+            ]
+          },
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b",
+            "traceId": "b055a112-2175-44f2-973f-8bdbbd1be645",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ]
+          }
+        }
+      },
+      "status": "active",
+      "createdAt": "2026-08-25T00:19:25.051667Z",
+      "updatedAt": "2026-08-25T00:20:25.818286Z",
+      "versions": [
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+          "sessionId": "352ecad4-9ce9-414e-9687-5aaab198bd0c",
+          "parentVersionId": null,
+          "ordinal": 1,
+          "authorType": "model",
+          "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :concept_name GROUP BY patient_id",
+          "parameters": [
+            {
+              "name": "concept_name",
+              "type": "string",
+              "source": "question",
+              "value": "CD4 count"
+            }
+          ],
+          "expectedColumns": [
+            {
+              "name": "patient_id",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b",
+            "traceId": "b055a112-2175-44f2-973f-8bdbbd1be645",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "ready",
+            "hubTraceId": "b055a112-2175-44f2-973f-8bdbbd1be645",
+            "generationValidation": {
+              "status": "passed",
+              "checks": [
+                {
+                  "name": "query_lint_attempt_1",
+                  "status": "passed",
+                  "message": "Candidate passed deterministic SQL lint."
+                },
+                {
+                  "name": "named_analyte_constraint",
+                  "status": "passed",
+                  "message": "Every analyte named in the question is constrained by its catalog semantic dimension and canonical bound value."
+                }
+              ]
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B writer",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b-q4"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b-q4"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "561bb714d7f82dffc2789f302c0871684cb57cbe57f505da85d27e7db0494f9e",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": null
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "catalystTraceId": "b055a112-2175-44f2-973f-8bdbbd1be645",
+            "turnId": "44679829-000b-4559-b9ac-d79cb650b5a8",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": null,
+            "effectiveBaseVersion": null,
+            "manualVersion": null,
+            "editorSnapshotDigest": null,
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "c40219ef-c43a-4789-b4e8-c89bd02f4f00",
+              "evidenceDigest": "54984cbfb618d7e725d25fe45a6af948d5911a59ed62eb0be4b93852f89ccd64",
+              "detailPath": "/v1/catalyst/workbench/sessions/352ecad4-9ce9-414e-9687-5aaab198bd0c/turns/44679829-000b-4559-b9ac-d79cb650b5a8/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b",
+              "profileName": "Catalyst query — Gemma 4 12B writer",
+              "profileDigest": "002e1be68707ffffb325de559d06d065b605a9b228c72d1b3f0b7122c1a34957",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4-12b",
+                "modelId": "gemma-4-12b-q4",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": []
+            },
+            "hubRequestDigest": "efe1d7706b66c004644677954af26fd68722f712bb36dbf665a70615ed43308c"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T00:19:51.327079Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "0c323a0f-6aca-4181-acd8-1482bb6c07d0",
+          "sessionId": "352ecad4-9ce9-414e-9687-5aaab198bd0c",
+          "parentVersionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+          "ordinal": 2,
+          "authorType": "model",
+          "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :concept_name GROUP BY patient_id",
+          "parameters": [
+            {
+              "name": "concept_name",
+              "type": "string",
+              "source": "question",
+              "value": "CD4%"
+            }
+          ],
+          "expectedColumns": [
+            {
+              "name": "patient_id",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "queryDigest": "6ec2ce7bc3d5e01825719c9189ed0ccf0e4223a615d484b6fef2b1d96a00b960",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b",
+            "traceId": "784ffcc6-46e2-4311-85f8-8bd2715a5a9a",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "ready",
+            "hubTraceId": "784ffcc6-46e2-4311-85f8-8bd2715a5a9a",
+            "generationValidation": {
+              "status": "passed",
+              "checks": [
+                {
+                  "name": "query_lint_attempt_1",
+                  "status": "passed",
+                  "message": "Candidate passed deterministic SQL lint."
+                },
+                {
+                  "name": "named_analyte_constraint",
+                  "status": "passed",
+                  "message": "Every analyte named in the question is constrained by its catalog semantic dimension and canonical bound value."
+                }
+              ]
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B writer",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b-q4"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b-q4"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "561bb714d7f82dffc2789f302c0871684cb57cbe57f505da85d27e7db0494f9e",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": null
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "turnId": "d2503146-263a-41b0-83c3-15431405e87a",
+            "catalystTraceId": "784ffcc6-46e2-4311-85f8-8bd2715a5a9a",
+            "revisionContextDigest": "4ea889f8a1e469b99bda3a1257fdd0dbfeb55bb33e6954023cd0570ec94e8e74",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": {
+              "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+              "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1"
+            },
+            "effectiveBaseVersion": {
+              "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+              "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1"
+            },
+            "manualVersion": null,
+            "editorSnapshotDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1",
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "b95a724b-1484-4189-bfe6-6689a33b4657",
+              "evidenceDigest": "d12803951f27bdc4f93f0cb97fcfa90b5c92dd5367c7ed23e72da3d168a8f378",
+              "detailPath": "/v1/catalyst/workbench/sessions/352ecad4-9ce9-414e-9687-5aaab198bd0c/turns/d2503146-263a-41b0-83c3-15431405e87a/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b",
+              "profileName": "Catalyst query — Gemma 4 12B writer",
+              "profileDigest": "002e1be68707ffffb325de559d06d065b605a9b228c72d1b3f0b7122c1a34957",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4-12b",
+                "modelId": "gemma-4-12b-q4",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": []
+            },
+            "hubRequestDigest": "fcf3d1f6daff28a5e5d7b91862a02b881ae5aaa9b227042238c0c00c81b90a06"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T00:20:25.818286Z"
+        }
+      ],
+      "currentVersion": {
+        "contractVersion": "catalyst.workbench.query-version.v1",
+        "versionId": "0c323a0f-6aca-4181-acd8-1482bb6c07d0",
+        "sessionId": "352ecad4-9ce9-414e-9687-5aaab198bd0c",
+        "parentVersionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+        "ordinal": 2,
+        "authorType": "model",
+        "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :concept_name GROUP BY patient_id",
+        "parameters": [
+          {
+            "name": "concept_name",
+            "type": "string",
+            "source": "question",
+            "value": "CD4%"
+          }
+        ],
+        "expectedColumns": [
+          {
+            "name": "patient_id",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "count",
+            "logicalType": "integer",
+            "nullable": false
+          }
+        ],
+        "queryDigest": "6ec2ce7bc3d5e01825719c9189ed0ccf0e4223a615d484b6fef2b1d96a00b960",
+        "provenance": {
+          "profileId": "catalyst-query-gemma-4-12b",
+          "traceId": "784ffcc6-46e2-4311-85f8-8bd2715a5a9a",
+          "contextSourceIds": [
+            "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+          ],
+          "sourceContract": "catalyst.query.v1",
+          "sourceStatus": "ready",
+          "hubTraceId": "784ffcc6-46e2-4311-85f8-8bd2715a5a9a",
+          "generationValidation": {
+            "status": "passed",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              },
+              {
+                "name": "named_analyte_constraint",
+                "status": "passed",
+                "message": "Every analyte named in the question is constrained by its catalog semantic dimension and canonical bound value."
+              }
+            ]
+          },
+          "profileLabel": "Catalyst query — Gemma 4 12B writer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b-q4"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b-q4"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "561bb714d7f82dffc2789f302c0871684cb57cbe57f505da85d27e7db0494f9e",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": null
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_finalize"
+          ],
+          "unavailableReasons": [],
+          "turnId": "d2503146-263a-41b0-83c3-15431405e87a",
+          "catalystTraceId": "784ffcc6-46e2-4311-85f8-8bd2715a5a9a",
+          "revisionContextDigest": "4ea889f8a1e469b99bda3a1257fdd0dbfeb55bb33e6954023cd0570ec94e8e74",
+          "dataSourceId": "openmrs-hiv",
+          "observedBase": {
+            "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+            "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1"
+          },
+          "effectiveBaseVersion": {
+            "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+            "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1"
+          },
+          "manualVersion": null,
+          "editorSnapshotDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1",
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "b95a724b-1484-4189-bfe6-6689a33b4657",
+            "evidenceDigest": "d12803951f27bdc4f93f0cb97fcfa90b5c92dd5367c7ed23e72da3d168a8f378",
+            "detailPath": "/v1/catalyst/workbench/sessions/352ecad4-9ce9-414e-9687-5aaab198bd0c/turns/d2503146-263a-41b0-83c3-15431405e87a/generation-evidence"
+          },
+          "profileSnapshot": {
+            "profileId": "catalyst-query-gemma-4-12b",
+            "profileName": "Catalyst query — Gemma 4 12B writer",
+            "profileDigest": "002e1be68707ffffb325de559d06d065b605a9b228c72d1b3f0b7122c1a34957",
+            "writer": {
+              "role": "writer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4-12b",
+              "modelId": "gemma-4-12b-q4",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-generate",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+              }
+            },
+            "omissions": []
+          },
+          "hubRequestDigest": "fcf3d1f6daff28a5e5d7b91862a02b881ae5aaa9b227042238c0c00c81b90a06"
+        },
+        "sourceFindingIds": [],
+        "repairProposalId": null,
+        "createdAt": "2026-08-25T00:20:25.818286Z"
+      },
+      "validations": [
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 2,
+          "validationId": "947c02d0-a197-4f15-a02b-0e9267d52de1",
+          "sessionId": "352ecad4-9ce9-414e-9687-5aaab198bd0c",
+          "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T00:19:51.327079Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 0,
+          "validationId": "503bdd94-51c1-4552-b37c-dedb936ef24b",
+          "sessionId": "352ecad4-9ce9-414e-9687-5aaab198bd0c",
+          "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+          "ordinal": 2,
+          "createdAt": "2026-08-25T00:19:51.409447Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "6ec2ce7bc3d5e01825719c9189ed0ccf0e4223a615d484b6fef2b1d96a00b960",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "invalid",
+          "advisory": true,
+          "checks": [
+            {
+              "name": "gateway_invariant",
+              "status": "failed",
+              "findingIds": [
+                "finding-a9ac06d10ed540e35b244426"
+              ]
+            }
+          ],
+          "findings": [
+            {
+              "contractVersion": "catalyst.workbench.finding.v1",
+              "findingId": "finding-a9ac06d10ed540e35b244426",
+              "ruleCode": "gateway_invariant.missing_semantic_filter",
+              "severity": "error",
+              "stage": "gateway_invariant",
+              "message": "The named analyte 'CD4 count' must be constrained by concept_name using its canonical bound value.",
+              "path": "$.sql",
+              "astUnit": null,
+              "span": null,
+              "evidence": null,
+              "suggestedAction": null,
+              "repairability": "manual",
+              "validatorRevision": "catalyst.workbench.validator.v1"
+            }
+          ],
+          "durationMs": 0,
+          "validationId": "e682b6ff-18ae-4a74-9bc1-772509c4e489",
+          "sessionId": "352ecad4-9ce9-414e-9687-5aaab198bd0c",
+          "versionId": "0c323a0f-6aca-4181-acd8-1482bb6c07d0",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T00:20:25.818286Z"
+        }
+      ],
+      "latestValidation": {
+        "contractVersion": "catalyst.workbench.validation.v1",
+        "queryDigest": "6ec2ce7bc3d5e01825719c9189ed0ccf0e4223a615d484b6fef2b1d96a00b960",
+        "validatorRevision": "catalyst.workbench.validator.v1",
+        "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+        "status": "invalid",
+        "advisory": true,
+        "checks": [
+          {
+            "name": "gateway_invariant",
+            "status": "failed",
+            "findingIds": [
+              "finding-a9ac06d10ed540e35b244426"
+            ]
+          }
+        ],
+        "findings": [
+          {
+            "contractVersion": "catalyst.workbench.finding.v1",
+            "findingId": "finding-a9ac06d10ed540e35b244426",
+            "ruleCode": "gateway_invariant.missing_semantic_filter",
+            "severity": "error",
+            "stage": "gateway_invariant",
+            "message": "The named analyte 'CD4 count' must be constrained by concept_name using its canonical bound value.",
+            "path": "$.sql",
+            "astUnit": null,
+            "span": null,
+            "evidence": null,
+            "suggestedAction": null,
+            "repairability": "manual",
+            "validatorRevision": "catalyst.workbench.validator.v1"
+          }
+        ],
+        "durationMs": 0,
+        "validationId": "e682b6ff-18ae-4a74-9bc1-772509c4e489",
+        "sessionId": "352ecad4-9ce9-414e-9687-5aaab198bd0c",
+        "versionId": "0c323a0f-6aca-4181-acd8-1482bb6c07d0",
+        "ordinal": 1,
+        "createdAt": "2026-08-25T00:20:25.818286Z"
+      },
+      "executions": [
+        {
+          "contractVersion": "catalyst.workbench.execution.v1",
+          "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1",
+          "idempotencyKey": "harness-notebook-05a9826f-a8ba-40bb-9e1f-fe02d7ffad31",
+          "validationStatus": "valid",
+          "query": {
+            "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :concept_name GROUP BY patient_id",
+            "parameters": [
+              {
+                "name": "concept_name",
+                "type": "string",
+                "source": "question",
+                "value": "CD4 count"
+              }
+            ]
+          },
+          "statementTimeoutMs": 10000,
+          "maxRows": 100,
+          "replayed": false,
+          "status": "succeeded",
+          "result": {
+            "columns": [
+              {
+                "ordinal": 0,
+                "name": "patient_id",
+                "databaseType": "text",
+                "typeOid": 25,
+                "logicalType": "string"
+              },
+              {
+                "ordinal": 1,
+                "name": "count",
+                "databaseType": "int8",
+                "typeOid": 20,
+                "logicalType": "integer"
+              }
+            ],
+            "rows": [
+              [
+                {
+                  "type": "string",
+                  "value": "dd553355-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5536fd-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5538dc-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd553c85-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55401d-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5541e2-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5543ac-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55571f-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5558ed-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd555c84-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd555e4a-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5561a5-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd556725-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd556955-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd556a73-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd556b89-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd556dcb-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd557008-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd557241-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd557357-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd557476-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55758c-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5579f9-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd557b13-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd557d3f-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd557e62-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd557f89-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5580a4-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5583ea-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd558797-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd558a32-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd558c78-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd558ead-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd558fcb-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5590e1-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5591fc-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd559316-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd559553-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5598a2-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd5599bc-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd559d0b-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd559e2a-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd559f44-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55a293-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55a3ad-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55a6f4-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55a812-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55aa42-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55ab61-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55ac77-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55b319-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55b42f-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55b664-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55b77a-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55b898-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55bf65-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55c08c-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55c420-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55d609-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55d958-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55dbeb-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55df82-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55e0ae-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55e456-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55e586-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55e6b1-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55e7e5-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55eb70-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd652779-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd6529a1-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd652afc-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd652d7d-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd652fff-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd653274-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd65360b-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd653748-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd653880-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd653aec-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd653d65-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd653fd6-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd65410a-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd654242-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd654376-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd654998-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd654fc6-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd656a02-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd656c47-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd656d6a-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd656e91-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd656fb0-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd6571f1-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd657310-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd657440-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd65891e-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd658b1b-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd658cc7-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd659852-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd65b439-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd65c5de-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd65c792-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ]
+            ],
+            "rowCount": {
+              "returned": 100,
+              "truncated": true,
+              "truncationReason": "configured_limit"
+            },
+            "warnings": []
+          },
+          "durationMs": 1537,
+          "executionId": "e9fc8506-8923-4404-9d34-a0fc032ed4de",
+          "sessionId": "352ecad4-9ce9-414e-9687-5aaab198bd0c",
+          "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+          "ordinal": 1,
+          "completedAt": "2026-08-25T00:19:52.979552Z"
+        }
+      ],
+      "guidance": [],
+      "dataSourceId": "openmrs-hiv",
+      "draftSeed": null
+    }
+  },
+  "elapsedMs": 4
+}

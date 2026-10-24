@@ -1,0 +1,210 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "POST",
+    "path": "/v1/catalyst/workbench/versions/c6a9dcdd-1e48-4eb2-a80d-7725cc3f6bbd/execute",
+    "body": {
+      "contractVersion": "catalyst.workbench.execute.request.v1",
+      "versionId": "c6a9dcdd-1e48-4eb2-a80d-7725cc3f6bbd",
+      "queryDigest": "9c0820178ff3ab14bd4ba2a7a779325599a69ab54f44f338edfe3e8e9e5f0393",
+      "idempotencyKey": "harness-notebook-1fabd640-8950-4b86-b333-8fdfac36bd11"
+    }
+  },
+  "response": {
+    "httpStatus": 200,
+    "body": {
+      "contractVersion": "catalyst.workbench.execution.v1",
+      "queryDigest": "9c0820178ff3ab14bd4ba2a7a779325599a69ab54f44f338edfe3e8e9e5f0393",
+      "idempotencyKey": "harness-notebook-1fabd640-8950-4b86-b333-8fdfac36bd11",
+      "validationStatus": "valid",
+      "query": {
+        "sql": "SELECT patient_gender, medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform = false GROUP BY patient_gender, medication_name ORDER BY count DESC LIMIT 10",
+        "parameters": []
+      },
+      "statementTimeoutMs": 10000,
+      "maxRows": 100,
+      "replayed": false,
+      "status": "succeeded",
+      "result": {
+        "columns": [
+          {
+            "ordinal": 0,
+            "name": "patient_gender",
+            "databaseType": "text",
+            "typeOid": 25,
+            "logicalType": "string"
+          },
+          {
+            "ordinal": 1,
+            "name": "medication_name",
+            "databaseType": "text",
+            "typeOid": 25,
+            "logicalType": "string"
+          },
+          {
+            "ordinal": 2,
+            "name": "count",
+            "databaseType": "int8",
+            "typeOid": 20,
+            "logicalType": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "female"
+            },
+            {
+              "type": "string",
+              "value": "Lamivudine"
+            },
+            {
+              "type": "integer",
+              "value": 6600
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "female"
+            },
+            {
+              "type": "string",
+              "value": "Stavudine"
+            },
+            {
+              "type": "integer",
+              "value": 6516
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "female"
+            },
+            {
+              "type": "string",
+              "value": "Nevirapine"
+            },
+            {
+              "type": "integer",
+              "value": 5928
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "male"
+            },
+            {
+              "type": "string",
+              "value": "Lamivudine"
+            },
+            {
+              "type": "integer",
+              "value": 3313
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "female"
+            },
+            {
+              "type": "string",
+              "value": "Trimethoprim and sulfamethoxazole"
+            },
+            {
+              "type": "integer",
+              "value": 3305
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "male"
+            },
+            {
+              "type": "string",
+              "value": "Stavudine"
+            },
+            {
+              "type": "integer",
+              "value": 3265
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "male"
+            },
+            {
+              "type": "string",
+              "value": "Nevirapine"
+            },
+            {
+              "type": "integer",
+              "value": 2882
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "male"
+            },
+            {
+              "type": "string",
+              "value": "Trimethoprim and sulfamethoxazole"
+            },
+            {
+              "type": "integer",
+              "value": 1582
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "female"
+            },
+            {
+              "type": "string",
+              "value": "Isoniazid"
+            },
+            {
+              "type": "integer",
+              "value": 1359
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "female"
+            },
+            {
+              "type": "string",
+              "value": "Efavirenz"
+            },
+            {
+              "type": "integer",
+              "value": 948
+            }
+          ]
+        ],
+        "rowCount": {
+          "returned": 10,
+          "truncated": false,
+          "truncationReason": null
+        },
+        "warnings": []
+      },
+      "durationMs": 71,
+      "executionId": "83dcc185-f456-4f27-adde-70781d5786d3",
+      "sessionId": "ea719da9-88ec-4e2b-a3df-ce358ba565df",
+      "versionId": "c6a9dcdd-1e48-4eb2-a80d-7725cc3f6bbd",
+      "ordinal": 3,
+      "completedAt": "2026-08-25T00:19:22.061863Z"
+    }
+  },
+  "elapsedMs": 97
+}

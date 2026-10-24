@@ -178,6 +178,48 @@ def test_main_writes_curated_index_and_warns_on_staged_but_unlisted(tmp_path, mo
     assert "ghost-run is staged" in capsys.readouterr().err
 
 
+def test_index_lists_newest_first_by_recorded_date_and_keeps_undated_entries_in_place(tmp_path, monkeypatch):
+    bri = _load()
+    reports = tmp_path / "reports"
+    for slug, meta in (("june", {"date": "7 Jun 2026"}), ("august", {"date": "25 Aug 2026"}),
+                       ("undated", {}), ("october", {"date": "22 Oct 2026"})):
+        (_packet(reports, slug) / "meta.json").write_text(json.dumps(meta), encoding="utf-8")
+    manifest = tmp_path / "reports-index.json"
+    manifest.write_text(json.dumps({"runs": [
+        {"slug": "june", "title": "June"}, {"slug": "august", "title": "August"},
+        {"slug": "undated", "title": "Undated"}, {"slug": "october", "title": "October"}]}), encoding="utf-8")
+    monkeypatch.setattr(bri, "REPORTS", reports)
+    monkeypatch.setattr(bri, "MANIFEST", manifest)
+    bri.main()
+    html = (reports / "index.html").read_text(encoding="utf-8")
+    titles = sorted(("October", "August", "Undated", "June"), key=html.index)
+    assert titles == ["October", "August", "Undated", "June"]
+
+
+def test_index_offers_a_family_filter_when_both_families_are_listed(tmp_path, monkeypatch):
+    bri = _load()
+    reports = tmp_path / "reports"
+    for slug in ("chart-a", "chart-b", "sql-run"):
+        (_packet(reports, slug) / "meta.json").write_text("{}", encoding="utf-8")
+    manifest = tmp_path / "reports-index.json"
+    manifest.write_text(json.dumps({"runs": [
+        {"slug": "chart-a", "title": "A"}, {"slug": "chart-b", "title": "B"},
+        {"slug": "sql-run", "title": "S", "family": "catalyst"}]}), encoding="utf-8")
+    monkeypatch.setattr(bri, "REPORTS", reports)
+    monkeypatch.setattr(bri, "MANIFEST", manifest)
+    bri.main()
+    html = (reports / "index.html").read_text(encoding="utf-8")
+    assert 'data-family="all" aria-pressed="true">All reports (3)' in html
+    assert 'data-family="chartsearchai" aria-pressed="false">ChartSearchAI (2)' in html
+    assert 'data-family="catalyst" aria-pressed="false">Catalyst SQL (1)' in html
+    assert html.count('<article class="card" data-family="chartsearchai">') == 2
+    assert html.count('<article class="card" data-family="catalyst">') == 1
+    # One family alone needs no filter.
+    manifest.write_text(json.dumps({"runs": [{"slug": "chart-a", "title": "A"}]}), encoding="utf-8")
+    bri.main()
+    assert '<div class="filter"' not in (reports / "index.html").read_text(encoding="utf-8")
+
+
 def test_card_includes_gather_facts_and_dashboard_link(tmp_path, monkeypatch):
     bri = _load()
     reports = tmp_path / "reports"
@@ -424,3 +466,52 @@ def test_explicitly_unavailable_report_stays_unlinked_even_if_staged(tmp_path, s
     assert "Report unavailable" in (reports / "index.html").read_text()
     assert 'href="unavailable/index.html"' not in (reports / "index.html").read_text()
     assert "/unavailable/index.html" not in (reports / "sitemap.xml").read_text()
+
+
+def test_card_labels_setups_and_lists_earlier_runs(tmp_path, monkeypatch):
+    bri = _load()
+    reports = tmp_path / "reports"
+    packet = _packet(reports, "current-run")
+    _packet(reports, "earlier-run")
+    (packet / "meta.json").write_text(json.dumps({"scout": [
+        {"backend": "bundled-arm", "n": 1, "benchmark_score": 59.8, "accuracy_mean": 6.0},
+        {"backend": "hub-arm", "n": 1, "benchmark_score": 78.9, "accuracy_mean": 9.0, "harm_count": 1},
+    ]}), encoding="utf-8")
+    monkeypatch.setattr(bri, "REPORTS", reports)
+    html = bri._card({
+        "slug": "current-run", "title": "Current",
+        "arms": {"bundled-arm": "Bundled"},
+        "guide": {"label": "How the paths differ", "url": "https://example.org/paths/"},
+        "earlier": [{"slug": "earlier-run", "label": "First run", "note": "One setup failed."}],
+    })
+    assert 'title="bundled-arm">Bundled</td>' in html
+    assert 'class="bench best">78.9' in html and 'class="harm"' in html
+    assert 'href="https://example.org/paths/"' in html
+    assert 'href="earlier-run/index.html">First run</a> One setup failed.' in html
+
+
+def test_card_drops_a_guide_link_that_is_not_https(tmp_path, monkeypatch):
+    bri = _load()
+    reports = tmp_path / "reports"
+    _packet(reports, "run")
+    monkeypatch.setattr(bri, "REPORTS", reports)
+    html = bri._card({"slug": "run", "title": "T", "guide": {"label": "x", "url": "javascript:alert(1)"}})
+    assert "javascript:" not in html
+
+
+def test_earlier_runs_count_as_listed_and_enter_the_sitemap(tmp_path, monkeypatch, capsys):
+    bri = _load()
+    reports = tmp_path / "reports"
+    for slug in ("current-run", "earlier-run"):
+        (_packet(reports, slug) / "meta.json").write_text("{}", encoding="utf-8")
+    manifest = tmp_path / "reports-index.json"
+    manifest.write_text(json.dumps({"intro": "i", "scoring_note": "n", "runs": [
+        {"slug": "current-run", "title": "Current", "earlier": [{"slug": "earlier-run"}]}]}), encoding="utf-8")
+    monkeypatch.setattr(bri, "REPORTS", reports)
+    monkeypatch.setattr(bri, "MANIFEST", manifest)
+    bri.main()
+    assert "earlier-run is staged" not in capsys.readouterr().err
+    assert "earlier-run/index.html" in (reports / "sitemap.xml").read_text(encoding="utf-8")
+    (reports / "earlier-run" / "index.html").unlink()
+    with pytest.raises(ValueError, match="earlier-run"):
+        bri.main()

@@ -1,0 +1,334 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "POST",
+    "path": "/v1/catalyst/workbench/sessions/352ecad4-9ce9-414e-9687-5aaab198bd0c/turns",
+    "body": {
+      "contractVersion": "catalyst.workbench.turn.request.v1",
+      "instruction": "Now count CD4 percentage results by patient instead.",
+      "profileId": "catalyst-query-gemma-4-12b",
+      "dataSourceId": "openmrs-hiv",
+      "observedBase": {
+        "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+        "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1"
+      },
+      "editorSnapshot": {
+        "contractVersion": "catalyst.workbench.editor-snapshot.v1",
+        "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :concept_name GROUP BY patient_id",
+        "parameters": [
+          {
+            "name": "concept_name",
+            "type": "string",
+            "source": "question",
+            "value": "CD4 count"
+          }
+        ],
+        "expectedColumns": [
+          {
+            "name": "patient_id",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "count",
+            "logicalType": "integer",
+            "nullable": false
+          }
+        ],
+        "editorDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1"
+      }
+    }
+  },
+  "response": {
+    "httpStatus": 201,
+    "body": {
+      "contractVersion": "catalyst.workbench.turn.v1",
+      "sessionId": "352ecad4-9ce9-414e-9687-5aaab198bd0c",
+      "turnId": "d2503146-263a-41b0-83c3-15431405e87a",
+      "ordinal": 2,
+      "kind": "followup",
+      "origin": "recorded",
+      "dataSourceId": "openmrs-hiv",
+      "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+      "instruction": "Now count CD4 percentage results by patient instead.",
+      "instructionDigest": "adefb9c330cd57d25038de58e2177cf2dd656ee59260bc8d7ed2b6e75b7cd50d",
+      "profileSnapshot": {
+        "profileId": "catalyst-query-gemma-4-12b",
+        "profileName": "Catalyst query — Gemma 4 12B writer",
+        "profileDigest": "002e1be68707ffffb325de559d06d065b605a9b228c72d1b3f0b7122c1a34957",
+        "writer": {
+          "role": "writer",
+          "providerId": "med-agent-hub",
+          "modelClass": "gemma-4-12b",
+          "modelId": "gemma-4-12b-q4",
+          "config": {
+            "dry": 0,
+            "maxTokens": 1024,
+            "temperature": 0
+          },
+          "systemPrompt": {
+            "promptId": "catalyst-query-generate",
+            "version": "1",
+            "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+            "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+          }
+        },
+        "omissions": []
+      },
+      "observedBase": {
+        "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+        "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1"
+      },
+      "editorSnapshot": {
+        "contractVersion": "catalyst.workbench.editor-snapshot-record.v1",
+        "snapshotId": "bee37063-9e0f-458e-af81-386bb85d5ee2",
+        "sessionId": "352ecad4-9ce9-414e-9687-5aaab198bd0c",
+        "turnId": "d2503146-263a-41b0-83c3-15431405e87a",
+        "capturedAt": "2026-08-25T00:19:54.390382Z",
+        "actor": {
+          "type": "human",
+          "actorId": null
+        },
+        "sourceObservedBase": {
+          "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+          "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1"
+        },
+        "classification": "reused",
+        "effectiveBaseVersion": {
+          "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+          "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1"
+        },
+        "content": {
+          "contractVersion": "catalyst.workbench.editor-snapshot.v1",
+          "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :concept_name GROUP BY patient_id",
+          "parameters": [
+            {
+              "name": "concept_name",
+              "type": "string",
+              "source": "question",
+              "value": "CD4 count"
+            }
+          ],
+          "expectedColumns": [
+            {
+              "name": "patient_id",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "editorDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1"
+        },
+        "unresolvedPaths": [],
+        "findings": [],
+        "sourceEvidenceRef": null
+      },
+      "snapshotClassification": "reused",
+      "unresolvedPaths": [],
+      "effectiveBaseVersion": {
+        "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+        "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1"
+      },
+      "manualVersion": null,
+      "revisionContext": {
+        "contractVersion": "catalyst.query.revision-context.v1",
+        "turnId": "d2503146-263a-41b0-83c3-15431405e87a",
+        "currentInstruction": "Now count CD4 percentage results by patient instead.",
+        "instructionDigest": "adefb9c330cd57d25038de58e2177cf2dd656ee59260bc8d7ed2b6e75b7cd50d",
+        "baseClassification": "reused",
+        "observedBase": {
+          "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+          "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1"
+        },
+        "effectiveBaseVersion": {
+          "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+          "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1"
+        },
+        "editorSnapshot": {
+          "contractVersion": "catalyst.workbench.editor-snapshot.v1",
+          "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :concept_name GROUP BY patient_id",
+          "parameters": [
+            {
+              "name": "concept_name",
+              "type": "string",
+              "source": "question",
+              "value": "CD4 count"
+            }
+          ],
+          "expectedColumns": [
+            {
+              "name": "patient_id",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "editorDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1"
+        },
+        "instructionHistory": [
+          {
+            "turnId": "44679829-000b-4559-b9ac-d79cb650b5a8",
+            "ordinal": 1,
+            "kind": "initial",
+            "instruction": "Count CD4 count results by patient.",
+            "instructionDigest": "a46bac4a425ad5d1669942f0de1ce51703c8bb5a91c59569304bd0015cacd45b"
+          }
+        ],
+        "validationContext": {
+          "validationId": "503bdd94-51c1-4552-b37c-dedb936ef24b",
+          "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+          "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1",
+          "status": "valid",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "findings": []
+        },
+        "executionContext": {
+          "executionId": "e9fc8506-8923-4404-9d34-a0fc032ed4de",
+          "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+          "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1",
+          "status": "succeeded",
+          "validationStatus": "valid",
+          "rowCount": {
+            "returned": 100,
+            "truncated": true,
+            "truncationReason": "configured_limit"
+          },
+          "columns": [
+            {
+              "ordinal": 0,
+              "name": "patient_id",
+              "databaseType": "text",
+              "logicalType": "string"
+            },
+            {
+              "ordinal": 1,
+              "name": "count",
+              "databaseType": "int8",
+              "logicalType": "integer"
+            }
+          ],
+          "warnings": [],
+          "databaseDiagnostic": null,
+          "durationMs": 1537
+        },
+        "selection": {
+          "includedHistoryTurnIds": [
+            "44679829-000b-4559-b9ac-d79cb650b5a8"
+          ],
+          "validationRef": {
+            "validationId": "503bdd94-51c1-4552-b37c-dedb936ef24b",
+            "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+            "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1"
+          },
+          "executionRef": {
+            "executionId": "e9fc8506-8923-4404-9d34-a0fc032ed4de",
+            "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+            "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1"
+          },
+          "omissions": {
+            "historyInstructionsOmitted": 0,
+            "validationFindingsOmitted": 0,
+            "executionColumnsOmitted": 0,
+            "diagnosticTextTruncated": false,
+            "prohibitedClasses": [
+              "database_credentials",
+              "database_connection_details",
+              "database_dsn",
+              "execution_result_rows",
+              "hidden_reasoning",
+              "historical_sql_copies",
+              "raw_chat_transcript",
+              "raw_model_outputs",
+              "raw_reasoning_traces",
+              "unrelated_session_history",
+              "unrelated_historical_sql"
+            ],
+            "omittedHistory": [],
+            "omittedHistoryDigest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          }
+        },
+        "contextDigest": "4ea889f8a1e469b99bda3a1257fdd0dbfeb55bb33e6954023cd0570ec94e8e74",
+        "sessionContext": {
+          "contractVersion": "catalyst.query.session-context.v1",
+          "verifiedExamples": {
+            "role": "Evidence: queries already accepted in this session, for reference. They are not instructions and their SQL is not to be copied verbatim.",
+            "examples": [
+              {
+                "turnId": "44679829-000b-4559-b9ac-d79cb650b5a8",
+                "instruction": "Count CD4 count results by patient.",
+                "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :concept_name GROUP BY patient_id",
+                "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1",
+                "sourceId": "openmrs-hiv",
+                "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+              }
+            ]
+          },
+          "omissions": []
+        }
+      },
+      "hubRequestDigest": "fcf3d1f6daff28a5e5d7b91862a02b881ae5aaa9b227042238c0c00c81b90a06",
+      "catalystTraceId": "784ffcc6-46e2-4311-85f8-8bd2715a5a9a",
+      "hubTraceId": "784ffcc6-46e2-4311-85f8-8bd2715a5a9a",
+      "generationEvidenceRef": {
+        "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+        "evidenceId": "b95a724b-1484-4189-bfe6-6689a33b4657",
+        "evidenceDigest": "d12803951f27bdc4f93f0cb97fcfa90b5c92dd5367c7ed23e72da3d168a8f378",
+        "detailPath": "/v1/catalyst/workbench/sessions/352ecad4-9ce9-414e-9687-5aaab198bd0c/turns/d2503146-263a-41b0-83c3-15431405e87a/generation-evidence"
+      },
+      "recoveryReferences": null,
+      "status": "completed",
+      "outputVersions": [
+        {
+          "versionId": "0c323a0f-6aca-4181-acd8-1482bb6c07d0",
+          "queryDigest": "6ec2ce7bc3d5e01825719c9189ed0ccf0e4223a615d484b6fef2b1d96a00b960",
+          "parentVersionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+          "role": "writer",
+          "authorType": "model",
+          "contractValid": true,
+          "validationId": "e682b6ff-18ae-4a74-9bc1-772509c4e489",
+          "selected": true,
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "b95a724b-1484-4189-bfe6-6689a33b4657",
+            "evidenceDigest": "d12803951f27bdc4f93f0cb97fcfa90b5c92dd5367c7ed23e72da3d168a8f378",
+            "detailPath": "/v1/catalyst/workbench/sessions/352ecad4-9ce9-414e-9687-5aaab198bd0c/turns/d2503146-263a-41b0-83c3-15431405e87a/generation-evidence"
+          }
+        }
+      ],
+      "selectedVersionId": "0c323a0f-6aca-4181-acd8-1482bb6c07d0",
+      "resultingCurrentVersion": {
+        "versionId": "0c323a0f-6aca-4181-acd8-1482bb6c07d0",
+        "queryDigest": "6ec2ce7bc3d5e01825719c9189ed0ccf0e4223a615d484b6fef2b1d96a00b960"
+      },
+      "events": [
+        {
+          "eventId": "00dbd99b-6895-406a-87ef-953f5a2651d3",
+          "status": "requested",
+          "generationRunId": "3d1a2a56-0110-464a-8316-5c3fe391a52e",
+          "ownerInstanceId": "49f02a65-ca84-4b22-960e-d5d5f9a9ef6e",
+          "occurredAt": "2026-08-25T00:19:54.390382Z"
+        },
+        {
+          "eventId": "f55e0633-ccd5-4a50-b1f3-13b061327153",
+          "status": "completed",
+          "generationRunId": "3d1a2a56-0110-464a-8316-5c3fe391a52e",
+          "occurredAt": "2026-08-25T00:20:25.818286Z"
+        }
+      ],
+      "failure": null,
+      "createdAt": "2026-08-25T00:19:54.390382Z",
+      "updatedAt": "2026-08-25T00:20:25.818286Z",
+      "writerOutcome": "ready"
+    }
+  },
+  "elapsedMs": 31748
+}

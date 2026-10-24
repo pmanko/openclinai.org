@@ -18,7 +18,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .commits import commit_changes, commit_trailers, derived_tests, detect_runner
+from .commits import code_changed, commit_changes, commit_trailers, derived_tests, detect_runner
 from .git import clean_env, common_dir, git, patch_id, repo_name, toplevel
 
 UMBRELLA = Path(__file__).resolve().parents[3]
@@ -141,11 +141,18 @@ def probe_commit(repo: Path, sha: str, force: bool = False) -> Outcome:
     sha7 = sha[:7]
     changes = commit_changes(repo, sha)
     main = [c for c in changes if c.kind == "main"]
-    if not main:
-        return Outcome(sha, True, "no-main")
     trailers = commit_trailers(repo, sha)
+    # A test-only commit is probed only for its mutations, which show the new test catches them.
+    if not main and not trailers.mutations:
+        return Outcome(sha, True, "no-main")
     if trailers.errors:
         return Outcome(sha, False, "blocked", [f"BLOCK {sha7} {e}" for e in trailers.errors])
+    # A comment or blank-line edit in main code cannot turn a test red, so only files whose
+    # code changed are reverted; a commit with no such file and no mutation needs no probe.
+    behavioral = [c for c in main if code_changed(repo, sha, c)]
+    if not behavioral and not trailers.mutations:
+        return Outcome(sha, True, "no-main",
+                       [f"skip  {sha7} main code changes only in comments or blank lines"])
 
     ledger = Ledger(repo)
     pid = patch_id(repo, sha) or sha
@@ -177,16 +184,20 @@ def probe_commit(repo: Path, sha: str, force: bool = False) -> Outcome:
         logs = work_dir() / "logs" / repo_name(repo)
         lines, ok = [], True
         try:
-            for change in main:
-                if change.status == "A":
-                    (wt / change.path).unlink()
-                else:
-                    git(wt, "checkout", "-q", f"{sha}^", "--", change.path)
-            good, line = _expect_red(_run(runner, wt, tests, logs / f"{sha7}-revert.log"),
-                                     sha7, f"revert of {len(main)} main file(s)", tests)
-            ok &= good
-            lines.append(line)
-            _reset(wt, sha)
+            if behavioral:
+                for change in behavioral:
+                    if change.status == "A":
+                        (wt / change.path).unlink()
+                    else:
+                        git(wt, "checkout", "-q", f"{sha}^", "--", change.path)
+                good, line = _expect_red(_run(runner, wt, tests, logs / f"{sha7}-revert.log"),
+                                         sha7, f"revert of {len(behavioral)} main file(s)", tests)
+                ok &= good
+                lines.append(line)
+                _reset(wt, sha)
+            else:
+                lines.append(f"skip  {sha7} revert: " + ("main code changes only in comments or blank lines"
+                             if main else "no main code changed"))
             good, line = _expect_green(_run(runner, wt, tests, logs / f"{sha7}-green.log"), sha7)
             ok &= good
             lines.append(line)

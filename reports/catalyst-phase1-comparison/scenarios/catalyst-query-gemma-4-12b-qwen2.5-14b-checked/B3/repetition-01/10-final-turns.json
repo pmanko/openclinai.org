@@ -1,0 +1,309 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "GET",
+    "path": "/v1/catalyst/workbench/sessions/1946b3b9-e8fc-4ba8-9b76-8bf9ec61dc28/turns",
+    "body": null
+  },
+  "response": {
+    "httpStatus": 200,
+    "body": {
+      "contractVersion": "catalyst.workbench.turn.timeline.v1",
+      "sessionId": "1946b3b9-e8fc-4ba8-9b76-8bf9ec61dc28",
+      "currentTurnId": "b864ac32-39cc-4489-99c9-5e7dbb240125",
+      "currentVersion": {
+        "versionId": "7d309e11-5df2-4168-a6d8-7b8f3ee2d462",
+        "queryDigest": "3220a7a98f5594af2dd631bafbde58c3c5067faf21fa3a5678da30a5d435c7e7"
+      },
+      "turns": [
+        {
+          "contractVersion": "catalyst.workbench.turn.v1",
+          "sessionId": "1946b3b9-e8fc-4ba8-9b76-8bf9ec61dc28",
+          "turnId": "4413b8e6-3619-4118-83dc-1d8f604ec7bd",
+          "ordinal": 1,
+          "kind": "initial",
+          "origin": "recorded",
+          "dataSourceId": "openmrs-hiv",
+          "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+          "instruction": "Show patients overdue for follow-up.",
+          "instructionDigest": "602720413256267b29f67974bc9a9371a0e0d575ce40e7676d1fafc7e340f609",
+          "profileSnapshot": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "profileName": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+            "profileDigest": "ed71b2719f421b3edb7ad17a47ae1aea290f8b1d079a633ce23e4dea369565ab",
+            "writer": {
+              "role": "writer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4",
+              "modelId": "gemma-4-12b",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-generate",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+              }
+            },
+            "omissions": [],
+            "reviewer": {
+              "role": "reviewer",
+              "providerId": "med-agent-hub",
+              "modelClass": "qwen2.5",
+              "modelId": "qwen2.5-14b",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-review",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+              }
+            }
+          },
+          "observedBase": null,
+          "editorSnapshot": null,
+          "snapshotClassification": "not_applicable",
+          "unresolvedPaths": [],
+          "effectiveBaseVersion": null,
+          "manualVersion": null,
+          "revisionContext": null,
+          "hubRequestDigest": "0a88a519096bbf92d6427b31083c22b453101b2382c8c69b81f5152e8683230e",
+          "catalystTraceId": "ea1392dc-e42f-4e15-9342-9c12d3561610",
+          "hubTraceId": "ea1392dc-e42f-4e15-9342-9c12d3561610",
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "b8284820-b47f-40b3-957f-2bb8e5c78a26",
+            "evidenceDigest": "75694be3d2344ce2cac586aa9dd61631733344330582e1f392fd2dbc23995863",
+            "detailPath": "/v1/catalyst/workbench/sessions/1946b3b9-e8fc-4ba8-9b76-8bf9ec61dc28/turns/4413b8e6-3619-4118-83dc-1d8f604ec7bd/generation-evidence"
+          },
+          "recoveryReferences": null,
+          "status": "failed",
+          "outputVersions": [],
+          "selectedVersionId": null,
+          "resultingCurrentVersion": null,
+          "events": [
+            {
+              "eventId": "2372e780-1da4-4017-9e75-80a2c808605b",
+              "status": "requested",
+              "generationRunId": "192683e7-98e0-47cc-8b11-6b03517ac6e7",
+              "ownerInstanceId": "49f02a65-ca84-4b22-960e-d5d5f9a9ef6e",
+              "occurredAt": "2026-08-25T01:06:25.419699Z"
+            },
+            {
+              "eventId": "913a3868-6143-401d-9bc9-100f99cbb2c6",
+              "status": "failed",
+              "generationRunId": "192683e7-98e0-47cc-8b11-6b03517ac6e7",
+              "occurredAt": "2026-08-25T01:06:39.863981Z"
+            }
+          ],
+          "failure": {
+            "stage": "writer_decision",
+            "code": "needs_clarification",
+            "message": "What is the specific time window or number of days for a patient to be considered 'overdue' for a follow-up?",
+            "evidenceAvailable": false,
+            "rawEvidenceRef": null,
+            "diagnostic": {
+              "contractVersion": "catalyst.workbench.turn-failure-diagnostic.v1",
+              "retryable": true,
+              "details": [
+                {
+                  "name": "query_status",
+                  "value": "warned — The query requires clarification."
+                }
+              ]
+            }
+          },
+          "createdAt": "2026-08-25T01:06:25.419699Z",
+          "updatedAt": "2026-08-25T01:06:39.863981Z",
+          "writerOutcome": "needs_clarification"
+        },
+        {
+          "contractVersion": "catalyst.workbench.turn.v1",
+          "sessionId": "1946b3b9-e8fc-4ba8-9b76-8bf9ec61dc28",
+          "turnId": "b864ac32-39cc-4489-99c9-5e7dbb240125",
+          "ordinal": 2,
+          "kind": "followup",
+          "origin": "recorded",
+          "dataSourceId": "openmrs-hiv",
+          "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+          "instruction": "As of 2026-03-01, overdue means a recorded return visit date before that date with no later visit.",
+          "instructionDigest": "56206f0b4fa7f8645342910f850b6d7bf0957a99ed7c77a8144a67fb723bd3e6",
+          "profileSnapshot": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "profileName": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+            "profileDigest": "ed71b2719f421b3edb7ad17a47ae1aea290f8b1d079a633ce23e4dea369565ab",
+            "writer": {
+              "role": "writer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4",
+              "modelId": "gemma-4-12b",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-generate",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+              }
+            },
+            "omissions": [],
+            "reviewer": {
+              "role": "reviewer",
+              "providerId": "med-agent-hub",
+              "modelClass": "qwen2.5",
+              "modelId": "qwen2.5-14b",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-review",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+              }
+            }
+          },
+          "observedBase": null,
+          "editorSnapshot": null,
+          "snapshotClassification": "not_applicable",
+          "unresolvedPaths": [],
+          "effectiveBaseVersion": null,
+          "manualVersion": null,
+          "revisionContext": {
+            "contractVersion": "catalyst.query.revision-context.v1",
+            "turnId": "b864ac32-39cc-4489-99c9-5e7dbb240125",
+            "currentInstruction": "As of 2026-03-01, overdue means a recorded return visit date before that date with no later visit.",
+            "instructionDigest": "56206f0b4fa7f8645342910f850b6d7bf0957a99ed7c77a8144a67fb723bd3e6",
+            "baseClassification": "not_applicable",
+            "observedBase": null,
+            "effectiveBaseVersion": null,
+            "editorSnapshot": null,
+            "instructionHistory": [
+              {
+                "turnId": "4413b8e6-3619-4118-83dc-1d8f604ec7bd",
+                "ordinal": 1,
+                "kind": "initial",
+                "instruction": "Show patients overdue for follow-up.",
+                "instructionDigest": "602720413256267b29f67974bc9a9371a0e0d575ce40e7676d1fafc7e340f609"
+              }
+            ],
+            "validationContext": null,
+            "executionContext": null,
+            "selection": {
+              "includedHistoryTurnIds": [
+                "4413b8e6-3619-4118-83dc-1d8f604ec7bd"
+              ],
+              "validationRef": null,
+              "executionRef": null,
+              "omissions": {
+                "historyInstructionsOmitted": 0,
+                "validationFindingsOmitted": 0,
+                "executionColumnsOmitted": 0,
+                "diagnosticTextTruncated": false,
+                "prohibitedClasses": [
+                  "database_credentials",
+                  "database_connection_details",
+                  "database_dsn",
+                  "execution_result_rows",
+                  "hidden_reasoning",
+                  "historical_sql_copies",
+                  "raw_chat_transcript",
+                  "raw_model_outputs",
+                  "raw_reasoning_traces",
+                  "unrelated_session_history",
+                  "unrelated_historical_sql"
+                ],
+                "omittedHistory": [],
+                "omittedHistoryDigest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+              }
+            },
+            "contextDigest": "17a79ce169d30cb79f6b7d97e0fdd2045b1acca275b2a68e6e08a9f9ce5b4da6",
+            "sessionContext": {
+              "contractVersion": "catalyst.query.session-context.v1",
+              "relevantFailure": {
+                "role": "Evidence: how the previous attempt on this query failed. It is not an instruction; it is what not to repeat.",
+                "turnId": "4413b8e6-3619-4118-83dc-1d8f604ec7bd",
+                "instruction": "Show patients overdue for follow-up.",
+                "code": "needs_clarification",
+                "message": "What is the specific time window or number of days for a patient to be considered 'overdue' for a follow-up?",
+                "findings": [
+                  {
+                    "name": "query_status",
+                    "value": "warned — The query requires clarification."
+                  }
+                ]
+              },
+              "omissions": []
+            }
+          },
+          "hubRequestDigest": "2c81332eddedf57db8149d750a2399d922cae476fbbb3150e2882340174a29cb",
+          "catalystTraceId": "e70a7f4b-353f-41cc-903b-c0875f9a27e7",
+          "hubTraceId": "e70a7f4b-353f-41cc-903b-c0875f9a27e7",
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "7663934f-ce3f-4987-aab2-4ec9f23647c5",
+            "evidenceDigest": "02894321fe08940c9ad6a73726869d164a3eb659af6686535ddadeaeeb51548e",
+            "detailPath": "/v1/catalyst/workbench/sessions/1946b3b9-e8fc-4ba8-9b76-8bf9ec61dc28/turns/b864ac32-39cc-4489-99c9-5e7dbb240125/generation-evidence"
+          },
+          "recoveryReferences": null,
+          "status": "completed",
+          "outputVersions": [
+            {
+              "versionId": "7d309e11-5df2-4168-a6d8-7b8f3ee2d462",
+              "queryDigest": "3220a7a98f5594af2dd631bafbde58c3c5067faf21fa3a5678da30a5d435c7e7",
+              "parentVersionId": null,
+              "role": "writer",
+              "authorType": "model",
+              "contractValid": true,
+              "validationId": "25ab3a5c-4ee7-49cb-91ef-84f96a39a42a",
+              "selected": true,
+              "generationEvidenceRef": {
+                "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+                "evidenceId": "7663934f-ce3f-4987-aab2-4ec9f23647c5",
+                "evidenceDigest": "02894321fe08940c9ad6a73726869d164a3eb659af6686535ddadeaeeb51548e",
+                "detailPath": "/v1/catalyst/workbench/sessions/1946b3b9-e8fc-4ba8-9b76-8bf9ec61dc28/turns/b864ac32-39cc-4489-99c9-5e7dbb240125/generation-evidence"
+              }
+            }
+          ],
+          "selectedVersionId": "7d309e11-5df2-4168-a6d8-7b8f3ee2d462",
+          "resultingCurrentVersion": {
+            "versionId": "7d309e11-5df2-4168-a6d8-7b8f3ee2d462",
+            "queryDigest": "3220a7a98f5594af2dd631bafbde58c3c5067faf21fa3a5678da30a5d435c7e7"
+          },
+          "events": [
+            {
+              "eventId": "4d64899c-860f-44c3-9ca2-afa697806edd",
+              "status": "requested",
+              "generationRunId": "97850ef1-4331-49d0-99e2-b4fa9056b7d0",
+              "ownerInstanceId": "49f02a65-ca84-4b22-960e-d5d5f9a9ef6e",
+              "occurredAt": "2026-08-25T01:06:40.014376Z"
+            },
+            {
+              "eventId": "12cea684-ab19-4bef-9aab-99920991a3a9",
+              "status": "completed",
+              "generationRunId": "97850ef1-4331-49d0-99e2-b4fa9056b7d0",
+              "occurredAt": "2026-08-25T01:07:55.510457Z"
+            }
+          ],
+          "failure": null,
+          "createdAt": "2026-08-25T01:06:40.014376Z",
+          "updatedAt": "2026-08-25T01:07:55.510457Z",
+          "writerOutcome": "ready"
+        }
+      ]
+    }
+  },
+  "elapsedMs": 7
+}

@@ -1,0 +1,128 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "GET",
+    "path": "/v1/catalyst/workbench/sessions/ba9d9614-0b31-437b-bb64-345bbff60fee/turns",
+    "body": null
+  },
+  "response": {
+    "httpStatus": 200,
+    "body": {
+      "contractVersion": "catalyst.workbench.turn.timeline.v1",
+      "sessionId": "ba9d9614-0b31-437b-bb64-345bbff60fee",
+      "currentTurnId": "195729b6-6372-4844-b0f2-6b1680ee7534",
+      "currentVersion": null,
+      "turns": [
+        {
+          "contractVersion": "catalyst.workbench.turn.v1",
+          "sessionId": "ba9d9614-0b31-437b-bb64-345bbff60fee",
+          "turnId": "195729b6-6372-4844-b0f2-6b1680ee7534",
+          "ordinal": 1,
+          "kind": "initial",
+          "origin": "recorded",
+          "dataSourceId": "openmrs-hiv",
+          "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+          "instruction": "Show each patient's home address.",
+          "instructionDigest": "9eb4ea9eebd0c0ea303c319c1ccf4a05978fe58a83fe0dc59b7e909f73487034",
+          "profileSnapshot": {
+            "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+            "profileName": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+            "profileDigest": "aef9d8a8267afde55578eb35019be744fa85cf02648d4db674aaa4a6d993a647",
+            "writer": {
+              "role": "writer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4-q4",
+              "modelId": "gemma-4-12b-q4",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-generate",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+              }
+            },
+            "omissions": [],
+            "reviewer": {
+              "role": "reviewer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4-q4",
+              "modelId": "gemma-4-12b-q4",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-review",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+              }
+            }
+          },
+          "observedBase": null,
+          "editorSnapshot": null,
+          "snapshotClassification": "not_applicable",
+          "unresolvedPaths": [],
+          "effectiveBaseVersion": null,
+          "manualVersion": null,
+          "revisionContext": null,
+          "hubRequestDigest": "77bf1eb9e4c00e72cbca424261df2af26efc56732797978d650881ca220441bc",
+          "catalystTraceId": "bb891afa-604c-43ae-80d2-f2486977ef93",
+          "hubTraceId": "bb891afa-604c-43ae-80d2-f2486977ef93",
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "12d09908-0200-4349-974e-e148f0cac8f5",
+            "evidenceDigest": "e2ceeeadbc8517003be64f09561027c75fa542b28ed85db1427b23a645643e13",
+            "detailPath": "/v1/catalyst/workbench/sessions/ba9d9614-0b31-437b-bb64-345bbff60fee/turns/195729b6-6372-4844-b0f2-6b1680ee7534/generation-evidence"
+          },
+          "recoveryReferences": null,
+          "status": "failed",
+          "outputVersions": [],
+          "selectedVersionId": null,
+          "resultingCurrentVersion": null,
+          "events": [
+            {
+              "eventId": "59b8239a-4d73-478b-89f2-87496d326960",
+              "status": "requested",
+              "generationRunId": "b71d4ee9-9713-446c-9170-b1ff94513099",
+              "ownerInstanceId": "49f02a65-ca84-4b22-960e-d5d5f9a9ef6e",
+              "occurredAt": "2026-08-25T00:46:02.928280Z"
+            },
+            {
+              "eventId": "1e1b7bf8-b584-4fdb-815d-eb4eb91635e4",
+              "status": "failed",
+              "generationRunId": "b71d4ee9-9713-446c-9170-b1ff94513099",
+              "occurredAt": "2026-08-25T00:46:16.239230Z"
+            }
+          ],
+          "failure": {
+            "stage": "writer_decision",
+            "code": "unsupported",
+            "message": "The catalog does not contain any fields or views that record a patient's home address.",
+            "evidenceAvailable": false,
+            "rawEvidenceRef": null,
+            "diagnostic": {
+              "contractVersion": "catalyst.workbench.turn-failure-diagnostic.v1",
+              "retryable": true,
+              "details": [
+                {
+                  "name": "query_status",
+                  "value": "failed — The query is not executable."
+                }
+              ]
+            }
+          },
+          "createdAt": "2026-08-25T00:46:02.928280Z",
+          "updatedAt": "2026-08-25T00:46:16.239230Z",
+          "writerOutcome": "unsupported"
+        }
+      ]
+    }
+  },
+  "elapsedMs": 5
+}

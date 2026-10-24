@@ -1,0 +1,1379 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "POST",
+    "path": "/v1/catalyst/workbench/versions/39f97292-ab7e-4f4a-87b0-d912fbdeec8a/execute",
+    "body": {
+      "contractVersion": "catalyst.workbench.execute.request.v1",
+      "versionId": "39f97292-ab7e-4f4a-87b0-d912fbdeec8a",
+      "queryDigest": "4ded40dc7320833a165d19640be0db7d4181fb2ed14a373c2fb980c73f2fd3b1",
+      "idempotencyKey": "harness-notebook-2a6eef28-3f47-4767-8172-d958301a9160"
+    }
+  },
+  "response": {
+    "httpStatus": 200,
+    "body": {
+      "contractVersion": "catalyst.workbench.execution.v1",
+      "queryDigest": "4ded40dc7320833a165d19640be0db7d4181fb2ed14a373c2fb980c73f2fd3b1",
+      "idempotencyKey": "harness-notebook-2a6eef28-3f47-4767-8172-d958301a9160",
+      "validationStatus": "valid",
+      "query": {
+        "sql": "WITH latest_adherence AS (\n  SELECT \n    patient_id, \n    value_coded_name, \n    observed_at, \n    ROW_NUMBER() OVER (PARTITION BY patient_id ORDER BY observed_at DESC) as rank\n  FROM analytics.hiv_observation_fact_v1\n  WHERE concept_name = :adherence_concept\n)\nSELECT \n  p.family_name, \n  p.given_name, \n  la.value_coded_name AS latest_adherence_result\nFROM analytics.hiv_patient_dim_v1 p\nJOIN latest_adherence la ON p.patient_id = la.patient_id\nWHERE la.rank = 1 \n  AND la.value_coded_name != 'All'",
+        "parameters": [
+          {
+            "name": "adherence_concept",
+            "type": "string",
+            "source": "question",
+            "value": "Antiretroviral adherence in past week"
+          }
+        ]
+      },
+      "statementTimeoutMs": 10000,
+      "maxRows": 100,
+      "replayed": false,
+      "status": "succeeded",
+      "result": {
+        "columns": [
+          {
+            "ordinal": 0,
+            "name": "family_name",
+            "databaseType": "text",
+            "typeOid": 25,
+            "logicalType": "string"
+          },
+          {
+            "ordinal": 1,
+            "name": "given_name",
+            "databaseType": "text",
+            "typeOid": 25,
+            "logicalType": "string"
+          },
+          {
+            "ordinal": 2,
+            "name": "latest_adherence_result",
+            "databaseType": "text",
+            "typeOid": 25,
+            "logicalType": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "Mukangu"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Half"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Oure"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Tipape"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Matey"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Few"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Jepkemei"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Karabor"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Okila"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Mung'Ugny"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Lagat"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Albert"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Butu"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Suiter"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Keter"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Kaila"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Chemutai"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Alele"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Mwanji"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Tiong'Igk"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Mbae"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Half"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Mitei"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Halambe"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Tormoi"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Litakwo"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Atuka"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Half"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Mwigei"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Few"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Kosgei"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Bindooi"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Kimaiwa"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Ngati"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Toet"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Sabul"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Ombati"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Chemuit"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Amsei"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Towett"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Mwallo"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Motoo"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Tue"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Ndeva"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Marindany"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Murango"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Bururu"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Keregei"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Barmel"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Masinde"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Half"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Alulu"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Kimngich"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Kuchwa"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Jumanne"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Few"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Sugt"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Chemasa"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Sirtich"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Andawa"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Atoti"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Andege"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Kipchichir"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Sego"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Cheboror"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Ombati"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Bulungu"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Sinoh"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Komo"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Ogal"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Malaba"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Ikey"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Ngotie"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Mego"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Kisa"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Keneck"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Tionyik"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Tuitoek"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Olekorio"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Half"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Kendagor"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Mesamba"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Kechigei"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Few"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Machanga"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Few"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Dieleman"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Javan"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Mwanji"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Half"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Msee"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Seii"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Maswai"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Wajala"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Leeli"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Nyenze"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Rirei"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Ken"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Few"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Chelulei"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Tulus"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Mboi"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Half"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Halambe"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Obatsa"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Half"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Mohammed"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Siwonei"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Benard"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Toet"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Morio"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "None"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Imala"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Agai"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Oromoo"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Most"
+            }
+          ]
+        ],
+        "rowCount": {
+          "returned": 100,
+          "truncated": true,
+          "truncationReason": "configured_limit"
+        },
+        "warnings": [
+          "`given_name` was blank or NULL in all 100 displayed rows. Select a populated column or revise the SQL expression. This check covers displayed rows only because results were truncated."
+        ]
+      },
+      "durationMs": 2054,
+      "executionId": "43dbdc08-1cb9-433f-a884-a8a1ef70d38f",
+      "sessionId": "23f50b23-1d00-4ccf-a299-ca4ee43a24b9",
+      "versionId": "39f97292-ab7e-4f4a-87b0-d912fbdeec8a",
+      "ordinal": 1,
+      "completedAt": "2026-08-25T01:06:17.609126Z"
+    }
+  },
+  "elapsedMs": 2080
+}

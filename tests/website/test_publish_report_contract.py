@@ -218,6 +218,13 @@ def test_stage_module_directly_covers_family_contracts(
         "slug": "catalyst-direct", "family": "catalyst", "title": "Replacement",
         "summary": "Updated summary", "takeaway": "Updated takeaway",
     }
+    mod.stage_report(
+        family="catalyst", run_dir=catalyst_fixture, slug="catalyst-direct",
+        reports_root=reports, manifest_path=manifest, root=tmp_path,
+    )
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    assert payload["runs"][0]["summary"] == "Updated summary"
+    assert payload["runs"][0]["takeaway"] == "Updated takeaway"
 
 
 def test_stage_module_rejects_invalid_inputs(tmp_path: Path, catalyst_fixture: Path) -> None:

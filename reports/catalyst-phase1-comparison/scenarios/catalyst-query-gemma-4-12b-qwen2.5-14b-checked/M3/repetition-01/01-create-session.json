@@ -1,0 +1,938 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "POST",
+    "path": "/v1/catalyst/workbench/sessions",
+    "body": {
+      "contractVersion": "catalyst.workbench.session.request.v1",
+      "deploymentMode": "demo",
+      "question": "Count CD4 count results by patient.",
+      "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+      "dataSourceId": "openmrs-hiv"
+    }
+  },
+  "response": {
+    "httpStatus": 201,
+    "body": {
+      "contractVersion": "catalyst.workbench.session.v1",
+      "sessionId": "bff945ac-4b7a-4703-8db5-ecd01562acc8",
+      "question": "Count CD4 count results by patient.",
+      "name": "Count CD4 count results by patient.",
+      "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+      "datasetId": "hiv-20260731T000741Z",
+      "datasetVersion": "hiv-20260731T000741Z",
+      "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+      "currentVersionId": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+      "browserState": {},
+      "provenance": {
+        "dataSourceId": "openmrs-hiv",
+        "catalogContextSourceId": "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+        "catalystTraceId": "556abe19-0f8c-416f-bd4b-c094869365b4",
+        "profileSnapshot": {
+          "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+          "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b",
+            "qwen2.5-14b"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b",
+            "query_review": "qwen2.5-14b"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            },
+            "query_review": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_review",
+            "query_finalize"
+          ],
+          "unavailableReasons": []
+        },
+        "datasetSnapshot": {
+          "datasetId": "hiv-20260731T000741Z",
+          "dataSource": "openmrs-hiv-fhir-postgresql",
+          "pipelineRunId": "hiv-20260731T000741Z",
+          "synthetic": null,
+          "patients": 5285,
+          "results": 427915,
+          "testTypes": 143,
+          "firstObservedAt": "2022-11-07T21:50:36Z",
+          "lastObservedAt": "2026-08-11T00:00:00Z"
+        },
+        "generationHttpStatus": 200,
+        "generationOutcome": {
+          "contractVersion": "catalyst.query.v1",
+          "deploymentMode": "demo",
+          "status": "ready",
+          "question": "Count CD4 count results by patient.",
+          "target": {
+            "dataSource": "openmrs-hiv-fhir-postgresql",
+            "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+            "dialect": "postgresql",
+            "approvedViews": [
+              "analytics.hiv_concept_mapping_v1",
+              "analytics.hiv_medication_request_fact_v1",
+              "analytics.hiv_observation_fact_v1",
+              "analytics.hiv_patient_dim_v1",
+              "analytics.hiv_visit_fact_v1",
+              "analytics.pipeline_freshness_v1",
+              "analytics.pipeline_run_v1",
+              "public.condition_flat",
+              "public.encounter_flat",
+              "public.medication_flat",
+              "public.medication_request_flat",
+              "public.observation_flat",
+              "public.patient_flat"
+            ]
+          },
+          "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :cd4_count_name GROUP BY patient_id",
+          "parameters": [
+            {
+              "name": "cd4_count_name",
+              "type": "string",
+              "source": "question",
+              "value": "CD4 count"
+            }
+          ],
+          "expectedColumns": [
+            {
+              "name": "patient_id",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "validation": {
+            "status": "passed",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              },
+              {
+                "name": "status",
+                "status": "passed",
+                "message": "The candidate's status is 'ready', which is correct."
+              },
+              {
+                "name": "approved-view",
+                "status": "passed",
+                "message": "The candidate uses the approved view 'analytics.hiv_observation_fact_v1'."
+              },
+              {
+                "name": "field-grounding",
+                "status": "passed",
+                "message": "The candidate correctly constrains the concept_name field to 'CD4 count' using a parameter."
+              },
+              {
+                "name": "one-statement-read-only",
+                "status": "passed",
+                "message": "The candidate uses a single SELECT statement without any destructive operations."
+              },
+              {
+                "name": "dialect-compatibility",
+                "status": "passed",
+                "message": "The candidate's SQL is compatible with PostgreSQL."
+              },
+              {
+                "name": "typed-parameter-binding",
+                "status": "passed",
+                "message": "The candidate uses a named parameter ':cd4_count_name' with the correct type 'string'."
+              },
+              {
+                "name": "output-column-agreement",
+                "status": "passed",
+                "message": "The candidate's output columns match the expected schema."
+              },
+              {
+                "name": "row-limit-policy",
+                "status": "passed",
+                "message": "The candidate does not exceed the row limit policy."
+              },
+              {
+                "name": "absence-of-invented-identifiers",
+                "status": "passed",
+                "message": "The candidate does not use any invented identifiers."
+              },
+              {
+                "name": "named_analyte_constraint",
+                "status": "passed",
+                "message": "Every analyte named in the question is constrained by its catalog semantic dimension and canonical bound value."
+              }
+            ]
+          },
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "traceId": "556abe19-0f8c-416f-bd4b-c094869365b4",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ]
+          },
+          "modelCollaboration": {
+            "writer": {
+              "model": "gemma-4-12b",
+              "candidate": {
+                "status": "ready",
+                "target": {
+                  "dataSource": "openmrs-hiv-fhir-postgresql",
+                  "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+                  "dialect": "postgresql",
+                  "approvedViews": [
+                    "analytics.hiv_concept_mapping_v1",
+                    "analytics.hiv_medication_request_fact_v1",
+                    "analytics.hiv_observation_fact_v1",
+                    "analytics.hiv_patient_dim_v1",
+                    "analytics.hiv_visit_fact_v1",
+                    "analytics.pipeline_freshness_v1",
+                    "analytics.pipeline_run_v1",
+                    "public.condition_flat",
+                    "public.encounter_flat",
+                    "public.medication_flat",
+                    "public.medication_request_flat",
+                    "public.observation_flat",
+                    "public.patient_flat"
+                  ]
+                },
+                "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :cd4_count_name GROUP BY patient_id",
+                "parameters": [
+                  {
+                    "name": "cd4_count_name",
+                    "type": "string",
+                    "source": "question",
+                    "value": "CD4 count"
+                  }
+                ],
+                "expectedColumns": [
+                  {
+                    "name": "patient_id",
+                    "logicalType": "string",
+                    "nullable": true
+                  },
+                  {
+                    "name": "count",
+                    "logicalType": "integer",
+                    "nullable": false
+                  }
+                ]
+              },
+              "lintFindings": []
+            },
+            "reviewer": {
+              "model": "qwen2.5-14b",
+              "decision": "approve",
+              "checks": [
+                {
+                  "name": "status",
+                  "status": "passed",
+                  "message": "The candidate's status is 'ready', which is correct."
+                },
+                {
+                  "name": "approved-view",
+                  "status": "passed",
+                  "message": "The candidate uses the approved view 'analytics.hiv_observation_fact_v1'."
+                },
+                {
+                  "name": "field-grounding",
+                  "status": "passed",
+                  "message": "The candidate correctly constrains the concept_name field to 'CD4 count' using a parameter."
+                },
+                {
+                  "name": "one-statement-read-only",
+                  "status": "passed",
+                  "message": "The candidate uses a single SELECT statement without any destructive operations."
+                },
+                {
+                  "name": "dialect-compatibility",
+                  "status": "passed",
+                  "message": "The candidate's SQL is compatible with PostgreSQL."
+                },
+                {
+                  "name": "typed-parameter-binding",
+                  "status": "passed",
+                  "message": "The candidate uses a named parameter ':cd4_count_name' with the correct type 'string'."
+                },
+                {
+                  "name": "output-column-agreement",
+                  "status": "passed",
+                  "message": "The candidate's output columns match the expected schema."
+                },
+                {
+                  "name": "row-limit-policy",
+                  "status": "passed",
+                  "message": "The candidate does not exceed the row limit policy."
+                },
+                {
+                  "name": "absence-of-invented-identifiers",
+                  "status": "passed",
+                  "message": "The candidate does not use any invented identifiers."
+                }
+              ]
+            },
+            "finalLintFindings": []
+          }
+        }
+      },
+      "status": "active",
+      "createdAt": "2026-08-25T00:59:36.281957Z",
+      "updatedAt": "2026-08-25T01:00:46.814600Z",
+      "versions": [
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+          "sessionId": "bff945ac-4b7a-4703-8db5-ecd01562acc8",
+          "parentVersionId": null,
+          "ordinal": 1,
+          "authorType": "model",
+          "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :cd4_count_name GROUP BY patient_id",
+          "parameters": [
+            {
+              "name": "cd4_count_name",
+              "type": "string",
+              "source": "question",
+              "value": "CD4 count"
+            }
+          ],
+          "expectedColumns": [
+            {
+              "name": "patient_id",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "queryDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "traceId": "556abe19-0f8c-416f-bd4b-c094869365b4",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "ready",
+            "hubTraceId": "556abe19-0f8c-416f-bd4b-c094869365b4",
+            "generationValidation": {
+              "status": "passed",
+              "checks": [
+                {
+                  "name": "query_lint_attempt_1",
+                  "status": "passed",
+                  "message": "Candidate passed deterministic SQL lint."
+                },
+                {
+                  "name": "status",
+                  "status": "passed",
+                  "message": "The candidate's status is 'ready', which is correct."
+                },
+                {
+                  "name": "approved-view",
+                  "status": "passed",
+                  "message": "The candidate uses the approved view 'analytics.hiv_observation_fact_v1'."
+                },
+                {
+                  "name": "field-grounding",
+                  "status": "passed",
+                  "message": "The candidate correctly constrains the concept_name field to 'CD4 count' using a parameter."
+                },
+                {
+                  "name": "one-statement-read-only",
+                  "status": "passed",
+                  "message": "The candidate uses a single SELECT statement without any destructive operations."
+                },
+                {
+                  "name": "dialect-compatibility",
+                  "status": "passed",
+                  "message": "The candidate's SQL is compatible with PostgreSQL."
+                },
+                {
+                  "name": "typed-parameter-binding",
+                  "status": "passed",
+                  "message": "The candidate uses a named parameter ':cd4_count_name' with the correct type 'string'."
+                },
+                {
+                  "name": "output-column-agreement",
+                  "status": "passed",
+                  "message": "The candidate's output columns match the expected schema."
+                },
+                {
+                  "name": "row-limit-policy",
+                  "status": "passed",
+                  "message": "The candidate does not exceed the row limit policy."
+                },
+                {
+                  "name": "absence-of-invented-identifiers",
+                  "status": "passed",
+                  "message": "The candidate does not use any invented identifiers."
+                },
+                {
+                  "name": "named_analyte_constraint",
+                  "status": "passed",
+                  "message": "Every analyte named in the question is constrained by its catalog semantic dimension and canonical bound value."
+                }
+              ]
+            },
+            "modelCollaboration": {
+              "writer": {
+                "model": "gemma-4-12b",
+                "candidate": {
+                  "status": "ready",
+                  "target": {
+                    "dataSource": "openmrs-hiv-fhir-postgresql",
+                    "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+                    "dialect": "postgresql",
+                    "approvedViews": [
+                      "analytics.hiv_concept_mapping_v1",
+                      "analytics.hiv_medication_request_fact_v1",
+                      "analytics.hiv_observation_fact_v1",
+                      "analytics.hiv_patient_dim_v1",
+                      "analytics.hiv_visit_fact_v1",
+                      "analytics.pipeline_freshness_v1",
+                      "analytics.pipeline_run_v1",
+                      "public.condition_flat",
+                      "public.encounter_flat",
+                      "public.medication_flat",
+                      "public.medication_request_flat",
+                      "public.observation_flat",
+                      "public.patient_flat"
+                    ]
+                  },
+                  "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :cd4_count_name GROUP BY patient_id",
+                  "parameters": [
+                    {
+                      "name": "cd4_count_name",
+                      "type": "string",
+                      "source": "question",
+                      "value": "CD4 count"
+                    }
+                  ],
+                  "expectedColumns": [
+                    {
+                      "name": "patient_id",
+                      "logicalType": "string",
+                      "nullable": true
+                    },
+                    {
+                      "name": "count",
+                      "logicalType": "integer",
+                      "nullable": false
+                    }
+                  ]
+                },
+                "lintFindings": []
+              },
+              "reviewer": {
+                "model": "qwen2.5-14b",
+                "decision": "approve",
+                "checks": [
+                  {
+                    "name": "status",
+                    "status": "passed",
+                    "message": "The candidate's status is 'ready', which is correct."
+                  },
+                  {
+                    "name": "approved-view",
+                    "status": "passed",
+                    "message": "The candidate uses the approved view 'analytics.hiv_observation_fact_v1'."
+                  },
+                  {
+                    "name": "field-grounding",
+                    "status": "passed",
+                    "message": "The candidate correctly constrains the concept_name field to 'CD4 count' using a parameter."
+                  },
+                  {
+                    "name": "one-statement-read-only",
+                    "status": "passed",
+                    "message": "The candidate uses a single SELECT statement without any destructive operations."
+                  },
+                  {
+                    "name": "dialect-compatibility",
+                    "status": "passed",
+                    "message": "The candidate's SQL is compatible with PostgreSQL."
+                  },
+                  {
+                    "name": "typed-parameter-binding",
+                    "status": "passed",
+                    "message": "The candidate uses a named parameter ':cd4_count_name' with the correct type 'string'."
+                  },
+                  {
+                    "name": "output-column-agreement",
+                    "status": "passed",
+                    "message": "The candidate's output columns match the expected schema."
+                  },
+                  {
+                    "name": "row-limit-policy",
+                    "status": "passed",
+                    "message": "The candidate does not exceed the row limit policy."
+                  },
+                  {
+                    "name": "absence-of-invented-identifiers",
+                    "status": "passed",
+                    "message": "The candidate does not use any invented identifiers."
+                  }
+                ]
+              },
+              "finalLintFindings": []
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b",
+              "qwen2.5-14b"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b",
+              "query_review": "qwen2.5-14b"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "query_review": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_review",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "catalystTraceId": "556abe19-0f8c-416f-bd4b-c094869365b4",
+            "turnId": "e289a554-c4d9-46b8-bdd5-ba64a380f2ac",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": null,
+            "effectiveBaseVersion": null,
+            "manualVersion": null,
+            "editorSnapshotDigest": null,
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "c71057b2-6c5f-4971-8d2e-7ee4acd3aa63",
+              "evidenceDigest": "c7d6038ef10d815fe644dd6c9948206c4676c787bb2773f6111180e999a9b137",
+              "detailPath": "/v1/catalyst/workbench/sessions/bff945ac-4b7a-4703-8db5-ecd01562acc8/turns/e289a554-c4d9-46b8-bdd5-ba64a380f2ac/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+              "profileName": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+              "profileDigest": "ed71b2719f421b3edb7ad17a47ae1aea290f8b1d079a633ce23e4dea369565ab",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4",
+                "modelId": "gemma-4-12b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": [],
+              "reviewer": {
+                "role": "reviewer",
+                "providerId": "med-agent-hub",
+                "modelClass": "qwen2.5",
+                "modelId": "qwen2.5-14b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-review",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                  "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+                }
+              }
+            },
+            "hubRequestDigest": "df0a8b6c0073c50f96f067f44e3d5d08e49009bb01043aa6548929b83adebd89"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T01:00:46.814600Z"
+        }
+      ],
+      "currentVersion": {
+        "contractVersion": "catalyst.workbench.query-version.v1",
+        "versionId": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+        "sessionId": "bff945ac-4b7a-4703-8db5-ecd01562acc8",
+        "parentVersionId": null,
+        "ordinal": 1,
+        "authorType": "model",
+        "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :cd4_count_name GROUP BY patient_id",
+        "parameters": [
+          {
+            "name": "cd4_count_name",
+            "type": "string",
+            "source": "question",
+            "value": "CD4 count"
+          }
+        ],
+        "expectedColumns": [
+          {
+            "name": "patient_id",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "count",
+            "logicalType": "integer",
+            "nullable": false
+          }
+        ],
+        "queryDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056",
+        "provenance": {
+          "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+          "traceId": "556abe19-0f8c-416f-bd4b-c094869365b4",
+          "contextSourceIds": [
+            "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+          ],
+          "sourceContract": "catalyst.query.v1",
+          "sourceStatus": "ready",
+          "hubTraceId": "556abe19-0f8c-416f-bd4b-c094869365b4",
+          "generationValidation": {
+            "status": "passed",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              },
+              {
+                "name": "status",
+                "status": "passed",
+                "message": "The candidate's status is 'ready', which is correct."
+              },
+              {
+                "name": "approved-view",
+                "status": "passed",
+                "message": "The candidate uses the approved view 'analytics.hiv_observation_fact_v1'."
+              },
+              {
+                "name": "field-grounding",
+                "status": "passed",
+                "message": "The candidate correctly constrains the concept_name field to 'CD4 count' using a parameter."
+              },
+              {
+                "name": "one-statement-read-only",
+                "status": "passed",
+                "message": "The candidate uses a single SELECT statement without any destructive operations."
+              },
+              {
+                "name": "dialect-compatibility",
+                "status": "passed",
+                "message": "The candidate's SQL is compatible with PostgreSQL."
+              },
+              {
+                "name": "typed-parameter-binding",
+                "status": "passed",
+                "message": "The candidate uses a named parameter ':cd4_count_name' with the correct type 'string'."
+              },
+              {
+                "name": "output-column-agreement",
+                "status": "passed",
+                "message": "The candidate's output columns match the expected schema."
+              },
+              {
+                "name": "row-limit-policy",
+                "status": "passed",
+                "message": "The candidate does not exceed the row limit policy."
+              },
+              {
+                "name": "absence-of-invented-identifiers",
+                "status": "passed",
+                "message": "The candidate does not use any invented identifiers."
+              },
+              {
+                "name": "named_analyte_constraint",
+                "status": "passed",
+                "message": "Every analyte named in the question is constrained by its catalog semantic dimension and canonical bound value."
+              }
+            ]
+          },
+          "modelCollaboration": {
+            "writer": {
+              "model": "gemma-4-12b",
+              "candidate": {
+                "status": "ready",
+                "target": {
+                  "dataSource": "openmrs-hiv-fhir-postgresql",
+                  "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+                  "dialect": "postgresql",
+                  "approvedViews": [
+                    "analytics.hiv_concept_mapping_v1",
+                    "analytics.hiv_medication_request_fact_v1",
+                    "analytics.hiv_observation_fact_v1",
+                    "analytics.hiv_patient_dim_v1",
+                    "analytics.hiv_visit_fact_v1",
+                    "analytics.pipeline_freshness_v1",
+                    "analytics.pipeline_run_v1",
+                    "public.condition_flat",
+                    "public.encounter_flat",
+                    "public.medication_flat",
+                    "public.medication_request_flat",
+                    "public.observation_flat",
+                    "public.patient_flat"
+                  ]
+                },
+                "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :cd4_count_name GROUP BY patient_id",
+                "parameters": [
+                  {
+                    "name": "cd4_count_name",
+                    "type": "string",
+                    "source": "question",
+                    "value": "CD4 count"
+                  }
+                ],
+                "expectedColumns": [
+                  {
+                    "name": "patient_id",
+                    "logicalType": "string",
+                    "nullable": true
+                  },
+                  {
+                    "name": "count",
+                    "logicalType": "integer",
+                    "nullable": false
+                  }
+                ]
+              },
+              "lintFindings": []
+            },
+            "reviewer": {
+              "model": "qwen2.5-14b",
+              "decision": "approve",
+              "checks": [
+                {
+                  "name": "status",
+                  "status": "passed",
+                  "message": "The candidate's status is 'ready', which is correct."
+                },
+                {
+                  "name": "approved-view",
+                  "status": "passed",
+                  "message": "The candidate uses the approved view 'analytics.hiv_observation_fact_v1'."
+                },
+                {
+                  "name": "field-grounding",
+                  "status": "passed",
+                  "message": "The candidate correctly constrains the concept_name field to 'CD4 count' using a parameter."
+                },
+                {
+                  "name": "one-statement-read-only",
+                  "status": "passed",
+                  "message": "The candidate uses a single SELECT statement without any destructive operations."
+                },
+                {
+                  "name": "dialect-compatibility",
+                  "status": "passed",
+                  "message": "The candidate's SQL is compatible with PostgreSQL."
+                },
+                {
+                  "name": "typed-parameter-binding",
+                  "status": "passed",
+                  "message": "The candidate uses a named parameter ':cd4_count_name' with the correct type 'string'."
+                },
+                {
+                  "name": "output-column-agreement",
+                  "status": "passed",
+                  "message": "The candidate's output columns match the expected schema."
+                },
+                {
+                  "name": "row-limit-policy",
+                  "status": "passed",
+                  "message": "The candidate does not exceed the row limit policy."
+                },
+                {
+                  "name": "absence-of-invented-identifiers",
+                  "status": "passed",
+                  "message": "The candidate does not use any invented identifiers."
+                }
+              ]
+            },
+            "finalLintFindings": []
+          },
+          "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b",
+            "qwen2.5-14b"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b",
+            "query_review": "qwen2.5-14b"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            },
+            "query_review": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_review",
+            "query_finalize"
+          ],
+          "unavailableReasons": [],
+          "catalystTraceId": "556abe19-0f8c-416f-bd4b-c094869365b4",
+          "turnId": "e289a554-c4d9-46b8-bdd5-ba64a380f2ac",
+          "dataSourceId": "openmrs-hiv",
+          "observedBase": null,
+          "effectiveBaseVersion": null,
+          "manualVersion": null,
+          "editorSnapshotDigest": null,
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "c71057b2-6c5f-4971-8d2e-7ee4acd3aa63",
+            "evidenceDigest": "c7d6038ef10d815fe644dd6c9948206c4676c787bb2773f6111180e999a9b137",
+            "detailPath": "/v1/catalyst/workbench/sessions/bff945ac-4b7a-4703-8db5-ecd01562acc8/turns/e289a554-c4d9-46b8-bdd5-ba64a380f2ac/generation-evidence"
+          },
+          "profileSnapshot": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "profileName": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+            "profileDigest": "ed71b2719f421b3edb7ad17a47ae1aea290f8b1d079a633ce23e4dea369565ab",
+            "writer": {
+              "role": "writer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4",
+              "modelId": "gemma-4-12b",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-generate",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+              }
+            },
+            "omissions": [],
+            "reviewer": {
+              "role": "reviewer",
+              "providerId": "med-agent-hub",
+              "modelClass": "qwen2.5",
+              "modelId": "qwen2.5-14b",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-review",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+              }
+            }
+          },
+          "hubRequestDigest": "df0a8b6c0073c50f96f067f44e3d5d08e49009bb01043aa6548929b83adebd89"
+        },
+        "sourceFindingIds": [],
+        "repairProposalId": null,
+        "createdAt": "2026-08-25T01:00:46.814600Z"
+      },
+      "validations": [
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 0,
+          "validationId": "c43394a1-a0c4-4b48-8718-b69f27d11a9d",
+          "sessionId": "bff945ac-4b7a-4703-8db5-ecd01562acc8",
+          "versionId": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T01:00:46.814600Z"
+        }
+      ],
+      "latestValidation": {
+        "contractVersion": "catalyst.workbench.validation.v1",
+        "queryDigest": "171a3b74d59463ecc2a41dda1cab3d106a3bacdb3a34a6dab554c99ec8b4f056",
+        "validatorRevision": "catalyst.workbench.validator.v1",
+        "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+        "status": "valid",
+        "advisory": true,
+        "checks": [],
+        "findings": [],
+        "durationMs": 0,
+        "validationId": "c43394a1-a0c4-4b48-8718-b69f27d11a9d",
+        "sessionId": "bff945ac-4b7a-4703-8db5-ecd01562acc8",
+        "versionId": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+        "ordinal": 1,
+        "createdAt": "2026-08-25T01:00:46.814600Z"
+      },
+      "executions": [],
+      "guidance": [],
+      "dataSourceId": "openmrs-hiv",
+      "draftSeed": null
+    }
+  },
+  "elapsedMs": 73508
+}
