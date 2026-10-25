@@ -1,0 +1,24 @@
+# Layered after catalyst-mvp-isolated.override.yml when the Catalyst MVP shares the
+# ChartSearchAI stack's Med Agent Hub instead of running its own
+# (CATALYST_HUB=shared scripts/catalyst-mvp.sh ...). The launcher also tells
+# Catalyst's scripts where that Hub is; this file only rewires the services.
+services:
+  catalyst-gateway:
+    # The shared Hub lives on the ChartSearchAI stack's network; the gateway keeps
+    # its own network for Spark and joins that one for the Hub.
+    networks:
+      - openelis-network
+      - shared-hub
+    depends_on: !override
+      spark-thriftserver:
+        condition: service_healthy
+
+  # This stack's own Hub is not started; naming it keeps it out of `up` and
+  # `down` unless the profile is asked for.
+  med-agent-hub:
+    profiles: ["own-hub"]
+
+networks:
+  shared-hub:
+    name: ${CATALYST_SHARED_HUB_NETWORK:-compose_default}
+    external: true
