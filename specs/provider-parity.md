@@ -34,9 +34,11 @@ comparisons in the picker.
 - [ ] Hub reads the records once per answer: one selection per answer, the same
       records block first in every stage, instructions after it, so the router's
       cache does the rest. Re-run.
-- [ ] Hub sends less for narrow questions: a smaller recent core and relevance-led
-      admission; each profile's window sized to its model. Re-run, and spot-check
-      answers on ChartSearchAI's 40-cell question set.
+- [ ] Hub sends less for narrow questions: a smaller recent core and each profile's
+      window sized to its model. Relevance-led admission belongs to
+      [decision-layer P3.4](decision-layer-experiment.md#phase-3-hub-decision-making-design-review-before-code),
+      gated by G0. Re-run, and spot-check answers on ChartSearchAI's 40-cell
+      question set.
 - [ ] A "fast checked" profile without In-Depth for live sessions, as an explicit
       choice.
 - [ ] An OpenRouter comparison profile with the same context budget, with one
