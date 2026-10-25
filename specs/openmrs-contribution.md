@@ -146,7 +146,8 @@ dated records and no longer listed here.
       re-run is in Decision 28; the temporal probe has not been re-run on the new
       composition.
 - [ ] Local boot check of the stack tops: fresh setup, restart with data, and a
-      module upgrade from a database set up on the previous heads.
+      module upgrade from a database set up on the previous heads, each finished
+      with `make chartsearch-smoke` ([environments/README.md](../environments/README.md#setup-acceptance)).
 - [ ] Maintainer review of the new PRs; replies per the reply brief, posted on the
       owner's approval.
 - [ ] Merge order once approved: QueryStore #92 to #97 first (a published snapshot
