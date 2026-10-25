@@ -1,8 +1,9 @@
 # OpenClinAI roadmap
 
-This is the landscape of OpenClinAI's efforts: one row per thread, each with its
-own spec written as a target path with checkboxes, and the current priorities
-across them. Dated evidence lives in [`reviews/`](reviews/).
+This is the landscape of OpenClinAI's efforts: one row per thread, and the current
+priorities across them. Each delivery thread has its own spec written as a target
+path with checkboxes; an exploration links its research until the owner scopes it
+as a thread. Dated evidence lives in [`reviews/`](reviews/).
 [Architecture](architecture.md) owns component boundaries, product repositories
 own application behavior, and the harness owns experiments. The workspace refactor
 that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in its
@@ -18,7 +19,7 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 | Catalyst delivery | [catalyst-delivery.md](catalyst-delivery.md) | Four journeys demonstrated; acceptance open | FP-009 and FP-010 |
 | Website and publication | [website-publication.md](website-publication.md) | Documentation site deploys from `main`; landing site live from the umbrella's own website proxy since 18 October | Audit item W04 |
 | Decision-layer experiment (Jev, Laya) | [decision-layer-experiment.md](decision-layer-experiment.md) | Proposed; research updated 16 October | Decisions D1–D5 |
-| Clinical knowledge bases | No umbrella spec yet. The Hub ships one static knowledge-base source; the harness holds the [research notes](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/artifacts/planning/clinical-kb-research.md) and [scope](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/artifacts/planning/kb-scope.md) | Exploration | Owner decides whether to scope a thread |
+| Clinical knowledge bases | No umbrella spec yet. The Hub ships one static knowledge-base source; the harness holds the [research notes](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/artifacts/planning/clinical-kb-research.md) | Exploration | Owner decides whether to scope a thread |
 | Validation methodology | The [harness](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/README.md) and its [evaluation methodology brief](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/artifacts/planning/eval-methodology-brief.md) | Runs experiments against the local stack; the 7 and 10 October reviews are its latest outputs | Serves the other threads' evaluations |
 | Workspace and validation refactor (Track B) | [closeout record](reviews/2026-10-02-refactor-closeout.md) | Complete, 2 October | None |
 
