@@ -82,5 +82,5 @@ the Catalyst gateway kept reaching it by name.
 
 ## Not done
 
-- The Catalyst PRs are not opened and the pin points at unpushed commits.
+- Catalyst #142 to #144 are open; #23 pins #144's head until they merge.
 - Checkpoint 1's fresh-setup and upgrade cases.

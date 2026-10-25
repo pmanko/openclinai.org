@@ -35,10 +35,11 @@ catalyst.openelis-global.org, which nothing here depends on.
 
 The modes, commands and first-start steps are in
 [environments/README.md](../environments/README.md#chartsearchai-and-catalyst-alone-or-together).
-Open: the Catalyst PRs (`result-freshness`, `openelis-3.3.0`, `shared-hub` on
-DIGI-UW/catalyst-ai) are not opened, so #23 pins unpushed commits; two harness
-suite defects found against the shared stack belong to the harness and the Hub
-(record).
+Open: Catalyst [#142](https://github.com/DIGI-UW/catalyst-ai/pull/142),
+[#143](https://github.com/DIGI-UW/catalyst-ai/pull/143) and
+[#144](https://github.com/DIGI-UW/catalyst-ai/pull/144) are in review, and #23 pins
+#144's head until they merge; two harness suite defects found against the shared
+stack belong to the harness and the Hub (record).
 
 ## Target path
 
@@ -58,10 +59,11 @@ record under [`reviews/`](reviews/) naming the commands run and their results.
 
 ### Checkpoint 2: Catalyst alone on the latest OpenELIS release
 
-- [ ] Catalyst PRs `result-freshness` and `openelis-3.3.0`: the 3.3.0 release images
-      by digest and openelis-docker tag, the seed's version guard, the warehouse
-      ordering fix, and the result-freshness contract fix the smoke exposed
-      (branches ready; not opened).
+- [ ] Catalyst [#142](https://github.com/DIGI-UW/catalyst-ai/pull/142) and
+      [#143](https://github.com/DIGI-UW/catalyst-ai/pull/143) merged: the
+      result-freshness contract fix the smoke exposed, then the 3.3.0 release images
+      by digest and openelis-docker tag, the seed's version guard and the warehouse
+      ordering fix.
 - [x] The MVP boots, seeds and passes `mvp-health.sh` on this machine in
       external-router mode, reporting OpenELIS 3.3.0 ([25 October record](reviews/2026-10-25-local-stacks-together.md)).
 - [x] `make catalyst-smoke`: Catalyst's own health gate, then one natural-language
@@ -77,8 +79,9 @@ record under [`reviews/`](reviews/) naming the commands run and their results.
       Catalyst alone still uses its own Hub ([25 October record](reviews/2026-10-25-local-stacks-together.md)).
 - [x] `CATALYST_HUB=shared` in `scripts/catalyst-mvp.sh` requires the umbrella Hub
       healthy and points Catalyst and its health gate at it ([25 October record](reviews/2026-10-25-local-stacks-together.md)).
-- [ ] Catalyst PR `shared-hub`: `MVP_HUB=external`, the gateway's Hub URL as
-      `MVP_GATEWAY_HUB_URL`, layered overrides (branch ready; not opened).
+- [ ] Catalyst [#144](https://github.com/DIGI-UW/catalyst-ai/pull/144) merged:
+      `MVP_HUB=external`, the gateway's Hub URL as `MVP_GATEWAY_HUB_URL`, layered
+      overrides.
 - [x] Both smokes green against the one Hub, the Hub revision the same in both
       ([25 October record](reviews/2026-10-25-local-stacks-together.md)).
 - [x] Harness suites for ChartSearchAI and Catalyst each run once against the
