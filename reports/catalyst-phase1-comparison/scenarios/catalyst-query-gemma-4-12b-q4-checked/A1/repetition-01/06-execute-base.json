@@ -1,0 +1,330 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "POST",
+    "path": "/v1/catalyst/workbench/versions/bfd41602-5c23-4952-aad2-fb9a4fb4fce9/execute",
+    "body": {
+      "contractVersion": "catalyst.workbench.execute.request.v1",
+      "versionId": "bfd41602-5c23-4952-aad2-fb9a4fb4fce9",
+      "queryDigest": "aef4db7f761b4f562954be9d147760d2f97dc5428bec3ff1bfa5034c24e21bcb",
+      "idempotencyKey": "harness-notebook-eb332509-5878-4b91-8739-9b3c5611693a"
+    }
+  },
+  "response": {
+    "httpStatus": 200,
+    "body": {
+      "contractVersion": "catalyst.workbench.execution.v1",
+      "queryDigest": "aef4db7f761b4f562954be9d147760d2f97dc5428bec3ff1bfa5034c24e21bcb",
+      "idempotencyKey": "harness-notebook-eb332509-5878-4b91-8739-9b3c5611693a",
+      "validationStatus": "valid",
+      "query": {
+        "sql": "SELECT t1.family_name, t1.given_name, t2.value_numeric, t2.value_unit, t2.observed_at FROM analytics.hiv_patient_dim_v1 AS t1 JOIN analytics.hiv_observation_fact_v1 AS t2 ON t1.patient_id = t2.patient_id WHERE t2.concept_name = :concept_name AND t2.observed_at >= :start_date",
+        "parameters": [
+          {
+            "name": "concept_name",
+            "type": "string",
+            "source": "question",
+            "value": "CD4 count"
+          },
+          {
+            "name": "start_date",
+            "type": "date-time",
+            "source": "question",
+            "value": "2026-02-01T00:00:00Z"
+          }
+        ]
+      },
+      "statementTimeoutMs": 10000,
+      "maxRows": 100,
+      "replayed": false,
+      "status": "succeeded",
+      "result": {
+        "columns": [
+          {
+            "ordinal": 0,
+            "name": "family_name",
+            "databaseType": "text",
+            "typeOid": 25,
+            "logicalType": "string"
+          },
+          {
+            "ordinal": 1,
+            "name": "given_name",
+            "databaseType": "text",
+            "typeOid": 25,
+            "logicalType": "string"
+          },
+          {
+            "ordinal": 2,
+            "name": "value_numeric",
+            "databaseType": "numeric",
+            "typeOid": 1700,
+            "logicalType": "decimal"
+          },
+          {
+            "ordinal": 3,
+            "name": "value_unit",
+            "databaseType": "text",
+            "typeOid": 25,
+            "logicalType": "string"
+          },
+          {
+            "ordinal": 4,
+            "name": "observed_at",
+            "databaseType": "timestamptz",
+            "typeOid": 1184,
+            "logicalType": "date-time"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "Mumbu"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "decimal",
+              "value": "450"
+            },
+            {
+              "type": "string",
+              "value": "cells/uL"
+            },
+            {
+              "type": "date-time",
+              "value": "2026-07-27T00:00:00Z"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Bwaber"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "decimal",
+              "value": "273"
+            },
+            {
+              "type": "string",
+              "value": "cells/uL"
+            },
+            {
+              "type": "date-time",
+              "value": "2026-05-07T00:00:00Z"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Chepkosgei"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "decimal",
+              "value": "404"
+            },
+            {
+              "type": "string",
+              "value": "cells/uL"
+            },
+            {
+              "type": "date-time",
+              "value": "2026-02-01T00:00:00Z"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Tere"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "decimal",
+              "value": "282"
+            },
+            {
+              "type": "string",
+              "value": "cells/uL"
+            },
+            {
+              "type": "date-time",
+              "value": "2026-03-03T00:00:00Z"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Kipchichir"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "decimal",
+              "value": "150"
+            },
+            {
+              "type": "string",
+              "value": "cells/uL"
+            },
+            {
+              "type": "date-time",
+              "value": "2026-07-31T00:00:00Z"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Magathi"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "decimal",
+              "value": "636"
+            },
+            {
+              "type": "string",
+              "value": "cells/uL"
+            },
+            {
+              "type": "date-time",
+              "value": "2026-03-09T00:00:00Z"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Ombati"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "decimal",
+              "value": "187"
+            },
+            {
+              "type": "string",
+              "value": "cells/uL"
+            },
+            {
+              "type": "date-time",
+              "value": "2026-02-12T00:00:00Z"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Kiregger"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "decimal",
+              "value": "161"
+            },
+            {
+              "type": "string",
+              "value": "cells/uL"
+            },
+            {
+              "type": "date-time",
+              "value": "2026-02-02T00:00:00Z"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Kolum"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "decimal",
+              "value": "442"
+            },
+            {
+              "type": "string",
+              "value": "cells/uL"
+            },
+            {
+              "type": "date-time",
+              "value": "2026-02-01T00:00:00Z"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Cheboskwony"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "decimal",
+              "value": "423"
+            },
+            {
+              "type": "string",
+              "value": "cells/uL"
+            },
+            {
+              "type": "date-time",
+              "value": "2026-03-27T00:00:00Z"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Jepkasi"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "decimal",
+              "value": "1008"
+            },
+            {
+              "type": "string",
+              "value": "cells/uL"
+            },
+            {
+              "type": "date-time",
+              "value": "2026-08-04T00:00:00Z"
+            }
+          ]
+        ],
+        "rowCount": {
+          "returned": 11,
+          "truncated": false,
+          "truncationReason": null
+        },
+        "warnings": [
+          "`given_name` was blank or NULL in all 11 returned rows. Select a populated column or revise the SQL expression."
+        ]
+      },
+      "durationMs": 638,
+      "executionId": "4136a22c-1934-42f3-a89f-ab72308c0318",
+      "sessionId": "bb8147f2-e2e7-4c17-bf85-082337c87039",
+      "versionId": "bfd41602-5c23-4952-aad2-fb9a4fb4fce9",
+      "ordinal": 1,
+      "completedAt": "2026-08-25T00:25:50.576722Z"
+    }
+  },
+  "elapsedMs": 674
+}

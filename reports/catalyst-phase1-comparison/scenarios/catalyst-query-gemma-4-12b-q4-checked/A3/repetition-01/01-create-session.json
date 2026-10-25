@@ -1,0 +1,578 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "POST",
+    "path": "/v1/catalyst/workbench/sessions",
+    "body": {
+      "contractVersion": "catalyst.workbench.session.request.v1",
+      "deploymentMode": "demo",
+      "question": "Count medication requests for female patients by medication name, excluding do_not_perform, highest count first.",
+      "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+      "dataSourceId": "openmrs-hiv"
+    }
+  },
+  "response": {
+    "httpStatus": 201,
+    "body": {
+      "contractVersion": "catalyst.workbench.session.v1",
+      "sessionId": "d16b152d-f5fb-434b-9ab4-7e67f0e0bf95",
+      "question": "Count medication requests for female patients by medication name, excluding do_not_perform, highest count first.",
+      "name": "Count medication requests for female patients by medication name, excluding do_not_perform, highest count first.",
+      "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+      "datasetId": "hiv-20260731T000741Z",
+      "datasetVersion": "hiv-20260731T000741Z",
+      "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+      "currentVersionId": "d53043f1-739a-4f5a-b13d-c37a567affa9",
+      "browserState": {},
+      "provenance": {
+        "dataSourceId": "openmrs-hiv",
+        "catalogContextSourceId": "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+        "catalystTraceId": "8e23fb68-60a0-47c3-a6c1-812bdadd5739",
+        "profileSnapshot": {
+          "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+          "profileLabel": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b-q4"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b-q4",
+            "query_review": "gemma-4-12b-q4"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            },
+            "query_review": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "dbfe5a9c13a1269a5ed8b269a8d5c82506419f8515efe33e236770a90e571ffa",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_review",
+            "query_finalize"
+          ],
+          "unavailableReasons": []
+        },
+        "datasetSnapshot": {
+          "datasetId": "hiv-20260731T000741Z",
+          "dataSource": "openmrs-hiv-fhir-postgresql",
+          "pipelineRunId": "hiv-20260731T000741Z",
+          "synthetic": null,
+          "patients": 5285,
+          "results": 427915,
+          "testTypes": 143,
+          "firstObservedAt": "2022-11-07T21:50:36Z",
+          "lastObservedAt": "2026-08-11T00:00:00Z"
+        },
+        "generationHttpStatus": 200,
+        "generationOutcome": {
+          "contractVersion": "catalyst.query.v1",
+          "deploymentMode": "demo",
+          "status": "ready",
+          "question": "Count medication requests for female patients by medication name, excluding do_not_perform, highest count first.",
+          "target": {
+            "dataSource": "openmrs-hiv-fhir-postgresql",
+            "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+            "dialect": "postgresql",
+            "approvedViews": [
+              "analytics.hiv_concept_mapping_v1",
+              "analytics.hiv_medication_request_fact_v1",
+              "analytics.hiv_observation_fact_v1",
+              "analytics.hiv_patient_dim_v1",
+              "analytics.hiv_visit_fact_v1",
+              "analytics.pipeline_freshness_v1",
+              "analytics.pipeline_run_v1",
+              "public.condition_flat",
+              "public.encounter_flat",
+              "public.medication_flat",
+              "public.medication_request_flat",
+              "public.observation_flat",
+              "public.patient_flat"
+            ]
+          },
+          "sql": "SELECT medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE patient_gender = 'female' AND do_not_perform = false GROUP BY medication_name ORDER BY count DESC",
+          "parameters": [],
+          "expectedColumns": [
+            {
+              "name": "medication_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "validation": {
+            "status": "passed",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              },
+              {
+                "name": "status_correctness",
+                "status": "passed",
+                "message": "The query status is 'ready'."
+              },
+              {
+                "name": "approved_view_and_field_grounding",
+                "status": "passed",
+                "message": "The query uses 'analytics.hiv_medication_request_fact_v1' which is in the approved views. Fields 'medication_name', 'patient_gender', 'do_not_perform', and 'count' (alias for COUNT(*)) are grounded."
+              },
+              {
+                "name": "one_statement_read_only_select",
+                "status": "passed",
+                "message": "The query is a single SELECT statement."
+              },
+              {
+                "name": "dialect_compatibility",
+                "status": "passed",
+                "message": "The query is compatible with the postgresql dialect."
+              },
+              {
+                "name": "typed_parameter_binding",
+                "status": "passed",
+                "message": "No placeholders are used, so no parameter binding is required."
+              },
+              {
+                "name": "output_column_agreement",
+                "status": "passed",
+                "message": "The output columns 'medication_name' and 'count' match the expected columns."
+              },
+              {
+                "name": "row_limit_policy",
+                "status": "passed",
+                "message": "The query does not exceed the row limit or require a specific limit as it is an aggregation."
+              },
+              {
+                "name": "absence_of_invented_identifiers",
+                "status": "passed",
+                "message": "No invented identifiers were found."
+              }
+            ]
+          },
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+            "traceId": "8e23fb68-60a0-47c3-a6c1-812bdadd5739",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ]
+          }
+        }
+      },
+      "status": "active",
+      "createdAt": "2026-08-25T00:26:56.669308Z",
+      "updatedAt": "2026-08-25T00:28:24.445581Z",
+      "versions": [
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "d53043f1-739a-4f5a-b13d-c37a567affa9",
+          "sessionId": "d16b152d-f5fb-434b-9ab4-7e67f0e0bf95",
+          "parentVersionId": null,
+          "ordinal": 1,
+          "authorType": "model",
+          "sql": "SELECT medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE patient_gender = 'female' AND do_not_perform = false GROUP BY medication_name ORDER BY count DESC",
+          "parameters": [],
+          "expectedColumns": [
+            {
+              "name": "medication_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "queryDigest": "2376394454a4e04bb119f29ca3b8f4d5dcd9e42d430398a7503c3e64a2ff3ee3",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+            "traceId": "8e23fb68-60a0-47c3-a6c1-812bdadd5739",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "ready",
+            "hubTraceId": "8e23fb68-60a0-47c3-a6c1-812bdadd5739",
+            "generationValidation": {
+              "status": "passed",
+              "checks": [
+                {
+                  "name": "query_lint_attempt_1",
+                  "status": "passed",
+                  "message": "Candidate passed deterministic SQL lint."
+                },
+                {
+                  "name": "status_correctness",
+                  "status": "passed",
+                  "message": "The query status is 'ready'."
+                },
+                {
+                  "name": "approved_view_and_field_grounding",
+                  "status": "passed",
+                  "message": "The query uses 'analytics.hiv_medication_request_fact_v1' which is in the approved views. Fields 'medication_name', 'patient_gender', 'do_not_perform', and 'count' (alias for COUNT(*)) are grounded."
+                },
+                {
+                  "name": "one_statement_read_only_select",
+                  "status": "passed",
+                  "message": "The query is a single SELECT statement."
+                },
+                {
+                  "name": "dialect_compatibility",
+                  "status": "passed",
+                  "message": "The query is compatible with the postgresql dialect."
+                },
+                {
+                  "name": "typed_parameter_binding",
+                  "status": "passed",
+                  "message": "No placeholders are used, so no parameter binding is required."
+                },
+                {
+                  "name": "output_column_agreement",
+                  "status": "passed",
+                  "message": "The output columns 'medication_name' and 'count' match the expected columns."
+                },
+                {
+                  "name": "row_limit_policy",
+                  "status": "passed",
+                  "message": "The query does not exceed the row limit or require a specific limit as it is an aggregation."
+                },
+                {
+                  "name": "absence_of_invented_identifiers",
+                  "status": "passed",
+                  "message": "No invented identifiers were found."
+                }
+              ]
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b-q4"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b-q4",
+              "query_review": "gemma-4-12b-q4"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "query_review": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "dbfe5a9c13a1269a5ed8b269a8d5c82506419f8515efe33e236770a90e571ffa",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_review",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "catalystTraceId": "8e23fb68-60a0-47c3-a6c1-812bdadd5739",
+            "turnId": "99f8c493-6fbe-445a-9e91-efc0ba37c22f",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": null,
+            "effectiveBaseVersion": null,
+            "manualVersion": null,
+            "editorSnapshotDigest": null,
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "ab089e32-9a3f-4bc9-8fde-33d5c3d98b47",
+              "evidenceDigest": "86b94e4097c620589692fd3f255288a4836b00ce8523b8b3b71db3ef804a96d4",
+              "detailPath": "/v1/catalyst/workbench/sessions/d16b152d-f5fb-434b-9ab4-7e67f0e0bf95/turns/99f8c493-6fbe-445a-9e91-efc0ba37c22f/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+              "profileName": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+              "profileDigest": "aef9d8a8267afde55578eb35019be744fa85cf02648d4db674aaa4a6d993a647",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4-q4",
+                "modelId": "gemma-4-12b-q4",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": [],
+              "reviewer": {
+                "role": "reviewer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4-q4",
+                "modelId": "gemma-4-12b-q4",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-review",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                  "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+                }
+              }
+            },
+            "hubRequestDigest": "21a90e9865d1f7602e34ec8b820a14cc8d7330f913cede499ce40d49cc98fb4d"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T00:28:24.445581Z"
+        }
+      ],
+      "currentVersion": {
+        "contractVersion": "catalyst.workbench.query-version.v1",
+        "versionId": "d53043f1-739a-4f5a-b13d-c37a567affa9",
+        "sessionId": "d16b152d-f5fb-434b-9ab4-7e67f0e0bf95",
+        "parentVersionId": null,
+        "ordinal": 1,
+        "authorType": "model",
+        "sql": "SELECT medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE patient_gender = 'female' AND do_not_perform = false GROUP BY medication_name ORDER BY count DESC",
+        "parameters": [],
+        "expectedColumns": [
+          {
+            "name": "medication_name",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "count",
+            "logicalType": "integer",
+            "nullable": false
+          }
+        ],
+        "queryDigest": "2376394454a4e04bb119f29ca3b8f4d5dcd9e42d430398a7503c3e64a2ff3ee3",
+        "provenance": {
+          "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+          "traceId": "8e23fb68-60a0-47c3-a6c1-812bdadd5739",
+          "contextSourceIds": [
+            "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+          ],
+          "sourceContract": "catalyst.query.v1",
+          "sourceStatus": "ready",
+          "hubTraceId": "8e23fb68-60a0-47c3-a6c1-812bdadd5739",
+          "generationValidation": {
+            "status": "passed",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              },
+              {
+                "name": "status_correctness",
+                "status": "passed",
+                "message": "The query status is 'ready'."
+              },
+              {
+                "name": "approved_view_and_field_grounding",
+                "status": "passed",
+                "message": "The query uses 'analytics.hiv_medication_request_fact_v1' which is in the approved views. Fields 'medication_name', 'patient_gender', 'do_not_perform', and 'count' (alias for COUNT(*)) are grounded."
+              },
+              {
+                "name": "one_statement_read_only_select",
+                "status": "passed",
+                "message": "The query is a single SELECT statement."
+              },
+              {
+                "name": "dialect_compatibility",
+                "status": "passed",
+                "message": "The query is compatible with the postgresql dialect."
+              },
+              {
+                "name": "typed_parameter_binding",
+                "status": "passed",
+                "message": "No placeholders are used, so no parameter binding is required."
+              },
+              {
+                "name": "output_column_agreement",
+                "status": "passed",
+                "message": "The output columns 'medication_name' and 'count' match the expected columns."
+              },
+              {
+                "name": "row_limit_policy",
+                "status": "passed",
+                "message": "The query does not exceed the row limit or require a specific limit as it is an aggregation."
+              },
+              {
+                "name": "absence_of_invented_identifiers",
+                "status": "passed",
+                "message": "No invented identifiers were found."
+              }
+            ]
+          },
+          "profileLabel": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b-q4"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b-q4",
+            "query_review": "gemma-4-12b-q4"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            },
+            "query_review": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "dbfe5a9c13a1269a5ed8b269a8d5c82506419f8515efe33e236770a90e571ffa",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_review",
+            "query_finalize"
+          ],
+          "unavailableReasons": [],
+          "catalystTraceId": "8e23fb68-60a0-47c3-a6c1-812bdadd5739",
+          "turnId": "99f8c493-6fbe-445a-9e91-efc0ba37c22f",
+          "dataSourceId": "openmrs-hiv",
+          "observedBase": null,
+          "effectiveBaseVersion": null,
+          "manualVersion": null,
+          "editorSnapshotDigest": null,
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "ab089e32-9a3f-4bc9-8fde-33d5c3d98b47",
+            "evidenceDigest": "86b94e4097c620589692fd3f255288a4836b00ce8523b8b3b71db3ef804a96d4",
+            "detailPath": "/v1/catalyst/workbench/sessions/d16b152d-f5fb-434b-9ab4-7e67f0e0bf95/turns/99f8c493-6fbe-445a-9e91-efc0ba37c22f/generation-evidence"
+          },
+          "profileSnapshot": {
+            "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+            "profileName": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+            "profileDigest": "aef9d8a8267afde55578eb35019be744fa85cf02648d4db674aaa4a6d993a647",
+            "writer": {
+              "role": "writer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4-q4",
+              "modelId": "gemma-4-12b-q4",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-generate",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+              }
+            },
+            "omissions": [],
+            "reviewer": {
+              "role": "reviewer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4-q4",
+              "modelId": "gemma-4-12b-q4",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-review",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+              }
+            }
+          },
+          "hubRequestDigest": "21a90e9865d1f7602e34ec8b820a14cc8d7330f913cede499ce40d49cc98fb4d"
+        },
+        "sourceFindingIds": [],
+        "repairProposalId": null,
+        "createdAt": "2026-08-25T00:28:24.445581Z"
+      },
+      "validations": [
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "2376394454a4e04bb119f29ca3b8f4d5dcd9e42d430398a7503c3e64a2ff3ee3",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 0,
+          "validationId": "855dddf6-68cc-46d7-8a21-ddeae2320d40",
+          "sessionId": "d16b152d-f5fb-434b-9ab4-7e67f0e0bf95",
+          "versionId": "d53043f1-739a-4f5a-b13d-c37a567affa9",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T00:28:24.445581Z"
+        }
+      ],
+      "latestValidation": {
+        "contractVersion": "catalyst.workbench.validation.v1",
+        "queryDigest": "2376394454a4e04bb119f29ca3b8f4d5dcd9e42d430398a7503c3e64a2ff3ee3",
+        "validatorRevision": "catalyst.workbench.validator.v1",
+        "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+        "status": "valid",
+        "advisory": true,
+        "checks": [],
+        "findings": [],
+        "durationMs": 0,
+        "validationId": "855dddf6-68cc-46d7-8a21-ddeae2320d40",
+        "sessionId": "d16b152d-f5fb-434b-9ab4-7e67f0e0bf95",
+        "versionId": "d53043f1-739a-4f5a-b13d-c37a567affa9",
+        "ordinal": 1,
+        "createdAt": "2026-08-25T00:28:24.445581Z"
+      },
+      "executions": [],
+      "guidance": [],
+      "dataSourceId": "openmrs-hiv",
+      "draftSeed": null
+    }
+  },
+  "elapsedMs": 90627
+}

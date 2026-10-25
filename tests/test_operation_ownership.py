@@ -56,7 +56,7 @@ class OperationOwnershipTests(unittest.TestCase):
             )
             wrapper.chmod(0o755)
             subprocess.run([
-                "make", "--no-print-directory", "validate-run", "MAKE=true",
+                "make", "--no-print-directory", "validate-run", "MAKE=true", "DASHBOARD_UP=true",
                 f"UV={wrapper}", f"TRACE_FILE={trace}", f"CORPUS_PROVENANCE={receipt}",
             ], cwd=ROOT, capture_output=True, text=True, check=True, timeout=15)
             args = json.loads(log.read_text())

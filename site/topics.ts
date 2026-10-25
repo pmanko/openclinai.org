@@ -23,6 +23,7 @@ export const topics: Topic[] = [
     blurb: 'How an AI answer is judged: scored against the patient chart, every claim traceable to a specific record, recorded on a run-manifest provenance spine — directional evidence, not a leaderboard.',
     links: [
       { kind: 'canvas', slug: 'specs/artifacts/canvases/validation-research', label: 'Validation research — the evidence model (canvas)' },
+      { kind: 'spec', slug: 'specs/background/evaluating-the-chart-search-providers', label: 'Evaluating the chart search providers' },
     ],
   },
   {

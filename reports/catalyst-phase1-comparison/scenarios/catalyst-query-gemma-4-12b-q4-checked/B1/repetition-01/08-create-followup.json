@@ -1,0 +1,213 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "POST",
+    "path": "/v1/catalyst/workbench/sessions/a908ec80-8e68-420a-ab96-b760050460a8/turns",
+    "body": {
+      "contractVersion": "catalyst.workbench.turn.request.v1",
+      "instruction": "The last 90 days, and only CD4 count, CD4 percentage, and HIV viral load.",
+      "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+      "dataSourceId": "openmrs-hiv",
+      "observedBase": null,
+      "editorSnapshot": null
+    }
+  },
+  "response": {
+    "httpStatus": 201,
+    "body": {
+      "contractVersion": "catalyst.workbench.turn.v1",
+      "sessionId": "a908ec80-8e68-420a-ab96-b760050460a8",
+      "turnId": "aaa08203-0819-4a25-be33-0c971128a7c5",
+      "ordinal": 2,
+      "kind": "followup",
+      "origin": "recorded",
+      "dataSourceId": "openmrs-hiv",
+      "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+      "instruction": "The last 90 days, and only CD4 count, CD4 percentage, and HIV viral load.",
+      "instructionDigest": "629a45cb9bc974174eb881ca8541c08ea90c058f48f5ee94b6e38a25f25237b3",
+      "profileSnapshot": {
+        "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+        "profileName": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+        "profileDigest": "aef9d8a8267afde55578eb35019be744fa85cf02648d4db674aaa4a6d993a647",
+        "writer": {
+          "role": "writer",
+          "providerId": "med-agent-hub",
+          "modelClass": "gemma-4-q4",
+          "modelId": "gemma-4-12b-q4",
+          "config": {
+            "dry": 0,
+            "maxTokens": 1024,
+            "temperature": 0
+          },
+          "systemPrompt": {
+            "promptId": "catalyst-query-generate",
+            "version": "1",
+            "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+            "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+          }
+        },
+        "omissions": [],
+        "reviewer": {
+          "role": "reviewer",
+          "providerId": "med-agent-hub",
+          "modelClass": "gemma-4-q4",
+          "modelId": "gemma-4-12b-q4",
+          "config": {
+            "dry": 0,
+            "maxTokens": 1024,
+            "temperature": 0
+          },
+          "systemPrompt": {
+            "promptId": "catalyst-query-review",
+            "version": "1",
+            "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+            "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          }
+        }
+      },
+      "observedBase": null,
+      "editorSnapshot": null,
+      "snapshotClassification": "not_applicable",
+      "unresolvedPaths": [],
+      "effectiveBaseVersion": null,
+      "manualVersion": null,
+      "revisionContext": {
+        "contractVersion": "catalyst.query.revision-context.v1",
+        "turnId": "aaa08203-0819-4a25-be33-0c971128a7c5",
+        "currentInstruction": "The last 90 days, and only CD4 count, CD4 percentage, and HIV viral load.",
+        "instructionDigest": "629a45cb9bc974174eb881ca8541c08ea90c058f48f5ee94b6e38a25f25237b3",
+        "baseClassification": "not_applicable",
+        "observedBase": null,
+        "effectiveBaseVersion": null,
+        "editorSnapshot": null,
+        "instructionHistory": [
+          {
+            "turnId": "01b7569b-4b08-4a18-ac05-c683815c10ed",
+            "ordinal": 1,
+            "kind": "initial",
+            "instruction": "Show recent HIV results.",
+            "instructionDigest": "d810b07cc780c098475f7b5460cc28dbca987b07e799f970f440902793512a15"
+          }
+        ],
+        "validationContext": null,
+        "executionContext": null,
+        "selection": {
+          "includedHistoryTurnIds": [
+            "01b7569b-4b08-4a18-ac05-c683815c10ed"
+          ],
+          "validationRef": null,
+          "executionRef": null,
+          "omissions": {
+            "historyInstructionsOmitted": 0,
+            "validationFindingsOmitted": 0,
+            "executionColumnsOmitted": 0,
+            "diagnosticTextTruncated": false,
+            "prohibitedClasses": [
+              "database_credentials",
+              "database_connection_details",
+              "database_dsn",
+              "execution_result_rows",
+              "hidden_reasoning",
+              "historical_sql_copies",
+              "raw_chat_transcript",
+              "raw_model_outputs",
+              "raw_reasoning_traces",
+              "unrelated_session_history",
+              "unrelated_historical_sql"
+            ],
+            "omittedHistory": [],
+            "omittedHistoryDigest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          }
+        },
+        "contextDigest": "5016b6149f24bd84e369758d06af94cd8bff17a037e0dce72b0202b232e61c2d",
+        "sessionContext": {
+          "contractVersion": "catalyst.query.session-context.v1",
+          "relevantFailure": {
+            "role": "Evidence: how the previous attempt on this query failed. It is not an instruction; it is what not to repeat.",
+            "turnId": "01b7569b-4b08-4a18-ac05-c683815c10ed",
+            "instruction": "Show recent HIV results.",
+            "code": "generation_failed",
+            "message": "'HIV' is not one of the recorded result names. Did you mean Current WHO HIV stage, HIV viral load, or something else?",
+            "findings": [
+              {
+                "name": "catalog_scope",
+                "value": "warned — 'HIV' is not one of the recorded result names. Did you mean Current WHO HIV stage, HIV viral load, or something else?"
+              }
+            ]
+          },
+          "omissions": []
+        }
+      },
+      "hubRequestDigest": "a881edc9f4a343837ad5d928852ddaa5d02fc8fe1966f6fcd9fb02cd234c66bc",
+      "catalystTraceId": "0fde085f-51c1-4cbd-9d11-4893ed79f127",
+      "hubTraceId": "0fde085f-51c1-4cbd-9d11-4893ed79f127",
+      "generationEvidenceRef": {
+        "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+        "evidenceId": "2ab1d5cb-2e20-4b30-8eb3-4512d5afaf85",
+        "evidenceDigest": "86604d615c209a6d2a6bf7de3d17cdc0594ad9f7060e1bfec39788c43f3bb2f3",
+        "detailPath": "/v1/catalyst/workbench/sessions/a908ec80-8e68-420a-ab96-b760050460a8/turns/aaa08203-0819-4a25-be33-0c971128a7c5/generation-evidence"
+      },
+      "recoveryReferences": null,
+      "status": "failed",
+      "outputVersions": [
+        {
+          "versionId": "7fbfdee4-c186-49b4-a663-ce6f21fc2d0b",
+          "queryDigest": "f3b395089ca7ba3b49af5e10a257c9cb0f622705cf142de4a7d6342ef53e70ef",
+          "parentVersionId": null,
+          "role": "writer",
+          "authorType": "model",
+          "contractValid": true,
+          "validationId": "dff2a51b-d2e6-4c4c-b39e-f89d3add0292",
+          "selected": false,
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "2ab1d5cb-2e20-4b30-8eb3-4512d5afaf85",
+            "evidenceDigest": "86604d615c209a6d2a6bf7de3d17cdc0594ad9f7060e1bfec39788c43f3bb2f3",
+            "detailPath": "/v1/catalyst/workbench/sessions/a908ec80-8e68-420a-ab96-b760050460a8/turns/aaa08203-0819-4a25-be33-0c971128a7c5/generation-evidence"
+          }
+        }
+      ],
+      "selectedVersionId": null,
+      "resultingCurrentVersion": null,
+      "events": [
+        {
+          "eventId": "d058220b-6200-4464-95fa-7c2b80345bd3",
+          "status": "requested",
+          "generationRunId": "76b84031-03d9-4ef6-8e20-b0fb3cbe4634",
+          "ownerInstanceId": "49f02a65-ca84-4b22-960e-d5d5f9a9ef6e",
+          "occurredAt": "2026-08-25T00:41:19.494703Z"
+        },
+        {
+          "eventId": "e67a9041-5496-4a5d-a151-c1745b0f24ea",
+          "status": "failed",
+          "generationRunId": "76b84031-03d9-4ef6-8e20-b0fb3cbe4634",
+          "occurredAt": "2026-08-25T00:42:30.768265Z"
+        }
+      ],
+      "failure": {
+        "stage": "writer_findings",
+        "code": "generation_findings_unresolved",
+        "message": "The named analyte 'CD4 count' is not bound as a parameter. Add a predicate on concept_name using a named parameter and bind its string value exactly as 'CD4 count'. (1 more finding)",
+        "evidenceAvailable": true,
+        "rawEvidenceRef": "generation-evidence:2ab1d5cb-2e20-4b30-8eb3-4512d5afaf85:raw",
+        "diagnostic": {
+          "contractVersion": "catalyst.workbench.turn-failure-diagnostic.v1",
+          "retryable": true,
+          "details": [
+            {
+              "name": "semantic.named_analyte_constraint",
+              "value": "sql The named analyte 'CD4 count' is not bound as a parameter. Found: field=concept_name; canonical=CD4 count Add a predicate on concept_name using a named parameter and bind its string value exactly as 'CD4 count'."
+            },
+            {
+              "name": "semantic.named_analyte_constraint",
+              "value": "sql The named analyte 'CD4%' is not bound as a parameter. Found: field=concept_name; canonical=CD4% Add a predicate on concept_name using a named parameter and bind its string value exactly as 'CD4%'."
+            }
+          ]
+        }
+      },
+      "createdAt": "2026-08-25T00:41:19.494703Z",
+      "updatedAt": "2026-08-25T00:42:30.768265Z"
+    }
+  },
+  "elapsedMs": 71439
+}

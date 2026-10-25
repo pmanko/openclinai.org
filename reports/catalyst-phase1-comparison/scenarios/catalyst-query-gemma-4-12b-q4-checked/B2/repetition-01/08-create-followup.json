@@ -1,0 +1,197 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "POST",
+    "path": "/v1/catalyst/workbench/sessions/98248bb9-39ab-4a95-ac55-9cd7a0414c12/turns",
+    "body": {
+      "contractVersion": "catalyst.workbench.turn.request.v1",
+      "instruction": "Poor adherence means the patient's latest antiretroviral adherence result is anything other than 'All'.",
+      "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+      "dataSourceId": "openmrs-hiv",
+      "observedBase": null,
+      "editorSnapshot": null
+    }
+  },
+  "response": {
+    "httpStatus": 201,
+    "body": {
+      "contractVersion": "catalyst.workbench.turn.v1",
+      "sessionId": "98248bb9-39ab-4a95-ac55-9cd7a0414c12",
+      "turnId": "77332609-ef52-444e-9a65-d6eda262860d",
+      "ordinal": 2,
+      "kind": "followup",
+      "origin": "recorded",
+      "dataSourceId": "openmrs-hiv",
+      "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+      "instruction": "Poor adherence means the patient's latest antiretroviral adherence result is anything other than 'All'.",
+      "instructionDigest": "07551cdd378e83556f84f73298f81b1c1c3467bbe589f16036f184b6d24f5fb0",
+      "profileSnapshot": {
+        "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+        "profileName": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+        "profileDigest": "aef9d8a8267afde55578eb35019be744fa85cf02648d4db674aaa4a6d993a647",
+        "writer": {
+          "role": "writer",
+          "providerId": "med-agent-hub",
+          "modelClass": "gemma-4-q4",
+          "modelId": "gemma-4-12b-q4",
+          "config": {
+            "dry": 0,
+            "maxTokens": 1024,
+            "temperature": 0
+          },
+          "systemPrompt": {
+            "promptId": "catalyst-query-generate",
+            "version": "1",
+            "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+            "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+          }
+        },
+        "omissions": [],
+        "reviewer": {
+          "role": "reviewer",
+          "providerId": "med-agent-hub",
+          "modelClass": "gemma-4-q4",
+          "modelId": "gemma-4-12b-q4",
+          "config": {
+            "dry": 0,
+            "maxTokens": 1024,
+            "temperature": 0
+          },
+          "systemPrompt": {
+            "promptId": "catalyst-query-review",
+            "version": "1",
+            "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+            "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          }
+        }
+      },
+      "observedBase": null,
+      "editorSnapshot": null,
+      "snapshotClassification": "not_applicable",
+      "unresolvedPaths": [],
+      "effectiveBaseVersion": null,
+      "manualVersion": null,
+      "revisionContext": {
+        "contractVersion": "catalyst.query.revision-context.v1",
+        "turnId": "77332609-ef52-444e-9a65-d6eda262860d",
+        "currentInstruction": "Poor adherence means the patient's latest antiretroviral adherence result is anything other than 'All'.",
+        "instructionDigest": "07551cdd378e83556f84f73298f81b1c1c3467bbe589f16036f184b6d24f5fb0",
+        "baseClassification": "not_applicable",
+        "observedBase": null,
+        "effectiveBaseVersion": null,
+        "editorSnapshot": null,
+        "instructionHistory": [
+          {
+            "turnId": "67a7e3ed-7ea4-4e6c-84a3-be8fa95d1c79",
+            "ordinal": 1,
+            "kind": "initial",
+            "instruction": "Show patients with poor adherence.",
+            "instructionDigest": "57c63199a661355d4eac4a99de7b7e0bf466664c39f4085aee515fbc0a611d3c"
+          }
+        ],
+        "validationContext": null,
+        "executionContext": null,
+        "selection": {
+          "includedHistoryTurnIds": [
+            "67a7e3ed-7ea4-4e6c-84a3-be8fa95d1c79"
+          ],
+          "validationRef": null,
+          "executionRef": null,
+          "omissions": {
+            "historyInstructionsOmitted": 0,
+            "validationFindingsOmitted": 0,
+            "executionColumnsOmitted": 0,
+            "diagnosticTextTruncated": false,
+            "prohibitedClasses": [
+              "database_credentials",
+              "database_connection_details",
+              "database_dsn",
+              "execution_result_rows",
+              "hidden_reasoning",
+              "historical_sql_copies",
+              "raw_chat_transcript",
+              "raw_model_outputs",
+              "raw_reasoning_traces",
+              "unrelated_session_history",
+              "unrelated_historical_sql"
+            ],
+            "omittedHistory": [],
+            "omittedHistoryDigest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          }
+        },
+        "contextDigest": "0f7cfdbf4471d411828af4ebbe805459e9a4d41f0222a6d7d778070299f0df73",
+        "sessionContext": {
+          "contractVersion": "catalyst.query.session-context.v1",
+          "relevantFailure": {
+            "role": "Evidence: how the previous attempt on this query failed. It is not an instruction; it is what not to repeat.",
+            "turnId": "67a7e3ed-7ea4-4e6c-84a3-be8fa95d1c79",
+            "instruction": "Show patients with poor adherence.",
+            "code": "needs_clarification",
+            "message": "What is the threshold or specific category for 'poor adherence' (e.g., a specific value for 'Overall drug adherence in last month' or 'Antiretroviral adherence in past week')?",
+            "findings": [
+              {
+                "name": "query_status",
+                "value": "warned — The query requires clarification."
+              }
+            ]
+          },
+          "omissions": []
+        }
+      },
+      "hubRequestDigest": "9081bf33e66ac983889e4641f68a74b9307c127aaf405e3d7a32f8c91506c27b",
+      "catalystTraceId": "9d43a512-54b7-4522-a699-8b30e0dcadd2",
+      "hubTraceId": "9d43a512-54b7-4522-a699-8b30e0dcadd2",
+      "generationEvidenceRef": {
+        "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+        "evidenceId": "250a37b4-b506-4034-a3a7-db3978aa56ce",
+        "evidenceDigest": "f191ccc1a2a20dd2e9fd12a3cd59b16390b495583cc3b80de6503904b1c4c39b",
+        "detailPath": "/v1/catalyst/workbench/sessions/98248bb9-39ab-4a95-ac55-9cd7a0414c12/turns/77332609-ef52-444e-9a65-d6eda262860d/generation-evidence"
+      },
+      "recoveryReferences": null,
+      "status": "completed",
+      "outputVersions": [
+        {
+          "versionId": "f37ec15e-2f1e-4ae0-b316-ade6ed18d50c",
+          "queryDigest": "edaa875f8cec98d0d2a44639b924bc2fd53266c2fe7fd59b9762423eb1a2457b",
+          "parentVersionId": null,
+          "role": "writer",
+          "authorType": "model",
+          "contractValid": true,
+          "validationId": "e525e34a-e8de-480c-b139-19c49b1663d5",
+          "selected": true,
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "250a37b4-b506-4034-a3a7-db3978aa56ce",
+            "evidenceDigest": "f191ccc1a2a20dd2e9fd12a3cd59b16390b495583cc3b80de6503904b1c4c39b",
+            "detailPath": "/v1/catalyst/workbench/sessions/98248bb9-39ab-4a95-ac55-9cd7a0414c12/turns/77332609-ef52-444e-9a65-d6eda262860d/generation-evidence"
+          }
+        }
+      ],
+      "selectedVersionId": "f37ec15e-2f1e-4ae0-b316-ade6ed18d50c",
+      "resultingCurrentVersion": {
+        "versionId": "f37ec15e-2f1e-4ae0-b316-ade6ed18d50c",
+        "queryDigest": "edaa875f8cec98d0d2a44639b924bc2fd53266c2fe7fd59b9762423eb1a2457b"
+      },
+      "events": [
+        {
+          "eventId": "6484a153-e16e-4821-9fac-b934893531f3",
+          "status": "requested",
+          "generationRunId": "dc15ee19-2ddf-41b0-ae04-5186d0cc009f",
+          "ownerInstanceId": "49f02a65-ca84-4b22-960e-d5d5f9a9ef6e",
+          "occurredAt": "2026-08-25T00:42:51.210103Z"
+        },
+        {
+          "eventId": "fd496447-2672-4162-8da7-07da36bac63a",
+          "status": "completed",
+          "generationRunId": "dc15ee19-2ddf-41b0-ae04-5186d0cc009f",
+          "occurredAt": "2026-08-25T00:44:26.928350Z"
+        }
+      ],
+      "failure": null,
+      "createdAt": "2026-08-25T00:42:51.210103Z",
+      "updatedAt": "2026-08-25T00:44:26.928350Z",
+      "writerOutcome": "ready"
+    }
+  },
+  "elapsedMs": 95881
+}

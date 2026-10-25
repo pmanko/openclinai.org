@@ -1,0 +1,642 @@
+[
+ {
+  "team": "catalyst-query-gemma-4-12b",
+  "scenario_id": "A1",
+  "turn": 0,
+  "version_id": "588e0ccb-bf32-46aa-8e11-acb2844b78dd",
+  "instruction": "List CD4 count results since 2026-02-01 with the patient, the value, the unit, and the observed date.",
+  "sql": "SELECT t1.family_name, t1.given_name, t2.value_numeric, t2.value_unit, t2.observed_at FROM analytics.hiv_patient_dim_v1 AS t1 JOIN analytics.hiv_observation_fact_v1 AS t2 ON t1.patient_id = t2.patient_id WHERE t2.concept_name = :concept_name AND t2.observed_at >= :start_date",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b/A1/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b/A1/repetition-01/06-execute-base.json",
+   "scenarios/catalyst-query-gemma-4-12b/A1/repetition-01/15-gold-execution-match-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b",
+  "scenario_id": "A2",
+  "turn": 0,
+  "version_id": "0722ee75-1892-4c61-b5a3-b0979ad764dd",
+  "instruction": "Count HIV visits by encounter type since 2025-01-01, highest count first.",
+  "sql": "SELECT encounter_type, COUNT(*) AS visit_count FROM analytics.hiv_visit_fact_v1 WHERE started_at >= :start_date GROUP BY encounter_type ORDER BY visit_count DESC",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b/A2/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b/A2/repetition-01/06-execute-base.json",
+   "scenarios/catalyst-query-gemma-4-12b/A2/repetition-01/15-gold-execution-match-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b",
+  "scenario_id": "A3",
+  "turn": 0,
+  "version_id": "b75f7703-2190-4b7a-b5f8-18a6ee441420",
+  "instruction": "Count medication requests for female patients by medication name, excluding do_not_perform, highest count first.",
+  "sql": "SELECT medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE patient_gender = :gender AND do_not_perform = false GROUP BY medication_name ORDER BY count DESC",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b/A3/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b/A3/repetition-01/06-execute-base.json",
+   "scenarios/catalyst-query-gemma-4-12b/A3/repetition-01/15-gold-execution-match-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b",
+  "scenario_id": "A4",
+  "turn": 0,
+  "version_id": "5e70b8c1-d20b-4443-b108-a78b27e27fac",
+  "instruction": "List each OpenMRS-native concept with no CIEL mapping, its name, and its total observation count, highest count first.",
+  "sql": "SELECT concept_name, observation_count FROM analytics.hiv_concept_mapping_v1 WHERE ciel_code IS NULL ORDER BY observation_count DESC",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b/A4/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b/A4/repetition-01/06-execute-base.json",
+   "scenarios/catalyst-query-gemma-4-12b/A4/repetition-01/15-gold-execution-match-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b",
+  "scenario_id": "B2",
+  "turn": 1,
+  "version_id": "4fd3e3b5-568c-4022-9171-ea665673225e",
+  "instruction": "Poor adherence means the patient's latest antiretroviral adherence result is anything other than 'All'.",
+  "sql": "SELECT \n  t1.patient_id, \n  t1.family_name, \n  t1.given_name, \n  t2.value_coded_name \nFROM analytics.hiv_patient_dim_v1 AS t1 \nJOIN (\n  SELECT \n    patient_id, \n    value_coded_name, \n    ROW_NUMBER() OVER (PARTITION BY patient_id ORDER BY observed_at DESC) as rank \n  FROM analytics.hiv_observation_fact_v1 \n  WHERE concept_name IN ('Antiretroviral adherence in past week', 'Overall drug adherence in last month') \n    AND value_coded_name IS NOT NULL\n) AS t2 ON t1.patient_id = t2.patient_id \nWHERE t2.rank = 1 \n  AND t2.value_coded_name <> 'All'",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b/B2/repetition-01/10-final-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b/B2/repetition-01/13-execute-successor.json",
+   "scenarios/catalyst-query-gemma-4-12b/B2/repetition-01/16-gold-execution-match-successor.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b",
+  "scenario_id": "B3",
+  "turn": 1,
+  "version_id": "19cdbf25-ecae-47bc-bc67-51533e28ffee",
+  "instruction": "As of 2026-03-01, overdue means a recorded return visit date before that date with no later visit.",
+  "sql": "SELECT \n  p.patient_id, \n  p.family_name, \n  p.given_name \nFROM analytics.hiv_patient_dim_v1 p \nWHERE p.patient_id IN (\n  SELECT \n    v.patient_id \n  FROM analytics.hiv_visit_fact_v1 v \n  WHERE v.started_at < :reference_date \n    AND NOT EXISTS (\n      SELECT 1 \n      FROM analytics.hiv_visit_fact_v1 v2 \n      WHERE v2.patient_id = v.patient_id \n        AND v2.started_at >= :reference_date \n    )\n)",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b/B3/repetition-01/10-final-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b/B3/repetition-01/13-execute-successor.json",
+   "scenarios/catalyst-query-gemma-4-12b/B3/repetition-01/16-gold-execution-match-successor.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b",
+  "scenario_id": "M1",
+  "turn": 0,
+  "version_id": "01c8c87b-9782-4fb9-8c33-00968152598e",
+  "instruction": "I need to get the list of medications prescribed for each patient, with the patient id and patient last name in the result.",
+  "sql": "SELECT t1.patient_id, t2.family_name, STRING_AGG(DISTINCT t1.medication_name, ', ') AS medications FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id GROUP BY t1.patient_id, t2.family_name",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b/M1/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b/M1/repetition-01/06-execute-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b",
+  "scenario_id": "M1",
+  "turn": 1,
+  "version_id": "c3dbec9f-1bbd-4a3f-bcf0-9e3ff68e11b4",
+  "instruction": "The query needs to be updated - gender is labeled as last name, and the result should be collapsed per patient - so one row per patient, with comma-separated unique medications.",
+  "sql": "SELECT t1.patient_id, t2.family_name, STRING_AGG(DISTINCT t1.medication_name, ', ') AS medications FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id GROUP BY t1.patient_id, t2.family_name",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b/M1/repetition-01/10-final-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b/M1/repetition-01/13-execute-successor.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b",
+  "scenario_id": "M1",
+  "turn": 2,
+  "version_id": "18e942e1-ac8c-4562-90e4-f1bd459b3fbf",
+  "instruction": "We need to join in the patient table by id to this query, so we can get patient last name",
+  "sql": "SELECT t1.patient_id, t2.family_name, STRING_AGG(DISTINCT t1.medication_name, ', ') AS medications FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id GROUP BY t1.patient_id, t2.family_name",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b/M1/repetition-01/10-final-turns-t2.json",
+   "scenarios/catalyst-query-gemma-4-12b/M1/repetition-01/13-execute-successor-t2.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b",
+  "scenario_id": "M2",
+  "turn": 0,
+  "version_id": "7e7c66b4-258e-4021-b1d2-f45a4089fbfe",
+  "instruction": "Count medication requests by medication name.",
+  "sql": "SELECT patient_gender, medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform = false GROUP BY patient_gender, medication_name ORDER BY count DESC LIMIT 10",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b/M2/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b/M2/repetition-01/06-execute-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b",
+  "scenario_id": "M2",
+  "turn": 1,
+  "version_id": "8cb08378-fca6-430b-86a4-271c4a670dda",
+  "instruction": "Regroup that by patient gender as well as medication name.",
+  "sql": "SELECT patient_gender, medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform = false GROUP BY patient_gender, medication_name",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b/M2/repetition-01/10-final-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b/M2/repetition-01/13-execute-successor.json",
+   "scenarios/catalyst-query-gemma-4-12b/M2/repetition-01/16-gold-execution-match-successor.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b",
+  "scenario_id": "M2",
+  "turn": 2,
+  "version_id": "c6a9dcdd-1e48-4eb2-a80d-7725cc3f6bbd",
+  "instruction": "Return only the ten highest medication-and-gender groups.",
+  "sql": "SELECT patient_gender, medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform = false GROUP BY patient_gender, medication_name ORDER BY count DESC LIMIT 10",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b/M2/repetition-01/10-final-turns-t2.json",
+   "scenarios/catalyst-query-gemma-4-12b/M2/repetition-01/13-execute-successor-t2.json",
+   "scenarios/catalyst-query-gemma-4-12b/M2/repetition-01/16-gold-execution-match-successor-t2.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b",
+  "scenario_id": "M3",
+  "turn": 0,
+  "version_id": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+  "instruction": "Count CD4 count results by patient.",
+  "sql": "SELECT encounter_type, COUNT(*) AS count FROM analytics.hiv_visit_fact_v1 GROUP BY encounter_type",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b/M3/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b/M3/repetition-01/06-execute-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b",
+  "scenario_id": "M3",
+  "turn": 1,
+  "version_id": "0c323a0f-6aca-4181-acd8-1482bb6c07d0",
+  "instruction": "Now count CD4 percentage results by patient instead.",
+  "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :concept_name GROUP BY patient_id",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b/M3/repetition-01/10-final-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b/M3/repetition-01/13-execute-successor.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b",
+  "scenario_id": "M3",
+  "turn": 2,
+  "version_id": "d04ed859-7cb5-4726-8d23-8b76bcca6baf",
+  "instruction": "Separately, count HIV visits by encounter type.",
+  "sql": "SELECT encounter_type, COUNT(*) AS count FROM analytics.hiv_visit_fact_v1 GROUP BY encounter_type",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b/M3/repetition-01/10-final-turns-t2.json",
+   "scenarios/catalyst-query-gemma-4-12b/M3/repetition-01/13-execute-successor-t2.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-q4-checked",
+  "scenario_id": "A1",
+  "turn": 0,
+  "version_id": "bfd41602-5c23-4952-aad2-fb9a4fb4fce9",
+  "instruction": "List CD4 count results since 2026-02-01 with the patient, the value, the unit, and the observed date.",
+  "sql": "SELECT t1.family_name, t1.given_name, t2.value_numeric, t2.value_unit, t2.observed_at FROM analytics.hiv_patient_dim_v1 AS t1 JOIN analytics.hiv_observation_fact_v1 AS t2 ON t1.patient_id = t2.patient_id WHERE t2.concept_name = :concept_name AND t2.observed_at >= :start_date",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/A1/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/A1/repetition-01/06-execute-base.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/A1/repetition-01/15-gold-execution-match-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-q4-checked",
+  "scenario_id": "A2",
+  "turn": 0,
+  "version_id": "a6ee49bc-82f7-410e-8132-9b8595b2bb78",
+  "instruction": "Count HIV visits by encounter type since 2025-01-01, highest count first.",
+  "sql": "SELECT encounter_type, COUNT(*) AS visit_count FROM analytics.hiv_visit_fact_v1 WHERE started_at >= :start_date GROUP BY encounter_type ORDER BY visit_count DESC",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/A2/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/A2/repetition-01/06-execute-base.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/A2/repetition-01/15-gold-execution-match-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-q4-checked",
+  "scenario_id": "A3",
+  "turn": 0,
+  "version_id": "d53043f1-739a-4f5a-b13d-c37a567affa9",
+  "instruction": "Count medication requests for female patients by medication name, excluding do_not_perform, highest count first.",
+  "sql": "SELECT medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE patient_gender = 'female' AND do_not_perform = false GROUP BY medication_name ORDER BY count DESC",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/A3/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/A3/repetition-01/06-execute-base.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/A3/repetition-01/15-gold-execution-match-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-q4-checked",
+  "scenario_id": "A4",
+  "turn": 0,
+  "version_id": "7a9523ff-0a32-4e44-8e45-4d69c28fc24b",
+  "instruction": "List each OpenMRS-native concept with no CIEL mapping, its name, and its total observation count, highest count first.",
+  "sql": "SELECT concept_name, observation_count FROM analytics.hiv_concept_mapping_v1 WHERE ciel_code IS NULL ORDER BY observation_count DESC",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/A4/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/A4/repetition-01/06-execute-base.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/A4/repetition-01/15-gold-execution-match-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-q4-checked",
+  "scenario_id": "B2",
+  "turn": 1,
+  "version_id": "f37ec15e-2f1e-4ae0-b316-ade6ed18d50c",
+  "instruction": "Poor adherence means the patient's latest antiretroviral adherence result is anything other than 'All'.",
+  "sql": "SELECT t1.patient_id, t1.family_name, t1.given_name FROM analytics.hiv_patient_dim_v1 AS t1 JOIN (SELECT DISTINCT ON (patient_id) patient_id, value_coded_name AS latest_adherence FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :concept_name AND obs_status = 'final' ORDER BY patient_id, observed_at DESC) AS t2 ON t1.patient_id = t2.patient_id WHERE t2.latest_adherence <> 'All'",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/B2/repetition-01/10-final-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/B2/repetition-01/13-execute-successor.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/B2/repetition-01/16-gold-execution-match-successor.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-q4-checked",
+  "scenario_id": "B3",
+  "turn": 1,
+  "version_id": "d617fae2-4b11-4854-8305-77aee19377ec",
+  "instruction": "As of 2026-03-01, overdue means a recorded return visit date before that date with no later visit.",
+  "sql": "SELECT \n  p.patient_id, \n  p.family_name, \n  p.given_name \nFROM analytics.hiv_patient_dim_v1 p \nWHERE p.patient_id IN (\n  SELECT \n    v.patient_id \n  FROM analytics.hiv_visit_fact_v1 v \n  WHERE v.started_at < :reference_date \n    AND NOT EXISTS (\n      SELECT 1 \n      FROM analytics.hiv_visit_fact_v1 v2 \n      WHERE v2.patient_id = v.patient_id \n        AND v2.started_at >= :reference_date \n    )\n)",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/B3/repetition-01/10-final-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/B3/repetition-01/13-execute-successor.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/B3/repetition-01/16-gold-execution-match-successor.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-q4-checked",
+  "scenario_id": "M1",
+  "turn": 0,
+  "version_id": "63bc7eb0-ffa1-4385-b3e0-993211f7ae1f",
+  "instruction": "I need to get the list of medications prescribed for each patient, with the patient id and patient last name in the result.",
+  "sql": "SELECT t1.patient_id, t2.family_name, STRING_AGG(DISTINCT t1.medication_name, ', ') AS medications FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id GROUP BY t1.patient_id, t2.family_name",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/M1/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/M1/repetition-01/06-execute-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-q4-checked",
+  "scenario_id": "M1",
+  "turn": 1,
+  "version_id": "2c9b2c73-9b7b-4114-a3a9-e1a1d1b232b2",
+  "instruction": "The query needs to be updated - gender is labeled as last name, and the result should be collapsed per patient - so one row per patient, with comma-separated unique medications.",
+  "sql": "SELECT t1.patient_id, t2.family_name, STRING_AGG(DISTINCT t1.medication_name, ', ') AS medications FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id GROUP BY t1.patient_id, t2.family_name",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/M1/repetition-01/10-final-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/M1/repetition-01/13-execute-successor.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-q4-checked",
+  "scenario_id": "M1",
+  "turn": 2,
+  "version_id": "62c5bddd-7e4f-432c-893e-abb23b522574",
+  "instruction": "We need to join in the patient table by id to this query, so we can get patient last name",
+  "sql": "SELECT t1.patient_id, t2.family_name, STRING_AGG(DISTINCT t1.medication_name, ', ') AS medications FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id GROUP BY t1.patient_id, t2.family_name",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/M1/repetition-01/10-final-turns-t2.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/M1/repetition-01/13-execute-successor-t2.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-q4-checked",
+  "scenario_id": "M2",
+  "turn": 0,
+  "version_id": "06305913-1820-4193-bb03-555fd5d96764",
+  "instruction": "Count medication requests by medication name.",
+  "sql": "SELECT patient_gender, medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform = false GROUP BY patient_gender, medication_name ORDER BY count DESC LIMIT 10",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/M2/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/M2/repetition-01/06-execute-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-q4-checked",
+  "scenario_id": "M2",
+  "turn": 1,
+  "version_id": "9c2e5eab-2c18-4aa2-b1df-ac7ae9f0379e",
+  "instruction": "Regroup that by patient gender as well as medication name.",
+  "sql": "SELECT patient_gender, medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform = false GROUP BY patient_gender, medication_name",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/M2/repetition-01/10-final-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/M2/repetition-01/13-execute-successor.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/M2/repetition-01/16-gold-execution-match-successor.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-q4-checked",
+  "scenario_id": "M2",
+  "turn": 2,
+  "version_id": "714f1fac-4635-4618-9b7c-474f51c94b84",
+  "instruction": "Return only the ten highest medication-and-gender groups.",
+  "sql": "SELECT patient_gender, medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform = false GROUP BY patient_gender, medication_name ORDER BY count DESC LIMIT 10",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/M2/repetition-01/10-final-turns-t2.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/M2/repetition-01/13-execute-successor-t2.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/M2/repetition-01/16-gold-execution-match-successor-t2.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-q4-checked",
+  "scenario_id": "M3",
+  "turn": 0,
+  "version_id": "75bd224d-4edd-48ed-89a3-700007352684",
+  "instruction": "Count CD4 count results by patient.",
+  "sql": "SELECT encounter_type, COUNT(*) AS count FROM analytics.hiv_visit_fact_v1 GROUP BY encounter_type",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/M3/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/M3/repetition-01/06-execute-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-q4-checked",
+  "scenario_id": "M3",
+  "turn": 2,
+  "version_id": "cc635f9b-7a9c-4b4f-a6a3-0bf2c742ba21",
+  "instruction": "Separately, count HIV visits by encounter type.",
+  "sql": "SELECT encounter_type, COUNT(*) AS count FROM analytics.hiv_visit_fact_v1 GROUP BY encounter_type",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/M3/repetition-01/10-final-turns-t2.json",
+   "scenarios/catalyst-query-gemma-4-12b-q4-checked/M3/repetition-01/13-execute-successor-t2.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+  "scenario_id": "A1",
+  "turn": 0,
+  "version_id": "3e3f2d48-09aa-4df1-b18a-03e4d7aa32c6",
+  "instruction": "List CD4 count results since 2026-02-01 with the patient, the value, the unit, and the observed date.",
+  "sql": "SELECT \n  t1.family_name, \n  t1.given_name, \n  t2.value_numeric, \n  t2.value_unit, \n  t2.observed_at \nFROM analytics.hiv_patient_dim_v1 AS t1 \nJOIN analytics.hiv_observation_fact_v1 AS t2 \n  ON t1.patient_id = t2.patient_id \nWHERE t2.concept_name = :concept_name \n  AND t2.observed_at >= :start_date",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/A1/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/A1/repetition-01/06-execute-base.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/A1/repetition-01/15-gold-execution-match-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+  "scenario_id": "A2",
+  "turn": 0,
+  "version_id": "807c2af7-13e7-4753-a869-47e8f2e74a33",
+  "instruction": "Count HIV visits by encounter type since 2025-01-01, highest count first.",
+  "sql": "SELECT encounter_type, COUNT(*) AS visit_count FROM analytics.hiv_visit_fact_v1 WHERE started_at >= :start_date GROUP BY encounter_type ORDER BY visit_count DESC",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/A2/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/A2/repetition-01/06-execute-base.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/A2/repetition-01/15-gold-execution-match-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+  "scenario_id": "A3",
+  "turn": 0,
+  "version_id": "bf90b391-375f-4136-88cd-f6bfd8cc6e48",
+  "instruction": "Count medication requests for female patients by medication name, excluding do_not_perform, highest count first.",
+  "sql": "SELECT medication_name, COUNT(*) AS request_count FROM analytics.hiv_medication_request_fact_v1 WHERE patient_gender = :gender AND do_not_perform = false GROUP BY medication_name ORDER BY request_count DESC",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/A3/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/A3/repetition-01/06-execute-base.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/A3/repetition-01/15-gold-execution-match-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+  "scenario_id": "A4",
+  "turn": 0,
+  "version_id": "826f816a-1441-4aec-a250-67a7786f0f34",
+  "instruction": "List each OpenMRS-native concept with no CIEL mapping, its name, and its total observation count, highest count first.",
+  "sql": "SELECT \n  t1.concept_name, \n  SUM(t1.observation_count) AS total_observation_count\nFROM analytics.hiv_concept_mapping_v1 AS t1\nWHERE t1.ciel_code IS NULL\nGROUP BY \n  t1.concept_name\nORDER BY \n  total_observation_count DESC",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/A4/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/A4/repetition-01/06-execute-base.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/A4/repetition-01/15-gold-execution-match-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+  "scenario_id": "B2",
+  "turn": 1,
+  "version_id": "39f97292-ab7e-4f4a-87b0-d912fbdeec8a",
+  "instruction": "Poor adherence means the patient's latest antiretroviral adherence result is anything other than 'All'.",
+  "sql": "WITH latest_adherence AS (\n  SELECT \n    patient_id, \n    value_coded_name, \n    observed_at, \n    ROW_NUMBER() OVER (PARTITION BY patient_id ORDER BY observed_at DESC) as rank\n  FROM analytics.hiv_observation_fact_v1\n  WHERE concept_name = :adherence_concept\n)\nSELECT \n  p.family_name, \n  p.given_name, \n  la.value_coded_name AS latest_adherence_result\nFROM analytics.hiv_patient_dim_v1 p\nJOIN latest_adherence la ON p.patient_id = la.patient_id\nWHERE la.rank = 1 \n  AND la.value_coded_name != 'All'",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/B2/repetition-01/10-final-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/B2/repetition-01/13-execute-successor.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/B2/repetition-01/16-gold-execution-match-successor.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+  "scenario_id": "B3",
+  "turn": 1,
+  "version_id": "7d309e11-5df2-4168-a6d8-7b8f3ee2d462",
+  "instruction": "As of 2026-03-01, overdue means a recorded return visit date before that date with no later visit.",
+  "sql": "SELECT \n  p.patient_id, \n  p.family_name, \n  p.given_name \nFROM analytics.hiv_patient_dim_v1 p \nWHERE p.patient_id IN (\n  SELECT \n    v.patient_id \n  FROM analytics.hiv_visit_fact_v1 v \n  WHERE v.started_at < :reference_date \n    AND NOT EXISTS (\n      SELECT 1 \n      FROM analytics.hiv_visit_fact_v1 v2 \n      WHERE v2.patient_id = v.patient_id \n        AND v2.started_at >= :reference_date \n    )\n)",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/B3/repetition-01/10-final-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/B3/repetition-01/13-execute-successor.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/B3/repetition-01/16-gold-execution-match-successor.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+  "scenario_id": "M1",
+  "turn": 0,
+  "version_id": "05b4d2f9-81c7-44ba-af5f-8686c90e6aec",
+  "instruction": "I need to get the list of medications prescribed for each patient, with the patient id and patient last name in the result.",
+  "sql": "SELECT t2.patient_id, t2.family_name, STRING_AGG(DISTINCT t1.medication_name, ', ') AS medications FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id GROUP BY t2.patient_id, t2.family_name",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M1/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M1/repetition-01/06-execute-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+  "scenario_id": "M1",
+  "turn": 1,
+  "version_id": "4febffe3-713c-4b4c-bc57-ed784ff39603",
+  "instruction": "The query needs to be updated - gender is labeled as last name, and the result should be collapsed per patient - so one row per patient, with comma-separated unique medications.",
+  "sql": "SELECT t2.patient_id, t2.family_name, STRING_AGG(DISTINCT t1.medication_name, ', ') AS medications FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id GROUP BY t2.patient_id, t2.family_name",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M1/repetition-01/10-final-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M1/repetition-01/13-execute-successor.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+  "scenario_id": "M1",
+  "turn": 2,
+  "version_id": "e4cb0a9c-f1f7-4a78-9048-609c20649963",
+  "instruction": "We need to join in the patient table by id to this query, so we can get patient last name",
+  "sql": "SELECT t2.patient_id, t2.family_name, STRING_AGG(DISTINCT t1.medication_name, ', ') AS medications FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id GROUP BY t2.patient_id, t2.family_name",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M1/repetition-01/10-final-turns-t2.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M1/repetition-01/13-execute-successor-t2.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+  "scenario_id": "M2",
+  "turn": 0,
+  "version_id": "1c624b17-699c-4f6a-82b1-a314bd83f263",
+  "instruction": "Count medication requests by medication name.",
+  "sql": "SELECT patient_gender, medication_name, COUNT(*) AS request_count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform IS FALSE GROUP BY patient_gender, medication_name ORDER BY request_count DESC LIMIT 10",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M2/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M2/repetition-01/06-execute-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+  "scenario_id": "M2",
+  "turn": 1,
+  "version_id": "79fb851e-38eb-48c5-9df6-e259f68389b8",
+  "instruction": "Regroup that by patient gender as well as medication name.",
+  "sql": "SELECT patient_gender, medication_name, COUNT(*) AS request_count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform IS FALSE GROUP BY patient_gender, medication_name",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M2/repetition-01/10-final-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M2/repetition-01/13-execute-successor.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M2/repetition-01/16-gold-execution-match-successor.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+  "scenario_id": "M2",
+  "turn": 2,
+  "version_id": "4c0e9662-bd76-4c28-af52-1b482dc72a09",
+  "instruction": "Return only the ten highest medication-and-gender groups.",
+  "sql": "SELECT patient_gender, medication_name, COUNT(*) AS request_count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform IS FALSE GROUP BY patient_gender, medication_name ORDER BY request_count DESC LIMIT 10",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M2/repetition-01/10-final-turns-t2.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M2/repetition-01/13-execute-successor-t2.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M2/repetition-01/16-gold-execution-match-successor-t2.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+  "scenario_id": "M3",
+  "turn": 0,
+  "version_id": "07b3fdb0-1416-44f6-a6b8-579f6156970b",
+  "instruction": "Count CD4 count results by patient.",
+  "sql": "SELECT encounter_type, COUNT(*) AS count FROM analytics.hiv_visit_fact_v1 GROUP BY encounter_type",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M3/repetition-01/02-initial-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M3/repetition-01/06-execute-base.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+  "scenario_id": "M3",
+  "turn": 1,
+  "version_id": "9fecf9b9-70a4-4eb9-a83f-41310f621178",
+  "instruction": "Now count CD4 percentage results by patient instead.",
+  "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :cd4_percentage_name GROUP BY patient_id",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M3/repetition-01/10-final-turns.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M3/repetition-01/13-execute-successor.json"
+  ],
+  "prior_sql": null
+ },
+ {
+  "team": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+  "scenario_id": "M3",
+  "turn": 2,
+  "version_id": "04831f8f-29ac-4d44-9c13-b7f8f98a026d",
+  "instruction": "Separately, count HIV visits by encounter type.",
+  "sql": "SELECT encounter_type, COUNT(*) AS count FROM analytics.hiv_visit_fact_v1 GROUP BY encounter_type",
+  "parameters": null,
+  "evidence": [
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M3/repetition-01/10-final-turns-t2.json",
+   "scenarios/catalyst-query-gemma-4-12b-qwen2.5-14b-checked/M3/repetition-01/13-execute-successor-t2.json"
+  ],
+  "prior_sql": null
+ }
+]

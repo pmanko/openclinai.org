@@ -1,5 +1,7 @@
 
-"""Offline umbrella link and gitlink checks; not publication or product validation."""
+"""Offline umbrella checks: each submodule is checked out at its pin and clean, the
+component set is the expected one, and local Markdown links resolve. GitHub and other
+external links are not checked. Not publication or product validation."""
 
 import os
 import re
@@ -33,14 +35,6 @@ def git(repo, *args, check=True):
     return result.stdout if result.returncode == 0 else None
 
 
-def github_repo(url):
-    match = re.fullmatch(
-        r"(?:https?://|ssh://git@|git@)github\.com[:/]([^/]+/[^/]+?)(?:\.git)?/?",
-        url, re.IGNORECASE,
-    )
-    return match[1].lower() if match else None
-
-
 def gitlinks(records):
     pins = {}
     for record in records.split("\0"):
@@ -53,7 +47,7 @@ def gitlinks(records):
 
 
 def repositories(root, errors):
-    pins, remotes = {}, {}
+    pins = {}
 
     def visit(repo, ref):
         records = (git(repo, "ls-tree", "-rz", ref) if ref else
@@ -68,15 +62,11 @@ def repositories(root, errors):
             if git(child, "status", "--porcelain", "--untracked-files=all",
                    "--ignore-submodules=all").strip():
                 errors.append(f"{relative}: dirty submodule (tracked or untracked files)")
-            for line in git(child, "remote", "-v").splitlines():
-                identity = github_repo(line.split()[1])
-                if identity:
-                    remotes[identity, sha] = child
             visit(child, sha)
 
     head = git(root, "rev-parse", "--verify", "HEAD", check=False)
     visit(root, head.strip() if head else None)
-    return pins, remotes
+    return pins
 
 
 def check_status(status, pins):
@@ -111,26 +101,11 @@ def markdown_links(text):
     return [link.strip("<>") for pattern in patterns for link in re.findall(pattern, text)]
 
 
-def check_link(root, source, link, remotes):
+def check_link(root, source, link):
     url = urlsplit(link)
-    path = unquote(url.path)
     if url.scheme or url.netloc:
-        if url.scheme != "https" or url.netloc.lower() != "github.com":
-            return None
-        match = re.fullmatch(r"/([^/]+/[^/]+)/blob/([^/]+)/(.+)", path)
-        if not match:
-            return None
-        identity, sha, target = match.groups()
-        # External product authorities need not be workspace components. Only
-        # locally managed repositories have a recorded source pin to enforce.
-        if identity.lower() not in {name for name, _ in remotes}:
-            return None
-        repo = remotes.get((identity.lower(), sha))
-        if not re.fullmatch(SHA, sha) or repo is None:
-            return "GitHub blob link does not match a local remote and recorded 40-SHA pin"
-        if git(repo, "cat-file", "-e", f"{sha}:{target}", check=False) is None:
-            return "GitHub blob path is absent from the pinned commit"
         return None
+    path = unquote(url.path)
     if not path:
         return None
     target = (source.parent / path).resolve()
@@ -144,13 +119,13 @@ def check_link(root, source, link, remotes):
 def validate(root=ROOT):
     root = root.resolve()
     errors = []
-    pins, remotes = repositories(root, errors)
+    pins = repositories(root, errors)
     errors.extend(check_topology(pins))
     errors.extend(check_status(git(root, "submodule", "status", "--recursive"), pins))
     documents = [root / "README.md", root / "AGENTS.md", *sorted((root / "specs").glob("*.md"))]
     for source in documents:
         for link in markdown_links(source.read_text(encoding="utf-8")):
-            problem = check_link(root, source, link, remotes)
+            problem = check_link(root, source, link)
             if problem:
                 errors.append(f"{source.relative_to(root)}: {link}: {problem}")
     return errors
@@ -164,5 +139,5 @@ if __name__ == "__main__":
     for failure in failures:
         print(f"ERROR: {failure}")
     if not failures:
-        print("Workspace links, recursive gitlink pins and submodule cleanliness passed (offline).")
+        print("Submodule checkouts match their pins, are clean, and local links resolve (offline).")
     raise SystemExit(bool(failures))

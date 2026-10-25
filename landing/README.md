@@ -56,3 +56,9 @@ The umbrella roadmap tracks ownership and delivery status. Publish only an
 explicitly reviewed source revision and record local checks, owner review and
 live verification separately. Generated evidence requires review/redaction
 before public disclosure.
+
+`scripts/publish-landing.sh --landing-only` syncs this directory to the website
+VM and then compares every live page with the checkout. Without the flag it also
+updates the website proxy configuration from `compose/website/` and `.env.website`
+(copy `.env.website.example`); see the
+[website publication spec](../specs/website-publication.md).

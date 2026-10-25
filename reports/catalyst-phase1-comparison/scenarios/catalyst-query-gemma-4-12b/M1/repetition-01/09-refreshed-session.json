@@ -1,0 +1,2029 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "GET",
+    "path": "/v1/catalyst/workbench/sessions/9f7ccc6f-e1f8-41b4-9152-4fc9d7aff772",
+    "body": null
+  },
+  "response": {
+    "httpStatus": 200,
+    "body": {
+      "contractVersion": "catalyst.workbench.session.v1",
+      "sessionId": "9f7ccc6f-e1f8-41b4-9152-4fc9d7aff772",
+      "question": "I need to get the list of medications prescribed for each patient, with the patient id and patient last name in the result.",
+      "name": "I need to get the list of medications prescribed for each patient, with the patient id and patient last name in the result.",
+      "profileId": "catalyst-query-gemma-4-12b",
+      "datasetId": "hiv-20260731T000741Z",
+      "datasetVersion": "hiv-20260731T000741Z",
+      "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+      "currentVersionId": "c3dbec9f-1bbd-4a3f-bcf0-9e3ff68e11b4",
+      "browserState": {},
+      "provenance": {
+        "dataSourceId": "openmrs-hiv",
+        "catalogContextSourceId": "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+        "catalystTraceId": "7a2d0801-8969-4b1c-9f6f-f17a8f91444c",
+        "profileSnapshot": {
+          "profileId": "catalyst-query-gemma-4-12b",
+          "profileLabel": "Catalyst query — Gemma 4 12B writer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b-q4"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b-q4"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "561bb714d7f82dffc2789f302c0871684cb57cbe57f505da85d27e7db0494f9e",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": null
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_finalize"
+          ],
+          "unavailableReasons": []
+        },
+        "datasetSnapshot": {
+          "datasetId": "hiv-20260731T000741Z",
+          "dataSource": "openmrs-hiv-fhir-postgresql",
+          "pipelineRunId": "hiv-20260731T000741Z",
+          "synthetic": null,
+          "patients": 5285,
+          "results": 427915,
+          "testTypes": 143,
+          "firstObservedAt": "2022-11-07T21:50:36Z",
+          "lastObservedAt": "2026-08-11T00:00:00Z"
+        },
+        "generationHttpStatus": 200,
+        "generationOutcome": {
+          "contractVersion": "catalyst.query.v1",
+          "deploymentMode": "demo",
+          "status": "ready",
+          "question": "I need to get the list of medications prescribed for each patient, with the patient id and patient last name in the result.",
+          "target": {
+            "dataSource": "openmrs-hiv-fhir-postgresql",
+            "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+            "dialect": "postgresql",
+            "approvedViews": [
+              "analytics.hiv_concept_mapping_v1",
+              "analytics.hiv_medication_request_fact_v1",
+              "analytics.hiv_observation_fact_v1",
+              "analytics.hiv_patient_dim_v1",
+              "analytics.hiv_visit_fact_v1",
+              "analytics.pipeline_freshness_v1",
+              "analytics.pipeline_run_v1",
+              "public.condition_flat",
+              "public.encounter_flat",
+              "public.medication_flat",
+              "public.medication_request_flat",
+              "public.observation_flat",
+              "public.patient_flat"
+            ]
+          },
+          "sql": "SELECT t1.patient_id, t2.family_name, t1.medication_name FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id",
+          "parameters": [],
+          "expectedColumns": [
+            {
+              "name": "patient_id",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "family_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "medication_name",
+              "logicalType": "string",
+              "nullable": true
+            }
+          ],
+          "validation": {
+            "status": "passed",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              }
+            ]
+          },
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b",
+            "traceId": "7a2d0801-8969-4b1c-9f6f-f17a8f91444c",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ]
+          }
+        }
+      },
+      "status": "active",
+      "createdAt": "2026-08-25T00:15:32.357315Z",
+      "updatedAt": "2026-08-25T00:16:30.047065Z",
+      "versions": [
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+          "sessionId": "9f7ccc6f-e1f8-41b4-9152-4fc9d7aff772",
+          "parentVersionId": null,
+          "ordinal": 1,
+          "authorType": "model",
+          "sql": "SELECT t1.patient_id, t2.family_name, t1.medication_name FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id",
+          "parameters": [],
+          "expectedColumns": [
+            {
+              "name": "patient_id",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "family_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "medication_name",
+              "logicalType": "string",
+              "nullable": true
+            }
+          ],
+          "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b",
+            "traceId": "7a2d0801-8969-4b1c-9f6f-f17a8f91444c",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "ready",
+            "hubTraceId": "7a2d0801-8969-4b1c-9f6f-f17a8f91444c",
+            "generationValidation": {
+              "status": "passed",
+              "checks": [
+                {
+                  "name": "query_lint_attempt_1",
+                  "status": "passed",
+                  "message": "Candidate passed deterministic SQL lint."
+                }
+              ]
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B writer",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b-q4"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b-q4"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "561bb714d7f82dffc2789f302c0871684cb57cbe57f505da85d27e7db0494f9e",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": null
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "catalystTraceId": "7a2d0801-8969-4b1c-9f6f-f17a8f91444c",
+            "turnId": "7ed4aa19-1ada-444c-8a9b-39da04f98d2d",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": null,
+            "effectiveBaseVersion": null,
+            "manualVersion": null,
+            "editorSnapshotDigest": null,
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "a577e0ae-b802-4db8-b014-1c71df9194f8",
+              "evidenceDigest": "ef3a1b850a8d6ee0263a15595a366ea4ecddea22bec9156c175a8793a672974e",
+              "detailPath": "/v1/catalyst/workbench/sessions/9f7ccc6f-e1f8-41b4-9152-4fc9d7aff772/turns/7ed4aa19-1ada-444c-8a9b-39da04f98d2d/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b",
+              "profileName": "Catalyst query — Gemma 4 12B writer",
+              "profileDigest": "002e1be68707ffffb325de559d06d065b605a9b228c72d1b3f0b7122c1a34957",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4-12b",
+                "modelId": "gemma-4-12b-q4",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": []
+            },
+            "hubRequestDigest": "08f054292dd1ed86fc5b174116924386f8b139f3dc599fc27be8a5023cbe19b5"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T00:15:58.912552Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "c3dbec9f-1bbd-4a3f-bcf0-9e3ff68e11b4",
+          "sessionId": "9f7ccc6f-e1f8-41b4-9152-4fc9d7aff772",
+          "parentVersionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+          "ordinal": 2,
+          "authorType": "model",
+          "sql": "SELECT t1.patient_id, t2.family_name, STRING_AGG(DISTINCT t1.medication_name, ', ') AS medications FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id GROUP BY t1.patient_id, t2.family_name",
+          "parameters": [],
+          "expectedColumns": [
+            {
+              "name": "patient_id",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "family_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "medications",
+              "logicalType": "string",
+              "nullable": true
+            }
+          ],
+          "queryDigest": "1405ded9c409782294edfcd7fe455c57480e4ad2999273a1fd8bf4ea363c5cd4",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b",
+            "traceId": "22cf86f0-80bd-4505-8cd1-8f253d3757c1",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "ready",
+            "hubTraceId": "22cf86f0-80bd-4505-8cd1-8f253d3757c1",
+            "generationValidation": {
+              "status": "passed",
+              "checks": [
+                {
+                  "name": "query_lint_attempt_1",
+                  "status": "passed",
+                  "message": "Candidate passed deterministic SQL lint."
+                }
+              ]
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B writer",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b-q4"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b-q4"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "561bb714d7f82dffc2789f302c0871684cb57cbe57f505da85d27e7db0494f9e",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": null
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "turnId": "af21b96f-4bb7-42d2-a32e-069b7124f621",
+            "catalystTraceId": "22cf86f0-80bd-4505-8cd1-8f253d3757c1",
+            "revisionContextDigest": "5aac3d45b2ad47b5906a986a7915ca9d6b04bd5294b5f090917aa658b1ca6e16",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": {
+              "versionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+              "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4"
+            },
+            "effectiveBaseVersion": {
+              "versionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+              "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4"
+            },
+            "manualVersion": null,
+            "editorSnapshotDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4",
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "55df2e24-07ae-42d2-98d0-b93835ef0a66",
+              "evidenceDigest": "b6a8fd18b9d837cf194367a776268620f8e1f5dd585d1d7ad5c9b029572c3e5f",
+              "detailPath": "/v1/catalyst/workbench/sessions/9f7ccc6f-e1f8-41b4-9152-4fc9d7aff772/turns/af21b96f-4bb7-42d2-a32e-069b7124f621/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b",
+              "profileName": "Catalyst query — Gemma 4 12B writer",
+              "profileDigest": "002e1be68707ffffb325de559d06d065b605a9b228c72d1b3f0b7122c1a34957",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4-12b",
+                "modelId": "gemma-4-12b-q4",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": []
+            },
+            "hubRequestDigest": "8d693515b7b8fdd85a1a5648e0ade0556c7241cf0d5eca1de9fa333c3f338261"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T00:16:30.047065Z"
+        }
+      ],
+      "currentVersion": {
+        "contractVersion": "catalyst.workbench.query-version.v1",
+        "versionId": "c3dbec9f-1bbd-4a3f-bcf0-9e3ff68e11b4",
+        "sessionId": "9f7ccc6f-e1f8-41b4-9152-4fc9d7aff772",
+        "parentVersionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+        "ordinal": 2,
+        "authorType": "model",
+        "sql": "SELECT t1.patient_id, t2.family_name, STRING_AGG(DISTINCT t1.medication_name, ', ') AS medications FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id GROUP BY t1.patient_id, t2.family_name",
+        "parameters": [],
+        "expectedColumns": [
+          {
+            "name": "patient_id",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "family_name",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "medications",
+            "logicalType": "string",
+            "nullable": true
+          }
+        ],
+        "queryDigest": "1405ded9c409782294edfcd7fe455c57480e4ad2999273a1fd8bf4ea363c5cd4",
+        "provenance": {
+          "profileId": "catalyst-query-gemma-4-12b",
+          "traceId": "22cf86f0-80bd-4505-8cd1-8f253d3757c1",
+          "contextSourceIds": [
+            "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+          ],
+          "sourceContract": "catalyst.query.v1",
+          "sourceStatus": "ready",
+          "hubTraceId": "22cf86f0-80bd-4505-8cd1-8f253d3757c1",
+          "generationValidation": {
+            "status": "passed",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              }
+            ]
+          },
+          "profileLabel": "Catalyst query — Gemma 4 12B writer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b-q4"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b-q4"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "561bb714d7f82dffc2789f302c0871684cb57cbe57f505da85d27e7db0494f9e",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": null
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_finalize"
+          ],
+          "unavailableReasons": [],
+          "turnId": "af21b96f-4bb7-42d2-a32e-069b7124f621",
+          "catalystTraceId": "22cf86f0-80bd-4505-8cd1-8f253d3757c1",
+          "revisionContextDigest": "5aac3d45b2ad47b5906a986a7915ca9d6b04bd5294b5f090917aa658b1ca6e16",
+          "dataSourceId": "openmrs-hiv",
+          "observedBase": {
+            "versionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+            "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4"
+          },
+          "effectiveBaseVersion": {
+            "versionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+            "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4"
+          },
+          "manualVersion": null,
+          "editorSnapshotDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4",
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "55df2e24-07ae-42d2-98d0-b93835ef0a66",
+            "evidenceDigest": "b6a8fd18b9d837cf194367a776268620f8e1f5dd585d1d7ad5c9b029572c3e5f",
+            "detailPath": "/v1/catalyst/workbench/sessions/9f7ccc6f-e1f8-41b4-9152-4fc9d7aff772/turns/af21b96f-4bb7-42d2-a32e-069b7124f621/generation-evidence"
+          },
+          "profileSnapshot": {
+            "profileId": "catalyst-query-gemma-4-12b",
+            "profileName": "Catalyst query — Gemma 4 12B writer",
+            "profileDigest": "002e1be68707ffffb325de559d06d065b605a9b228c72d1b3f0b7122c1a34957",
+            "writer": {
+              "role": "writer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4-12b",
+              "modelId": "gemma-4-12b-q4",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-generate",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+              }
+            },
+            "omissions": []
+          },
+          "hubRequestDigest": "8d693515b7b8fdd85a1a5648e0ade0556c7241cf0d5eca1de9fa333c3f338261"
+        },
+        "sourceFindingIds": [],
+        "repairProposalId": null,
+        "createdAt": "2026-08-25T00:16:30.047065Z"
+      },
+      "validations": [
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 3,
+          "validationId": "3ec31cb3-5a85-4ab7-b6d0-2d3219812f3e",
+          "sessionId": "9f7ccc6f-e1f8-41b4-9152-4fc9d7aff772",
+          "versionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T00:15:58.912552Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 0,
+          "validationId": "383f7800-2ff1-4fe8-87f2-42761e9e40b9",
+          "sessionId": "9f7ccc6f-e1f8-41b4-9152-4fc9d7aff772",
+          "versionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+          "ordinal": 2,
+          "createdAt": "2026-08-25T00:15:58.961667Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "1405ded9c409782294edfcd7fe455c57480e4ad2999273a1fd8bf4ea363c5cd4",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 1,
+          "validationId": "1b52b337-35d7-4163-9c1d-766ba84ad3b8",
+          "sessionId": "9f7ccc6f-e1f8-41b4-9152-4fc9d7aff772",
+          "versionId": "c3dbec9f-1bbd-4a3f-bcf0-9e3ff68e11b4",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T00:16:30.047065Z"
+        }
+      ],
+      "latestValidation": {
+        "contractVersion": "catalyst.workbench.validation.v1",
+        "queryDigest": "1405ded9c409782294edfcd7fe455c57480e4ad2999273a1fd8bf4ea363c5cd4",
+        "validatorRevision": "catalyst.workbench.validator.v1",
+        "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+        "status": "valid",
+        "advisory": true,
+        "checks": [],
+        "findings": [],
+        "durationMs": 1,
+        "validationId": "1b52b337-35d7-4163-9c1d-766ba84ad3b8",
+        "sessionId": "9f7ccc6f-e1f8-41b4-9152-4fc9d7aff772",
+        "versionId": "c3dbec9f-1bbd-4a3f-bcf0-9e3ff68e11b4",
+        "ordinal": 1,
+        "createdAt": "2026-08-25T00:16:30.047065Z"
+      },
+      "executions": [
+        {
+          "contractVersion": "catalyst.workbench.execution.v1",
+          "queryDigest": "cf9abc61b29a52b6fcb0abe439b7e359038093d39fa9e7225c173db4be9743d4",
+          "idempotencyKey": "harness-notebook-29c48f5b-ab4c-4848-9973-efaa25723f25",
+          "validationStatus": "valid",
+          "query": {
+            "sql": "SELECT t1.patient_id, t2.family_name, t1.medication_name FROM analytics.hiv_medication_request_fact_v1 AS t1 JOIN analytics.hiv_patient_dim_v1 AS t2 ON t1.patient_id = t2.patient_id",
+            "parameters": []
+          },
+          "statementTimeoutMs": 10000,
+          "maxRows": 100,
+          "replayed": false,
+          "status": "succeeded",
+          "result": {
+            "columns": [
+              {
+                "ordinal": 0,
+                "name": "patient_id",
+                "databaseType": "text",
+                "typeOid": 25,
+                "logicalType": "string"
+              },
+              {
+                "ordinal": 1,
+                "name": "family_name",
+                "databaseType": "text",
+                "typeOid": 25,
+                "logicalType": "string"
+              },
+              {
+                "ordinal": 2,
+                "name": "medication_name",
+                "databaseType": "text",
+                "typeOid": 25,
+                "logicalType": "string"
+              }
+            ],
+            "rows": [
+              [
+                {
+                  "type": "string",
+                  "value": "dd9b9432-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Chebose"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd7fb330-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Odouri"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dda170e8-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Munun"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dda1e8f0-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Malit"
+                },
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd77bb1e-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Echessa"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd8170b1-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Wanja"
+                },
+                {
+                  "type": "string",
+                  "value": "Isoniazid"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd9f301f-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Kipkenei"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd8b6a6f-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Maranga"
+                },
+                {
+                  "type": "string",
+                  "value": "Isoniazid"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd9262f8-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Setanei"
+                },
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd9b615a-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Kidogo"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dda9be38-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Nyanyor"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd88b69e-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Kamire"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd74d5d4-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Jepsiror"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd70721f-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Rabae"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd962bf9-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Sanbu"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd7f9d19-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Chepkoros"
+                },
+                {
+                  "type": "string",
+                  "value": "Efavirenz"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd8fe4bb-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Minning"
+                },
+                {
+                  "type": "string",
+                  "value": "Hemophilus influenza B vaccine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd7cc14c-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Onyango"
+                },
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd710d2c-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Jepngetich"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd92f2cf-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Komo"
+                },
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd97a353-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Wairimo"
+                },
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd8ab261-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Mburuku"
+                },
+                {
+                  "type": "string",
+                  "value": "Measles vaccination"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd80ffd0-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Gitau"
+                },
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd8abac8-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Chelanga"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd94164c-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Bet"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd9ee16d-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Koitalel"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dda54c24-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Amuyunso"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dda8f473-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Wangila"
+                },
+                {
+                  "type": "string",
+                  "value": "Efavirenz"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd66b8e8-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Makhokha"
+                },
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd814b8d-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Chebiego"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd97cc0f-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Nyababa"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dda1db89-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Ekibitot"
+                },
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd8be5fa-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Chemoges"
+                },
+                {
+                  "type": "string",
+                  "value": "Isoniazid"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd921cc2-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Mbasho"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd9bb446-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Kimenjo"
+                },
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd84a174-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Erigwony"
+                },
+                {
+                  "type": "string",
+                  "value": "Measles vaccination"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd8762d7-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Suti"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd7d4804-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Busola"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55e7e5-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Chepngetich"
+                },
+                {
+                  "type": "string",
+                  "value": "Isoniazid"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd837d10-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Kiptoo"
+                },
+                {
+                  "type": "string",
+                  "value": "Hepatitis B vaccination"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd80fc67-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Maritm"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd7be4e2-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Cheboi"
+                },
+                {
+                  "type": "string",
+                  "value": "Lopinavir / ritonavir"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd66025a-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Kitui"
+                },
+                {
+                  "type": "string",
+                  "value": "Tenofovir"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd74eec6-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Kirui"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd79ac9b-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Amudafi"
+                },
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd8761b4-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Tanui"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dda37cb9-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Obatsa"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd81622c-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Elipan"
+                },
+                {
+                  "type": "string",
+                  "value": "Lopinavir / ritonavir"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd80be66-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Kimining"
+                },
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dda560c2-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Butu"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd706cc6-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Ooko"
+                },
+                {
+                  "type": "string",
+                  "value": "Retrovir"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd83e3f3-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Makori"
+                },
+                {
+                  "type": "string",
+                  "value": "Ethambutol and isoniazid"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd87706c-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Brotherson"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd9f09ee-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Mantin"
+                },
+                {
+                  "type": "string",
+                  "value": "Measles vaccination"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd9bcf0a-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Oindo"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd55b898-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Mutwiri"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd9a71e0-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Muket"
+                },
+                {
+                  "type": "string",
+                  "value": "Isoniazid"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd706b92-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Jotham"
+                },
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd7d85e7-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Kamugor"
+                },
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dda926e4-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Bowen"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd90198c-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Nyale"
+                },
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd9e0611-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Tirop"
+                },
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd967772-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Rongony"
+                },
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dda73754-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Mugei"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dda30cf2-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Ochwang"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd6f47f2-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Soriney"
+                },
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd652d7d-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Kigen"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd935d70-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Solonom"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd97d0f8-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Kuria"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd8ab261-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Mburuku"
+                },
+                {
+                  "type": "string",
+                  "value": "Hemophilus influenza B vaccine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd7fa768-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Angulu"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd759516-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Mbae"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd90198c-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Nyale"
+                },
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd74db2d-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Kone"
+                },
+                {
+                  "type": "string",
+                  "value": "Efavirenz"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd79ab6f-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Machas"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd74969b-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Rotich"
+                },
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd883a75-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Itambi"
+                },
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd8ac60b-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Ezekiel"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd96866a-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Obedi"
+                },
+                {
+                  "type": "string",
+                  "value": "Isoniazid"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd8736cc-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Nyingei"
+                },
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd8e5d9c-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Agui"
+                },
+                {
+                  "type": "string",
+                  "value": "Hepatitis B vaccination"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd79c141-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Chirchir"
+                },
+                {
+                  "type": "string",
+                  "value": "Abacavir"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd664af7-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Kimurgor"
+                },
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd7d112e-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Bengunn"
+                },
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd96d4a9-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Mutai"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd754a62-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Muinde"
+                },
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd6f7431-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Libwab"
+                },
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd7bb383-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Ripai"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd7110dd-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Birgei"
+                },
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd557008-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Siromba"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine / nevirapine / stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd9f0f8b-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Kimisik"
+                },
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dda19413-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Songony"
+                },
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd7fa9b2-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Bundatich"
+                },
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd7bce0b-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Nyambura"
+                },
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dda92a44-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Musyoka"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd7d27f4-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Kitocho"
+                },
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd8eeceb-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Ndunda"
+                },
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd6f3685-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Suiter"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd665497-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Etiang"
+                },
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "dd9a56ca-1691-11df-97a5-7038c432aabf"
+                },
+                {
+                  "type": "string",
+                  "value": "Siele"
+                },
+                {
+                  "type": "string",
+                  "value": "Diphtheria tetanus and pertussis vaccination"
+                }
+              ]
+            ],
+            "rowCount": {
+              "returned": 100,
+              "truncated": true,
+              "truncationReason": "configured_limit"
+            },
+            "warnings": []
+          },
+          "durationMs": 94,
+          "executionId": "a34f392d-6e82-48c9-a7ab-cd65682d8641",
+          "sessionId": "9f7ccc6f-e1f8-41b4-9152-4fc9d7aff772",
+          "versionId": "01c8c87b-9782-4fb9-8c33-00968152598e",
+          "ordinal": 1,
+          "completedAt": "2026-08-25T00:15:59.074938Z"
+        }
+      ],
+      "guidance": [],
+      "dataSourceId": "openmrs-hiv",
+      "draftSeed": null
+    }
+  },
+  "elapsedMs": 4
+}

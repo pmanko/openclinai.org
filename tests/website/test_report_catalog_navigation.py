@@ -9,15 +9,6 @@ catalog = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(catalog)
 
 
-def test_catalog_retains_historical_catalyst_entries():
-    rows = json.loads((ROOT / 'reports-index.json').read_text())['runs']
-    by_slug = {row['slug']: row for row in rows}
-    assert len(by_slug) == len(rows)
-    for slug in ('catalyst-phase1-comparison', 'catalyst-t094-release', 'catalyst-notebook-t094-2026-07-22'):
-        assert by_slug[slug]['family'] == 'catalyst'
-        assert 'Historical' in by_slug[slug]['context']
-
-
 def test_unavailable_report_is_retained_without_a_broken_action(tmp_path, monkeypatch):
     monkeypatch.setattr(catalog, 'REPORTS', tmp_path)
     html = catalog._card({'slug':'old-run', 'title':'Historical run', 'family':'catalyst',

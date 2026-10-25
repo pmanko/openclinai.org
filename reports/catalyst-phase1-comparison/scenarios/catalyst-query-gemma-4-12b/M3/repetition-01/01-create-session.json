@@ -1,0 +1,439 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "POST",
+    "path": "/v1/catalyst/workbench/sessions",
+    "body": {
+      "contractVersion": "catalyst.workbench.session.request.v1",
+      "deploymentMode": "demo",
+      "question": "Count CD4 count results by patient.",
+      "profileId": "catalyst-query-gemma-4-12b",
+      "dataSourceId": "openmrs-hiv"
+    }
+  },
+  "response": {
+    "httpStatus": 201,
+    "body": {
+      "contractVersion": "catalyst.workbench.session.v1",
+      "sessionId": "352ecad4-9ce9-414e-9687-5aaab198bd0c",
+      "question": "Count CD4 count results by patient.",
+      "name": "Count CD4 count results by patient.",
+      "profileId": "catalyst-query-gemma-4-12b",
+      "datasetId": "hiv-20260731T000741Z",
+      "datasetVersion": "hiv-20260731T000741Z",
+      "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+      "currentVersionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+      "browserState": {},
+      "provenance": {
+        "dataSourceId": "openmrs-hiv",
+        "catalogContextSourceId": "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+        "catalystTraceId": "b055a112-2175-44f2-973f-8bdbbd1be645",
+        "profileSnapshot": {
+          "profileId": "catalyst-query-gemma-4-12b",
+          "profileLabel": "Catalyst query — Gemma 4 12B writer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b-q4"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b-q4"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "561bb714d7f82dffc2789f302c0871684cb57cbe57f505da85d27e7db0494f9e",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": null
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_finalize"
+          ],
+          "unavailableReasons": []
+        },
+        "datasetSnapshot": {
+          "datasetId": "hiv-20260731T000741Z",
+          "dataSource": "openmrs-hiv-fhir-postgresql",
+          "pipelineRunId": "hiv-20260731T000741Z",
+          "synthetic": null,
+          "patients": 5285,
+          "results": 427915,
+          "testTypes": 143,
+          "firstObservedAt": "2022-11-07T21:50:36Z",
+          "lastObservedAt": "2026-08-11T00:00:00Z"
+        },
+        "generationHttpStatus": 200,
+        "generationOutcome": {
+          "contractVersion": "catalyst.query.v1",
+          "deploymentMode": "demo",
+          "status": "ready",
+          "question": "Count CD4 count results by patient.",
+          "target": {
+            "dataSource": "openmrs-hiv-fhir-postgresql",
+            "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+            "dialect": "postgresql",
+            "approvedViews": [
+              "analytics.hiv_concept_mapping_v1",
+              "analytics.hiv_medication_request_fact_v1",
+              "analytics.hiv_observation_fact_v1",
+              "analytics.hiv_patient_dim_v1",
+              "analytics.hiv_visit_fact_v1",
+              "analytics.pipeline_freshness_v1",
+              "analytics.pipeline_run_v1",
+              "public.condition_flat",
+              "public.encounter_flat",
+              "public.medication_flat",
+              "public.medication_request_flat",
+              "public.observation_flat",
+              "public.patient_flat"
+            ]
+          },
+          "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :concept_name GROUP BY patient_id",
+          "parameters": [
+            {
+              "name": "concept_name",
+              "type": "string",
+              "source": "question",
+              "value": "CD4 count"
+            }
+          ],
+          "expectedColumns": [
+            {
+              "name": "patient_id",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "validation": {
+            "status": "passed",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              },
+              {
+                "name": "named_analyte_constraint",
+                "status": "passed",
+                "message": "Every analyte named in the question is constrained by its catalog semantic dimension and canonical bound value."
+              }
+            ]
+          },
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b",
+            "traceId": "b055a112-2175-44f2-973f-8bdbbd1be645",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ]
+          }
+        }
+      },
+      "status": "active",
+      "createdAt": "2026-08-25T00:19:25.051667Z",
+      "updatedAt": "2026-08-25T00:19:51.327079Z",
+      "versions": [
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+          "sessionId": "352ecad4-9ce9-414e-9687-5aaab198bd0c",
+          "parentVersionId": null,
+          "ordinal": 1,
+          "authorType": "model",
+          "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :concept_name GROUP BY patient_id",
+          "parameters": [
+            {
+              "name": "concept_name",
+              "type": "string",
+              "source": "question",
+              "value": "CD4 count"
+            }
+          ],
+          "expectedColumns": [
+            {
+              "name": "patient_id",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b",
+            "traceId": "b055a112-2175-44f2-973f-8bdbbd1be645",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "ready",
+            "hubTraceId": "b055a112-2175-44f2-973f-8bdbbd1be645",
+            "generationValidation": {
+              "status": "passed",
+              "checks": [
+                {
+                  "name": "query_lint_attempt_1",
+                  "status": "passed",
+                  "message": "Candidate passed deterministic SQL lint."
+                },
+                {
+                  "name": "named_analyte_constraint",
+                  "status": "passed",
+                  "message": "Every analyte named in the question is constrained by its catalog semantic dimension and canonical bound value."
+                }
+              ]
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B writer",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b-q4"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b-q4"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "561bb714d7f82dffc2789f302c0871684cb57cbe57f505da85d27e7db0494f9e",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": null
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "catalystTraceId": "b055a112-2175-44f2-973f-8bdbbd1be645",
+            "turnId": "44679829-000b-4559-b9ac-d79cb650b5a8",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": null,
+            "effectiveBaseVersion": null,
+            "manualVersion": null,
+            "editorSnapshotDigest": null,
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "c40219ef-c43a-4789-b4e8-c89bd02f4f00",
+              "evidenceDigest": "54984cbfb618d7e725d25fe45a6af948d5911a59ed62eb0be4b93852f89ccd64",
+              "detailPath": "/v1/catalyst/workbench/sessions/352ecad4-9ce9-414e-9687-5aaab198bd0c/turns/44679829-000b-4559-b9ac-d79cb650b5a8/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b",
+              "profileName": "Catalyst query — Gemma 4 12B writer",
+              "profileDigest": "002e1be68707ffffb325de559d06d065b605a9b228c72d1b3f0b7122c1a34957",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4-12b",
+                "modelId": "gemma-4-12b-q4",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": []
+            },
+            "hubRequestDigest": "efe1d7706b66c004644677954af26fd68722f712bb36dbf665a70615ed43308c"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T00:19:51.327079Z"
+        }
+      ],
+      "currentVersion": {
+        "contractVersion": "catalyst.workbench.query-version.v1",
+        "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+        "sessionId": "352ecad4-9ce9-414e-9687-5aaab198bd0c",
+        "parentVersionId": null,
+        "ordinal": 1,
+        "authorType": "model",
+        "sql": "SELECT patient_id, COUNT(*) AS count FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :concept_name GROUP BY patient_id",
+        "parameters": [
+          {
+            "name": "concept_name",
+            "type": "string",
+            "source": "question",
+            "value": "CD4 count"
+          }
+        ],
+        "expectedColumns": [
+          {
+            "name": "patient_id",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "count",
+            "logicalType": "integer",
+            "nullable": false
+          }
+        ],
+        "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1",
+        "provenance": {
+          "profileId": "catalyst-query-gemma-4-12b",
+          "traceId": "b055a112-2175-44f2-973f-8bdbbd1be645",
+          "contextSourceIds": [
+            "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+          ],
+          "sourceContract": "catalyst.query.v1",
+          "sourceStatus": "ready",
+          "hubTraceId": "b055a112-2175-44f2-973f-8bdbbd1be645",
+          "generationValidation": {
+            "status": "passed",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              },
+              {
+                "name": "named_analyte_constraint",
+                "status": "passed",
+                "message": "Every analyte named in the question is constrained by its catalog semantic dimension and canonical bound value."
+              }
+            ]
+          },
+          "profileLabel": "Catalyst query — Gemma 4 12B writer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b-q4"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b-q4"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "561bb714d7f82dffc2789f302c0871684cb57cbe57f505da85d27e7db0494f9e",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": null
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_finalize"
+          ],
+          "unavailableReasons": [],
+          "catalystTraceId": "b055a112-2175-44f2-973f-8bdbbd1be645",
+          "turnId": "44679829-000b-4559-b9ac-d79cb650b5a8",
+          "dataSourceId": "openmrs-hiv",
+          "observedBase": null,
+          "effectiveBaseVersion": null,
+          "manualVersion": null,
+          "editorSnapshotDigest": null,
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "c40219ef-c43a-4789-b4e8-c89bd02f4f00",
+            "evidenceDigest": "54984cbfb618d7e725d25fe45a6af948d5911a59ed62eb0be4b93852f89ccd64",
+            "detailPath": "/v1/catalyst/workbench/sessions/352ecad4-9ce9-414e-9687-5aaab198bd0c/turns/44679829-000b-4559-b9ac-d79cb650b5a8/generation-evidence"
+          },
+          "profileSnapshot": {
+            "profileId": "catalyst-query-gemma-4-12b",
+            "profileName": "Catalyst query — Gemma 4 12B writer",
+            "profileDigest": "002e1be68707ffffb325de559d06d065b605a9b228c72d1b3f0b7122c1a34957",
+            "writer": {
+              "role": "writer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4-12b",
+              "modelId": "gemma-4-12b-q4",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-generate",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+              }
+            },
+            "omissions": []
+          },
+          "hubRequestDigest": "efe1d7706b66c004644677954af26fd68722f712bb36dbf665a70615ed43308c"
+        },
+        "sourceFindingIds": [],
+        "repairProposalId": null,
+        "createdAt": "2026-08-25T00:19:51.327079Z"
+      },
+      "validations": [
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 2,
+          "validationId": "947c02d0-a197-4f15-a02b-0e9267d52de1",
+          "sessionId": "352ecad4-9ce9-414e-9687-5aaab198bd0c",
+          "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T00:19:51.327079Z"
+        }
+      ],
+      "latestValidation": {
+        "contractVersion": "catalyst.workbench.validation.v1",
+        "queryDigest": "e05721fa5de4ad2d2c6284f98b895456e550116fb9a079254614e951476dd4d1",
+        "validatorRevision": "catalyst.workbench.validator.v1",
+        "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+        "status": "valid",
+        "advisory": true,
+        "checks": [],
+        "findings": [],
+        "durationMs": 2,
+        "validationId": "947c02d0-a197-4f15-a02b-0e9267d52de1",
+        "sessionId": "352ecad4-9ce9-414e-9687-5aaab198bd0c",
+        "versionId": "cee8779d-da8f-4d86-b0a4-c79e7b4438c7",
+        "ordinal": 1,
+        "createdAt": "2026-08-25T00:19:51.327079Z"
+      },
+      "executions": [],
+      "guidance": [],
+      "dataSourceId": "openmrs-hiv",
+      "draftSeed": null
+    }
+  },
+  "elapsedMs": 29151
+}

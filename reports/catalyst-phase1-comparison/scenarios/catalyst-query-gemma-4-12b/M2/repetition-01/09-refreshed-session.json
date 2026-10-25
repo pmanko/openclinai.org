@@ -1,0 +1,941 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "GET",
+    "path": "/v1/catalyst/workbench/sessions/ea719da9-88ec-4e2b-a3df-ce358ba565df",
+    "body": null
+  },
+  "response": {
+    "httpStatus": 200,
+    "body": {
+      "contractVersion": "catalyst.workbench.session.v1",
+      "sessionId": "ea719da9-88ec-4e2b-a3df-ce358ba565df",
+      "question": "Count medication requests by medication name.",
+      "name": "Count medication requests by medication name.",
+      "profileId": "catalyst-query-gemma-4-12b",
+      "datasetId": "hiv-20260731T000741Z",
+      "datasetVersion": "hiv-20260731T000741Z",
+      "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+      "currentVersionId": "8cb08378-fca6-430b-86a4-271c4a670dda",
+      "browserState": {},
+      "provenance": {
+        "dataSourceId": "openmrs-hiv",
+        "catalogContextSourceId": "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+        "catalystTraceId": "572b88dd-f96a-421e-9a9c-1918794d576b",
+        "profileSnapshot": {
+          "profileId": "catalyst-query-gemma-4-12b",
+          "profileLabel": "Catalyst query — Gemma 4 12B writer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b-q4"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b-q4"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "561bb714d7f82dffc2789f302c0871684cb57cbe57f505da85d27e7db0494f9e",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": null
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_finalize"
+          ],
+          "unavailableReasons": []
+        },
+        "datasetSnapshot": {
+          "datasetId": "hiv-20260731T000741Z",
+          "dataSource": "openmrs-hiv-fhir-postgresql",
+          "pipelineRunId": "hiv-20260731T000741Z",
+          "synthetic": null,
+          "patients": 5285,
+          "results": 427915,
+          "testTypes": 143,
+          "firstObservedAt": "2022-11-07T21:50:36Z",
+          "lastObservedAt": "2026-08-11T00:00:00Z"
+        },
+        "generationHttpStatus": 200,
+        "generationOutcome": {
+          "contractVersion": "catalyst.query.v1",
+          "deploymentMode": "demo",
+          "status": "ready",
+          "question": "Count medication requests by medication name.",
+          "target": {
+            "dataSource": "openmrs-hiv-fhir-postgresql",
+            "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+            "dialect": "postgresql",
+            "approvedViews": [
+              "analytics.hiv_concept_mapping_v1",
+              "analytics.hiv_medication_request_fact_v1",
+              "analytics.hiv_observation_fact_v1",
+              "analytics.hiv_patient_dim_v1",
+              "analytics.hiv_visit_fact_v1",
+              "analytics.pipeline_freshness_v1",
+              "analytics.pipeline_run_v1",
+              "public.condition_flat",
+              "public.encounter_flat",
+              "public.medication_flat",
+              "public.medication_request_flat",
+              "public.observation_flat",
+              "public.patient_flat"
+            ]
+          },
+          "sql": "SELECT medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform = false GROUP BY medication_name",
+          "parameters": [],
+          "expectedColumns": [
+            {
+              "name": "medication_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "validation": {
+            "status": "passed",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              }
+            ]
+          },
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b",
+            "traceId": "572b88dd-f96a-421e-9a9c-1918794d576b",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ]
+          }
+        }
+      },
+      "status": "active",
+      "createdAt": "2026-08-25T00:17:06.921244Z",
+      "updatedAt": "2026-08-25T00:18:09.262813Z",
+      "versions": [
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "7e7c66b4-258e-4021-b1d2-f45a4089fbfe",
+          "sessionId": "ea719da9-88ec-4e2b-a3df-ce358ba565df",
+          "parentVersionId": null,
+          "ordinal": 1,
+          "authorType": "model",
+          "sql": "SELECT medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform = false GROUP BY medication_name",
+          "parameters": [],
+          "expectedColumns": [
+            {
+              "name": "medication_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b",
+            "traceId": "572b88dd-f96a-421e-9a9c-1918794d576b",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "ready",
+            "hubTraceId": "572b88dd-f96a-421e-9a9c-1918794d576b",
+            "generationValidation": {
+              "status": "passed",
+              "checks": [
+                {
+                  "name": "query_lint_attempt_1",
+                  "status": "passed",
+                  "message": "Candidate passed deterministic SQL lint."
+                }
+              ]
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B writer",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b-q4"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b-q4"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "561bb714d7f82dffc2789f302c0871684cb57cbe57f505da85d27e7db0494f9e",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": null
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "catalystTraceId": "572b88dd-f96a-421e-9a9c-1918794d576b",
+            "turnId": "5c96254e-60de-4706-8237-a0fd49a13f87",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": null,
+            "effectiveBaseVersion": null,
+            "manualVersion": null,
+            "editorSnapshotDigest": null,
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "8e11b6cc-20de-4ee9-9060-02a8994de510",
+              "evidenceDigest": "c325bcf52ae7ab60028e3b15219b0ed3b9e3e9a1746fe256d161e3c4d6877b9c",
+              "detailPath": "/v1/catalyst/workbench/sessions/ea719da9-88ec-4e2b-a3df-ce358ba565df/turns/5c96254e-60de-4706-8237-a0fd49a13f87/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b",
+              "profileName": "Catalyst query — Gemma 4 12B writer",
+              "profileDigest": "002e1be68707ffffb325de559d06d065b605a9b228c72d1b3f0b7122c1a34957",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4-12b",
+                "modelId": "gemma-4-12b-q4",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": []
+            },
+            "hubRequestDigest": "2e121a5743cf5ca511b028c57d01c12ab562c6371c6a18a4ff9ccae337e3b097"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T00:17:32.687095Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "8cb08378-fca6-430b-86a4-271c4a670dda",
+          "sessionId": "ea719da9-88ec-4e2b-a3df-ce358ba565df",
+          "parentVersionId": "7e7c66b4-258e-4021-b1d2-f45a4089fbfe",
+          "ordinal": 2,
+          "authorType": "model",
+          "sql": "SELECT patient_gender, medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform = false GROUP BY patient_gender, medication_name",
+          "parameters": [],
+          "expectedColumns": [
+            {
+              "name": "patient_gender",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "medication_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "queryDigest": "465036cc9d891ccf35e4707518a2b7c53b95ebf2312b32e8486b1ef60358e814",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b",
+            "traceId": "3454fecb-cafa-4347-869b-a2766c1cdc91",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "ready",
+            "hubTraceId": "3454fecb-cafa-4347-869b-a2766c1cdc91",
+            "generationValidation": {
+              "status": "passed",
+              "checks": [
+                {
+                  "name": "query_lint_attempt_1",
+                  "status": "passed",
+                  "message": "Candidate passed deterministic SQL lint."
+                }
+              ]
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B writer",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b-q4"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b-q4"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "561bb714d7f82dffc2789f302c0871684cb57cbe57f505da85d27e7db0494f9e",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": null
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "turnId": "2243fcad-406b-401c-b141-69ea4ac9c3c9",
+            "catalystTraceId": "3454fecb-cafa-4347-869b-a2766c1cdc91",
+            "revisionContextDigest": "c830c35330660aa3ed2b21bad6b6bbc7d50c779a9e37b92ee7e293ce358ed631",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": {
+              "versionId": "7e7c66b4-258e-4021-b1d2-f45a4089fbfe",
+              "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2"
+            },
+            "effectiveBaseVersion": {
+              "versionId": "7e7c66b4-258e-4021-b1d2-f45a4089fbfe",
+              "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2"
+            },
+            "manualVersion": null,
+            "editorSnapshotDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2",
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "420e228f-d8ba-4d0c-b4b1-5aed6e489b7c",
+              "evidenceDigest": "9f680de1ea59272ec73bc98803ed187062457c29a099af8adeca23d47bf8c06d",
+              "detailPath": "/v1/catalyst/workbench/sessions/ea719da9-88ec-4e2b-a3df-ce358ba565df/turns/2243fcad-406b-401c-b141-69ea4ac9c3c9/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b",
+              "profileName": "Catalyst query — Gemma 4 12B writer",
+              "profileDigest": "002e1be68707ffffb325de559d06d065b605a9b228c72d1b3f0b7122c1a34957",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4-12b",
+                "modelId": "gemma-4-12b-q4",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": []
+            },
+            "hubRequestDigest": "f7f209d8864e0d2c618140de7c540579ff177015e6a2ff844a9253cfba73a41e"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T00:18:09.262813Z"
+        }
+      ],
+      "currentVersion": {
+        "contractVersion": "catalyst.workbench.query-version.v1",
+        "versionId": "8cb08378-fca6-430b-86a4-271c4a670dda",
+        "sessionId": "ea719da9-88ec-4e2b-a3df-ce358ba565df",
+        "parentVersionId": "7e7c66b4-258e-4021-b1d2-f45a4089fbfe",
+        "ordinal": 2,
+        "authorType": "model",
+        "sql": "SELECT patient_gender, medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform = false GROUP BY patient_gender, medication_name",
+        "parameters": [],
+        "expectedColumns": [
+          {
+            "name": "patient_gender",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "medication_name",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "count",
+            "logicalType": "integer",
+            "nullable": false
+          }
+        ],
+        "queryDigest": "465036cc9d891ccf35e4707518a2b7c53b95ebf2312b32e8486b1ef60358e814",
+        "provenance": {
+          "profileId": "catalyst-query-gemma-4-12b",
+          "traceId": "3454fecb-cafa-4347-869b-a2766c1cdc91",
+          "contextSourceIds": [
+            "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+          ],
+          "sourceContract": "catalyst.query.v1",
+          "sourceStatus": "ready",
+          "hubTraceId": "3454fecb-cafa-4347-869b-a2766c1cdc91",
+          "generationValidation": {
+            "status": "passed",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              }
+            ]
+          },
+          "profileLabel": "Catalyst query — Gemma 4 12B writer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b-q4"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b-q4"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "561bb714d7f82dffc2789f302c0871684cb57cbe57f505da85d27e7db0494f9e",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": null
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_finalize"
+          ],
+          "unavailableReasons": [],
+          "turnId": "2243fcad-406b-401c-b141-69ea4ac9c3c9",
+          "catalystTraceId": "3454fecb-cafa-4347-869b-a2766c1cdc91",
+          "revisionContextDigest": "c830c35330660aa3ed2b21bad6b6bbc7d50c779a9e37b92ee7e293ce358ed631",
+          "dataSourceId": "openmrs-hiv",
+          "observedBase": {
+            "versionId": "7e7c66b4-258e-4021-b1d2-f45a4089fbfe",
+            "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2"
+          },
+          "effectiveBaseVersion": {
+            "versionId": "7e7c66b4-258e-4021-b1d2-f45a4089fbfe",
+            "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2"
+          },
+          "manualVersion": null,
+          "editorSnapshotDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2",
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "420e228f-d8ba-4d0c-b4b1-5aed6e489b7c",
+            "evidenceDigest": "9f680de1ea59272ec73bc98803ed187062457c29a099af8adeca23d47bf8c06d",
+            "detailPath": "/v1/catalyst/workbench/sessions/ea719da9-88ec-4e2b-a3df-ce358ba565df/turns/2243fcad-406b-401c-b141-69ea4ac9c3c9/generation-evidence"
+          },
+          "profileSnapshot": {
+            "profileId": "catalyst-query-gemma-4-12b",
+            "profileName": "Catalyst query — Gemma 4 12B writer",
+            "profileDigest": "002e1be68707ffffb325de559d06d065b605a9b228c72d1b3f0b7122c1a34957",
+            "writer": {
+              "role": "writer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4-12b",
+              "modelId": "gemma-4-12b-q4",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-generate",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+              }
+            },
+            "omissions": []
+          },
+          "hubRequestDigest": "f7f209d8864e0d2c618140de7c540579ff177015e6a2ff844a9253cfba73a41e"
+        },
+        "sourceFindingIds": [],
+        "repairProposalId": null,
+        "createdAt": "2026-08-25T00:18:09.262813Z"
+      },
+      "validations": [
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 0,
+          "validationId": "ea4cbe20-5fa9-4723-963a-e845ddfe2009",
+          "sessionId": "ea719da9-88ec-4e2b-a3df-ce358ba565df",
+          "versionId": "7e7c66b4-258e-4021-b1d2-f45a4089fbfe",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T00:17:32.687095Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 0,
+          "validationId": "ff9777b6-e017-4e72-aefb-6185c6fb8a86",
+          "sessionId": "ea719da9-88ec-4e2b-a3df-ce358ba565df",
+          "versionId": "7e7c66b4-258e-4021-b1d2-f45a4089fbfe",
+          "ordinal": 2,
+          "createdAt": "2026-08-25T00:17:32.743816Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "465036cc9d891ccf35e4707518a2b7c53b95ebf2312b32e8486b1ef60358e814",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 0,
+          "validationId": "82946d8d-ed83-41f6-b341-e80d859b1a05",
+          "sessionId": "ea719da9-88ec-4e2b-a3df-ce358ba565df",
+          "versionId": "8cb08378-fca6-430b-86a4-271c4a670dda",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T00:18:09.262813Z"
+        }
+      ],
+      "latestValidation": {
+        "contractVersion": "catalyst.workbench.validation.v1",
+        "queryDigest": "465036cc9d891ccf35e4707518a2b7c53b95ebf2312b32e8486b1ef60358e814",
+        "validatorRevision": "catalyst.workbench.validator.v1",
+        "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+        "status": "valid",
+        "advisory": true,
+        "checks": [],
+        "findings": [],
+        "durationMs": 0,
+        "validationId": "82946d8d-ed83-41f6-b341-e80d859b1a05",
+        "sessionId": "ea719da9-88ec-4e2b-a3df-ce358ba565df",
+        "versionId": "8cb08378-fca6-430b-86a4-271c4a670dda",
+        "ordinal": 1,
+        "createdAt": "2026-08-25T00:18:09.262813Z"
+      },
+      "executions": [
+        {
+          "contractVersion": "catalyst.workbench.execution.v1",
+          "queryDigest": "6a84f270493a1c3344bc9c15abd461d5e7bacc2771a2921d0103d39cdd159ef2",
+          "idempotencyKey": "harness-notebook-3b694d07-3de5-4d98-943c-0b4dcdfd9f6e",
+          "validationStatus": "valid",
+          "query": {
+            "sql": "SELECT medication_name, COUNT(*) AS count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform = false GROUP BY medication_name",
+            "parameters": []
+          },
+          "statementTimeoutMs": 10000,
+          "maxRows": 100,
+          "replayed": false,
+          "status": "succeeded",
+          "result": {
+            "columns": [
+              {
+                "ordinal": 0,
+                "name": "medication_name",
+                "databaseType": "text",
+                "typeOid": 25,
+                "logicalType": "string"
+              },
+              {
+                "ordinal": 1,
+                "name": "count",
+                "databaseType": "int8",
+                "typeOid": 20,
+                "logicalType": "integer"
+              }
+            ],
+            "rows": [
+              [
+                {
+                  "type": "string",
+                  "value": "Hepatitis B vaccination"
+                },
+                {
+                  "type": "integer",
+                  "value": 600
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Fluconazole"
+                },
+                {
+                  "type": "integer",
+                  "value": 103
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Lopinavir / ritonavir"
+                },
+                {
+                  "type": "integer",
+                  "value": 474
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Tenofovir"
+                },
+                {
+                  "type": "integer",
+                  "value": 12
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Streptomycin"
+                },
+                {
+                  "type": "integer",
+                  "value": 23
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Infant formula"
+                },
+                {
+                  "type": "integer",
+                  "value": 71
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Ethambutol and isoniazid"
+                },
+                {
+                  "type": "integer",
+                  "value": 425
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Rifampicin and isoniazid"
+                },
+                {
+                  "type": "integer",
+                  "value": 47
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Didanosine"
+                },
+                {
+                  "type": "integer",
+                  "value": 404
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                },
+                {
+                  "type": "integer",
+                  "value": 9913
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                },
+                {
+                  "type": "integer",
+                  "value": 4887
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Polio vaccination, oral"
+                },
+                {
+                  "type": "integer",
+                  "value": 639
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                },
+                {
+                  "type": "integer",
+                  "value": 8810
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Rifadin"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Total maternal to child transmission prophylaxis"
+                },
+                {
+                  "type": "integer",
+                  "value": 40
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Retrovir"
+                },
+                {
+                  "type": "integer",
+                  "value": 403
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                },
+                {
+                  "type": "integer",
+                  "value": 9781
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Efavirenz"
+                },
+                {
+                  "type": "integer",
+                  "value": 1548
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Abacavir"
+                },
+                {
+                  "type": "integer",
+                  "value": 203
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Dapsone"
+                },
+                {
+                  "type": "integer",
+                  "value": 161
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Hemophilus influenza B vaccine"
+                },
+                {
+                  "type": "integer",
+                  "value": 589
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Rifampicin isoniazid pyrazinamide and ethambutol"
+                },
+                {
+                  "type": "integer",
+                  "value": 140
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Lamivudine / nevirapine / stavudine"
+                },
+                {
+                  "type": "integer",
+                  "value": 137
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Ethambutol"
+                },
+                {
+                  "type": "integer",
+                  "value": 82
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Measles vaccination"
+                },
+                {
+                  "type": "integer",
+                  "value": 553
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Isoniazid"
+                },
+                {
+                  "type": "integer",
+                  "value": 1972
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Nelfinavir"
+                },
+                {
+                  "type": "integer",
+                  "value": 72
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Diphtheria tetanus and pertussis vaccination"
+                },
+                {
+                  "type": "integer",
+                  "value": 664
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Lamivudine / zidovudine"
+                },
+                {
+                  "type": "integer",
+                  "value": 569
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Isoniazid / pyrazinamide / rifampin"
+                },
+                {
+                  "type": "integer",
+                  "value": 89
+                }
+              ]
+            ],
+            "rowCount": {
+              "returned": 30,
+              "truncated": false,
+              "truncationReason": null
+            },
+            "warnings": []
+          },
+          "durationMs": 56,
+          "executionId": "5f07579f-6afe-4e63-a324-de5b86ea1261",
+          "sessionId": "ea719da9-88ec-4e2b-a3df-ce358ba565df",
+          "versionId": "7e7c66b4-258e-4021-b1d2-f45a4089fbfe",
+          "ordinal": 1,
+          "completedAt": "2026-08-25T00:17:32.823872Z"
+        }
+      ],
+      "guidance": [
+        {
+          "contractVersion": "catalyst.workbench.guidance.v1",
+          "entryId": "guidance-7b5557ff-742d-4c91-bd3f-b20b4a453f40",
+          "sessionId": "ea719da9-88ec-4e2b-a3df-ce358ba565df",
+          "order": 1,
+          "text": "Exclude do_not_perform requests.",
+          "textDigest": "be56d9ddb840bd5691e48e5719f91f3338ea15f4f5b3bca4ddd009014dfb16e3",
+          "source": "human",
+          "originTurnId": null,
+          "acceptedBy": {
+            "type": "human",
+            "actorId": null
+          },
+          "state": "active",
+          "supersededBy": null,
+          "createdAt": "2026-08-25T00:17:32.877701Z",
+          "events": [
+            {
+              "eventId": "4002d2e6-e1de-4671-ae4e-7f70ad6bfd75",
+              "action": "pinned",
+              "occurredAt": "2026-08-25T00:17:32.877701Z",
+              "actor": {
+                "type": "human",
+                "actorId": null
+              }
+            }
+          ]
+        }
+      ],
+      "dataSourceId": "openmrs-hiv",
+      "draftSeed": null
+    }
+  },
+  "elapsedMs": 3
+}

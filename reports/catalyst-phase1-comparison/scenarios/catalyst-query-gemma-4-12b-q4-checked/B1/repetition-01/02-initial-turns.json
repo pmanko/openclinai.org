@@ -1,0 +1,128 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "GET",
+    "path": "/v1/catalyst/workbench/sessions/a908ec80-8e68-420a-ab96-b760050460a8/turns",
+    "body": null
+  },
+  "response": {
+    "httpStatus": 200,
+    "body": {
+      "contractVersion": "catalyst.workbench.turn.timeline.v1",
+      "sessionId": "a908ec80-8e68-420a-ab96-b760050460a8",
+      "currentTurnId": "01b7569b-4b08-4a18-ac05-c683815c10ed",
+      "currentVersion": null,
+      "turns": [
+        {
+          "contractVersion": "catalyst.workbench.turn.v1",
+          "sessionId": "a908ec80-8e68-420a-ab96-b760050460a8",
+          "turnId": "01b7569b-4b08-4a18-ac05-c683815c10ed",
+          "ordinal": 1,
+          "kind": "initial",
+          "origin": "recorded",
+          "dataSourceId": "openmrs-hiv",
+          "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+          "instruction": "Show recent HIV results.",
+          "instructionDigest": "d810b07cc780c098475f7b5460cc28dbca987b07e799f970f440902793512a15",
+          "profileSnapshot": {
+            "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+            "profileName": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+            "profileDigest": "aef9d8a8267afde55578eb35019be744fa85cf02648d4db674aaa4a6d993a647",
+            "writer": {
+              "role": "writer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4-q4",
+              "modelId": "gemma-4-12b-q4",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-generate",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+              }
+            },
+            "omissions": [],
+            "reviewer": {
+              "role": "reviewer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4-q4",
+              "modelId": "gemma-4-12b-q4",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-review",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+              }
+            }
+          },
+          "observedBase": null,
+          "editorSnapshot": null,
+          "snapshotClassification": "not_applicable",
+          "unresolvedPaths": [],
+          "effectiveBaseVersion": null,
+          "manualVersion": null,
+          "revisionContext": null,
+          "hubRequestDigest": "59a3c33601269be6c60fd99a3f9b220001834328f0ee9edb7d0901a1a7c1c126",
+          "catalystTraceId": "141bdd99-03e8-4a7c-8416-9732c3b62a97",
+          "hubTraceId": "141bdd99-03e8-4a7c-8416-9732c3b62a97",
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "9f6b3200-5624-4ab9-9819-32e66ff3b2ba",
+            "evidenceDigest": "2aef1f69f5ef96992cb8b9f0851da118dd13ea5d06c17ca4021f8c3b4ed3ad36",
+            "detailPath": "/v1/catalyst/workbench/sessions/a908ec80-8e68-420a-ab96-b760050460a8/turns/01b7569b-4b08-4a18-ac05-c683815c10ed/generation-evidence"
+          },
+          "recoveryReferences": null,
+          "status": "failed",
+          "outputVersions": [],
+          "selectedVersionId": null,
+          "resultingCurrentVersion": null,
+          "events": [
+            {
+              "eventId": "18ef30f7-c8c3-4cd4-b89d-e56730be8426",
+              "status": "requested",
+              "generationRunId": "461e882c-b0f4-4613-94d0-4bbbdafa1372",
+              "ownerInstanceId": "49f02a65-ca84-4b22-960e-d5d5f9a9ef6e",
+              "occurredAt": "2026-08-25T00:41:19.223981Z"
+            },
+            {
+              "eventId": "dff691e0-b177-46ef-91aa-1b101433fa42",
+              "status": "failed",
+              "generationRunId": "461e882c-b0f4-4613-94d0-4bbbdafa1372",
+              "occurredAt": "2026-08-25T00:41:19.342489Z"
+            }
+          ],
+          "failure": {
+            "stage": "writer_output_contract",
+            "code": "generation_failed",
+            "message": "'HIV' is not one of the recorded result names. Did you mean Current WHO HIV stage, HIV viral load, or something else?",
+            "evidenceAvailable": false,
+            "rawEvidenceRef": null,
+            "diagnostic": {
+              "contractVersion": "catalyst.workbench.turn-failure-diagnostic.v1",
+              "retryable": true,
+              "details": [
+                {
+                  "name": "catalog_scope",
+                  "value": "warned — 'HIV' is not one of the recorded result names. Did you mean Current WHO HIV stage, HIV viral load, or something else?"
+                }
+              ]
+            }
+          },
+          "createdAt": "2026-08-25T00:41:19.223981Z",
+          "updatedAt": "2026-08-25T00:41:19.342489Z",
+          "writerOutcome": "needs_clarification"
+        }
+      ]
+    }
+  },
+  "elapsedMs": 3
+}

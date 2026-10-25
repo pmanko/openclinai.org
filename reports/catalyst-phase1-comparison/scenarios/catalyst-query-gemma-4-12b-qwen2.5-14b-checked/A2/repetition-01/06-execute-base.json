@@ -1,0 +1,120 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "POST",
+    "path": "/v1/catalyst/workbench/versions/807c2af7-13e7-4753-a869-47e8f2e74a33/execute",
+    "body": {
+      "contractVersion": "catalyst.workbench.execute.request.v1",
+      "versionId": "807c2af7-13e7-4753-a869-47e8f2e74a33",
+      "queryDigest": "1f23bd92f342c2f2cc34c0764ab6253ebd515b3eb30127c2571b22670dc15924",
+      "idempotencyKey": "harness-notebook-17d91ed3-a62b-48df-9d77-c31ee549be19"
+    }
+  },
+  "response": {
+    "httpStatus": 200,
+    "body": {
+      "contractVersion": "catalyst.workbench.execution.v1",
+      "queryDigest": "1f23bd92f342c2f2cc34c0764ab6253ebd515b3eb30127c2571b22670dc15924",
+      "idempotencyKey": "harness-notebook-17d91ed3-a62b-48df-9d77-c31ee549be19",
+      "validationStatus": "valid",
+      "query": {
+        "sql": "SELECT encounter_type, COUNT(*) AS visit_count FROM analytics.hiv_visit_fact_v1 WHERE started_at >= :start_date GROUP BY encounter_type ORDER BY visit_count DESC",
+        "parameters": [
+          {
+            "name": "start_date",
+            "type": "date",
+            "source": "question",
+            "value": "2025-01-01"
+          }
+        ]
+      },
+      "statementTimeoutMs": 10000,
+      "maxRows": 100,
+      "replayed": false,
+      "status": "succeeded",
+      "result": {
+        "columns": [
+          {
+            "ordinal": 0,
+            "name": "encounter_type",
+            "databaseType": "text",
+            "typeOid": 25,
+            "logicalType": "string"
+          },
+          {
+            "ordinal": 1,
+            "name": "visit_count",
+            "databaseType": "int8",
+            "typeOid": 20,
+            "logicalType": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "Adult Visit"
+            },
+            {
+              "type": "integer",
+              "value": 13369
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "OPD Visit"
+            },
+            {
+              "type": "integer",
+              "value": 13310
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Check In"
+            },
+            {
+              "type": "integer",
+              "value": 941
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Facility Visit"
+            },
+            {
+              "type": "integer",
+              "value": 938
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Attachment Upload"
+            },
+            {
+              "type": "integer",
+              "value": 6
+            }
+          ]
+        ],
+        "rowCount": {
+          "returned": 5,
+          "truncated": false,
+          "truncationReason": null
+        },
+        "warnings": []
+      },
+      "durationMs": 64,
+      "executionId": "6062472f-b97a-4e93-9649-10c97bdae4a1",
+      "sessionId": "6c6f8313-d5b2-44dc-a8a5-b4f328021274",
+      "versionId": "807c2af7-13e7-4753-a869-47e8f2e74a33",
+      "ordinal": 1,
+      "completedAt": "2026-08-25T00:49:56.551591Z"
+    }
+  },
+  "elapsedMs": 90
+}

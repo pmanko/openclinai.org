@@ -1,0 +1,2841 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "GET",
+    "path": "/v1/catalyst/workbench/sessions/bb7b83ed-722e-49e7-a2d6-9743c66eda90",
+    "body": null
+  },
+  "response": {
+    "httpStatus": 200,
+    "body": {
+      "contractVersion": "catalyst.workbench.session.v1",
+      "sessionId": "bb7b83ed-722e-49e7-a2d6-9743c66eda90",
+      "question": "Count medication requests by medication name.",
+      "name": "Count medication requests by medication name.",
+      "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+      "datasetId": "hiv-20260731T000741Z",
+      "datasetVersion": "hiv-20260731T000741Z",
+      "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+      "currentVersionId": "4c0e9662-bd76-4c28-af52-1b482dc72a09",
+      "browserState": {},
+      "provenance": {
+        "dataSourceId": "openmrs-hiv",
+        "catalogContextSourceId": "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+        "catalystTraceId": "4c15ca40-0356-4875-819f-d84fd50bb686",
+        "profileSnapshot": {
+          "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+          "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b",
+            "qwen2.5-14b"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b",
+            "query_review": "qwen2.5-14b"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            },
+            "query_review": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_review",
+            "query_finalize"
+          ],
+          "unavailableReasons": []
+        },
+        "datasetSnapshot": {
+          "datasetId": "hiv-20260731T000741Z",
+          "dataSource": "openmrs-hiv-fhir-postgresql",
+          "pipelineRunId": "hiv-20260731T000741Z",
+          "synthetic": null,
+          "patients": 5285,
+          "results": 427915,
+          "testTypes": 143,
+          "firstObservedAt": "2022-11-07T21:50:36Z",
+          "lastObservedAt": "2026-08-11T00:00:00Z"
+        },
+        "generationHttpStatus": 200,
+        "generationOutcome": {
+          "contractVersion": "catalyst.query.v1",
+          "deploymentMode": "demo",
+          "status": "ready",
+          "question": "Count medication requests by medication name.",
+          "target": {
+            "dataSource": "openmrs-hiv-fhir-postgresql",
+            "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+            "dialect": "postgresql",
+            "approvedViews": [
+              "analytics.hiv_concept_mapping_v1",
+              "analytics.hiv_medication_request_fact_v1",
+              "analytics.hiv_observation_fact_v1",
+              "analytics.hiv_patient_dim_v1",
+              "analytics.hiv_visit_fact_v1",
+              "analytics.pipeline_freshness_v1",
+              "analytics.pipeline_run_v1",
+              "public.condition_flat",
+              "public.encounter_flat",
+              "public.medication_flat",
+              "public.medication_request_flat",
+              "public.observation_flat",
+              "public.patient_flat"
+            ]
+          },
+          "sql": "SELECT medication_name, COUNT(*) AS request_count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform IS FALSE GROUP BY medication_name",
+          "parameters": [],
+          "expectedColumns": [
+            {
+              "name": "medication_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "request_count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "validation": {
+            "status": "passed",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              },
+              {
+                "name": "status",
+                "status": "passed",
+                "message": "The candidate's status is 'ready', which is correct."
+              },
+              {
+                "name": "approved-view",
+                "status": "passed",
+                "message": "The candidate uses the approved view 'analytics.hiv_medication_request_fact_v1'."
+              },
+              {
+                "name": "field-grounding",
+                "status": "passed",
+                "message": "The candidate correctly references the fields 'medication_name' and 'do_not_perform' from the approved view."
+              },
+              {
+                "name": "one-statement-read-only",
+                "status": "passed",
+                "message": "The candidate uses a single SELECT statement without any destructive operations."
+              },
+              {
+                "name": "dialect-compatibility",
+                "status": "passed",
+                "message": "The candidate's SQL is compatible with PostgreSQL."
+              },
+              {
+                "name": "typed-parameter-binding",
+                "status": "passed",
+                "message": "The candidate does not use any parameters."
+              },
+              {
+                "name": "output-column-agreement",
+                "status": "passed",
+                "message": "The candidate's output columns match the expected columns."
+              },
+              {
+                "name": "row-limit-policy",
+                "status": "passed",
+                "message": "The candidate does not exceed the row limit policy."
+              },
+              {
+                "name": "absence-of-invented-identifiers",
+                "status": "passed",
+                "message": "The candidate does not use any invented identifiers."
+              }
+            ]
+          },
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "traceId": "4c15ca40-0356-4875-819f-d84fd50bb686",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ]
+          },
+          "modelCollaboration": {
+            "writer": {
+              "model": "gemma-4-12b",
+              "candidate": {
+                "status": "ready",
+                "target": {
+                  "dataSource": "openmrs-hiv-fhir-postgresql",
+                  "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+                  "dialect": "postgresql",
+                  "approvedViews": [
+                    "analytics.hiv_concept_mapping_v1",
+                    "analytics.hiv_medication_request_fact_v1",
+                    "analytics.hiv_observation_fact_v1",
+                    "analytics.hiv_patient_dim_v1",
+                    "analytics.hiv_visit_fact_v1",
+                    "analytics.pipeline_freshness_v1",
+                    "analytics.pipeline_run_v1",
+                    "public.condition_flat",
+                    "public.encounter_flat",
+                    "public.medication_flat",
+                    "public.medication_request_flat",
+                    "public.observation_flat",
+                    "public.patient_flat"
+                  ]
+                },
+                "sql": "SELECT medication_name, COUNT(*) AS request_count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform IS FALSE GROUP BY medication_name",
+                "parameters": [],
+                "expectedColumns": [
+                  {
+                    "name": "medication_name",
+                    "logicalType": "string",
+                    "nullable": true
+                  },
+                  {
+                    "name": "request_count",
+                    "logicalType": "integer",
+                    "nullable": false
+                  }
+                ]
+              },
+              "lintFindings": []
+            },
+            "reviewer": {
+              "model": "qwen2.5-14b",
+              "decision": "approve",
+              "checks": [
+                {
+                  "name": "status",
+                  "status": "passed",
+                  "message": "The candidate's status is 'ready', which is correct."
+                },
+                {
+                  "name": "approved-view",
+                  "status": "passed",
+                  "message": "The candidate uses the approved view 'analytics.hiv_medication_request_fact_v1'."
+                },
+                {
+                  "name": "field-grounding",
+                  "status": "passed",
+                  "message": "The candidate correctly references the fields 'medication_name' and 'do_not_perform' from the approved view."
+                },
+                {
+                  "name": "one-statement-read-only",
+                  "status": "passed",
+                  "message": "The candidate uses a single SELECT statement without any destructive operations."
+                },
+                {
+                  "name": "dialect-compatibility",
+                  "status": "passed",
+                  "message": "The candidate's SQL is compatible with PostgreSQL."
+                },
+                {
+                  "name": "typed-parameter-binding",
+                  "status": "passed",
+                  "message": "The candidate does not use any parameters."
+                },
+                {
+                  "name": "output-column-agreement",
+                  "status": "passed",
+                  "message": "The candidate's output columns match the expected columns."
+                },
+                {
+                  "name": "row-limit-policy",
+                  "status": "passed",
+                  "message": "The candidate does not exceed the row limit policy."
+                },
+                {
+                  "name": "absence-of-invented-identifiers",
+                  "status": "passed",
+                  "message": "The candidate does not use any invented identifiers."
+                }
+              ]
+            },
+            "finalLintFindings": []
+          }
+        }
+      },
+      "status": "active",
+      "createdAt": "2026-08-25T00:56:05.705676Z",
+      "updatedAt": "2026-08-25T00:59:33.026795Z",
+      "versions": [
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "1c624b17-699c-4f6a-82b1-a314bd83f263",
+          "sessionId": "bb7b83ed-722e-49e7-a2d6-9743c66eda90",
+          "parentVersionId": null,
+          "ordinal": 1,
+          "authorType": "model",
+          "sql": "SELECT medication_name, COUNT(*) AS request_count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform IS FALSE GROUP BY medication_name",
+          "parameters": [],
+          "expectedColumns": [
+            {
+              "name": "medication_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "request_count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "queryDigest": "d74057396bcb2e44ee6ba34350c5908d5c07c31d1574e4b903405d57e6aeef38",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "traceId": "4c15ca40-0356-4875-819f-d84fd50bb686",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "ready",
+            "hubTraceId": "4c15ca40-0356-4875-819f-d84fd50bb686",
+            "generationValidation": {
+              "status": "passed",
+              "checks": [
+                {
+                  "name": "query_lint_attempt_1",
+                  "status": "passed",
+                  "message": "Candidate passed deterministic SQL lint."
+                },
+                {
+                  "name": "status",
+                  "status": "passed",
+                  "message": "The candidate's status is 'ready', which is correct."
+                },
+                {
+                  "name": "approved-view",
+                  "status": "passed",
+                  "message": "The candidate uses the approved view 'analytics.hiv_medication_request_fact_v1'."
+                },
+                {
+                  "name": "field-grounding",
+                  "status": "passed",
+                  "message": "The candidate correctly references the fields 'medication_name' and 'do_not_perform' from the approved view."
+                },
+                {
+                  "name": "one-statement-read-only",
+                  "status": "passed",
+                  "message": "The candidate uses a single SELECT statement without any destructive operations."
+                },
+                {
+                  "name": "dialect-compatibility",
+                  "status": "passed",
+                  "message": "The candidate's SQL is compatible with PostgreSQL."
+                },
+                {
+                  "name": "typed-parameter-binding",
+                  "status": "passed",
+                  "message": "The candidate does not use any parameters."
+                },
+                {
+                  "name": "output-column-agreement",
+                  "status": "passed",
+                  "message": "The candidate's output columns match the expected columns."
+                },
+                {
+                  "name": "row-limit-policy",
+                  "status": "passed",
+                  "message": "The candidate does not exceed the row limit policy."
+                },
+                {
+                  "name": "absence-of-invented-identifiers",
+                  "status": "passed",
+                  "message": "The candidate does not use any invented identifiers."
+                }
+              ]
+            },
+            "modelCollaboration": {
+              "writer": {
+                "model": "gemma-4-12b",
+                "candidate": {
+                  "status": "ready",
+                  "target": {
+                    "dataSource": "openmrs-hiv-fhir-postgresql",
+                    "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+                    "dialect": "postgresql",
+                    "approvedViews": [
+                      "analytics.hiv_concept_mapping_v1",
+                      "analytics.hiv_medication_request_fact_v1",
+                      "analytics.hiv_observation_fact_v1",
+                      "analytics.hiv_patient_dim_v1",
+                      "analytics.hiv_visit_fact_v1",
+                      "analytics.pipeline_freshness_v1",
+                      "analytics.pipeline_run_v1",
+                      "public.condition_flat",
+                      "public.encounter_flat",
+                      "public.medication_flat",
+                      "public.medication_request_flat",
+                      "public.observation_flat",
+                      "public.patient_flat"
+                    ]
+                  },
+                  "sql": "SELECT medication_name, COUNT(*) AS request_count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform IS FALSE GROUP BY medication_name",
+                  "parameters": [],
+                  "expectedColumns": [
+                    {
+                      "name": "medication_name",
+                      "logicalType": "string",
+                      "nullable": true
+                    },
+                    {
+                      "name": "request_count",
+                      "logicalType": "integer",
+                      "nullable": false
+                    }
+                  ]
+                },
+                "lintFindings": []
+              },
+              "reviewer": {
+                "model": "qwen2.5-14b",
+                "decision": "approve",
+                "checks": [
+                  {
+                    "name": "status",
+                    "status": "passed",
+                    "message": "The candidate's status is 'ready', which is correct."
+                  },
+                  {
+                    "name": "approved-view",
+                    "status": "passed",
+                    "message": "The candidate uses the approved view 'analytics.hiv_medication_request_fact_v1'."
+                  },
+                  {
+                    "name": "field-grounding",
+                    "status": "passed",
+                    "message": "The candidate correctly references the fields 'medication_name' and 'do_not_perform' from the approved view."
+                  },
+                  {
+                    "name": "one-statement-read-only",
+                    "status": "passed",
+                    "message": "The candidate uses a single SELECT statement without any destructive operations."
+                  },
+                  {
+                    "name": "dialect-compatibility",
+                    "status": "passed",
+                    "message": "The candidate's SQL is compatible with PostgreSQL."
+                  },
+                  {
+                    "name": "typed-parameter-binding",
+                    "status": "passed",
+                    "message": "The candidate does not use any parameters."
+                  },
+                  {
+                    "name": "output-column-agreement",
+                    "status": "passed",
+                    "message": "The candidate's output columns match the expected columns."
+                  },
+                  {
+                    "name": "row-limit-policy",
+                    "status": "passed",
+                    "message": "The candidate does not exceed the row limit policy."
+                  },
+                  {
+                    "name": "absence-of-invented-identifiers",
+                    "status": "passed",
+                    "message": "The candidate does not use any invented identifiers."
+                  }
+                ]
+              },
+              "finalLintFindings": []
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b",
+              "qwen2.5-14b"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b",
+              "query_review": "qwen2.5-14b"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "query_review": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_review",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "catalystTraceId": "4c15ca40-0356-4875-819f-d84fd50bb686",
+            "turnId": "2fa9d523-8cfc-4232-8a9e-ca112ba5012d",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": null,
+            "effectiveBaseVersion": null,
+            "manualVersion": null,
+            "editorSnapshotDigest": null,
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "22e64d31-41da-43fb-b96d-0dc50f908b62",
+              "evidenceDigest": "b3b34781a2f63f0de8f2c0ab2da16b281a68f51d81806eee22a710af48b236a7",
+              "detailPath": "/v1/catalyst/workbench/sessions/bb7b83ed-722e-49e7-a2d6-9743c66eda90/turns/2fa9d523-8cfc-4232-8a9e-ca112ba5012d/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+              "profileName": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+              "profileDigest": "ed71b2719f421b3edb7ad17a47ae1aea290f8b1d079a633ce23e4dea369565ab",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4",
+                "modelId": "gemma-4-12b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": [],
+              "reviewer": {
+                "role": "reviewer",
+                "providerId": "med-agent-hub",
+                "modelClass": "qwen2.5",
+                "modelId": "qwen2.5-14b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-review",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                  "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+                }
+              }
+            },
+            "hubRequestDigest": "ea5d62b53b6e10b8128b46e245043da18b7cb22edf09723064eb6d8f81feafde"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T00:57:06.101035Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "79fb851e-38eb-48c5-9df6-e259f68389b8",
+          "sessionId": "bb7b83ed-722e-49e7-a2d6-9743c66eda90",
+          "parentVersionId": "1c624b17-699c-4f6a-82b1-a314bd83f263",
+          "ordinal": 2,
+          "authorType": "model",
+          "sql": "SELECT patient_gender, medication_name, COUNT(*) AS request_count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform IS FALSE GROUP BY patient_gender, medication_name",
+          "parameters": [],
+          "expectedColumns": [
+            {
+              "name": "patient_gender",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "medication_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "request_count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "queryDigest": "ef1a7266e68311a74c21cc5611cc6b8fb716843177bbbcafa21ebfe20ebc9ddf",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "traceId": "b3ff767b-8829-4913-a524-5c7e6ed436ac",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "ready",
+            "hubTraceId": "b3ff767b-8829-4913-a524-5c7e6ed436ac",
+            "generationValidation": {
+              "status": "passed",
+              "checks": [
+                {
+                  "name": "query_lint_attempt_1",
+                  "status": "passed",
+                  "message": "Candidate passed deterministic SQL lint."
+                },
+                {
+                  "name": "status",
+                  "status": "passed",
+                  "message": "The candidate's status is 'ready', which is correct."
+                },
+                {
+                  "name": "approved-view",
+                  "status": "passed",
+                  "message": "The candidate uses the approved view 'analytics.hiv_medication_request_fact_v1'."
+                },
+                {
+                  "name": "field-grounding",
+                  "status": "passed",
+                  "message": "The fields 'patient_gender', 'medication_name', and 'request_count' are correctly grounded in the catalog."
+                },
+                {
+                  "name": "one-statement-read-only",
+                  "status": "passed",
+                  "message": "The candidate is a single SELECT statement without any destructive operations."
+                },
+                {
+                  "name": "dialect-compatibility",
+                  "status": "passed",
+                  "message": "The SQL is compatible with PostgreSQL."
+                },
+                {
+                  "name": "typed-parameter-binding",
+                  "status": "passed",
+                  "message": "There are no parameters in the candidate SQL."
+                },
+                {
+                  "name": "output-column-agreement",
+                  "status": "passed",
+                  "message": "The output columns match the expected columns in the candidate."
+                },
+                {
+                  "name": "row-limit-policy",
+                  "status": "passed",
+                  "message": "The candidate does not exceed the row limit policy."
+                },
+                {
+                  "name": "absence-of-invented-identifiers",
+                  "status": "passed",
+                  "message": "The candidate does not use any invented identifiers."
+                }
+              ]
+            },
+            "modelCollaboration": {
+              "writer": {
+                "model": "gemma-4-12b",
+                "candidate": {
+                  "status": "ready",
+                  "target": {
+                    "dataSource": "openmrs-hiv-fhir-postgresql",
+                    "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+                    "dialect": "postgresql",
+                    "approvedViews": [
+                      "analytics.hiv_concept_mapping_v1",
+                      "analytics.hiv_medication_request_fact_v1",
+                      "analytics.hiv_observation_fact_v1",
+                      "analytics.hiv_patient_dim_v1",
+                      "analytics.hiv_visit_fact_v1",
+                      "analytics.pipeline_freshness_v1",
+                      "analytics.pipeline_run_v1",
+                      "public.condition_flat",
+                      "public.encounter_flat",
+                      "public.medication_flat",
+                      "public.medication_request_flat",
+                      "public.observation_flat",
+                      "public.patient_flat"
+                    ]
+                  },
+                  "sql": "SELECT patient_gender, medication_name, COUNT(*) AS request_count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform IS FALSE GROUP BY patient_gender, medication_name",
+                  "parameters": [],
+                  "expectedColumns": [
+                    {
+                      "name": "patient_gender",
+                      "logicalType": "string",
+                      "nullable": true
+                    },
+                    {
+                      "name": "medication_name",
+                      "logicalType": "string",
+                      "nullable": true
+                    },
+                    {
+                      "name": "request_count",
+                      "logicalType": "integer",
+                      "nullable": false
+                    }
+                  ]
+                },
+                "lintFindings": [],
+                "disposition": "selected"
+              },
+              "reviewer": {
+                "model": "qwen2.5-14b",
+                "decision": "approve",
+                "checks": [
+                  {
+                    "name": "status",
+                    "status": "passed",
+                    "message": "The candidate's status is 'ready', which is correct."
+                  },
+                  {
+                    "name": "approved-view",
+                    "status": "passed",
+                    "message": "The candidate uses the approved view 'analytics.hiv_medication_request_fact_v1'."
+                  },
+                  {
+                    "name": "field-grounding",
+                    "status": "passed",
+                    "message": "The fields 'patient_gender', 'medication_name', and 'request_count' are correctly grounded in the catalog."
+                  },
+                  {
+                    "name": "one-statement-read-only",
+                    "status": "passed",
+                    "message": "The candidate is a single SELECT statement without any destructive operations."
+                  },
+                  {
+                    "name": "dialect-compatibility",
+                    "status": "passed",
+                    "message": "The SQL is compatible with PostgreSQL."
+                  },
+                  {
+                    "name": "typed-parameter-binding",
+                    "status": "passed",
+                    "message": "There are no parameters in the candidate SQL."
+                  },
+                  {
+                    "name": "output-column-agreement",
+                    "status": "passed",
+                    "message": "The output columns match the expected columns in the candidate."
+                  },
+                  {
+                    "name": "row-limit-policy",
+                    "status": "passed",
+                    "message": "The candidate does not exceed the row limit policy."
+                  },
+                  {
+                    "name": "absence-of-invented-identifiers",
+                    "status": "passed",
+                    "message": "The candidate does not use any invented identifiers."
+                  }
+                ],
+                "disposition": "selected"
+              },
+              "finalLintFindings": [],
+              "base": {
+                "baseClassification": "reused",
+                "observedBase": {
+                  "versionId": "1c624b17-699c-4f6a-82b1-a314bd83f263",
+                  "queryDigest": "d74057396bcb2e44ee6ba34350c5908d5c07c31d1574e4b903405d57e6aeef38"
+                },
+                "effectiveBaseVersion": {
+                  "versionId": "1c624b17-699c-4f6a-82b1-a314bd83f263",
+                  "queryDigest": "d74057396bcb2e44ee6ba34350c5908d5c07c31d1574e4b903405d57e6aeef38"
+                },
+                "editorDigest": "d74057396bcb2e44ee6ba34350c5908d5c07c31d1574e4b903405d57e6aeef38"
+              }
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b",
+              "qwen2.5-14b"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b",
+              "query_review": "qwen2.5-14b"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "query_review": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_review",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "turnId": "4feefb22-0e84-42cb-bf23-37bedc094d82",
+            "catalystTraceId": "b3ff767b-8829-4913-a524-5c7e6ed436ac",
+            "revisionContextDigest": "2f259b9aa487670953e7676626dc22c80b2a15b012f58d2105fe7ad607ac02ff",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": {
+              "versionId": "1c624b17-699c-4f6a-82b1-a314bd83f263",
+              "queryDigest": "d74057396bcb2e44ee6ba34350c5908d5c07c31d1574e4b903405d57e6aeef38"
+            },
+            "effectiveBaseVersion": {
+              "versionId": "1c624b17-699c-4f6a-82b1-a314bd83f263",
+              "queryDigest": "d74057396bcb2e44ee6ba34350c5908d5c07c31d1574e4b903405d57e6aeef38"
+            },
+            "manualVersion": null,
+            "editorSnapshotDigest": "d74057396bcb2e44ee6ba34350c5908d5c07c31d1574e4b903405d57e6aeef38",
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "8b953bc9-fa4f-4f0b-a8c3-198915f7ff36",
+              "evidenceDigest": "bf23861ab702b9ff1d2f6b407660128862db10d84dcff9cfc938b7804f40e617",
+              "detailPath": "/v1/catalyst/workbench/sessions/bb7b83ed-722e-49e7-a2d6-9743c66eda90/turns/4feefb22-0e84-42cb-bf23-37bedc094d82/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+              "profileName": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+              "profileDigest": "ed71b2719f421b3edb7ad17a47ae1aea290f8b1d079a633ce23e4dea369565ab",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4",
+                "modelId": "gemma-4-12b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": [],
+              "reviewer": {
+                "role": "reviewer",
+                "providerId": "med-agent-hub",
+                "modelClass": "qwen2.5",
+                "modelId": "qwen2.5-14b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-review",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                  "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+                }
+              }
+            },
+            "hubRequestDigest": "25bcdd82c1dcb321c43c73bf92ff38ed581520f0b350d5a109a20eb8cc516ccd"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T00:58:18.246413Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "4c0e9662-bd76-4c28-af52-1b482dc72a09",
+          "sessionId": "bb7b83ed-722e-49e7-a2d6-9743c66eda90",
+          "parentVersionId": "79fb851e-38eb-48c5-9df6-e259f68389b8",
+          "ordinal": 3,
+          "authorType": "model",
+          "sql": "SELECT patient_gender, medication_name, COUNT(*) AS request_count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform IS FALSE GROUP BY patient_gender, medication_name ORDER BY request_count DESC LIMIT 10",
+          "parameters": [],
+          "expectedColumns": [
+            {
+              "name": "patient_gender",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "medication_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "request_count",
+              "logicalType": "integer",
+              "nullable": false
+            }
+          ],
+          "queryDigest": "c434f469345032d04e6b93a39e2d5f7d4e11e5afc637022969ca3c4df2aa688b",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "traceId": "962c68a8-bd28-4ab2-b078-867cfd41f7d0",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "ready",
+            "hubTraceId": "962c68a8-bd28-4ab2-b078-867cfd41f7d0",
+            "generationValidation": {
+              "status": "passed",
+              "checks": [
+                {
+                  "name": "query_lint_attempt_1",
+                  "status": "passed",
+                  "message": "Candidate passed deterministic SQL lint."
+                },
+                {
+                  "name": "status",
+                  "status": "passed",
+                  "message": "The candidate's status is 'ready', indicating it is prepared for execution."
+                },
+                {
+                  "name": "approved-view",
+                  "status": "passed",
+                  "message": "The candidate uses the approved view 'analytics.hiv_medication_request_fact_v1'."
+                },
+                {
+                  "name": "field-grounding",
+                  "status": "passed",
+                  "message": "The fields 'patient_gender', 'medication_name', and 'request_count' are correctly grounded in the catalog."
+                },
+                {
+                  "name": "one-statement-read-only",
+                  "status": "passed",
+                  "message": "The candidate is a single SELECT statement with no write operations."
+                },
+                {
+                  "name": "dialect-compatibility",
+                  "status": "passed",
+                  "message": "The SQL is compatible with PostgreSQL, the specified dialect."
+                },
+                {
+                  "name": "typed-parameter-binding",
+                  "status": "passed",
+                  "message": "There are no parameters used in the candidate SQL."
+                },
+                {
+                  "name": "output-column-agreement",
+                  "status": "passed",
+                  "message": "The output columns match the expected columns: patient_gender, medication_name, and request_count."
+                },
+                {
+                  "name": "row-limit-policy",
+                  "status": "passed",
+                  "message": "The candidate limits the output to 10 rows, adhering to the policy."
+                },
+                {
+                  "name": "absence-of-invented-identifiers",
+                  "status": "passed",
+                  "message": "The candidate does not introduce any identifiers not present in the catalog."
+                }
+              ]
+            },
+            "modelCollaboration": {
+              "writer": {
+                "model": "gemma-4-12b",
+                "candidate": {
+                  "status": "ready",
+                  "target": {
+                    "dataSource": "openmrs-hiv-fhir-postgresql",
+                    "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+                    "dialect": "postgresql",
+                    "approvedViews": [
+                      "analytics.hiv_concept_mapping_v1",
+                      "analytics.hiv_medication_request_fact_v1",
+                      "analytics.hiv_observation_fact_v1",
+                      "analytics.hiv_patient_dim_v1",
+                      "analytics.hiv_visit_fact_v1",
+                      "analytics.pipeline_freshness_v1",
+                      "analytics.pipeline_run_v1",
+                      "public.condition_flat",
+                      "public.encounter_flat",
+                      "public.medication_flat",
+                      "public.medication_request_flat",
+                      "public.observation_flat",
+                      "public.patient_flat"
+                    ]
+                  },
+                  "sql": "SELECT patient_gender, medication_name, COUNT(*) AS request_count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform IS FALSE GROUP BY patient_gender, medication_name ORDER BY request_count DESC LIMIT 10",
+                  "parameters": [],
+                  "expectedColumns": [
+                    {
+                      "name": "patient_gender",
+                      "logicalType": "string",
+                      "nullable": true
+                    },
+                    {
+                      "name": "medication_name",
+                      "logicalType": "string",
+                      "nullable": true
+                    },
+                    {
+                      "name": "request_count",
+                      "logicalType": "integer",
+                      "nullable": false
+                    }
+                  ]
+                },
+                "lintFindings": [],
+                "disposition": "selected"
+              },
+              "reviewer": {
+                "model": "qwen2.5-14b",
+                "decision": "approve",
+                "checks": [
+                  {
+                    "name": "status",
+                    "status": "passed",
+                    "message": "The candidate's status is 'ready', indicating it is prepared for execution."
+                  },
+                  {
+                    "name": "approved-view",
+                    "status": "passed",
+                    "message": "The candidate uses the approved view 'analytics.hiv_medication_request_fact_v1'."
+                  },
+                  {
+                    "name": "field-grounding",
+                    "status": "passed",
+                    "message": "The fields 'patient_gender', 'medication_name', and 'request_count' are correctly grounded in the catalog."
+                  },
+                  {
+                    "name": "one-statement-read-only",
+                    "status": "passed",
+                    "message": "The candidate is a single SELECT statement with no write operations."
+                  },
+                  {
+                    "name": "dialect-compatibility",
+                    "status": "passed",
+                    "message": "The SQL is compatible with PostgreSQL, the specified dialect."
+                  },
+                  {
+                    "name": "typed-parameter-binding",
+                    "status": "passed",
+                    "message": "There are no parameters used in the candidate SQL."
+                  },
+                  {
+                    "name": "output-column-agreement",
+                    "status": "passed",
+                    "message": "The output columns match the expected columns: patient_gender, medication_name, and request_count."
+                  },
+                  {
+                    "name": "row-limit-policy",
+                    "status": "passed",
+                    "message": "The candidate limits the output to 10 rows, adhering to the policy."
+                  },
+                  {
+                    "name": "absence-of-invented-identifiers",
+                    "status": "passed",
+                    "message": "The candidate does not introduce any identifiers not present in the catalog."
+                  }
+                ],
+                "disposition": "selected"
+              },
+              "finalLintFindings": [],
+              "base": {
+                "baseClassification": "reused",
+                "observedBase": {
+                  "versionId": "79fb851e-38eb-48c5-9df6-e259f68389b8",
+                  "queryDigest": "ef1a7266e68311a74c21cc5611cc6b8fb716843177bbbcafa21ebfe20ebc9ddf"
+                },
+                "effectiveBaseVersion": {
+                  "versionId": "79fb851e-38eb-48c5-9df6-e259f68389b8",
+                  "queryDigest": "ef1a7266e68311a74c21cc5611cc6b8fb716843177bbbcafa21ebfe20ebc9ddf"
+                },
+                "editorDigest": "ef1a7266e68311a74c21cc5611cc6b8fb716843177bbbcafa21ebfe20ebc9ddf"
+              }
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b",
+              "qwen2.5-14b"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b",
+              "query_review": "qwen2.5-14b"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "query_review": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_review",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "turnId": "26d2b0b0-c987-4d60-bac5-7c7be34de0d7",
+            "catalystTraceId": "962c68a8-bd28-4ab2-b078-867cfd41f7d0",
+            "revisionContextDigest": "dae7fe2b0a442a40f1623644f8c0dcf8c9d76712fc4fb2b8b22ee862a21d75bc",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": {
+              "versionId": "79fb851e-38eb-48c5-9df6-e259f68389b8",
+              "queryDigest": "ef1a7266e68311a74c21cc5611cc6b8fb716843177bbbcafa21ebfe20ebc9ddf"
+            },
+            "effectiveBaseVersion": {
+              "versionId": "79fb851e-38eb-48c5-9df6-e259f68389b8",
+              "queryDigest": "ef1a7266e68311a74c21cc5611cc6b8fb716843177bbbcafa21ebfe20ebc9ddf"
+            },
+            "manualVersion": null,
+            "editorSnapshotDigest": "ef1a7266e68311a74c21cc5611cc6b8fb716843177bbbcafa21ebfe20ebc9ddf",
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "25c74350-a720-4c30-9651-2e9ae861ee68",
+              "evidenceDigest": "7a34bc6f1659c826f4a60c0c2bf4da1d756bcf362f695b39d366a358b7307f74",
+              "detailPath": "/v1/catalyst/workbench/sessions/bb7b83ed-722e-49e7-a2d6-9743c66eda90/turns/26d2b0b0-c987-4d60-bac5-7c7be34de0d7/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+              "profileName": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+              "profileDigest": "ed71b2719f421b3edb7ad17a47ae1aea290f8b1d079a633ce23e4dea369565ab",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4",
+                "modelId": "gemma-4-12b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": [],
+              "reviewer": {
+                "role": "reviewer",
+                "providerId": "med-agent-hub",
+                "modelClass": "qwen2.5",
+                "modelId": "qwen2.5-14b",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-review",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                  "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+                }
+              }
+            },
+            "hubRequestDigest": "0a06a8b9dd750bb7fc75e5d93d659dabd9c7be29cf38d3f06a756a7eb743913f"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T00:59:33.026795Z"
+        }
+      ],
+      "currentVersion": {
+        "contractVersion": "catalyst.workbench.query-version.v1",
+        "versionId": "4c0e9662-bd76-4c28-af52-1b482dc72a09",
+        "sessionId": "bb7b83ed-722e-49e7-a2d6-9743c66eda90",
+        "parentVersionId": "79fb851e-38eb-48c5-9df6-e259f68389b8",
+        "ordinal": 3,
+        "authorType": "model",
+        "sql": "SELECT patient_gender, medication_name, COUNT(*) AS request_count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform IS FALSE GROUP BY patient_gender, medication_name ORDER BY request_count DESC LIMIT 10",
+        "parameters": [],
+        "expectedColumns": [
+          {
+            "name": "patient_gender",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "medication_name",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "request_count",
+            "logicalType": "integer",
+            "nullable": false
+          }
+        ],
+        "queryDigest": "c434f469345032d04e6b93a39e2d5f7d4e11e5afc637022969ca3c4df2aa688b",
+        "provenance": {
+          "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+          "traceId": "962c68a8-bd28-4ab2-b078-867cfd41f7d0",
+          "contextSourceIds": [
+            "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+          ],
+          "sourceContract": "catalyst.query.v1",
+          "sourceStatus": "ready",
+          "hubTraceId": "962c68a8-bd28-4ab2-b078-867cfd41f7d0",
+          "generationValidation": {
+            "status": "passed",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              },
+              {
+                "name": "status",
+                "status": "passed",
+                "message": "The candidate's status is 'ready', indicating it is prepared for execution."
+              },
+              {
+                "name": "approved-view",
+                "status": "passed",
+                "message": "The candidate uses the approved view 'analytics.hiv_medication_request_fact_v1'."
+              },
+              {
+                "name": "field-grounding",
+                "status": "passed",
+                "message": "The fields 'patient_gender', 'medication_name', and 'request_count' are correctly grounded in the catalog."
+              },
+              {
+                "name": "one-statement-read-only",
+                "status": "passed",
+                "message": "The candidate is a single SELECT statement with no write operations."
+              },
+              {
+                "name": "dialect-compatibility",
+                "status": "passed",
+                "message": "The SQL is compatible with PostgreSQL, the specified dialect."
+              },
+              {
+                "name": "typed-parameter-binding",
+                "status": "passed",
+                "message": "There are no parameters used in the candidate SQL."
+              },
+              {
+                "name": "output-column-agreement",
+                "status": "passed",
+                "message": "The output columns match the expected columns: patient_gender, medication_name, and request_count."
+              },
+              {
+                "name": "row-limit-policy",
+                "status": "passed",
+                "message": "The candidate limits the output to 10 rows, adhering to the policy."
+              },
+              {
+                "name": "absence-of-invented-identifiers",
+                "status": "passed",
+                "message": "The candidate does not introduce any identifiers not present in the catalog."
+              }
+            ]
+          },
+          "modelCollaboration": {
+            "writer": {
+              "model": "gemma-4-12b",
+              "candidate": {
+                "status": "ready",
+                "target": {
+                  "dataSource": "openmrs-hiv-fhir-postgresql",
+                  "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+                  "dialect": "postgresql",
+                  "approvedViews": [
+                    "analytics.hiv_concept_mapping_v1",
+                    "analytics.hiv_medication_request_fact_v1",
+                    "analytics.hiv_observation_fact_v1",
+                    "analytics.hiv_patient_dim_v1",
+                    "analytics.hiv_visit_fact_v1",
+                    "analytics.pipeline_freshness_v1",
+                    "analytics.pipeline_run_v1",
+                    "public.condition_flat",
+                    "public.encounter_flat",
+                    "public.medication_flat",
+                    "public.medication_request_flat",
+                    "public.observation_flat",
+                    "public.patient_flat"
+                  ]
+                },
+                "sql": "SELECT patient_gender, medication_name, COUNT(*) AS request_count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform IS FALSE GROUP BY patient_gender, medication_name ORDER BY request_count DESC LIMIT 10",
+                "parameters": [],
+                "expectedColumns": [
+                  {
+                    "name": "patient_gender",
+                    "logicalType": "string",
+                    "nullable": true
+                  },
+                  {
+                    "name": "medication_name",
+                    "logicalType": "string",
+                    "nullable": true
+                  },
+                  {
+                    "name": "request_count",
+                    "logicalType": "integer",
+                    "nullable": false
+                  }
+                ]
+              },
+              "lintFindings": [],
+              "disposition": "selected"
+            },
+            "reviewer": {
+              "model": "qwen2.5-14b",
+              "decision": "approve",
+              "checks": [
+                {
+                  "name": "status",
+                  "status": "passed",
+                  "message": "The candidate's status is 'ready', indicating it is prepared for execution."
+                },
+                {
+                  "name": "approved-view",
+                  "status": "passed",
+                  "message": "The candidate uses the approved view 'analytics.hiv_medication_request_fact_v1'."
+                },
+                {
+                  "name": "field-grounding",
+                  "status": "passed",
+                  "message": "The fields 'patient_gender', 'medication_name', and 'request_count' are correctly grounded in the catalog."
+                },
+                {
+                  "name": "one-statement-read-only",
+                  "status": "passed",
+                  "message": "The candidate is a single SELECT statement with no write operations."
+                },
+                {
+                  "name": "dialect-compatibility",
+                  "status": "passed",
+                  "message": "The SQL is compatible with PostgreSQL, the specified dialect."
+                },
+                {
+                  "name": "typed-parameter-binding",
+                  "status": "passed",
+                  "message": "There are no parameters used in the candidate SQL."
+                },
+                {
+                  "name": "output-column-agreement",
+                  "status": "passed",
+                  "message": "The output columns match the expected columns: patient_gender, medication_name, and request_count."
+                },
+                {
+                  "name": "row-limit-policy",
+                  "status": "passed",
+                  "message": "The candidate limits the output to 10 rows, adhering to the policy."
+                },
+                {
+                  "name": "absence-of-invented-identifiers",
+                  "status": "passed",
+                  "message": "The candidate does not introduce any identifiers not present in the catalog."
+                }
+              ],
+              "disposition": "selected"
+            },
+            "finalLintFindings": [],
+            "base": {
+              "baseClassification": "reused",
+              "observedBase": {
+                "versionId": "79fb851e-38eb-48c5-9df6-e259f68389b8",
+                "queryDigest": "ef1a7266e68311a74c21cc5611cc6b8fb716843177bbbcafa21ebfe20ebc9ddf"
+              },
+              "effectiveBaseVersion": {
+                "versionId": "79fb851e-38eb-48c5-9df6-e259f68389b8",
+                "queryDigest": "ef1a7266e68311a74c21cc5611cc6b8fb716843177bbbcafa21ebfe20ebc9ddf"
+              },
+              "editorDigest": "ef1a7266e68311a74c21cc5611cc6b8fb716843177bbbcafa21ebfe20ebc9ddf"
+            }
+          },
+          "profileLabel": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b",
+            "qwen2.5-14b"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b",
+            "query_review": "qwen2.5-14b"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            },
+            "query_review": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "15595cf4e548c98075b154c0dadd8fe56921196c118ca36895882645a6daac49",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_review",
+            "query_finalize"
+          ],
+          "unavailableReasons": [],
+          "turnId": "26d2b0b0-c987-4d60-bac5-7c7be34de0d7",
+          "catalystTraceId": "962c68a8-bd28-4ab2-b078-867cfd41f7d0",
+          "revisionContextDigest": "dae7fe2b0a442a40f1623644f8c0dcf8c9d76712fc4fb2b8b22ee862a21d75bc",
+          "dataSourceId": "openmrs-hiv",
+          "observedBase": {
+            "versionId": "79fb851e-38eb-48c5-9df6-e259f68389b8",
+            "queryDigest": "ef1a7266e68311a74c21cc5611cc6b8fb716843177bbbcafa21ebfe20ebc9ddf"
+          },
+          "effectiveBaseVersion": {
+            "versionId": "79fb851e-38eb-48c5-9df6-e259f68389b8",
+            "queryDigest": "ef1a7266e68311a74c21cc5611cc6b8fb716843177bbbcafa21ebfe20ebc9ddf"
+          },
+          "manualVersion": null,
+          "editorSnapshotDigest": "ef1a7266e68311a74c21cc5611cc6b8fb716843177bbbcafa21ebfe20ebc9ddf",
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "25c74350-a720-4c30-9651-2e9ae861ee68",
+            "evidenceDigest": "7a34bc6f1659c826f4a60c0c2bf4da1d756bcf362f695b39d366a358b7307f74",
+            "detailPath": "/v1/catalyst/workbench/sessions/bb7b83ed-722e-49e7-a2d6-9743c66eda90/turns/26d2b0b0-c987-4d60-bac5-7c7be34de0d7/generation-evidence"
+          },
+          "profileSnapshot": {
+            "profileId": "catalyst-query-gemma-4-12b-qwen2.5-14b-checked",
+            "profileName": "Catalyst query — Gemma 4 12B writer, Qwen 2.5 14B reviewer",
+            "profileDigest": "ed71b2719f421b3edb7ad17a47ae1aea290f8b1d079a633ce23e4dea369565ab",
+            "writer": {
+              "role": "writer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4",
+              "modelId": "gemma-4-12b",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-generate",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+              }
+            },
+            "omissions": [],
+            "reviewer": {
+              "role": "reviewer",
+              "providerId": "med-agent-hub",
+              "modelClass": "qwen2.5",
+              "modelId": "qwen2.5-14b",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-review",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+              }
+            }
+          },
+          "hubRequestDigest": "0a06a8b9dd750bb7fc75e5d93d659dabd9c7be29cf38d3f06a756a7eb743913f"
+        },
+        "sourceFindingIds": [],
+        "repairProposalId": null,
+        "createdAt": "2026-08-25T00:59:33.026795Z"
+      },
+      "validations": [
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "d74057396bcb2e44ee6ba34350c5908d5c07c31d1574e4b903405d57e6aeef38",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 3,
+          "validationId": "912a20c8-9891-4b34-b637-16c0c5373b8a",
+          "sessionId": "bb7b83ed-722e-49e7-a2d6-9743c66eda90",
+          "versionId": "1c624b17-699c-4f6a-82b1-a314bd83f263",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T00:57:06.101035Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "d74057396bcb2e44ee6ba34350c5908d5c07c31d1574e4b903405d57e6aeef38",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 0,
+          "validationId": "9240dd85-e865-4ef6-b85b-2f2526ff3590",
+          "sessionId": "bb7b83ed-722e-49e7-a2d6-9743c66eda90",
+          "versionId": "1c624b17-699c-4f6a-82b1-a314bd83f263",
+          "ordinal": 2,
+          "createdAt": "2026-08-25T00:57:06.175649Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "ef1a7266e68311a74c21cc5611cc6b8fb716843177bbbcafa21ebfe20ebc9ddf",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 1,
+          "validationId": "c4c17a66-c785-455a-8170-9f688affe327",
+          "sessionId": "bb7b83ed-722e-49e7-a2d6-9743c66eda90",
+          "versionId": "79fb851e-38eb-48c5-9df6-e259f68389b8",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T00:58:18.246413Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "ef1a7266e68311a74c21cc5611cc6b8fb716843177bbbcafa21ebfe20ebc9ddf",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 0,
+          "validationId": "4fe270fe-4073-48fb-9ba1-8bcf060658df",
+          "sessionId": "bb7b83ed-722e-49e7-a2d6-9743c66eda90",
+          "versionId": "79fb851e-38eb-48c5-9df6-e259f68389b8",
+          "ordinal": 2,
+          "createdAt": "2026-08-25T00:58:18.334205Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "c434f469345032d04e6b93a39e2d5f7d4e11e5afc637022969ca3c4df2aa688b",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 1,
+          "validationId": "9af8aeed-e62a-4fa8-861d-9510ae68caa5",
+          "sessionId": "bb7b83ed-722e-49e7-a2d6-9743c66eda90",
+          "versionId": "4c0e9662-bd76-4c28-af52-1b482dc72a09",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T00:59:33.026795Z"
+        }
+      ],
+      "latestValidation": {
+        "contractVersion": "catalyst.workbench.validation.v1",
+        "queryDigest": "c434f469345032d04e6b93a39e2d5f7d4e11e5afc637022969ca3c4df2aa688b",
+        "validatorRevision": "catalyst.workbench.validator.v1",
+        "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+        "status": "valid",
+        "advisory": true,
+        "checks": [],
+        "findings": [],
+        "durationMs": 1,
+        "validationId": "9af8aeed-e62a-4fa8-861d-9510ae68caa5",
+        "sessionId": "bb7b83ed-722e-49e7-a2d6-9743c66eda90",
+        "versionId": "4c0e9662-bd76-4c28-af52-1b482dc72a09",
+        "ordinal": 1,
+        "createdAt": "2026-08-25T00:59:33.026795Z"
+      },
+      "executions": [
+        {
+          "contractVersion": "catalyst.workbench.execution.v1",
+          "queryDigest": "d74057396bcb2e44ee6ba34350c5908d5c07c31d1574e4b903405d57e6aeef38",
+          "idempotencyKey": "harness-notebook-8b834e62-3ad1-43d6-9ca6-7faeafe8b5b9",
+          "validationStatus": "valid",
+          "query": {
+            "sql": "SELECT medication_name, COUNT(*) AS request_count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform IS FALSE GROUP BY medication_name",
+            "parameters": []
+          },
+          "statementTimeoutMs": 10000,
+          "maxRows": 100,
+          "replayed": false,
+          "status": "succeeded",
+          "result": {
+            "columns": [
+              {
+                "ordinal": 0,
+                "name": "medication_name",
+                "databaseType": "text",
+                "typeOid": 25,
+                "logicalType": "string"
+              },
+              {
+                "ordinal": 1,
+                "name": "request_count",
+                "databaseType": "int8",
+                "typeOid": 20,
+                "logicalType": "integer"
+              }
+            ],
+            "rows": [
+              [
+                {
+                  "type": "string",
+                  "value": "Hepatitis B vaccination"
+                },
+                {
+                  "type": "integer",
+                  "value": 600
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Fluconazole"
+                },
+                {
+                  "type": "integer",
+                  "value": 103
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Lopinavir / ritonavir"
+                },
+                {
+                  "type": "integer",
+                  "value": 474
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Tenofovir"
+                },
+                {
+                  "type": "integer",
+                  "value": 12
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Streptomycin"
+                },
+                {
+                  "type": "integer",
+                  "value": 23
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Infant formula"
+                },
+                {
+                  "type": "integer",
+                  "value": 71
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Ethambutol and isoniazid"
+                },
+                {
+                  "type": "integer",
+                  "value": 425
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Rifampicin and isoniazid"
+                },
+                {
+                  "type": "integer",
+                  "value": 47
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Didanosine"
+                },
+                {
+                  "type": "integer",
+                  "value": 404
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                },
+                {
+                  "type": "integer",
+                  "value": 9913
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                },
+                {
+                  "type": "integer",
+                  "value": 4887
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Polio vaccination, oral"
+                },
+                {
+                  "type": "integer",
+                  "value": 639
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                },
+                {
+                  "type": "integer",
+                  "value": 8810
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Rifadin"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Total maternal to child transmission prophylaxis"
+                },
+                {
+                  "type": "integer",
+                  "value": 40
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Retrovir"
+                },
+                {
+                  "type": "integer",
+                  "value": 403
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                },
+                {
+                  "type": "integer",
+                  "value": 9781
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Efavirenz"
+                },
+                {
+                  "type": "integer",
+                  "value": 1548
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Abacavir"
+                },
+                {
+                  "type": "integer",
+                  "value": 203
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Dapsone"
+                },
+                {
+                  "type": "integer",
+                  "value": 161
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Hemophilus influenza B vaccine"
+                },
+                {
+                  "type": "integer",
+                  "value": 589
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Rifampicin isoniazid pyrazinamide and ethambutol"
+                },
+                {
+                  "type": "integer",
+                  "value": 140
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Lamivudine / nevirapine / stavudine"
+                },
+                {
+                  "type": "integer",
+                  "value": 137
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Ethambutol"
+                },
+                {
+                  "type": "integer",
+                  "value": 82
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Measles vaccination"
+                },
+                {
+                  "type": "integer",
+                  "value": 553
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Isoniazid"
+                },
+                {
+                  "type": "integer",
+                  "value": 1972
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Nelfinavir"
+                },
+                {
+                  "type": "integer",
+                  "value": 72
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Diphtheria tetanus and pertussis vaccination"
+                },
+                {
+                  "type": "integer",
+                  "value": 664
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Lamivudine / zidovudine"
+                },
+                {
+                  "type": "integer",
+                  "value": 569
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "Isoniazid / pyrazinamide / rifampin"
+                },
+                {
+                  "type": "integer",
+                  "value": 89
+                }
+              ]
+            ],
+            "rowCount": {
+              "returned": 30,
+              "truncated": false,
+              "truncationReason": null
+            },
+            "warnings": []
+          },
+          "durationMs": 80,
+          "executionId": "e2ce3e93-3257-40f6-adcf-f7df9207ffd4",
+          "sessionId": "bb7b83ed-722e-49e7-a2d6-9743c66eda90",
+          "versionId": "1c624b17-699c-4f6a-82b1-a314bd83f263",
+          "ordinal": 1,
+          "completedAt": "2026-08-25T00:57:06.278158Z"
+        },
+        {
+          "contractVersion": "catalyst.workbench.execution.v1",
+          "queryDigest": "ef1a7266e68311a74c21cc5611cc6b8fb716843177bbbcafa21ebfe20ebc9ddf",
+          "idempotencyKey": "harness-notebook-942a245a-7d9b-43ec-8749-33663458e9e4",
+          "validationStatus": "valid",
+          "query": {
+            "sql": "SELECT patient_gender, medication_name, COUNT(*) AS request_count FROM analytics.hiv_medication_request_fact_v1 WHERE do_not_perform IS FALSE GROUP BY patient_gender, medication_name",
+            "parameters": []
+          },
+          "statementTimeoutMs": 10000,
+          "maxRows": 100,
+          "replayed": false,
+          "status": "succeeded",
+          "result": {
+            "columns": [
+              {
+                "ordinal": 0,
+                "name": "patient_gender",
+                "databaseType": "text",
+                "typeOid": 25,
+                "logicalType": "string"
+              },
+              {
+                "ordinal": 1,
+                "name": "medication_name",
+                "databaseType": "text",
+                "typeOid": 25,
+                "logicalType": "string"
+              },
+              {
+                "ordinal": 2,
+                "name": "request_count",
+                "databaseType": "int8",
+                "typeOid": 20,
+                "logicalType": "integer"
+              }
+            ],
+            "rows": [
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Retrovir"
+                },
+                {
+                  "type": "integer",
+                  "value": 169
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Efavirenz"
+                },
+                {
+                  "type": "integer",
+                  "value": 948
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                },
+                {
+                  "type": "integer",
+                  "value": 3265
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Isoniazid"
+                },
+                {
+                  "type": "integer",
+                  "value": 1359
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                },
+                {
+                  "type": "integer",
+                  "value": 1582
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Total maternal to child transmission prophylaxis"
+                },
+                {
+                  "type": "integer",
+                  "value": 39
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Fluconazole"
+                },
+                {
+                  "type": "integer",
+                  "value": 27
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Streptomycin"
+                },
+                {
+                  "type": "integer",
+                  "value": 12
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Lopinavir / ritonavir"
+                },
+                {
+                  "type": "integer",
+                  "value": 290
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Stavudine"
+                },
+                {
+                  "type": "integer",
+                  "value": 6516
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Polio vaccination, oral"
+                },
+                {
+                  "type": "integer",
+                  "value": 224
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Ethambutol and isoniazid"
+                },
+                {
+                  "type": "integer",
+                  "value": 283
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Hemophilus influenza B vaccine"
+                },
+                {
+                  "type": "integer",
+                  "value": 209
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Hepatitis B vaccination"
+                },
+                {
+                  "type": "integer",
+                  "value": 388
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Rifampicin isoniazid pyrazinamide and ethambutol"
+                },
+                {
+                  "type": "integer",
+                  "value": 86
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Rifampicin and isoniazid"
+                },
+                {
+                  "type": "integer",
+                  "value": 26
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Measles vaccination"
+                },
+                {
+                  "type": "integer",
+                  "value": 354
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Ethambutol"
+                },
+                {
+                  "type": "integer",
+                  "value": 49
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Abacavir"
+                },
+                {
+                  "type": "integer",
+                  "value": 58
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                },
+                {
+                  "type": "integer",
+                  "value": 5928
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Efavirenz"
+                },
+                {
+                  "type": "integer",
+                  "value": 600
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Abacavir"
+                },
+                {
+                  "type": "integer",
+                  "value": 145
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Infant formula"
+                },
+                {
+                  "type": "integer",
+                  "value": 55
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Isoniazid"
+                },
+                {
+                  "type": "integer",
+                  "value": 613
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Rifadin"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Isoniazid / pyrazinamide / rifampin"
+                },
+                {
+                  "type": "integer",
+                  "value": 61
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Tenofovir"
+                },
+                {
+                  "type": "integer",
+                  "value": 3
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Didanosine"
+                },
+                {
+                  "type": "integer",
+                  "value": 235
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Nevirapine"
+                },
+                {
+                  "type": "integer",
+                  "value": 2882
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Isoniazid / pyrazinamide / rifampin"
+                },
+                {
+                  "type": "integer",
+                  "value": 28
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Nelfinavir"
+                },
+                {
+                  "type": "integer",
+                  "value": 60
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Measles vaccination"
+                },
+                {
+                  "type": "integer",
+                  "value": 199
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine / nevirapine / stavudine"
+                },
+                {
+                  "type": "integer",
+                  "value": 36
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Retrovir"
+                },
+                {
+                  "type": "integer",
+                  "value": 234
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Streptomycin"
+                },
+                {
+                  "type": "integer",
+                  "value": 11
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine / nevirapine / stavudine"
+                },
+                {
+                  "type": "integer",
+                  "value": 101
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Dapsone"
+                },
+                {
+                  "type": "integer",
+                  "value": 51
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Rifampicin isoniazid pyrazinamide and ethambutol"
+                },
+                {
+                  "type": "integer",
+                  "value": 54
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Diphtheria tetanus and pertussis vaccination"
+                },
+                {
+                  "type": "integer",
+                  "value": 230
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Lopinavir / ritonavir"
+                },
+                {
+                  "type": "integer",
+                  "value": 184
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Infant formula"
+                },
+                {
+                  "type": "integer",
+                  "value": 16
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine / zidovudine"
+                },
+                {
+                  "type": "integer",
+                  "value": 367
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                },
+                {
+                  "type": "integer",
+                  "value": 6600
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Tenofovir"
+                },
+                {
+                  "type": "integer",
+                  "value": 9
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Polio vaccination, oral"
+                },
+                {
+                  "type": "integer",
+                  "value": 415
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Diphtheria tetanus and pertussis vaccination"
+                },
+                {
+                  "type": "integer",
+                  "value": 434
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Ethambutol"
+                },
+                {
+                  "type": "integer",
+                  "value": 33
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Rifampicin and isoniazid"
+                },
+                {
+                  "type": "integer",
+                  "value": 21
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Hepatitis B vaccination"
+                },
+                {
+                  "type": "integer",
+                  "value": 212
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Dapsone"
+                },
+                {
+                  "type": "integer",
+                  "value": 110
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Fluconazole"
+                },
+                {
+                  "type": "integer",
+                  "value": 76
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine / zidovudine"
+                },
+                {
+                  "type": "integer",
+                  "value": 202
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Total maternal to child transmission prophylaxis"
+                },
+                {
+                  "type": "integer",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Ethambutol and isoniazid"
+                },
+                {
+                  "type": "integer",
+                  "value": 142
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Lamivudine"
+                },
+                {
+                  "type": "integer",
+                  "value": 3313
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Nelfinavir"
+                },
+                {
+                  "type": "integer",
+                  "value": 12
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Trimethoprim and sulfamethoxazole"
+                },
+                {
+                  "type": "integer",
+                  "value": 3305
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "male"
+                },
+                {
+                  "type": "string",
+                  "value": "Didanosine"
+                },
+                {
+                  "type": "integer",
+                  "value": 169
+                }
+              ],
+              [
+                {
+                  "type": "string",
+                  "value": "female"
+                },
+                {
+                  "type": "string",
+                  "value": "Hemophilus influenza B vaccine"
+                },
+                {
+                  "type": "integer",
+                  "value": 380
+                }
+              ]
+            ],
+            "rowCount": {
+              "returned": 59,
+              "truncated": false,
+              "truncationReason": null
+            },
+            "warnings": []
+          },
+          "durationMs": 49,
+          "executionId": "d93f331d-451e-426b-83e0-78d2a35a9ff9",
+          "sessionId": "bb7b83ed-722e-49e7-a2d6-9743c66eda90",
+          "versionId": "79fb851e-38eb-48c5-9df6-e259f68389b8",
+          "ordinal": 2,
+          "completedAt": "2026-08-25T00:58:18.407110Z"
+        }
+      ],
+      "guidance": [
+        {
+          "contractVersion": "catalyst.workbench.guidance.v1",
+          "entryId": "guidance-fb6ad9b6-d9ac-49e1-aa6a-ec067ad4f9d8",
+          "sessionId": "bb7b83ed-722e-49e7-a2d6-9743c66eda90",
+          "order": 1,
+          "text": "Exclude do_not_perform requests.",
+          "textDigest": "be56d9ddb840bd5691e48e5719f91f3338ea15f4f5b3bca4ddd009014dfb16e3",
+          "source": "human",
+          "originTurnId": null,
+          "acceptedBy": {
+            "type": "human",
+            "actorId": null
+          },
+          "state": "active",
+          "supersededBy": null,
+          "createdAt": "2026-08-25T00:57:06.358355Z",
+          "events": [
+            {
+              "eventId": "fdc8cb8c-4d9b-4af9-a40d-d138f2a4230d",
+              "action": "pinned",
+              "occurredAt": "2026-08-25T00:57:06.358355Z",
+              "actor": {
+                "type": "human",
+                "actorId": null
+              }
+            }
+          ]
+        }
+      ],
+      "dataSourceId": "openmrs-hiv",
+      "draftSeed": null
+    }
+  },
+  "elapsedMs": 4
+}

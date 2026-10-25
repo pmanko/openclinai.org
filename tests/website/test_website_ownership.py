@@ -7,7 +7,7 @@ HARNESS = ROOT / 'targets/validation-harness'
 
 def test_harness_carries_no_website_sources_or_publication_tooling():
     """Invariant: the harness produces artifacts; it never owns website sources or publishers."""
-    for relative in ('landing', 'site', 'reports-index.json', '.github/workflows/pages.yml'):
+    for relative in ('landing', 'site', 'reports/reports-index.json', '.github/workflows/pages.yml'):
         assert not (HARNESS / relative).exists(), relative
     for script in (ROOT / 'scripts').iterdir():
         if script.name.startswith(('publish-', 'cloud-', 'build-reports', 'build-landing', 'stage-report')):

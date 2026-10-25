@@ -1,0 +1,545 @@
+{
+  "contractVersion": "harness.catalyst-notebook.http-exchange.v1",
+  "request": {
+    "method": "GET",
+    "path": "/v1/catalyst/workbench/sessions/98248bb9-39ab-4a95-ac55-9cd7a0414c12",
+    "body": null
+  },
+  "response": {
+    "httpStatus": 200,
+    "body": {
+      "contractVersion": "catalyst.workbench.session.v1",
+      "sessionId": "98248bb9-39ab-4a95-ac55-9cd7a0414c12",
+      "question": "Show patients with poor adherence.",
+      "name": "Show patients with poor adherence.",
+      "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+      "datasetId": "hiv-20260731T000741Z",
+      "datasetVersion": "hiv-20260731T000741Z",
+      "catalogVersion": "openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+      "currentVersionId": "f37ec15e-2f1e-4ae0-b316-ade6ed18d50c",
+      "browserState": {},
+      "provenance": {
+        "dataSourceId": "openmrs-hiv",
+        "catalogContextSourceId": "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6",
+        "catalystTraceId": "51a2fc7d-3f94-47a3-b77d-ef3d1af65676",
+        "profileSnapshot": {
+          "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+          "profileLabel": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b-q4"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b-q4",
+            "query_review": "gemma-4-12b-q4"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            },
+            "query_review": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "dbfe5a9c13a1269a5ed8b269a8d5c82506419f8515efe33e236770a90e571ffa",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_review",
+            "query_finalize"
+          ],
+          "unavailableReasons": []
+        },
+        "datasetSnapshot": {
+          "datasetId": "hiv-20260731T000741Z",
+          "dataSource": "openmrs-hiv-fhir-postgresql",
+          "pipelineRunId": "hiv-20260731T000741Z",
+          "synthetic": null,
+          "patients": 5285,
+          "results": 427915,
+          "testTypes": 143,
+          "firstObservedAt": "2022-11-07T21:50:36Z",
+          "lastObservedAt": "2026-08-11T00:00:00Z"
+        },
+        "generationHttpStatus": 200,
+        "generationOutcome": {
+          "contractVersion": "catalyst.query.v1",
+          "deploymentMode": "demo",
+          "status": "needs_clarification",
+          "question": "Show patients with poor adherence.",
+          "clarification": "What is the threshold or specific category for 'poor adherence' (e.g., a specific value for 'Overall drug adherence in last month' or 'Antiretroviral adherence in past week')?",
+          "validation": {
+            "status": "warned",
+            "checks": [
+              {
+                "name": "query_status",
+                "status": "warned",
+                "message": "The query requires clarification."
+              }
+            ]
+          },
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+            "traceId": "51a2fc7d-3f94-47a3-b77d-ef3d1af65676",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ]
+          }
+        }
+      },
+      "status": "active",
+      "createdAt": "2026-08-25T00:42:33.196423Z",
+      "updatedAt": "2026-08-25T00:44:26.928350Z",
+      "versions": [
+        {
+          "contractVersion": "catalyst.workbench.query-version.v1",
+          "versionId": "f37ec15e-2f1e-4ae0-b316-ade6ed18d50c",
+          "sessionId": "98248bb9-39ab-4a95-ac55-9cd7a0414c12",
+          "parentVersionId": null,
+          "ordinal": 1,
+          "authorType": "model",
+          "sql": "SELECT t1.patient_id, t1.family_name, t1.given_name FROM analytics.hiv_patient_dim_v1 AS t1 JOIN (SELECT DISTINCT ON (patient_id) patient_id, value_coded_name AS latest_adherence FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :concept_name AND obs_status = 'final' ORDER BY patient_id, observed_at DESC) AS t2 ON t1.patient_id = t2.patient_id WHERE t2.latest_adherence <> 'All'",
+          "parameters": [
+            {
+              "name": "concept_name",
+              "type": "string",
+              "source": "question",
+              "value": "Antiretroviral adherence in past week"
+            }
+          ],
+          "expectedColumns": [
+            {
+              "name": "patient_id",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "family_name",
+              "logicalType": "string",
+              "nullable": true
+            },
+            {
+              "name": "given_name",
+              "logicalType": "string",
+              "nullable": true
+            }
+          ],
+          "queryDigest": "edaa875f8cec98d0d2a44639b924bc2fd53266c2fe7fd59b9762423eb1a2457b",
+          "provenance": {
+            "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+            "traceId": "9d43a512-54b7-4522-a699-8b30e0dcadd2",
+            "contextSourceIds": [
+              "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+            ],
+            "sourceContract": "catalyst.query.v1",
+            "sourceStatus": "ready",
+            "hubTraceId": "9d43a512-54b7-4522-a699-8b30e0dcadd2",
+            "generationValidation": {
+              "status": "warned",
+              "checks": [
+                {
+                  "name": "query_lint_attempt_1",
+                  "status": "warned",
+                  "message": "Deterministic correction requested for: sql.parse_error."
+                },
+                {
+                  "name": "query_lint_attempt_2",
+                  "status": "passed",
+                  "message": "Candidate passed deterministic SQL lint."
+                },
+                {
+                  "name": "status_correctness",
+                  "status": "passed",
+                  "message": "The query status is 'ready'."
+                },
+                {
+                  "name": "approved_view_and_field_grounding",
+                  "status": "passed",
+                  "message": "All fields (patient_id, family_name, given_name, concept_name, obs_status, value_coded_name, observed_at) are grounded in the approved views."
+                },
+                {
+                  "name": "one_statement_read_only_select",
+                  "status": "passed",
+                  "message": "The query is a single SELECT statement."
+                },
+                {
+                  "name": "dialect_compatibility",
+                  "status": "passed",
+                  "message": "The query uses PostgreSQL-compatible DISTINCT ON syntax."
+                },
+                {
+                  "name": "typed_parameter_binding",
+                  "status": "passed",
+                  "message": "The :concept_name parameter is correctly typed as string."
+                },
+                {
+                  "name": "output_column_agreement",
+                  "status": "passed",
+                  "message": "The output columns match the expected columns in the target."
+                },
+                {
+                  "name": "row_limit_policy",
+                  "status": "passed",
+                  "message": "No row limit is explicitly violated; the query is a standard selection."
+                },
+                {
+                  "name": "absence_of_invented_identifiers",
+                  "status": "passed",
+                  "message": "No invented identifiers were used."
+                },
+                {
+                  "name": "analyte_constraint",
+                  "status": "passed",
+                  "message": "The query explicitly constrains the concept_name to 'Antiretroviral adherence in past week' as specified in the parameter."
+                }
+              ]
+            },
+            "profileLabel": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+            "profileAvailable": true,
+            "requiredModels": [
+              "gemma-4-12b-q4"
+            ],
+            "roleModels": {
+              "query_generate": "gemma-4-12b-q4",
+              "query_review": "gemma-4-12b-q4"
+            },
+            "roleKnobs": {
+              "query_generate": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "query_review": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              }
+            },
+            "profileConfigurationDigest": "dbfe5a9c13a1269a5ed8b269a8d5c82506419f8515efe33e236770a90e571ffa",
+            "rolePromptDigests": {
+              "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+              "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+            },
+            "backend": {},
+            "backendModelMetadata": {},
+            "stages": [
+              "context",
+              "query_generate",
+              "query_lint",
+              "query_review",
+              "query_finalize"
+            ],
+            "unavailableReasons": [],
+            "turnId": "77332609-ef52-444e-9a65-d6eda262860d",
+            "catalystTraceId": "9d43a512-54b7-4522-a699-8b30e0dcadd2",
+            "revisionContextDigest": "0f7cfdbf4471d411828af4ebbe805459e9a4d41f0222a6d7d778070299f0df73",
+            "dataSourceId": "openmrs-hiv",
+            "observedBase": null,
+            "effectiveBaseVersion": null,
+            "manualVersion": null,
+            "editorSnapshotDigest": null,
+            "generationEvidenceRef": {
+              "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+              "evidenceId": "250a37b4-b506-4034-a3a7-db3978aa56ce",
+              "evidenceDigest": "f191ccc1a2a20dd2e9fd12a3cd59b16390b495583cc3b80de6503904b1c4c39b",
+              "detailPath": "/v1/catalyst/workbench/sessions/98248bb9-39ab-4a95-ac55-9cd7a0414c12/turns/77332609-ef52-444e-9a65-d6eda262860d/generation-evidence"
+            },
+            "profileSnapshot": {
+              "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+              "profileName": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+              "profileDigest": "aef9d8a8267afde55578eb35019be744fa85cf02648d4db674aaa4a6d993a647",
+              "writer": {
+                "role": "writer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4-q4",
+                "modelId": "gemma-4-12b-q4",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-generate",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                  "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+                }
+              },
+              "omissions": [],
+              "reviewer": {
+                "role": "reviewer",
+                "providerId": "med-agent-hub",
+                "modelClass": "gemma-4-q4",
+                "modelId": "gemma-4-12b-q4",
+                "config": {
+                  "dry": 0,
+                  "maxTokens": 1024,
+                  "temperature": 0
+                },
+                "systemPrompt": {
+                  "promptId": "catalyst-query-review",
+                  "version": "1",
+                  "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                  "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+                }
+              }
+            },
+            "hubRequestDigest": "9081bf33e66ac983889e4641f68a74b9307c127aaf405e3d7a32f8c91506c27b"
+          },
+          "sourceFindingIds": [],
+          "repairProposalId": null,
+          "createdAt": "2026-08-25T00:44:26.928350Z"
+        }
+      ],
+      "currentVersion": {
+        "contractVersion": "catalyst.workbench.query-version.v1",
+        "versionId": "f37ec15e-2f1e-4ae0-b316-ade6ed18d50c",
+        "sessionId": "98248bb9-39ab-4a95-ac55-9cd7a0414c12",
+        "parentVersionId": null,
+        "ordinal": 1,
+        "authorType": "model",
+        "sql": "SELECT t1.patient_id, t1.family_name, t1.given_name FROM analytics.hiv_patient_dim_v1 AS t1 JOIN (SELECT DISTINCT ON (patient_id) patient_id, value_coded_name AS latest_adherence FROM analytics.hiv_observation_fact_v1 WHERE concept_name = :concept_name AND obs_status = 'final' ORDER BY patient_id, observed_at DESC) AS t2 ON t1.patient_id = t2.patient_id WHERE t2.latest_adherence <> 'All'",
+        "parameters": [
+          {
+            "name": "concept_name",
+            "type": "string",
+            "source": "question",
+            "value": "Antiretroviral adherence in past week"
+          }
+        ],
+        "expectedColumns": [
+          {
+            "name": "patient_id",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "family_name",
+            "logicalType": "string",
+            "nullable": true
+          },
+          {
+            "name": "given_name",
+            "logicalType": "string",
+            "nullable": true
+          }
+        ],
+        "queryDigest": "edaa875f8cec98d0d2a44639b924bc2fd53266c2fe7fd59b9762423eb1a2457b",
+        "provenance": {
+          "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+          "traceId": "9d43a512-54b7-4522-a699-8b30e0dcadd2",
+          "contextSourceIds": [
+            "catalog:openmrs-hiv-catalog-v6+schema.7c66b5f8311b1ce6"
+          ],
+          "sourceContract": "catalyst.query.v1",
+          "sourceStatus": "ready",
+          "hubTraceId": "9d43a512-54b7-4522-a699-8b30e0dcadd2",
+          "generationValidation": {
+            "status": "warned",
+            "checks": [
+              {
+                "name": "query_lint_attempt_1",
+                "status": "warned",
+                "message": "Deterministic correction requested for: sql.parse_error."
+              },
+              {
+                "name": "query_lint_attempt_2",
+                "status": "passed",
+                "message": "Candidate passed deterministic SQL lint."
+              },
+              {
+                "name": "status_correctness",
+                "status": "passed",
+                "message": "The query status is 'ready'."
+              },
+              {
+                "name": "approved_view_and_field_grounding",
+                "status": "passed",
+                "message": "All fields (patient_id, family_name, given_name, concept_name, obs_status, value_coded_name, observed_at) are grounded in the approved views."
+              },
+              {
+                "name": "one_statement_read_only_select",
+                "status": "passed",
+                "message": "The query is a single SELECT statement."
+              },
+              {
+                "name": "dialect_compatibility",
+                "status": "passed",
+                "message": "The query uses PostgreSQL-compatible DISTINCT ON syntax."
+              },
+              {
+                "name": "typed_parameter_binding",
+                "status": "passed",
+                "message": "The :concept_name parameter is correctly typed as string."
+              },
+              {
+                "name": "output_column_agreement",
+                "status": "passed",
+                "message": "The output columns match the expected columns in the target."
+              },
+              {
+                "name": "row_limit_policy",
+                "status": "passed",
+                "message": "No row limit is explicitly violated; the query is a standard selection."
+              },
+              {
+                "name": "absence_of_invented_identifiers",
+                "status": "passed",
+                "message": "No invented identifiers were used."
+              },
+              {
+                "name": "analyte_constraint",
+                "status": "passed",
+                "message": "The query explicitly constrains the concept_name to 'Antiretroviral adherence in past week' as specified in the parameter."
+              }
+            ]
+          },
+          "profileLabel": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+          "profileAvailable": true,
+          "requiredModels": [
+            "gemma-4-12b-q4"
+          ],
+          "roleModels": {
+            "query_generate": "gemma-4-12b-q4",
+            "query_review": "gemma-4-12b-q4"
+          },
+          "roleKnobs": {
+            "query_generate": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            },
+            "query_review": {
+              "dry": 0,
+              "maxTokens": 1024,
+              "temperature": 0
+            }
+          },
+          "profileConfigurationDigest": "dbfe5a9c13a1269a5ed8b269a8d5c82506419f8515efe33e236770a90e571ffa",
+          "rolePromptDigests": {
+            "query_generate": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f",
+            "query_review": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+          },
+          "backend": {},
+          "backendModelMetadata": {},
+          "stages": [
+            "context",
+            "query_generate",
+            "query_lint",
+            "query_review",
+            "query_finalize"
+          ],
+          "unavailableReasons": [],
+          "turnId": "77332609-ef52-444e-9a65-d6eda262860d",
+          "catalystTraceId": "9d43a512-54b7-4522-a699-8b30e0dcadd2",
+          "revisionContextDigest": "0f7cfdbf4471d411828af4ebbe805459e9a4d41f0222a6d7d778070299f0df73",
+          "dataSourceId": "openmrs-hiv",
+          "observedBase": null,
+          "effectiveBaseVersion": null,
+          "manualVersion": null,
+          "editorSnapshotDigest": null,
+          "generationEvidenceRef": {
+            "contractVersion": "catalyst.workbench.generation-evidence-ref.v1",
+            "evidenceId": "250a37b4-b506-4034-a3a7-db3978aa56ce",
+            "evidenceDigest": "f191ccc1a2a20dd2e9fd12a3cd59b16390b495583cc3b80de6503904b1c4c39b",
+            "detailPath": "/v1/catalyst/workbench/sessions/98248bb9-39ab-4a95-ac55-9cd7a0414c12/turns/77332609-ef52-444e-9a65-d6eda262860d/generation-evidence"
+          },
+          "profileSnapshot": {
+            "profileId": "catalyst-query-gemma-4-12b-q4-checked",
+            "profileName": "Catalyst query — Gemma 4 12B (Q4, self-checked)",
+            "profileDigest": "aef9d8a8267afde55578eb35019be744fa85cf02648d4db674aaa4a6d993a647",
+            "writer": {
+              "role": "writer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4-q4",
+              "modelId": "gemma-4-12b-q4",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-generate",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-generate.txt",
+                "promptDigest": "265d9a16558a9dc7aa8a8937de9ddc1998740803c1fcf186a26549a5027e0c4f"
+              }
+            },
+            "omissions": [],
+            "reviewer": {
+              "role": "reviewer",
+              "providerId": "med-agent-hub",
+              "modelClass": "gemma-4-q4",
+              "modelId": "gemma-4-12b-q4",
+              "config": {
+                "dry": 0,
+                "maxTokens": 1024,
+                "temperature": 0
+              },
+              "systemPrompt": {
+                "promptId": "catalyst-query-review",
+                "version": "1",
+                "promptRef": "med-agent-hub:server/prompts/catalyst-query-review.txt",
+                "promptDigest": "dbbc2c835cd44a104ca4e3c4b277956d5a0aa48e9a1444c60537df8fac2cfe78"
+              }
+            }
+          },
+          "hubRequestDigest": "9081bf33e66ac983889e4641f68a74b9307c127aaf405e3d7a32f8c91506c27b"
+        },
+        "sourceFindingIds": [],
+        "repairProposalId": null,
+        "createdAt": "2026-08-25T00:44:26.928350Z"
+      },
+      "validations": [
+        {
+          "contractVersion": "catalyst.workbench.validation.v1",
+          "queryDigest": "edaa875f8cec98d0d2a44639b924bc2fd53266c2fe7fd59b9762423eb1a2457b",
+          "validatorRevision": "catalyst.workbench.validator.v1",
+          "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+          "status": "valid",
+          "advisory": true,
+          "checks": [],
+          "findings": [],
+          "durationMs": 2,
+          "validationId": "e525e34a-e8de-480c-b139-19c49b1663d5",
+          "sessionId": "98248bb9-39ab-4a95-ac55-9cd7a0414c12",
+          "versionId": "f37ec15e-2f1e-4ae0-b316-ade6ed18d50c",
+          "ordinal": 1,
+          "createdAt": "2026-08-25T00:44:26.928350Z"
+        }
+      ],
+      "latestValidation": {
+        "contractVersion": "catalyst.workbench.validation.v1",
+        "queryDigest": "edaa875f8cec98d0d2a44639b924bc2fd53266c2fe7fd59b9762423eb1a2457b",
+        "validatorRevision": "catalyst.workbench.validator.v1",
+        "validatorDigest": "daaf09fa0874f67fa856cacd7c335c21a87d38ecd5ac981d5afb1519dc6d5db2",
+        "status": "valid",
+        "advisory": true,
+        "checks": [],
+        "findings": [],
+        "durationMs": 2,
+        "validationId": "e525e34a-e8de-480c-b139-19c49b1663d5",
+        "sessionId": "98248bb9-39ab-4a95-ac55-9cd7a0414c12",
+        "versionId": "f37ec15e-2f1e-4ae0-b316-ade6ed18d50c",
+        "ordinal": 1,
+        "createdAt": "2026-08-25T00:44:26.928350Z"
+      },
+      "executions": [],
+      "guidance": [],
+      "dataSourceId": "openmrs-hiv",
+      "draftSeed": null
+    }
+  },
+  "elapsedMs": 2
+}
