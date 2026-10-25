@@ -105,6 +105,13 @@ Check only that OpenMRS opens, ChartSearchAI is available on a patient chart,
 and known HIV patient records are loaded. Account logins are checked while
 provisioning. Model-quality evaluations, reports and videos are not setup gates.
 
+`make chartsearch-smoke` runs that check from the terminal: it confirms the
+deployed modules, frontend bundle and Hub image are the pinned builds, logs in as
+`eval-doctor`, loads the sample patient and asks ChartSearchAI one question through
+the configured provider, which must come back with an Answer whose citations
+resolve. Run it after setup and after any component pin moves. It needs the
+running stack and model, so it is not a CI check.
+
 ## Baselines
 
 A baseline is a saved state of OpenMRS and QueryStore's index, published as a
