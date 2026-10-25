@@ -16,6 +16,7 @@ import argparse
 import base64
 import hashlib
 import json
+import os
 import subprocess
 import time
 import urllib.parse
@@ -491,8 +492,14 @@ def main() -> int:
     parser.add_argument("--provider", default="hub", help="Configured ChartSearchAI provider (default: hub).")
     parser.add_argument("--profile", help="Hub profile; default: the advertised product default.")
     parser.add_argument("--question", default=DEFAULT_QUESTION)
-    parser.add_argument("--username", default="admin")
-    parser.add_argument("--password", default="Admin123")
+    parser.add_argument(
+        "--username", default=os.environ.get("CHARTSEARCH_ADMIN_USER", "admin"),
+        help="OpenMRS account (default: CHARTSEARCH_ADMIN_USER, else the demo administrator).",
+    )
+    parser.add_argument(
+        "--password", default=os.environ.get("CHARTSEARCH_ADMIN_PASSWORD", "Admin123"),
+        help="Its password (default: CHARTSEARCH_ADMIN_PASSWORD, else the local demo password).",
+    )
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument("--clear-after", action="store_true", help="Start a fresh chat for the patient afterwards.")
     parser.add_argument("--output", type=Path)

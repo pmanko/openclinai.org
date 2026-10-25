@@ -4,6 +4,7 @@ import importlib.util
 import json
 import sys
 import urllib.parse
+import uuid
 from email.message import Message
 from pathlib import Path
 
@@ -325,12 +326,15 @@ def test_the_cli_asks_about_the_sample_patient_with_the_advertised_default(tmp_p
         smoke, "smoke", lambda openmrs_url, **kwargs: calls.append(("smoke", openmrs_url, kwargs)) or result
     )
     output = tmp_path / "smoke.json"
+    # The account comes from the environment the Makefile and setup already use;
+    # a value made up per run shows it is read, not a baked-in default.
+    account = {"username": f"user-{uuid.uuid4().hex[:8]}", "password": uuid.uuid4().hex}
+    monkeypatch.setenv("CHARTSEARCH_ADMIN_USER", account["username"])
+    monkeypatch.setenv("CHARTSEARCH_ADMIN_PASSWORD", account["password"])
     monkeypatch.setattr(sys, "argv", ["chartsearch-smoke.py", "--output", str(output), "--clear-after"])
 
     assert smoke.main() == 0
-    assert calls[0] == (
-        "discover", "http://127.0.0.1:8088/openmrs", {"username": "admin", "password": "Admin123", "timeout": 300},
-    )
+    assert calls[0] == ("discover", "http://127.0.0.1:8088/openmrs", {**account, "timeout": 300})
     assert calls[1][1] == "http://127.0.0.1:8088/openmrs"
     assert calls[1][2]["patient"] == smoke.SAMPLE_PATIENT
     assert calls[1][2]["profile"] == "single-12b-checked"
