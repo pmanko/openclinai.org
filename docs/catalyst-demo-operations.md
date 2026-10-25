@@ -62,7 +62,7 @@ Seed only for an explicitly requested fixture rebuild, never as a startup repair
 | `catalyst-router-model-router-1` | Current shared CPU model inference service |
 | `catalyst-demo-model-router-1` | Stopped legacy router retained for rollback |
 | Older `catalyst-demo-*` UI, Gateway, Hub and analytics database | Previous application retained for rollback pending final release proof |
-| `csim-*` | Separate Superset investigation and preview stacks; not owned by Catalyst release cleanup |
+| `csim-*` | Separate Superset investigation and preview stacks, built from [`tools/csim-superset`](../tools/csim-superset/README.md); not owned by Catalyst release cleanup |
 
 The current UI and API are routed to the isolated stack. Its Superset endpoint
 is `/catalyst-dashboards/`. Existing `/superset/`, `/superset-preview/`, media and
