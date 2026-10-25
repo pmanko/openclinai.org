@@ -112,6 +112,34 @@ the configured provider, which must come back with an Answer whose citations
 resolve. Run it after setup and after any component pin moves. It needs the
 running stack and model, so it is not a CI check.
 
+## ChartSearchAI and Catalyst, Alone or Together
+
+Catalyst's local MVP (OpenELIS Global 2, its FHIR server, FHIR Data Pipes, Spark,
+Superset and the Catalyst gateway and UI) runs beside this stack on its own ports.
+Both use the model router on port 8077 (`make llama-router-up`, or started by
+`make local-stack-up`). Run each mode from the umbrella root:
+
+| Mode | First start | Later starts | Smoke |
+| --- | --- | --- | --- |
+| ChartSearchAI alone | `make chartsearch-research-setup` | `make local-stack-up` | `make chartsearch-smoke` |
+| Catalyst alone | `make catalyst-mvp-external` | `make catalyst-mvp-up` | `make catalyst-smoke` |
+| Together, one Hub | `make local-stack-up`, then `CATALYST_HUB=shared make catalyst-mvp-external` | `make local-stack-up`, then `CATALYST_HUB=shared make catalyst-mvp-up` | `make chartsearch-smoke` and `CATALYST_HUB=shared make catalyst-smoke` |
+
+Catalyst alone runs its own Hub on port 18082. With `CATALYST_HUB=shared` it runs
+none: its gateway uses this stack's Hub (`harness-med-agent-hub`, port 18081),
+which must be up first, and Catalyst's health gate checks that Hub's commit. Give
+every Catalyst command in that mode the same `CATALYST_HUB=shared`.
+`make catalyst-smoke` runs Catalyst's health and provenance gate, then asks the
+local gateway one question, which must come back as SQL that runs and returns
+rows.
+
+The Catalyst MVP's first start seeds a synthetic OpenELIS fixture and loads it
+through FHIR Data Pipes into Spark, which takes about 15 minutes; later starts
+keep that data. Stop it with `make catalyst-mvp-down`, which leaves this stack and
+the shared Hub running. `make catalyst-mvp-reset` discards the MVP's databases
+and warehouse only. The Catalyst UI is at <http://localhost:13000> and its Superset
+at <http://localhost:18088>.
+
 ## Baselines
 
 A baseline is a saved state of OpenMRS and QueryStore's index, published as a

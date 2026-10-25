@@ -3,8 +3,9 @@
 **Thread:** every product stack the umbrella owns runs on one machine on its own and
 all together, from the current pins, with one Med Agent Hub, one model router and
 one validation harness, and each mode has a smoke that proves it ·
-**Status:** ChartSearchAI alone runs at the current pins, its smoke pending #22;
-Catalyst runs only with its own Hub and a 2025 OpenELIS pin; nothing runs together ·
+**Status:** each stack runs alone and both run together on one Hub at OpenELIS
+Global 2 3.3.0, all three smokes green on 25 October; the Catalyst PRs are not yet
+opened, and ChartSearchAI's fresh-setup and upgrade cases are not run ·
 **Owners:** umbrella (compose, overrides, launchers, smokes, pins), Catalyst
 (its MVP compose and scripts), Hub (serving both products from one container)
 
@@ -26,18 +27,18 @@ catalyst.openelis-global.org, which nothing here depends on.
 
 ## Where this stands (25 October 2026)
 
-| Mode | Today | Checks on this revision | Pending |
-| --- | --- | --- | --- |
-| ChartSearchAI alone | `make local-stack-up`: OpenMRS, QueryStore, Hub (`harness-med-agent-hub`, :18081), router (:8077) at the current pins; restarted with data on 25 October ([record](reviews/2026-10-25-local-stack-restart.md)) | `make deployed-sources-check` (artifact identity only) | `make chartsearch-smoke`, the question-level check, lands with [#22](https://github.com/pmanko/openclinai.org/pull/22) |
-| Catalyst alone | `make catalyst-mvp-up` builds a second Hub from the same checkout (:18082) on its own network, and clones DIGI-UW/openelis-docker at f118d0a for OpenELIS 3.2.1.11; not set up on this machine | Catalyst's `mvp-health.sh` gate | A question-level smoke (checkpoint 2) |
-| Together | Not possible: Catalyst's compose hardcodes `MED_AGENT_HUB_BASE_URL=http://med-agent-hub:8080` and depends on its own Hub service; the two stacks sit on different Docker networks; `scripts/catalyst-mvp.sh` and the health gate assume port 18082 | None | Checkpoint 3 |
+| Mode | Command and smoke | Proven |
+| --- | --- | --- |
+| ChartSearchAI alone | `make local-stack-up`; `make chartsearch-smoke` | restart with data ([record](reviews/2026-10-25-local-stack-restart.md)) |
+| Catalyst alone | `make catalyst-mvp-up`, its own Hub on 18082; `make catalyst-smoke` | fresh boot on OpenELIS 3.3.0 ([25 October record](reviews/2026-10-25-local-stacks-together.md)) |
+| Together | `make local-stack-up`, then `CATALYST_HUB=shared make catalyst-mvp-up`; both smokes | one Hub, both smokes, both harness suites run ([25 October record](reviews/2026-10-25-local-stacks-together.md)) |
 
-OpenELIS couplings in Catalyst (`targets/catalyst`): `env.recommended` pins
-`OPENELIS_VERSION=3.2.1.11` and `OPENELIS_DOCKER_REF=f118d0a`; `scripts/mvp-seed.sh`
-refuses any version outside 3.2.1.x and seeds `analytics/openelis/seed-openelis-3.2.1.sql`;
-`docker-compose.mvp.yml` uses `catalyst/hapi-mtls-proxy:openelis-3.2.1`;
-`scripts/mvp-health.sh` gates on the openelis-docker commit. The latest release is
-OpenELIS Global 2 3.3.0 (20 October 2026).
+The modes, commands and first-start steps are in
+[environments/README.md](../environments/README.md#chartsearchai-and-catalyst-alone-or-together).
+Open: the Catalyst PRs (`result-freshness`, `openelis-3.3.0`, `shared-hub` on
+DIGI-UW/catalyst-ai) are not opened, so #23 pins unpushed commits; two harness
+suite defects found against the shared stack belong to the harness and the Hub
+(record).
 
 ## Target path
 
@@ -49,51 +50,52 @@ record under [`reviews/`](reviews/) naming the commands run and their results.
 - [x] The stack runs at the current pins with data retained: modules, bundle and
       Hub rebuilt, index unchanged, identity probe green
       ([25 October record](reviews/2026-10-25-local-stack-restart.md)).
-- [ ] `make chartsearch-smoke` is the setup acceptance step and the boot-check
-      finisher; pending [#22](https://github.com/pmanko/openclinai.org/pull/22).
+- [x] `make chartsearch-smoke` is the setup acceptance step and the boot-check
+      finisher ([#22](https://github.com/pmanko/openclinai.org/pull/22)).
 - [ ] Fresh setup (`make chartsearch-research-setup`) and the module upgrade from a
       database set up on the previous heads each end with a green smoke; recorded
       in a dated review.
 
 ### Checkpoint 2: Catalyst alone on the latest OpenELIS release
 
-- [ ] Catalyst PR: OpenELIS Global 2 3.3.0. Bump the openelis-docker ref and
-      `OPENELIS_VERSION`, lift the 3.2.1-only guard in `mvp-seed.sh`, check the seed
-      SQL against the 3.3.0 schema (a new seed file if tables moved), rebuild the
-      HAPI mTLS proxy image for the release, and update the health gate's pin.
-- [ ] The MVP boots, seeds and passes `mvp-health.sh` on this machine in
-      external-router mode (its Hub on :18082, the shared router on :8077);
-      recorded in a dated review with the OpenELIS version it reports.
-- [ ] `make catalyst-smoke`: Catalyst's own health gate, then one natural-language
-      question through the local gateway that returns generated SQL and a result.
-      Never against the demo host.
+- [ ] Catalyst PRs `result-freshness` and `openelis-3.3.0`: the 3.3.0 release images
+      by digest and openelis-docker tag, the seed's version guard, the warehouse
+      ordering fix, and the result-freshness contract fix the smoke exposed
+      (branches ready; not opened).
+- [x] The MVP boots, seeds and passes `mvp-health.sh` on this machine in
+      external-router mode, reporting OpenELIS 3.3.0 ([25 October record](reviews/2026-10-25-local-stacks-together.md)).
+- [x] `make catalyst-smoke`: Catalyst's own health gate, then one natural-language
+      question through the local gateway that returns generated SQL and a result
+      ([25 October record](reviews/2026-10-25-local-stacks-together.md)).
 - [ ] Catalyst gitlink moved to the merged 3.3.0 commit.
 
 ### Checkpoint 3: together, one Hub
 
-- [ ] Umbrella override (`compose/catalyst-mvp-isolated.override.yml`): the gateway's
-      Hub URL points at `harness-med-agent-hub`, its dependency on the MVP's Hub is
-      reset, the gateway joins the ChartSearchAI network, and the MVP's own Hub
-      service is parked under an unused profile. Catalyst alone still uses its own
-      Hub; only the override swaps it.
-- [ ] `scripts/catalyst-mvp.sh` in shared mode requires the umbrella Hub healthy
-      (`make med-agent-hub-up`) and points the health gate at :18081.
-- [ ] Optional Catalyst PR: `MED_AGENT_HUB_BASE_URL` becomes an environment variable
-      with the current literal as its default, so the override needs no `!override`.
-- [ ] Both smokes green against the one Hub, recorded in a dated review: the
-      ChartSearchAI answer unchanged, the Catalyst question answered, the Hub
-      revision the same in both.
-- [ ] Harness suites for ChartSearchAI and Catalyst each run once against the
-      shared stack from one harness checkout; run ids in the review.
+- [x] Umbrella override (`compose/catalyst-mvp-shared-hub.override.yml`, layered on
+      the isolated one): the gateway joins the ChartSearchAI network, its dependency
+      on the MVP's Hub is reset, and the MVP's own Hub sits behind an unused profile.
+      Catalyst alone still uses its own Hub ([25 October record](reviews/2026-10-25-local-stacks-together.md)).
+- [x] `CATALYST_HUB=shared` in `scripts/catalyst-mvp.sh` requires the umbrella Hub
+      healthy and points Catalyst and its health gate at it ([25 October record](reviews/2026-10-25-local-stacks-together.md)).
+- [ ] Catalyst PR `shared-hub`: `MVP_HUB=external`, the gateway's Hub URL as
+      `MVP_GATEWAY_HUB_URL`, layered overrides (branch ready; not opened).
+- [x] Both smokes green against the one Hub, the Hub revision the same in both
+      ([25 October record](reviews/2026-10-25-local-stacks-together.md)).
+- [x] Harness suites for ChartSearchAI and Catalyst each run once against the
+      shared stack from one harness checkout ([25 October record](reviews/2026-10-25-local-stacks-together.md)). Two Catalyst suite
+      defects it found are open: the suite's base SQL reads a retired PostgreSQL
+      view (harness), and the Hub reports no prompt token count for qwen2.5-14b
+      (Hub).
 
 ### Checkpoint 4: written down and repeatable
 
 - [ ] `environments/README.md` names the three modes, their one command each and
       their smoke; `docs/catalyst-demo-operations.md` points at it for the local
-      MVP and keeps only the demo-host material.
-- [ ] The review process boot check (openmrs-contribution.md) names both smokes.
-- [ ] Each pin move of the Hub, ChartSearchAI, QueryStore, ESM or Catalyst runs the
-      smokes of the stacks it touches before the pin lands, and the record says so.
+      MVP (in [#23](https://github.com/pmanko/openclinai.org/pull/23)).
+- [x] The OpenMRS boot check (openmrs-contribution.md) finishes with
+      `make chartsearch-smoke` ([#22](https://github.com/pmanko/openclinai.org/pull/22)).
+- [ ] Each pin move runs the smokes of the stacks it touches before the pin lands,
+      and the PR says so: the rule is in [AGENTS.md](../AGENTS.md) (in #23).
 
 ## Rules
 

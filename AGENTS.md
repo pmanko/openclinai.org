@@ -51,6 +51,11 @@
   gitlink each. Remove the harness's product gitlinks and the openmrs_chatbot target.
 - Read component instructions before edits. Commit/publish component changes in
   their own repository before updating the umbrella gitlink to a reachable commit.
+- An umbrella PR may pin a component PR head while it is open; before it merges,
+  every gitlink points at the head of that component's fork `main` or a release.
+  Run the smoke of each stack a moved pin touches (`make chartsearch-smoke` for
+  OpenMRS, QueryStore, ChartSearchAI, its frontend or the Hub; `make catalyst-smoke`
+  for Catalyst or the Hub) and report the result in the PR.
 - Run `python3 -m unittest discover -s tests -v` and
   `python3 scripts/check_workspace.py` for umbrella changes. These checks are
   not component, deployed-runtime or release acceptance.
