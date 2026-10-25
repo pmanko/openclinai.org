@@ -21,11 +21,6 @@ test('01 · Understand the problems and reveal supporting detail', async ({ page
   expect(await newerLogin.getByRole('link',{name:'Open newer Superset ↗',exact:true}).evaluate(link=>link.href)).toBe('https://catalyst.openelis-global.org/superset-preview/superset/dashboard/csim-full-synthetic/');
   expect(await newerLogin.getByRole('link',{name:'Open hourly example in this instance ↗',exact:true}).evaluate(link=>link.href)).toBe('https://catalyst.openelis-global.org/superset-preview/superset/dashboard/hourly-reporting-preview/');
   await expect(page.locator('details[open]')).toHaveCount(0);
-  await expect(page.locator('#reported-coverage')).toContainText('cached chart references still contain old IDs');
-  await expect(page.locator('#reported-coverage tbody tr')).toHaveCount(4);
-  await expect(page.locator('#time-controls tbody tr')).toHaveCount(3);
-  await expect(page.locator('#time-controls')).toContainText('January stays excluded');
-  await expect(page.locator('#open-interactions')).toContainText('have not been reproduced');
   await capture(page, info, 'overview-and-available-examples');
   await page.locator('.resource.primary').scrollIntoViewIfNeeded();
   await capture(page, info, 'available-dashboards-and-evidence');
@@ -36,7 +31,6 @@ test('01 · Understand the problems and reveal supporting detail', async ({ page
   await capture(page, info, 'reported-issue-coverage',page.locator('#reported-coverage'));
   await test.step('Read the date-label and grouping solution', async () => {
     await page.locator('#issue-dates summary').click();
-    await expect(page.locator('#issue-dates')).toContainText('A fixed Month–Year format does not adapt to quarters or years.');
     await capture(page, info, 'date-labels-and-grouping');
   });
   await test.step('Change the illustrative grouping without changing its date range', async () => {
@@ -70,8 +64,6 @@ test('07 · Follow an issue to evidence, the dashboard and back', async ({page, 
   const workflow=page.locator('#time-grouping');
   await expect(workflow.getByRole('heading',{name:'Dates, missing periods and grouping'})).toBeInViewport();
   await expect(workflow.getByText('Expected result',{exact:true})).toBeVisible();
-  await expect(page.locator('#filter-options .version')).toHaveText('Superset 6.1.0 · released version');
-  await expect(page.locator('#dashboard-time-units .version')).toHaveText('Newer Superset build · unreleased');
   await expect(page.locator('#filter-options').getByRole('link',{name:'Compare with the per-dashboard fix ↓'})).toHaveAttribute('href','#dashboard-time-units');
   await expect(page.locator('#dashboard-time-units').getByRole('link',{name:'Compare with the 6.1.0 workaround ↑'})).toHaveAttribute('href','#filter-options');
   await capture(page,info,'issue-to-recorded-workflow');

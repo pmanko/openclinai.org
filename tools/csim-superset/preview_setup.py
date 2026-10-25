@@ -44,11 +44,6 @@ with app.app_context():
         if saved.main_dttm_col == 'filter_anchor' and not saved.sql.startswith(date_context):
             saved.sql = date_context + saved.sql
             adapted += 1
-        if saved.main_dttm_col == 'filter_anchor':
-            # PostgreSQL accepts "3 months", not "1 quarter". Use a valid
-            # interval literal directly in the dataset SQL.
-            saved.sql = saved.sql.replace("INTERVAL '1 {{ grain }}'",
-                "INTERVAL '{{ 3 if grain == \"quarter\" else 1 }} {{ \"months\" if grain == \"quarter\" else grain }}'")
     dataset = db.session.query(SqlaTable).filter_by(uuid=identity('hourly-dataset')).one_or_none()
     if dataset is None:
         dataset = SqlaTable(uuid=identity('hourly-dataset'), database=database, schema='public', table_name='Hourly reporting example')

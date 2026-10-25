@@ -15,6 +15,7 @@ sql: |-
   FROM (
   {% set grain = {'P1M':'month','P3M':'quarter','P1Y':'year'}.get(time_grain, 'month') %}
   {% set label_format = {'month':'YYYY-MM','quarter':'YYYY "Q"Q','year':'YYYY'}[grain] %}
+  {% set step = {'month':'1 month','quarter':'3 months','year':'1 year'}[grain] %}
   {% set tf = {'from_expr': "TIMESTAMP '" ~ from_dttm ~ "'" if from_dttm else none,
                'to_expr': "TIMESTAMP '" ~ to_dttm ~ "'" if to_dttm else none} %}
   SELECT * FROM (

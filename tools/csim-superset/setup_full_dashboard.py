@@ -40,11 +40,11 @@ def category_calendar(sql, antibiotic):
 '''+body+'''
 ), bounds AS (
 SELECT {% if from_dttm %} TIMESTAMP '{{ from_dttm }}' {% else %} MIN(month_date) {% endif %} AS start_at,
-       {% if to_dttm %} TIMESTAMP '{{ to_dttm }}' {% else %} MAX(month_date)+INTERVAL '1 {{ grain }}' {% endif %} AS end_at
+       {% if to_dttm %} TIMESTAMP '{{ to_dttm }}' {% else %} MAX(month_date)+INTERVAL '{{ step }}' {% endif %} AS end_at
 FROM observed HAVING COUNT(*) >= 0
 ), calendar AS (
 SELECT d::date AS month_date FROM bounds CROSS JOIN LATERAL generate_series(
-date_trunc('{{ grain }}',start_at),date_trunc('{{ grain }}',end_at-INTERVAL '1 microsecond'),INTERVAL '1 {{ grain }}') d
+date_trunc('{{ grain }}',start_at),date_trunc('{{ grain }}',end_at-INTERVAL '1 microsecond'),INTERVAL '{{ step }}') d
 ), dimensions AS (SELECT DISTINCT '''+','.join(keys)+''' FROM observed)
 SELECT s.*,c.month_date,EXTRACT(EPOCH FROM c.month_date) AS period_sort,
        to_char(c.month_date,'{{ label_format }}') AS time_aggregate,'''+values+'''
@@ -76,6 +76,7 @@ WHERE TRUE
         adapted = adapted.replace("TO_CHAR(h.month_date, 'Mon YYYY')", "TO_CHAR(h.month_date, '{{ label_format }}')")
     header = '''{% set grain = {'P1M':'month','P3M':'quarter','P1Y':'year'}.get(time_grain, 'month') %}
 {% set label_format = {'month':'YYYY-MM','quarter':'YYYY "Q"Q','year':'YYYY'}[grain] %}
+{% set step = {'month':'1 month','quarter':'3 months','year':'1 year'}[grain] %}
 {% set tf = {'from_expr': "TIMESTAMP '" ~ from_dttm ~ "'" if from_dttm else none,
              'to_expr': "TIMESTAMP '" ~ to_dttm ~ "'" if to_dttm else none} %}
 '''
@@ -89,12 +90,12 @@ WHERE TRUE
 ''' + adapted + '''
 ), bounds AS (
  SELECT {% if tf.from_expr %} {{ tf.from_expr }} {% else %} MIN(month_date) {% endif %} AS start_at,
-        {% if tf.to_expr %} {{ tf.to_expr }} {% else %} MAX(month_date) + INTERVAL '1 {{ grain }}' {% endif %} AS end_at
+        {% if tf.to_expr %} {{ tf.to_expr }} {% else %} MAX(month_date) + INTERVAL '{{ step }}' {% endif %} AS end_at
  FROM observed HAVING COUNT(*) >= 0
 ), calendar AS (
  SELECT d::date AS month_date FROM bounds CROSS JOIN LATERAL generate_series(
  date_trunc('{{ grain }}', start_at), date_trunc('{{ grain }}', end_at - INTERVAL '1 microsecond'),
- INTERVAL '1 {{ grain }}') d
+ INTERVAL '{{ step }}') d
 ), dimensions AS (
  SELECT DISTINCT hosp_num,hosp_code,state,location_name,location_code FROM public.csim_baseline
 )
