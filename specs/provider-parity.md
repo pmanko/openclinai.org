@@ -42,10 +42,12 @@ comparisons in the picker.
       records block first in every stage, instructions after it, so the router's
       cache does the rest. Re-run
       ([17 October](reviews/2026-10-17-provider-parity-measurements.md#hub-reads-the-records-once)).
-- [ ] Hub sends less for narrow questions: a smaller recent core and relevance-led
-      admission; each profile's window sized to its model. Re-run, and spot-check
-      answers on ChartSearchAI's 40-cell question set, which needs its demo
-      patients loaded (none are in the HIV database).
+- [ ] Hub sends less for narrow questions: a smaller recent core and each profile's
+      window sized to its model. Relevance-led admission belongs to
+      [decision-layer P3.4](decision-layer-experiment.md#phase-3-hub-decision-making-design-review-before-code),
+      gated by G0. Re-run, and spot-check answers on ChartSearchAI's 40-cell
+      question set, which needs its demo patients loaded (none are in the HIV
+      database).
 - [x] A "fast checked" profile without In-Depth for live sessions, as an explicit
       choice ([17 October](reviews/2026-10-17-provider-parity-measurements.md#fast-checked-profile)).
 - [ ] Reuse the chart's temporal facts across questions. llama.cpp build 10809
