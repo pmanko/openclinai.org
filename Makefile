@@ -131,7 +131,15 @@ repository-lines-pr-check:
 # Verify that staged, mounted, and served OpenMRS artifacts plus the running hub
 # image were all built from the source revisions currently pinned by this repo.
 deployed-sources-check: repository-lines-check
-	python3 scripts/probe-chartsearchai-relay.py --identity-only
+	python3 scripts/chartsearch-smoke.py --identity-only
+
+# Setup acceptance for the local ChartSearchAI stack: the deployed artifacts are the
+# pinned builds, an evaluation account logs in, the sample patient is loaded, and one
+# question through the configured provider comes back with an Answer whose citations
+# resolve. Needs the running stack and model. PATIENT=<uuid> asks about another chart.
+chartsearch-smoke:
+	@python3 scripts/chartsearch-smoke.py --username eval-doctor --clear-after \
+	  $(if $(PATIENT),--patient $(PATIENT)) --output artifacts/chartsearchai-local/smoke.json
 
 chartsearch-esm-build:
 	@./scripts/chartsearch-esm-build.sh
