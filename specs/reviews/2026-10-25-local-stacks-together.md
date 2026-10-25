@@ -91,8 +91,9 @@ rejected its own repair ("review repair failed deterministic lint"), and twice t
 writer declared `count_patients` a `string`, so the table builder refused the
 integer Spark returned (`Row 0 column count_patients does not match string`, 502).
 Three further generations declared it `integer`. Across the day the default
-profile (writer gemma-e4b, reviewer qwen2.5-14b) produced runnable, correctly typed
-SQL for this question in 8 of 14 attempts.
+profile (writer gemma-e4b, reviewer qwen2.5-14b) answered this question 17 times:
+12 times with correctly typed SQL (9 executed, all with one row), 3 times rejected
+by its own review, and twice with the count declared a string.
 
 ## Not done
 

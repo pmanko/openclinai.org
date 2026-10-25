@@ -70,8 +70,10 @@ record under [`reviews/`](reviews/) naming the commands run and their results.
       question through the local gateway that returns generated SQL and a result
       ([25 October record](reviews/2026-10-25-local-stacks-together.md)).
 - [x] Catalyst gitlink moved to Catalyst main after #142 to #144 merged (7498348).
-- [ ] `make catalyst-smoke` reliably green: the default query profile wrote runnable,
-      correctly typed SQL for the smoke question in 8 of 14 attempts ([record](reviews/2026-10-25-local-stacks-together.md#after-the-catalyst-merge)).
+- [ ] `make catalyst-smoke` reliably green: the default query profile answered the
+      smoke question with correctly typed SQL 12 times in 17, was rejected by its own
+      review 3 times and declared the count a string twice
+      ([record](reviews/2026-10-25-local-stacks-together.md#after-the-catalyst-merge)).
 
 ### Checkpoint 3: together, one Hub
 
