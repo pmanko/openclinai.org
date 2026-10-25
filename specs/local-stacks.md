@@ -3,8 +3,8 @@
 **Thread:** every product stack the umbrella owns runs on one machine on its own and
 all together, from the current pins, with one Med Agent Hub, one model router and
 one validation harness, and each mode has a smoke that proves it ·
-**Status:** ChartSearchAI alone runs at the current pins with its smoke; Catalyst
-runs only with its own Hub and a 2025 OpenELIS pin; nothing runs together ·
+**Status:** ChartSearchAI alone runs at the current pins, its smoke pending #22;
+Catalyst runs only with its own Hub and a 2025 OpenELIS pin; nothing runs together ·
 **Owners:** umbrella (compose, overrides, launchers, smokes, pins), Catalyst
 (its MVP compose and scripts), Hub (serving both products from one container)
 
@@ -26,11 +26,11 @@ catalyst.openelis-global.org, which nothing here depends on.
 
 ## Where this stands (25 October 2026)
 
-| Mode | Today | Proof today |
-| --- | --- | --- |
-| ChartSearchAI alone | `make local-stack-up`: OpenMRS, QueryStore, Hub (`harness-med-agent-hub`, :18081), router (:8077) at the current pins | `make chartsearch-smoke` ([#22](https://github.com/pmanko/openclinai.org/pull/22)): checked Answer in 10.6 s, citations resolved, Hub 9ac9d43 |
-| Catalyst alone | `make catalyst-mvp-up` builds a second Hub from the same checkout (:18082) on its own network, and clones DIGI-UW/openelis-docker at f118d0a for OpenELIS 3.2.1.11; not set up on this machine | Catalyst's `mvp-health.sh` gate; no question-level smoke |
-| Together | Not possible: Catalyst's compose hardcodes `MED_AGENT_HUB_BASE_URL=http://med-agent-hub:8080` and depends on its own Hub service; the two stacks sit on different Docker networks; `scripts/catalyst-mvp.sh` and the health gate assume port 18082 | None |
+| Mode | Today | Checks on this revision | Pending |
+| --- | --- | --- | --- |
+| ChartSearchAI alone | `make local-stack-up`: OpenMRS, QueryStore, Hub (`harness-med-agent-hub`, :18081), router (:8077) at the current pins; restarted with data on 25 October ([record](reviews/2026-10-25-local-stack-restart.md)) | `make deployed-sources-check` (artifact identity only) | `make chartsearch-smoke`, the question-level check, lands with [#22](https://github.com/pmanko/openclinai.org/pull/22) |
+| Catalyst alone | `make catalyst-mvp-up` builds a second Hub from the same checkout (:18082) on its own network, and clones DIGI-UW/openelis-docker at f118d0a for OpenELIS 3.2.1.11; not set up on this machine | Catalyst's `mvp-health.sh` gate | A question-level smoke (checkpoint 2) |
+| Together | Not possible: Catalyst's compose hardcodes `MED_AGENT_HUB_BASE_URL=http://med-agent-hub:8080` and depends on its own Hub service; the two stacks sit on different Docker networks; `scripts/catalyst-mvp.sh` and the health gate assume port 18082 | None | Checkpoint 3 |
 
 OpenELIS couplings in Catalyst (`targets/catalyst`): `env.recommended` pins
 `OPENELIS_VERSION=3.2.1.11` and `OPENELIS_DOCKER_REF=f118d0a`; `scripts/mvp-seed.sh`
@@ -48,9 +48,9 @@ record under [`reviews/`](reviews/) naming the commands run and their results.
 
 - [x] The stack runs at the current pins with data retained: modules, bundle and
       Hub rebuilt, index unchanged, identity probe green
-      ([#19](https://github.com/pmanko/openclinai.org/pull/19), merged 25 October).
+      ([25 October record](reviews/2026-10-25-local-stack-restart.md)).
 - [ ] `make chartsearch-smoke` is the setup acceptance step and the boot-check
-      finisher ([#22](https://github.com/pmanko/openclinai.org/pull/22)).
+      finisher; pending [#22](https://github.com/pmanko/openclinai.org/pull/22).
 - [ ] Fresh setup (`make chartsearch-research-setup`) and the module upgrade from a
       database set up on the previous heads each end with a green smoke; recorded
       in a dated review.
