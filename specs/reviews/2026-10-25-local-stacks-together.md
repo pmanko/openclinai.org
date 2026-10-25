@@ -80,6 +80,20 @@ The Catalyst failures are not the shared stack's:
 `make validate-run` recreates `harness-med-agent-hub` with the run's temporal anchor;
 the Catalyst gateway kept reaching it by name.
 
+## After the Catalyst merge
+
+Catalyst #142 to #144 merged as 7498348, whose tree is the tested head plus #141's
+documentation; #23 pins it. On that pin `make chartsearch-smoke` passed (checked
+Answer, one resolved citation, Hub 9ac9d43). `CATALYST_HUB=shared make
+catalyst-smoke` passed its health gate three times and failed its question three
+times, for the model's output rather than the stack: once the profile's review
+rejected its own repair ("review repair failed deterministic lint"), and twice the
+writer declared `count_patients` a `string`, so the table builder refused the
+integer Spark returned (`Row 0 column count_patients does not match string`, 502).
+Three further generations declared it `integer`. Across the day the default
+profile (writer gemma-e4b, reviewer qwen2.5-14b) produced runnable, correctly typed
+SQL for this question in 8 of 14 attempts.
+
 ## Not done
 
 - Catalyst #142 to #144 are open; #23 pins #144's head until they merge.

@@ -69,7 +69,9 @@ record under [`reviews/`](reviews/) naming the commands run and their results.
 - [x] `make catalyst-smoke`: Catalyst's own health gate, then one natural-language
       question through the local gateway that returns generated SQL and a result
       ([25 October record](reviews/2026-10-25-local-stacks-together.md)).
-- [ ] Catalyst gitlink moved to the merged 3.3.0 commit.
+- [x] Catalyst gitlink moved to Catalyst main after #142 to #144 merged (7498348).
+- [ ] `make catalyst-smoke` reliably green: the default query profile wrote runnable,
+      correctly typed SQL for the smoke question in 8 of 14 attempts ([record](reviews/2026-10-25-local-stacks-together.md#after-the-catalyst-merge)).
 
 ### Checkpoint 3: together, one Hub
 
