@@ -29,11 +29,35 @@ if [[ "${MVP_COMPOSE_OVERRIDE_FILE}" == "${DEFAULT_MVP_COMPOSE_OVERRIDE_FILE}" ]
   export CATALYST_UI_PORT="${CATALYST_UI_PORT:-13000}"
   export ANALYTICS_DB_PORT="${ANALYTICS_DB_PORT:-15443}"
   export DATA_PIPES_PORT="${DATA_PIPES_PORT:-18090}"
-  export MED_AGENT_HUB_PORT="${MED_AGENT_HUB_PORT:-18082}"
   export OPENELIS_HTTPS_PORT="${OPENELIS_HTTPS_PORT:-28443}"
   export HAPI_HTTPS_PORT="${HAPI_HTTPS_PORT:-28444}"
   export SUPERSET_PORT="${SUPERSET_PORT:-18088}"
 fi
+
+# CATALYST_HUB=shared runs Catalyst on the ChartSearchAI stack's Med Agent Hub
+# (`make med-agent-hub-up`, container harness-med-agent-hub on 18081) instead of
+# its own, so one Hub serves both products. Give every command the same value:
+# the health gate inspects whichever Hub the gateway uses.
+CATALYST_HUB="${CATALYST_HUB:-own}"
+case "${CATALYST_HUB}" in
+  own)
+    if [[ "${MVP_COMPOSE_OVERRIDE_FILE}" == "${DEFAULT_MVP_COMPOSE_OVERRIDE_FILE}" ]]; then
+      export MED_AGENT_HUB_PORT="${MED_AGENT_HUB_PORT:-18082}"
+    fi
+    ;;
+  shared)
+    shared_hub_container="${SHARED_HUB_CONTAINER:-harness-med-agent-hub}"
+    export MVP_HUB=external
+    export MVP_HUB_CONTAINER="${shared_hub_container}"
+    export MVP_GATEWAY_HUB_URL="http://${shared_hub_container}:8080"
+    export MED_AGENT_HUB_PORT="${SHARED_HUB_PORT:-18081}"
+    export MVP_COMPOSE_OVERRIDE_FILE="${MVP_COMPOSE_OVERRIDE_FILE}:${ROOT_DIR}/compose/catalyst-mvp-shared-hub.override.yml"
+    ;;
+  *)
+    echo "ERROR: CATALYST_HUB must be own or shared (got: ${CATALYST_HUB})." >&2
+    exit 2
+    ;;
+esac
 
 usage() {
   cat <<'EOF'
@@ -110,6 +134,15 @@ require_pinned_clean_target "med-agent-hub" "targets/med-agent-hub"
 # The umbrella owns both product pins and builds the exact sibling Hub checkout.
 # Catalyst's separately pinned fallback is only for standalone Catalyst runs.
 export MED_AGENT_HUB_CONTEXT="${HUB_DIR}"
+
+if [[ "${CATALYST_HUB}" == "shared" ]] && [[ "${command_name}" =~ ^(up|boot|restart|health|warm)$ ]]; then
+  hub_health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' "${MVP_HUB_CONTAINER}" 2>/dev/null || true)"
+  if [[ "${hub_health}" != "healthy" ]]; then
+    echo "ERROR: the shared Hub ${MVP_HUB_CONTAINER} is not running and healthy." >&2
+    echo "Start it first: make med-agent-hub-up (or make local-stack-up)." >&2
+    exit 1
+  fi
+fi
 
 run_catalyst() {
   local script_name="$1"

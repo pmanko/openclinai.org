@@ -28,6 +28,11 @@ Do not rebuild or restart services during a recording or an import.
 
 ## Local development storage
 
+To start the local MVP, alone or sharing one Hub with the ChartSearchAI stack, and
+to smoke it, see
+[ChartSearchAI and Catalyst, alone or together](../environments/README.md#chartsearchai-and-catalyst-alone-or-together).
+This section covers where its data lives.
+
 Keep the local runtime checkout under a persistent code directory, never `/tmp`
 or the operating system's temporary directory. The wrapper refuses startup,
 seeding, and imports from temporary checkouts. Review/build checkouts may still
