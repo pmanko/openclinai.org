@@ -18,7 +18,7 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 | OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | Three gh-stack stacks on the OpenMRS repositories since 21 October (QueryStore #92–#98, backend #615–#623, frontend #72–#76), one PR per layer targeting the layer below; the old fork PRs are closed with pointers | Fresh-reviewer (Codex) findings fixed in their owning layers ([record](reviews/2026-10-21-stack-cutover.md)); next the backend findings, the local boot check of the tops, then the maintainer's review |
 | Review process and gates | [review-process.md](review-process.md) | Designed 20 October from the maintainer's documented method ([record](reviews/2026-10-20-maintainer-review-process.md)); nothing built | Owner marks up the design; then hooks and probes, applied to the open round |
 | Catalyst delivery | [catalyst-delivery.md](catalyst-delivery.md) | Four journeys demonstrated; acceptance open | FP-009 and FP-010 |
-| Local stacks, alone and together | [local-stacks.md](local-stacks.md) | Each stack alone and both on one Hub, Catalyst at OpenELIS Global 2 3.3.0; all smokes and both harness suites run on 25 October ([record](reviews/2026-10-25-local-stacks-together.md)) | Merge Catalyst [#142](https://github.com/DIGI-UW/catalyst-ai/pull/142) to [#144](https://github.com/DIGI-UW/catalyst-ai/pull/144) and pin Catalyst main; ChartSearchAI fresh-setup and upgrade checks |
+| Local stacks, alone and together | [local-stacks.md](local-stacks.md) | Each stack alone and both on one Hub, Catalyst at OpenELIS Global 2 3.3.0; all smokes and both harness suites run on 25 October ([record](reviews/2026-10-25-local-stacks-together.md)) | ChartSearchAI fresh-setup and upgrade checks; the harness Catalyst suite's retired base SQL and the Hub's missing qwen2.5-14b token count |
 | Website and publication | [website-publication.md](website-publication.md) | Documentation site deploys from `main`; landing site live from the umbrella's own website proxy since 18 October | Audit item W04 |
 | Decision-layer experiment (Jev, Laya) | [decision-layer-experiment.md](decision-layer-experiment.md) | Proposed; research updated 16 October | Decisions D1–D5 |
 | Clinical knowledge bases | No umbrella spec yet. The Hub ships one static knowledge-base source; the harness holds the [research notes](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/artifacts/planning/clinical-kb-research.md) | Exploration | Owner decides whether to scope a thread |
@@ -38,8 +38,8 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
    least as fast as the built-in provider.
 4. [Local HIV research environment](local-hiv-environment.md): setup needs only
    Docker and the native model router.
-5. [Local stacks, alone and together](local-stacks.md): land the Catalyst PRs the
-   shared stack needs, then ChartSearchAI's fresh-setup and upgrade checks.
+5. [Local stacks, alone and together](local-stacks.md): ChartSearchAI's fresh-setup
+   and upgrade checks, then the two harness suite defects the shared run found.
 6. [Catalyst delivery](catalyst-delivery.md): owner acceptance of the four local and
    server journeys and publication verification.
 7. [Website and publication](website-publication.md): close audit item W04.

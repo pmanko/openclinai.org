@@ -127,7 +127,13 @@ by the engine tests. `make chartsearch-smoke` passed on the same Hub (checked
 Answer, 52.7 s) and `CATALYST_HUB=shared make catalyst-smoke` passed with its
 health gate.
 
+## Pins on the mains (26 October)
+
+Catalyst #146 and #147 and Hub #40 merged as 8af4a85 and 36708b5, with trees
+identical to the pinned heads. With those pins and the Hub and gateway rebuilt,
+`make chartsearch-smoke` passed (checked Answer, one resolved citation, Hub
+36708b5) and `CATALYST_HUB=shared make catalyst-smoke` passed with its health gate.
+
 ## Not done
 
-- Catalyst #146 and #147 and Hub #40 are open; #23 pins their heads until they merge.
 - Checkpoint 1's fresh-setup and upgrade cases.
