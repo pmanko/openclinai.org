@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import sys
 import urllib.parse
 import uuid
@@ -438,11 +439,19 @@ def test_runtime_identity_binds_built_and_deployed_artifacts(tmp_path, monkeypat
         if args[:3] == ["git", "rev-parse", "HEAD^{tree}"]:
             return "tree-sha\n"
         if args[:2] == ["docker", "inspect"]:
-            return json.dumps([{"Id": "container-id", "Image": "sha256:image"}])
-        if args[:3] == ["docker", "image", "inspect"]:
             return json.dumps(
-                [{"Config": {"Labels": {"org.opencontainers.image.revision": hub_revision[0]}}}]
+                [
+                    {
+                        "Id": "container-id",
+                        "Image": "sha256:image",
+                        "Config": {"Labels": {"org.opencontainers.image.revision": hub_revision[0]}},
+                    }
+                ]
             )
+        if args[:3] == ["docker", "image", "inspect"]:
+            # An untagged image a container still runs cannot be inspected
+            # under the containerd image store; the identity must not need it.
+            raise subprocess.CalledProcessError(1, args)
         if args[:2] == ["docker", "exec"]:
             mounted = querystore_omod if "querystore" in args[-1] else omod
             return f"{smoke._sha256(mounted)}  {mounted.name}\n"
