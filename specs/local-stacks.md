@@ -69,11 +69,12 @@ record under [`reviews/`](reviews/) naming the commands run and their results.
 - [x] `make catalyst-smoke`: Catalyst's own health gate, then one natural-language
       question through the local gateway that returns generated SQL and a result
       ([25 October record](reviews/2026-10-25-local-stacks-together.md)).
-- [x] Catalyst gitlink moved to Catalyst main after #142 to #144 merged (7498348).
-- [ ] `make catalyst-smoke` reliably green: the default query profile answered the
-      smoke question with correctly typed SQL 12 times in 17, was rejected by its own
-      review 3 times and declared the count a string twice
-      ([record](reviews/2026-10-25-local-stacks-together.md#after-the-catalyst-merge)).
+- [ ] Catalyst gitlink on Catalyst main: #142 to #144 merged (7498348); #23 pins #146's head until it merges.
+- [ ] `make catalyst-smoke` reliably green. A mistyped declaration no longer fails
+      a query once [Catalyst #146](https://github.com/DIGI-UW/catalyst-ai/pull/146)
+      merges; the default profile's own review still rejects about one generation in
+      three ("review repair failed deterministic lint")
+      ([record](reviews/2026-10-25-local-stacks-together.md#result-typing-catalyst-146)).
 
 ### Checkpoint 3: together, one Hub
 

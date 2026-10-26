@@ -95,6 +95,19 @@ profile (writer gemma-e4b, reviewer qwen2.5-14b) answered this question 17 times
 12 times with correctly typed SQL (9 executed, all with one row), 3 times rejected
 by its own review, and twice with the count declared a string.
 
+## Result typing (Catalyst #146)
+
+The owner chose to type a question's result by what the database returns.
+[Catalyst #146](https://github.com/DIGI-UW/catalyst-ai/pull/146) (696567a) reads the
+column types from the driver's description, as Workbench execution already does,
+and turns a contradicted declaration into a table warning. Gateway: 427 tests, ruff
+format and lint; four of the five new table tests fail without it. With #23 pinning
+696567a and the MVP rebuilt on the shared Hub, a preview whose `count_patients` was
+declared a string executed with 200, the integer 96 and the warning `Column
+count_patients was declared string; the database returned integer.` Of six smoke
+runs, four passed and two were rejected by the profile's own review ("review repair
+failed deterministic lint"); no run failed on a type.
+
 ## Not done
 
 - Catalyst #142 to #144 are open; #23 pins #144's head until they merge.
