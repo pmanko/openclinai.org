@@ -271,7 +271,35 @@ def test_setup_stops_openmrs_and_its_gateway_before_restoring_then_starts_the_st
     start = calls.index("make local-stack-up create_tables=false")
     restart = calls.index("docker restart harness-openmrs-backend")
     verify = calls.index("python3 scripts/hiv-baseline.py verify")
-    assert stop < restore < start < restart < verify
+    recorded = calls.index("python3 scripts/hiv-baseline.py record-deployed")
+    assert stop < restore < start < restart < verify < recorded
+
+
+def test_record_deployed_copies_each_module_build_record(tmp_path):
+    state = tmp_path / "state"
+    builds = state / "module-provenance"
+    builds.mkdir(parents=True)
+    for module, commit in (("chartsearchai", "c" * 40), ("querystore", "a" * 40)):
+        (builds / f"{module}-1.0.0-SNAPSHOT.omod.provenance.json").write_text(
+            json.dumps({"source_commit": commit}), encoding="utf-8")
+    log = tmp_path / "calls.log"
+
+    result = _run_tool(tmp_path, _stub_bin(tmp_path, log, None), "record-deployed")
+
+    assert result.returncode == 0, result.stderr
+    for module, commit in (("chartsearchai", "c" * 40), ("querystore", "a" * 40)):
+        assert json.loads((state / f"deployed-{module}-omod.json").read_text()) == {"source_commit": commit}
+    assert _calls(log) == []
+
+
+def test_record_deployed_without_a_build_record_fails_and_writes_nothing(tmp_path):
+    log = tmp_path / "calls.log"
+
+    result = _run_tool(tmp_path, _stub_bin(tmp_path, log, None), "record-deployed")
+
+    assert result.returncode == 1
+    assert "build the modules first" in result.stderr
+    assert not list((tmp_path / "state").glob("deployed-*")) if (tmp_path / "state").exists() else True
 
 
 @pytest.mark.parametrize("image, pulled", [
