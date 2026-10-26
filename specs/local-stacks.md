@@ -4,8 +4,8 @@
 all together, from the current pins, with one Med Agent Hub, one model router and
 one validation harness, and each mode has a smoke that proves it ·
 **Status:** each stack runs alone and both run together on one Hub at OpenELIS
-Global 2 3.3.0, all three smokes green on 25 October; the Catalyst PRs are not yet
-opened, and ChartSearchAI's fresh-setup and upgrade cases are not run ·
+Global 2 3.3.0, from component mains; both smokes green on 26 October. Open:
+ChartSearchAI's fresh-setup and upgrade cases, and two harness suite defects ·
 **Owners:** umbrella (compose, overrides, launchers, smokes, pins), Catalyst
 (its MVP compose and scripts), Hub (serving both products from one container)
 
@@ -25,7 +25,7 @@ Out of scope here: the HIV data setup itself
 and acceptance ([catalyst-delivery.md](catalyst-delivery.md)), and the demo host at
 catalyst.openelis-global.org, which nothing here depends on.
 
-## Where this stands (25 October 2026)
+## Where this stands (26 October 2026)
 
 | Mode | Command and smoke | Proven |
 | --- | --- | --- |
@@ -35,11 +35,8 @@ catalyst.openelis-global.org, which nothing here depends on.
 
 The modes, commands and first-start steps are in
 [environments/README.md](../environments/README.md#chartsearchai-and-catalyst-alone-or-together).
-Open: Catalyst [#142](https://github.com/DIGI-UW/catalyst-ai/pull/142),
-[#143](https://github.com/DIGI-UW/catalyst-ai/pull/143) and
-[#144](https://github.com/DIGI-UW/catalyst-ai/pull/144) are in review, and #23 pins
-#144's head until they merge; two harness suite defects found against the shared
-stack belong to the harness and the Hub (record).
+Open: two harness suite defects found against the shared stack, which belong to
+the harness and the Hub ([record](reviews/2026-10-25-local-stacks-together.md)).
 
 ## Target path
 
@@ -59,7 +56,7 @@ record under [`reviews/`](reviews/) naming the commands run and their results.
 
 ### Checkpoint 2: Catalyst alone on the latest OpenELIS release
 
-- [ ] Catalyst [#142](https://github.com/DIGI-UW/catalyst-ai/pull/142) and
+- [x] Catalyst [#142](https://github.com/DIGI-UW/catalyst-ai/pull/142) and
       [#143](https://github.com/DIGI-UW/catalyst-ai/pull/143) merged: the
       result-freshness contract fix the smoke exposed, then the 3.3.0 release images
       by digest and openelis-docker tag, the seed's version guard and the warehouse
@@ -69,12 +66,14 @@ record under [`reviews/`](reviews/) naming the commands run and their results.
 - [x] `make catalyst-smoke`: Catalyst's own health gate, then one natural-language
       question through the local gateway that returns generated SQL and a result
       ([25 October record](reviews/2026-10-25-local-stacks-together.md)).
-- [ ] Catalyst and Hub gitlinks on their mains: Catalyst #142 to #144 merged (7498348); #23 pins Catalyst #147's and Hub #40's heads until they merge.
-- [ ] `make catalyst-smoke` reliably green: 8 of 8 with
+- [x] Catalyst and Hub gitlinks on their mains (Catalyst 8af4a85, Hub 36708b5) after
+      Catalyst #142 to #147 and Hub #40 merged, both smokes green on them
+      ([#24](https://github.com/pmanko/openclinai.org/pull/24)).
+- [x] `make catalyst-smoke` reliably green: 8 of 8 with
       [Catalyst #146](https://github.com/DIGI-UW/catalyst-ai/pull/146) (result types
       from the database), [#147](https://github.com/DIGI-UW/catalyst-ai/pull/147) and
       [Hub #40](https://github.com/pmanko/med-agent-hub/pull/40) (the reviewer gives
-      feedback, the writer revises), once those merge
+      feedback, the writer revises), all merged
       ([record](reviews/2026-10-25-local-stacks-together.md#reviewer-as-feedback-only-catalyst-147-hub-40)).
 
 ### Checkpoint 3: together, one Hub
@@ -85,7 +84,7 @@ record under [`reviews/`](reviews/) naming the commands run and their results.
       Catalyst alone still uses its own Hub ([25 October record](reviews/2026-10-25-local-stacks-together.md)).
 - [x] `CATALYST_HUB=shared` in `scripts/catalyst-mvp.sh` requires the umbrella Hub
       healthy and points Catalyst and its health gate at it ([25 October record](reviews/2026-10-25-local-stacks-together.md)).
-- [ ] Catalyst [#144](https://github.com/DIGI-UW/catalyst-ai/pull/144) merged:
+- [x] Catalyst [#144](https://github.com/DIGI-UW/catalyst-ai/pull/144) merged:
       `MVP_HUB=external`, the gateway's Hub URL as `MVP_GATEWAY_HUB_URL`, layered
       overrides.
 - [x] Both smokes green against the one Hub, the Hub revision the same in both
@@ -98,13 +97,14 @@ record under [`reviews/`](reviews/) naming the commands run and their results.
 
 ### Checkpoint 4: written down and repeatable
 
-- [ ] `environments/README.md` names the three modes, their one command each and
+- [x] `environments/README.md` names the three modes, their one command each and
       their smoke; `docs/catalyst-demo-operations.md` points at it for the local
-      MVP (in [#23](https://github.com/pmanko/openclinai.org/pull/23)).
+      MVP ([#23](https://github.com/pmanko/openclinai.org/pull/23)).
 - [x] The OpenMRS boot check (openmrs-contribution.md) finishes with
       `make chartsearch-smoke` ([#22](https://github.com/pmanko/openclinai.org/pull/22)).
-- [ ] Each pin move runs the smokes of the stacks it touches before the pin lands,
-      and the PR says so: the rule is in [AGENTS.md](../AGENTS.md) (in #23).
+- [x] Each pin move runs the smokes of the stacks it touches before the pin lands,
+      and the PR says so: the rule is in [AGENTS.md](../AGENTS.md)
+      ([#23](https://github.com/pmanko/openclinai.org/pull/23)).
 
 ## Rules
 
