@@ -108,7 +108,26 @@ count_patients was declared string; the database returned integer.` Of six smoke
 runs, four passed and two were rejected by the profile's own review ("review repair
 failed deterministic lint"); no run failed on a type.
 
+## Reviewer as feedback only (Catalyst #147, Hub #40)
+
+The two rejections above came from the reviewer rewriting a correct query. The
+owner decided the reviewer gives feedback and the writer revises its own query
+once, with no re-review. [Catalyst #147](https://github.com/DIGI-UW/catalyst-ai/pull/147)
+(a6bfb31, stacked on #146) sends lint findings back to the writer for every
+profile, limits the reviewer to approve or revise with feedback, and keeps the
+writer's lint-clean original with the feedback as advice when a revision cannot
+be used; [Hub #40](https://github.com/pmanko/med-agent-hub/pull/40) (80ce6a6)
+changes the reviewer prompt to match. Gateway 434 tests and ruff, UI 310 tests,
+Hub 724 tests; the five new engine tests fail on the old engine.
+
+With #23 pinning both and the Hub and gateway rebuilt: the smoke question passed
+8 of 8. Over 12 generations the writer corrected its own lint findings 5 times and
+the reviewer approved all 12, so no revision ran live; the revise path is covered
+by the engine tests. `make chartsearch-smoke` passed on the same Hub (checked
+Answer, 52.7 s) and `CATALYST_HUB=shared make catalyst-smoke` passed with its
+health gate.
+
 ## Not done
 
-- Catalyst #142 to #144 are open; #23 pins #144's head until they merge.
+- Catalyst #146 and #147 and Hub #40 are open; #23 pins their heads until they merge.
 - Checkpoint 1's fresh-setup and upgrade cases.
