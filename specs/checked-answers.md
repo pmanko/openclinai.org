@@ -111,10 +111,13 @@ dated review under `reviews/` for a run.
   answers-only run after the fix (replayed on the 26 October claims: 6, down from 9).
 - [ ] A2 Review policy. Every profile carries a `review` policy block:
   `action: label` (the only accepted value; `apply` and `redo` reserved and refused) and
-  `grounding: separate | folded | off`. `separate` is the entailment call; `folded` adds a
-  per-citation support verdict to the reviewer's JSON and skips the call; `off` runs neither
-  and marks citations unchecked rather than leaving them "checking". The label-mode prompt
-  returns `answer_ok` and `errors` (each with `wrong` and `chart`) and no corrected answer.
+  `grounding: separate | folded | off`, covering the Answer and the In-Depth claims. `separate`
+  is the entailment call; `folded` adds a per-citation support verdict to the reviewer's JSON
+  and skips the call; `off` runs neither and marks citations unchecked rather than leaving them
+  "checking". In-Depth citations are checked for what the claim attributes to each record, not
+  for the interpretation joined to it, and an uncited claim is tagged general guidance without
+  marking the In-Depth for checking (owner, 27 October). The label-mode prompt returns
+  `answer_ok` and `errors` (each with `wrong` and `chart`) and no corrected answer.
   Tests: every product and eval profile loads with its policies validated; `off` yields
   unchecked citations; `folded` writes grounding statuses from the review reply; no profile id
   appears in engine code. Evidence: the Hub PR.
@@ -123,8 +126,8 @@ dated review under `reviews/` for a run.
   UD-Q4_K_XL (thinking off, card sampling); router sections (`qwen3.8-27b` new) and
   `model_registry.json` entries; the residency check for each arm's pair. Evidence: the
   umbrella PR and `make llama-router-models` output.
-- [ ] A4 Profiles and arms. Hub profiles, visibility `eval`, same stages, policies and context
-  as the default: `single-12b-xcheck` (Gemma 4 12B writes, Qwen3.6-35B-A3B reviews and
+- [ ] A4 Profiles and arms. Hub product profiles sorted after the default, so the app and the
+  harness run them alike; same stages, policies and context as the default: `single-12b-xcheck` (Gemma 4 12B writes, Qwen3.6-35B-A3B reviews and
   grounds), `single-31b-xcheck` (Gemma 4 31B writes, Qwen3.8-27B reviews and grounds),
   `single-12b-checked-folded` and `single-12b-checked-noground` (the default pair with the
   grounding policy changed). Harness arms for each in `backends.json`. Evidence: the Hub and
