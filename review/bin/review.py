@@ -7,6 +7,7 @@ answer, findings-<round>.json and round-<round>.md. Posts nothing.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -339,11 +340,13 @@ def run_full(args) -> int:
                       f"\n## Inputs\n\n- Run directory: {run_dir}\n", out_dir / "judge.md")
     rows = out_dir / "judge-rows.json"
     rows.write_text(json.dumps(last_json(answer)))
+    card = judge_card(out_dir / "judge.md", pass_index=1, passes=1)
     subprocess.run(["make", "-C", str(HARNESS), "validate-judge-finalize", f"RUN={run_dir}",
-                    f"ROWS={rows}"], check=True, capture_output=True)
+                    f"ROWS={rows}", f"JUDGE_CARD={card}", "JUDGE_PROMOTE=1"], check=True,
+                   capture_output=True)
     report = harness("validate", "report", "--run-dir", str(run_dir))
     lines = [f"# Full evaluation {args.set} ({stamp})", "", f"Run: {run_dir}",
-             f"Report: {report.stdout.strip()}", ""] + arm_table(run_dir)
+             f"Report: {report.stdout.strip()}", "", judging(run_dir)["sentence"], ""] + arm_table(run_dir)
     if args.baseline:
         lines += ["", f"Compared with run {args.baseline}: "
                   f"{HARNESS / 'artifacts/validate' / args.baseline / 'report.html'}"]
@@ -352,6 +355,29 @@ def run_full(args) -> int:
     (out_dir / "summary.md").write_text("\n".join(lines) + "\n")
     print("\n".join(lines))
     return 0
+
+
+def judge_card(answer: Path, pass_index: int, passes: int) -> Path:
+    """The judge card for one pass: the session facts role.sh wrote beside the answer, plus
+    the brief's hash and which pass of how many this was. Written beside the answer."""
+    session = json.loads(answer.with_suffix(".md.card.json").read_text())
+    brief = BRIEFS / "judge.md"
+    session.update({"brief_sha256": hashlib.sha256(brief.read_bytes()).hexdigest(),
+                    "brief_path": str(brief.relative_to(UMBRELLA)),
+                    "pass_index": pass_index, "passes": passes})
+    card = answer.with_suffix(".card.json")
+    card.write_text(json.dumps(session, indent=1))
+    return card
+
+
+def judging(run_dir: Path) -> dict:
+    """Who judged the run, read through the harness's own card reader."""
+    out = subprocess.run(
+        ["uv", "--directory", str(HARNESS), "run", "python", "-c",
+         "import json, sys\nfrom harness.validate.judging import judge_summary\n"
+         "print(json.dumps(judge_summary(sys.argv[1])))", str(run_dir)],
+        check=True, capture_output=True, text=True).stdout
+    return json.loads(out)
 
 
 def arm_means(run_dir: Path) -> dict[str, dict]:
@@ -384,7 +410,9 @@ def publish_full(run_dir: Path, set_id: str) -> str:
     subprocess.run(["uv", "--directory", str(HARNESS), "run", "python", "scripts/validate-dashboard.py",
                     "--freeze", str(run_dir / "dashboard.html"), "--run", str(run_dir)],
                    check=True, capture_output=True)
-    day = time.strftime("%Y-%m-%d", time.localtime(run_dir.stat().st_mtime))
+    # The run's day is its results', not the directory's: a card or a second judge pass
+    # written later must republish into the same slug.
+    day = time.strftime("%Y-%m-%d", time.localtime((run_dir / "results.jsonl").stat().st_mtime))
     slug = f"l5-{set_id}-{day}-{run_dir.name[:8]}"
     means = arm_means(run_dir)
     # The index's score table is the report's own judge summary, frozen beside the report.
@@ -394,7 +422,9 @@ def publish_full(run_dir: Path, set_id: str) -> str:
          "rows = [json.loads(l) for l in open(sys.argv[1]) if l.strip()]\n"
          "print(json.dumps(scout_summary(rows, list(dict.fromkeys(r['backend_id'] for r in rows)))))",
          str(run_dir / "judge.jsonl")], check=True, capture_output=True, text=True).stdout
-    (run_dir / "meta.json").write_text(json.dumps({"scout": json.loads(scout)}, indent=2) + "\n")
+    # The judge travels with the scores: the catalog names it under every score table.
+    (run_dir / "meta.json").write_text(json.dumps({"scout": json.loads(scout), "judging": judging(run_dir)},
+                                                  indent=2) + "\n")
     # The index shows the judged scores as a table; the catalog's editor writes the takeaway.
     # A run already in the catalog keeps the copy written for it.
     listed = {r["slug"] for r in json.loads((UMBRELLA / "reports/reports-index.json").read_text())["runs"]}
