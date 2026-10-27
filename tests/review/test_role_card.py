@@ -39,3 +39,26 @@ def test_a_human_role_without_an_answer_asks_for_one_and_writes_no_card(tmp_path
     assert proc.returncode == 3
     assert "write your answer to" in proc.stdout
     assert not (tmp_path / "reviewer.md.card.json").exists()
+
+
+def test_the_judge_card_adds_the_brief_hash_and_the_pass_to_the_session(tmp_path):
+    import hashlib
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("review_driver", ROOT / "review" / "bin" / "review.py")
+    assert spec and spec.loader
+    review = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(review)
+    answer = tmp_path / "judge-p2.md"
+    answer.write_text("[]\n")
+    (tmp_path / "judge-p2.md.card.json").write_text(json.dumps(
+        {"agent": "codex", "agent_version": "0.160.1", "model": "gpt-6-astra",
+         "reasoning_effort": "high", "sampling": "provider default", "role": "judge",
+         "started_at": "2026-10-27T01:00:00Z", "finished_at": "2026-10-27T01:06:00Z"}))
+
+    card = json.loads(review.judge_card(answer, pass_index=2, passes=3).read_text())
+
+    brief = ROOT / "review" / "briefs" / "judge.md"
+    assert card["brief_sha256"] == hashlib.sha256(brief.read_bytes()).hexdigest()
+    assert card["brief_path"] == "review/briefs/judge.md"
+    assert (card["pass_index"], card["passes"]) == (2, 3)
+    assert card["model"] == "gpt-6-astra" and card["agent_version"] == "0.160.1"

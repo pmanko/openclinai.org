@@ -336,14 +336,7 @@ def run_full(args) -> int:
                           data_root if data_root != DATA else None, args.resume)
     subprocess.run(["make", "-C", str(HARNESS), "validate-judge-prep", f"RUN={run_dir}"], check=True,
                    capture_output=True)
-    answer = run_role(args, "judge", run_dir, (BRIEFS / "judge.md").read_text() +
-                      f"\n## Inputs\n\n- Run directory: {run_dir}\n", out_dir / "judge.md")
-    rows = out_dir / "judge-rows.json"
-    rows.write_text(json.dumps(last_json(answer)))
-    card = judge_card(out_dir / "judge.md", pass_index=1, passes=1)
-    subprocess.run(["make", "-C", str(HARNESS), "validate-judge-finalize", f"RUN={run_dir}",
-                    f"ROWS={rows}", f"JUDGE_CARD={card}", "JUDGE_PROMOTE=1"], check=True,
-                   capture_output=True)
+    judge_passes(args, run_dir, out_dir)
     report = harness("validate", "report", "--run-dir", str(run_dir))
     lines = [f"# Full evaluation {args.set} ({stamp})", "", f"Run: {run_dir}",
              f"Report: {report.stdout.strip()}", "", judging(run_dir)["sentence"], ""] + arm_table(run_dir)
@@ -355,6 +348,35 @@ def run_full(args) -> int:
     (out_dir / "summary.md").write_text("\n".join(lines) + "\n")
     print("\n".join(lines))
     return 0
+
+
+def judge_passes(args, run_dir: Path, out_dir: Path) -> list[str]:
+    """Judge the run's cells in N fresh sessions, each stored as its own actor with its card.
+    One pass is promoted as it is; several are aggregated per cell (median of the 0-10 axes,
+    majority of the categorical ones, a harm tie counting as harmful) into the canonical
+    judge.jsonl by the harness. Returns the actor ids."""
+    passes = max(1, int(getattr(args, "judge_passes", 1) or 1))
+    prompt = (BRIEFS / "judge.md").read_text() + f"\n## Inputs\n\n- Run directory: {run_dir}\n"
+    actors = []
+    for i in range(1, passes + 1):
+        out = out_dir / ("judge.md" if passes == 1 else f"judge-p{i}.md")
+        answer = run_role(args, "judge", run_dir, prompt, out)
+        rows = out.with_suffix(".rows.json")
+        rows.write_text(json.dumps(last_json(answer)))
+        card = judge_card(out, pass_index=i, passes=passes)
+        done = subprocess.run(["make", "-C", str(HARNESS), "validate-judge-finalize", f"RUN={run_dir}",
+                               f"ROWS={rows}", f"JUDGE_CARD={card}"]
+                              + (["JUDGE_PROMOTE=1"] if passes == 1 else []),
+                              check=True, capture_output=True, text=True).stdout
+        m = re.search(r"judges/([^/\s]+)/judge\.jsonl", done)
+        if not m:
+            raise SystemExit(f"finalize named no actor for pass {i}:\n{done}")
+        actors.append(m.group(1))
+    if passes > 1:
+        subprocess.run(["uv", "--directory", str(HARNESS), "run", "python", "scripts/judge-aggregate.py",
+                        str(run_dir)] + [a for actor in actors for a in ("--actor", actor)],
+                       check=True, capture_output=True, text=True)
+    return actors
 
 
 def judge_card(answer: Path, pass_index: int, passes: int) -> Path:
@@ -469,6 +491,8 @@ def main() -> int:
     ap.add_argument("--set", default="full-default")
     ap.add_argument("--profiles", help="extra arms: comma-separated profiles the Hub advertises")
     ap.add_argument("--baseline", help="an earlier full run id to cite for comparison")
+    ap.add_argument("--judge-passes", type=int, default=1,
+                    help="L5: judge the cells this many times in fresh sessions (default 1)")
     ap.add_argument("--no-publish", action="store_true",
                     help="L5: keep the report and dashboard local instead of publishing them")
     ap.add_argument("--publish", metavar="RUN_DIR", help="publish an already judged L5 run")
