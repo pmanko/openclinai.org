@@ -122,18 +122,18 @@ dated review under `reviews/` for a run.
   unchecked citations; `folded` writes grounding statuses from the review reply; no profile id
   appears in engine code. Evidence: the Hub PR.
 - [ ] A3 Models. Pinned downloads (revision and hash in the model manifest) for Gemma 4 31B
-  Q4_K_M, Qwen3.6-35B-A3B Q4_K_M (thinking budget 0 when checking) and Qwen3.8-27B
-  UD-Q4_K_XL (thinking off, card sampling); router sections (`qwen3.8-27b` new) and
+  Q4_K_M, Qwen3.6-35B-A3B UD-Q4_K_M and Qwen3.5-9B Q8_0 (both thinking off, card
+  sampling); router sections (`qwen3.5-9b` new) and
   `model_registry.json` entries; the residency check for each arm's pair. Evidence: the
   umbrella PR and `make llama-router-models` output.
 - [ ] A4 Profiles and arms. Hub product profiles sorted after the default, so the app and the
   harness run them alike; same stages, policies and context as the default: `single-12b-xcheck` (Gemma 4 12B writes, Qwen3.6-35B-A3B reviews and
-  grounds), `single-31b-xcheck` (Gemma 4 31B writes, Qwen3.8-27B reviews and grounds),
+  grounds), `single-31b-xcheck` (Gemma 4 31B writes, Qwen3.5-9B reviews and grounds),
   `single-12b-checked-folded` and `single-12b-checked-noground` (the default pair with the
   grounding policy changed). Harness arms for each in `backends.json`. Evidence: the Hub and
   harness PRs with their profile-loading tests.
 - [ ] A5 Runs. After A1 and A2 are deployed. Run A, 33 GB resident: bundled, Hub answer-only,
-  baseline, folded, noground, `single-12b-xcheck`. Run B, 36 GB resident: `single-31b-xcheck`
+  baseline, folded, noground, `single-12b-xcheck`. Run B, 28 GB resident: `single-31b-xcheck`
   with the baseline repeated as the in-run control. Judged blind per scenario by gpt-6-astra
   high, three passes, plus one Claude Opus 5.5 high pass on run A ([judging.md](judging.md)
   C2 to C5). Evidence: a dated review with, per arm, the judged scores and harm, the latency,
@@ -159,7 +159,7 @@ dated review under `reviews/` for a run.
 | folded | `single-12b-checked-folded` | Gemma 4 12B | Gemma 4 12B, grounding in the review | 13 GB |
 | noground | `single-12b-checked-noground` | Gemma 4 12B | Gemma 4 12B, no grounding | 13 GB |
 | arm 3 | `single-12b-xcheck` | Gemma 4 12B | Qwen3.6-35B-A3B | 33 GB |
-| arm 4 | `single-31b-xcheck` | Gemma 4 31B | Qwen3.8-27B | 36 GB |
+| arm 4 | `single-31b-xcheck` | Gemma 4 31B | Qwen3.5-9B | 28 GB |
 
 Run A holds the first six (about 3.5 hours at 55 s per checked turn, 35 turns per arm); run B
 holds arm 4 and the baseline. The two runs are compared like for like through the judge cards.
