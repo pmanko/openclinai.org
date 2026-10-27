@@ -15,9 +15,10 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 | --- | --- | --- | --- |
 | Local HIV research environment | [local-hiv-environment.md](local-hiv-environment.md) | Setup and reset restore the published default baseline in about 5 minutes; Ross's fresh install passed; account context reaches the model; the 18 October module heads need a rebuilt baseline | New default baseline for the 18 October heads; Docker-only prerequisites |
 | Provider parity and local inference efficiency | [provider-parity.md](provider-parity.md) | Hub reads its context once per answer: checked answers take 16–56 s here when the router reuses the chart's temporal facts, 83–204 s when it does not, against 7–51 s built-in | Cross-question reuse; OpenRouter comparison; Ross re-measures |
-| OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | Three gh-stack stacks on the OpenMRS repositories since 21 October (QueryStore #92–#98, backend #615–#623, frontend #72–#76), one PR per layer targeting the layer below; the old fork PRs are closed with pointers | Fresh-reviewer (Codex) findings fixed in their owning layers ([record](reviews/2026-10-21-stack-cutover.md)); next the backend findings, the local boot check of the tops, then the maintainer's review |
+| OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | Three gh-stack stacks on the OpenMRS repositories since 21 October, one PR per layer targeting the layer below; the frontend stack (#72–#76) merged 27 October; QueryStore #94–#98 and backend #617–#623 are restacked with the maintainer's rounds 10 and 11 answered ([record](reviews/2026-10-26-upstream-sync.md)) | The maintainer's merge order for QueryStore and the backend; the ESM fork main and umbrella pin moved to the merged upstream |
 | Review process and gates | [review-process.md](review-process.md) | Designed 20 October from the maintainer's documented method ([record](reviews/2026-10-20-maintainer-review-process.md)); nothing built | Owner marks up the design; then hooks and probes, applied to the open round |
-| Judging | [judging.md](judging.md) | Planned 26 October; the judge card (C1) is in harness #200 and the umbrella's `judging-card` branch | C1 published on the two L5 pages, then repeated passes (C2) |
+| Judging | [judging.md](judging.md) | C1 to C5 built on harness #200 and umbrella #28 (judge cards, repeated passes with agreement, a judge panel, blinded per-scenario sessions, per-pass drill-down); no run has used them yet | The first blinded, three-pass run (the checked-answers runs), then tick the boxes |
+| Checked answers | [checked-answers.md](checked-answers.md) | Scoped 27 October: the reviewer labels and never rewrites, grounding is a profile choice, the In-Depth gate misfires on 31 of 35 claims, team profiles deferred | A1 the In-Depth gate fix, A2 the review policy block, then the arms and runs A and B |
 | Catalyst delivery | [catalyst-delivery.md](catalyst-delivery.md) | Four journeys demonstrated; acceptance open | FP-009 and FP-010 |
 | Local stacks, alone and together | [local-stacks.md](local-stacks.md) | Each stack alone and both on one Hub, Catalyst at OpenELIS Global 2 3.3.0; all smokes and both harness suites run on 25 October ([record](reviews/2026-10-25-local-stacks-together.md)) | The harness Catalyst suite's retired base SQL and the Hub's missing qwen2.5-14b token count |
 | Website and publication | [website-publication.md](website-publication.md) | Documentation site deploys from `main`; landing site live from the umbrella's own website proxy since 18 October | Audit item W04 |
@@ -34,17 +35,20 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
    [target path](openmrs-contribution.md#target-path): the fresh-reviewer
    findings in their owning layers, the local boot check of the stack tops, then
    the maintainer's review and the merge order.
-3. [Provider parity](provider-parity.md): close the remaining gap, the router's
+3. [Checked answers](checked-answers.md): the In-Depth gate fix and the review
+   policy block in the Hub, then the cross-family arms and the two judged runs
+   that decide the default profile.
+4. [Provider parity](provider-parity.md): close the remaining gap, the router's
    reuse of the chart's temporal facts across questions, so Hub answers are at
    least as fast as the built-in provider.
-4. [Local HIV research environment](local-hiv-environment.md): setup needs only
+5. [Local HIV research environment](local-hiv-environment.md): setup needs only
    Docker and the native model router.
-5. [Local stacks, alone and together](local-stacks.md): the two harness suite
+6. [Local stacks, alone and together](local-stacks.md): the two harness suite
    defects the shared run found.
-6. [Catalyst delivery](catalyst-delivery.md): owner acceptance of the four local and
+7. [Catalyst delivery](catalyst-delivery.md): owner acceptance of the four local and
    server journeys and publication verification.
-7. [Website and publication](website-publication.md): close audit item W04.
-8. [Decision-layer experiment](decision-layer-experiment.md): owner review of the
+8. [Website and publication](website-publication.md): close audit item W04.
+9. [Decision-layer experiment](decision-layer-experiment.md): owner review of the
    proposal.
 
 Upstream merging, deployment changes and release or clinical signoffs are not
