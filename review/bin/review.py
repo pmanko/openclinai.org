@@ -303,9 +303,19 @@ def measure(set_id: str, gold: str) -> int:
     return scored.returncode
 
 
-def advertised_profiles() -> set[str]:
+def advertised_profiles() -> dict[str, str]:
+    """The profiles the Hub advertises as available, each with its product title."""
     data = rest_get("chartsearchai/models").get("data", [])
-    return {m["id"] for m in data if m.get("available")}
+    return {m["id"]: str(m.get("label") or m["id"]) for m in data if m.get("available")}
+
+
+def profile_arms(offered: dict[str, str], wanted: list[str]) -> dict[str, dict]:
+    """One provider arm per wanted profile, titled as the product titles it."""
+    return {f"hub-profile-{profile}": {"label": offered.get(profile) or profile, "kind": "provider_arm",
+                                       "provider": "hub",
+                                       "endpointUrl": "http://med-agent-hub:8080/v1/chat/completions",
+                                       "modelName": profile}
+            for profile in wanted}
 
 
 def run_full(args) -> int:
@@ -326,12 +336,8 @@ def run_full(args) -> int:
         backends = json.loads((data_root / "backends.json").read_text())
         cset_path = data_root / "comparison_sets" / f"{args.set}.json"
         cset = json.loads(cset_path.read_text())
-        for profile in wanted:
-            arm = f"hub-profile-{profile}"
-            backends[arm] = {"label": f"Hub profile {profile} (advertised)", "kind": "provider_arm",
-                             "provider": "hub",
-                             "endpointUrl": "http://med-agent-hub:8080/v1/chat/completions",
-                             "modelName": profile}
+        for arm, backend in profile_arms(offered, wanted).items():
+            backends[arm] = backend
             cset["backend_ids"].append(arm)
         (data_root / "backends.json").write_text(json.dumps(backends, indent=1))
         cset_path.write_text(json.dumps(cset, indent=1))
