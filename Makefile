@@ -422,6 +422,7 @@ REVIEW_ARGS = $(if $(PR),--pr $(PR)) $(if $(REPO),--repo $(REPO)) $(if $(AGENT),
 	$(if $(PROFILES),--profiles $(PROFILES)) $(if $(BASELINE),--baseline $(BASELINE)) \
 	$(if $(NO_PUBLISH),--no-publish) $(if $(PUBLISH),--publish $(PUBLISH)) $(if $(L5_RESUME),--resume $(L5_RESUME)) \
 	$(if $(JUDGE_PASSES),--judge-passes $(JUDGE_PASSES)) $(if $(REJUDGE),--rejudge $(REJUDGE)) \
+	$(foreach j,$(JUDGES),--judge $(j)) $(if $(BLIND),--blind) \
 	$(if $(MEASURE),--measure $(MEASURE) --gold $(GOLD)) \
 	$(if $(THREADS_UNTIL),--threads-until $(THREADS_UNTIL)) $(if $(NO_CONSUMER),--no-consumer) \
 	$(if $(HEAD),--head $(HEAD)) $(if $(BASE),--base $(BASE))

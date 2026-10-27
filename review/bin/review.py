@@ -15,6 +15,7 @@ import shutil
 import subprocess
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -100,14 +101,17 @@ def settle(findings: list[dict]) -> list[dict]:
     return findings
 
 
-def run_role(args, role: str, workdir: Path, prompt: str, out: Path) -> str:
+def run_role(args, role: str, workdir: Path, prompt: str, out: Path,
+             agent: str | None = None, env: dict | None = None) -> str:
+    """One fresh session of the agent (the run's, or ``agent``), with ``env`` added to the
+    environment role.sh reads its model and effort from."""
     prompt_file = out.with_suffix(".prompt.md")
     if role != "fixer":
         prompt += ("\nYour final message is saved as your answer: do not write it to a file, and "
                    "leave the repository as you found it.\n")
     prompt_file.write_text(prompt)
-    rc = subprocess.run([str(BIN / "role.sh"), args.agent, role, str(workdir),
-                         str(prompt_file), str(out)]).returncode
+    rc = subprocess.run([str(BIN / "role.sh"), agent or args.agent, role, str(workdir),
+                         str(prompt_file), str(out)], env={**os.environ, **(env or {})}).returncode
     if rc == 3:
         sys.exit(3)
     if rc or not out.exists():
@@ -334,8 +338,8 @@ def run_full(args) -> int:
     with run_environment(data_root, args.set, out_dir / "settings-as-found.json") as env:
         run_dir = run_set("validate-run", args.set, out_dir / "run.log", env,
                           data_root if data_root != DATA else None, args.resume)
-    subprocess.run(["make", "-C", str(HARNESS), "validate-judge-prep", f"RUN={run_dir}"], check=True,
-                   capture_output=True)
+    subprocess.run(["make", "-C", str(HARNESS), "validate-judge-prep", f"RUN={run_dir}"]
+                   + (["BLIND=1"] if args.blind else []), check=True, capture_output=True)
     judge_passes(args, run_dir, out_dir)
     report = harness("validate", "report", "--run-dir", str(run_dir))
     lines = [f"# Full evaluation {args.set} ({stamp})", "", f"Run: {run_dir}",
@@ -351,29 +355,89 @@ def run_full(args) -> int:
     return 0
 
 
+def parse_judges(args) -> list[dict]:
+    """The judges a run uses: each ``--judge agent:model:effort``, or the run's agent with
+    the model and effort role.sh resolves from REVIEW_MODEL and REVIEW_REASONING."""
+    judges = []
+    for spec in getattr(args, "judges", None) or []:
+        parts = spec.split(":")
+        if len(parts) != 3 or not all(parts):
+            raise SystemExit(f"--judge wants agent:model:effort, got {spec!r}")
+        judges.append({"agent": parts[0], "model": parts[1], "effort": parts[2]})
+    return judges or [{"agent": args.agent, "model": os.environ.get("REVIEW_MODEL", ""),
+                       "effort": os.environ.get("REVIEW_REASONING", "")}]
+
+
+def judge_sessions(args, run_dir: Path, out_dir: Path, pass_index: int, passes: int,
+                   judge: dict, blind: bool, tag: str = "judge") -> tuple[Path, Path]:
+    """One pass of one judge: a single session over judge-cells.jsonl, or, blinded, one
+    session per scenario bundle (up to four at once, a failed session re-run once). Writes the
+    pass's rows (every session's, concatenated) and its card (the first session's, with the
+    brief hash and the pass) beside the answers. Returns the rows and card paths."""
+    base = out_dir / f"{tag}.md"
+    inputs = f"\n## Inputs\n\n- Run directory: {run_dir}\n"
+    brief = (BRIEFS / "judge.md").read_text()
+    env = {k: v for k, v in (("REVIEW_MODEL", judge.get("model")), ("REVIEW_REASONING", judge.get("effort"))) if v}
+    if blind:
+        bundles = sorted((run_dir / "judge-bundles").glob("*.jsonl"))
+        if not bundles:
+            raise SystemExit(f"{run_dir}: no judge-bundles; run validate-judge-prep with BLIND=1")
+        sessions = [(out_dir / f"{tag}-{b.stem}.md", brief + inputs
+                     + f"- Cells for this session: {b} (one scenario; its arms are lettered, so score each "
+                       "answer on its own against the chart and keep the letter as backend_id)\n")
+                    for b in bundles]
+    else:
+        sessions = [(base, brief + inputs)]
+
+    def one(session):
+        out, prompt = session
+        for attempt in (1, 2):
+            try:
+                return run_role(args, "judge", run_dir, prompt, out, agent=judge["agent"], env=env)
+            except SystemExit as e:
+                if e.code == 3 or attempt == 2:
+                    raise
+        return ""
+
+    with ThreadPoolExecutor(max_workers=min(4, len(sessions))) as pool:
+        answers = list(pool.map(one, sessions))
+    rows = [r for answer in answers for r in (last_json(answer) or [])]
+    rows_path = base.with_suffix(".rows.json")
+    rows_path.write_text(json.dumps(rows))
+    cards = [json.loads(out.with_suffix(".md.card.json").read_text()) for out, _ in sessions]
+    merged = {**cards[0], "started_at": min(c.get("started_at", "") for c in cards),
+              "finished_at": max(c.get("finished_at", "") for c in cards),
+              "sessions": len(cards), "blinded": blind}
+    base.with_suffix(".md.card.json").write_text(json.dumps(merged, indent=1))
+    return rows_path, judge_card(base, pass_index=pass_index, passes=passes)
+
+
 def judge_passes(args, run_dir: Path, out_dir: Path) -> list[str]:
-    """Judge the run's cells in N fresh sessions, each stored as its own actor with its card.
-    One pass is promoted as it is; several are aggregated per cell (median of the 0-10 axes,
-    majority of the categorical ones, a harm tie counting as harmful) into the canonical
-    judge.jsonl by the harness. Returns the actor ids."""
+    """Judge the run's cells with each judge, N fresh passes each, every pass stored as its
+    own actor with its card. One judge's single pass is promoted as it is; anything more is
+    aggregated per cell (median of the 0-10 axes, majority of the categorical ones, a harm tie
+    counting as harmful) into the canonical judge.jsonl by the harness. Returns the actor ids."""
     passes = max(1, int(getattr(args, "judge_passes", 1) or 1))
-    prompt = (BRIEFS / "judge.md").read_text() + f"\n## Inputs\n\n- Run directory: {run_dir}\n"
+    judges = parse_judges(args)
+    blind = bool(getattr(args, "blind", False))
     actors = []
-    for i in range(1, passes + 1):
-        out = out_dir / ("judge.md" if passes == 1 else f"judge-p{i}.md")
-        answer = run_role(args, "judge", run_dir, prompt, out)
-        rows = out.with_suffix(".rows.json")
-        rows.write_text(json.dumps(last_json(answer)))
-        card = judge_card(out, pass_index=i, passes=passes)
-        done = subprocess.run(["make", "-C", str(HARNESS), "validate-judge-finalize", f"RUN={run_dir}",
-                               f"ROWS={rows}", f"JUDGE_CARD={card}"]
-                              + (["JUDGE_PROMOTE=1"] if passes == 1 else []),
-                              check=True, capture_output=True, text=True).stdout
-        m = re.search(r"judges/([^/\s]+)/judge\.jsonl", done)
-        if not m:
-            raise SystemExit(f"finalize named no actor for pass {i}:\n{done}")
-        actors.append(m.group(1))
-    if passes > 1:
+    for k, judge in enumerate(judges, 1):
+        for i in range(1, passes + 1):
+            tag = "judge" + (f"-j{k}" if len(judges) > 1 else "") + (f"-p{i}" if passes > 1 else "")
+            rows, card = judge_sessions(args, run_dir, out_dir, i, passes, judge, blind, tag)
+            done = subprocess.run(["make", "-C", str(HARNESS), "validate-judge-finalize", f"RUN={run_dir}",
+                                   f"ROWS={rows}", f"JUDGE_CARD={card}"]
+                                  + (["JUDGE_PROMOTE=1"] if passes == 1 and len(judges) == 1 else []),
+                                  check=True, capture_output=True, text=True).stdout
+            m = re.search(r"judges/([^/\s]+)/judge\.jsonl", done)
+            if not m:
+                raise SystemExit(f"finalize named no actor for {tag}:\n{done}")
+            actors.append(m.group(1))
+            manifest = run_dir / "judges" / m.group(1) / "manifest.json"
+            if manifest.exists() and json.loads(manifest.read_text()).get("self_preference_risk"):
+                print(f"WARNING: {m.group(1)} is from the same model family as an arm it judged "
+                      f"(self-preference risk); see its manifest")
+    if len(actors) > 1:
         subprocess.run(["uv", "--directory", str(HARNESS), "run", "python", "scripts/judge-aggregate.py",
                         str(run_dir)] + [a for actor in actors for a in ("--actor", actor)],
                        check=True, capture_output=True, text=True)
@@ -408,8 +472,8 @@ def rejudge(args) -> int:
     stamp = time.strftime("%Y%m%d-%H%M%S")
     out_dir = work_dir() / f"rejudge-{stamp}"
     out_dir.mkdir(parents=True)
-    subprocess.run(["make", "-C", str(HARNESS), "validate-judge-prep", f"RUN={run_dir}"], check=True,
-                   capture_output=True)
+    subprocess.run(["make", "-C", str(HARNESS), "validate-judge-prep", f"RUN={run_dir}"]
+                   + (["BLIND=1"] if args.blind else []), check=True, capture_output=True)
     actors = judge_passes(args, run_dir, out_dir)
     report = harness("validate", "report", "--run-dir", str(run_dir))
     lines = [f"# Re-judged {run_dir.name} ({stamp})", "", f"Passes: {', '.join(actors)}",
@@ -533,6 +597,10 @@ def main() -> int:
     ap.add_argument("--baseline", help="an earlier full run id to cite for comparison")
     ap.add_argument("--judge-passes", type=int, default=1,
                     help="L5: judge the cells this many times in fresh sessions (default 1)")
+    ap.add_argument("--judge", dest="judges", action="append", metavar="AGENT:MODEL:EFFORT",
+                    help="L5: a judge to use, repeatable; default is the run's agent with REVIEW_MODEL and REVIEW_REASONING")
+    ap.add_argument("--blind", action="store_true",
+                    help="L5: letter the arms and judge one scenario per session")
     ap.add_argument("--no-publish", action="store_true",
                     help="L5: keep the report and dashboard local instead of publishing them")
     ap.add_argument("--publish", metavar="RUN_DIR", help="publish an already judged L5 run")

@@ -38,11 +38,19 @@ between like judges.
   thresholds stated, and the highest-spread cells listed on the page (harness
   `agreement.py`, `judges/consensus.json`). Built on harness #200 and umbrella #28; evidence is
   the first published three-pass run.
-- [ ] C3 Panel. `--judge agent:model:effort`, repeatable; per-judge arm scores side by side,
-  inter-judge alpha, the disagreement cells as the priority sample for human adjudication; a
-  judge from an arm's own model family is refused or flagged.
-- [ ] C4 Isolation. One bundle per scenario with arm identities replaced by letters, one
-  session per bundle, the letters mapped back at finalize.
+- [ ] C3 Panel. `make review FULL=1 JUDGES="codex:gpt-6-astra:high claude:claude-opus-5-5:high"`
+  (`--judge agent:model:effort`, repeatable) gives each judge its own passes; the harness
+  combines each judge's passes into one rating and writes the judges side by side with
+  Krippendorff's alpha between them into `judges/consensus.json` (harness
+  `judge-aggregate.py`), shown on the report and dashboard; a judge card records the judge's
+  model family, the arms' families and `self_preference_risk` when they coincide, and the run
+  summary warns. Built on harness #200 and umbrella #28; evidence is the first run judged by
+  two families.
+- [ ] C4 Isolation. `make review FULL=1 ... BLIND=1`: `judge-prep --blind` writes one bundle
+  per scenario under `judge-bundles/` with the arms replaced by letters shuffled per scenario
+  (harness `blinding.py`); `review.py` runs one judge session per bundle, up to four at once,
+  re-running a failed one once; `judge-finalize` maps the letters back and records the pass as
+  blinded. Built on harness #200 and umbrella #28; evidence is the first blinded run.
 - [ ] C5 Drill-down and like-for-like comparison. Every pass's scores and note per cell (the
   report's heatmap note and the dashboard's cell panel); the run summary says whether the
   baseline was judged the same way (model, effort, brief, aggregation), and
