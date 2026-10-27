@@ -32,10 +32,12 @@ between like judges.
   branch (`review/bin/role.sh` writes the session card, `review.py` adds the brief hash and
   pass, publication carries it to the catalog). The two published L5 runs get their cards
   from the local session logs and are republished.
-- [ ] C2 Repeated passes. `make review FULL=1 ... PASSES=N` runs N fresh sessions as actors
-  p1..pN; the canonical rows are the per-cell median and majority; Krippendorff's alpha per
-  axis across passes, with the 0.667 and 0.8 thresholds stated, and the highest-spread cells
-  listed on the page.
+- [ ] C2 Repeated passes. `make review FULL=1 ... JUDGE_PASSES=N` runs N fresh sessions as
+  actors p1..pN; the canonical rows are the per-cell median and majority (harness
+  `judge-aggregate.py`); Krippendorff's alpha per axis across passes, with the 0.667 and 0.8
+  thresholds stated, and the highest-spread cells listed on the page (harness
+  `agreement.py`, `judges/consensus.json`). Built on harness #200 and umbrella #28; evidence is
+  the first published three-pass run.
 - [ ] C3 Panel. `--judge agent:model:effort`, repeatable; per-judge arm scores side by side,
   inter-judge alpha, the disagreement cells as the priority sample for human adjudication; a
   judge from an arm's own model family is refused or flagged.
