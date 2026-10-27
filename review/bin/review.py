@@ -375,7 +375,8 @@ def judge_sessions(args, run_dir: Path, out_dir: Path, pass_index: int, passes: 
     pass's rows (every session's, concatenated) and its card (the first session's, with the
     brief hash and the pass) beside the answers. Returns the rows and card paths."""
     base = out_dir / f"{tag}.md"
-    inputs = f"\n## Inputs\n\n- Run directory: {run_dir}\n"
+    inputs = (f"\n## Inputs\n\n- Run directory: {run_dir}\n"
+              f"- Rubric: {HARNESS / '.claude/skills/clinical-answer-scoring/rubric.md'}\n")
     brief = (BRIEFS / "judge.md").read_text()
     env = {k: v for k, v in (("REVIEW_MODEL", judge.get("model")), ("REVIEW_REASONING", judge.get("effort"))) if v}
     if blind:
