@@ -341,8 +341,9 @@ def run_full(args) -> int:
     lines = [f"# Full evaluation {args.set} ({stamp})", "", f"Run: {run_dir}",
              f"Report: {report.stdout.strip()}", "", judging(run_dir)["sentence"], ""] + arm_table(run_dir)
     if args.baseline:
-        lines += ["", f"Compared with run {args.baseline}: "
-                  f"{HARNESS / 'artifacts/validate' / args.baseline / 'report.html'}"]
+        base = HARNESS / "artifacts/validate" / args.baseline
+        lines += ["", f"Compared with run {args.baseline}: {base / 'report.html'}",
+                  baseline_note(run_dir, base)]
     if not args.no_publish:
         lines += ["", f"Published: {publish_full(run_dir, args.set)}"]
     (out_dir / "summary.md").write_text("\n".join(lines) + "\n")
@@ -377,6 +378,45 @@ def judge_passes(args, run_dir: Path, out_dir: Path) -> list[str]:
                         str(run_dir)] + [a for actor in actors for a in ("--actor", actor)],
                        check=True, capture_output=True, text=True)
     return actors
+
+
+def judge_match(a: dict, b: dict) -> bool:
+    """Whether two judging summaries came from the same judge: the canonical cards agree on
+    model, reasoning effort and brief, and the passes were combined the same way."""
+    def key(summary: dict) -> tuple:
+        cards = [c for c in summary.get("cards", []) if c.get("actor_id") in summary.get("canonical", [])]
+        return (summary.get("aggregation") or "", len(cards),
+                tuple(sorted((str(c.get("model")), str(c.get("reasoning_effort")), str(c.get("brief_sha256")))
+                             for c in cards)))
+    return bool(a.get("recorded")) and bool(b.get("recorded")) and key(a) == key(b)
+
+
+def baseline_note(run_dir: Path, base: Path) -> str:
+    """One line saying whether the baseline's scores are comparable with this run's."""
+    mine, theirs = judging(run_dir), judging(base)
+    if judge_match(mine, theirs):
+        return "Like for like: the baseline was judged the same way."
+    return (f"Not like for like: the baseline reads \"{theirs['sentence']}\" while this run reads "
+            f"\"{mine['sentence']}\". Re-judge the baseline's frozen cells with this judge: "
+            f"make review REJUDGE={base} AGENT=... MODEL=... REASONING=... JUDGE_PASSES=...")
+
+
+def rejudge(args) -> int:
+    """Judge an existing run's frozen cells again with the current judge and passes. The new
+    pass(es) become the headline; earlier passes stay as actors. Publish separately."""
+    run_dir = Path(args.rejudge).resolve()
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    out_dir = work_dir() / f"rejudge-{stamp}"
+    out_dir.mkdir(parents=True)
+    subprocess.run(["make", "-C", str(HARNESS), "validate-judge-prep", f"RUN={run_dir}"], check=True,
+                   capture_output=True)
+    actors = judge_passes(args, run_dir, out_dir)
+    report = harness("validate", "report", "--run-dir", str(run_dir))
+    lines = [f"# Re-judged {run_dir.name} ({stamp})", "", f"Passes: {', '.join(actors)}",
+             f"Report: {report.stdout.strip()}", "", judging(run_dir)["sentence"], ""] + arm_table(run_dir)
+    (out_dir / "summary.md").write_text("\n".join(lines) + "\n")
+    print("\n".join(lines))
+    return 0
 
 
 def judge_card(answer: Path, pass_index: int, passes: int) -> Path:
@@ -496,6 +536,8 @@ def main() -> int:
     ap.add_argument("--no-publish", action="store_true",
                     help="L5: keep the report and dashboard local instead of publishing them")
     ap.add_argument("--publish", metavar="RUN_DIR", help="publish an already judged L5 run")
+    ap.add_argument("--rejudge", metavar="RUN_DIR",
+                    help="L5: judge an existing run's frozen cells again with the current judge")
     ap.add_argument("--resume", metavar="RUN_DIR",
                     help="L5: carry that run's clean cells over and run only the rest (an added arm)")
     ap.add_argument("--measure", help="run a set on the deployed stack and score it against --gold")
@@ -512,6 +554,8 @@ def main() -> int:
         ap.error("--head reviews one local layer; --stack reads the pushed stack")
     if args.measure:
         return measure(args.measure, args.gold)
+    if args.rejudge:
+        return rejudge(args)
     if args.publish:
         run_dir = Path(args.publish).resolve()
         print(f"Published: {publish_full(run_dir, run_set_id(run_dir))}")

@@ -62,3 +62,21 @@ def test_the_judge_card_adds_the_brief_hash_and_the_pass_to_the_session(tmp_path
     assert card["brief_path"] == "review/briefs/judge.md"
     assert (card["pass_index"], card["passes"]) == (2, 3)
     assert card["model"] == "gpt-6-astra" and card["agent_version"] == "0.160.1"
+
+
+def test_judge_match_compares_the_canonical_cards_not_the_actor_names():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("review_driver2", ROOT / "review" / "bin" / "review.py")
+    assert spec and spec.loader
+    review = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(review)
+
+    def summary(model, effort="high", brief="b1", actor="p1", aggregation="single-pass"):
+        return {"recorded": True, "aggregation": aggregation, "canonical": [actor],
+                "cards": [{"actor_id": actor, "model": model, "reasoning_effort": effort, "brief_sha256": brief}]}
+
+    assert review.judge_match(summary("gpt-6-astra"), summary("gpt-6-astra", actor="other"))
+    assert not review.judge_match(summary("gpt-6-astra"), summary("claude-opus-5-5"))
+    assert not review.judge_match(summary("gpt-6-astra"), summary("gpt-6-astra", effort="medium"))
+    assert not review.judge_match(summary("gpt-6-astra"), summary("gpt-6-astra", brief="b2"))
+    assert not review.judge_match(summary("gpt-6-astra"), {"recorded": False, "cards": [], "canonical": []})

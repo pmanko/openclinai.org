@@ -43,9 +43,11 @@ between like judges.
   judge from an arm's own model family is refused or flagged.
 - [ ] C4 Isolation. One bundle per scenario with arm identities replaced by letters, one
   session per bundle, the letters mapped back at finalize.
-- [ ] C5 Drill-down and like-for-like comparison. Every pass's scores and note per cell; a
-  baseline compares only when the judge cards match, otherwise `--rejudge <run>` scores the
-  baseline's frozen cells with the current judge.
+- [ ] C5 Drill-down and like-for-like comparison. Every pass's scores and note per cell (the
+  report's heatmap note and the dashboard's cell panel); the run summary says whether the
+  baseline was judged the same way (model, effort, brief, aggregation), and
+  `make review REJUDGE=<run> ...` scores a run's frozen cells again with the current judge.
+  Built on harness #200 and umbrella #28; evidence is the first run compared like for like.
 - [ ] C6 Human calibration stays as built (`validate-adjudicate`, PPI); C3's disagreement
   cells feed its sample.
 
