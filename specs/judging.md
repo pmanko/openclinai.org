@@ -38,8 +38,9 @@ between like judges.
   thresholds stated, and the highest-spread cells listed on the page (harness
   `agreement.py`, `judges/consensus.json`). Built on harness #200 and umbrella #28; evidence is
   the first published three-pass run.
-- [ ] C3 Panel. `make review FULL=1 JUDGES="codex:gpt-6-astra:high claude:claude-opus-5-5:high"`
-  (`--judge agent:model:effort`, repeatable) gives each judge its own passes; the harness
+- [ ] C3 Panel. `make review FULL=1 JUDGES="codex:gpt-6-astra:high:3 claude:claude-opus-5-5:high:1"`
+  (`--judge agent:model:effort[:passes]`, repeatable; a judge without a count takes
+  `JUDGE_PASSES`) gives each judge its own number of passes; the harness
   combines each judge's passes into one rating and writes the judges side by side with
   Krippendorff's alpha between them into `judges/consensus.json` (harness
   `judge-aggregate.py`), shown on the report and dashboard; a judge card records the judge's
@@ -54,7 +55,10 @@ between like judges.
 - [ ] C5 Drill-down and like-for-like comparison. Every pass's scores and note per cell (the
   report's heatmap note and the dashboard's cell panel); the run summary says whether the
   baseline was judged the same way (model, effort, brief, aggregation), and
-  `make review REJUDGE=<run> ...` scores a run's frozen cells again with the current judge.
+  `make review REJUDGE=<run> ...` scores a run's frozen cells again with the current judge;
+  `make review ADD_JUDGES=<run> JUDGES="..."` adds judges or passes to a judged run and
+  rebuilds its headline from the earlier passes and the new ones, numbering a judge's new
+  passes after its earlier ones and keeping the run's blinding.
   Built on harness #200 and umbrella #28; evidence is the first run compared like for like.
 - [ ] C6 Human calibration stays as built (`validate-adjudicate`, PPI); C3's disagreement
   cells feed its sample.
