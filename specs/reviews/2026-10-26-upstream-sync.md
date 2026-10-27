@@ -36,6 +36,15 @@ upstream was rebased.
 | ChartSearchAI | 46b30eb75 | 12255dd84 | #623 a087da3 + main 77ed45f; adds the 16 drug-safety commits |
 | ESM | aee3449 | aee3449 | unchanged |
 
+After round 10 (the same evening) both stacks were pushed again with the maintainer's fixes, and
+the fork mains moved a second time, again by approved force push:
+
+| Fork | From | To | Content |
+| --- | --- | --- | --- |
+| QueryStore | 651f5e4 | 155d6efef | #98 after round 10, on main 8bbc5ea (`.claude/` tooling commits only) |
+| ChartSearchAI | 12255dd84 | 3e3012631 | #623 after round 10, on main 2508d82 (ADR Decision 460); the paired build replaced by the Depends-On check |
+| ESM | aee3449 | aee3449 | unchanged |
+
 ## Checks
 
 | Step | Result |
@@ -45,3 +54,4 @@ upstream was rebased.
 | Index | unchanged QueryStore code, so no reindex; after the restart the index reports complete with 514,682 documents |
 | Build and deploy | `make openmrs-source-pair-build`, backend recreated (healthy in 35 s), `hiv-baseline.py record-deployed` |
 | Smoke | `make chartsearch-smoke`: `single-12b-checked` Answer `checked` with one resolved citation in 18.9 s, done in 58.5 s, stored; identity ChartSearchAI 12255dd84, QueryStore 651f5e4, ESM aee3449, Hub 36708b5 |
+| Round-10 pins | QueryStore: every layer's full suite green (635 api and 66 omod tests at the tip). Backend: full suites at #617 and #619 green but for the known timing-dependent `LocalLlmServerAuthTest`; at #620 the body-read guard caught the `ofInputStream` change, which was dropped before the push, after which `ArchitectureGuardTest` and the wiring tests pass at #620 and the tip. `make openmrs-source-pair-build`, `docker restart`, healthy in 40 s, `record-deployed` (ChartSearchAI 3e3012631, QueryStore 155d6efef). Index unchanged and complete (514,682). `make chartsearch-smoke`: `single-12b-checked` Answer `checked` with 1 resolved citation in 39.6 s, done in 64.2 s, stored |
