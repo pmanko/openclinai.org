@@ -27,7 +27,7 @@ evidence supports, and every added step has a judged run showing what it buys.
   no) and becomes a profile choice: separate, folded into the review, or off. The baseline
   keeps it separate.
 - The reviewer's prompt stops asking for a rewrite the engine discards.
-- No team profile for now. The ten-stage single profile already has five model calls; the
+- No team profile for now. The ten-stage single profile already has six model calls; the
   team's gather stage adds two or more, unmeasured. Team profiles return when a harder task
   set exists (multi-step or longitudinal questions) and the single baseline has been judged.
 - The In-Depth gate judges each claim on the claim's own words, never on the question's.
@@ -51,7 +51,7 @@ order. A stage is a step; a role is the model that takes it. The checked profile
 | final_resolve_refs | re-maps citations | none |
 | ground_verdicts | one entailment call: does each cited record support its sentence | 3, grounder |
 | indepth | the writer drafts Background claims; the reviewer validates them | 4 writer, 5 reviewer |
-| indepth_gate | the deterministic checks per claim | none |
+| indepth_gate | the deterministic checks per claim, then one entailment call for the claims' citations | 6, grounder |
 
 Findings behind the decisions (26 and 27 October reads of the three full runs and the code):
 
@@ -61,9 +61,13 @@ Findings behind the decisions (26 and 27 October reads of the three full runs an
 - The grounder never changes the answer: an unsupported citation marks the answer
   `needs_review` and the citation unsupported. The answer-only profile also runs it, so no arm
   has measured leaving it out.
-- The In-Depth gate calls the answer gate per claim with the question attached; a question
-  that says "trend" fails every claim mentioning a single-point measurement. 31 of 35
-  In-Depths are flagged in every run; on reading at most 4 deserved it.
+- 31 of 35 In-Depths are marked for checking in every run, but the date check accounts for few
+  of them. In the 26 October run the citation checks marked 66 of 89 claims: 33 because the
+  grounder found the cited record did not support the claim, 33 because the claim cites nothing
+  and is labelled general guidance. The date check questioned 9 claims in 6 In-Depths.
+- The In-Depth gate called the answer gate per claim with the question attached, so a question
+  asking how weight changed failed a claim that stated one CD4 value. Replayed claim by claim,
+  3 of the 9 questioned claims came from the question.
 - Under both judges the checked profile's answer scores are within a point of answer-only
   while costing about 20 s more per turn
   ([26 October record](reviews/2026-10-26-l5-full-default.md)).
@@ -103,8 +107,8 @@ dated review under `reviews/` for a run.
   claim only; the Answer gate keeps the question. Tests: a non-trend claim over a
   single-point series under a "trend" question raises nothing; a claim asserting a trend over
   one point still fails; the flagged claims of the 26 October run as goldens with the expected
-  flag set. Evidence: the Hub PR and the flagged count on a 17-scenario answers-only run after
-  the fix (expected: single digits, not 31 of 35).
+  flag set. Evidence: the Hub PR and the date check's questioned-claim count on a 17-scenario
+  answers-only run after the fix (replayed on the 26 October claims: 6, down from 9).
 - [ ] A2 Review policy. Every profile carries a `review` policy block:
   `action: label` (the only accepted value; `apply` and `redo` reserved and refused) and
   `grounding: separate | folded | off`. `separate` is the entailment call; `folded` adds a
