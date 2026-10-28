@@ -174,13 +174,15 @@ arm), 17 scenarios, 35 turns per arm.
 
 ### L6 Local entailment scorer (Hub, harness)
 
-- [ ] L6.1 A `policies.review.grounding: scorer` provider that calls a local entailment
-  model (MiniCheck class, or AlignScore) per (source, statement) pair and returns a
-  probability; licences checked and recorded (Bespoke-MiniCheck-7B is non-commercial)
-  ([MiniCheck](https://arxiv.org/html/2404.10774v2),
-  [AlignScore calibration](https://arxiv.org/pdf/2505.21072)). This is the same local
-  cross-encoder arm as decision-layer P0.3; the weights, the replay pairs and the metrics
-  are shared, not duplicated.
+- [x] L6.1 Measured offline first ([28 October replay](reviews/2026-10-28-entailment-scorer-replay.md)):
+  on 461 judged In-Depth points, four scorers (MiniCheck DeBERTa and Flan-T5, two NLI
+  cross-encoders; MIT and Apache licences) reach AUROC 0.56 to 0.66 and no threshold with
+  0.8 precision, because a whole point (a chart fact joined to a clinical reading) is not
+  entailed by its record even when the fact is; the bare fact is (p 0.62 to 0.85). No scorer
+  replaces the prompted check. A scorer stays a candidate only on atomic (record, fact)
+  pairs, which the facts-first check already lists; the shadow provider scores those
+  (Hub #48) and the decision is taken on the fact-level labelled set from run D2 onward:
+  if it does not reach 0.8 precision at recall above the prompted check's, L6 closes.
 - [x] L6.2 Shadow first: `policies.review.shadow: scorer` records the scorer's probabilities
   and label on every `groundingChecks[]` entry beside the configured checker's verdict; the
   shipped labels are unchanged (Hub #48). The service is `scripts/scorer-service.py`
