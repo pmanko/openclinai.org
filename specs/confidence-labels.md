@@ -102,7 +102,9 @@ arm), 17 scenarios, 35 turns per arm.
   adjudications (judging.md C6) join as a second reference where they exist. Output: a table
   per run under `judges/check-precision.json`, shown on the report and the dashboard.
 - [x] L1.2 Runs 8dacd7b1 and e01674f6 scored, the result recorded with the DRY finding and a
-  first calibrated score: [28 October review](reviews/2026-10-28-confidence-labels-runs-a2-c.md).
+  first calibrated score: [28 October review](reviews/2026-10-28-confidence-labels-runs-a2-c.md);
+  run b7bccdd2 (bare, verify, agree) scored and the fit repeated on 958 points:
+  [run D3 record](reviews/2026-10-28-confidence-labels-run-d3.md).
 - [ ] **LG1** Bar for visibility (owner decision): a check may mark what the clinician sees
   when its precision is at least 0.8 on at least 50 marked items across two judged runs, and
   its marks are not a subset of a cheaper check's. A check below the bar runs hidden and is
@@ -146,7 +148,12 @@ arm), 17 scenarios, 35 turns per arm.
   ([CoVe](https://arxiv.org/pdf/2309.11495)); its flags are per sentence with `wrong` and
   `chart`, as the label prompt already returns. Built as the `verify` arm (Hub #46); after run
   D's first turns showed four chart reads and 107 s a turn, the citation verdicts are folded
-  into the verification review and the verifier is Qwen3.5-9B (Hub #47). Measured in run D2.
+  into the verification review and the verifier is Qwen3.5-9B (Hub #47). Measured in run D3
+  ([record](reviews/2026-10-28-confidence-labels-run-d3.md)): its flags were right where
+  judged (1 of 1 answer, 2 of 3 In-Depth points) but too few for LG1; the 9B's own citation
+  verdicts were empty in 11 of 35 turns and wrong in all 7 contradictions it did give, so the
+  fallback citation check uses the 12B grounding model and the review runs at temperature 0
+  (Hub d3-checks).
 - [ ] L3.6 Prompt probes become tests: the ten probe pairs under `work/hub-labels/` move to
   Hub fixtures with the expected label per pair, run against a stub model in CI and against
   the live checkers before a run.
@@ -181,17 +188,18 @@ arm), 17 scenarios, 35 turns per arm.
   entailed by its record even when the fact is; the bare fact is (p 0.62 to 0.85). No scorer
   replaces the prompted check. A scorer stays a candidate only on atomic (record, fact)
   pairs, which the facts-first check already lists; the shadow provider scores those
-  (Hub #48) and the decision is taken on the fact-level labelled set from run D2 onward:
-  if it does not reach 0.8 precision at recall above the prompted check's, L6 closes.
+  (Hub #48) and the decision is taken on the fact-level labelled set from the first judged run
+  with the shadow on (run D3 ran without it): if it does not reach 0.8 precision at recall
+  above the prompted check's, L6 closes.
 - [x] L6.2 Shadow first: `policies.review.shadow: scorer` records the scorer's probabilities
   and label on every `groundingChecks[]` entry beside the configured checker's verdict; the
   shipped labels are unchanged (Hub #48). The service is `scripts/scorer-service.py`
   (`make scorer-up`, `SCORER_MODEL`, the Hub reads `SCORER_BASE_URL`); the model follows the
-  28 October replay. Switched on in the profiles after run D2, whose Hub image stays fixed.
+  28 October replay. Switched on in the profiles once Hub #48 is pinned, after run D3.
 
 ### L7 Agreement arm (research)
 
-- [x] L7.1 Built as the `agree` profile (Hub #46); measured in run D2. The `agree` profile: two writers from different families answer independently;
+- [x] L7.1 Built as the `agree` profile (Hub #46); measured in run D3. The `agree` profile: two writers from different families answer independently;
   claims are split and matched; the first writer's answer is shown as written (never a
   merged text), agreed claims read as supported and disagreements as "the models differ"
   with the other reading. A candidate replacement for the model review, not an addition. Agreement is a confidence signal, not proof: two
@@ -199,8 +207,11 @@ arm), 17 scenarios, 35 turns per arm.
   ([semantic entropy](https://oatml.cs.ox.ac.uk/blog/2024/06/19/detecting_hallucinations_2024.html),
   [cross-model disagreement](https://arxiv.org/pdf/2603.25450)). Cost about one extra
   answer per turn; semantic entropy (5 to 10 samples) is out of reach on this host.
-- [ ] L7.2 Judged against the default and arm 3 in a checked-answers run; agreement scored
-  under L1 as one more check.
+- [x] L7.2 Judged in run D3 and scored under L1 as one more check: 0.40 precision on 5 marked
+  cells (the misses are wording differences on "last visit" answers judged 9 and 10), 11 of 35
+  answers sent to review, no score lift at 18 s a turn
+  ([record](reviews/2026-10-28-confidence-labels-run-d3.md)). Retired from the matrix (owner,
+  28 October); the profile and code stay for a wording-tolerant matcher if one is tried.
 
 ### L8 Calibration and the confidence label (harness, Hub)
 
@@ -230,28 +241,22 @@ or it goes. The matrix below replaces the seven-arm matrix for the next run.
 | Same-model review (the default's reviewer) | Answer scores within noise of answer-only in three runs; 0.5 precision on its marks | Retire; a model does not catch its own errors ([Mind the Gap](https://arxiv.org/pdf/2412.02674)) |
 | Free-form cross-family review (arm 3's reviewer) | 0.5 precision, the main source of marks in run C | Replace: one run measures the verification-question form (L3.5) against claim agreement with a second writer (L7); the one that clears LG1 with the better recall stays, the other goes |
 | Prompted citation check, separate | 0.38 (A2) to 0.6 (C, 5 marks); scores unchanged without it | Keep only until the scorer (L6) is measured beside it in shadow; then one of the two |
-| Citation check folded into the review | Caught 0 of 4 judged citation faults | Retire the arm |
+| Citation check folded into the review | Caught 0 of 4 judged citation faults (C); the 9B verifier returned no verdicts in 11 of 35 turns and 7 false contradictions (D3) | The fold stays on the verify arm with the 12B separate check as its fallback; the 9B never judges citations alone |
 | No citation check (noground) | Scores equal to the default | Becomes the bare control (deterministic checks only), not a separate research arm |
 | DRY on the writer | No score change, no garbled dates, 15 s a turn faster with it off | Off is the default; the DRY-off arm is retired |
 | Two writers merged into one answer | Mixing models lowers quality and synthesis loses to selection ([Self-MoA](https://mlanthology.org/tmlr/2026/li2026tmlr-rethinking/), [selection bottleneck](https://www.alphaxiv.org/abs/2603.20324)) | Never built |
-| Claim agreement between two independent writers | Recurring facts are far more likely true; disagreement is the suspect ([USC](https://deepmind.google/research/publications/universal-self-consistency-with-large-language-models/), [Integrative Decoding](https://arxiv.org/pdf/2410.01556)) | Candidate replacement for the model review; measured in the next run |
+| Claim agreement between two independent writers | 0.40 precision on 5 marks in D3, 11 of 35 answers to review, no score lift ([record](reviews/2026-10-28-confidence-labels-run-d3.md)) | Retired from the matrix (owner, 28 October); the profile stays off the run list |
+| Window scope warn, single-point trend on a refusal | Marked correct answers in every arm of D3 (judges 9 and 10) | Window scope is an info note; the single-point check passes an answer that states no trend and checks only the series the answer names (Hub d3-checks) |
 | Confidence grade (High, Medium, Low) | Never measured; small models' self-confidence is near chance | Withdrawn; returns only as the calibrated score of L8 |
 | Team profiles | Unmeasured, two extra calls | Stay deferred (checked-answers A8) |
 
-Next run (run D), four arms, each answering one question:
-
-| Arm | Checks | Question |
-| --- | --- | --- |
-| bare | writer, deterministic checks, DRY off | the floor: what the rules alone catch |
-| verify | bare plus a cross-family reviewer asking verification questions (L3.5) | does a disciplined critic clear LG1 |
-| agree | bare plus a second writer from another family and claim-level agreement (L7) | does agreement clear LG1 |
-| bundled | ChartSearchAI built-in | the reference |
-
-The run is judged by one blind pass (owner, 28 October: one judge run per round from here),
-scored by L1, and the arm whose check clears LG1 at the better recall per second becomes the
-default's check (checked-answers A7). The scorer (L6) is not in the Hub for run D: it is
-measured offline on the same labelled pairs by the decision-layer replay (P0.3), and joins a
-profile only if it clears LG1 there. The labelled points of runs A2, C and D feed L8.
+Run D3 (b7bccdd2, 28 October) measured four arms: bare, verify, agree and the built-in
+reference ([record](reviews/2026-10-28-confidence-labels-run-d3.md)). The next judged run
+carries three: bare, verify (12B fallback, temperature 0) and bundled, with the shadow scorer
+recording fact-level labels for L6. It is judged by one blind pass per judge (owner, 28
+October: one judge run per round), scored by L1, and the check that clears LG1 at the better
+recall per second becomes the default's check (checked-answers A7). The labelled points of
+runs A2, C and D3 feed L8.
 
 ## Order of work
 
@@ -262,13 +267,15 @@ profile only if it clears LG1 there. The labelled points of runs A2, C and D fee
 3. Done 28 October (Hub #46): L5.2 (DRY off by default, router too), L3.5 (verification-question
    reviewer), L7 (second writer and claim agreement), the bare, verify and agree profiles; the
    retired arms removed. L6 runs offline in the decision-layer replay first.
-4. Run D was stopped at 86 of 175 turns on 28 October after its first turns showed the verify
-   arm's cost (owner: no churn without a remediated Hub); Hub #47 folds the verifier's citation
-   check and uses the 9B. Run D2 is the same four arms on that Hub, judged by one gpt-6-astra
-   pass and one Opus pass, blind.
-5. From D2's table: the pruning table's open rows; L8 refit on A2, C and D2; L6's provider if
-   the offline replay clears the bar; L9 and checked-answers A6 and A7 from LG1, which the owner
-   sets from the table.
+4. Done 28 October: run D (stopped at 86 turns for the verify arm's cost), D2 (stopped at 114
+   turns when the 9B returned no citation verdicts; Hub 35ef26b falls back to the separate
+   check) and D3 (b7bccdd2, judged by one gpt-6-astra pass and one Opus pass, blind) on Hub #47;
+   the pruning table's open rows closed, L8 refit on A2, C and D3 (held-out AUROC 0.725, no
+   0.8-precision band), the agree arm retired, the misfiring deterministic checks and the verify
+   profile fixed (Hub d3-checks).
+5. Pin Hub #48 and switch the shadow scorer on; the next judged run (bare, verify, bundled)
+   gives L6 its fact-level set and the verification review its mark count for LG1, which the
+   owner sets from the table with LG2; then L9 and checked-answers A6 and A7.
 6. Run B (the 31B pair) on the settled checks.
 
 ## Interface with the decision-layer experiment

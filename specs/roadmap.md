@@ -19,7 +19,7 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 | Review process and gates | [review-process.md](review-process.md) | Designed 20 October from the maintainer's documented method ([record](reviews/2026-10-20-maintainer-review-process.md)); nothing built | Owner marks up the design; then hooks and probes, applied to the open round |
 | Judging | [judging.md](judging.md) | C1 to C5 built on harness #200 and umbrella #28 (judge cards, repeated passes with agreement, a judge panel, blinded per-scenario sessions, per-pass drill-down); no run has used them yet | The first blinded, three-pass run (the checked-answers runs), then tick the boxes |
 | Checked answers | [checked-answers.md](checked-answers.md) | A1 to A4 built (Hub #41 to #44); run A judged 27 October and rerun on the fixed Hub (8dacd7b1, judging in progress); run B waits for the label remediation | Run B on the remediated Hub, then A7 from the judged runs |
-| Confidence labels | [confidence-labels.md](confidence-labels.md) | Proposed 27 October from the dashboard review: the checks mark correct claims (35% of In-Depth points marked, half the red false), the strict citation prompt made Qwen reject everything, DRY garbles copied dates; the judge no longer sees the checks and scores every In-Depth point | L1 measure each check against the judge on run 8dacd7b1; the cheap Hub label changes before run B |
+| Confidence labels | [confidence-labels.md](confidence-labels.md) | Findings-not-grades labels shipped behind the profiles (Hub #44 to #48, ESM findings view); runs A2, C and D3 judged blind and every check scored against the judge ([A2 and C](reviews/2026-10-28-confidence-labels-runs-a2-c.md), [D3](reviews/2026-10-28-confidence-labels-run-d3.md)): the checks mark almost nothing that remains and no band of the calibrated score reaches 0.8 precision; the agree arm retired, the misfiring deterministic checks fixed (Hub d3-checks) | Pin Hub #48 with the shadow scorer on; the next judged run gives L6 its fact-level set and LG1 its mark count; the owner sets LG1 and LG2 |
 | Catalyst delivery | [catalyst-delivery.md](catalyst-delivery.md) | Four journeys demonstrated; acceptance open | FP-009 and FP-010 |
 | Local stacks, alone and together | [local-stacks.md](local-stacks.md) | Each stack alone and both on one Hub, Catalyst at OpenELIS Global 2 3.3.0; all smokes and both harness suites run on 25 October ([record](reviews/2026-10-25-local-stacks-together.md)) | The harness Catalyst suite's retired base SQL and the Hub's missing qwen2.5-14b token count |
 | Website and publication | [website-publication.md](website-publication.md) | Documentation site deploys from `main`; landing site live from the umbrella's own website proxy since 18 October | Audit item W04 |
@@ -36,9 +36,9 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
    [target path](openmrs-contribution.md#target-path): the fresh-reviewer
    findings in their owning layers, the local boot check of the stack tops, then
    the maintainer's review and the merge order.
-3. [Confidence labels](confidence-labels.md): measure every check against the
-   judge on the rerun, then the label semantics, checker prompts and sampling
-   changes in the Hub, so a red mark means a proven contradiction.
+3. [Confidence labels](confidence-labels.md): the shadow scorer on in the next
+   judged run (bare, verify, bundled), then LG1 and LG2 from its table, so a red
+   mark means a proven contradiction.
 4. [Checked answers](checked-answers.md): run B on the remediated Hub, then the
    default profile from the judged runs.
 5. [Provider parity](provider-parity.md): close the remaining gap, the router's
