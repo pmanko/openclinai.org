@@ -145,3 +145,10 @@ def test_one_new_pass_on_an_unjudged_run_is_promoted(tmp_path, monkeypatch):
     finalize = [c[1] for c in calls if c[0] == "cmd" and "validate-judge-finalize" in c[1]]
     assert "JUDGE_PROMOTE=1" in finalize[0]
     assert not [c for c in calls if c[0] == "cmd" and "scripts/judge-aggregate.py" in c[1]]
+
+
+def test_last_json_forgives_a_trailing_comma_in_the_verdict_block():
+    review = _review()
+    answer = "Scored.\n```json\n[{\"scenario_id\": \"s1\", \"accuracy\": 8,}, ]\n```\n"
+
+    assert review.last_json(answer) == [{"scenario_id": "s1", "accuracy": 8}]
