@@ -189,9 +189,10 @@ arm), 17 scenarios, 35 turns per arm.
 
 ### L7 Agreement arm (research)
 
-- [ ] L7.1 `single-two-writers`: two writers from different families answer independently;
-  claims are split and matched; agreed claims are shown as the answer and disagreements as
-  "the models differ" with both readings. Agreement is a confidence signal, not proof: two
+- [ ] L7.1 The `agree` profile: two writers from different families answer independently;
+  claims are split and matched; the first writer's answer is shown as written (never a
+  merged text), agreed claims read as supported and disagreements as "the models differ"
+  with the other reading. A candidate replacement for the model review, not an addition. Agreement is a confidence signal, not proof: two
   models can misread the same chart the same way
   ([semantic entropy](https://oatml.cs.ox.ac.uk/blog/2024/06/19/detecting_hallucinations_2024.html),
   [cross-model disagreement](https://arxiv.org/pdf/2603.25450)). Cost about one extra
@@ -216,15 +217,51 @@ arm), 17 scenarios, 35 turns per arm.
   no High/Medium/Low chip while `level` is null. Replaces checked-answers A6's label list.
   Evidence: the frontend PR and the next judged run's dashboard.
 
+## Pruning (28 October 2026, from runs A2 and C and the ensemble research)
+
+Every signal and arm earns its place by a measured precision and recall against the judge,
+or it goes. The matrix below replaces the seven-arm matrix for the next run.
+
+| Signal or arm | Evidence | Decision |
+| --- | --- | --- |
+| Date check, record check (deterministic) | Precision 0.75 to 1.0; recall under 0.1 | Keep; the proven-contradiction class, never a grade |
+| Same-model review (the default's reviewer) | Answer scores within noise of answer-only in three runs; 0.5 precision on its marks | Retire; a model does not catch its own errors ([Mind the Gap](https://arxiv.org/pdf/2412.02674)) |
+| Free-form cross-family review (arm 3's reviewer) | 0.5 precision, the main source of marks in run C | Replace: one run measures the verification-question form (L3.5) against claim agreement with a second writer (L7); the one that clears LG1 with the better recall stays, the other goes |
+| Prompted citation check, separate | 0.38 (A2) to 0.6 (C, 5 marks); scores unchanged without it | Keep only until the scorer (L6) is measured beside it in shadow; then one of the two |
+| Citation check folded into the review | Caught 0 of 4 judged citation faults | Retire the arm |
+| No citation check (noground) | Scores equal to the default | Becomes the bare control (deterministic checks only), not a separate research arm |
+| DRY on the writer | No score change, no garbled dates, 15 s a turn faster with it off | Off is the default; the DRY-off arm is retired |
+| Two writers merged into one answer | Mixing models lowers quality and synthesis loses to selection ([Self-MoA](https://mlanthology.org/tmlr/2026/li2026tmlr-rethinking/), [selection bottleneck](https://www.alphaxiv.org/abs/2603.20324)) | Never built |
+| Claim agreement between two independent writers | Recurring facts are far more likely true; disagreement is the suspect ([USC](https://deepmind.google/research/publications/universal-self-consistency-with-large-language-models/), [Integrative Decoding](https://arxiv.org/pdf/2410.01556)) | Candidate replacement for the model review; measured in the next run |
+| Confidence grade (High, Medium, Low) | Never measured; small models' self-confidence is near chance | Withdrawn; returns only as the calibrated score of L8 |
+| Team profiles | Unmeasured, two extra calls | Stay deferred (checked-answers A8) |
+
+Next run (run D), four arms, each answering one question:
+
+| Arm | Checks | Question |
+| --- | --- | --- |
+| bare | writer, deterministic checks, DRY off | the floor: what the rules alone catch |
+| verify | bare plus a cross-family reviewer asking verification questions (L3.5), the scorer in shadow (L6) | does a disciplined critic clear LG1 |
+| agree | bare plus a second writer from another family and claim-level agreement (L7), the scorer in shadow | does agreement clear LG1 |
+| bundled | ChartSearchAI built-in | the reference |
+
+The run is judged like A2 and C (gpt-6-astra high x3 and Opus high x1, blind), scored by L1,
+and the arm whose check clears LG1 at the better recall per second becomes the default's
+check (checked-answers A7). The scorer's shadow verdicts are scored the same way and decide
+L6. The labelled points of runs A2, C and D feed L8.
+
 ## Order of work
 
-1. L1.1 and L1.2 as soon as run 8dacd7b1's judging is finalised (no Hub change needed).
-2. The cheap Hub changes that alter labels only: L3.1 to L3.4, L4.1, L4.2, L5.1 and L2.1 to
-   L2.4 on one Hub PR stacked on #44; rebuilt, smoked, pinned. Run B
-   (checked-answers A5) runs on that Hub, with the default repeated as its control.
-3. L5.2 from run 8dacd7b1's judged scores.
-4. L6 and L7 as research arms in the run after B; L8 once two judged runs carry per-point
-   verdicts; L9 with checked-answers A6 once LG1 names the checks that may show.
+1. Done 27 and 28 October: L1.1 (harness #202), L2.1 to L2.5, L3.1 to L3.4, L4, L5.1 (Hub #45),
+   the frontend findings view; runs A2 (8dacd7b1) and C (e01674f6) judged and scored.
+2. L1.2: the A2 against C review, with edited answers scored against their original draft; the
+   owner sets LG1 and LG2.
+3. One Hub PR: L5.2 (DRY off by default), L3.5 (verification-question reviewer), L7 (second
+   writer and claim agreement), L6 (scorer provider in shadow), and the bare, verify and
+   agree profiles; the retired arms removed.
+4. Run D, judged and scored; the pruning table's open rows decided from it; L8 fit on the three
+   runs' labelled points; L9 and checked-answers A6 and A7 from LG1.
+5. Run B (the 31B pair) on the settled checks.
 
 ## Interface with the decision-layer experiment
 
