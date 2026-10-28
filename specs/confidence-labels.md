@@ -101,9 +101,8 @@ arm), 17 scenarios, 35 turns per arm.
   since 27 October (correct, wrong_fact, wrong_citation, unsupported, guidance). Human
   adjudications (judging.md C6) join as a second reference where they exist. Output: a table
   per run under `judges/check-precision.json`, shown on the report and the dashboard.
-- [ ] L1.2 Run 8dacd7b1 scored with it once its judging (three gpt-6-astra passes, one Claude
-  Opus 5.5 pass) is finalised, and the result recorded in a dated review together with the
-  DRY finding. Evidence: the review.
+- [x] L1.2 Runs 8dacd7b1 and e01674f6 scored, the result recorded with the DRY finding and a
+  first calibrated score: [28 October review](reviews/2026-10-28-confidence-labels-runs-a2-c.md).
 - [ ] **LG1** Bar for visibility (owner decision): a check may mark what the clinician sees
   when its precision is at least 0.8 on at least 50 marked items across two judged runs, and
   its marks are not a subset of a cheaper check's. A check below the bar runs hidden and is
@@ -167,12 +166,9 @@ arm), 17 scenarios, 35 turns per arm.
 - [ ] L5.1 DRY off for every stage that copies or decides: review, grounding, In-Depth
   review, tables and date lists (the `review` role already allows `dry: 0`; the grounding
   and In-Depth review calls get the knob).
-- [ ] L5.2 The answer stage's default DRY set from the judged scores of
-  `single-12b-checked-nodry` against the default in run 8dacd7b1: off if no loss, else a
-  prose-only variant (penalty range 512 to 1024 tokens so the chart never counts as
-  repetition, allowed length 2 to 4, breakers including `-`, `/`, `(` and `)`) run as one
-  more arm. The router's `[*]` section and the Hub's `SYNTH_DRY_MULTIPLIER` default follow
-  the decision.
+- [x] L5.2 DRY off is the writer's default: no loss on any judged axis, no garbled dates,
+  15 s a turn faster ([28 October review](reviews/2026-10-28-confidence-labels-runs-a2-c.md));
+  Hub #46 (`SYNTH_DRY_MULTIPLIER` 0) and the router's `[*]` section.
 
 ### L6 Local entailment scorer (Hub, harness)
 
