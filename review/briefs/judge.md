@@ -41,8 +41,16 @@ When a cell's `in_depth_section` is not empty, add a `background` object scored 
 In-Depth alone, against the same chart and reference date, with the rubric's Background
 axes: `support` and `added_value` (0 to 10), `no_new_harm` (`ok` or `harm`, the harm rule
 above applied to a claim only the In-Depth makes), `conciseness` (`ok` or `padded`),
-`n_claims`, and a one-sentence `note`. The In-Depth never raises or lowers the answer
-fields. A cell without an In-Depth has no `background` key.
+`n_claims`, and a one-sentence `note`. Also give `claims`: one object per In-Depth point,
+in order, for every turn of the cell, each with `turn`, `n` (the point's number in that
+turn), `verdict` and a short `reason`. The verdict is `correct` (every patient fact it
+states matches the chart and its citations point to records that state them),
+`wrong_fact` (a patient value, date, drug, result or status contradicts the chart),
+`wrong_citation` (the facts are right but a cited record does not state them),
+`unsupported` (it states a patient fact the chart does not contain), or `guidance`
+(it states no patient fact; general clinical knowledge). Judge each point on its own; any
+note or mark printed after a point is not part of it. The In-Depth never raises or lowers
+the answer fields. A cell without an In-Depth has no `background` key.
 
 ## Answer
 
