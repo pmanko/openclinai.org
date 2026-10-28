@@ -140,11 +140,13 @@ arm), 17 scenarios, 35 turns per arm.
 - [ ] L3.4 Batches of at most four pairs per call; balanced few-shot examples (supported,
   contradicted, not addressed) in the prompt; temperature 0; DRY off; the label's
   log-probability recorded as a score where the router exposes it.
-- [ ] L3.5 The reviewer asks and answers verification questions (Chain-of-Verification:
+- [x] L3.5 The reviewer asks and answers verification questions (Chain-of-Verification:
   questions drawn from the answer, each answered from the chart alone, then compared) and
   reports only contradictions it can quote
   ([CoVe](https://arxiv.org/pdf/2309.11495)); its flags are per sentence with `wrong` and
-  `chart`, as the label prompt already returns.
+  `chart`, as the label prompt already returns. Built as the `verify` arm (Hub #46); after run
+  D's first turns showed four chart reads and 107 s a turn, the citation verdicts are folded
+  into the verification review and the verifier is Qwen3.5-9B (Hub #47). Measured in run D2.
 - [ ] L3.6 Prompt probes become tests: the ten probe pairs under `work/hub-labels/` move to
   Hub fixtures with the expected label per pair, run against a stub model in CI and against
   the live checkers before a run.
@@ -185,7 +187,7 @@ arm), 17 scenarios, 35 turns per arm.
 
 ### L7 Agreement arm (research)
 
-- [ ] L7.1 The `agree` profile: two writers from different families answer independently;
+- [x] L7.1 Built as the `agree` profile (Hub #46); measured in run D2. The `agree` profile: two writers from different families answer independently;
   claims are split and matched; the first writer's answer is shown as written (never a
   merged text), agreed claims read as supported and disagreements as "the models differ"
   with the other reading. A candidate replacement for the model review, not an addition. Agreement is a confidence signal, not proof: two
@@ -256,9 +258,14 @@ profile only if it clears LG1 there. The labelled points of runs A2, C and D fee
 3. Done 28 October (Hub #46): L5.2 (DRY off by default, router too), L3.5 (verification-question
    reviewer), L7 (second writer and claim agreement), the bare, verify and agree profiles; the
    retired arms removed. L6 runs offline in the decision-layer replay first.
-4. Run D, judged and scored; the pruning table's open rows decided from it; L8 fit on the three
-   runs' labelled points; L9 and checked-answers A6 and A7 from LG1.
-5. Run B (the 31B pair) on the settled checks.
+4. Run D was stopped at 86 of 175 turns on 28 October after its first turns showed the verify
+   arm's cost (owner: no churn without a remediated Hub); Hub #47 folds the verifier's citation
+   check and uses the 9B. Run D2 is the same four arms on that Hub, judged by one gpt-6-astra
+   pass and one Opus pass, blind.
+5. From D2's table: the pruning table's open rows; L8 refit on A2, C and D2; L6's provider if
+   the offline replay clears the bar; L9 and checked-answers A6 and A7 from LG1, which the owner
+   sets from the table.
+6. Run B (the 31B pair) on the settled checks.
 
 ## Interface with the decision-layer experiment
 
