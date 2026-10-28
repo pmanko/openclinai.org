@@ -139,10 +139,11 @@ dated review under `reviews/` for a run.
   C2 to C5). Evidence: a dated review with, per arm, the judged scores and harm, the latency,
   the reviewer's flags against the judges' accuracy (flag precision and missed errors), the
   grounder's verdicts against the judges' citation groundedness, and what `off` loses.
-- [ ] A6 Labels. One status per answer, one note that names the checks that questioned it
-  (date check, second model review, citation support), citation marks, and the In-Depth as the
-  product renders it; the same on the harness report and dashboard. Scoped from A5's evidence.
-  Evidence: the Hub envelope PR, the frontend PR, the harness PR, and the next judged run.
+- [ ] A6 Labels. Owned by [confidence-labels.md](confidence-labels.md) since 27 October: a
+  check may mark what the clinician sees only after its precision against the judge clears
+  that spec's LG1, labels are three-way per claim, and the clinician view shows findings
+  (L9). This box is ticked when L9 is. Run B runs on the Hub that carries that spec's cheap
+  label changes (L2 to L5), with the default repeated as its control.
 - [ ] A7 Default. The product default profile is the arm A5 supports; `single-12b-checked`
   stays only if nothing beats it. Evidence: the Hub PR moving `default: true` and the record
   it cites.
