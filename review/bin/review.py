@@ -428,22 +428,28 @@ def judge_sessions(args, run_dir: Path, out_dir: Path, pass_index: int, passes: 
     else:
         sessions = [(base, brief + inputs)]
 
+    attempts = max(1, int(os.environ.get("JUDGE_ATTEMPTS", "4")))
+
     def one(session):
         out, prompt = session
-        for attempt in (1, 2):
+        for attempt in range(1, attempts + 1):
             try:
                 answer = run_role(args, "judge", run_dir, prompt, out, agent=judge["agent"], env=env)
                 return last_json(answer) or []
             except SystemExit as e:
-                if e.code == 3 or attempt == 2:
+                if e.code == 3 or attempt == attempts:
                     raise
             except json.JSONDecodeError as e:
-                # An unreadable verdict block is a failed session: run it once more, alone.
-                if attempt == 2:
+                # An unreadable verdict block is a failed session: run it again, alone.
+                if attempt == attempts:
                     raise SystemExit(f"{out}: the judge's verdict block is not JSON ({e})")
+            # A judge that rate-limits (429) answers again after a pause that grows per attempt.
+            time.sleep(60 * attempt)
         return []
 
-    with ThreadPoolExecutor(max_workers=min(4, len(sessions))) as pool:
+    # JUDGE_PARALLEL caps the sessions in flight; a rate-limited judge wants 1.
+    parallel = max(1, int(os.environ.get("JUDGE_PARALLEL", "4")))
+    with ThreadPoolExecutor(max_workers=min(parallel, len(sessions))) as pool:
         rows = [r for session_rows in pool.map(one, sessions) for r in session_rows]
     rows_path = base.with_suffix(".rows.json")
     rows_path.write_text(json.dumps(rows))
