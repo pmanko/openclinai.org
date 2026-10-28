@@ -86,10 +86,16 @@ def stack(checkout: Path, remote: str, slug: str, author: str, pr: int, head: st
 
 
 def last_json(text: str):
+    """The last ```json block of a role's answer, parsed. A trailing comma before a closing
+    bracket (a judge wrote one on 27 October and lost a whole pass to it) is removed first."""
     blocks = re.findall(r"```json\s*(.*?)```", text, re.S)
     if not blocks:
         raise SystemExit("the role's answer has no ```json block")
-    return json.loads(blocks[-1])
+    block = blocks[-1]
+    try:
+        return json.loads(block)
+    except json.JSONDecodeError:
+        return json.loads(re.sub(r",\s*([}\]])", r"\1", block))
 
 
 def settle(findings: list[dict]) -> list[dict]:
@@ -426,15 +432,19 @@ def judge_sessions(args, run_dir: Path, out_dir: Path, pass_index: int, passes: 
         out, prompt = session
         for attempt in (1, 2):
             try:
-                return run_role(args, "judge", run_dir, prompt, out, agent=judge["agent"], env=env)
+                answer = run_role(args, "judge", run_dir, prompt, out, agent=judge["agent"], env=env)
+                return last_json(answer) or []
             except SystemExit as e:
                 if e.code == 3 or attempt == 2:
                     raise
-        return ""
+            except json.JSONDecodeError as e:
+                # An unreadable verdict block is a failed session: run it once more, alone.
+                if attempt == 2:
+                    raise SystemExit(f"{out}: the judge's verdict block is not JSON ({e})")
+        return []
 
     with ThreadPoolExecutor(max_workers=min(4, len(sessions))) as pool:
-        answers = list(pool.map(one, sessions))
-    rows = [r for answer in answers for r in (last_json(answer) or [])]
+        rows = [r for session_rows in pool.map(one, sessions) for r in session_rows]
     rows_path = base.with_suffix(".rows.json")
     rows_path.write_text(json.dumps(rows))
     cards = [json.loads(out.with_suffix(".md.card.json").read_text()) for out, _ in sessions]

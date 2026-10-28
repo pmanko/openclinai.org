@@ -155,3 +155,9 @@ def test_profile_arms_take_the_product_title_the_hub_advertises():
     assert arms["hub-profile-single-12b-xcheck"]["label"] == "Checked answer (12B writer, Qwen checker)"
     assert arms["hub-profile-single-12b-xcheck"]["modelName"] == "single-12b-xcheck"
     assert arms["hub-profile-unlabelled"]["label"] == "unlabelled"
+
+def test_last_json_forgives_a_trailing_comma_in_the_verdict_block():
+    review = _review()
+    answer = "Scored.\n```json\n[{\"scenario_id\": \"s1\", \"accuracy\": 8,}, ]\n```\n"
+
+    assert review.last_json(answer) == [{"scenario_id": "s1", "accuracy": 8}]
