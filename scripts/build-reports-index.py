@@ -151,6 +151,8 @@ def gather(slug: str) -> dict:
         "date": meta.get("date"),
         "scout": list(meta.get("scout") or []),
         "scoreline": str(meta.get("scoreline") or ""),
+        # Who judged, frozen with the scores; a run that recorded no judge says so.
+        "judging": _judging_line(meta.get("judging")),
     }
     rdir = _run_dir_for(slug)
     if not rdir or not ((rdir / "results.json").is_file() if family == "catalyst" else (rdir / "results.jsonl").is_file()):
@@ -264,6 +266,13 @@ def _https(link) -> dict | None:
             and str(link.get("url", "")).startswith("https://")):
         return link
     return None
+
+
+def _judging_line(judging) -> str:
+    """The sentence naming the judge a report's scores came from, or the absence of one."""
+    if isinstance(judging, dict) and judging.get("sentence"):
+        return str(judging["sentence"])
+    return ""
 
 
 def _scout_table(scout: list[dict], labels: dict | None = None) -> str:
@@ -405,6 +414,7 @@ def _card(entry: dict) -> str:
     )
     if g["scout"] and not unavailable:
         statistics = '<div class="report-table-scroll" role="region" aria-label="Recorded score tables" tabindex="0">' + statistics + '</div>'
+        statistics += ('<p class="judged-by">' + esc(g["judging"] or "Judge not recorded for this run.") + '</p>')
     takeaway = (f'<p class="takeaway"><span class="tk">Takeaway</span>{esc(entry["takeaway"])}</p>'
                 if entry.get("takeaway") else "")
     # Earlier runs of the same comparison stay published but are listed under the
@@ -470,6 +480,7 @@ _STYLE_CORE = """
   .btn.ghost{background:transparent;color:var(--accent);}
   .btn:hover{filter:brightness(1.1);}
   .summary{color:var(--text);font-size:14.5px;margin:10px 0 16px;max-width:760px;}
+  p.judged-by{margin:8px 0 0;font-size:12.5px;color:var(--muted);}
   table.scout{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--panel2);
     border:1px solid var(--border);border-radius:8px;overflow:hidden;}
   table.scout th,table.scout td{padding:8px 12px;text-align:right;border-bottom:1px solid var(--border);}

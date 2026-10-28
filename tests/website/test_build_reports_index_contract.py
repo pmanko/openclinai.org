@@ -515,3 +515,24 @@ def test_earlier_runs_count_as_listed_and_enter_the_sitemap(tmp_path, monkeypatc
     (reports / "earlier-run" / "index.html").unlink()
     with pytest.raises(ValueError, match="earlier-run"):
         bri.main()
+
+
+def test_gather_names_the_judge_under_the_score_table(tmp_path, monkeypatch):
+    """The judge a report's scores came from is frozen in its meta and shown with them;
+    a packet that recorded no judge says so rather than leaving the reader to guess."""
+    bri = _load()
+    packet = _packet(tmp_path, "judged-run")
+    scout = [{"backend": "arm-a", "n": 1, "benchmark_score": 80.0, "harm_count": 0}]
+    judging = {"recorded": True, "cards": [], "canonical": ["codex-gpt-6-astra-high-p1"],
+               "sentence": "Judged by gpt-6-astra, reasoning high, Codex CLI 0.160.1, pass 1 of 1."}
+    (packet / "meta.json").write_text(json.dumps({"scout": scout, "judging": judging}), encoding="utf-8")
+    monkeypatch.setattr(bri, "REPORTS", tmp_path)
+
+    assert bri.gather("judged-run")["judging"] == judging["sentence"]
+    html = bri._card({"slug": "judged-run", "title": "Judged run"})
+    assert "Judged by gpt-6-astra, reasoning high, Codex CLI 0.160.1, pass 1 of 1." in html
+
+    unjudged = _packet(tmp_path, "older-run")
+    (unjudged / "meta.json").write_text(json.dumps({"scout": scout}), encoding="utf-8")
+    assert bri.gather("older-run")["judging"] == ""
+    assert "Judge not recorded for this run." in bri._card({"slug": "older-run", "title": "Older"})

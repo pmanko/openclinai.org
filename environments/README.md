@@ -25,7 +25,9 @@ an ignored `.env.chartsearch` file. This is the Q8 artifact used by the default
 router preset, not a Q4 or other quantization renamed to the same filename.
 Its published SHA-256 is
 `f20e7ff1be28c283eeeb18fc895733791c56a5851d5cd3fe9691b7f7d12afa72`.
-The existing router uses this directory.
+The existing router uses this directory. Larger models for explicit comparisons
+are pinned the same way in `scripts/llama-router.models.tsv`, saved as
+`<alias>.gguf` in the same directory; setup needs only the default.
 
 Run from the umbrella root:
 

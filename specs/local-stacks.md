@@ -4,8 +4,8 @@
 all together, from the current pins, with one Med Agent Hub, one model router and
 one validation harness, and each mode has a smoke that proves it ·
 **Status:** each stack runs alone and both run together on one Hub at OpenELIS
-Global 2 3.3.0, from component mains; both smokes green on 26 October. Open:
-ChartSearchAI's fresh-setup and upgrade cases, and two harness suite defects ·
+Global 2 3.3.0, from component mains; both smokes green on 26 October, after a
+fresh ChartSearchAI setup too. Open: two harness suite defects ·
 **Owners:** umbrella (compose, overrides, launchers, smokes, pins), Catalyst
 (its MVP compose and scripts), Hub (serving both products from one container)
 
@@ -29,7 +29,7 @@ catalyst.openelis-global.org, which nothing here depends on.
 
 | Mode | Command and smoke | Proven |
 | --- | --- | --- |
-| ChartSearchAI alone | `make local-stack-up`; `make chartsearch-smoke` | restart with data ([record](reviews/2026-10-25-local-stack-restart.md)) |
+| ChartSearchAI alone | `make local-stack-up`; `make chartsearch-smoke` | restart with data ([record](reviews/2026-10-25-local-stack-restart.md)); fresh setup from the baseline ([record](reviews/2026-10-26-fresh-setup.md)) |
 | Catalyst alone | `make catalyst-mvp-up`, its own Hub on 18082; `make catalyst-smoke` | fresh boot on OpenELIS 3.3.0 ([25 October record](reviews/2026-10-25-local-stacks-together.md)) |
 | Together | `make local-stack-up`, then `CATALYST_HUB=shared make catalyst-mvp-up`; both smokes | one Hub, both smokes, both harness suites run ([25 October record](reviews/2026-10-25-local-stacks-together.md)) |
 
@@ -50,9 +50,9 @@ record under [`reviews/`](reviews/) naming the commands run and their results.
       ([25 October record](reviews/2026-10-25-local-stack-restart.md)).
 - [x] `make chartsearch-smoke` is the setup acceptance step and the boot-check
       finisher ([#22](https://github.com/pmanko/openclinai.org/pull/22)).
-- [ ] Fresh setup (`make chartsearch-research-setup`) and the module upgrade from a
-      database set up on the previous heads each end with a green smoke; recorded
-      in a dated review.
+- [x] Fresh setup (`make chartsearch-research-setup`) and the module upgrade from a
+      database set up on the previous heads each end with a green smoke
+      ([26 October record](reviews/2026-10-26-fresh-setup.md)).
 
 ### Checkpoint 2: Catalyst alone on the latest OpenELIS release
 

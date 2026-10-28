@@ -204,7 +204,7 @@ def stage_report(
     results = run_dir / ("results.json" if family == "catalyst" else "results.jsonl")
     recorded_at = results.stat().st_mtime if results.is_file() else run_dir.stat().st_mtime
     meta = {
-        **{key: recorded[key] for key in ("scout", "scoreline") if key in recorded},
+        **{key: recorded[key] for key in ("scout", "scoreline", "judging") if key in recorded},
         "date": recorded.get("date") or datetime.fromtimestamp(recorded_at, timezone.utc).strftime("%-d %b %Y"),
         "slug": slug,
         "report_family": family,
