@@ -241,14 +241,15 @@ Next run (run D), four arms, each answering one question:
 | Arm | Checks | Question |
 | --- | --- | --- |
 | bare | writer, deterministic checks, DRY off | the floor: what the rules alone catch |
-| verify | bare plus a cross-family reviewer asking verification questions (L3.5), the scorer in shadow (L6) | does a disciplined critic clear LG1 |
-| agree | bare plus a second writer from another family and claim-level agreement (L7), the scorer in shadow | does agreement clear LG1 |
+| verify | bare plus a cross-family reviewer asking verification questions (L3.5) | does a disciplined critic clear LG1 |
+| agree | bare plus a second writer from another family and claim-level agreement (L7) | does agreement clear LG1 |
 | bundled | ChartSearchAI built-in | the reference |
 
-The run is judged like A2 and C (gpt-6-astra high x3 and Opus high x1, blind), scored by L1,
-and the arm whose check clears LG1 at the better recall per second becomes the default's
-check (checked-answers A7). The scorer's shadow verdicts are scored the same way and decide
-L6. The labelled points of runs A2, C and D feed L8.
+The run is judged by one blind pass (owner, 28 October: one judge run per round from here),
+scored by L1, and the arm whose check clears LG1 at the better recall per second becomes the
+default's check (checked-answers A7). The scorer (L6) is not in the Hub for run D: it is
+measured offline on the same labelled pairs by the decision-layer replay (P0.3), and joins a
+profile only if it clears LG1 there. The labelled points of runs A2, C and D feed L8.
 
 ## Order of work
 
@@ -256,9 +257,9 @@ L6. The labelled points of runs A2, C and D feed L8.
    the frontend findings view; runs A2 (8dacd7b1) and C (e01674f6) judged and scored.
 2. L1.2: the A2 against C review, with edited answers scored against their original draft; the
    owner sets LG1 and LG2.
-3. One Hub PR: L5.2 (DRY off by default), L3.5 (verification-question reviewer), L7 (second
-   writer and claim agreement), L6 (scorer provider in shadow), and the bare, verify and
-   agree profiles; the retired arms removed.
+3. Done 28 October (Hub #46): L5.2 (DRY off by default, router too), L3.5 (verification-question
+   reviewer), L7 (second writer and claim agreement), the bare, verify and agree profiles; the
+   retired arms removed. L6 runs offline in the decision-layer replay first.
 4. Run D, judged and scored; the pruning table's open rows decided from it; L8 fit on the three
    runs' labelled points; L9 and checked-answers A6 and A7 from LG1.
 5. Run B (the 31B pair) on the settled checks.
