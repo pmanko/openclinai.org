@@ -356,6 +356,10 @@ chartsearch-doctor:
 seed:
 	./scripts/seed-local.sh $(if $(FROM_SCHEMA),--from-schema $(FROM_SCHEMA)) $(if $(DUMP),--dump "$(DUMP)") $(if $(TARGET),--target "$(TARGET)")
 
+# The local entailment scorer the Hub reads in shadow (confidence-labels L6): `make scorer-up`.
+scorer-up:
+	./scripts/scorer-up.sh
+
 validate-preflight:
 	./scripts/validate-preflight.sh $(SET) $(TIER)
 

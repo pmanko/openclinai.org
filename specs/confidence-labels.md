@@ -181,9 +181,11 @@ arm), 17 scenarios, 35 turns per arm.
   [AlignScore calibration](https://arxiv.org/pdf/2505.21072)). This is the same local
   cross-encoder arm as decision-layer P0.3; the weights, the replay pairs and the metrics
   are shared, not duplicated.
-- [ ] L6.2 Shadow first: the scorer's probability is recorded in `groundingChecks[]` beside
-  the configured checker's verdict on one evaluation profile; the shipped labels are
-  unchanged until it clears LG1.
+- [x] L6.2 Shadow first: `policies.review.shadow: scorer` records the scorer's probabilities
+  and label on every `groundingChecks[]` entry beside the configured checker's verdict; the
+  shipped labels are unchanged (Hub #48). The service is `scripts/scorer-service.py`
+  (`make scorer-up`, `SCORER_MODEL`, the Hub reads `SCORER_BASE_URL`); the model follows the
+  28 October replay. Switched on in the profiles after run D2, whose Hub image stays fixed.
 
 ### L7 Agreement arm (research)
 
