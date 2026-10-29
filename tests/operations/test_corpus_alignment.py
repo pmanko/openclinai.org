@@ -4,11 +4,6 @@ from pathlib import Path
 
 import pytest
 
-from harness.validate.corpus_alignment import (
-    alignment_issues,
-    expected_ledgers,
-)
-
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location(
     "capture_chart_fixture", ROOT / "scripts" / "capture-chart-fixture.py"
@@ -24,103 +19,62 @@ assert VERIFY_SPEC and VERIFY_SPEC.loader
 VERIFY_SPEC.loader.exec_module(VERIFY_CORPUS)
 
 
-def test_fixture_refresh_uses_hub_serializer_and_preserves_curated_identity():
+LEDGER = {
+    "patient": "patient-1",
+    "hub_revision": "a" * 40,
+    "snapshot_id": "snap-1",
+    "total": 2,
+    "chart_snapshot": "[1] (2026-01-02) Visit -- Adult outpatient\n[2] (2026-01-02) Finding -- Weight: 71 kg\n",
+    "mappings": [
+        {"index": 1, "resourceType": "visit", "resourceUuid": "visit-1"},
+        {"index": 2, "resourceType": "obs", "resourceUuid": "obs-1"},
+    ],
+}
+
+
+def test_fixture_refresh_takes_the_hubs_ledger_and_preserves_curated_identity():
     original = {
         "slug": "patient-a",
         "patient": {"uuid": "patient-1", "birthdate": "1990-01-01"},
         "chart_snapshot": "stale",
         "mappings": [],
     }
-    records = [
-        {
-            "resourceType": "visit",
-            "resourceUuid": "visit-1",
-            "date": "2026-01-02",
-            "text": "Visit -- Adult outpatient",
-            "metadata": {},
-        },
-        {
-            "resourceType": "obs",
-            "resourceUuid": "obs-1",
-            "date": "2026-01-02",
-            "text": "Finding -- Weight: 71.0 kg",
-            "metadata": {},
-        },
-    ]
 
-    refreshed = CAPTURE.updated_fixture(
-        original,
-        records,
-        captured_at="2026-07-12T00:00:00+00:00",
-        hub_commit="a" * 40,
-    )
+    refreshed = CAPTURE.updated_fixture(original, LEDGER, captured_at="2026-07-12T00:00:00+00:00")
 
     assert refreshed["slug"] == "patient-a"
     assert refreshed["patient"] == original["patient"]
-    assert refreshed["chart_snapshot"] == (
-        "[1] (2026-01-02) Visit -- Adult outpatient\n"
-        "[2] (2026-01-02) Finding -- Weight: 71 kg\n"
-    )
+    assert refreshed["chart_snapshot"] == LEDGER["chart_snapshot"]
     assert refreshed["valid_uuids"] == ["obs-1", "visit-1"]
     assert refreshed["provenance"]["resource_types"] == {"obs": 1, "visit": 1}
-    assert "chartsearchai_chat_session" not in refreshed["provenance"]["source"]
+    assert refreshed["provenance"]["med_agent_hub_commit"] == "a" * 40
+    assert refreshed["provenance"]["querystore_snapshot_id"] == "snap-1"
 
 
-def test_all_fixture_capture_fetches_every_patient_before_writing(tmp_path, monkeypatch):
-    fixtures = []
-    for patient in ("p1", "p2"):
-        path = tmp_path / f"{patient}.json"
-        path.write_text(
-            json.dumps(
-                {
-                    "slug": patient,
-                    "patient": {"uuid": patient},
-                    "chart_snapshot": "original",
-                    "mappings": [],
-                }
-            ),
-            encoding="utf-8",
-        )
-        fixtures.append(path)
+def _fixture(tmp_path, patient):
+    path = tmp_path / f"{patient}.json"
+    path.write_text(
+        json.dumps({"slug": patient, "patient": {"uuid": patient}, "chart_snapshot": "original", "mappings": []}),
+        encoding="utf-8",
+    )
+    return path
+
+
+def test_all_fixture_capture_writes_nothing_when_a_patient_has_no_ledger(tmp_path, monkeypatch):
+    fixtures = [_fixture(tmp_path, "p1"), _fixture(tmp_path, "p2")]
     before = [path.read_text(encoding="utf-8") for path in fixtures]
     monkeypatch.setattr(CAPTURE, "_fixture_paths", lambda *_args: fixtures)
-    monkeypatch.setattr(CAPTURE, "_hub_commit", lambda: "a" * 40)
-    calls = 0
+    monkeypatch.setattr(CAPTURE, "hub_ledgers", lambda patients, _container: {"p1": {**LEDGER, "patient": "p1"}})
 
-    def fetch(_endpoint, _patient, _username, _password):
-        nonlocal calls
-        calls += 1
-        if calls == 2:
-            raise RuntimeError("second patient unavailable")
-        return [
-            {
-                "resourceType": "obs",
-                "resourceUuid": "obs-1",
-                "date": "2026-01-01",
-                "text": "Finding -- Weight: 71 kg",
-            }
-        ]
-
-    monkeypatch.setattr(CAPTURE, "live_records", fetch)
-
-    assert CAPTURE.main(["--all", "--username", "reader", "--password", "secret"]) == 1
+    assert CAPTURE.main(["--all"]) == 1
     assert [path.read_text(encoding="utf-8") for path in fixtures] == before
 
 
 def test_successful_fixture_capture_replaces_staged_file_atomically(tmp_path, monkeypatch):
-    fixture = tmp_path / "p1.json"
-    fixture.write_text(
-        json.dumps({"patient": {"uuid": "p1"}, "chart_snapshot": "old", "mappings": []}),
-        encoding="utf-8",
-    )
+    fixture = _fixture(tmp_path, "p1")
     monkeypatch.setattr(CAPTURE, "ROOT", tmp_path)
     monkeypatch.setattr(CAPTURE, "_fixture_paths", lambda *_args: [fixture])
-    monkeypatch.setattr(CAPTURE, "_hub_commit", lambda: "a" * 40)
-    monkeypatch.setattr(
-        CAPTURE,
-        "live_records",
-        lambda *_args: [{"resourceType": "obs", "resourceUuid": "o1", "date": "2026-01-01", "text": "Finding -- Weight: 71 kg"}],
-    )
+    monkeypatch.setattr(CAPTURE, "hub_ledgers", lambda patients, _container: {"p1": {**LEDGER, "patient": "p1"}})
     replacements = []
     real_replace = CAPTURE.os.replace
 
@@ -130,108 +84,68 @@ def test_successful_fixture_capture_replaces_staged_file_atomically(tmp_path, mo
 
     monkeypatch.setattr(CAPTURE.os, "replace", replace)
 
-    assert CAPTURE.main(["--all", "--username", "reader", "--password", "secret"]) == 0
+    assert CAPTURE.main(["--all"]) == 0
     assert replacements == [(tmp_path / ".p1.json.tmp", fixture)]
-    assert json.loads(fixture.read_text())["valid_uuids"] == ["o1"]
+    assert json.loads(fixture.read_text())["valid_uuids"] == ["obs-1", "visit-1"]
 
 
 def test_verify_corpus_cli_reports_matching_live_ledger(monkeypatch, capsys):
-    expected = {
-        "p1": {
-            "chart_snapshot": "[1] (2026-01-01) Finding -- Weight: 71 kg\n",
-            "mappings": [{"index": 1, "resourceUuid": "o1"}],
-        }
-    }
+    expected = {"p1": {"chart_snapshot": LEDGER["chart_snapshot"], "mappings": LEDGER["mappings"]}}
     monkeypatch.setattr(VERIFY_CORPUS, "expected_ledgers", lambda *_args: expected)
-    monkeypatch.setattr(VERIFY_CORPUS, "live_records", lambda *_args: [{"uuid": "o1"}])
-    monkeypatch.setattr(
-        VERIFY_CORPUS,
-        "render_chart",
-        lambda _records: (expected["p1"]["chart_snapshot"], expected["p1"]["mappings"]),
-    )
+    monkeypatch.setattr(VERIFY_CORPUS, "hub_ledgers", lambda patients, _container: {"p1": LEDGER})
     monkeypatch.setattr(VERIFY_CORPUS, "alignment_issues", lambda *_args: [])
-    monkeypatch.setattr(
-        VERIFY_CORPUS.sys,
-        "argv",
-        [
-            "verify-validation-corpus.py",
-            "--set",
-            "set",
-            "--endpoint",
-            "http://querystore",
-            "--username",
-            "reader",
-            "--password",
-            "secret",
-        ],
-    )
+    monkeypatch.setattr(VERIFY_CORPUS.sys, "argv", ["verify-validation-corpus.py", "--set", "set"])
 
     assert VERIFY_CORPUS.main() == 0
-    assert "p1: 1 exact fixture/live records" in capsys.readouterr().out
+    assert "p1: 2 exact fixture/live records" in capsys.readouterr().out
 
 
 def test_verify_corpus_cli_reports_alignment_issues(monkeypatch, capsys):
-    expected = {"p1": {"chart_snapshot": "fixture", "mappings": []}}
-    monkeypatch.setattr(VERIFY_CORPUS, "expected_ledgers", lambda *_args: expected)
-    monkeypatch.setattr(VERIFY_CORPUS, "live_records", lambda *_args: [])
-    monkeypatch.setattr(VERIFY_CORPUS, "render_chart", lambda _records: ("live", []))
-    monkeypatch.setattr(
-        VERIFY_CORPUS,
-        "alignment_issues",
-        lambda *_args: ["p1: rendered chart text differs"],
-    )
-    monkeypatch.setattr(
-        VERIFY_CORPUS.sys,
-        "argv",
-        [
-            "verify-validation-corpus.py",
-            "--set",
-            "set",
-            "--endpoint",
-            "http://querystore",
-            "--username",
-            "reader",
-            "--password",
-            "secret",
-        ],
-    )
+    monkeypatch.setattr(VERIFY_CORPUS, "expected_ledgers", lambda *_args: {"p1": {"chart_snapshot": "x", "mappings": []}})
+    monkeypatch.setattr(VERIFY_CORPUS, "hub_ledgers", lambda patients, _container: {"p1": LEDGER})
+    monkeypatch.setattr(VERIFY_CORPUS, "alignment_issues", lambda *_args: ["p1: rendered chart text differs"])
+    monkeypatch.setattr(VERIFY_CORPUS.sys, "argv", ["verify-validation-corpus.py", "--set", "set"])
 
     assert VERIFY_CORPUS.main() == 1
-    output = capsys.readouterr().out
-    assert "p1: rendered chart text differs" in output
-    assert "Restore/reindex" in output
+    assert "p1: rendered chart text differs" in capsys.readouterr().out
 
 
-def test_live_records_pages_past_a_server_page_cap(monkeypatch):
-    """The HIV baseline's OpenMRS returns at most 100 records a page whatever limit is asked; the
-    reader must page by totalCount, or every chart over one page is cut short."""
-    LEDGER = ROOT / "scripts" / "querystore_ledger.py"
-    spec = importlib.util.spec_from_file_location("querystore_ledger", LEDGER)
-    ledger = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(ledger)
-    chart = [{"resourceUuid": f"r{i}"} for i in range(5)]
-    starts = []
+def _hub_ledger_module():
+    spec = importlib.util.spec_from_file_location("hub_ledger", ROOT / "scripts" / "hub_ledger.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
-    class Response:
-        def __init__(self, payload):
-            self.payload = payload
 
-        def __enter__(self):
-            return self
+def test_hub_ledgers_run_the_hubs_querystore_export_in_its_container(monkeypatch):
+    module = _hub_ledger_module()
+    calls = []
 
-        def __exit__(self, *_args):
-            return False
+    class Done:
+        returncode = 0
+        stdout = json.dumps({**LEDGER, "patient": "p1"}) + "\n" + json.dumps({**LEDGER, "patient": "p2"}) + "\n"
+        stderr = ""
 
-        def read(self):
-            return json.dumps(self.payload).encode()
+    def run(command, **_kwargs):
+        calls.append(command)
+        return Done()
 
-    def urlopen(request, timeout):
-        start = int(request.full_url.split("startIndex=")[1])
-        starts.append(start)
-        return Response({"results": chart[start : start + 2], "totalCount": len(chart)})
+    monkeypatch.setattr(module.subprocess, "run", run)
 
-    monkeypatch.setattr(ledger.urllib.request, "urlopen", urlopen)
+    ledgers = module.hub_ledgers(["p1", "p2"], "hub")
+    assert sorted(ledgers) == ["p1", "p2"]
+    assert calls == [["docker", "exec", "hub", "python", "-m", "server.querystore_export",
+                      "--patient", "p1", "--patient", "p2"]]
 
-    assert ledger.live_records("http://example/records", "p", "u", "pw") == chart
-    assert starts == [0, 2, 4]
 
+def test_hub_ledgers_report_the_hubs_error(monkeypatch):
+    module = _hub_ledger_module()
+
+    class Failed:
+        returncode = 1
+        stdout = ""
+        stderr = "ERROR: QueryStore is not configured in this Hub"
+
+    monkeypatch.setattr(module.subprocess, "run", lambda *_a, **_k: Failed())
+    with pytest.raises(RuntimeError, match="not configured"):
+        module.hub_ledgers(["p1"], "hub")
