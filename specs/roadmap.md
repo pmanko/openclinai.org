@@ -20,7 +20,7 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 | Judging | [judging.md](judging.md) | C1 to C5 built on harness #200 and umbrella #28 (judge cards, repeated passes, a judge panel, blinded per-scenario sessions, per-pass drill-down) and used for every run since A2; one gpt-6-astra pass and one Opus pass per round (owner, 28 October); PRs open | Merge harness #200 to #202 and umbrella #28, then tick C1 to C5 |
 | Checked answers | [checked-answers.md](checked-answers.md) | A1 to A4 built (Hub #41 to #44, open); runs A, A2, C, D3 and D4 judged; the arms narrowed to bare, verify and the built-in reference ([D4 record](reviews/2026-10-28-confidence-labels-run-d4.md)) | A7 default (proposed: bare), run B with the 31B writer, then merge the Hub stack |
 | Confidence labels | [confidence-labels.md](confidence-labels.md) | Findings-not-grades labels built behind the profiles (Hub stack #41 to #50, ESM `findings-view`); five judged runs (A2, C, D3, D4) scored against the judge ([A2 and C](reviews/2026-10-28-confidence-labels-runs-a2-c.md), [D3](reviews/2026-10-28-confidence-labels-run-d3.md), [D4](reviews/2026-10-28-confidence-labels-run-d4.md)): no check moves a judged score, the checks see under a tenth of judged faults, the entailment scorer failed and was removed (L6 closed), the calibrated score has no 0.8 band | Owner: LG1 and the default from the D4 proposals (bare by default, verification review hidden); then run B and work on the answers' faults |
-| Answer rules | [answer-rules.md](answer-rules.md) | Started 28 October: nine fault patterns from runs D3 and D4 turned into deterministic rules in the Hub gate (edits from the chart, marks with the chart's value); replay on the judged answers: 66 of 66 marks on judged faults ([record](reviews/2026-10-28-answer-rules-replay.md)) | R10: one judged run of the default (bare) and the built-in reference |
+| Answer rules | [answer-rules.md](answer-rules.md) | Started 28 October: the judged fault patterns of runs D3 and D4 that the chart decides, as deterministic rules in the Hub gate that are general or read their parameters from the chart (Hub PR #52); the HIV-specific candidates were dropped; development replay in [the record](reviews/2026-10-28-answer-rules-replay.md) | R10: charts for held-out patients, a firing-rate pass, then one judged run |
 | Catalyst delivery | [catalyst-delivery.md](catalyst-delivery.md) | Four journeys demonstrated; acceptance open | FP-009 and FP-010 |
 | Local stacks, alone and together | [local-stacks.md](local-stacks.md) | Each stack alone and both on one Hub, Catalyst at OpenELIS Global 2 3.3.0; all smokes and both harness suites run on 25 October ([record](reviews/2026-10-25-local-stacks-together.md)) | The harness Catalyst suite's retired base SQL and the Hub's missing qwen2.5-14b token count |
 | Website and publication | [website-publication.md](website-publication.md) | Documentation site deploys from `main`; landing site live from the umbrella's own website proxy since 18 October | Audit item W04 |
@@ -37,8 +37,8 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
    [target path](openmrs-contribution.md#target-path): the fresh-reviewer
    findings in their owning layers, the local boot check of the stack tops, then
    the maintainer's review and the merge order.
-3. [Answer rules](answer-rules.md): the deterministic rules for the judged
-   fault patterns, measured in one judged run (R10); the default is the bare
+3. [Answer rules](answer-rules.md): general deterministic rules for the judged
+   fault patterns, measured on held-out patients (R10); the default is the bare
    profile and LG1 is set ([confidence labels](confidence-labels.md)).
 4. [Checked answers](checked-answers.md): run B on the remediated Hub, then the
    default profile from the judged runs.

@@ -29,9 +29,13 @@ writer's, not a check's.
 | P8 | Advanced HIV disease denied although WHO stage 3 or 4 (or CD4 below 200) is recorded | convo-diagnosis-evidence | WHO stage and CD4 records; the WHO definition |
 | P9 | "The record does not state a diagnosis" although an HIV programme enrolment is recorded | convo-diagnosis-evidence: accuracy 6 in every arm | programme and diagnosis records |
 
-Not yet rules: a historical drug called current (efavirenz absent from the latest orders), a
-"None" prophylaxis plan described as managing a risk, an omitted active diagnosis (failure to
-thrive). They need a model of which orders and plans are current, which is a separate design.
+Not rules (owner, 28 October: a rule is general or reads its parameters from the chart, and
+what cannot be generalised now is not built): P6 needs a drug classification the system does not
+carry (a hand list of antiretrovirals would fit the rule to these charts) and P8 a disease-specific
+definition (WHO advanced HIV disease). Also out: a historical drug called current, a "None" plan
+described as managing a risk and an omitted active diagnosis, which need a model of which orders
+and plans are current. Any of them returns only with a general mechanism, for example a
+classification source the deployment supplies.
 
 ## What the research says
 
@@ -64,6 +68,12 @@ thrive). They need a model of which orders and plans are current, which is a sep
 4. Every rule reports a finding named `rule_<name>` with the chart's value, in the answer's and
    the In-Depth's gate checks, so the dashboard, the report and the envelope share it.
 5. A rule's marks are measured against the judge like every check (confidence-labels L1, LG1).
+6. A rule is general or takes its parameters from the chart in hand: no built-in list of drugs,
+   diseases or measurements, no cutoff fitted to the charts it was written from. When a value
+   is old comes from the series' own measuring rhythm; which words name a measurement comes
+   from the chart's other measurements; which drug a record holds comes from its drug order.
+7. Evidence for a rule comes from patients and questions it was not written from. A replay on
+   the runs that showed the pattern is development work, not measurement.
 
 ## Target path
 
@@ -73,9 +83,9 @@ thrive). They need a model of which orders and plans are current, which is a sep
 - [ ] R2 Relative time: a claim saying "the last/past N days, weeks, months" (or "last week",
   "last month") whose cited records all predate that span before the reference date is marked
   with the records' dates.
-- [ ] R3 Stale latest value: an answer about a series whose last point is more than 90 days
-  before the reference date, and that does not give the gap, gets one sentence naming the
-  last date and the gap.
+- [ ] R3 Stale latest value: an answer about a series whose gap from its last reading to the
+  reference date is longer than any interval between its own readings, and that does not give
+  the gap, gets one sentence naming the last date and the gap.
 - [ ] R4 Series: a trend answer that names two or fewer of a series' in-window readings gets
   the readings appended (up to eight, else count, first, last, lowest, highest); "steady",
   "steadily", "consistent" or "continuous" about a series that changes direction is marked
@@ -83,28 +93,25 @@ thrive). They need a model of which orders and plans are current, which is a sep
 - [ ] R5 Drug citation: a drug name followed by a citation to a drug order of another drug
   gets the citation of the order that names it (preferring a record the answer already cites,
   then the latest); with no such order it is marked.
-- [ ] R6 Drug class: a sentence that calls drugs antiretroviral (regimen, therapy, ART, ARV)
-  and names a chart drug outside the antiretroviral list, with no other class word for it in
-  the sentence (tuberculosis, TB, prophylaxis, PCP, antibiotic, antifungal), is marked. The
-  list is the WHO antiretroviral generic names (ATC J05AE, J05AF, J05AG, J05AJ, J05AR, J05AX).
 - [ ] R7 Demographics citation: a claim that cites only the patient demographics record for
   anything but name, sex, age, birth date, address or identifier is marked.
-- [ ] R8 Advanced HIV disease: a claim that denies advanced HIV disease while the latest WHO
-  stage is 3 or 4 or the latest CD4 count is below 200 cells/uL is marked with that record
-  (WHO definition for adults and adolescents:
-  [WHO advanced HIV disease guidelines, 2017](https://www.who.int/publications/i/item/9789241550062)).
 - [ ] R9 Diagnosis presence: a claim that the record states no diagnosis while an active
   programme enrolment or diagnosis record names a condition is marked with that record.
-- [ ] R10 Measured: one judged run of the default (bare) and the built-in reference on the
-  rules; per rule, marks and edits against the judge (precision, and the accuracy of the cells
-  it edited), recorded in `reviews/`.
+- [ ] R10 Measured on held-out patients: charts captured for 10 to 20 HIV-baseline patients the
+  rules were not written from, scenarios that exercise each pattern and question types the rules
+  were not written for; first an unjudged pass counting how often each rule fires, with a hand
+  check of a sample; then one judged run of the default (bare) and the built-in reference. Per
+  rule, marks and edits against the judge, recorded in `reviews/`. A rule keeps marking only if
+  it clears LG1 there.
 
 ## Order of work
 
-1. R1 to R9 built in one Hub layer (`answer-rules` on the Hub stack, 173c6b5), each with tests
-   from the fixture charts and the D3 and D4 texts that showed the pattern; replayed on those
-   answers: all 66 marks fall on cells or points a judge faulted, 55 on ones both faulted
-   ([replay](reviews/2026-10-28-answer-rules-replay.md)). The ChartSearchAI panel names the
-   findings "Chart rule" (ESM `findings-view`).
-2. R10: one judged run (bare, bundled), one gpt-6-astra pass and one Opus pass, blind.
+1. R1 to R5, R7 and R9 built in one Hub layer (`answer-rules`, PR #52), each tested on the
+   fixture charts with the D3 and D4 texts and on a diabetes chart the rules were not written
+   from; the development replay on D3 and D4 is in
+   [the replay record](reviews/2026-10-28-answer-rules-replay.md). The ChartSearchAI panel names
+   the findings "Chart rule" (ESM `findings-view`). A judged run on the same 17 scenarios was
+   started and stopped (owner, 28 October): a temperature-0 writer on the same questions would
+   reproduce the development answers and give a false signal.
+2. R10 on held-out patients.
 3. The rules that clear LG1 keep marking; a rule below it runs hidden until fixed or dropped.
