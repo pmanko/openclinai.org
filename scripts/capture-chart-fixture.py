@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Refresh judge fixtures from the same live evidence path med-agent-hub uses."""
+"""Refresh judge fixtures from the running Hub's QueryStore export (the ledger it answers from)."""
 
 from __future__ import annotations
 
 import argparse
 import json
 import os
-import subprocess
 import sys
 from collections import Counter
 from copy import deepcopy
@@ -15,65 +14,40 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
-HUB_ROOT = ROOT / "targets" / "med-agent-hub"
 HARNESS_ROOT = ROOT / "targets" / "validation-harness"
-sys.path.insert(0, str(HARNESS_ROOT))
-sys.path.insert(0, str(HUB_ROOT))
+sys.path.insert(0, str(ROOT / "scripts"))
 
-from harness.validate.corpus_alignment import live_records  # noqa: E402
-def render_chart(records):
-    from server.chart_serializer import render_chart as serialize
-
-    return serialize(records)
-
-
-def _hub_commit() -> str:
-    dirty = subprocess.run(
-        ["git", "status", "--porcelain"],
-        cwd=HUB_ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    if dirty:
-        raise RuntimeError("med-agent-hub must be clean before capturing judge fixtures")
-    return subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=HUB_ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
+from hub_ledger import HUB_CONTAINER, hub_ledgers  # noqa: E402
 
 
 def updated_fixture(
     fixture: dict[str, Any],
-    records: list[dict[str, Any]],
+    ledger: dict[str, Any],
     *,
     captured_at: str,
-    hub_commit: str,
 ) -> dict[str, Any]:
     """Return a refreshed fixture while preserving its curated identity fields."""
     updated = deepcopy(fixture)
-    chart_snapshot, mappings = render_chart(records)
+    mappings = ledger["mappings"]
     valid_uuids = sorted(
         {mapping["resourceUuid"] for mapping in mappings if mapping.get("resourceUuid")}
     )
-    updated["chart_snapshot"] = chart_snapshot
+    updated["chart_snapshot"] = ledger["chart_snapshot"]
     updated["mappings"] = mappings
     updated["valid_uuids"] = valid_uuids
     updated["n_records"] = len(mappings)
     updated["n_valid_uuids"] = len(valid_uuids)
     updated["provenance"] = {
-        "source": "Querystore patientrecord rendered by med-agent-hub chart_serializer",
+        "source": "Querystore patientrecord read and rendered by med-agent-hub server.querystore_export",
         "captured_at": captured_at,
-        "med_agent_hub_commit": hub_commit,
+        "med_agent_hub_commit": ledger.get("hub_revision") or "",
+        "querystore_snapshot_id": ledger.get("snapshot_id") or "",
         "resource_types": dict(
             sorted(Counter(mapping["resourceType"] for mapping in mappings).items())
         ),
         "note": (
-            "Closed-context scoring fixture captured from the same complete evidence ledger "
-            "and serializer used by med-agent-hub."
+            "Closed-context scoring fixture captured through the Hub's own QueryStore client "
+            "and chart serializer, the evidence ledger the Hub answers from."
         ),
     }
     return updated
@@ -92,54 +66,28 @@ def main(argv: list[str] | None = None) -> int:
     selected = parser.add_mutually_exclusive_group(required=True)
     selected.add_argument("--fixture", help="fixture JSON to refresh in place")
     selected.add_argument("--all", action="store_true", help="refresh every committed chart fixture")
-    port = os.environ.get("HARNESS_PROXY_HTTP_PORT", "8088")
-    parser.add_argument(
-        "--endpoint",
-        default=f"http://localhost:{port}/openmrs/ws/rest/v1/querystore/patientrecord",
-    )
-    parser.add_argument("--username", default=os.environ.get("QUERYSTORE_USERNAME", ""))
-    parser.add_argument("--password", default=os.environ.get("QUERYSTORE_PASSWORD", ""))
+    parser.add_argument("--container", default=HUB_CONTAINER, help="the running Hub container")
     args = parser.parse_args(argv)
 
-    if not args.username or not args.password:
-        print(
-            "ERROR: set QUERYSTORE_USERNAME and QUERYSTORE_PASSWORD for the read-only fixture capture",
-            file=sys.stderr,
-        )
-        return 1
-
     captured_at = datetime.now(timezone.utc).isoformat()
-    try:
-        hub_commit = _hub_commit()
-    except (subprocess.CalledProcessError, RuntimeError) as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
-        return 1
     prepared: list[tuple[Path, dict[str, Any]]] = []
     try:
-        for fixture_path in _fixture_paths(args.fixture, args.all):
-            fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+        fixtures = [
+            (path, json.loads(path.read_text(encoding="utf-8")))
+            for path in _fixture_paths(args.fixture, args.all)
+        ]
+        patients = []
+        for path, fixture in fixtures:
             patient_uuid = str((fixture.get("patient") or {}).get("uuid") or "").strip()
             if not patient_uuid:
-                raise ValueError(f"{fixture_path} has no patient.uuid")
-            records = live_records(
-                args.endpoint,
-                patient_uuid,
-                args.username,
-                args.password,
-            )
-            if not records:
+                raise ValueError(f"{path} has no patient.uuid")
+            patients.append(patient_uuid)
+        ledgers = hub_ledgers(patients, args.container)
+        for (path, fixture), patient_uuid in zip(fixtures, patients):
+            ledger = ledgers.get(patient_uuid)
+            if not ledger or not ledger.get("mappings"):
                 raise ValueError(f"no live records for {patient_uuid}")
-            prepared.append(
-                (
-                    fixture_path,
-                    updated_fixture(
-                        fixture,
-                        records,
-                        captured_at=captured_at,
-                        hub_commit=hub_commit,
-                    ),
-                )
-            )
+            prepared.append((path, updated_fixture(fixture, ledger, captured_at=captured_at)))
     except Exception as exc:
         print(f"ERROR: fixture capture aborted before writing: {exc}", file=sys.stderr)
         return 1

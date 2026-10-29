@@ -14,39 +14,26 @@ sys.path.insert(0, str(HARNESS_ROOT))
 from harness.validate.corpus_alignment import (  # noqa: E402
     alignment_issues,
     expected_ledgers,
-    live_records,
 )
 
-HUB_ROOT = ROOT / "targets" / "med-agent-hub"
-sys.path.insert(0, str(HUB_ROOT))
-
-
-
-
-def render_chart(records):
-    from server.chart_serializer import render_chart as serialize
-
-    return serialize(records)
+sys.path.insert(0, str(ROOT / "scripts"))
+from hub_ledger import HUB_CONTAINER, hub_ledgers  # noqa: E402
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--set", required=True)
-    parser.add_argument("--endpoint", required=True)
-    parser.add_argument("--username", required=True)
-    parser.add_argument("--password", required=True)
+    parser.add_argument("--container", default=HUB_CONTAINER, help="the running Hub container")
     parser.add_argument(
         "--data-root", type=Path, default=HARNESS_ROOT / "datasets/validation"
     )
     args = parser.parse_args()
 
     expected = expected_ledgers(args.data_root, args.set)
-    live = {}
-    for patient in expected:
-        snapshot, mappings = render_chart(
-            live_records(args.endpoint, patient, args.username, args.password)
-        )
-        live[patient] = {"chart_snapshot": snapshot, "mappings": mappings}
+    live = {
+        patient: {"chart_snapshot": ledger["chart_snapshot"], "mappings": ledger["mappings"]}
+        for patient, ledger in hub_ledgers(sorted(expected), args.container).items()
+    }
     issues = alignment_issues(expected, live)
     if issues:
         print("ERROR: live validation corpus does not match committed chart fixtures:")

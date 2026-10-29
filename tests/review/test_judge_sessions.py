@@ -147,6 +147,15 @@ def test_one_new_pass_on_an_unjudged_run_is_promoted(tmp_path, monkeypatch):
     assert not [c for c in calls if c[0] == "cmd" and "scripts/judge-aggregate.py" in c[1]]
 
 
+def test_profile_arms_take_the_product_title_the_hub_advertises():
+    review = _review()
+    arms = review.profile_arms({"single-12b-xcheck": "Checked answer (12B writer, Qwen checker)"},
+                               ["single-12b-xcheck", "unlabelled"])
+
+    assert arms["hub-profile-single-12b-xcheck"]["label"] == "Checked answer (12B writer, Qwen checker)"
+    assert arms["hub-profile-single-12b-xcheck"]["modelName"] == "single-12b-xcheck"
+    assert arms["hub-profile-unlabelled"]["label"] == "unlabelled"
+
 def test_last_json_forgives_a_trailing_comma_in_the_verdict_block():
     review = _review()
     answer = "Scored.\n```json\n[{\"scenario_id\": \"s1\", \"accuracy\": 8,}, ]\n```\n"
