@@ -420,6 +420,7 @@ REVIEW_ARGS = $(if $(PR),--pr $(PR)) $(if $(REPO),--repo $(REPO)) $(if $(AGENT),
 	$(if $(GATE),--gate $(GATE)) $(if $(GATE_BASE),--gate-base $(GATE_BASE)) \
 	$(if $(FULL),--full $(if $(filter command line,$(origin SET)),--set $(SET))) \
 	$(if $(PROFILES),--profiles $(PROFILES)) $(if $(BASELINE),--baseline $(BASELINE)) \
+	$(if $(DATA_ROOT),--data-root $(abspath $(DATA_ROOT))) \
 	$(if $(NO_PUBLISH),--no-publish) $(if $(PUBLISH),--publish $(PUBLISH)) $(if $(L5_RESUME),--resume $(L5_RESUME)) \
 	$(if $(JUDGE_PASSES),--judge-passes $(JUDGE_PASSES)) $(if $(REJUDGE),--rejudge $(REJUDGE)) \
 	$(if $(ADD_JUDGES),--add-judges $(ADD_JUDGES)) \
