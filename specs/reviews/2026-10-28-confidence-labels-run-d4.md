@@ -93,3 +93,10 @@ only consistent feature is the model review.
 3. Effort moves from checking to the answers' faults: completeness of series and windows,
    the records an answer omits, citation choice. Run B (the 31B writer) tests whether a bigger
    writer moves the judged faults that no check catches.
+
+## Decisions (owner, 28 October)
+
+- The default profile is `single-12b-bare` (Hub d3-checks 46a4dcd, PR #50).
+- LG1 as written: a check marks what the clinician sees at 0.8 precision on 50 marks across two
+  judged runs; the verification review stays a hidden arm until it has them.
+- Work moves to deterministic rules for the judged fault patterns ([answer-rules.md](../answer-rules.md)).

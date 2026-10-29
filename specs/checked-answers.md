@@ -146,7 +146,8 @@ dated review under `reviews/` for a run.
   label changes (L2 to L5), with the default repeated as its control.
 - [ ] A7 Default. The product default profile is the arm A5 supports; `single-12b-checked`
   stays only if nothing beats it. Evidence: the Hub PR moving `default: true` and the record
-  it cites.
+  it cites. Owner, 28 October: `single-12b-bare`, from the
+  [D4 record](reviews/2026-10-28-confidence-labels-run-d4.md); the move is on Hub PR #50.
 - [ ] A8 Team profiles. Revisited when a task set exists that a single writer cannot serve;
   the entry criterion is written here before any team run. No action now.
 

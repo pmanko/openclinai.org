@@ -105,7 +105,7 @@ arm), 17 scenarios, 35 turns per arm.
   first calibrated score: [28 October review](reviews/2026-10-28-confidence-labels-runs-a2-c.md);
   run b7bccdd2 (bare, verify, agree) scored and the fit repeated on 958 points:
   [run D3 record](reviews/2026-10-28-confidence-labels-run-d3.md).
-- [ ] **LG1** Bar for visibility (owner decision): a check may mark what the clinician sees
+- [x] **LG1** Bar for visibility (owner decision, set as written on 28 October, [D4 record](reviews/2026-10-28-confidence-labels-run-d4.md#decisions-owner-28-october)): a check may mark what the clinician sees
   when its precision is at least 0.8 on at least 50 marked items across two judged runs, and
   its marks are not a subset of a cheaper check's. A check below the bar runs hidden and is
   shown only on the dashboard and report. Proposed values; the owner sets them. Status after
@@ -271,8 +271,9 @@ feed L8 (1123 points, held-out AUROC 0.695, no band at 0.8).
 5. Done 28 October: run D4 (2a053c09) on the fixed checks; L6 scored offline and closed, the
    scorer removed; one more value-binding misfire fixed (Hub d3-checks 34000a9); L8 refit on
    four runs ([record](reviews/2026-10-28-confidence-labels-run-d4.md)).
-6. Owner: LG1 and the default (checked-answers A7) from the D4 record's proposals; L9 and A6
-   follow LG1 (the frontend findings view is built on the ESM fork's `findings-view`).
+6. Done 28 October (owner): LG1 as written and the bare default. L9 and checked-answers A6 follow
+   (the frontend findings view is built on the ESM fork's `findings-view`); the deterministic
+   rules for the judged faults continue in [answer-rules.md](answer-rules.md).
 7. Run B (the 31B writer) on the settled checks, with bare and the verification review.
 
 ## Interface with the decision-layer experiment
