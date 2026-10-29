@@ -14,8 +14,10 @@ sys.path.insert(0, str(HARNESS_ROOT))
 from harness.validate.corpus_alignment import (  # noqa: E402
     alignment_issues,
     expected_ledgers,
-    live_records,
 )
+
+sys.path.insert(0, str(ROOT / "scripts"))
+from querystore_ledger import live_records  # noqa: E402
 
 HUB_ROOT = ROOT / "targets" / "med-agent-hub"
 sys.path.insert(0, str(HUB_ROOT))

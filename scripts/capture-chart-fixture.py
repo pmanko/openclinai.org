@@ -17,10 +17,10 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent.parent
 HUB_ROOT = ROOT / "targets" / "med-agent-hub"
 HARNESS_ROOT = ROOT / "targets" / "validation-harness"
-sys.path.insert(0, str(HARNESS_ROOT))
 sys.path.insert(0, str(HUB_ROOT))
+sys.path.insert(0, str(ROOT / "scripts"))
 
-from harness.validate.corpus_alignment import live_records  # noqa: E402
+from querystore_ledger import live_records  # noqa: E402
 def render_chart(records):
     from server.chart_serializer import render_chart as serialize
 

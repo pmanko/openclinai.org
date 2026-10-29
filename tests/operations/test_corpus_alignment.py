@@ -7,7 +7,6 @@ import pytest
 from harness.validate.corpus_alignment import (
     alignment_issues,
     expected_ledgers,
-    live_records,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -201,3 +200,38 @@ def test_verify_corpus_cli_reports_alignment_issues(monkeypatch, capsys):
     output = capsys.readouterr().out
     assert "p1: rendered chart text differs" in output
     assert "Restore/reindex" in output
+
+
+def test_live_records_pages_past_a_server_page_cap(monkeypatch):
+    """The HIV baseline's OpenMRS returns at most 100 records a page whatever limit is asked; the
+    reader must page by totalCount, or every chart over one page is cut short."""
+    LEDGER = ROOT / "scripts" / "querystore_ledger.py"
+    spec = importlib.util.spec_from_file_location("querystore_ledger", LEDGER)
+    ledger = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ledger)
+    chart = [{"resourceUuid": f"r{i}"} for i in range(5)]
+    starts = []
+
+    class Response:
+        def __init__(self, payload):
+            self.payload = payload
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self):
+            return json.dumps(self.payload).encode()
+
+    def urlopen(request, timeout):
+        start = int(request.full_url.split("startIndex=")[1])
+        starts.append(start)
+        return Response({"results": chart[start : start + 2], "totalCount": len(chart)})
+
+    monkeypatch.setattr(ledger.urllib.request, "urlopen", urlopen)
+
+    assert ledger.live_records("http://example/records", "p", "u", "pw") == chart
+    assert starts == [0, 2, 4]
+
