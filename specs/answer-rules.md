@@ -113,5 +113,9 @@ classification source the deployment supplies.
    the findings "Chart rule" (ESM `findings-view`). A judged run on the same 17 scenarios was
    started and stopped (owner, 28 October): a temperature-0 writer on the same questions would
    reproduce the development answers and give a false signal.
-2. R10 on held-out patients.
+2. R10, first half, done 28 October: an unjudged pass on 15 held-out patients found two misfires
+   (the window rule emptied answers with nothing inside the window; drug abbreviations), both fixed
+   ([record](reviews/2026-10-28-answer-rules-heldout-pass.md)). That set is now development data.
+3. R10, second half: 15 fresh patients drawn the same way, the same 8 questions, the default (bare)
+   and the built-in reference, judged blind by one gpt-6-astra and one Opus pass.
 3. The rules that clear LG1 keep marking; a rule below it runs hidden until fixed or dropped.
