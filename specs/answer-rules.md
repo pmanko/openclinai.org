@@ -97,7 +97,7 @@ classification source the deployment supplies.
   anything but name, sex, age, birth date, address or identifier is marked.
 - [ ] R9 Diagnosis presence: a claim that the record states no diagnosis while an active
   programme enrolment or diagnosis record names a condition is marked with that record.
-- [ ] R10 Measured on held-out patients: charts captured for 10 to 20 HIV-baseline patients the
+- [x] R10 Measured on held-out patients ([unjudged pass](reviews/2026-10-28-answer-rules-heldout-pass.md), [judged run](reviews/2026-10-29-answer-rules-r10.md)): charts captured for 10 to 20 HIV-baseline patients the
   rules were not written from, scenarios that exercise each pattern and question types the rules
   were not written for; first an unjudged pass counting how often each rule fires, with a hand
   check of a sample; then one judged run of the default (bare) and the built-in reference. Per
@@ -116,6 +116,10 @@ classification source the deployment supplies.
 2. R10, first half, done 28 October: an unjudged pass on 15 held-out patients found two misfires
    (the window rule emptied answers with nothing inside the window; drug abbreviations), both fixed
    ([record](reviews/2026-10-28-answer-rules-heldout-pass.md)). That set is now development data.
-3. R10, second half: 15 fresh patients drawn the same way, the same 8 questions, the default (bare)
-   and the built-in reference, judged blind by one gpt-6-astra and one Opus pass.
+3. R10, second half, done 29 October: 15 fresh patients, the default (bare) and the built-in
+   reference, judged blind ([record](reviews/2026-10-29-answer-rules-r10.md)). The window edit
+   lifts the orders question from 5 to 8.8 to 9.2; marks are right 6 of 9 times but rare; one
+   window defect fixed after the run.
+4. Next: a general missed-return-visit rule from the temporal facts' return dates and encounters;
+   drug class and indication only with a classification source or the chart's current plans.
 3. The rules that clear LG1 keep marking; a rule below it runs hidden until fixed or dropped.
