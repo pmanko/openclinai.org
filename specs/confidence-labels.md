@@ -108,7 +108,9 @@ arm), 17 scenarios, 35 turns per arm.
 - [ ] **LG1** Bar for visibility (owner decision): a check may mark what the clinician sees
   when its precision is at least 0.8 on at least 50 marked items across two judged runs, and
   its marks are not a subset of a cheaper check's. A check below the bar runs hidden and is
-  shown only on the dashboard and report. Proposed values; the owner sets them.
+  shown only on the dashboard and report. Proposed values; the owner sets them. Status after
+  D4: only the deterministic checks mark often enough to measure; the verification review is
+  at 0.67 on 6 marks ([record](reviews/2026-10-28-confidence-labels-run-d4.md)).
 
 ### L2 Label semantics (Hub envelope, harness, frontend)
 
@@ -153,7 +155,8 @@ arm), 17 scenarios, 35 turns per arm.
   judged (1 of 1 answer, 2 of 3 In-Depth points) but too few for LG1; the 9B's own citation
   verdicts were empty in 11 of 35 turns and wrong in all 7 contradictions it did give, so the
   fallback citation check uses the 12B grounding model and the review runs at temperature 0
-  (Hub d3-checks).
+  (Hub d3-checks). Run D4 on that profile ([record](reviews/2026-10-28-confidence-labels-run-d4.md)): D3 and D4 together give the review 6
+  In-Depth marks at 0.67 and 1 of 1 answer mark, about one mark per eleven turns.
 - [ ] L3.6 Prompt probes become tests: the ten probe pairs under `work/hub-labels/` move to
   Hub fixtures with the expected label per pair, run against a stub model in CI and against
   the live checkers before a run.
@@ -179,23 +182,14 @@ arm), 17 scenarios, 35 turns per arm.
   15 s a turn faster ([28 October review](reviews/2026-10-28-confidence-labels-runs-a2-c.md));
   Hub #46 (`SYNTH_DRY_MULTIPLIER` 0) and the router's `[*]` section.
 
-### L6 Local entailment scorer (Hub, harness)
+### L6 Local entailment scorer (closed 28 October 2026)
 
-- [x] L6.1 Measured offline first ([28 October replay](reviews/2026-10-28-entailment-scorer-replay.md)):
-  on 461 judged In-Depth points, four scorers (MiniCheck DeBERTa and Flan-T5, two NLI
-  cross-encoders; MIT and Apache licences) reach AUROC 0.56 to 0.66 and no threshold with
-  0.8 precision, because a whole point (a chart fact joined to a clinical reading) is not
-  entailed by its record even when the fact is; the bare fact is (p 0.62 to 0.85). No scorer
-  replaces the prompted check. A scorer stays a candidate only on atomic (record, fact)
-  pairs, which the facts-first check already lists; the shadow provider scores those
-  (Hub #48) and the decision is taken on the fact-level labelled set from the first judged run
-  with the shadow on (run D3 ran without it): if it does not reach 0.8 precision at recall
-  above the prompted check's, L6 closes.
-- [x] L6.2 Shadow first: `policies.review.shadow: scorer` records the scorer's probabilities
-  and label on every `groundingChecks[]` entry beside the configured checker's verdict; the
-  shipped labels are unchanged (Hub #48). The service is `scripts/scorer-service.py`
-  (`make scorer-up`, `SCORER_MODEL`, the Hub reads `SCORER_BASE_URL`); the model follows the
-  28 October replay. Switched on in the profiles once Hub #48 is pinned, after run D3.
+- [x] L6 Measured and closed. Whole points first ([replay](reviews/2026-10-28-entailment-scorer-replay.md):
+  four MIT and Apache scorers, AUROC 0.56 to 0.66 on 461 points), then the atomic (record,
+  fact) pairs the facts-first check lists, scored offline on run C's 470 facts ([run D4
+  record](reviews/2026-10-28-confidence-labels-run-d4.md)): AUROC 0.63, precision at most 0.35 at any threshold, falling as the
+  threshold rises. No scorer reaches the 0.8 bar, so none replaces or backs the prompted check;
+  the service, its settings and the Hub's shadow policy are removed (owner, 28 October).
 
 ### L7 Agreement arm (research)
 
@@ -216,8 +210,8 @@ arm), 17 scenarios, 35 turns per arm.
 ### L8 Calibration and the confidence label (harness, Hub)
 
 - [ ] L8.1 With two judged runs of per-point verdicts (about 700 labelled points each), fit
-  three-band thresholds (supported, uncertain, contradicted) on the scorer's probability on a
-  calibration split and report precision and coverage on the held-out split
+  three-band thresholds (supported, uncertain, contradicted) on the checks' combined probability
+  (the logistic fit of `work/labels/calibrate.py`) on a calibration split and report precision and coverage on the held-out split
   ([conformal factuality](https://www.themoonlight.io/review/language-models-with-conformal-factuality-guarantees)).
 - [ ] **LG2** A confidence label returns to the clinician's view only when its bands hold
   on the held-out split (proposed: at least 0.9 precision for "supported", at most 0.1 of
@@ -240,7 +234,8 @@ or it goes. The matrix below replaces the seven-arm matrix for the next run.
 | Date check, record check (deterministic) | Precision 0.75 to 1.0; recall under 0.1 | Keep; the proven-contradiction class, never a grade |
 | Same-model review (the default's reviewer) | Answer scores within noise of answer-only in three runs; 0.5 precision on its marks | Retire; a model does not catch its own errors ([Mind the Gap](https://arxiv.org/pdf/2412.02674)) |
 | Free-form cross-family review (arm 3's reviewer) | 0.5 precision, the main source of marks in run C | Replace: one run measures the verification-question form (L3.5) against claim agreement with a second writer (L7); the one that clears LG1 with the better recall stays, the other goes |
-| Prompted citation check, separate | 0.38 (A2) to 0.6 (C, 5 marks); scores unchanged without it | Keep only until the scorer (L6) is measured beside it in shadow; then one of the two |
+| Prompted citation check, separate | 0.38 (A2) to 0.6 (C, 5 marks); scores unchanged without it; almost no marks since the three-way labels | Kept as the verify arm's fallback and the answer-only arm's check; the scorer that might have replaced it failed (L6) |
+| Local entailment scorer (shadow) | AUROC 0.63, precision at most 0.35 on run C's listed facts (D4 record) | Removed; L6 closed |
 | Citation check folded into the review | Caught 0 of 4 judged citation faults (C); the 9B verifier returned no verdicts in 11 of 35 turns and 7 false contradictions (D3) | The fold stays on the verify arm with the 12B separate check as its fallback; the 9B never judges citations alone |
 | No citation check (noground) | Scores equal to the default | Becomes the bare control (deterministic checks only), not a separate research arm |
 | DRY on the writer | No score change, no garbled dates, 15 s a turn faster with it off | Off is the default; the DRY-off arm is retired |
@@ -250,13 +245,13 @@ or it goes. The matrix below replaces the seven-arm matrix for the next run.
 | Confidence grade (High, Medium, Low) | Never measured; small models' self-confidence is near chance | Withdrawn; returns only as the calibrated score of L8 |
 | Team profiles | Unmeasured, two extra calls | Stay deferred (checked-answers A8) |
 
-Run D3 (b7bccdd2, 28 October) measured four arms: bare, verify, agree and the built-in
-reference ([record](reviews/2026-10-28-confidence-labels-run-d3.md)). The next judged run
-carries three: bare, verify (12B fallback, temperature 0) and bundled, with the shadow scorer
-recording fact-level labels for L6. It is judged by one blind pass per judge (owner, 28
-October: one judge run per round), scored by L1, and the check that clears LG1 at the better
-recall per second becomes the default's check (checked-answers A7). The labelled points of
-runs A2, C and D3 feed L8.
+Runs D3 (b7bccdd2) and D4 (2a053c09) measured bare, verify, agree and the built-in reference
+([D3](reviews/2026-10-28-confidence-labels-run-d3.md), [D4](reviews/2026-10-28-confidence-labels-run-d4.md)). In five judged runs no check has moved a
+judged score, and the judged faults (wrong or missing facts, omitted records, incomplete series)
+are of kinds the checks do not look for. Proposed from D4: bare becomes the default's check set
+(checked-answers A7); the verification review runs hidden in every round until it has the LG1
+sample; work moves to the answers' faults and to run B. The labelled points of A2, C, D3 and D4
+feed L8 (1123 points, held-out AUROC 0.695, no band at 0.8).
 
 ## Order of work
 
@@ -273,10 +268,12 @@ runs A2, C and D3 feed L8.
    the pruning table's open rows closed, L8 refit on A2, C and D3 (held-out AUROC 0.725, no
    0.8-precision band), the agree arm retired, the misfiring deterministic checks and the verify
    profile fixed (Hub d3-checks).
-5. Pin Hub #48 and switch the shadow scorer on; the next judged run (bare, verify, bundled)
-   gives L6 its fact-level set and the verification review its mark count for LG1, which the
-   owner sets from the table with LG2; then L9 and checked-answers A6 and A7.
-6. Run B (the 31B pair) on the settled checks.
+5. Done 28 October: run D4 (2a053c09) on the fixed checks; L6 scored offline and closed, the
+   scorer removed; one more value-binding misfire fixed (Hub d3-checks 34000a9); L8 refit on
+   four runs ([record](reviews/2026-10-28-confidence-labels-run-d4.md)).
+6. Owner: LG1 and the default (checked-answers A7) from the D4 record's proposals; L9 and A6
+   follow LG1 (the frontend findings view is built on the ESM fork's `findings-view`).
+7. Run B (the 31B writer) on the settled checks, with bare and the verification review.
 
 ## Interface with the decision-layer experiment
 
@@ -289,11 +286,10 @@ thread blocks the other:
   L1.1's output format (per-check precision and recall against the judge) is the metric set
   P0.6 reports for its arms, so one script serves both.
 - Three-band labels: L2's supported / contradicted / not addressed is the label scheme P0.6
-  fits its thresholds to; L8's calibration is the same fit, done on the generative and scorer
-  checkers this thread owns. If G1 passes, the qualifying model becomes a provider under
-  L6.1 with no new policy value.
-- Rules in common: shadow first and a separately attributed actor (their P2.2, our L6.2 and
-  LG1), the judge never sees a check (their rule that a decision verdict is never the
+  fits its thresholds to; L8's calibration is the same fit. Our local scorer failed the bar
+  (L6 closed, 28 October); if their G1 passes, the qualifying model joins a profile through
+  LG1 like any other check.
+- Rules in common: shadow first and a separately attributed actor (their P2.2, our LG1), the judge never sees a check (their rule that a decision verdict is never the
   promoted judge, our principle 8).
 - Scope split: this thread owns what a label means and when it may show; that thread owns
   its models and gates G0 to G3. Phase 3 items graduate through LG1 like any other check.

@@ -152,23 +152,24 @@ dated review under `reviews/` for a run.
 
 ## Run plan
 
-| Arm | Profile | Writer (answer, In-Depth) | Reviewer, grounder | Resident |
+The seven-arm matrix of run A was narrowed by runs A2 to D4 (see
+[confidence-labels.md](confidence-labels.md#pruning-28-october-2026-from-runs-a2-and-c-and-the-ensemble-research)):
+same-model review, the folded and noground variants, DRY on, the 12B cross-check and the
+agreement arm are retired. The arms now:
+
+| Arm | Profile | Writer (answer, In-Depth) | Checks | Resident |
 | --- | --- | --- | --- | --- |
 | bundled | ChartSearchAI built-in | Gemma 4 12B | module's own checks | 13 GB |
-| answer-only | `single-12b-answer` | Gemma 4 12B | none (grounder only) | 13 GB |
-| baseline | `single-12b-checked` | Gemma 4 12B | Gemma 4 12B | 13 GB |
-| folded | `single-12b-checked-folded` | Gemma 4 12B | Gemma 4 12B, grounding in the review | 13 GB |
-| noground | `single-12b-checked-noground` | Gemma 4 12B | Gemma 4 12B, no grounding | 13 GB |
-| arm 3 | `single-12b-xcheck` | Gemma 4 12B | Qwen3.6-35B-A3B | 33 GB |
-| arm 4 | `single-31b-xcheck` | Gemma 4 31B | Qwen3.5-9B | 28 GB |
+| answer-only | `single-12b-answer` | Gemma 4 12B | deterministic, 12B citation check | 13 GB |
+| bare | `single-12b-bare` | Gemma 4 12B | deterministic only | 13 GB |
+| verify | `single-12b-verify` | Gemma 4 12B | deterministic, Qwen3.5-9B verification questions, 12B citation fallback | 23 GB |
+| run B | `single-31b-xcheck` | Gemma 4 31B | deterministic, Qwen3.5-9B review and citations | 28 GB |
 
-Run A holds the first six (about 3.5 hours at 55 s per checked turn, 35 turns per arm); run B
-holds arm 4 and the baseline. The two runs are compared like for like through the judge cards.
-Arm 3 against the first three isolates what self-review and then cross-family review add to
-the same draft; arm 4 against arm 3 asks whether a bigger pair does better; folded and noground
-against the baseline price the grounder.
+Run B holds the 31B arm with bare and verify repeated as its in-run controls.
 
 ## Order of work
 
-A1, then A2 (separate Hub PRs, each rebuilt and pinned with `make chartsearch-smoke`), A3 and
-A4 together, A5, then A6 and A7 from its evidence.
+A1 to A4 built and run A judged (27 October); runs A2, C, D3 and D4 judged (28 October, records
+under `reviews/`). Next: A7 from the [D4 record](reviews/2026-10-28-confidence-labels-run-d4.md)'s
+proposal (bare as the default), run B, A6 once confidence-labels L9 lands, then the Hub stack
+merged and the gitlink moved to fork `main`.
