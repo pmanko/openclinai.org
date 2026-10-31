@@ -33,7 +33,7 @@ def work_dir() -> Path:
 class Outcome:
     sha: str
     ok: bool
-    status: str  # probed, skip, cached, baseline, no-main, blocked
+    status: str  # probed, skip, baseline, no-main, blocked
     lines: list[str] = field(default_factory=list)
 
 
@@ -43,6 +43,7 @@ class Run:
     ran: int
     failed: list[str]
     log: Path
+    failed_ids: list[dict] = field(default_factory=list)
 
 
 class Ledger:
@@ -53,17 +54,6 @@ class Ledger:
         if not self.path.exists():
             return []
         return [json.loads(l) for l in self.path.read_text().splitlines() if l.strip()]
-
-    def find(self, pid: str, trailer_key: str) -> dict | None:
-        for rec in reversed(self.records()):
-            if rec.get("patch_id") != pid:
-                continue
-            if rec["status"] == "baseline" and not trailer_key:
-                return rec
-            if rec["status"] in ("probed", "skip") and rec["ok"] \
-                    and rec.get("trailers", "") == trailer_key:
-                return rec
-        return None
 
     def append(self, rec: dict) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -99,17 +89,33 @@ def _run(runner: str, wt: Path, tests: list[str], log: Path) -> Run:
     log.parent.mkdir(parents=True, exist_ok=True)
     proc = subprocess.run([str(RUNNERS / f"{runner}.sh"), str(wt), str(log), *tests],
                           capture_output=True, text=True, env=clean_env())
-    ran, failed = 0, []
+    ran, failed, failed_ids = 0, [], []
     for line in proc.stdout.splitlines():
         if line.startswith("RAN "):
             ran = int(line.split()[1])
+        elif line.startswith("FAILED_ID "):
+            try:
+                identity = json.loads(line[len("FAILED_ID "):])
+                if (not isinstance(identity, dict) or
+                        any(not isinstance(identity.get(key), str) for key in ("file", "name", "full_name")) or
+                        not isinstance(identity.get("selectors"), list) or
+                        any(not isinstance(v, str) for v in identity["selectors"])):
+                    raise ValueError("invalid test identity")
+                failed_ids.append(identity)
+            except (ValueError, TypeError):
+                return Run(2, ran, failed, log)
         elif line.startswith("FAILED "):
             failed.append(line[7:].strip())
-    return Run(proc.returncode, ran, failed, log)
+    return Run(proc.returncode, ran, failed, log, failed_ids)
 
 
 def _first(run: Run, tests: list[str] = ()) -> str:
     """The failure to quote: one from a named test when there is one, else the first."""
+    identities = {identity.get("full_name") for identity in run.failed_ids
+                  if any(test in identity.get("selectors", []) for test in tests)}
+    identified = [failure for failure in run.failed if failure.split(": ", 1)[0] in identities]
+    if identified:
+        return identified[0][:160]
     names = [re.split(r"#|::", t)[-1] for t in tests]
     named = [f for f in run.failed if any(n and n in f for n in names)]
     return ((named or run.failed or [""])[0])[:160]
@@ -119,8 +125,10 @@ def _expect_red(run: Run, sha7: str, what: str, tests: list[str] = ()) -> tuple[
     if run.code == 1 and run.ran > 0 and run.failed:
         named = [re.split(r"#|::", test)[-1] for test in tests if "#" in test or "::" in test]
         failed_cases = [re.split(r"#|::", failure.split(": ", 1)[0])[-1] for failure in run.failed]
-        if named and not any(case == name or case.startswith(name + "[")
-                             for name in named for case in failed_cases):
+        matched = (any(test in identity["selectors"] for test in tests for identity in run.failed_ids)
+                   if run.failed_ids else any(case == name or case.startswith(name + "[")
+                                             for name in named for case in failed_cases))
+        if named and not matched:
             return False, f"BLOCK {sha7} {what}: intended test did not fail"
         return True, f"red   {sha7} {what}: {len(run.failed)} of {run.ran} failed: {_first(run, tests)}"
     if run.code == 2:
@@ -141,7 +149,7 @@ def _expect_green(run: Run, sha7: str) -> tuple[bool, str]:
     return False, f"BLOCK {sha7} at the commit: {reason} (see {run.log})"
 
 
-def probe_commit(repo: Path, sha: str, force: bool = False) -> Outcome:
+def probe_commit(repo: Path, sha: str) -> Outcome:
     sha = git(repo, "rev-parse", sha).strip()
     sha7 = sha[:7]
     changes = commit_changes(repo, sha)
@@ -162,11 +170,6 @@ def probe_commit(repo: Path, sha: str, force: bool = False) -> Outcome:
     ledger = Ledger(repo)
     pid = patch_id(repo, sha) or sha
     key = trailers.key()
-    previous = None  # Re-execute: patch identity cannot establish environment freshness.
-    if previous:
-        what = ("pushed before the probes were installed" if previous["status"] == "baseline"
-                else f"same patch as {previous['sha'][:7]}")
-        return Outcome(sha, True, "cached", [f"skip  {sha7} {what}"])
     record = {"sha": sha, "patch_id": pid, "trailers": key}
     if trailers.skip:
         line = f"skip  {sha7} Probe: skip ({trailers.skip})"

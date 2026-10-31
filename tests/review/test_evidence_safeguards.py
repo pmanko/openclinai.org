@@ -63,6 +63,10 @@ def test_unrelated_failure_does_not_satisfy_named_mutation_probe():
     run = Run(1, 2, ['tests.example::other: boundary assertion failed'], Path('log'))
     assert not _expect_red(run, 'head', 'mutation', ['tests/example.py::boundary'])[0]
     assert _expect_red(run, 'head', 'mutation', ['tests/example.py::other'])[0]
+    from reviewkit.probes import _first
+    nested = Run(1, 2, ['unrelated: boundary in diagnostic', 'suite boundary: expected 1'], Path('log'),
+                 [{'full_name': 'suite boundary', 'selectors': ['fixture.test.js#boundary']}])
+    assert _first(nested, ['fixture.test.js#boundary']) == 'suite boundary: expected 1'
 
 
 def test_executable_inputs_are_classified_without_freezing_prose():
@@ -79,23 +83,48 @@ def test_vitest_runner_rejects_process_errors_and_incomplete_evidence(tmp_path):
     stub.parent.mkdir(parents=True)
     log = tmp_path / 'run.log'
     cases = [('passed', 0, 0, 'passed', 0), ('failed', 1, 0, 'failed', 1),
-             ('pending', 0, 0, 'passed', 3), ('passed', 1, 0, 'passed', 2),
+             ('skipped', 0, 0, 'passed', 3), ('passed', 1, 0, 'passed', 2),
              ('failed', 1, 1, 'failed', 2), ('passed', 0, 0, 'interrupted', 2),
              ('passed', 0, 0, 'missing', 2), ('passed', 0, 1, 'passed', 2),
              ('passed', 0, 0, 'malformed', 2)]
     for status, process_exit, errors, reason, expected in cases:
         report = {'testResults': [{'status': 'failed' if status == 'failed' else 'passed',
-                  'assertionResults': [{'status': status, 'fullName': 'behavior', 'failureMessages': ['wrong']}]}]}
+                  'name': str(tmp_path / 'fixture.test.js'),
+                  'assertionResults': [{'status': status, 'title': 'behavior', 'fullName': 'suite behavior', 'failureMessages': ['wrong']}]}]}
         metadata = {'reason': reason, 'unhandled_errors': errors}
         encoded_metadata = '{bad' if reason == 'malformed' else json.dumps(metadata)
         # A stale sidecar must not stand in for an interrupted reporter.
         Path(str(log) + '.execution.json').write_text(json.dumps({'reason': 'passed', 'unhandled_errors': 0}))
-        stub.write_text('#!' + sys.executable + '\nimport os,json,sys\n'
+        stub.write_text('#!' + sys.executable + '\nimport os,json,sys,subprocess\n'
             'from pathlib import Path\n'
             'output=next(x.split("=",1)[1] for x in sys.argv if x.startswith("--outputFile.json="))\n'
             f'Path(output).write_text({json.dumps(json.dumps(report))})\n' +
-            ('' if reason == 'missing' else f'Path(os.environ["REVIEW_VITEST_EVIDENCE"]).write_text({json.dumps(encoded_metadata)})\n') +
+            ('' if reason == 'missing' else
+             f'Path(os.environ["REVIEW_VITEST_EVIDENCE"]).write_text({json.dumps(encoded_metadata)})\n' if reason == 'malformed' else
+             'reporter=next(x.split("=",1)[1] for x in sys.argv if x.startswith("--reporter=") and x.endswith(".mjs"))\n' +
+             'subprocess.run(["node", "-e", "import(process.argv[1]).then(({default:R})=>new R().onTestRunEnd([],Array(Number(process.argv[2])).fill({}),process.argv[3]))", reporter, ' + repr(str(errors)) + ', ' + repr(reason) + '], check=True)\n') +
             f'sys.exit({process_exit})\n')
         stub.chmod(0o755)
         result = subprocess.run([str(ROOT / 'review/bin/runners/vitest.sh'), str(tmp_path), str(log), 'fixture.test.js'], capture_output=True)
         assert result.returncode == expected, (status, process_exit, errors, reason, result.stdout, result.stderr)
+        if status == 'failed' and errors == 0 and reason == 'failed':
+            from reviewkit.probes import _run
+            selected = ['fixture.test.js#behavior']
+            run = _run('vitest', tmp_path, selected, log)
+            assert _expect_red(run, 'head', 'mutation', selected)[0]
+            assert run.failed_ids[0]['full_name'] == 'suite behavior'
+            assert not _expect_red(run, 'head', 'mutation', ['other.test.js#behavior'])[0]
+            assert not _expect_red(run, 'head', 'mutation', ['fixture.test.js#unrelated'])[0]
+
+
+def test_maven_interruption_cannot_prove_a_mutation_failed(tmp_path):
+    stub = tmp_path / 'bin/mvn'
+    stub.parent.mkdir()
+    report = tmp_path / 'target/surefire-reports/TEST-current.xml'
+    report.parent.mkdir(parents=True)
+    xml = '<testsuite><testcase classname="ExampleTest" name="behavior"><failure message="expected 1"/></testcase></testsuite>'
+    stub.write_text('#!' + sys.executable + '\nfrom pathlib import Path\n' +
+                    "Path('target/surefire-reports/TEST-current.xml').write_text(" + repr(xml) + ')\nraise SystemExit(137)\n')
+    stub.chmod(0o755)
+    result = subprocess.run([str(ROOT / 'review/bin/runners/maven.sh'), str(tmp_path), str(tmp_path/'run.log'), 'ExampleTest#behavior'], env={**os.environ, 'PATH': str(stub.parent)+os.pathsep+os.environ['PATH']}, capture_output=True)
+    assert result.returncode == 2, result.stdout + result.stderr

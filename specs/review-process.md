@@ -281,8 +281,8 @@ threads and no consumer checkout, and ran once.
 - [x] Carried threads: `threads.py` attaches the replaced PR's threads under
       `previous`; the brief treats an unanswered ask there as open
       ([record](reviews/2026-10-21-harness-reproduction.md#reproduced-25)).
-- [x] The consumer checkout: `review.py` adds the other repository at its stack top
-      and the brief's step 7 checks the two sides of the contract
+- [x] The consumer checkout: `review.py` adds the selected repository at the supplied revision,
+      or records its current local commit when none is supplied, and the brief's step 7 checks the two sides of the contract
       ([record](reviews/2026-10-21-harness-reproduction.md#third-run-on-the-missed-cases)).
 - [x] The states around the diff: the brief's step 6 names the restart, resume,
       blank-input, missing-store, cap and recovery cases

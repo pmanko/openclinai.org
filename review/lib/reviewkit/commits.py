@@ -3,7 +3,8 @@
 Paths are classified by content conventions, never by branch or repository name:
 test code (Maven `src/test`, `tests/`, `__tests__`, `*.test.ts`, `test_*.py`), main
 code (source files outside those), and other files (documentation, build files,
-configuration) that the probes ignore.
+configuration) that the probes ignore, except executable profiles, prompts and
+dataset inputs explicitly classified below.
 """
 
 from __future__ import annotations

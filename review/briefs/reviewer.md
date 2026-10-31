@@ -9,7 +9,7 @@ The prompt gives you: the repository checkout at the examined revision (your wor
 directory), the base ref, `threads.json` (the PR's title, body, linked ticket, every
 review thread so far, and under `previous` the threads of the PR this one replaced),
 the previous round's `findings.json` if any, the effort level, where to write your
-answer, and where given a read-only checkout of the consumer repository at its stack top.
+answer, and where given a read-only checkout of the consumer repository at the supplied revision (or its recorded current local commit).
 
 ## Steps
 

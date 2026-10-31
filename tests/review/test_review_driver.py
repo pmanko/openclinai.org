@@ -130,6 +130,26 @@ def test_a_round_records_findings_and_downgrades_unevidenced_blockers(tmp_path):
     assert report["consumer_head"] == consumer_head
     assert git(out_dir / "consumer/umbrella", "rev-parse", "HEAD") == consumer_head
 
+    # Auxiliary commands must leave the completed review and its thread snapshot intact.
+    saved = (out_dir / "result.json").read_bytes()
+    thread_snapshot = (out_dir / "threads.json").read_bytes()
+    pending_reply = subprocess.run([*cmd, "--replies"], env=env, capture_output=True, text=True)
+    assert pending_reply.returncode == 3
+    assert (out_dir / "result.json").read_bytes() == saved
+    (out_dir / "replies.md").write_text("Draft reply only.\n")
+    result = subprocess.run([*cmd, "--replies"], env=env, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    assert (out_dir / "result.json").read_bytes() == saved
+    assert (out_dir / "threads.json").read_bytes() == thread_snapshot
+    auxiliary = subprocess.run([*cmd, "--no-review"], env=env, capture_output=True, text=True)
+    assert auxiliary.returncode == 0, auxiliary.stderr
+    assert (out_dir / "result.json").read_bytes() == saved
+    assert (out_dir / "threads.json").read_bytes() == thread_snapshot
+    for count in ("0", "-1"):
+        result = subprocess.run([*cmd, "--rounds", count], env=env, capture_output=True, text=True)
+        assert result.returncode == 2
+        assert (out_dir / "result.json").read_bytes() == saved
+
     # Even explicitly requested fix rounds must not act on a superseded report.
     answer["findings"] = [{"file": "calc.py", "line": 1, "finding": "x breaks y", "blocking": True,
                             "failure_mode": "y fails", "evidence": "fixture assertion failed"}]

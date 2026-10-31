@@ -37,13 +37,13 @@ OPENMRS = re.compile(r"github\.com[:/]+(openmrs/[^/\s]+?)(\.git)?$")
 
 
 def upstream(checkout: Path, repository: str | None = None) -> tuple[str, str]:
-    """The remote that points at the OpenMRS repository, and its owner/name."""
+    """Select the requested GitHub repository, or the default OpenMRS upstream."""
     for line in git(checkout, "remote", "-v").splitlines():
         name, url = line.split()[:2]
         m = re.search(r"github\.com[:/]+([^/\s]+/[^/\s]+?)(\.git)?$", url) if repository else OPENMRS.search(url)
         if m and (repository is None or m.group(1) == repository):
             return name, m.group(1)
-    raise SystemExit(f"{checkout}: no remote points at github.com/openmrs")
+    raise SystemExit(f"{checkout}: no remote points at github.com/{repository or 'openmrs/*'}")
 
 
 def fetch_pr(checkout: Path, remote: str, pr: int) -> str:
@@ -469,6 +469,7 @@ def run_set_id(run_dir: Path) -> str:
 
 def main() -> int:
     global ACTIVE_RESULT
+    ACTIVE_RESULT = None
     ap = argparse.ArgumentParser()
     ap.add_argument("--pr", type=int)
     ap.add_argument("--repository", help="Exact GitHub owner/repository; selects the matching remote")
@@ -503,6 +504,8 @@ def main() -> int:
     ap.add_argument("--head", help="review this local ref instead of the PR's pushed head (review before the push)")
     ap.add_argument("--base", help="with --head: the local ref of the layer below, instead of the remote base branch")
     args = ap.parse_args()
+    if args.rounds < 1:
+        ap.error("--rounds must be at least 1")
     if args.no_consumer and (args.consumer_head or args.consumer_repo):
         ap.error("--no-consumer cannot select a consumer repository or revision")
     if args.base and not args.head:
@@ -527,9 +530,11 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     run_lock = (out_dir / "run.lock").open("w")
     fcntl.flock(run_lock, fcntl.LOCK_EX)
-    ACTIVE_RESULT = out_dir / "result.json"
-    ACTIVE_RESULT.write_text(json.dumps({"execution": "running", "assessment": "undetermined"}))
-    threads = out_dir / "threads.json"
+    if not args.replies and not args.no_review:
+        ACTIVE_RESULT = out_dir / "result.json"
+        ACTIVE_RESULT.write_text(json.dumps({"execution": "running", "assessment": "undetermined"}))
+    threads = out_dir / ("reply-threads.json" if args.replies else
+                         "evaluation-threads.json" if args.no_review else "threads.json")
     subprocess.run([str(BIN / "threads.py"), slug, str(args.pr), str(threads)]
                    + (["--until", args.threads_until] if args.threads_until else []), check=True)
     meta = json.loads(threads.read_text())

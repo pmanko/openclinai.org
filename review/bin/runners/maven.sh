@@ -33,5 +33,5 @@ except (OSError, ET.ParseError):
     errors += 1
 print('RAN ' + str(ran))
 rc = int(sys.argv[2])
-sys.exit(2 if errors else 3 if not ran and rc == 0 else 2 if not ran else 1 if failed and rc else 0 if not failed and rc == 0 else 2)
+sys.exit(2 if errors or rc not in (0, 1) else 3 if not ran and rc == 0 else 2 if not ran else 1 if failed and rc else 0 if not failed and rc == 0 else 2)
 PY

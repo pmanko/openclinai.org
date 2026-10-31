@@ -22,7 +22,7 @@ reports are rejected. Evidence: `work/review/vitest-exit-fixture/`.
 
 Verification:
 
-- `targets/validation-harness/.venv/bin/python -m pytest tests/review -q`: 35 passed.
+- `targets/validation-harness/.venv/bin/python -m pytest tests/review -q`: 36 passed.
 - `python3 -m unittest discover -s tests -v`: 19 passed.
 - `python3 scripts/check_workspace.py`: passed in an isolated clean checkout with
   all recorded component pins initialized. The active implementation checkout remains
@@ -43,6 +43,17 @@ Verification:
   and `wahs-contract-fixed-output.json`.
 
 Follow-up verification:
+
+- The tooling's own source review reproduced four defects: reply drafting erased
+  the saved result, focused Vitest runs rejected deselected tests, named tests
+  inside suites lost their failure identity, and Maven interruption could certify
+  partial red evidence. Regressions reproduced the failures before repair. Replies
+  and evaluation-only commands now preserve the source result and thread snapshot;
+  invalid round counts are rejected before changing them. Vitest records selector
+  identities and excludes skipped assertions; abnormal Maven exits are infrastructure
+  failures. The actual Vitest counterexamples pass after repair, and removing the
+  execution reporter from an isolated copy makes its regression fail. Unused cache
+  lookup and force controls were removed; consumer-selection documentation was corrected.
 
 - Harness #205 at `c528770` also resolves generated `patient_bundle` filenames to
   catalog IDs while preserving explicit `patient_id` values. The regression failed
