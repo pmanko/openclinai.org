@@ -21,6 +21,10 @@ Verification:
 - `python3 scripts/check_workspace.py`: passed in an isolated clean checkout with
   all recorded component pins initialized. The active implementation checkout remains
   at PR heads and is not used as pin-validation evidence.
+- Website verification in that clean checkout: `python -m pytest tests/website -q`
+  passed 123 tests; `npm test` in `site/` passed 47 tests; `npm run build:pages`
+  and `python3 scripts/check-website-links.py` passed. This built local artifacts
+  without deploying them.
 - Harness #205: interface repair `5597288`, diagnostic correction `0059042`;
   seven focused tests and 1,209 full-suite tests passed before the diagnostic-only
   correction; seven focused tests passed again afterward. Remote checks passed.
@@ -32,7 +36,10 @@ Verification:
   Script and observed output: `work/review/applicability/verify-wahs-contract-fixed.py`
   and `wahs-contract-fixed-output.json`.
 
-The open-PR campaign is running serially by repository and base-branch dependency.
-Its current results are in `work/review/campaign/results.json`; per-PR findings and
-execution reports are under `work/review/<component>-<PR>/`. Campaign completion and
-review conclusions are not established by the tooling tests above.
+The open-PR campaign collects reviews serially by repository and base-branch
+dependency, with explicit consumer revisions for the different feature branches.
+Its results are in `work/review/campaign/results-resumed.json`; per-PR findings and
+execution reports are under `work/review/<component>-<PR>/`. The local
+`work/review/campaign/report.html` includes follow-up adjudications and evidence.
+Campaign completion and review conclusions are not established by the tooling
+tests above.
