@@ -85,6 +85,9 @@ report; without it the report stands on its own.
 
 ## Layout
 
+Review output names include the URL-encoded GitHub owner and repository, so two
+forks with the same component alias and PR number cannot share reports or answers.
+
 ```
 review/
   README.md              how a round runs, for a person or an agent
@@ -97,7 +100,7 @@ review/
     stack.md             the cross-layer dimension for STACK=1
     judge.md             the harness rubric, for FULL=1
   bin/
-    threads.py           open threads per PR into work/review/<repo>-<pr>/threads.json
+    threads.py           open threads per PR into work/review/<component>-<encoded-repository>-<pr>/threads.json
     probe                [--repo] <commit>...: revert the main files, expect red; restore,
                          expect green; apply each Mutation:, expect red; --baseline records
                          already-pushed commits

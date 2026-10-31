@@ -61,7 +61,8 @@ it prevents a fork PR from being mistaken for an upstream PR.
 Set `REVIEW_PYTHON` to an absolute prepared interpreter for Python components.
 The runner never installs pytest alone as a substitute for component dependencies.
 Reports record dependency-file hashes and supplied consumer revisions. Missing
-consumer checkouts and unexecuted tests remain explicit gaps.
+default consumer checkouts leave a partial review; an unavailable explicitly
+selected consumer stops the run. Unexecuted tests remain explicit gaps.
 
 Use `CONSUMER_REPO=<checkout alias> CONSUMER_HEAD=<commit>` to select the repository
 and feature revision on the other side of this particular contract. The default
@@ -70,6 +71,9 @@ needs `CONSUMER_REPO=umbrella`. Without an explicit revision the driver uses tha
 which may belong to a different experiment. A mismatch against that revision does
 not establish a defect in a different producer/consumer pair. The report records
 the exact consumer commit; `NO_CONSUMER=1` omits this comparison explicitly.
+Report and worktree paths include the encoded GitHub repository identity. Saved
+human answers are archived and requested again when their review prompt or thread
+snapshot changes.
 
 The default is a local source review. `FIX=1` explicitly permits the fixer to
 commit and push between rounds, only after a complete, current review. Full evaluation reports remain local unless

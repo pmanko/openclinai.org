@@ -184,3 +184,30 @@ def test_failed_cleanup_cannot_reuse_old_assertions(tmp_path, runner):
             protected.chmod(0o755)
     assert result.returncode == 2, result.stdout + result.stderr
     assert not marker.exists(), 'Tests started despite unavailable fresh evidence'
+
+
+@pytest.mark.parametrize('runner', ['pytest', 'maven'])
+def test_same_named_failure_in_another_file_or_class_is_not_the_requested_test(tmp_path, monkeypatch, runner):
+    from reviewkit.probes import _run
+    if runner == 'pytest':
+        (tmp_path / 'test_intended.py').write_text('import pytest\npytestmark = getattr(pytest.mark, "skip")\ndef test_boundary(): assert False\n')
+        (tmp_path / 'test_other.py').write_text('def test_boundary(): assert False\n')
+        selected = ['test_intended.py::test_boundary', 'test_other.py']
+        correct = ['test_other.py::test_boundary']
+        monkeypatch.setenv('REVIEW_PYTHON', sys.executable)
+    else:
+        stub = tmp_path / 'bin/mvn'
+        stub.parent.mkdir()
+        reports = tmp_path / 'target/surefire-reports'
+        reports.mkdir(parents=True)
+        xml = '<testsuite><testcase classname="IntendedTest" name="boundary"><skipped/></testcase><testcase classname="pkg.OtherTest" name="boundary"><failure message="unrelated"/></testcase></testsuite>'
+        stub.write_text('#!' + sys.executable + '\nfrom pathlib import Path\n' +
+            f'Path("target/surefire-reports/TEST-fresh.xml").write_text({xml!r})\nraise SystemExit(1)\n')
+        stub.chmod(0o755)
+        monkeypatch.setenv('PATH', str(stub.parent) + os.pathsep + os.environ['PATH'])
+        selected = ['IntendedTest#boundary', 'OtherTest']
+        correct = ['OtherTest#boundary']
+    result = _run(runner, tmp_path, selected, tmp_path / 'run.log')
+    assert not _expect_red(result, 'head', 'mutation', selected)[0]
+    result = _run(runner, tmp_path, correct, tmp_path / 'correct.log')
+    assert _expect_red(result, 'head', 'mutation', correct)[0]

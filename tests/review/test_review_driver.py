@@ -83,11 +83,11 @@ def test_a_round_records_findings_and_downgrades_unevidenced_blockers(tmp_path):
 
     first = subprocess.run(cmd, env=env, capture_output=True, text=True)
     assert first.returncode == 3, first.stderr
-    out_dir = work / "querystore-1"
+    out_dir = next(work.rglob("reviewer-1.prompt.md")).parent
     prompt = (out_dir / "reviewer-1.prompt.md").read_text()
     assert head in prompt and "Effort: low" in prompt
     assert json.loads((out_dir / "threads.json").read_text())["threads"][0]["awaiting_reply"]
-    assert (work / "wt-review" / "querystore" / "1" / "calc.py").read_text() == "x = 1\n"
+    assert next((work / "wt-review").rglob("calc.py")).read_text() == "x = 1\n"
 
     answer = {"head": head, "reviewed_files": ["calc.py"], "unreviewed_files": [], "tests": [], "findings": [
         {"file": "calc.py", "line": 1, "finding": "x is wrong", "blocking": True},
@@ -124,6 +124,11 @@ def test_a_round_records_findings_and_downgrades_unevidenced_blockers(tmp_path):
     selected = [cmd[0], str(umbrella / "review/bin/review.py"), *cmd[2:],
                 "--consumer-repo", "umbrella", "--consumer-head", consumer_head]
     result = subprocess.run(selected, env=env, capture_output=True, text=True)
+    assert result.returncode == 3, result.stderr
+    assert not (out_dir / "reviewer-1.md").exists()
+    assert list((out_dir / "history").rglob("reviewer-1.md"))
+    (out_dir / "reviewer-1.md").write_text("```json\n" + json.dumps(answer) + "\n```\n")
+    result = subprocess.run(selected, env=env, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
     report = json.loads((out_dir / "result.json").read_text())
     assert report["consumer_repo"] == "umbrella"
@@ -156,5 +161,32 @@ def test_a_round_records_findings_and_downgrades_unevidenced_blockers(tmp_path):
     (out_dir / "reviewer-1.md").write_text("```json\n" + json.dumps(answer) + "\n```\n")
     env["REVIEW_IDENTITY"] = json.dumps({**identity, "headRefOid": base})
     result = subprocess.run([*cmd, "--fix", "--rounds", "2"], env=env, capture_output=True, text=True)
+    assert result.returncode == 3, result.stdout + result.stderr
+    (out_dir / "reviewer-1.md").write_text("```json\n" + json.dumps(answer) + "\n```\n")
+    result = subprocess.run([*cmd, "--fix", "--rounds", "2"], env=env, capture_output=True, text=True)
     assert result.returncode == 0, result.stdout + result.stderr
     assert json.loads((out_dir / "result.json").read_text())["execution"] == "superseded"
+
+    # Two forks with identical commits and PR numbers must not reuse a human answer.
+    other = tmp_path / "github.com/another/calc.git"
+    git(tmp_path, "clone", "-q", "--bare", str(upstream), str(other))
+    git(repo, "remote", "add", "other", str(other))
+    git(repo, "push", "-q", "other", "HEAD:refs/pull/1/head")
+    env["REVIEW_IDENTITY"] = json.dumps(identity)
+    saved = (out_dir / "result.json").read_bytes()
+    result = subprocess.run([*cmd, "--repository", "another/calc"], env=env, capture_output=True, text=True)
+    assert result.returncode == 3, result.stdout + result.stderr
+    assert (out_dir / "result.json").read_bytes() == saved
+    prompts = list(work.glob("*/reviewer-1.prompt.md"))
+    assert len(prompts) == 2
+    assert len(list((work / "wt-review").rglob("calc.py"))) == 2
+
+    # Explicitly requested contract evidence cannot disappear into a clean result.
+    missing = [cmd[0], str(umbrella / "review/bin/review.py"), *cmd[2:],
+               "--consumer-repo", "hub", "--consumer-head", consumer_head]
+    result = subprocess.run(missing, env=env, capture_output=True, text=True)
+    assert result.returncode not in (0, 3), result.stdout + result.stderr
+    report = json.loads((out_dir / "result.json").read_text())
+    assert report["execution"] == "error" and report["assessment"] == "undetermined"
+    assert report["requested_consumer_repo"] == "hub"
+    assert report["requested_consumer_head"] == consumer_head

@@ -85,6 +85,24 @@ def test_a_fix_whose_test_fails_without_it_is_pushed_with_red_and_green(project)
     assert len(records[1]["lines"]) == 4
 
 
+def test_a_failed_restoration_run_blocks_the_probe(project, monkeypatch):
+    sys.path.insert(0, str(ROOT / 'review/lib'))
+    from reviewkit import probes
+    commit(project, {"tests/test_calc.py": FIXED_TEST},
+           'Test the lower bound\n\nMutation: calc.py "max(low, min(value, high))" -> "min(value, high)"')
+    original = probes._run
+    observed = []
+    def runner(kind, wt, tests, log):
+        observed.append((wt / 'calc.py').read_text())
+        if len(observed) == 3:
+            return probes.Run(2, 0, [], log)
+        return original(kind, wt, tests, log)
+    monkeypatch.setattr(probes, '_run', runner)
+    result = probes.probe_commit(project, 'HEAD')
+    assert observed == [CALC, BROKEN, CALC]
+    assert not result.ok
+
+
 def test_a_fix_whose_test_passes_without_it_is_refused(project):
     weak = TEST + "\n\ndef test_top():\n    assert clamp(50, 0, 10) == 10\n"
     commit(project, {"calc.py": CALC.replace("return", "return  "), "tests/test_calc.py": weak},
@@ -223,9 +241,9 @@ def test_the_red_line_quotes_a_failure_of_a_named_test_first():
     sys.path.insert(0, str(ROOT / "review" / "lib"))
     from reviewkit.probes import Run, _first
 
-    run = Run(1, 5, ["OtherTest.old:12 expected 1", "PagingTest.slices:30 expected [R]"], Path("log"))
-    assert _first(run, ["PagingTest#slices"]).startswith("PagingTest.slices")
-    assert _first(run, ["tests/test_x.py::missing"]).startswith("OtherTest.old")
+    run = Run(1, 5, ["OtherTest#old: expected 1", "PagingTest#slices: expected [R]"], Path("log"))
+    assert _first(run, ["PagingTest#slices"]).startswith("PagingTest#slices")
+    assert _first(run, ["tests/test_x.py::missing"]).startswith("OtherTest#old")
 
 
 def test_a_rewrite_over_a_head_this_branch_pushed_is_allowed_when_fetch_skips_the_branch(project):

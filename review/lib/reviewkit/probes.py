@@ -85,6 +85,29 @@ def _reset(wt: Path, sha: str) -> None:
     git(wt, "clean", "-fdq", "-e", "node_modules")
 
 
+def _matches_test(identity: str, selector: str, root: Path | None = None) -> bool:
+    """Match a reported case to its file/class and method, never its method alone."""
+    parts = re.split(r"#|::", selector)
+    if len(parts) < 2:
+        return False
+    source, *symbols = parts
+    if source.endswith(".py"):
+        path = Path(source)
+        if path.is_absolute() and root is not None:
+            try:
+                path = path.relative_to(root)
+            except ValueError:
+                return False
+        source = str(path.with_suffix("")).replace("/", ".")
+    expected = ".".join([source, *symbols])
+    actual = re.sub(r"#|::", ".", identity)
+    if "#" in selector and not selector.split("#", 1)[0].endswith(".py"):
+        actual_class, _, method = identity.partition("#")
+        if "." not in source:
+            actual = actual_class.rsplit(".", 1)[-1] + "." + method
+    return actual == expected or actual.startswith(expected + "[")
+
+
 def _run(runner: str, wt: Path, tests: list[str], log: Path) -> Run:
     log.parent.mkdir(parents=True, exist_ok=True)
     proc = subprocess.run([str(RUNNERS / f"{runner}.sh"), str(wt), str(log), *tests],
@@ -105,7 +128,14 @@ def _run(runner: str, wt: Path, tests: list[str], log: Path) -> Run:
             except (ValueError, TypeError):
                 return Run(2, ran, failed, log)
         elif line.startswith("FAILED "):
-            failed.append(line[7:].strip())
+            failure = line[7:].strip()
+            failed.append(failure)
+            if runner in ("pytest", "maven"):
+                identity = failure.split(": ", 1)[0]
+                failed_ids.append({"file": re.split(r"#|::", identity)[0],
+                                   "name": re.split(r"#|::", identity)[-1],
+                                   "full_name": identity,
+                                   "selectors": [test for test in tests if _matches_test(identity, test, wt)]})
     return Run(proc.returncode, ran, failed, log, failed_ids)
 
 
@@ -116,18 +146,17 @@ def _first(run: Run, tests: list[str] = ()) -> str:
     identified = [failure for failure in run.failed if failure.split(": ", 1)[0] in identities]
     if identified:
         return identified[0][:160]
-    names = [re.split(r"#|::", t)[-1] for t in tests]
-    named = [f for f in run.failed if any(n and n in f for n in names)]
+    named = [f for f in run.failed if any(_matches_test(f.split(": ", 1)[0], test) for test in tests)]
     return ((named or run.failed or [""])[0])[:160]
 
 
 def _expect_red(run: Run, sha7: str, what: str, tests: list[str] = ()) -> tuple[bool, str]:
     if run.code == 1 and run.ran > 0 and run.failed:
-        named = [re.split(r"#|::", test)[-1] for test in tests if "#" in test or "::" in test]
-        failed_cases = [re.split(r"#|::", failure.split(": ", 1)[0])[-1] for failure in run.failed]
-        matched = (any(test in identity["selectors"] for test in tests for identity in run.failed_ids)
-                   if run.failed_ids else any(case == name or case.startswith(name + "[")
-                                             for name in named for case in failed_cases))
+        named = [test for test in tests if "#" in test or "::" in test]
+        failed_cases = [failure.split(": ", 1)[0] for failure in run.failed]
+        matched = (any(test in identity["selectors"] for test in named for identity in run.failed_ids)
+                   if run.failed_ids else any(_matches_test(case, test)
+                                             for test in named for case in failed_cases))
         if named and not matched:
             return False, f"BLOCK {sha7} {what}: intended test did not fail"
         return True, f"red   {sha7} {what}: {len(run.failed)} of {run.ran} failed: {_first(run, tests)}"

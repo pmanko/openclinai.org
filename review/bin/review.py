@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Drive `make review`: threads, fresh-session roles, rounds, and the optional layers.
 
-Writes everything to work/review/<repo>-<pr>/: threads.json, the prompts, each role's
+Writes everything to work/review/<component>-<encoded-repository>-<pr>/: threads.json, the prompts, each role's
 answer, findings-<round>.json and round-<round>.md. Posts nothing.
 """
 from __future__ import annotations
@@ -18,6 +18,7 @@ import sys
 import time
 from contextlib import contextmanager
 from pathlib import Path
+from urllib.parse import quote
 
 UMBRELLA = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(UMBRELLA / "review" / "lib"))
@@ -147,6 +148,14 @@ def run_role(args, role: str, workdir: Path, prompt: str, out: Path) -> str:
     if role != "fixer":
         prompt += ("\nYour final message is saved as your answer: do not write it to a file, and "
                    "leave the repository as you found it.\n")
+    if args.agent == "human" and out.exists():
+        previous_prompt = prompt_file.read_text() if prompt_file.exists() else ""
+        if previous_prompt != prompt:
+            archive = out.parent / "history" / hashlib.sha256(previous_prompt.encode() + out.read_bytes()).hexdigest()[:16]
+            archive.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(out, archive / out.name)
+            (archive / prompt_file.name).write_text(previous_prompt)
+            out.unlink()
     prompt_file.write_text(prompt)
     role_script = out.with_suffix(".role.sh")
     role_script.write_bytes((BIN / "role.sh").read_bytes())
@@ -526,25 +535,30 @@ def main() -> int:
     checkout = Path(args.checkout).resolve() if args.checkout else UMBRELLA / REPOS[args.repo]
     remote, slug = upstream(checkout, args.repository)
     git(checkout, "fetch", "-q", remote)
-    out_dir = work_dir() / f"{args.repo}-{args.pr}"
+    repository_key = quote(slug, safe="")
+    out_dir = work_dir() / f"{args.repo}-{repository_key}-{args.pr}"
     out_dir.mkdir(parents=True, exist_ok=True)
     run_lock = (out_dir / "run.lock").open("w")
     fcntl.flock(run_lock, fcntl.LOCK_EX)
     if not args.replies and not args.no_review:
         ACTIVE_RESULT = out_dir / "result.json"
-        ACTIVE_RESULT.write_text(json.dumps({"execution": "running", "assessment": "undetermined"}))
+        ACTIVE_RESULT.write_text(json.dumps({"execution": "running", "assessment": "undetermined",
+                                            "repository": slug, "pr": args.pr,
+                                            "requested_consumer_repo": args.consumer_repo,
+                                            "requested_consumer_head": args.consumer_head}))
     threads = out_dir / ("reply-threads.json" if args.replies else
                          "evaluation-threads.json" if args.no_review else "threads.json")
     subprocess.run([str(BIN / "threads.py"), slug, str(args.pr), str(threads)]
                    + (["--until", args.threads_until] if args.threads_until else []), check=True)
     meta = json.loads(threads.read_text())
+    snapshot_hash = hashlib.sha256(threads.read_bytes()).hexdigest()
 
     if args.replies:
         fetch_pr(checkout, remote, args.pr)
         rounds = sorted(out_dir.glob("findings-*.json"))
         ledger = work_dir() / "ledger"
         prompt = (BRIEFS / "reply.md").read_text() + (
-            f"\n## Inputs\n\n- Threads: {threads}\n- Last round: {rounds[-1] if rounds else 'none'}\n"
+            f"\n## Inputs\n\n- Threads: {threads} (snapshot {snapshot_hash})\n- Last round: {rounds[-1] if rounds else 'none'}\n"
             f"- Probe ledger (red and green lines by commit): {ledger}\n"
             f"- Commits on the PR: `git log {meta['base']}..refs/review/pr/{args.pr}`\n")
         run_role(args, "reply", checkout, prompt, out_dir / "replies.md")
@@ -557,10 +571,10 @@ def main() -> int:
         head = (git(checkout, "rev-parse", "--verify", f"{args.head}^{{commit}}").strip() if args.head
                 else fetch_pr(checkout, remote, args.pr))
         base = git(checkout, "rev-parse", args.base if args.base else f"{remote}/{meta['base']}").strip()
-        wt = work_dir() / "wt-review" / args.repo / str(args.pr)
+        wt = work_dir() / "wt-review" / args.repo / repository_key / str(args.pr)
         brief = (BRIEFS / "reviewer.md").read_text()
         inputs = [f"- Repository checkout at the {'local, not yet pushed' if args.head else 'PR'} head {head}: {wt}",
-                  f"- Base: {base}", f"- Prepared Python interpreter: {os.environ.get('REVIEW_PYTHON', 'not supplied; report dependency gaps')}", f"- Threads and ticket: {threads}",
+                  f"- Base: {base}", f"- Prepared Python interpreter: {os.environ.get('REVIEW_PYTHON', 'not supplied; report dependency gaps')}", f"- Threads and ticket: {threads} (snapshot {snapshot_hash})",
                   f"- Effort: {args.effort}" + (" (from round 2 on, blocking findings only)"
                                                if k > 1 else "")]
         previous = out_dir / f"findings-{k - 1}.json"
@@ -576,10 +590,14 @@ def main() -> int:
                               f"  - #{l['number']} {l['title']} ({l['head'][:7]})" for l in layers))
         worktree(checkout, wt, target)
         consumer = None if args.no_consumer else args.consumer_repo or CONSUMERS.get(args.repo)
+        missing_consumer = False
         if args.consumer_head and not consumer:
             ap.error("--consumer-head needs a consumer; select one with --consumer-repo")
         if consumer and not (UMBRELLA / REPOS[consumer] / ".git").exists():
+            if args.consumer_repo or args.consumer_head:
+                raise ValueError(f"requested consumer {consumer} is unavailable")
             inputs.append(f"- Consumer {consumer} is unavailable; its contract is unverified.")
+            missing_consumer = True
             consumer = None
         if consumer:
             consumer_checkout = UMBRELLA / REPOS[consumer]
@@ -604,7 +622,7 @@ def main() -> int:
                     base_branch=meta["base"], identity_after=fresh,
                     consumer_repo=consumer,
                     consumer_head=consumer_sha if consumer else None,
-                    execution=("superseded" if stale else "partial" if data["unreviewed_files"] else "complete"),
+                    execution=("superseded" if stale else "partial" if data["unreviewed_files"] or missing_consumer else "complete"),
                     behavior_verification="see evidence; not inferred from source review",
                     findings=settle(data["findings"]))
         data["dependency_files"] = {str(p.relative_to(wt)): hashlib.sha256(p.read_bytes()).hexdigest()
@@ -622,7 +640,7 @@ def main() -> int:
         if args.agent == "human":
             print("fix the blocking findings on the PR branch, push, and re-run")
             return 3
-        fix_wt = worktree(checkout, work_dir() / "wt-fix" / args.repo,
+        fix_wt = worktree(checkout, work_dir() / "wt-fix" / args.repo / repository_key,
                           head, branch=meta["head_branch"])
         run_role(args, "fixer", fix_wt, (BRIEFS / "fixer.md").read_text() +
                  f"\n## Inputs\n\n- Findings to fix: {out_dir / f'findings-{k}.json'}\n"
@@ -652,6 +670,7 @@ if __name__ == "__main__":
         sys.exit(main())
     except BaseException as exc:
         if ACTIVE_RESULT and not (isinstance(exc, SystemExit) and exc.code in (None, 0)):
-            ACTIVE_RESULT.write_text(json.dumps({"execution": "error", "assessment": "undetermined",
-                                                "error": str(exc)}, indent=2))
+            data = json.loads(ACTIVE_RESULT.read_text())
+            data.update(execution="error", assessment="undetermined", error=str(exc))
+            ACTIVE_RESULT.write_text(json.dumps(data, indent=2))
         raise

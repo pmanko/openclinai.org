@@ -22,7 +22,7 @@ reports are rejected. Evidence: `work/review/vitest-exit-fixture/`.
 
 Verification:
 
-- `targets/validation-harness/.venv/bin/python -m pytest tests/review -q`: 39 passed.
+- `targets/validation-harness/.venv/bin/python -m pytest tests/review -q`: 42 passed.
 - `python3 -m unittest discover -s tests -v`: 19 passed.
 - `python3 scripts/check_workspace.py`: passed in an isolated clean checkout with
   all recorded component pins initialized. The active implementation checkout remains
@@ -43,6 +43,18 @@ Verification:
   and `wahs-contract-fixed-output.json`.
 
 Follow-up verification:
+
+- The second tooling review reproduced ambiguous Python/Maven test matching,
+  acceptance of an unavailable explicitly selected consumer, and report/answer
+  collisions between forks with the same PR number. Matching now preserves the
+  file or class, explicit unavailable consumers fail with their requested identity
+  retained, and report, lock and worktree paths include the encoded GitHub repository.
+  Human answers are archived and requested again when their prompt or thread
+  snapshot changes. Missing default consumers leave a partial review. The two matching regressions
+  fail against the previous implementation. A new restoration test also fails when
+  execution of the restored code is removed. Evidence:
+  `work/review/applicability/identity-regressions/` and the preserved second review
+  in `work/review/umbrella-32/`.
 
 - All three test adapters now stop before executing tests when old evidence cannot
   be removed. A read-only Maven results directory previously caused its stale
@@ -80,7 +92,8 @@ Follow-up verification:
 The open-PR campaign collects reviews serially by repository, base-branch
 dependency and actual commit ancestry, with explicit consumer revisions for the different feature branches.
 Its results are in `work/review/campaign/results-resumed.json`; per-PR findings and
-execution reports are under `work/review/<component>-<PR>/`. The local
+execution reports are under `work/review/`, with repository-qualified directories
+for runs after the collision repair. The local
 `work/review/campaign/report.html` includes follow-up adjudications and evidence.
 Campaign completion and review conclusions are not established by the tooling
 tests above.
