@@ -414,7 +414,7 @@ review-hooks-install:
 	  [ "$$d" = . ] || review/bin/probe --repo $$d --baseline; \
 	done
 
-REVIEW_ARGS = $(if $(PR),--pr $(PR)) $(if $(REPO),--repo $(REPO)) $(if $(AGENT),--agent $(AGENT)) \
+REVIEW_ARGS = $(if $(REPOSITORY),--repository $(REPOSITORY)) $(if $(FIX),--fix) $(if $(PUBLISH_EVALUATION),--publish-evaluation) $(if $(PR),--pr $(PR)) $(if $(REPO),--repo $(REPO)) $(if $(AGENT),--agent $(AGENT)) \
 	$(if $(EFFORT),--effort $(EFFORT)) $(if $(ROUNDS),--rounds $(ROUNDS)) $(if $(STACK),--stack) \
 	$(if $(SCENARIOS),--scenarios $(SCENARIOS)) $(if $(NO_REVIEW),--no-review) \
 	$(if $(GATE),--gate $(GATE)) $(if $(GATE_BASE),--gate-base $(GATE_BASE)) \

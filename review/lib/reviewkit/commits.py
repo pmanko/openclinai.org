@@ -33,6 +33,8 @@ _SCISSORS = "# ------------------------ >8 ------------------------"
 def classify(path: str) -> str:
     if TEST_PATH.search(path):
         return "test"
+    if path == "server/levels.yaml" or path.startswith("server/prompts/"):
+        return "main"
     if path.endswith(CODE_EXT) and not BUILD_CONFIG.search(path):
         return "main"
     return "other"

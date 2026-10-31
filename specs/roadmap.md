@@ -16,7 +16,7 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 | Local HIV research environment | [local-hiv-environment.md](local-hiv-environment.md) | Setup and reset restore the published default baseline in about 5 minutes; Ross's fresh install passed; account context reaches the model; the 18 October module heads need a rebuilt baseline | New default baseline for the 18 October heads; Docker-only prerequisites |
 | Provider parity and local inference efficiency | [provider-parity.md](provider-parity.md) | Hub reads its context once per answer: checked answers take 16–56 s here when the router reuses the chart's temporal facts, 83–204 s when it does not, against 7–51 s built-in | Cross-question reuse; OpenRouter comparison; Ross re-measures |
 | OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | Three gh-stack stacks on the OpenMRS repositories since 21 October (QueryStore #92–#98, backend #615–#623, frontend #72–#76), one PR per layer targeting the layer below; the old fork PRs are closed with pointers | Fresh-reviewer (Codex) findings fixed in their owning layers ([record](reviews/2026-10-21-stack-cutover.md)); next the backend findings, the local boot check of the tops, then the maintainer's review |
-| Review process and gates | [review-process.md](review-process.md) | Designed 20 October from the maintainer's documented method ([record](reviews/2026-10-20-maintainer-review-process.md)); nothing built | Owner marks up the design; then hooks and probes, applied to the open round |
+| Review process and gates | [review-process.md](review-process.md) | Hooks, probes and source review implemented; evidence safeguards and Hub/harness support under verification | Review own-repository PRs in stack order; validate evidence and cross-component behavior |
 | Catalyst delivery | [catalyst-delivery.md](catalyst-delivery.md) | Four journeys demonstrated; acceptance open | FP-009 and FP-010 |
 | Local stacks, alone and together | [local-stacks.md](local-stacks.md) | Each stack alone and both on one Hub, Catalyst at OpenELIS Global 2 3.3.0; all smokes and both harness suites run on 25 October ([record](reviews/2026-10-25-local-stacks-together.md)) | ChartSearchAI fresh-setup and upgrade checks; the harness Catalyst suite's retired base SQL and the Hub's missing qwen2.5-14b token count |
 | Website and publication | [website-publication.md](website-publication.md) | Documentation site deploys from `main`; landing site live from the umbrella's own website proxy since 18 October | Audit item W04 |
@@ -27,8 +27,8 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 
 ## Current priorities
 
-1. [Review process and gates](review-process.md): the owner marks up the
-   design; hooks and probes first, applied to the 20 October round.
+1. [Review process and gates](review-process.md): harden evidence handling, support Hub and harness, and review the open fork PRs
+   in dependency order.
 2. [OpenMRS contribution delivery](openmrs-contribution.md): the
    [target path](openmrs-contribution.md#target-path): the fresh-reviewer
    findings in their owning layers, the local boot check of the stack tops, then

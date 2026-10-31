@@ -3,8 +3,8 @@
 Revert probe: the commit's tests fail with its main-code files put back to the parent
 and pass at the commit. Mutation probe: each Mutation: trailer, applied at the commit,
 makes the tests fail. Probes run in a persistent worktree per repository so builds stay
-incremental. A commit whose patch was already probed with the same trailers, or recorded
-as pushed before the probes existed, is not probed again.
+incremental. Every requested probe is executed afresh; historical baseline and patch identity
+do not establish current behavioral evidence.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .commits import code_changed, commit_changes, commit_trailers, derived_tests, detect_runner
+from .commits import classify, code_changed, commit_changes, commit_trailers, derived_tests, detect_runner
 from .git import clean_env, common_dir, git, patch_id, repo_name, toplevel
 
 UMBRELLA = Path(__file__).resolve().parents[3]
@@ -116,10 +116,10 @@ def _first(run: Run, tests: list[str] = ()) -> str:
 
 
 def _expect_red(run: Run, sha7: str, what: str, tests: list[str] = ()) -> tuple[bool, str]:
-    if run.code == 1:
+    if run.code == 1 and run.ran > 0 and run.failed:
         return True, f"red   {sha7} {what}: {len(run.failed)} of {run.ran} failed: {_first(run, tests)}"
     if run.code == 2:
-        return True, f"red   {sha7} {what}: the build fails (see {run.log})"
+        return False, f"BLOCK {sha7} {what}: infrastructure failure (see {run.log})"
     if run.code == 0:
         return False, (f"BLOCK {sha7} {what}: {run.ran} passed; the tests do not "
                        "detect it")
@@ -129,7 +129,7 @@ def _expect_red(run: Run, sha7: str, what: str, tests: list[str] = ()) -> tuple[
 
 
 def _expect_green(run: Run, sha7: str) -> tuple[bool, str]:
-    if run.code == 0:
+    if run.code == 0 and run.ran > 0:
         return True, f"green {sha7}: {run.ran} passed"
     reason = {1: f"{len(run.failed)} of {run.ran} failed: {_first(run)}",
               2: "the build fails", 3: "no named test ran"}.get(run.code, f"runner error {run.code}")
@@ -157,7 +157,7 @@ def probe_commit(repo: Path, sha: str, force: bool = False) -> Outcome:
     ledger = Ledger(repo)
     pid = patch_id(repo, sha) or sha
     key = trailers.key()
-    previous = None if force else ledger.find(pid, key)
+    previous = None  # Re-execute: patch identity cannot establish environment freshness.
     if previous:
         what = ("pushed before the probes were installed" if previous["status"] == "baseline"
                 else f"same patch as {previous['sha'][:7]}")
@@ -202,7 +202,13 @@ def probe_commit(repo: Path, sha: str, force: bool = False) -> Outcome:
             ok &= good
             lines.append(line)
             for n, mutation in enumerate(trailers.mutations, 1):
+                if classify(mutation.path) == "test":
+                    ok = False
+                    lines.append(f"BLOCK {sha7}: mutations must preserve tests")
+                    continue
                 target = wt / mutation.path
+                if not target.resolve().is_relative_to(wt.resolve()):
+                    raise ValueError("mutation path escapes review checkout")
                 text = target.read_text(encoding="utf-8") if target.is_file() else ""
                 count = text.count(mutation.old)
                 if count != 1:
@@ -217,6 +223,9 @@ def probe_commit(repo: Path, sha: str, force: bool = False) -> Outcome:
                 ok &= good
                 lines.append(line)
                 _reset(wt, sha)
+                restored, restored_line = _expect_green(_run(runner, wt, tests, logs / f"{sha7}-restored{n}.log"), sha7)
+                ok &= restored
+                lines.append(restored_line)
         finally:
             _reset(wt, sha)
     ledger.append({**record, "status": "probed", "ok": ok, "tests": tests, "lines": lines})

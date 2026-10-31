@@ -63,9 +63,9 @@ def test_a_round_records_findings_and_downgrades_unevidenced_blockers(tmp_path):
     prompt = (out_dir / "reviewer-1.prompt.md").read_text()
     assert head in prompt and "Effort: low" in prompt
     assert json.loads((out_dir / "threads.json").read_text())["threads"][0]["awaiting_reply"]
-    assert (work / "wt-review" / "querystore" / "calc.py").read_text() == "x = 1\n"
+    assert (work / "wt-review" / "querystore" / "1" / "calc.py").read_text() == "x = 1\n"
 
-    answer = {"head": head, "findings": [
+    answer = {"head": head, "reviewed_files": ["calc.py"], "unreviewed_files": [], "tests": [], "findings": [
         {"file": "calc.py", "line": 1, "finding": "x is wrong", "blocking": True},
         {"file": "calc.py", "line": 1, "finding": "x breaks y", "blocking": True,
          "failure_mode": "if merged, y fails", "evidence": "pytest: 1 failed"}]}

@@ -82,7 +82,7 @@ def test_a_fix_whose_test_fails_without_it_is_pushed_with_red_and_green(project)
     ledger = (Path(os.environ["REVIEW_WORK"]) / "ledger" / "fork.jsonl").read_text()
     records = [json.loads(l) for l in ledger.splitlines()]
     assert [r["status"] for r in records] == ["skip", "probed"]
-    assert len(records[1]["lines"]) == 3
+    assert len(records[1]["lines"]) == 4
 
 
 def test_a_fix_whose_test_passes_without_it_is_refused(project):
@@ -151,7 +151,7 @@ def test_main_code_without_a_test_is_refused_unless_skipped_on_the_record(projec
     assert push(project).returncode == 0
 
 
-def test_a_patch_already_probed_is_not_probed_again_after_a_rebase(project):
+def test_a_rebased_patch_is_probed_again(project):
     commit(project, {"calc.py": BROKEN}, "Simplify\n\nProbe: skip (setup)")
     commit(project, {"calc.py": CALC, "tests/test_calc.py": FIXED_TEST}, "Clamp")
     assert push(project).returncode == 0
@@ -162,7 +162,7 @@ def test_a_patch_already_probed_is_not_probed_again_after_a_rebase(project):
     git(project, "rebase", "-q", "main")
     result = push(project, "--force-with-lease")
     assert result.returncode == 0, result.stderr
-    assert "same patch as" in result.stderr
+    assert "red   " in result.stderr and "green " in result.stderr
 
 
 def test_pushes_to_a_default_branch_or_over_unseen_work_are_refused(project, tmp_path):
@@ -186,14 +186,14 @@ def test_pushes_to_a_default_branch_or_over_unseen_work_are_refused(project, tmp
     assert refused.returncode != 0 and "fetch and look" in refused.stderr
 
 
-def test_commits_already_pushed_are_recorded_as_baseline_and_skipped(project):
+def test_baseline_records_cannot_certify_unverified_code(project):
     commit(project, {"calc.py": CALC + "\nLIMIT = 3\n"}, "Old work")
     git(project, "push", "-q", "--no-verify", "origin", "HEAD:refs/heads/fix")
     assert "2 commits recorded" in run(project, sys.executable, str(PROBE), "--baseline").stdout
     git(project, "commit", "-q", "--amend", "-m", "Old work, reworded")
     result = git(project, "push", "--force-with-lease", "origin", "HEAD:fix", check=False)
-    assert result.returncode == 0, result.stderr
-    assert "before the probes were installed" in result.stderr
+    assert result.returncode != 0
+    assert "with no test" in result.stderr
 
 
 @pytest.mark.parametrize("files, message, refusal", [

@@ -55,7 +55,7 @@ report is the validation thread's output and feeds publication.
 ## Parameters
 
 ```
-make review PR=<n> [REPO=chartsearchai|esm|querystore] [AGENT=claude|codex|gemini|human]
+make review PR=<n> [REPO=umbrella|hub|harness|chartsearchai|esm|querystore] [AGENT=claude|codex|gemini|human]
             [EFFORT=low|medium|high] [ROUNDS=1] [STACK=1] [SCENARIOS=<set>] [GATE=<name>]
             [FULL=1] [SET=full-default] [PROFILES=<advertised Hub profiles>] [BASELINE=<run id>]
             [HEAD=<local ref> BASE=<local ref>]  review the layer before it is pushed
@@ -72,7 +72,7 @@ make review-replies PR=<n> [REPO=]              draft thread replies from the la
 | high | plus security and performance dimensions, uncertain findings returned as questions, a refutation pass on each blocking finding |
 
 `STACK=1` adds the contracts between layers (what one PR emits against what the PRs
-above and below consume) and reads the stack's merged top. `ROUNDS` above 1 repeats
+above and below consume) and reads the stack's merged top. `ROUNDS` above 1 with explicit `FIX=1` repeats
 review and fix until the reviewer records zero blocking findings on the pushed head,
 and every round after a clean one is blocking-only. `SCENARIOS`, `GATE` and `FULL` are off
 unless named. `FULL=1` runs the harness on `SET` (default `full-default`) against the set's two
@@ -148,9 +148,8 @@ Mutation: api/src/main/java/.../QueryStoreServiceImpl.java "candidateLimit" -> "
 
 The pre-push hook probes every commit the push adds (not on any remote yet) that
 touches main code, in a persistent probe worktree under `work/review/wt/<repo>` so Maven
-compiles incrementally. A patch already probed with the same trailers is not probed again
-after a rebase; commits pushed before the hooks were installed are recorded as the
-baseline. Mutation strings use JSON escapes, so a multi-line edit is one trailer.
+compiles incrementally. Probes execute afresh even after a rebase; historical baseline records are not
+verification evidence. Mutation strings use JSON escapes, so a multi-line edit is one trailer.
 
 ## Roles
 
@@ -225,9 +224,9 @@ and a person at a terminal.
   with. The report, not the score, is what publication consumes.
 - Every harness run starts the live dashboard (`make validate-dashboard`,
   http://localhost:8099), which follows the newest run. When an L5 run is judged, the run
-  step freezes that dashboard beside the report and publishes both to the reports site
+  step freezes that dashboard beside the report and, when explicitly requested, publishes both to the reports site
   (`scripts/publish-report.sh`), so a PR or record can link the published page;
-  `NO_PUBLISH=1` keeps them local, `PUBLISH=<run dir>` publishes a judged run later, and
+  reports stay local by default; `PUBLISH_EVALUATION=1` publishes them, `PUBLISH=<run dir>` publishes a judged run later, and
   `L5_RESUME=<run dir>` with `PROFILES=` adds arms to a finished run without re-running
   the cells it already completed.
 

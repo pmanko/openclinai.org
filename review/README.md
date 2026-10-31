@@ -7,8 +7,8 @@ hooks, scripts and briefs that a person or any agent runs the same way.
 
 `make review-hooks-install` points `core.hooksPath` of the umbrella and the three
 OpenMRS component checkouts (and their worktrees) at `review/hooks/`, and records the
-component commits already pushed to the forks as the baseline, so only new work is
-probed. Remove with `git -C <checkout> config --unset core.hooksPath`.
+component commits already pushed to the forks as historical baseline records. These
+records do not certify tests or exempt rebased changes from fresh probes. Remove with `git -C <checkout> config --unset core.hooksPath`.
 
 | Hook | Refuses |
 | --- | --- |
@@ -33,7 +33,7 @@ The tests are the `Tests:` trailer, otherwise the test files the commit adds or
 changes. A main-code commit with neither is refused unless it carries
 `Probe: skip (<reason>)`. The red and green lines go to stderr and to
 `work/review/ledger/<repo>.jsonl`; quote them in replies. A commit whose patch was
-already probed with the same trailers (a rebase) is not probed again. Logs are in
+already probed is run again; a patch ID cannot establish environment freshness. Logs are in
 `work/review/logs/<repo>/`.
 
 ```
@@ -49,3 +49,29 @@ offline; `package.json` with Vitest; pytest) or `git config review.runner`.
 
 `git commit --no-verify` and `git push --no-verify` skip the hooks; the ledger then has
 no record for that work, and a reply cannot quote one.
+
+
+## Review your repository PRs
+
+Use `make review REPO=hub REPOSITORY=pmanko/med-agent-hub PR=49 AGENT=codex`.
+`REPO` selects the checkout: `umbrella`, `hub`, `harness`, `chartsearchai`, `esm`, or
+`querystore`. `REPOSITORY` selects the exact GitHub repository and matching remote;
+it prevents a fork PR from being mistaken for an upstream PR.
+
+Set `REVIEW_PYTHON` to an absolute prepared interpreter for Python components.
+The runner never installs pytest alone as a substitute for component dependencies.
+Reports record dependency-file hashes and supplied consumer revisions. Missing
+consumer checkouts and unexecuted tests remain explicit gaps.
+
+The default is a local source review. `FIX=1` explicitly permits the fixer to
+commit and push between rounds. Full evaluation reports remain local unless
+`PUBLISH_EVALUATION=1` or `PUBLISH=<run directory>` is selected.
+
+Reports must identify the examined revision and account for every changed file.
+Incomplete coverage is `partial`; a changed PR head is `superseded`. Neither can
+produce `no_findings`. Findings, execution status and behavior verification are
+separate: a source review does not establish deployed-runtime acceptance.
+
+Probes require executed tests. Skips, collection errors and dependency failures
+cannot prove behavior. Mutations preserve tests and require a passing restoration.
+Hub profiles and prompts are executable inputs; prose remains review-only.
