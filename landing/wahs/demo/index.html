@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Washington Health Summary (WAHS+) — Interactive Patient Chart Explorer &amp; Read-Only Skills</title>
-  <meta name="description" content="Explore FHIR R4 patient charts with a simple core-resource browser, experiment with non-destructive backend condensation levers, and run read-only patient skills and grounded Q&A." />
+  <title>Washington Health Summary (WAHS+) — Interactive 3-Phase Patient Chart Explorer</title>
+  <meta name="description" content="Explore FHIR R4 patient charts in 3 clean phases: (1) Choose a patient & browse raw FHIR resources, (2) Adjust non-destructive condensation levers, and (3) Run read-only patient skills & grounded Q&A." />
   <link rel="canonical" href="https://wahs-demo.openclinai.org/" />
   <style>
     :root {
@@ -35,7 +35,8 @@
       --radius: 12px;
       --radius-sm: 8px;
       --shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-      --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.07);
+      --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+      --shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.14);
       --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
@@ -46,49 +47,46 @@
       background: var(--bg);
       color: var(--text);
       font-family: var(--font-sans);
-      line-height: 1.55;
+      line-height: 1.5;
       font-size: 15px;
     }
 
     a { color: var(--primary); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
-    /* Top Navigation Bar */
+    /* Top Brand Bar */
     .topbar {
       background: #0f172a;
       color: #f8fafc;
-      padding: 0.75rem 1.5rem;
+      padding: 0.65rem 1.5rem;
       border-bottom: 1px solid #1e293b;
-      position: sticky;
-      top: 0;
-      z-index: 40;
     }
     .topbar-inner {
-      max-width: 1440px;
+      max-width: 1480px;
       margin: 0 auto;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 1rem;
+      gap: 0.75rem;
     }
     .brand {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.7rem;
     }
     .brand-badge {
       background: #1d4ed8;
       color: #fff;
       font-weight: 700;
-      font-size: 0.75rem;
-      padding: 0.25rem 0.6rem;
+      font-size: 0.72rem;
+      padding: 0.22rem 0.58rem;
       border-radius: 999px;
       letter-spacing: 0.04em;
       text-transform: uppercase;
     }
     .brand h1 {
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-weight: 700;
       margin: 0;
       color: #ffffff;
@@ -97,121 +95,291 @@
       display: flex;
       align-items: center;
       gap: 1rem;
-      font-size: 0.85rem;
+      font-size: 0.83rem;
     }
-    .topbar-links a {
-      color: #cbd5e1;
-      font-weight: 500;
-    }
+    .topbar-links a { color: #cbd5e1; font-weight: 500; }
     .topbar-links a:hover { color: #ffffff; }
 
-    /* Main Container */
-    .container {
-      max-width: 1440px;
+    /* Sticky 3-Phase Stepper & Live Context Bar */
+    .phase-shell-bar {
+      position: sticky;
+      top: 0;
+      z-index: 35;
+      background: rgba(255, 255, 255, 0.97);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+    }
+    .phase-shell-inner {
+      max-width: 1480px;
       margin: 0 auto;
-      padding: 1.25rem 1.5rem 3.5rem;
+      padding: 0.65rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
     }
 
-    /* How It Works 3-Step Flow Banner */
-    .workflow-banner {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1rem 1.25rem;
-      margin-bottom: 1.25rem;
-      box-shadow: var(--shadow);
+    /* 3-Phase Stepper Tabs */
+    .phase-stepper {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.65rem;
     }
-    .workflow-step {
+    @media (max-width: 860px) {
+      .phase-stepper { grid-template-columns: 1fr; }
+    }
+    .phase-step-tab {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       gap: 0.75rem;
+      padding: 0.6rem 0.9rem;
+      border-radius: var(--radius-sm);
+      border: 2px solid var(--border);
+      background: var(--surface-subtle);
+      color: var(--text-secondary);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.14s ease;
     }
-    .step-num {
+    .phase-step-tab:hover {
+      border-color: #93c5fd;
+      background: var(--surface);
+    }
+    .phase-step-tab.active[data-phase="1"] {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      color: var(--text);
+      box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
+    }
+    .phase-step-tab.active[data-phase="2"] {
+      border-color: var(--teal);
+      background: var(--teal-light);
+      color: var(--text);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+    }
+    .phase-step-tab.active[data-phase="3"] {
+      border-color: var(--purple);
+      background: var(--purple-light);
+      color: var(--text);
+      box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.1);
+    }
+    .phase-step-num {
       width: 28px;
       height: 28px;
       border-radius: 999px;
-      background: var(--primary-light);
-      color: var(--primary);
-      border: 1px solid var(--primary-border);
-      font-weight: 700;
-      font-size: 0.85rem;
+      font-weight: 800;
+      font-size: 0.82rem;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      margin-top: 0.1rem;
-    }
-    .workflow-step strong {
-      display: block;
-      font-size: 0.92rem;
-      color: var(--text);
-      margin-bottom: 0.15rem;
-    }
-    .workflow-step span {
-      font-size: 0.82rem;
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
       color: var(--text-secondary);
+    }
+    .phase-step-tab.active[data-phase="1"] .phase-step-num {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .phase-step-tab.active[data-phase="2"] .phase-step-num {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: #fff;
+    }
+    .phase-step-tab.active[data-phase="3"] .phase-step-num {
+      background: var(--purple);
+      border-color: var(--purple);
+      color: #fff;
+    }
+    .phase-step-title {
+      font-weight: 700;
+      font-size: 0.88rem;
+      display: block;
+      color: var(--text);
+    }
+    .phase-step-sub {
+      font-size: 0.74rem;
+      color: var(--text-muted);
       display: block;
     }
 
-    /* Section Header */
-    .section-block {
-      margin-bottom: 1.75rem;
+    /* Persistent Active Context Summary Bar */
+    .context-summary-strip {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.4rem 0.8rem;
+      font-size: 0.79rem;
     }
-    .section-header {
+    .context-pills-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .ctx-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      padding: 0.18rem 0.55rem;
+      border-radius: 6px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .ctx-chip code {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      color: var(--primary);
+    }
+    .context-quick-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* Main Phase Container */
+    .container {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 1.15rem 1.5rem 3rem;
+    }
+
+    /* Single Active Phase View */
+    .phase-panel {
+      display: none;
+      animation: fadeIn 0.16s ease-out;
+    }
+    .phase-panel.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(3px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Phase Header & Footer Action Bars */
+    .phase-header-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.85rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .phase-title-wrap h2 {
+      margin: 0;
+      font-size: 1.22rem;
+      font-weight: 800;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
+    .phase-title-wrap p {
+      margin: 0.2rem 0 0;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .phase-footer-bar {
+      margin-top: 1.25rem;
+      padding: 0.9rem 1.15rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
       gap: 0.75rem;
-      margin-bottom: 0.85rem;
-    }
-    .section-title-group {
-      display: flex;
-      align-items: center;
-      gap: 0.65rem;
-      flex-wrap: wrap;
-    }
-    .step-pill {
-      background: var(--primary);
-      color: #fff;
-      font-size: 0.72rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 0.2rem 0.6rem;
-      border-radius: 999px;
-    }
-    .step-pill.teal { background: var(--teal); }
-    .step-pill.purple { background: var(--purple); }
-    .section-header h2 {
-      margin: 0;
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: var(--text);
-    }
-    .section-subtitle {
-      font-size: 0.86rem;
-      color: var(--text-secondary);
-      margin: 0.15rem 0 0;
     }
 
-    /* Single-Level Patient Persona Grid */
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.48rem 0.9rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text);
+      transition: all 0.12s ease;
+    }
+    .btn:hover { background: var(--surface-alt); }
+    .btn-sm {
+      padding: 0.28rem 0.6rem;
+      font-size: 0.76rem;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+    .btn-primary:hover { background: #1e40af; }
+    .btn-teal {
+      background: var(--teal);
+      color: #ffffff;
+      border-color: var(--teal);
+    }
+    .btn-teal:hover { background: #115e59; }
+    .btn-purple {
+      background: var(--purple);
+      color: #ffffff;
+      border-color: var(--purple);
+    }
+    .btn-purple:hover { background: #5b21b6; }
+
+    /* PHASE 1: Persona Grid + 2-Pane Raw FHIR Browser */
+    .persona-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.95rem 1.1rem;
+      margin-bottom: 1.1rem;
+      box-shadow: var(--shadow);
+    }
+    .persona-block-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      margin-bottom: 0.75rem;
+    }
+    .persona-block-header h3 {
+      margin: 0;
+      font-size: 0.96rem;
+      font-weight: 700;
+    }
     .persona-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(295px, 1fr));
-      gap: 0.85rem;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 0.75rem;
+    }
+    .persona-grid.collapsed {
+      display: none;
     }
     .persona-card {
       background: var(--surface);
       border: 2px solid var(--border);
-      border-radius: var(--radius);
-      padding: 0.95rem 1.05rem;
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 0.95rem;
       cursor: pointer;
-      transition: all 0.15s ease;
-      box-shadow: var(--shadow);
+      transition: all 0.14s ease;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -231,84 +399,56 @@
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      gap: 0.5rem;
-      margin-bottom: 0.35rem;
+      gap: 0.45rem;
+      margin-bottom: 0.28rem;
     }
     .persona-name {
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 0.96rem;
       color: var(--text);
     }
     .persona-meta {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: var(--text-muted);
       font-family: var(--font-mono);
       background: var(--surface-alt);
-      padding: 0.15rem 0.45rem;
-      border-radius: 6px;
+      padding: 0.12rem 0.42rem;
+      border-radius: 5px;
       white-space: nowrap;
     }
     .persona-tag {
-      display: inline-block;
-      font-size: 0.76rem;
+      font-size: 0.75rem;
       font-weight: 600;
       color: var(--primary);
-      margin-bottom: 0.4rem;
+      margin-bottom: 0.35rem;
     }
     .persona-bio {
-      font-size: 0.82rem;
+      font-size: 0.79rem;
       color: var(--text-secondary);
-      margin: 0 0 0.6rem;
-      line-height: 1.45;
+      margin: 0 0 0.5rem;
+      line-height: 1.42;
     }
-    .persona-highlights {
-      font-size: 0.74rem;
-      color: var(--text-muted);
+    .persona-card-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.4rem;
       border-top: 1px solid var(--border);
-      padding-top: 0.45rem;
+      padding-top: 0.42rem;
+      font-size: 0.72rem;
+      color: var(--text-muted);
       font-weight: 500;
     }
 
-    /* Buttons */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.48rem 0.9rem;
-      border-radius: var(--radius-sm);
-      font-size: 0.84rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: 1px solid var(--border-strong);
-      background: var(--surface);
-      color: var(--text);
-      transition: all 0.12s ease;
-    }
-    .btn:hover { background: var(--surface-alt); }
-    .btn-primary {
-      background: var(--primary);
-      color: #ffffff;
-      border-color: var(--primary);
-    }
-    .btn-primary:hover { background: #1e40af; }
-    .btn-teal {
-      background: var(--teal);
-      color: #ffffff;
-      border-color: var(--teal);
-    }
-    .btn-teal:hover { background: #115e59; }
-
-    /* Zone A: Two-Panel Split (Original FHIR Browser vs Condensation Levers & Condensed View) */
-    .zone-a-grid {
+    /* Phase 1 2-Pane FHIR Browser (Table Left, Inspector Right) */
+    .phase1-browser-split {
       display: grid;
-      grid-template-columns: 1.05fr 1fr;
-      gap: 1.15rem;
+      grid-template-columns: 1.2fr 0.95fr;
+      gap: 1.1rem;
       align-items: start;
     }
-    @media (max-width: 1120px) {
-      .zone-a-grid {
-        grid-template-columns: 1fr;
-      }
+    @media (max-width: 1080px) {
+      .phase1-browser-split { grid-template-columns: 1fr; }
     }
 
     .panel-card {
@@ -319,7 +459,7 @@
       overflow: hidden;
     }
     .panel-header {
-      padding: 0.9rem 1.15rem;
+      padding: 0.85rem 1.1rem;
       background: var(--surface-subtle);
       border-bottom: 1px solid var(--border);
       display: flex;
@@ -330,37 +470,36 @@
     }
     .panel-header h3 {
       margin: 0;
-      font-size: 0.98rem;
+      font-size: 0.96rem;
       font-weight: 700;
       color: var(--text);
     }
     .panel-header-sub {
-      font-size: 0.79rem;
+      font-size: 0.77rem;
       color: var(--text-muted);
     }
     .panel-body {
-      padding: 1rem 1.15rem;
+      padding: 0.95rem 1.1rem;
     }
 
-    /* Simple Core-Resource FHIR Browser */
     .browser-cat-bar {
       display: flex;
       flex-wrap: wrap;
       gap: 0.35rem;
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.65rem;
     }
     .cat-pill {
       border: 1px solid var(--border);
       background: var(--surface-alt);
       color: var(--text-secondary);
       border-radius: 999px;
-      padding: 0.25rem 0.65rem;
-      font-size: 0.76rem;
+      padding: 0.24rem 0.62rem;
+      font-size: 0.75rem;
       font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 0.3rem;
+      gap: 0.28rem;
     }
     .cat-pill:hover { border-color: var(--border-strong); }
     .cat-pill.active {
@@ -370,8 +509,8 @@
     }
     .cat-count {
       font-family: var(--font-mono);
-      font-size: 0.7rem;
-      opacity: 0.88;
+      font-size: 0.69rem;
+      opacity: 0.9;
     }
 
     .browser-search-row {
@@ -388,7 +527,7 @@
     }
 
     .browser-table-wrap {
-      max-height: 410px;
+      max-height: 540px;
       overflow-y: auto;
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
@@ -407,13 +546,13 @@
       font-weight: 700;
       padding: 0.5rem 0.65rem;
       border-bottom: 1px solid var(--border);
-      font-size: 0.74rem;
+      font-size: 0.73rem;
       text-transform: uppercase;
       letter-spacing: 0.03em;
       z-index: 2;
     }
     .browser-table td {
-      padding: 0.5rem 0.65rem;
+      padding: 0.52rem 0.65rem;
       border-bottom: 1px solid var(--border);
       vertical-align: top;
     }
@@ -426,9 +565,9 @@
 
     .res-badge {
       display: inline-block;
-      padding: 0.1rem 0.42rem;
+      padding: 0.12rem 0.45rem;
       border-radius: 5px;
-      font-size: 0.7rem;
+      font-size: 0.71rem;
       font-weight: 600;
       background: var(--surface-alt);
       color: var(--text-secondary);
@@ -448,65 +587,77 @@
       margin-right: 0.25rem;
     }
 
-    /* Resource Inspector Drawer inside Panel A1 */
-    .resource-inspector {
-      margin-top: 0.8rem;
-      border: 1px solid var(--primary-border);
-      background: #f8fbff;
-      border-radius: var(--radius-sm);
-      padding: 0.8rem 0.95rem;
+    /* Right-Pane Dedicated FHIR Resource Inspector */
+    .inspector-sticky-card {
+      position: sticky;
+      top: 108px;
     }
-    .inspector-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
+    .inspector-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.45rem;
+      margin-bottom: 0.75rem;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.6rem 0.75rem;
+      font-size: 0.78rem;
     }
     .inspector-note-box {
-      background: #ffffff;
-      border: 1px solid var(--border);
+      background: #fffef7;
+      border: 1px solid var(--amber-border);
       border-radius: 6px;
-      padding: 0.65rem 0.8rem;
+      padding: 0.7rem 0.85rem;
       font-family: var(--font-mono);
       font-size: 0.77rem;
       white-space: pre-wrap;
-      max-height: 180px;
+      max-height: 240px;
       overflow-y: auto;
-      margin-bottom: 0.55rem;
+      margin-bottom: 0.75rem;
       color: var(--text);
     }
     .inspector-json-box {
       background: #0f172a;
       color: #e2e8f0;
       border-radius: 6px;
-      padding: 0.65rem 0.8rem;
+      padding: 0.75rem 0.9rem;
       font-family: var(--font-mono);
-      font-size: 0.74rem;
+      font-size: 0.75rem;
       white-space: pre-wrap;
-      max-height: 190px;
+      max-height: 430px;
       overflow-y: auto;
       margin: 0;
     }
 
-    /* Panel A2: Condensation Levers & Condensed Chart */
-    .levers-box {
+    /* PHASE 2: Dedicated Condensation Studio (Levers Left, Condensed Output Right) */
+    .phase2-studio-grid {
+      display: grid;
+      grid-template-columns: 0.88fr 1.22fr;
+      gap: 1.15rem;
+      align-items: start;
+    }
+    @media (max-width: 1080px) {
+      .phase2-studio-grid { grid-template-columns: 1fr; }
+    }
+
+    .lever-group-card {
       background: var(--surface-subtle);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       padding: 0.85rem 0.95rem;
-      margin-bottom: 0.85rem;
+      margin-bottom: 0.8rem;
     }
-    .lever-row {
-      margin-bottom: 0.75rem;
-    }
-    .lever-row:last-child { margin-bottom: 0; }
     .lever-label {
       display: block;
-      font-size: 0.79rem;
+      font-size: 0.81rem;
       font-weight: 700;
       color: var(--text);
       margin-bottom: 0.35rem;
+    }
+    .lever-help {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin: 0 0 0.5rem;
     }
     .seg-group {
       display: flex;
@@ -518,7 +669,7 @@
       background: var(--surface);
       color: var(--text-secondary);
       border-radius: 6px;
-      padding: 0.32rem 0.65rem;
+      padding: 0.35rem 0.68rem;
       font-size: 0.78rem;
       font-weight: 600;
       cursor: pointer;
@@ -531,37 +682,52 @@
       border-color: var(--teal);
     }
 
-    .prep-toggles-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    .prep-toggles-stack {
+      display: flex;
+      flex-direction: column;
       gap: 0.45rem;
     }
     .prep-toggle-item {
       display: flex;
       align-items: flex-start;
-      gap: 0.45rem;
-      font-size: 0.78rem;
+      gap: 0.5rem;
+      font-size: 0.79rem;
       color: var(--text-secondary);
       background: var(--surface);
       border: 1px solid var(--border);
-      padding: 0.4rem 0.6rem;
+      padding: 0.48rem 0.65rem;
       border-radius: 6px;
       cursor: pointer;
     }
     .prep-toggle-item input { margin-top: 0.18rem; }
 
-    /* Condensed Metrics Strip */
+    .omitted-audit-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.8rem 0.95rem;
+      font-size: 0.79rem;
+    }
+    .omitted-audit-box h4 {
+      margin: 0 0 0.4rem;
+      font-size: 0.82rem;
+      color: var(--text);
+    }
+
     .condensed-metrics-strip {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 0.5rem;
-      margin-bottom: 0.75rem;
+      gap: 0.55rem;
+      margin-bottom: 0.8rem;
+    }
+    @media (max-width: 680px) {
+      .condensed-metrics-strip { grid-template-columns: repeat(2, 1fr); }
     }
     .metric-mini {
       background: var(--teal-light);
       border: 1px solid var(--teal-border);
       border-radius: 8px;
-      padding: 0.5rem 0.65rem;
+      padding: 0.55rem 0.7rem;
     }
     .metric-mini-label {
       font-size: 0.7rem;
@@ -570,7 +736,7 @@
       text-transform: uppercase;
     }
     .metric-mini-val {
-      font-size: 0.96rem;
+      font-size: 0.98rem;
       font-weight: 700;
       color: var(--text);
       font-family: var(--font-mono);
@@ -581,109 +747,107 @@
       border: 1px solid var(--primary-border);
       color: #1e3a8a;
       border-radius: var(--radius-sm);
-      padding: 0.55rem 0.75rem;
-      font-size: 0.8rem;
-      margin-bottom: 0.75rem;
+      padding: 0.6rem 0.8rem;
+      font-size: 0.81rem;
+      margin-bottom: 0.85rem;
     }
 
     .condensed-sections-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.6rem;
-      max-height: 365px;
-      overflow-y: auto;
-      padding-right: 0.2rem;
+      gap: 0.65rem;
     }
-    @media (max-width: 680px) {
+    @media (max-width: 720px) {
       .condensed-sections-grid { grid-template-columns: 1fr; }
-      .condensed-metrics-strip { grid-template-columns: repeat(2, 1fr); }
     }
     .cond-sec-card {
       background: var(--surface-subtle);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      padding: 0.6rem 0.75rem;
+      padding: 0.65rem 0.8rem;
     }
     .cond-sec-card h4 {
-      margin: 0 0 0.35rem;
-      font-size: 0.79rem;
+      margin: 0 0 0.4rem;
+      font-size: 0.81rem;
       font-weight: 700;
       color: var(--text);
       display: flex;
       justify-content: space-between;
+      align-items: center;
     }
     .cond-sec-list {
       margin: 0;
       padding-left: 1.05rem;
-      font-size: 0.76rem;
+      font-size: 0.77rem;
       color: var(--text-secondary);
     }
-    .cond-sec-list li { margin-bottom: 0.22rem; }
+    .cond-sec-list li { margin-bottom: 0.24rem; }
 
     .raw-ledger-pre {
       background: #0f172a;
       color: #f8fafc;
-      padding: 0.8rem;
+      padding: 0.9rem;
       border-radius: var(--radius-sm);
       font-family: var(--font-mono);
-      font-size: 0.75rem;
-      max-height: 365px;
+      font-size: 0.76rem;
+      max-height: 580px;
       overflow-y: auto;
       white-space: pre-wrap;
       margin: 0;
     }
 
-    /* Zone B: Unified Read-Only Skills & Q&A Workspace */
-    .readonly-notice {
-      background: var(--amber-light);
-      border: 1px solid var(--amber-border);
-      color: #78350f;
-      border-radius: var(--radius-sm);
-      padding: 0.65rem 0.95rem;
-      font-size: 0.83rem;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 0.5rem;
+    /* PHASE 3: Master-Detail Skills Launcher (Left Rail) + Grounded Q&A & Report Card (Right Main Stage) */
+    .phase3-master-detail {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 1.2rem;
+      align-items: start;
+    }
+    @media (max-width: 1040px) {
+      .phase3-master-detail { grid-template-columns: 1fr; }
     }
 
+    .skills-rail-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.9rem;
+      box-shadow: var(--shadow);
+    }
     .skills-group-title {
-      font-size: 0.82rem;
-      font-weight: 700;
+      font-size: 0.76rem;
+      font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.04em;
       color: var(--text-secondary);
-      margin: 0 0 0.55rem;
+      margin: 0 0 0.5rem;
       display: flex;
       align-items: center;
-      gap: 0.45rem;
+      gap: 0.4rem;
     }
+    .skills-rail-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .skills-rail-list:last-child { margin-bottom: 0; }
 
-    .skills-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
-      gap: 0.7rem;
-      margin-bottom: 1.1rem;
-    }
     .skill-btn-card {
       background: var(--surface);
       border: 2px solid var(--border);
       border-radius: var(--radius-sm);
-      padding: 0.75rem 0.85rem;
+      padding: 0.65rem 0.75rem;
       text-align: left;
       cursor: pointer;
-      transition: all 0.14s ease;
-      box-shadow: var(--shadow);
+      transition: all 0.12s ease;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      gap: 0.3rem;
     }
     .skill-btn-card:hover {
       border-color: #93c5fd;
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-md);
+      background: var(--surface-subtle);
     }
     .skill-btn-card.active {
       border-color: var(--primary);
@@ -693,30 +857,29 @@
     .skill-card-head {
       display: flex;
       align-items: flex-start;
-      gap: 0.5rem;
-      margin-bottom: 0.35rem;
+      gap: 0.45rem;
     }
     .skill-icon {
-      font-size: 1.2rem;
-      line-height: 1;
+      font-size: 1.1rem;
+      line-height: 1.1;
     }
     .skill-title {
       font-weight: 700;
-      font-size: 0.87rem;
+      font-size: 0.84rem;
       color: var(--text);
-      line-height: 1.3;
+      line-height: 1.28;
     }
     .skill-sub {
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       color: var(--text-secondary);
-      margin: 0 0 0.5rem;
-      line-height: 1.38;
+      margin: 0;
+      line-height: 1.35;
     }
     .skill-badge {
       display: inline-block;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 700;
-      padding: 0.15rem 0.5rem;
+      padding: 0.12rem 0.48rem;
       border-radius: 999px;
       align-self: flex-start;
     }
@@ -724,26 +887,26 @@
     .skill-badge.warn { background: var(--amber-light); color: var(--amber); border: 1px solid var(--amber-border); }
     .skill-badge.ok { background: var(--teal-light); color: var(--teal); border: 1px solid var(--teal-border); }
 
-    /* Free-Text Q&A Bar */
+    /* Right Stage: Q&A Bar + Active Report Card */
     .qa-bar-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 0.9rem 1.1rem;
-      margin-bottom: 1rem;
+      padding: 0.85rem 1.05rem;
+      margin-bottom: 0.95rem;
       box-shadow: var(--shadow);
     }
     .qa-input-row {
       display: flex;
-      gap: 0.6rem;
-      margin-bottom: 0.55rem;
+      gap: 0.55rem;
+      margin-bottom: 0.5rem;
     }
     .qa-input {
       flex: 1;
-      padding: 0.6rem 0.85rem;
+      padding: 0.55rem 0.85rem;
       border: 1px solid var(--border-strong);
       border-radius: var(--radius-sm);
-      font-size: 0.9rem;
+      font-size: 0.88rem;
     }
     .qa-sample-chips {
       display: flex;
@@ -756,8 +919,8 @@
       border: 1px solid var(--border);
       color: var(--text-secondary);
       border-radius: 999px;
-      padding: 0.2rem 0.65rem;
-      font-size: 0.75rem;
+      padding: 0.18rem 0.62rem;
+      font-size: 0.74rem;
       cursor: pointer;
     }
     .qa-chip:hover {
@@ -766,12 +929,11 @@
       border-color: var(--primary-border);
     }
 
-    /* Read-Only Report Card Output */
     .report-card {
       background: var(--surface);
       border: 2px solid var(--primary-border);
       border-radius: var(--radius);
-      padding: 1.2rem 1.35rem;
+      padding: 1.15rem 1.3rem;
       box-shadow: var(--shadow-md);
     }
     .report-card-header {
@@ -781,42 +943,42 @@
       justify-content: space-between;
       gap: 0.75rem;
       border-bottom: 1px solid var(--border);
-      padding-bottom: 0.85rem;
-      margin-bottom: 0.95rem;
+      padding-bottom: 0.8rem;
+      margin-bottom: 0.9rem;
     }
     .report-card-title {
       margin: 0;
-      font-size: 1.12rem;
-      font-weight: 700;
+      font-size: 1.1rem;
+      font-weight: 800;
       color: var(--text);
     }
     .report-summary-box {
       background: #f8fbff;
       border-left: 4px solid var(--primary);
-      padding: 0.8rem 1rem;
+      padding: 0.75rem 0.95rem;
       border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       color: var(--text);
-      margin-bottom: 1rem;
+      margin-bottom: 0.95rem;
     }
 
     .report-items-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.83rem;
-      margin-bottom: 1rem;
+      font-size: 0.82rem;
+      margin-bottom: 0.95rem;
     }
     .report-items-table th {
       background: var(--surface-alt);
       color: var(--text-secondary);
       text-align: left;
-      padding: 0.5rem 0.7rem;
-      font-size: 0.74rem;
+      padding: 0.5rem 0.68rem;
+      font-size: 0.73rem;
       text-transform: uppercase;
       border-bottom: 1px solid var(--border);
     }
     .report-items-table td {
-      padding: 0.6rem 0.7rem;
+      padding: 0.58rem 0.68rem;
       border-bottom: 1px solid var(--border);
       vertical-align: top;
     }
@@ -825,48 +987,48 @@
       background: var(--teal-light);
       border: 1px solid var(--teal-border);
       border-radius: var(--radius-sm);
-      padding: 0.8rem 1rem;
-      margin-bottom: 0.9rem;
+      padding: 0.75rem 0.95rem;
+      margin-bottom: 0.85rem;
     }
     .remediation-box h4 {
-      margin: 0 0 0.4rem;
-      font-size: 0.86rem;
+      margin: 0 0 0.35rem;
+      font-size: 0.85rem;
       color: var(--teal);
     }
     .remediation-box ul {
       margin: 0;
       padding-left: 1.15rem;
-      font-size: 0.84rem;
+      font-size: 0.83rem;
       color: var(--text);
     }
-    .remediation-box li { margin-bottom: 0.3rem; }
+    .remediation-box li { margin-bottom: 0.25rem; }
 
     .lever-impact-box {
       background: var(--purple-light);
       border: 1px solid var(--purple-border);
       color: #4c1d95;
       border-radius: var(--radius-sm);
-      padding: 0.65rem 0.9rem;
-      font-size: 0.81rem;
-      margin-bottom: 0.9rem;
+      padding: 0.6rem 0.85rem;
+      font-size: 0.8rem;
+      margin-bottom: 0.85rem;
     }
 
     .clinician-tech-box {
       background: #0f172a;
       color: #e2e8f0;
       border-radius: var(--radius-sm);
-      padding: 0.75rem 0.95rem;
+      padding: 0.7rem 0.9rem;
       font-family: var(--font-mono);
-      font-size: 0.77rem;
-      margin-bottom: 0.9rem;
+      font-size: 0.76rem;
+      margin-bottom: 0.85rem;
     }
 
     .citations-bar {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.4rem;
+      gap: 0.38rem;
       align-items: center;
-      padding-top: 0.75rem;
+      padding-top: 0.7rem;
       border-top: 1px solid var(--border);
     }
     .cite-chip {
@@ -874,7 +1036,7 @@
       border: 1px solid var(--border-strong);
       border-radius: 6px;
       padding: 0.22rem 0.55rem;
-      font-size: 0.74rem;
+      font-size: 0.73rem;
       font-family: var(--font-mono);
       color: var(--primary);
       cursor: pointer;
@@ -882,6 +1044,28 @@
     .cite-chip:hover {
       background: var(--primary-light);
       border-color: var(--primary);
+    }
+
+    /* Slide-Over FHIR Source Drawer (Used in Phase 3 so clicking citations never yanks user out of Phase 3) */
+    .drawer-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      z-index: 90;
+      justify-content: flex-end;
+    }
+    .drawer-backdrop.open { display: flex; }
+    .drawer-panel {
+      background: var(--surface);
+      width: min(620px, 94vw);
+      height: 100%;
+      padding: 1.25rem 1.4rem;
+      box-shadow: var(--shadow-lg);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
     }
 
     /* Custom Bundle Modal */
@@ -902,7 +1086,7 @@
       max-width: 680px;
       width: 100%;
       padding: 1.25rem 1.4rem;
-      box-shadow: var(--shadow-md);
+      box-shadow: var(--shadow-lg);
     }
     .modal-textarea {
       width: 100%;
@@ -923,7 +1107,7 @@
     <div class="topbar-inner">
       <div class="brand">
         <span class="brand-badge">WAHS+ Patient Chart Explorer</span>
-        <h1>Washington Health Summary — Interactive FHIR Browser, Condensation Levers &amp; Read-Only Patient Skills</h1>
+        <h1>Washington Health Summary — 3-Phase FHIR Browser, Condensation Studio &amp; Read-Only Patient Skills</h1>
       </div>
       <nav class="topbar-links" aria-label="WAHS Navigation">
         <a href="/wahs/">WAHS Overview</a>
@@ -933,174 +1117,233 @@
     </div>
   </header>
 
+  <!-- Sticky 3-Phase Stepper & Persistent Active Context Bar -->
+  <div class="phase-shell-bar">
+    <div class="phase-shell-inner">
+      <div class="phase-stepper" role="tablist" aria-label="WAHS Explorer Phases">
+        <button type="button" class="phase-step-tab active" role="tab" id="phase-tab-1" aria-selected="true" aria-controls="phase-panel-1" data-phase="1">
+          <span class="phase-step-num">1</span>
+          <span>
+            <span class="phase-step-title">Phase 1 · Select &amp; Browse Original FHIR</span>
+            <span class="phase-step-sub">Choose a patient persona &amp; inspect untouched FHIR R4 resources</span>
+          </span>
+        </button>
+        <button type="button" class="phase-step-tab" role="tab" id="phase-tab-2" aria-selected="false" aria-controls="phase-panel-2" data-phase="2">
+          <span class="phase-step-num">2</span>
+          <span>
+            <span class="phase-step-title">Phase 2 · Condense &amp; Prep Levers</span>
+            <span class="phase-step-sub">Experiment with token budgets (16k→1k), strategy &amp; hygiene toggles</span>
+          </span>
+        </button>
+        <button type="button" class="phase-step-tab" role="tab" id="phase-tab-3" aria-selected="false" aria-controls="phase-panel-3" data-phase="3">
+          <span class="phase-step-num">3</span>
+          <span>
+            <span class="phase-step-title">Phase 3 · Patient Skills &amp; Q&amp;A</span>
+            <span class="phase-step-sub">Run 9 read-only everyday &amp; health-check skills or ask questions</span>
+          </span>
+        </button>
+      </div>
+
+      <!-- Persistent Active Context Summary Strip -->
+      <div class="context-summary-strip" aria-label="Active Patient and Condensation Context">
+        <div class="context-pills-group">
+          <span class="ctx-chip" id="ctx-patient-chip">👤 Patient: —</span>
+          <span class="ctx-chip" id="ctx-lever-chip">🎛️ Levers: <code>8k • Lossless Structural</code></span>
+          <span class="ctx-chip" id="ctx-posture-chip">🛡️ Posture: <code>Patient Self View</code></span>
+        </div>
+        <div class="context-quick-actions">
+          <button type="button" class="btn btn-sm" id="ctx-jump-phase1-btn">1. Raw FHIR</button>
+          <button type="button" class="btn btn-sm" id="ctx-jump-phase2-btn">2. Levers</button>
+          <button type="button" class="btn btn-sm btn-primary" id="ctx-jump-phase3-btn">3. Skills &amp; Q&amp;A</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <main class="container">
 
-    <!-- 3-Step Patient & Researcher Workflow Banner -->
-    <section class="workflow-banner" aria-label="How this interactive explorer works">
-      <div class="workflow-step">
-        <div class="step-num">1</div>
-        <div>
-          <strong>Choose a Patient Persona (or Load Any FHIR Bundle)</strong>
-          <span>Pick one of 6 realistic patient charts—or upload your own FHIR R4 JSON—and browse the original resources in a clean, single-level table.</span>
+    <!-- ===================================================================== -->
+    <!-- PHASE 1: CHOOSE PATIENT CHART & INSPECT ORIGINAL FHIR R4 RECORD       -->
+    <!-- ===================================================================== -->
+    <section class="phase-panel active" id="phase-panel-1" role="tabpanel" aria-labelledby="phase-tab-1">
+      <div class="phase-header-bar">
+        <div class="phase-title-wrap">
+          <h2>Phase 1: Choose a Patient Chart &amp; Browse Original FHIR Resources</h2>
+          <p>Select one of the 6 top-level patient personas (or upload a custom FHIR R4 Bundle JSON) and inspect the untouched original resources below.</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button type="button" class="btn" id="open-custom-fhir-btn">📂 Load Custom FHIR R4 Bundle (.json)</button>
+          <button type="button" class="btn btn-teal" id="phase1-top-next-btn">Continue to Phase 2: Condense Chart →</button>
         </div>
       </div>
-      <div class="workflow-step">
-        <div class="step-num">2</div>
-        <div>
-          <strong>Adjust Backend Condensation Levers (Non-Destructive)</strong>
-          <span>Experiment with token size limits (<code>16k → 1k</code>), condensation strategy (<em>Lossless Structural</em> vs. <em>Hierarchical Grouped</em>), and hygiene filters without altering the original chart.</span>
-        </div>
-      </div>
-      <div class="workflow-step">
-        <div class="step-num">3</div>
-        <div>
-          <strong>Run Read-Only Patient Skills &amp; Ask Questions</strong>
-          <span>Run everyday patient tasks or read-only chart health checks to get clear explanations and doctor questions—deferring any chart mutation.</span>
-        </div>
-      </div>
-    </section>
 
-    <!-- STEP 1: Single-Level Patient Persona Selector -->
-    <section class="section-block" id="patient-selector-section">
-      <div class="section-header">
-        <div>
-          <div class="section-title-group">
-            <span class="step-pill">Step 1</span>
-            <h2>Choose a Patient Chart</h2>
+      <!-- 1A. Collapsible Single-Level Patient Persona Selector -->
+      <div class="persona-block" id="patient-selector-section">
+        <div class="persona-block-header">
+          <div>
+            <h3>1A. Patient Personas (Single-Level Cohort — 3 Multi-Year Longitudinal + 3 Acute Transition Archetypes)</h3>
           </div>
-          <p class="section-subtitle">Select a top-level patient persona below or load a custom FHIR R4 Bundle JSON file.</p>
+          <button type="button" class="btn btn-sm" id="toggle-persona-grid-btn">Collapse Persona Cards ▲</button>
         </div>
-        <div>
-          <button type="button" class="btn btn-primary" id="open-custom-fhir-btn">📂 Load Custom FHIR R4 Bundle (.json)</button>
-        </div>
+        <div class="persona-grid" id="persona-grid" role="region" aria-label="Patient Personas"></div>
       </div>
 
-      <div class="persona-grid" id="persona-grid" role="region" aria-label="Patient Personas"></div>
-    </section>
-
-    <!-- STEP 2 (ZONE A): Original FHIR Browser & Interactive Backend Condensation Levers -->
-    <section class="section-block" id="zone-a-section">
-      <div class="section-header">
-        <div>
-          <div class="section-title-group">
-            <span class="step-pill teal">Step 2 · Backend Preparation &amp; Condensation (What We Control)</span>
-            <h2>Browse Original FHIR Record &amp; Experiment with Condensation Levers</h2>
-          </div>
-          <p class="section-subtitle">Left: Simple 1-level browser over the original untouched FHIR R4 resources. Right: Interactive backend condensation levers and the resulting condensed chart.</p>
-        </div>
-      </div>
-
-      <div class="zone-a-grid">
-        <!-- Panel A1: Simple Core-Resource FHIR Browser -->
+      <!-- 1B. Full-Width 2-Pane Simple Core-Resource FHIR Browser -->
+      <div class="phase1-browser-split" id="zone-a-section">
+        <!-- Left Pane: 1-Level Core-Resource Table -->
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <h3 id="browser-panel-title">Original FHIR R4 Chart Browser</h3>
-              <div class="panel-header-sub" id="browser-panel-subtitle">100% non-destructive view of the original bundle resources</div>
+              <h3 id="browser-panel-title">1B. Original FHIR R4 Core-Resource Browser</h3>
+              <div class="panel-header-sub">Flattened 1-level view of core clinical resources — click any row to inspect on the right</div>
             </div>
             <span class="res-badge" id="browser-total-badge">0 entries</span>
           </div>
           <div class="panel-body">
-            <!-- Core Category Filter Pills -->
             <div class="browser-cat-bar" id="browser-cat-bar" role="tablist" aria-label="FHIR Resource Categories"></div>
-
-            <!-- Search Input -->
             <div class="browser-search-row">
-              <input type="search" id="browser-search-input" class="browser-search-input" placeholder="Filter resources by condition, medication, lab name, clinic, or code..." aria-label="Filter FHIR resources" />
+              <input type="search" id="browser-search-input" class="browser-search-input" placeholder="Search conditions, medications, labs, clinical notes, clinic names, or codes..." aria-label="Filter FHIR resources" />
             </div>
-
-            <!-- 1-Level Resource Table -->
             <div class="browser-table-wrap">
               <table class="browser-table">
                 <thead>
                   <tr>
-                    <th style="width: 54px;">#</th>
-                    <th style="width: 120px;">Category</th>
-                    <th>Summary &amp; Flattened Details</th>
-                    <th style="width: 96px;">Date</th>
-                    <th style="width: 125px;">Source / Status</th>
+                    <th style="width: 50px;">#</th>
+                    <th style="width: 118px;">Resource</th>
+                    <th>Summary &amp; Flattened Clinical Details</th>
+                    <th style="width: 94px;">Date</th>
+                    <th style="width: 125px;">Clinic / Code</th>
                   </tr>
                 </thead>
                 <tbody id="browser-table-body"></tbody>
               </table>
             </div>
+          </div>
+        </div>
 
-            <!-- Click-to-Inspect Resource Drawer -->
-            <div class="resource-inspector" id="resource-inspector">
-              <div class="inspector-top">
-                <strong id="inspector-title" style="font-size: 0.86rem; color: var(--primary);">Click any row above to inspect its decoded clinical fields &amp; raw FHIR R4 JSON</strong>
-                <span class="res-badge" id="inspector-meta-badge">FHIR R4</span>
+        <!-- Right Pane: Sticky Dedicated Resource & Decoded Note Inspector -->
+        <div class="panel-card inspector-sticky-card" id="resource-inspector">
+          <div class="panel-header">
+            <div>
+              <h3 id="inspector-title">Selected FHIR Resource Inspector</h3>
+              <div class="panel-header-sub">Decoded UTF-8 clinical note text &amp; underlying FHIR R4 JSON structure</div>
+            </div>
+            <span class="res-badge" id="inspector-meta-badge">FHIR R4</span>
+          </div>
+          <div class="panel-body">
+            <div class="inspector-summary-grid" id="inspector-summary-grid"></div>
+            <div id="inspector-note-container" style="display: none;">
+              <div style="font-size: 0.76rem; font-weight: 700; color: var(--amber); margin-bottom: 0.3rem;">📄 Decoded Clinical Note Narrative (UTF-8 from Base64 payload):</div>
+              <div class="inspector-note-box" id="inspector-note-text"></div>
+            </div>
+            <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.3rem;">Underlying FHIR R4 Resource JSON:</div>
+            <pre class="inspector-json-box" id="inspector-json-box">{}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-footer-bar">
+        <div style="font-size: 0.85rem; color: var(--text-secondary);">
+          Done inspecting the raw FHIR R4 bundle? Move to <strong>Phase 2</strong> to configure non-destructive condensation levers.
+        </div>
+        <button type="button" class="btn btn-teal" id="phase1-bottom-next-btn">Continue to Phase 2: Condense &amp; Prep Levers →</button>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- PHASE 2: BACKEND PREPARATION & CONDENSATION LEVERS                    -->
+    <!-- ===================================================================== -->
+    <section class="phase-panel" id="phase-panel-2" role="tabpanel" aria-labelledby="phase-tab-2">
+      <div class="phase-header-bar">
+        <div class="phase-title-wrap">
+          <h2>Phase 2: Backend Preparation &amp; Interactive Condensation Levers</h2>
+          <p>Experiment with how the backend prepares and condenses the chart before any patient skill or Q&amp;A prompt runs. The original FHIR bundle is never mutated.</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button type="button" class="btn" id="phase2-top-back-btn">← Back to Phase 1 (Raw FHIR)</button>
+          <button type="button" class="btn btn-purple" id="phase2-top-next-btn">Continue to Phase 3: Patient Skills &amp; Q&amp;A →</button>
+        </div>
+      </div>
+
+      <div class="phase2-studio-grid">
+        <!-- Left Column: Backend Levers We Control -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h3>2A. Backend Condensation &amp; Prep Levers</h3>
+              <div class="panel-header-sub">Levers controlled by the system / researcher</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <!-- Lever 1: Token Budget -->
+            <div class="lever-group-card">
+              <span class="lever-label">1. Target Condensed Size Limit (Token Budget)</span>
+              <p class="lever-help">Controls how tightly the chart is compressed to fit model context windows.</p>
+              <div class="seg-group" id="budget-lever-group">
+                <button type="button" class="seg-btn" data-budget="16384">16k (Full History)</button>
+                <button type="button" class="seg-btn active" data-budget="8192">8k (Standard 2-Yr)</button>
+                <button type="button" class="seg-btn" data-budget="4096">4k (1-Page Brief)</button>
+                <button type="button" class="seg-btn" data-budget="2048">2k (Compact Capsule)</button>
+                <button type="button" class="seg-btn" data-budget="1024">1k (Emergency Card)</button>
               </div>
-              <div id="inspector-note-container" style="display: none;">
-                <div style="font-size: 0.75rem; font-weight: 700; color: var(--teal); margin-bottom: 0.25rem;">Decoded Clinical Note Narrative (UTF-8 from Base64):</div>
-                <div class="inspector-note-box" id="inspector-note-text"></div>
+            </div>
+
+            <!-- Lever 2: Condensation Approach -->
+            <div class="lever-group-card">
+              <span class="lever-label">2. Condensation Approach (Strategy)</span>
+              <p class="lever-help">Compare verbatim line preservation against hierarchical renewal/trend folding.</p>
+              <div class="seg-group" id="mode-lever-group">
+                <button type="button" class="seg-btn active" data-mode="lossless_structural">Lossless Structural (Verbatim Lines)</button>
+                <button type="button" class="seg-btn" data-mode="hierarchical">Hierarchical Grouped (Fold Renewals &amp; Trends)</button>
               </div>
-              <pre class="inspector-json-box" id="inspector-json-box">{ "tip": "Select any resource row in the table above to view its underlying FHIR R4 JSON structure." }</pre>
+            </div>
+
+            <!-- Lever 3: Non-Destructive Prep & Hygiene Toggles -->
+            <div class="lever-group-card">
+              <span class="lever-label">3. Non-Destructive Hygiene &amp; Privacy Toggles</span>
+              <p class="lever-help">Filter non-clinical noise or preview optional external-share privacy redaction.</p>
+              <div class="prep-toggles-stack">
+                <label class="prep-toggle-item">
+                  <input type="checkbox" id="toggle-exclude-claims" checked disabled />
+                  <span><strong>Exclude Billing Claims</strong> (<span id="count-claims-label">0</span> <code>Claim/EOB</code> kept out of clinical prompt)</span>
+                </label>
+                <label class="prep-toggle-item">
+                  <input type="checkbox" id="toggle-dedup-notes" checked disabled />
+                  <span><strong>Deduplicate Base64 Notes</strong> (<span id="count-b64-label">0</span> byte-identical wrapper copies collapsed)</span>
+                </label>
+                <label class="prep-toggle-item">
+                  <input type="checkbox" id="toggle-filter-equip" />
+                  <span><strong>Filter Room Equipment</strong> (<span id="count-equip-label">0</span> clinic exam-room <code>Device</code> artifacts)</span>
+                </label>
+                <label class="prep-toggle-item">
+                  <input type="checkbox" id="toggle-privacy-share" />
+                  <span><strong>Preview External Share Privacy</strong> (<span id="count-sdoh-label">0</span> sensitive social/safety entries withheld)</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Kept vs. Omitted Sections Breakdown -->
+            <div class="omitted-audit-box" id="omitted-audit-box">
+              <h4>📊 Kept vs. Omitted Sections at Current Budget</h4>
+              <div id="omitted-audit-content"></div>
             </div>
           </div>
         </div>
 
-        <!-- Panel A2: Backend Condensation Levers & Resulting Condensed Chart -->
+        <!-- Right Column: Resulting Condensed Chart Inspector -->
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <h3>Backend Condensation Levers &amp; Condensed Chart</h3>
-              <div class="panel-header-sub">Control how the chart is prepared and condensed before running skills or Q&amp;A</div>
+              <h3 id="condensed-panel-title">2B. Resulting Condensed Chart Preview</h3>
+              <div class="panel-header-sub">Live output produced by the selected Phase 2 levers</div>
             </div>
             <div class="seg-group">
-              <button type="button" class="seg-btn active" id="view-human-summary-btn">Readable Summary</button>
-              <button type="button" class="seg-btn" id="view-raw-ledger-btn">Raw AI Context Ledger</button>
+              <button type="button" class="seg-btn active" id="view-human-summary-btn">Readable Structured Summary</button>
+              <button type="button" class="seg-btn" id="view-raw-ledger-btn">Raw Numbered AI Ledger</button>
             </div>
           </div>
           <div class="panel-body">
-            <!-- Levers Box -->
-            <div class="levers-box">
-              <!-- Lever 1: Target Size Limit -->
-              <div class="lever-row">
-                <span class="lever-label">1. Target Condensed Size Limit (Token Budget):</span>
-                <div class="seg-group" id="budget-lever-group">
-                  <button type="button" class="seg-btn" data-budget="16384">16k (Full History)</button>
-                  <button type="button" class="seg-btn active" data-budget="8192">8k (Standard 2-Yr Summary)</button>
-                  <button type="button" class="seg-btn" data-budget="4096">4k (1-Page Visit Brief)</button>
-                  <button type="button" class="seg-btn" data-budget="2048">2k (Compact Capsule)</button>
-                  <button type="button" class="seg-btn" data-budget="1024">1k (Emergency Card)</button>
-                </div>
-              </div>
-
-              <!-- Lever 2: Condensation Approach -->
-              <div class="lever-row">
-                <span class="lever-label">2. Condensation Approach (Strategy):</span>
-                <div class="seg-group" id="mode-lever-group">
-                  <button type="button" class="seg-btn active" data-mode="lossless_structural">Lossless Structural (Verbatim Lines, No Folding)</button>
-                  <button type="button" class="seg-btn" data-mode="hierarchical">Hierarchical Grouped (Fold Renewals &amp; Lab Trends)</button>
-                </div>
-              </div>
-
-              <!-- Lever 3: Non-Destructive Prep Toggles -->
-              <div class="lever-row">
-                <span class="lever-label">3. Non-Destructive Preparation &amp; Hygiene Toggles:</span>
-                <div class="prep-toggles-grid">
-                  <label class="prep-toggle-item">
-                    <input type="checkbox" id="toggle-exclude-claims" checked disabled />
-                    <span><strong>Exclude Billing Claims</strong> (<span id="count-claims-label">0</span> <code>Claim/EOB</code> kept out of clinical prompt)</span>
-                  </label>
-                  <label class="prep-toggle-item">
-                    <input type="checkbox" id="toggle-dedup-notes" checked disabled />
-                    <span><strong>Deduplicate Base64 Notes</strong> (<span id="count-b64-label">0</span> identical copies collapsed via SHA-256)</span>
-                  </label>
-                  <label class="prep-toggle-item">
-                    <input type="checkbox" id="toggle-filter-equip" />
-                    <span><strong>Filter Room Equipment</strong> (<span id="count-equip-label">0</span> clinic room <code>Device</code> artifacts)</span>
-                  </label>
-                  <label class="prep-toggle-item">
-                    <input type="checkbox" id="toggle-privacy-share" />
-                    <span><strong>Preview External Share Privacy</strong> (<span id="count-sdoh-label">0</span> sensitive entries withheld)</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <!-- Live Compression Metrics -->
+            <!-- 4-Tile Telemetry Strip -->
             <div class="condensed-metrics-strip">
               <div class="metric-mini">
                 <div class="metric-mini-label">Raw FHIR Tokens</div>
@@ -1120,77 +1363,119 @@
               </div>
             </div>
 
-            <!-- Dynamic Explanation of What Changed at This Lever -->
+            <!-- Dynamic Lever Explanation -->
             <div class="lever-explanation-banner" id="lever-explanation-banner"></div>
 
-            <!-- Human-Readable Condensed Summary View -->
+            <!-- Structured Readable Summary Grid -->
             <div id="condensed-human-view" class="condensed-sections-grid"></div>
 
-            <!-- Raw Condensed Context Ledger View (Hidden by Default) -->
+            <!-- Raw AI Context Ledger -->
             <pre id="condensed-raw-view" class="raw-ledger-pre" style="display: none;"></pre>
           </div>
         </div>
       </div>
+
+      <div class="phase-footer-bar">
+        <button type="button" class="btn" id="phase2-bottom-back-btn">← Back to Phase 1: Original FHIR Browser</button>
+        <div style="font-size: 0.85rem; color: var(--text-secondary);">
+          Ready to test patient-facing tasks and health checks on this condensed chart?
+        </div>
+        <button type="button" class="btn btn-purple" id="phase2-bottom-next-btn">Continue to Phase 3: Run Patient Skills &amp; Q&amp;A →</button>
+      </div>
     </section>
 
-    <!-- STEP 3 (ZONE B): Unified Patient-Facing Read-Only Skills & Q&A Workspace -->
-    <section class="section-block" id="zone-b-section">
-      <div class="section-header">
-        <div>
-          <div class="section-title-group">
-            <span class="step-pill purple">Step 3 · Patient-Facing Experience (Read-Only)</span>
-            <h2>Run Patient Skills or Ask Questions About This Chart</h2>
+    <!-- ===================================================================== -->
+    <!-- PHASE 3: PATIENT-FACING READ-ONLY SKILLS & GROUNDED Q&A WORKSPACE     -->
+    <!-- ===================================================================== -->
+    <section class="phase-panel" id="phase-panel-3" role="tabpanel" aria-labelledby="phase-tab-3">
+      <div class="phase-header-bar" id="zone-b-section">
+        <div class="phase-title-wrap">
+          <h2>Phase 3: Run Read-Only Patient Skills &amp; Ask Questions</h2>
+          <p>Select any suggested skill in the left rail—or ask a question—to view an organized, plain-English report card with suggested doctor questions and clickable FHIR citations.</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <div class="seg-group" id="audience-view-group" aria-label="Audience Display Mode">
+            <button type="button" class="seg-btn active" data-audience="patient">👤 Patient View (Plain English)</button>
+            <button type="button" class="seg-btn" data-audience="clinician">🩺 Clinician View (+ Codes &amp; KB Rules)</button>
           </div>
-          <p class="section-subtitle">Click any suggested skill below—or ask your own question—to generate an organized, plain-English report card grounded in the condensed chart.</p>
-        </div>
-        <div class="seg-group" id="audience-view-group" aria-label="Audience Display Mode">
-          <button type="button" class="seg-btn active" data-audience="patient">👤 Patient View (Plain English)</button>
-          <button type="button" class="seg-btn" data-audience="clinician">🩺 Clinician View (+ Codes &amp; KB Rules)</button>
+          <button type="button" class="btn" id="phase3-top-back-btn">← Back to Phase 2 (Levers)</button>
         </div>
       </div>
 
-      <!-- Read-Only Non-Destructive Notice -->
-      <div class="readonly-notice">
-        <div>
-          <strong>🛡️ Non-Destructive Read-Only Mode:</strong> Skills and Q&amp;A never alter, delete, or overwrite your original FHIR chart. Health-check skills explain potential record discrepancies and suggest questions or remediation steps to review with your clinician.
+      <!-- Master-Detail 2-Column Workspace -->
+      <div class="phase3-master-detail">
+        <!-- Left Rail: 9 Read-Only Skills Launcher -->
+        <aside class="skills-rail-card" aria-label="Suggested Read-Only Patient Skills">
+          <div class="skills-group-title">✨ Everyday Patient Tasks (5)</div>
+          <div class="skills-rail-list" id="everyday-skills-grid"></div>
+
+          <div class="skills-group-title">🔍 Read-Only Chart Health Checks (4)</div>
+          <div class="skills-rail-list" id="healthcheck-skills-grid"></div>
+        </aside>
+
+        <!-- Right Main Stage: Q&A Input Bar + Active Report Card -->
+        <div class="phase3-main-stage">
+          <!-- Free-Text Question Bar -->
+          <div class="qa-bar-card">
+            <form id="qa-form" class="qa-input-row">
+              <input type="text" id="qa-question-input" class="qa-input" placeholder="Ask a question about this chart's medications, lab trends, hospital stay, vaccines, or unrecorded tests..." aria-label="Ask a question about this chart" />
+              <button type="submit" class="btn btn-primary">Ask Question</button>
+            </form>
+            <div class="qa-sample-chips" id="qa-sample-chips"></div>
+          </div>
+
+          <!-- Active Skill / Q&A Report Card -->
+          <div class="report-card" id="active-report-card"></div>
         </div>
       </div>
 
-      <!-- Row 1: 5 Everyday Patient Task Skills -->
-      <div class="skills-group-title">✨ Everyday Patient Tasks (Summarize &amp; Understand Your Chart)</div>
-      <div class="skills-grid" id="everyday-skills-grid"></div>
-
-      <!-- Row 2: 4 Chart Health-Check & Guidance Skills -->
-      <div class="skills-group-title">🔍 Chart Health-Check &amp; Reconciliation Guidance (Read-Only Issue Checks)</div>
-      <div class="skills-grid" id="healthcheck-skills-grid"></div>
-
-      <!-- Free-Text Question Bar -->
-      <div class="qa-bar-card">
-        <form id="qa-form" class="qa-input-row">
-          <input type="text" id="qa-question-input" class="qa-input" placeholder="Ask a question about this patient's medications, lab trends, hospital stay, vaccines, or unrecorded tests..." aria-label="Ask a question about this chart" />
-          <button type="submit" class="btn btn-primary">Ask Question</button>
-        </form>
-        <div class="qa-sample-chips" id="qa-sample-chips"></div>
+      <div class="phase-footer-bar">
+        <button type="button" class="btn" id="phase3-bottom-back-btn">← Back to Phase 2: Adjust Condensation Levers</button>
+        <div style="font-size: 0.82rem; color: var(--text-muted);">
+          🛡️ <strong>Read-Only Guarantee:</strong> Skills and Q&amp;A provide plain-English guidance and suggested remediation steps without modifying the underlying FHIR chart.
+        </div>
+        <button type="button" class="btn" id="phase3-bottom-phase1-btn">↶ Switch Patient in Phase 1</button>
       </div>
-
-      <!-- Active Skill / Q&A Report Card -->
-      <div class="report-card" id="active-report-card"></div>
     </section>
 
   </main>
+
+  <!-- Slide-Over FHIR Source Drawer (Opens in Phase 3 when clicking any Citation Chip) -->
+  <div class="drawer-backdrop" id="citation-drawer-backdrop" role="dialog" aria-modal="true" aria-labelledby="drawer-resource-title">
+    <div class="drawer-panel">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+        <div>
+          <span class="res-badge" id="drawer-resource-badge">Cited FHIR Source</span>
+          <h3 id="drawer-resource-title" style="margin: 0.3rem 0 0; font-size: 1.05rem;">Resource Details</h3>
+        </div>
+        <button type="button" class="btn btn-sm" id="close-citation-drawer-btn">✕ Close</button>
+      </div>
+      <div class="inspector-summary-grid" id="drawer-summary-grid"></div>
+      <div id="drawer-note-container" style="display: none;">
+        <div style="font-size: 0.76rem; font-weight: 700; color: var(--amber); margin-bottom: 0.3rem;">📄 Decoded Clinical Note Narrative:</div>
+        <div class="inspector-note-box" id="drawer-note-text"></div>
+      </div>
+      <div style="font-size: 0.76rem; font-weight: 700; color: var(--text-secondary);">Underlying FHIR R4 Resource JSON:</div>
+      <pre class="inspector-json-box" id="drawer-json-box" style="max-height: 360px;">{}</pre>
+      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 0.75rem;">
+        <button type="button" class="btn btn-primary btn-sm" id="drawer-open-in-phase1-btn">🔍 Open in Phase 1 Full FHIR Browser</button>
+        <button type="button" class="btn btn-sm" id="drawer-close-bottom-btn">Done</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Modal for Loading Custom FHIR R4 Bundle -->
   <div class="modal-backdrop" id="custom-fhir-modal" role="dialog" aria-modal="true" aria-labelledby="custom-modal-title">
     <div class="modal-card">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <h3 id="custom-modal-title" style="margin: 0;">Load Custom FHIR R4 Bundle (.json)</h3>
-        <button type="button" class="btn" id="close-custom-modal-btn">✕ Close</button>
+        <button type="button" class="btn btn-sm" id="close-custom-modal-btn">✕ Close</button>
       </div>
       <p style="font-size: 0.84rem; color: var(--text-secondary); margin: 0.5rem 0;">
         Select a local FHIR R4 <code>Bundle</code> JSON file or paste JSON below. Everything runs 100% locally in your browser.
       </p>
-      <input type="file" id="custom-fhir-file-input" accept=".json,application/json" style="margin-bottom: 0.5rem; font-size: 0.84rem;" />
-      <textarea id="custom-fhir-textarea" class="modal-textarea" placeholder='{"resourceType": "Bundle", "type": "collection", "entry": [ ... ]}'></textarea>
+      <input type="file" id="custom-fhir-file-input" accept=".json,application/json" style="margin-bottom: 0.5rem; font-size: 0.84rem;" aria-label="Upload FHIR Bundle JSON file" />
+      <textarea id="custom-fhir-textarea" class="modal-textarea" placeholder='{"resourceType": "Bundle", "type": "collection", "entry": [ ... ]}' aria-label="Custom FHIR Bundle JSON text"></textarea>
       <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
         <button type="button" class="btn" id="load-sample-uscore-btn">Insert Sample Mini Bundle</button>
         <button type="button" class="btn btn-primary" id="apply-custom-fhir-btn">Load into Explorer</button>
@@ -1208,10 +1493,13 @@
         : Object.keys(patientsMap);
 
       let state = {
+        activePhase: "1", // "1" | "2" | "3"
+        personaGridCollapsed: false,
         activePatientId: personaIds[0] || "",
         browserCategory: "All Core Clinical",
         browserSearch: "",
         selectedResourceIndex: null,
+        drawerResourceIndex: null,
         budget: "8192",
         condenseMode: "lossless_structural",
         condensedViewType: "human", // "human" | "raw"
@@ -1234,33 +1522,87 @@
         return patientsMap[state.activePatientId] || Object.values(patientsMap)[0] || null;
       }
 
-      /* 1. Render Single-Level Patient Persona Cards */
+      /* Switch Active Phase (1, 2, or 3) */
+      function setPhase(phaseNum, scrollToTop) {
+        state.activePhase = String(phaseNum);
+        ["1", "2", "3"].forEach(function (num) {
+          const tab = document.getElementById("phase-tab-" + num);
+          const panel = document.getElementById("phase-panel-" + num);
+          const isAct = num === state.activePhase;
+          if (tab) {
+            tab.classList.toggle("active", isAct);
+            tab.setAttribute("aria-selected", isAct ? "true" : "false");
+          }
+          if (panel) {
+            panel.classList.toggle("active", isAct);
+          }
+        });
+        renderContextStrip();
+        if (scrollToTop !== false) {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      }
+
+      /* Render Persistent Top Context Summary Strip */
+      function renderContextStrip() {
+        const p = currentPatient();
+        if (!p) return;
+        const fb = p.fhir_browser || {};
+        const entriesCount = fb.total_bundle_entries || p.total_bundle_entries || 0;
+        const modeBucket = (p.condensation_matrix || {})[state.condenseMode] || {};
+        const cell = modeBucket[state.budget] || modeBucket["8192"] || {};
+        const redPct = cell.reduction_pct != null ? cell.reduction_pct + "% reduction" : "";
+        const modeShort = state.condenseMode === "lossless_structural" ? "Lossless Structural" : "Hierarchical Grouped";
+        const budgetShort = Math.round(parseInt(state.budget, 10) / 1024) + "k";
+
+        document.getElementById("ctx-patient-chip").innerHTML =
+          "👤 Patient: <strong>" + esc(p.patient_name) + "</strong> <code>(" + entriesCount.toLocaleString() + " FHIR entries)</code>";
+        document.getElementById("ctx-lever-chip").innerHTML =
+          "🎛️ Levers: <code>" + esc(budgetShort + " • " + modeShort + (redPct ? " • " + redPct : "")) + "</code>";
+        document.getElementById("ctx-posture-chip").innerHTML =
+          state.privacyExternalShare
+            ? "🔒 Posture: <code>External Share (Sensitive Redacted)</code>"
+            : "🛡️ Posture: <code>Patient Self View (Full Chart)</code>";
+      }
+
+      /* PHASE 1A: Render Single-Level Patient Persona Cards */
       function renderPersonaGrid() {
         const grid = document.getElementById("persona-grid");
+        const toggleBtn = document.getElementById("toggle-persona-grid-btn");
         if (!grid) return;
+
+        grid.classList.toggle("collapsed", !!state.personaGridCollapsed);
+        if (toggleBtn) {
+          toggleBtn.textContent = state.personaGridCollapsed
+            ? "Expand Persona Cards (6 Patients) ▼"
+            : "Collapse Persona Cards ▲";
+        }
+
         grid.innerHTML = personaIds.map(function (pid) {
           const p = patientsMap[pid];
           if (!p) return "";
           const isAct = pid === state.activePatientId;
           const entriesCount = (p.fhir_browser && p.fhir_browser.total_bundle_entries) || p.total_bundle_entries || 0;
           return (
-            '<button type="button" class="persona-card ' + (isAct ? "active" : "") + '" data-pid="' + esc(pid) + '">' +
+            '<div class="persona-card ' + (isAct ? "active" : "") + '" data-pid="' + esc(pid) + '" role="button" tabindex="0">' +
               '<div>' +
                 '<div class="persona-card-top">' +
-                  '<span class="persona-name">' + esc(p.patient_name) + '</span>' +
+                  '<span class="persona-name">' + (isAct ? "✓ " : "") + esc(p.patient_name) + '</span>' +
                   '<span class="persona-meta">DOB ' + esc(p.birth_date || "—") + ' • ' + entriesCount.toLocaleString() + ' entries</span>' +
                 '</div>' +
                 '<div class="persona-tag">' + esc(p.short_tag || p.dataset_label || "") + '</div>' +
                 '<p class="persona-bio">' + esc(p.persona_bio || "") + '</p>' +
               '</div>' +
-              '<div class="persona-highlights">' + esc(p.key_highlights || "") + '</div>' +
-            '</button>'
+              '<div class="persona-card-foot">' +
+                '<span>' + esc(p.key_highlights || "") + '</span>' +
+              '</div>' +
+            '</div>'
           );
         }).join("");
 
-        grid.querySelectorAll(".persona-card").forEach(function (btn) {
-          btn.addEventListener("click", function () {
-            state.activePatientId = btn.getAttribute("data-pid");
+        grid.querySelectorAll(".persona-card").forEach(function (card) {
+          function selectCard() {
+            state.activePatientId = card.getAttribute("data-pid");
             state.browserCategory = "All Core Clinical";
             state.browserSearch = "";
             state.selectedResourceIndex = null;
@@ -1268,11 +1610,18 @@
             const searchEl = document.getElementById("browser-search-input");
             if (searchEl) searchEl.value = "";
             renderAll();
+          }
+          card.addEventListener("click", selectCard);
+          card.addEventListener("keydown", function (ev) {
+            if (ev.key === "Enter" || ev.key === " ") {
+              ev.preventDefault();
+              selectCard();
+            }
           });
         });
       }
 
-      /* 2. Render Simple Core-Resource FHIR Browser (Panel A1) */
+      /* PHASE 1B: Render 2-Pane Simple Core-Resource FHIR Browser */
       function renderFhirBrowser() {
         const p = currentPatient();
         if (!p || !p.fhir_browser) return;
@@ -1293,7 +1642,7 @@
         ];
 
         document.getElementById("browser-panel-title").textContent =
-          "Original FHIR R4 Chart Browser — " + p.patient_name;
+          "1B. Original FHIR R4 Chart Browser — " + p.patient_name;
         document.getElementById("browser-total-badge").textContent =
           (fb.total_bundle_entries || 0).toLocaleString() + " Raw Bundle Entries";
 
@@ -1337,12 +1686,20 @@
           return hay.indexOf(q) !== -1;
         });
 
+        const chosen = (fb.resources || []).find(function (r) {
+          return r.index === state.selectedResourceIndex;
+        }) || rows[0] || (fb.resources || [])[0];
+
+        if (chosen && state.selectedResourceIndex == null) {
+          state.selectedResourceIndex = chosen.index;
+        }
+
         const tbody = document.getElementById("browser-table-body");
         if (!rows.length) {
           tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-muted); padding: 1.2rem;">No FHIR resources match the current filter.</td></tr>';
         } else {
           tbody.innerHTML = rows.map(function (r) {
-            const isSel = state.selectedResourceIndex === r.index;
+            const isSel = chosen && chosen.index === r.index;
             const flagsHtml = (r.flags || []).map(function (fl) {
               return '<span class="flag-chip">' + esc(fl) + '</span>';
             }).join("");
@@ -1367,19 +1724,22 @@
 
         tbody.querySelectorAll(".browser-row").forEach(function (tr) {
           tr.addEventListener("click", function () {
-            const idx = parseInt(tr.getAttribute("data-rindex"), 10);
-            state.selectedResourceIndex = idx;
+            state.selectedResourceIndex = parseInt(tr.getAttribute("data-rindex"), 10);
             renderFhirBrowser();
           });
         });
 
-        // Update inspector drawer
-        const chosen = (fb.resources || []).find(function (r) { return r.index === state.selectedResourceIndex; }) || rows[0];
         if (chosen) {
           document.getElementById("inspector-title").textContent =
-            "Inspecting #" + chosen.index + " — " + chosen.resourceType + ": " + chosen.display;
+            "#" + chosen.index + " — " + chosen.resourceType + ": " + chosen.display;
           document.getElementById("inspector-meta-badge").textContent =
-            chosen.code + " • ID: " + chosen.id;
+            chosen.code || chosen.resourceType;
+          document.getElementById("inspector-summary-grid").innerHTML =
+            '<div><strong>Category:</strong> ' + esc(chosen.category) + '</div>' +
+            '<div><strong>Date:</strong> <code>' + esc(chosen.date || "—") + '</code></div>' +
+            '<div><strong>Source Clinic:</strong> ' + esc(chosen.sourceOrg || "Primary Chart") + '</div>' +
+            '<div><strong>Resource ID:</strong> <code>' + esc(String(chosen.id || "").slice(0, 22)) + '</code></div>';
+
           const noteCont = document.getElementById("inspector-note-container");
           if (chosen.decodedNoteText) {
             noteCont.style.display = "block";
@@ -1392,12 +1752,14 @@
         }
       }
 
-      /* 3. Render Backend Condensation Levers & Condensed Chart (Panel A2) */
+      /* PHASE 2: Render Backend Condensation Levers & Resulting Condensed Chart */
       function renderCondensationPanel() {
         const p = currentPatient();
         if (!p || !p.condensation_matrix) return;
         const prep = p.prep_lever_summary || {};
 
+        document.getElementById("condensed-panel-title").textContent =
+          "2B. Resulting Condensed Chart — " + p.patient_name;
         document.getElementById("count-claims-label").textContent = (prep.non_clinical_claims_count || 0).toLocaleString();
         document.getElementById("count-b64-label").textContent = (prep.duplicate_base64_notes_count || 0).toLocaleString();
         document.getElementById("count-equip-label").textContent = (prep.room_equipment_devices_count || 0).toLocaleString();
@@ -1417,12 +1779,33 @@
         const hs = cell.human_summary || {};
         let leverMsg = hs.what_changed_at_this_lever || "";
         if (state.filterRoomEquip && prep.room_equipment_devices_count > 0) {
-          leverMsg += " • Room-Equipment Filter ON: " + prep.room_equipment_devices_count + " clinic facility Device entry(ies) hidden from the condensed view.";
+          leverMsg += " • Room-Equipment Filter ON: " + prep.room_equipment_devices_count + " clinic facility Device entry(ies) hidden from condensed view.";
         }
         if (state.privacyExternalShare && prep.sensitive_sdoh_count > 0) {
           leverMsg += " • External Share Privacy ON: " + prep.sensitive_sdoh_count + " sensitive SDOH/personal-safety entry(ies) withheld.";
         }
-        document.getElementById("lever-explanation-banner").innerHTML = "<strong>How Current Levers Shape This Condensed Chart:</strong> " + esc(leverMsg);
+        document.getElementById("lever-explanation-banner").innerHTML =
+          "<strong>How Current Levers Shape This Condensed Chart:</strong> " + esc(leverMsg);
+
+        // Kept vs Omitted breakdown
+        const omittedMap = cell.omitted_sections || {};
+        const omittedKeys = Object.keys(omittedMap).filter(function (k) { return omittedMap[k] > 0; });
+        const omittedBox = document.getElementById("omitted-audit-content");
+        if (omittedBox) {
+          if (!omittedKeys.length) {
+            omittedBox.innerHTML =
+              '<div style="color: var(--teal); font-weight: 600;">✓ 0 clinical items omitted at this token budget — 100% of extracted clinical records fit directly in context.</div>';
+          } else {
+            omittedBox.innerHTML =
+              '<div style="margin-bottom: 0.35rem; color: var(--text-secondary);"><strong>Preserved 100%:</strong> IPS Safety Core (Allergies, Active Conditions, Active Medications).</div>' +
+              '<div style="color: var(--amber); font-weight: 600; margin-bottom: 0.25rem;">Trimmed to fit ' + Math.round(cell.target_tokens / 1024) + 'k budget (recoverable via Phase 3 on-demand lookup):</div>' +
+              '<ul style="margin: 0; padding-left: 1.1rem; color: var(--text-secondary);">' +
+                omittedKeys.map(function (k) {
+                  return '<li><code>' + esc(k) + '</code>: ' + omittedMap[k] + ' older/routine item(s) omitted</li>';
+                }).join("") +
+              '</ul>';
+          }
+        }
 
         const humanDiv = document.getElementById("condensed-human-view");
         const rawPre = document.getElementById("condensed-raw-view");
@@ -1465,7 +1848,7 @@
 
           humanDiv.innerHTML = sections.map(function (sec) {
             const listHtml = sec.items.length
-              ? '<ul class="cond-sec-list">' + sec.items.slice(0, 8).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join("") + '</ul>'
+              ? '<ul class="cond-sec-list">' + sec.items.slice(0, 10).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join("") + '</ul>'
               : '<div style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">' + esc(sec.empty) + '</div>';
             return (
               '<div class="cond-sec-card">' +
@@ -1477,7 +1860,7 @@
         }
       }
 
-      /* 4. Render Read-Only Skills & Q&A Workspace (Zone B) */
+      /* PHASE 3: Render Master-Detail Skills Launcher & Active Report Card */
       function renderSkillsAndQa() {
         const p = currentPatient();
         if (!p) return;
@@ -1492,13 +1875,11 @@
             const isAct = !state.customQuestionResult && state.activeSkillId === s.id;
             return (
               '<button type="button" class="skill-btn-card ' + (isAct ? "active" : "") + '" data-skill-id="' + esc(s.id) + '">' +
-                '<div>' +
-                  '<div class="skill-card-head">' +
-                    '<span class="skill-icon">' + esc(s.icon) + '</span>' +
-                    '<span class="skill-title">' + esc(s.title) + '</span>' +
-                  '</div>' +
-                  '<p class="skill-sub">' + esc(s.subtitle) + '</p>' +
+                '<div class="skill-card-head">' +
+                  '<span class="skill-icon">' + esc(s.icon) + '</span>' +
+                  '<span class="skill-title">' + esc(s.title) + '</span>' +
                 '</div>' +
+                '<p class="skill-sub">' + esc(s.subtitle) + '</p>' +
                 '<span class="skill-badge ' + esc(s.badge_tone || "info") + '">' + esc(s.status_badge) + '</span>' +
               '</button>'
             );
@@ -1516,13 +1897,12 @@
         renderSkillCards(everydaySkills, "everyday-skills-grid");
         renderSkillCards(checkSkills, "healthcheck-skills-grid");
 
-        // Render sample Q&A chips (including unanswerable probe)
         const postureKey = state.privacyExternalShare ? "external_share" : "patient_self";
         const qaSamples = ((p.postures || {})[postureKey] || {}).qa_samples || [];
         const chipsContainer = document.getElementById("qa-sample-chips");
         if (chipsContainer) {
           chipsContainer.innerHTML =
-            '<span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">Try asking:</span>' +
+            '<span style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted);">Try asking:</span>' +
             qaSamples.map(function (qa, idx) {
               return '<button type="button" class="qa-chip" data-qa-idx="' + idx + '">' + esc(qa.question) + '</button>';
             }).join("");
@@ -1540,14 +1920,13 @@
           });
         }
 
-        renderActiveReportCard(p, skills, qaSamples);
+        renderActiveReportCard(p, skills);
       }
 
-      function renderActiveReportCard(p, skills, qaSamples) {
+      function renderActiveReportCard(p, skills) {
         const container = document.getElementById("active-report-card");
         if (!container) return;
 
-        // If user asked a custom / sample question, render Q&A Report Card
         if (state.customQuestionResult) {
           const qa = state.customQuestionResult;
           const cites = qa.citations || [];
@@ -1574,12 +1953,11 @@
             (state.audience === "clinician" && qa.clinician_technical_note
               ? '<div class="clinician-tech-box"><strong>Clinician Technical Provenance:</strong> ' + esc(qa.clinician_technical_note) + '</div>'
               : '') +
-            renderCitationsBar(cites, p);
+            renderCitationsBar(cites);
           bindCitationClicks(container, p);
           return;
         }
 
-        // Otherwise render the selected Read-Only Skill Report Card
         const skill = skills.find(function (s) { return s.id === state.activeSkillId; }) || skills[0];
         if (!skill) return;
 
@@ -1610,14 +1988,14 @@
                 esc(skill.group_label) + ' • ' + esc(skill.status_badge) +
               '</span>' +
               '<h3 class="report-card-title">' + esc(skill.icon) + ' ' + esc(skill.title) + '</h3>' +
-              '<div style="font-size: 0.81rem; color: var(--text-muted); margin-top: 0.15rem;">Prompt: “' + esc(skill.prompt_question) + '”</div>' +
+              '<div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.15rem;">Prompt: “' + esc(skill.prompt_question) + '”</div>' +
             '</div>' +
             '<span class="res-badge">Read-Only Skill Report</span>' +
           '</div>' +
           '<div class="report-summary-box">' + esc(skill.plain_english_summary) + '</div>' +
           '<div style="overflow-x: auto;">' +
             '<table class="report-items-table">' +
-              '<thead><tr><th style="width: 170px;">Category / Status</th><th style="width: 220px;">Item / Finding</th><th>Plain-English Explanation &amp; Clinical Details</th><th style="width: 165px;">Source Clinic</th></tr></thead>' +
+              '<thead><tr><th style="width: 165px;">Category / Status</th><th style="width: 210px;">Item / Finding</th><th>Plain-English Explanation &amp; Clinical Details</th><th style="width: 155px;">Source Clinic</th></tr></thead>' +
               '<tbody>' + rowsHtml + '</tbody>' +
             '</table>' +
           '</div>' +
@@ -1626,30 +2004,30 @@
             '<ul>' + remHtml + '</ul>' +
           '</div>' +
           '<div class="lever-impact-box">' +
-            '<strong>🎛️ How Backend Condensation Levers (Step 2) Affect This Skill:</strong> ' +
+            '<strong>🎛️ How Phase 2 Condensation Levers Affect This Skill:</strong> ' +
             esc(skill.lever_sensitivity_note || "") +
-            ' (Currently viewing at <code>' + (parseInt(state.budget, 10) / 1024) + 'k</code> tokens, <code>' + esc(state.condenseMode) + '</code>).' +
+            ' (Active levers: <code>' + (parseInt(state.budget, 10) / 1024) + 'k</code> tokens, <code>' + esc(state.condenseMode) + '</code>).' +
           '</div>' +
           (state.audience === "clinician" && skill.clinician_technical_note
             ? '<div class="clinician-tech-box"><strong>Clinician Technical &amp; Knowledge-Base Rule Note:</strong> ' + esc(skill.clinician_technical_note) + '</div>'
             : '') +
-          renderCitationsBar(skill.citations || [], p);
+          renderCitationsBar(skill.citations || []);
 
         bindCitationClicks(container, p);
       }
 
-      function renderCitationsBar(cites, p) {
+      function renderCitationsBar(cites) {
         if (!cites || !cites.length) {
           return '<div class="citations-bar"><span style="font-size: 0.76rem; color: var(--text-muted);">No specific FHIR resource citations required (or safety abstention).</span></div>';
         }
         return (
           '<div class="citations-bar">' +
-            '<span style="font-size: 0.76rem; font-weight: 700; color: var(--text-secondary);">Grounded FHIR Sources (click to inspect in Original FHIR Browser):</span>' +
+            '<span style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);">Grounded FHIR Sources (click to open side-by-side Source Drawer):</span>' +
             cites.map(function (c) {
               const uuid = c.resource_uuid || c.resourceUuid || "";
               const rtype = c.resource_type || c.resourceType || "FHIR";
               return (
-                '<button type="button" class="cite-chip" data-cite-uuid="' + esc(uuid) + '" title="' + esc(c.text || "") + '">' +
+                '<button type="button" class="cite-chip" data-cite-uuid="' + esc(uuid) + '" data-cite-rtype="' + esc(rtype) + '" data-cite-text="' + esc(c.text || "") + '">' +
                   'Source [' + esc(c.index) + '] ' + esc(rtype) + ' (' + esc(uuid.slice(0, 12)) + ')' +
                 '</button>'
               );
@@ -1658,31 +2036,110 @@
         );
       }
 
+      /* Open Slide-Over Source Drawer in Phase 3 without losing place */
+      function openCitationDrawer(uuid, fallbackType, fallbackText, p) {
+        const fb = (p && p.fhir_browser) || {};
+        const match = (fb.resources || []).find(function (r) {
+          return r.id === uuid || String(r.id).indexOf(uuid) !== -1;
+        });
+        const drawer = document.getElementById("citation-drawer-backdrop");
+        if (match) {
+          state.drawerResourceIndex = match.index;
+          document.getElementById("drawer-resource-badge").textContent =
+            "FHIR " + match.resourceType + " • #" + match.index;
+          document.getElementById("drawer-resource-title").textContent = match.display;
+          document.getElementById("drawer-summary-grid").innerHTML =
+            '<div><strong>Category:</strong> ' + esc(match.category) + '</div>' +
+            '<div><strong>Date:</strong> <code>' + esc(match.date || "—") + '</code></div>' +
+            '<div><strong>Source Clinic:</strong> ' + esc(match.sourceOrg || "Primary Chart") + '</div>' +
+            '<div><strong>UUID:</strong> <code>' + esc(match.id) + '</code></div>';
+          const noteCont = document.getElementById("drawer-note-container");
+          if (match.decodedNoteText) {
+            noteCont.style.display = "block";
+            document.getElementById("drawer-note-text").textContent = match.decodedNoteText;
+          } else {
+            noteCont.style.display = "none";
+          }
+          document.getElementById("drawer-json-box").textContent =
+            JSON.stringify(match.rawJson || {}, null, 2);
+        } else {
+          state.drawerResourceIndex = null;
+          document.getElementById("drawer-resource-badge").textContent = "FHIR " + (fallbackType || "Resource");
+          document.getElementById("drawer-resource-title").textContent = fallbackType + " (" + uuid + ")";
+          document.getElementById("drawer-summary-grid").innerHTML =
+            '<div style="grid-column: 1 / -1;"><strong>Ledger Entry:</strong> ' + esc(fallbackText || uuid) + '</div>';
+          document.getElementById("drawer-note-container").style.display = "none";
+          document.getElementById("drawer-json-box").textContent =
+            JSON.stringify({ resourceType: fallbackType, id: uuid, summary: fallbackText }, null, 2);
+        }
+        drawer.classList.add("open");
+      }
+
       function bindCitationClicks(container, p) {
         container.querySelectorAll(".cite-chip").forEach(function (chip) {
           chip.addEventListener("click", function () {
-            const uuid = chip.getAttribute("data-cite-uuid");
-            if (!uuid || !p || !p.fhir_browser) return;
-            const match = (p.fhir_browser.resources || []).find(function (r) {
-              return r.id === uuid || String(r.id).indexOf(uuid) !== -1;
-            });
-            if (match) {
-              state.browserCategory = "All Core Clinical";
-              state.browserSearch = "";
-              state.selectedResourceIndex = match.index;
-              renderFhirBrowser();
-              document.getElementById("resource-inspector").scrollIntoView({ behavior: "smooth", block: "center" });
-            }
+            openCitationDrawer(
+              chip.getAttribute("data-cite-uuid") || "",
+              chip.getAttribute("data-cite-rtype") || "Resource",
+              chip.getAttribute("data-cite-text") || "",
+              p
+            );
           });
         });
       }
 
       function renderAll() {
+        renderContextStrip();
         renderPersonaGrid();
         renderFhirBrowser();
         renderCondensationPanel();
         renderSkillsAndQa();
       }
+
+      /* Wire Phase Navigation Stepper & Buttons */
+      document.querySelectorAll(".phase-step-tab").forEach(function (tab) {
+        tab.addEventListener("click", function () {
+          setPhase(tab.getAttribute("data-phase"), true);
+        });
+      });
+      document.getElementById("ctx-jump-phase1-btn").addEventListener("click", function () { setPhase("1", true); });
+      document.getElementById("ctx-jump-phase2-btn").addEventListener("click", function () { setPhase("2", true); });
+      document.getElementById("ctx-jump-phase3-btn").addEventListener("click", function () { setPhase("3", true); });
+
+      document.getElementById("phase1-top-next-btn").addEventListener("click", function () { setPhase("2", true); });
+      document.getElementById("phase1-bottom-next-btn").addEventListener("click", function () { setPhase("2", true); });
+      document.getElementById("phase2-top-back-btn").addEventListener("click", function () { setPhase("1", true); });
+      document.getElementById("phase2-bottom-back-btn").addEventListener("click", function () { setPhase("1", true); });
+      document.getElementById("phase2-top-next-btn").addEventListener("click", function () { setPhase("3", true); });
+      document.getElementById("phase2-bottom-next-btn").addEventListener("click", function () { setPhase("3", true); });
+      document.getElementById("phase3-top-back-btn").addEventListener("click", function () { setPhase("2", true); });
+      document.getElementById("phase3-bottom-back-btn").addEventListener("click", function () { setPhase("2", true); });
+      document.getElementById("phase3-bottom-phase1-btn").addEventListener("click", function () { setPhase("1", true); });
+
+      document.getElementById("toggle-persona-grid-btn").addEventListener("click", function () {
+        state.personaGridCollapsed = !state.personaGridCollapsed;
+        renderPersonaGrid();
+      });
+
+      /* Slide-Over Citation Drawer Controls */
+      const citationDrawer = document.getElementById("citation-drawer-backdrop");
+      function closeCitationDrawer() { citationDrawer.classList.remove("open"); }
+      document.getElementById("close-citation-drawer-btn").addEventListener("click", closeCitationDrawer);
+      document.getElementById("drawer-close-bottom-btn").addEventListener("click", closeCitationDrawer);
+      citationDrawer.addEventListener("click", function (ev) {
+        if (ev.target === citationDrawer) closeCitationDrawer();
+      });
+      document.getElementById("drawer-open-in-phase1-btn").addEventListener("click", function () {
+        if (state.drawerResourceIndex != null) {
+          state.browserCategory = "All Core Clinical";
+          state.browserSearch = "";
+          state.selectedResourceIndex = state.drawerResourceIndex;
+          renderFhirBrowser();
+        }
+        closeCitationDrawer();
+        setPhase("1", false);
+        document.getElementById("zone-a-section").scrollIntoView({ behavior: "smooth", block: "start" });
+      });
 
       /* Interactive Controls Wiring */
       document.getElementById("browser-search-input").addEventListener("input", function (e) {
@@ -1695,6 +2152,7 @@
           document.querySelectorAll("#budget-lever-group .seg-btn").forEach(function (b) { b.classList.remove("active"); });
           btn.classList.add("active");
           state.budget = btn.getAttribute("data-budget");
+          renderContextStrip();
           renderCondensationPanel();
           renderSkillsAndQa();
         });
@@ -1705,6 +2163,7 @@
           document.querySelectorAll("#mode-lever-group .seg-btn").forEach(function (b) { b.classList.remove("active"); });
           btn.classList.add("active");
           state.condenseMode = btn.getAttribute("data-mode");
+          renderContextStrip();
           renderCondensationPanel();
           renderSkillsAndQa();
         });
@@ -1731,6 +2190,7 @@
 
       document.getElementById("toggle-privacy-share").addEventListener("change", function (e) {
         state.privacyExternalShare = !!e.target.checked;
+        renderContextStrip();
         renderCondensationPanel();
         renderSkillsAndQa();
       });
@@ -1755,7 +2215,6 @@
         const qaSamples = ((p.postures || {})[postureKey] || {}).qa_samples || [];
         const qLow = q.toLowerCase();
 
-        // Check if query matches one of the precomputed Q&A samples
         const matchedQa = qaSamples.find(function (item) {
           return item.question.toLowerCase() === qLow || item.question.toLowerCase().indexOf(qLow) !== -1;
         });
@@ -1765,8 +2224,6 @@
           return;
         }
 
-        // Check if query matches one of the 9 skills by keyword
-        const skills = p.skills || [];
         if (/conflict|duplicate pill|hold|stop|interaction|statin|plavix|warfarin|eliquis|spironolactone/i.test(qLow)) {
           state.activeSkillId = "skill-med-conflicts";
           state.customQuestionResult = null;
@@ -1817,6 +2274,12 @@
       document.getElementById("close-custom-modal-btn").addEventListener("click", function () {
         modal.classList.remove("open");
       });
+      document.addEventListener("keydown", function (ev) {
+        if (ev.key === "Escape") {
+          modal.classList.remove("open");
+          closeCitationDrawer();
+        }
+      });
       document.getElementById("custom-fhir-file-input").addEventListener("change", function (e) {
         const file = e.target.files && e.target.files[0];
         if (!file) return;
@@ -1831,7 +2294,7 @@
           resourceType: "Bundle",
           type: "collection",
           entry: [
-            { resource: { resourceType: "Patient", id: "pat-custom-1", name: [{ given: ["jordan"], family: "Rivera" }], birthDate: "1962-08-19", gender: "female" } },
+            { resource: { resourceType: "Patient", id: "pat-custom-1", name: [{ given: ["Jordan"], family: "Rivera" }], birthDate: "1962-08-19", gender: "female" } },
             { resource: { resourceType: "AllergyIntolerance", id: "allergy-sulfa", clinicalStatus: { coding: [{ code: "active" }] }, code: { coding: [{ code: "387406002", display: "Sulfonamide antibacterial" }] }, criticality: "high" } },
             { resource: { resourceType: "Condition", id: "cond-htn", clinicalStatus: { coding: [{ code: "active" }] }, code: { coding: [{ code: "59621000", display: "Essential hypertension" }] }, onsetDateTime: "2021-03-10" } },
             { resource: { resourceType: "MedicationRequest", id: "med-lisinopril", status: "active", authoredOn: "2025-09-15", medicationCodeableConcept: { coding: [{ code: "314076", display: "Lisinopril 10 MG Oral Tablet" }] }, dosageInstruction: [{ text: "Take 1 tablet daily" }] } },
@@ -1894,7 +2357,7 @@
               cat = "Labs & Vitals";
               const vq = res.valueQuantity || {};
               sum = vq.value != null ? ("Value: " + vq.value + " " + (vq.unit || "")) : "Observation";
-              labs.push(disp + ( sum ? " — " + sum : ""));
+              labs.push(disp + (sum ? " — " + sum : ""));
             } else if (rtype === "Immunization") {
               cat = "Immunizations";
             } else if (rtype === "DocumentReference") {
@@ -1935,6 +2398,7 @@
             tier: 0,
             tier_name: "Custom Bundle Condensed",
             rendered_records: resources.length,
+            omitted_sections: {},
             chart_text: resources.map(function (r) { return "[" + r.index + "] " + r.resourceType + ": " + r.display + " (" + r.summary + ")"; }).join("\n"),
             human_summary: {
               allergies: allergies,
@@ -2007,7 +2471,6 @@
         }
       });
 
-      // Initial render
       renderAll();
     })();
   </script>
