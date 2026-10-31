@@ -17,7 +17,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent.parent
 
 
-FAMILIES = {"chartsearchai", "catalyst"}
+FAMILIES = {"chartsearchai", "catalyst", "wahs"}
 SAFE_SLUG = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
 
 
@@ -191,7 +191,13 @@ def stage_report(
     if family == "chartsearchai":
         comparison_set = _comparison_set(run_dir)
         family_meta = {"comparison_set": comparison_set}
-
+    elif family == "wahs":
+        manifest = _load_json(run_dir / "run_manifest.json") if (run_dir / "run_manifest.json").is_file() else {}
+        family_meta = {
+            k: manifest[k]
+            for k in ("suite_id", "suite_sha256", "evaluation_modality")
+            if manifest.get(k)
+        }
     else:
         suite_id, suite_sha256 = _catalyst_suite_identity(run_dir)
         family_meta = {"suite_id": suite_id, "suite_sha256": suite_sha256}
@@ -204,7 +210,11 @@ def stage_report(
     results = run_dir / ("results.json" if family == "catalyst" else "results.jsonl")
     recorded_at = results.stat().st_mtime if results.is_file() else run_dir.stat().st_mtime
     meta = {
-        **{key: recorded[key] for key in ("scout", "scoreline") if key in recorded},
+        **{
+            key: recorded[key]
+            for key in ("scout", "scoreline", "judging", "evaluation_modality", "patients", "cells")
+            if key in recorded
+        },
         "date": recorded.get("date") or datetime.fromtimestamp(recorded_at, timezone.utc).strftime("%-d %b %Y"),
         "slug": slug,
         "report_family": family,

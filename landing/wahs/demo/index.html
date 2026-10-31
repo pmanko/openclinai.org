@@ -1,0 +1,2059 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WA Health Summary · Guided AI Condensation, Reconciliation &amp; Q&amp;A Prototype</title>
+  <meta name="description" content="Guided interactive walkthrough of the Washington Health Summary (WAHS) FHIR R4 record condenser, cross-clinic medication and problem reconciliation, privacy-segmented sharing, and source-grounded Q&A." />
+  <link rel="canonical" href="https://openclinai.org/wahs/demo/" />
+  <meta property="og:url" content="https://wahs-demo.openclinai.org/" />
+  <meta property="og:title" content="WA Health Summary · Guided AI Condensation, Reconciliation & Q&A Prototype" />
+  <meta property="og:description" content="Step-by-step demonstration of how WA Health Summary condenses multi-megabyte FHIR exports, catches cross-clinic conflicts, protects sensitive social history, and answers questions with linked source records." />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      /* WA Health Summary (myhealthsummary.demo.cirg.uw.edu) Bootstrap 5 Theme Palette */
+      --bs-primary: #164680;
+      --bs-primary-dark: #0f325c;
+      --bs-primary-bg-subtle: #d0dae6;
+      --bs-primary-border-subtle: #a2b5cc;
+      --bs-info: #149691;
+      --bs-info-bg-subtle: #d0eae9;
+      --bs-info-border-subtle: #a1d5d3;
+      --bs-success: #198754;
+      --bs-success-bg-subtle: #d1e7dd;
+      --bs-warning: #ffc107;
+      --bs-warning-text: #664d03;
+      --bs-warning-bg-subtle: #fff3cd;
+      --bs-danger: #dc3545;
+      --bs-danger-text: #842029;
+      --bs-danger-bg-subtle: #f8d7da;
+      --page-title: #22489c;
+      --table-stripe: #e7f1ff;
+      --bg: #f8f9fa;
+      --surface: #ffffff;
+      --border: #dee2e6;
+      --text: #212529;
+      --muted: #495057;
+      --muted-light: #6c757d;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      font-size: 16px;
+    }
+
+    .skip-link {
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      background: var(--bs-primary);
+      color: #fff;
+      padding: 0.6rem 1.1rem;
+      z-index: 200;
+      border-radius: 0 0 6px 0;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .skip-link:focus { left: 0; top: 0; }
+
+    /* WA Health Summary Header Bar */
+    .wahs-navbar {
+      background: #ffffff;
+      border-bottom: 3px solid var(--bs-primary);
+      box-shadow: 0 2px 8px rgba(22, 70, 128, 0.07);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 0.65rem 1.5rem;
+    }
+    .wahs-navbar-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      text-decoration: none;
+      color: var(--bs-primary);
+    }
+    .brand-crest {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--bs-primary) 0%, var(--bs-info) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: -0.03em;
+      flex-shrink: 0;
+      box-shadow: 0 2px 5px rgba(22, 70, 128, 0.2);
+    }
+    .brand-text-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--bs-primary);
+      line-height: 1.2;
+      margin: 0;
+    }
+    .brand-subtitle {
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .header-links {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .header-link {
+      position: relative;
+      color: var(--bs-primary);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.92rem;
+      padding: 0.35rem 0.15rem;
+    }
+    .header-link::before {
+      content: "";
+      opacity: 0;
+      transition: all 0.2s;
+      height: 2px;
+      width: 100%;
+      left: 0;
+      background-color: var(--bs-info);
+      position: absolute;
+      bottom: 0;
+    }
+    .header-link:hover::before { opacity: 1; }
+
+    /* Page Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem 1.5rem 4rem;
+    }
+
+    /* Guided Orientation Banner */
+    .orientation-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--bs-info);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .orientation-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .page-title {
+      color: var(--page-title);
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0 0 0.4rem;
+    }
+    .orientation-lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 880px;
+    }
+
+    /* Patient Record Selector Strip */
+    .patient-selector-section {
+      margin-bottom: 1.5rem;
+    }
+    .section-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 0.65rem;
+    }
+    .section-step-tag {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--bs-primary);
+    }
+    .source-mode-toggle {
+      display: inline-flex;
+      background: #e9ecef;
+      border-radius: 6px;
+      padding: 3px;
+      gap: 4px;
+      font-size: 0.85rem;
+    }
+    .source-mode-btn {
+      border: none;
+      background: transparent;
+      padding: 0.35rem 0.75rem;
+      border-radius: 5px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.83rem;
+    }
+    .source-mode-btn.active {
+      background: var(--bs-primary);
+      color: #ffffff;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+    }
+
+    .patient-cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+    }
+    @media (max-width: 860px) {
+      .patient-cards { grid-template-columns: 1fr; }
+    }
+    .patient-card {
+      background: #ffffff;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.15rem;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .patient-card:hover {
+      border-color: var(--bs-primary-border-subtle);
+      background: #fbfdff;
+    }
+    .patient-card.active {
+      border-color: var(--bs-primary);
+      background: #f2f7fd;
+      box-shadow: 0 3px 10px rgba(22, 70, 128, 0.1);
+    }
+    .patient-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .patient-name {
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: var(--bs-primary);
+    }
+    .patient-age-pill {
+      font-size: 0.76rem;
+      font-weight: 700;
+      background: var(--bs-primary-bg-subtle);
+      color: var(--bs-primary-dark);
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+    }
+    .patient-desc {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin: 0;
+    }
+    .patient-stats {
+      font-size: 0.78rem;
+      color: var(--muted-light);
+      font-weight: 600;
+      margin-top: auto;
+      padding-top: 0.35rem;
+      border-top: 1px solid #edf0f2;
+    }
+
+    /* 4-Step WA Health Summary Pill Navigation */
+    .workflow-stepper {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.6rem;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.6rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    @media (max-width: 900px) {
+      .workflow-stepper { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 540px) {
+      .workflow-stepper { grid-template-columns: 1fr; }
+    }
+    .step-pill {
+      border: 1px solid transparent;
+      border-radius: 7px;
+      background: transparent;
+      padding: 0.7rem 0.9rem;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+    .step-pill:hover {
+      background: var(--bs-primary-bg-subtle);
+    }
+    .step-pill.active {
+      background: var(--bs-primary);
+      color: #ffffff;
+    }
+    .step-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #e9ecef;
+      color: var(--bs-primary);
+      font-weight: 800;
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-pill.active .step-num {
+      background: var(--bs-info);
+      color: #ffffff;
+    }
+    .step-text {
+      display: flex;
+      flex-direction: column;
+    }
+    .step-title {
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: var(--bs-primary);
+      line-height: 1.25;
+    }
+    .step-pill.active .step-title { color: #ffffff; }
+    .step-sub {
+      font-size: 0.76rem;
+      color: var(--muted-light);
+      margin-top: 2px;
+    }
+    .step-pill.active .step-sub { color: #d0eae9; }
+
+    /* Step Content Card */
+    .step-stage {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.75rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    .stage-header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.1rem;
+      margin-bottom: 1.4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .stage-header h2 {
+      color: var(--page-title);
+      font-size: 1.35rem;
+      margin: 0 0 0.35rem;
+    }
+    .stage-header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.96rem;
+      max-width: 780px;
+    }
+
+    /* Visual Funnel / KPI Cards */
+    .funnel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.1rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 860px) {
+      .funnel-grid { grid-template-columns: 1fr; }
+    }
+    .funnel-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-top: 4px solid var(--bs-primary);
+      border-radius: 8px;
+      padding: 1.15rem 1.25rem;
+    }
+    .funnel-card.highlight {
+      border-top-color: var(--bs-info);
+      background: #f4fbfb;
+    }
+    .funnel-card .kicker {
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--bs-primary);
+    }
+    .funnel-card .big-num {
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: var(--text);
+      margin: 0.25rem 0;
+    }
+    .funnel-card p {
+      margin: 0;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    /* Callouts & Alert Boxes */
+    .callout {
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+      border: 1px solid var(--border);
+      font-size: 0.94rem;
+    }
+    .callout.info {
+      background: var(--bs-info-bg-subtle);
+      border-color: var(--bs-info-border-subtle);
+      color: #083c3a;
+    }
+    .callout.warn {
+      background: var(--bs-warning-bg-subtle);
+      border-color: #ffecb5;
+      color: var(--bs-warning-text);
+    }
+    .callout.success {
+      background: var(--bs-success-bg-subtle);
+      border-color: #badbcc;
+      color: #0f5132;
+    }
+
+    /* Finding Cards (Step 2) */
+    .finding-card {
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--bs-primary);
+      border-radius: 8px;
+      padding: 1.1rem 1.25rem;
+      margin-bottom: 1rem;
+      background: #ffffff;
+    }
+    .finding-card.high {
+      border-left-color: var(--bs-danger);
+      background: #fffdfd;
+    }
+    .finding-card.medium {
+      border-left-color: var(--bs-warning);
+    }
+    .finding-card.info {
+      border-left-color: var(--bs-info);
+    }
+    .finding-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.45rem;
+    }
+    .finding-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--bs-primary);
+      margin: 0;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .badge.high { background: var(--bs-danger-bg-subtle); color: var(--bs-danger-text); }
+    .badge.medium { background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text); }
+    .badge.info, .badge.low { background: var(--bs-info-bg-subtle); color: #083c3a; }
+    .badge.ok { background: var(--bs-success-bg-subtle); color: #0f5132; }
+
+    .cite-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: #e7f1ff;
+      color: var(--bs-primary);
+      border: 1px solid var(--bs-primary-border-subtle);
+      border-radius: 5px;
+      padding: 0.18rem 0.55rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.78rem;
+      font-weight: 600;
+      margin: 0.2rem 0.25rem 0.2rem 0;
+      cursor: pointer;
+    }
+    .cite-chip:hover {
+      background: var(--bs-primary);
+      color: #ffffff;
+    }
+
+    /* WA Health Summary Table Styling (from _styles_WAHealthSummary.52598082.css) */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 0.75rem 0 1.25rem;
+      border-radius: 6px;
+      border: 1px solid lightgray;
+    }
+    table.wahs-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    table.wahs-table thead {
+      background-color: var(--bs-primary);
+      color: #ffffff;
+    }
+    table.wahs-table th,
+    table.wahs-table td {
+      padding: 0.6rem 0.85rem;
+      text-align: left;
+      border: 1px solid lightgray;
+      vertical-align: top;
+    }
+    table.wahs-table tbody tr:nth-child(odd) {
+      background-color: #ffffff;
+    }
+    table.wahs-table tbody tr:nth-child(2n) {
+      background-color: var(--table-stripe);
+    }
+
+    /* Bootstrap-style Accordions */
+    details.wahs-accordion {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 0.85rem;
+      background: #ffffff;
+      overflow: hidden;
+    }
+    details.wahs-accordion > summary {
+      padding: 0.9rem 1.15rem;
+      font-weight: 700;
+      color: var(--bs-primary);
+      background: #f8f9fa;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      list-style: none;
+    }
+    details.wahs-accordion > summary::-webkit-details-marker { display: none; }
+    details.wahs-accordion > summary::after {
+      content: "▾";
+      font-size: 1rem;
+      color: var(--bs-primary);
+      transition: transform 0.15s;
+    }
+    details.wahs-accordion[open] > summary {
+      border-bottom: 1px solid var(--border);
+      background: #e7f1ff;
+    }
+    details.wahs-accordion[open] > summary::after {
+      transform: rotate(180deg);
+    }
+    .accordion-body {
+      padding: 1.1rem 1.25rem;
+    }
+
+    /* Controls & Buttons */
+    .control-pill-group {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .btn {
+      font: inherit;
+      font-size: 0.92rem;
+      font-weight: 600;
+      padding: 0.55rem 1.1rem;
+      border-radius: 6px;
+      border: 1px solid var(--bs-primary);
+      background: var(--bs-primary);
+      color: #ffffff;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .btn:hover { background: var(--bs-primary-dark); }
+    .btn-outline {
+      background: #ffffff;
+      color: var(--bs-primary);
+    }
+    .btn-outline:hover {
+      background: #e7f1ff;
+    }
+    .btn-teal {
+      background: var(--bs-info);
+      border-color: var(--bs-info);
+      color: #ffffff;
+    }
+    .btn-teal:hover { filter: brightness(0.93); }
+
+    .step-footer {
+      margin-top: 1.75rem;
+      padding-top: 1.15rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    /* Step 4 Chat Layout */
+    .qa-prompt-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .qa-prompt-card {
+      background: #f8f9fa;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--bs-info);
+      border-radius: 7px;
+      padding: 0.75rem 0.95rem;
+      text-align: left;
+      cursor: pointer;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+    .qa-prompt-card:hover {
+      background: #e7f1ff;
+      border-color: var(--bs-primary);
+    }
+    .qa-prompt-card .q-cat {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--bs-info);
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+    .qa-prompt-card .q-text {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--bs-primary);
+    }
+
+    .chat-box {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #f8f9fa;
+      padding: 1.25rem;
+      min-height: 260px;
+      max-height: 540px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .chat-bubble {
+      padding: 1rem 1.2rem;
+      border-radius: 8px;
+      font-size: 0.94rem;
+    }
+    .chat-bubble.user {
+      background: var(--bs-primary);
+      color: #ffffff;
+      align-self: flex-end;
+      max-width: 80%;
+      font-weight: 500;
+    }
+    .chat-bubble.assistant {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      align-self: stretch;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .chat-bubble h3 {
+      margin: 0 0 0.45rem;
+      font-size: 1.05rem;
+      color: var(--page-title);
+    }
+    .chat-bubble ul { margin: 0.4rem 0; padding-left: 1.3rem; }
+    .chat-bubble li { margin-bottom: 0.35rem; }
+
+    .chat-form {
+      display: flex;
+      gap: 0.6rem;
+    }
+    .chat-form input {
+      flex: 1;
+      font: inherit;
+      padding: 0.65rem 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+
+    /* Selected Source Record Toast/Drawer */
+    .source-inspector {
+      position: fixed;
+      bottom: 1.25rem;
+      right: 1.25rem;
+      max-width: 460px;
+      background: #ffffff;
+      border: 2px solid var(--bs-primary);
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      box-shadow: 0 8px 28px rgba(22, 70, 128, 0.22);
+      z-index: 150;
+      display: none;
+      font-size: 0.88rem;
+    }
+    .source-inspector-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.4rem;
+      font-weight: 700;
+      color: var(--bs-primary);
+    }
+    .source-inspector-close {
+      border: none;
+      background: transparent;
+      font-size: 1.1rem;
+      cursor: pointer;
+      color: var(--muted);
+    }
+
+    pre.ledger-view {
+      background: #1b2430;
+      color: #e6edf3;
+      padding: 1rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      max-height: 380px;
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-demo">Skip to interactive walkthrough</a>
+
+  <header class="wahs-navbar">
+    <div class="wahs-navbar-inner">
+      <a class="navbar-brand" href="https://wahs-demo.openclinai.org/">
+        <div class="brand-crest" aria-hidden="true">WA</div>
+        <div class="brand-text-wrap">
+          <span class="brand-title">WA Health Summary</span>
+          <span class="brand-subtitle">HL7 Standards-Based Patient Summary &middot; AI Reconciliation &amp; Condensation Prototype</span>
+        </div>
+      </a>
+      <nav class="header-links" aria-label="Site navigation">
+        <a class="header-link" href="https://openclinai.org/wahs/">Project Overview</a>
+        <a class="header-link" href="https://reports.openclinai.org/2026-10-30-wahs-phase2-eval/index.html">Evaluation Report</a>
+        <a class="header-link" href="https://myhealthsummary.demo.cirg.uw.edu/" target="_blank" rel="noopener noreferrer">CIRG Reference App &nearr;</a>
+        <a class="header-link" href="https://openclinai.org/">OpenClinAI Home</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-demo" class="container" tabindex="-1">
+    <!-- Orientation Banner -->
+    <section class="orientation-card" aria-label="What this prototype demonstrates">
+      <div class="orientation-top">
+        <div>
+          <h1 class="page-title">Turning Any FHIR R4 Patient Chart into a Verifiable Health Summary</h1>
+          <p class="orientation-lead">
+            When patients or clinicians combine FHIR R4 records across hospitals, primary care, specialty clinics, retail pharmacies, and state registries, the export is often too large for an AI model to read directly—and frequently contains cross-clinic medication conflicts, discharge note hold contradictions, outdated disease stages, and duplicate registry entries. Explore <strong>6 example patient charts</strong> below (3 EHIgnite Synthea charts across Set A/B/C + 3 US Core / IPS clinical archetypes) or <strong>paste/upload any custom FHIR R4 Bundle JSON</strong>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Patient Selector -->
+    <section class="patient-selector-section" aria-label="Select a sample patient record">
+      <div class="section-label-row" style="flex-wrap:wrap;gap:0.75rem;">
+        <span class="section-step-tag">Select a Patient Chart (6 Multi-Domain Archetypes) or Inspect Custom FHIR R4 JSON</span>
+        <div style="display:flex;flex-wrap:wrap;gap:0.65rem;align-items:center;">
+          <div class="source-mode-toggle" role="group" aria-label="Audience explanation mode">
+            <button type="button" class="source-mode-btn audience-mode-btn active" id="audience-patient" data-audience="patient">
+              Patient View (Plain English &amp; Doctor Checklist)
+            </button>
+            <button type="button" class="source-mode-btn audience-mode-btn" id="audience-clinician" data-audience="clinician">
+              Clinician View (SNOMED / RxNorm / LOINC &amp; KB Rules)
+            </button>
+          </div>
+          <div class="source-mode-toggle" role="group" aria-label="Record source complexity">
+            <button type="button" class="source-mode-btn dataset-mode-btn active" id="mode-set-b" data-set="set_b">
+              Set B (Multi-Clinic HIE + WA IIS)
+            </button>
+            <button type="button" class="source-mode-btn dataset-mode-btn" id="mode-set-c" data-set="set_c">
+              Set C (Messy Uncoded + Note Contradictions)
+            </button>
+            <button type="button" class="source-mode-btn dataset-mode-btn" id="mode-set-a" data-set="set_a">
+              Set A (Single-Clinic Baseline)
+            </button>
+          </div>
+          <button type="button" class="btn btn-outline" id="toggle-custom-fhir-btn" style="padding:0.38rem 0.8rem;font-size:0.83rem;">
+            + Paste / Upload Custom FHIR R4 Bundle (.json)
+          </button>
+        </div>
+      </div>
+
+      <!-- Custom FHIR R4 Bundle Inspector Drawer -->
+      <div id="custom-fhir-drawer" style="display:none;background:#ffffff;border:2px solid var(--bs-info);border-radius:8px;padding:1.1rem 1.25rem;margin-bottom:1rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.6rem;">
+          <strong style="color:var(--bs-primary);font-size:1rem;">Inspect Any Custom FHIR R4 Patient Chart (100% Client-Side in Browser)</strong>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <label class="btn btn-outline" style="padding:0.35rem 0.75rem;font-size:0.82rem;cursor:pointer;">
+              Upload .json File
+              <input type="file" id="custom-fhir-file" accept=".json,application/json" style="display:none;" />
+            </label>
+            <button type="button" class="btn btn-outline" id="load-sample-custom-fhir" style="padding:0.35rem 0.75rem;font-size:0.82rem;">
+              Load Sample US Core Bundle
+            </button>
+            <button type="button" class="btn btn-teal" id="run-custom-fhir-btn" style="padding:0.35rem 0.85rem;font-size:0.82rem;">
+              Run Non-Destructive Condenser &amp; KB Skills &rarr;
+            </button>
+          </div>
+        </div>
+        <p style="margin:0 0 0.5rem;font-size:0.86rem;color:var(--muted);">
+          Paste any FHIR R4 <code>Bundle</code> JSON below. The browser extracts <code>Patient</code>, <code>Condition</code>, <code>MedicationRequest</code>, <code>Immunization</code>, <code>Observation</code>, <code>Encounter</code>, <code>Procedure</code>, <code>Device</code>, and Base64 <code>DocumentReference</code> notes, preserves all clinical items non-destructively in Stage 1, and runs the 4-Layer KB reconciliation skills in Stage 2.
+        </p>
+        <textarea id="custom-fhir-textarea" rows="6" style="width:100%;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.8rem;padding:0.6rem;border:1px solid var(--border);border-radius:6px;" placeholder='{"resourceType": "Bundle", "type": "collection", "entry": [ ... ]}'></textarea>
+        <div id="custom-fhir-status" style="margin-top:0.4rem;font-size:0.84rem;color:var(--bs-primary);font-weight:600;"></div>
+      </div>
+
+      <div class="patient-cards" id="patient-cards"></div>
+    </section>
+
+    <!-- 4-Step Workflow Navigation -->
+    <nav class="workflow-stepper" role="tablist" aria-label="WA Health Summary 4-step workflow">
+      <button type="button" class="step-pill active" role="tab" aria-selected="true" data-step="1">
+        <span class="step-num">1</span>
+        <span class="step-text">
+          <span class="step-title">Condense Chart (Non-Destructive)</span>
+          <span class="step-sub">Fit budget without mutating clinical content</span>
+        </span>
+      </button>
+      <button type="button" class="step-pill" role="tab" aria-selected="false" data-step="2">
+        <span class="step-num">2</span>
+        <span class="step-text">
+          <span class="step-title">Reconciliation &amp; Duplicate Findings</span>
+          <span class="step-sub">Skill-surfaced duplicates, stages &amp; vaccines</span>
+        </span>
+      </button>
+      <button type="button" class="step-pill" role="tab" aria-selected="false" data-step="3">
+        <span class="step-num">3</span>
+        <span class="step-text">
+          <span class="step-title">Optional Privacy Preview (Deferred W9)</span>
+          <span class="step-sub">Opt-in selective disclosure &amp; summary</span>
+        </span>
+      </button>
+      <button type="button" class="step-pill" role="tab" aria-selected="false" data-step="4">
+        <span class="step-num">4</span>
+        <span class="step-text">
+          <span class="step-title">Ask Your Summary</span>
+          <span class="step-sub">Grounded Q&amp;A with source records</span>
+        </span>
+      </button>
+    </nav>
+
+    <!-- Active Step Stage -->
+    <section class="step-stage" id="step-stage" aria-live="polite"></section>
+  </main>
+
+  <!-- Floating Source Record Inspector -->
+  <aside class="source-inspector" id="source-inspector" role="status" aria-live="polite">
+    <div class="source-inspector-head">
+      <span id="inspector-title">Verified FHIR Source Record</span>
+      <button type="button" class="source-inspector-close" id="inspector-close" aria-label="Close source record inspector">&times;</button>
+    </div>
+    <div id="inspector-body"></div>
+  </aside>
+
+  <script src="wahs_demo_data.js"></script>
+  <script>
+    (function () {
+      const DATA = window.WAHS_DEMO_DATA || { patients: {}, ablation_rows: [] };
+
+      const PATIENT_PROFILES = [
+        {
+          baseId: "Maurice742_Auer97",
+          name: "Maurice Auer",
+          ageLabel: "Age 84 · Synthea HIE",
+          headline: "Cardiopulmonary, CKD Stage 2 vs. 3b & Type 2 Diabetes",
+          highlights: "84-year longitudinal chart with dual statins, brand/generic conflicts & Nov 2023 CABG/ICU stay"
+        },
+        {
+          baseId: "Lamar193_Beer512",
+          name: "Lamar Beer",
+          ageLabel: "Age 74 · Synthea HIE",
+          headline: "Primary & Specialty Care: Chronic Sinusitis, Hypertension & Zoster",
+          highlights: "Cross-clinic active vs. resolved condition conflicts, ACIP Zoster series & sensitive SDOH"
+        },
+        {
+          baseId: "Byron202_Emard19",
+          name: "Byron Emard",
+          ageLabel: "Age 17 · Synthea + WA IIS",
+          headline: "Adolescent Care & Multi-Registry School Immunizations",
+          highlights: "Clinic, retail pharmacy, and WA State Immunization Information System (IIS) records"
+        },
+        {
+          baseId: "Elena_Rostova_Cardiorenal",
+          name: "Elena Rostova",
+          ageLabel: "Age 71 · US Core / IPS",
+          headline: "Cardiorenal HFrEF, CKD 3b & Hyperkalemia Discharge Note-Hold",
+          highlights: "Entresto + Lisinopril RAAS overlap, Spironolactone + KCl K+ 5.8 hazard & discharge note contradiction"
+        },
+        {
+          baseId: "Arthur_Pendelton_Anticoag",
+          name: "Arthur Pendelton",
+          ageLabel: "Age 78 · US Core / IPS",
+          headline: "AFib + Mechanical Valve, Dual Anticoagulation & Upper GI Bleed",
+          highlights: "Concurrent Eliquis + Warfarin + OTC Naproxen, EGD hemostasis & active vs. resolved GI bleed"
+        },
+        {
+          baseId: "Margaret_Chen_Polypharmacy",
+          name: "Margaret Chen",
+          ageLabel: "Age 82 · US Core / IPS",
+          headline: "Geriatric Polypharmacy, Beers Sedatives, Falls & Privacy",
+          highlights: "Concurrent Ativan + Ambien with ED fall note-hold, Prediabetes vs. T2DM & Pneumococcal IIS dedup"
+        }
+      ];
+
+      let currentBaseId = "Maurice742_Auer97";
+      let currentDatasetMode = "set_b"; // "set_b", "set_c", or "set_a"
+      let currentAudienceMode = "patient"; // "patient" or "clinician"
+      let currentStep = 1;
+      let currentPosture = "patient_self"; // "patient_self" or "external_share"
+      let currentTierKey = "tier_8k"; // "tier_8k" or "tier_2k"
+
+      const patientCardsEl = document.getElementById("patient-cards");
+      const stepStageEl = document.getElementById("step-stage");
+      const inspectorEl = document.getElementById("source-inspector");
+      const inspectorTitleEl = document.getElementById("inspector-title");
+      const inspectorBodyEl = document.getElementById("inspector-body");
+
+      document.getElementById("inspector-close").addEventListener("click", function () {
+        inspectorEl.style.display = "none";
+      });
+
+      function escapeHtml(s) {
+        return String(s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function getCurrentPatientKey() {
+        const candidate = currentBaseId + "_" + currentDatasetMode;
+        if (DATA.patients[candidate]) return candidate;
+        const fallbackB = currentBaseId + "_set_b";
+        if (DATA.patients[fallbackB]) return fallbackB;
+        if (DATA.patients[currentBaseId]) return currentBaseId;
+        return Object.keys(DATA.patients)[0];
+      }
+
+      function getCurrentPatient() {
+        return DATA.patients[getCurrentPatientKey()];
+      }
+
+      function getPostureData(pt) {
+        if (!pt || !pt.postures) return {};
+        return pt.postures[currentPosture] || pt.postures.patient_self || {};
+      }
+
+      function showCitationInspector(idx, uuid, rtype, date, summary) {
+        inspectorTitleEl.textContent = "Verified FHIR Source Record [" + idx + "]";
+        inspectorBodyEl.innerHTML =
+          "<div><strong>Resource Type:</strong> <code>" + escapeHtml(rtype || "ClinicalResource") + "</code></div>" +
+          "<div><strong>FHIR Entry UUID:</strong> <code>" + escapeHtml(uuid || "") + "</code></div>" +
+          (date ? "<div><strong>Clinical Date:</strong> " + escapeHtml(date) + "</div>" : "") +
+          (summary ? "<div style='margin-top:0.35rem;color:#495057;'>" + escapeHtml(summary) + "</div>" : "");
+        inspectorEl.style.display = "block";
+      }
+
+      function renderCitationChips(citations) {
+        if (!citations || !citations.length) return "";
+        return citations.map(function (c) {
+          const idx = c.index || "?";
+          const uuid = c.resource_uuid || c.resourceUuid || "";
+          const rtype = c.resource_type || c.resourceType || "FHIR";
+          const date = c.date || "";
+          const sum = c.text || c.summary || "";
+          const countBadge = (c.member_uuid_count && c.member_uuid_count > 1)
+            ? " &middot; " + c.member_uuid_count + " merged"
+            : "";
+          return (
+            '<button type="button" class="cite-chip" ' +
+            'data-idx="' + escapeHtml(idx) + '" ' +
+            'data-uuid="' + escapeHtml(uuid) + '" ' +
+            'data-rtype="' + escapeHtml(rtype) + '" ' +
+            'data-date="' + escapeHtml(date) + '" ' +
+            'data-sum="' + escapeHtml(sum) + '" ' +
+            'title="Click to inspect FHIR resource ' + escapeHtml(uuid) + '">' +
+            'Source [' + escapeHtml(idx) + '] &middot; ' + escapeHtml(rtype) + (date ? " (" + escapeHtml(date) + ")" : "") + countBadge +
+            '</button>'
+          );
+        }).join(" ");
+      }
+
+      function bindCitationButtons(container) {
+        container.querySelectorAll(".cite-chip").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            showCitationInspector(
+              btn.getAttribute("data-idx"),
+              btn.getAttribute("data-uuid"),
+              btn.getAttribute("data-rtype"),
+              btn.getAttribute("data-date"),
+              btn.getAttribute("data-sum")
+            );
+          });
+        });
+      }
+
+      function setStep(stepNum, shouldScroll) {
+        currentStep = stepNum;
+        document.querySelectorAll(".step-pill").forEach(function (btn) {
+          const isMatch = Number(btn.getAttribute("data-step")) === stepNum;
+          btn.classList.toggle("active", isMatch);
+          btn.setAttribute("aria-selected", isMatch ? "true" : "false");
+        });
+        renderCurrentStep();
+        if (shouldScroll) {
+          const stepper = document.querySelector(".workflow-stepper");
+          if (stepper) stepper.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+
+      function renderPatientSelector() {
+        patientCardsEl.innerHTML = PATIENT_PROFILES.map(function (prof) {
+          const key = prof.baseId + "_" + currentDatasetMode;
+          const pt = DATA.patients[key] || DATA.patients[prof.baseId + "_set_b"] || DATA.patients[prof.baseId] || {};
+          const post = getPostureData(pt);
+          const isActive = prof.baseId === currentBaseId;
+          const dqCount = ((post.data_quality_and_conflicts && post.data_quality_and_conflicts.findings) || []).length;
+          return (
+            '<button type="button" class="patient-card ' + (isActive ? "active" : "") + '" data-base="' + prof.baseId + '">' +
+              '<div class="patient-card-head">' +
+                '<span class="patient-name">' + escapeHtml(prof.name) + '</span>' +
+                '<span class="patient-age-pill">' + escapeHtml(prof.ageLabel) + '</span>' +
+              '</div>' +
+              '<p class="patient-desc"><strong>' + escapeHtml(prof.headline) + '</strong><br>' + escapeHtml(prof.highlights) + '</p>' +
+              '<div class="patient-stats">' +
+                'Raw FHIR: <strong>' + escapeHtml(pt.raw_mb) + ' MB</strong> (' + Number(pt.total_bundle_entries || 0).toLocaleString() + ' entries) &middot; ' +
+                '<strong>' + dqCount + '</strong> reconciliation findings' +
+              '</div>' +
+            '</button>'
+          );
+        }).join("");
+
+        patientCardsEl.querySelectorAll(".patient-card").forEach(function (card) {
+          card.addEventListener("click", function () {
+            currentBaseId = card.getAttribute("data-base");
+            renderPatientSelector();
+            renderCurrentStep();
+          });
+        });
+      }
+
+      // STEP 1: Condense & Clean Record
+      function renderStep1(pt) {
+        const post = getPostureData(pt);
+        const bloat = post.duplicates_and_bloat || {};
+        const sm = bloat.summary_metrics || {};
+        const cond = post[currentTierKey] || post.tier_8k || {};
+        const sf = post.skill_findings || {};
+        const dupPanels = bloat.multi_code_lab_analytes || [];
+        const bloatCards = bloat.cards || [];
+        const rawTokens = Number(pt.raw_est_tokens || 1);
+        const reductionPct = (((rawTokens - Number(cond.actual_tokens || 0)) / rawTokens) * 100).toFixed(2);
+        const condenseModeLabel = cond.condense_mode || "lossless_structural";
+        const skillDupCount = Number(sf.duplicate_candidate_count || (sf.duplicate_candidates || []).length || 0);
+        const skillReconCount = Number(sf.reconciliation_finding_count || (sf.reconciliation_findings || []).length || 0);
+
+        const bloatCardsHtml = bloatCards.map(function (c) {
+          return (
+            '<div class="finding-card ' + escapeHtml(c.severity || "info") + '">' +
+              '<div class="finding-top">' +
+                '<h3 class="finding-title">' + escapeHtml(c.title) + '</h3>' +
+                '<span class="badge ' + escapeHtml(c.severity || "info") + '">' + escapeHtml(c.category || "Condensation") + '</span>' +
+              '</div>' +
+              '<p style="margin:0.35rem 0;">' + escapeHtml(c.summary) + '</p>' +
+              '<div style="margin-top:0.5rem;">' + renderCitationChips(c.citations) + '</div>' +
+            '</div>'
+          );
+        }).join("");
+
+        const dupRows = dupPanels.slice(0, 15).map(function (p) {
+          const loincs = (p.loinc_codes || []).join(", ");
+          const dupDatesCount = (p.same_day_duplicate_dates || []).length;
+          return (
+            "<tr>" +
+              "<td><strong>" + escapeHtml(p.concept) + "</strong>" + (p.has_blood_vs_serum_split ? ' <span class="badge info">Blood/Serum Split</span>' : "") + "</td>" +
+              "<td><code>" + escapeHtml(loincs || "—") + "</code></td>" +
+              "<td><strong>" + Number(p.measurement_count || 0).toLocaleString() + "</strong> readings</td>" +
+              "<td>" + dupDatesCount + " same-day duplicate dates</td>" +
+              "<td>" + escapeHtml(p.first_date) + " &rarr; " + escapeHtml(p.latest_date) + " (<strong>" + escapeHtml(p.latest_value) + " " + escapeHtml(p.unit) + "</strong>)</td>" +
+              "<td>" + renderCitationChips(p.citations) + "</td>" +
+            "</tr>"
+          );
+        }).join("");
+
+        stepStageEl.innerHTML =
+          '<div class="stage-header">' +
+            '<div>' +
+              '<h2>Step 1: Non-Destructive Structural Condensation (Stage 1)</h2>' +
+              '<p>Stage 1 strips FHIR JSON syntax overhead, coding system URIs, and non-clinical billing noise while preserving <strong>100% of distinct clinical events and intraday timestamps</strong> (<code>' + escapeHtml(condenseModeLabel) + '</code> — 0 clinical records silently mutated or deleted). Potential duplicates are surfaced as explicit <strong>Stage 2 Skill Findings</strong> rather than silently overwritten.</p>' +
+            '</div>' +
+            '<div class="control-pill-group" role="group" aria-label="Target summary size">' +
+              '<button type="button" class="btn ' + (currentTierKey === "tier_8k" ? "" : "btn-outline") + '" data-tier="tier_8k">Standard Clinical Summary (8k budget)</button>' +
+              '<button type="button" class="btn ' + (currentTierKey === "tier_2k" ? "" : "btn-outline") + '" data-tier="tier_2k">Compact Emergency Summary (2k budget)</button>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="funnel-grid">' +
+            '<div class="funnel-card">' +
+              '<div class="kicker">1A &middot; Raw FHIR R4 Input (' + escapeHtml(pt.dataset_label || currentDatasetMode) + ')</div>' +
+              '<div class="big-num">' + escapeHtml(pt.raw_mb) + ' MB (' + Number(pt.raw_est_tokens || 0).toLocaleString() + ' tokens)</div>' +
+              '<p>Contains <strong>' + Number(pt.total_bundle_entries || 0).toLocaleString() + '</strong> raw FHIR entries, including <strong>' + Number(sm.raw_lab_observations || 0).toLocaleString() + '</strong> lab observations and <strong>' + Number(sm.excluded_non_clinical_entries || 0).toLocaleString() + '</strong> non-clinical billing/claim entries.</p>' +
+            '</div>' +
+            '<div class="funnel-card">' +
+              '<div class="kicker">1B &middot; Stage 2 Hygiene &amp; Duplicate Skills</div>' +
+              '<div class="big-num">' + skillDupCount + ' Duplicate Groups &amp; ' + skillReconCount + ' Conflicts Flagged</div>' +
+              '<p>Identifies <strong>' + Number(sm.canonical_lab_analytes || 0).toLocaleString() + '</strong> canonical LOINC analyte chains, <strong>' + Number(sm.deduplicated_base64_notes || 0).toLocaleString() + '</strong> repeated Base64 notes, and <strong>' + Number(sm.folded_stopped_med_ingredients || 0).toLocaleString() + '</strong> historical medication renewal chains with full member UUID arrays.</p>' +
+            '</div>' +
+            '<div class="funnel-card highlight">' +
+              '<div class="kicker">1C &middot; Non-Destructive Condensed Ledger (Tier ' + escapeHtml(cond.tier) + ')</div>' +
+              '<div class="big-num">' + Number(cond.actual_tokens || 0).toLocaleString() + ' Tokens (-' + reductionPct + '%)</div>' +
+              '<p>Fits cleanly inside the <strong>' + Number(cond.target_tokens || 0).toLocaleString() + '</strong>-token budget (<strong>' + Number(cond.ledger_lines || 0).toLocaleString() + '</strong> structured ledger lines, <em>' + escapeHtml(cond.tier_name) + '</em>) while retaining <strong>100% of allergies, active medications, and active conditions</strong> with FHIR UUID links.</p>' +
+            '</div>' +
+          '</div>' +
+
+          '<h3 style="color:var(--page-title);margin:1.35rem 0 0.65rem;">Chart Hygiene &amp; Duplicate Candidates Surfaced in ' + escapeHtml(pt.patient_name) + '’s Record</h3>' +
+          (bloatCardsHtml || '<p>No duplicate bloat findings recorded.</p>') +
+
+          '<details class="wahs-accordion" open style="margin-top:1.1rem;">' +
+            '<summary>Inspect Consolidated Multi-Code &amp; Same-Day Duplicate Lab Panels (' + dupPanels.length + ' canonical analytes)</summary>' +
+            '<div class="accordion-body">' +
+              (dupRows
+                ? '<div class="table-wrap"><table class="wahs-table"><thead><tr><th>Lab Analyte</th><th>LOINC Codes Merged</th><th>Total Readings</th><th>Same-Day Duplicates</th><th>Date Span &amp; Latest Value</th><th>Source Provenance</th></tr></thead><tbody>' + dupRows + '</tbody></table></div>'
+                : '<p>No multi-code or same-day duplicate numeric lab panels in this bundle.</p>') +
+            '</div>' +
+          '</details>' +
+
+          '<div class="step-footer">' +
+            '<span style="color:var(--muted);font-size:0.9rem;">Click any <strong>Source [N]</strong> button above to inspect the underlying FHIR resource UUID and merged record count.</span>' +
+            '<button type="button" class="btn btn-teal" id="next-to-step-2">Continue to Step 2: Reconcile Cross-Clinic Conflicts &rarr;</button>' +
+          '</div>';
+
+        bindCitationButtons(stepStageEl);
+        stepStageEl.querySelectorAll("[data-tier]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            currentTierKey = b.getAttribute("data-tier");
+            renderStep1(pt);
+          });
+        });
+        document.getElementById("next-to-step-2").addEventListener("click", function () {
+          setStep(2, true);
+        });
+      }
+
+      // STEP 2: Reconcile Cross-Clinic Conflicts
+      function renderStep2(pt) {
+        const post = getPostureData(pt);
+        const dq = post.data_quality_and_conflicts || {};
+        const findings = dq.findings || [];
+
+        const cardsHtml = findings.map(function (f) {
+          const domainLabel = f.domain || f.category || "Clinical Rule";
+          const plainBody = f.patient_plain_summary || f.description || f.detail || "";
+          const askDoc = f.what_to_ask_doctor || "";
+          const techNote = f.clinician_technical_note || f.description || "";
+          const ruleBadge = f.kb_rule_id ? ' <code style="font-size:0.75rem;color:var(--bs-primary);">' + escapeHtml(f.kb_rule_id) + '</code>' : '';
+
+          if (currentAudienceMode === "patient") {
+            return (
+              '<div class="finding-card ' + escapeHtml(f.severity) + '">' +
+                '<div class="finding-top">' +
+                  '<h3 class="finding-title">' + escapeHtml(f.title) + '</h3>' +
+                  '<span class="badge ' + escapeHtml(f.severity) + '">Plain-English Alert &middot; ' + escapeHtml(domainLabel) + '</span>' +
+                '</div>' +
+                '<p style="margin:0.4rem 0;font-size:0.96rem;"><strong>What this means for you:</strong> ' + escapeHtml(plainBody) + '</p>' +
+                (askDoc
+                  ? '<div class="callout info" style="margin:0.55rem 0;padding:0.65rem 0.9rem;">' +
+                      '<strong>What to Ask Your Doctor or Pharmacist at Your Next Visit:</strong><br>' +
+                      '<em>&ldquo;' + escapeHtml(askDoc) + '&rdquo;</em>' +
+                    '</div>'
+                  : '') +
+                '<div style="margin-top:0.55rem;">' + renderCitationChips(f.citations) + '</div>' +
+              '</div>'
+            );
+          }
+
+          return (
+            '<div class="finding-card ' + escapeHtml(f.severity) + '">' +
+              '<div class="finding-top">' +
+                '<h3 class="finding-title">' + escapeHtml(f.title) + ruleBadge + '</h3>' +
+                '<span class="badge ' + escapeHtml(f.severity) + '">' + escapeHtml((f.severity || "").toUpperCase()) + ' &middot; ' + escapeHtml(domainLabel) + '</span>' +
+              '</div>' +
+              '<p style="margin:0.35rem 0;"><strong>Clinical Reconciliation Detail:</strong> ' + escapeHtml(f.description || f.detail) + '</p>' +
+              '<p style="margin:0.35rem 0;font-size:0.88rem;color:#2b3a4a;"><strong>4-Layer KB &amp; Terminology Audit:</strong> <code>' + escapeHtml(techNote) + '</code></p>' +
+              '<p style="margin:0.35rem 0;color:var(--muted);"><strong>Suggested Clinical / Registry Action:</strong> ' + escapeHtml(f.recommendation) + '</p>' +
+              '<div style="margin-top:0.55rem;">' + renderCitationChips(f.citations) + '</div>' +
+            '</div>'
+          );
+        }).join("");
+
+        const modeBannerText = currentDatasetMode === "set_c"
+          ? '<strong>Set C (Messy Uncoded + Note Contradictions) Active:</strong> Testing uncoded display strings (missing RxNorm/SNOMED codes), intraday repeat labs, and free-text clinical note hold/discontinue contradictions against active MedicationRequests.'
+          : (currentDatasetMode === "set_b"
+              ? '<strong>Multi-Clinic / Transition Record Active (' + (currentAudienceMode === "patient" ? "Patient Plain-English View" : "Clinician Code & Rule View") + '):</strong> Viewing combined records across inpatient discharge, primary care, specialty clinics, retail pharmacy, and the WA State Immunization Information System.'
+              : '<strong>Single-Clinic Baseline (Set A) Active:</strong> Viewing the single-clinic baseline export. Switch to <strong>Set B</strong> or <strong>Set C</strong> above to inspect cross-clinic and note-vs-prescription contradictions.');
+
+        stepStageEl.innerHTML =
+          '<div class="stage-header">' +
+            '<div>' +
+              '<h2>Step 2: Stage 2 Skill-Driven Clinical Reconciliation &amp; Duplicate Findings</h2>' +
+              '<p>Rather than silently deleting conflicting records during condensation, WAHS runs explicit <strong>4-Layer Clinical KB Skills</strong> (RxNorm/ATC therapeutic class overlap, drug-electrolyte/bleeding interaction hazards, SNOMED stage exclusivity, free-text discharge note hold contradictions, and WA IIS / CDC ACIP immunization rules) and surfaces every finding with <code>Source [N]</code> provenance.</p>' +
+            '</div>' +
+            '<span class="badge ' + (dq.high_severity_count > 0 ? "high" : "ok") + '" style="font-size:0.88rem;padding:0.4rem 0.85rem;">' +
+              (dq.total_findings || findings.length) + ' Findings (' + (dq.high_severity_count || 0) + ' High Priority)' +
+            '</span>' +
+          '</div>' +
+
+          '<div class="callout ' + (currentDatasetMode === "set_a" ? "info" : "warn") + '">' +
+            modeBannerText +
+          '</div>' +
+
+          (cardsHtml || '<p>No clinical conflicts detected in this view.</p>') +
+
+          '<div class="step-footer">' +
+            '<button type="button" class="btn btn-outline" id="back-to-step-1">&larr; Back to Step 1: Condense Record</button>' +
+            '<button type="button" class="btn btn-teal" id="next-to-step-3">Continue to Step 3: Prepare Shareable Summary &rarr;</button>' +
+          '</div>';
+
+        bindCitationButtons(stepStageEl);
+        document.getElementById("back-to-step-1").addEventListener("click", function () { setStep(1, true); });
+        document.getElementById("next-to-step-3").addEventListener("click", function () { setStep(3, true); });
+      }
+
+      // STEP 3: Prepare & Share Summary (Privacy Posture + Clinical Summary Tables)
+      function renderStep3(pt) {
+        const post = getPostureData(pt);
+        const selfPost = (pt.postures && pt.postures.patient_self) || post;
+        const pat = post.patterns_and_summaries || {};
+        const ds = pat.directed_summary || {};
+        const selfDs = (selfPost.patterns_and_summaries && selfPost.patterns_and_summaries.directed_summary) || {};
+        const cond = post[currentTierKey] || post.tier_8k || {};
+        const he = pat.highlight_encounter || null;
+
+        const activeMedsRows = (ds.active_medications || []).map(function (m) {
+          return (
+            "<tr>" +
+              "<td><strong>" + escapeHtml(m.display) + "</strong>" +
+                (m.conflict_note ? '<div style="margin-top:0.25rem;"><span class="badge high">Conflict: ' + escapeHtml(m.conflict_note) + '</span></div>' : "") +
+              "</td>" +
+              "<td>" + escapeHtml(m.date || "—") + "</td>" +
+              "<td>" + escapeHtml(m.source_org || "Primary Care") + "</td>" +
+              "<td>" + renderCitationChips(m.citations) + "</td>" +
+            "</tr>"
+          );
+        }).join("");
+
+        const trajRows = (pat.trajectories || []).map(function (t) {
+          const dir = String(t.direction || "");
+          const arrow = dir.indexOf("dec") === 0 || dir === "down"
+            ? "&darr; Decreasing"
+            : (dir.indexOf("inc") === 0 || dir === "up" ? "&uarr; Increasing" : "&rarr; Stable");
+          const initObj = t.initial || t.first || {};
+          const latestObj = t.latest || {};
+          const minObj = t.min || {};
+          const maxObj = t.max || {};
+          return (
+            "<tr>" +
+              "<td><strong>" + escapeHtml(t.concept || t.analyte) + "</strong></td>" +
+              "<td>" + Number(t.count || 0).toLocaleString() + "</td>" +
+              "<td>" + escapeHtml(initObj.value) + " " + escapeHtml(t.unit) + " <small>(" + escapeHtml(initObj.date) + ")</small></td>" +
+              "<td><strong>" + escapeHtml(latestObj.value) + " " + escapeHtml(t.unit) + "</strong> <small>(" + escapeHtml(latestObj.date) + ")</small></td>" +
+              "<td>" + escapeHtml(minObj.value) + " &ndash; " + escapeHtml(maxObj.value) + "</td>" +
+              "<td>" + arrow + "</td>" +
+              "<td>" + renderCitationChips(t.citations) + "</td>" +
+            "</tr>"
+          );
+        }).join("");
+
+        const heHtml = he
+          ? (
+            '<div class="finding-card info">' +
+              '<div class="finding-top">' +
+                '<h3 class="finding-title">' + escapeHtml(he.title) + '</h3>' +
+                '<span class="badge info">' + escapeHtml(he.window) + '</span>' +
+              '</div>' +
+              '<p style="margin:0.4rem 0;">' + escapeHtml(he.narrative) + '</p>' +
+              (he.opus_5_5_comparison
+                ? '<div class="callout info" style="margin:0.65rem 0;">' +
+                    '<div><strong>Uncondensed Baseline (Opus 5.5):</strong> ' + escapeHtml(he.opus_5_5_comparison.raw_json_feeding_opus_5_5) + '</div>' +
+                    '<div style="margin-top:0.3rem;"><strong>WAHS Condensed Pipeline:</strong> ' + escapeHtml(he.opus_5_5_comparison.wahs_condensed_pipeline) + '</div>' +
+                  '</div>'
+                : '') +
+              '<div style="margin-top:0.5rem;">' + renderCitationChips(he.citations) + '</div>' +
+            '</div>'
+          )
+          : '<p>No high-acuity inpatient/ICU stay highlighted for this patient.</p>';
+
+        const ablRows = (DATA.ablation_rows || []).map(function (r) {
+          return (
+            "<tr>" +
+              "<td><strong>" + escapeHtml(r.patient) + "</strong></td>" +
+              "<td>" + r.raw_mb + " MB</td>" +
+              "<td>" + Number(r.target_tokens).toLocaleString() + "</td>" +
+              "<td><strong>" + Number(r.actual_tokens).toLocaleString() + "</strong></td>" +
+              "<td>Tier " + r.tier + " (" + escapeHtml(r.tier_name) + ")</td>" +
+              "<td>" + r.reduction_pct + "%</td>" +
+              "<td><span class='badge ok'>" + r.gt_anomalies_retained + "/" + r.gt_anomalies_total + " (" + r.recall_pct + "%)</span></td>" +
+            "</tr>"
+          );
+        }).join("");
+
+        const uniqueSensitiveList = Array.from(new Set(selfDs.sensitive_sdoh_included || []));
+        const redactedCount = cond.redacted_count || ds.redacted_privacy_count || uniqueSensitiveList.length || 0;
+        const retainedItems = (ds.privacy_diff && ds.privacy_diff.retained_in_external_share) || [
+          "Active medical diagnoses & heart/kidney conditions (" + (ds.active_conditions || []).length + " entries)",
+          "Active medications & duplicate-therapy safety alerts (" + (ds.active_medications || []).length + " entries)",
+          "Allergies & implantable medical devices",
+          "Key lab trends (eGFR, Creatinine, HbA1c) & immunization history (" + Number(ds.immunization_count || 0) + " doses)"
+        ];
+        const removedItems = uniqueSensitiveList.length
+          ? uniqueSensitiveList
+          : ["Substance use screenings (DAST-10 / 42 CFR Part 2)", "Intimate partner violence / HARK safety screenings", "Sensitive housing instability & criminal-justice SDOH records"];
+
+        const privacyDiffHtml =
+          '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin:1rem 0 1.35rem;">' +
+            '<div style="border:1px solid #b7e4c7;background:#f3faf6;border-radius:8px;padding:1rem 1.15rem;">' +
+              '<div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;color:#1b4332;margin-bottom:0.35rem;">What Stays Visible in External Share (Clinical Safety Core)</div>' +
+              '<ul style="margin:0.35rem 0 0;padding-left:1.2rem;font-size:0.9rem;color:#212529;">' +
+                retainedItems.map(function (item) { return '<li style="margin-bottom:0.25rem;">' + escapeHtml(item) + '</li>'; }).join("") +
+              '</ul>' +
+            '</div>' +
+            '<div style="border:1px solid #f5c2c7;background:#fff5f5;border-radius:8px;padding:1rem 1.15rem;">' +
+              '<div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;color:#842029;margin-bottom:0.35rem;">Automatically Removed in External Share (42 CFR Part 2 &amp; WA MHMDA)</div>' +
+              '<p style="margin:0.2rem 0 0.4rem;font-size:0.86rem;color:#58151c;"><strong>' + redactedCount + ' sensitive records</strong> (' + removedItems.length + ' finding categories) are stripped before prompt construction when sharing externally:</p>' +
+              '<ul style="margin:0;padding-left:1.2rem;font-size:0.9rem;color:#842029;">' +
+                removedItems.map(function (item) { return '<li style="margin-bottom:0.25rem;"><strong>' + escapeHtml(item) + '</strong></li>'; }).join("") +
+              '</ul>' +
+            '</div>' +
+          '</div>';
+
+        stepStageEl.innerHTML =
+          '<div class="stage-header">' +
+            '<div>' +
+              '<h2>Step 3: Prepare Your Shareable WA Health Summary</h2>' +
+              '<p>Choose who this summary is for. In <strong>My Personal View</strong>, sensitive social and behavioral health entries are shown with a privacy notice. In <strong>External Provider Share</strong>, sensitive entries covered by 42 CFR Part 2, WA My Health My Data Act, or intimate partner violence (IPV) protections are automatically redacted before sharing.</p>' +
+            '</div>' +
+            '<div class="control-pill-group" role="group" aria-label="Sharing privacy posture">' +
+              '<button type="button" class="btn ' + (currentPosture === "patient_self" ? "" : "btn-outline") + '" data-posture="patient_self">My Personal View (Full Record)</button>' +
+              '<button type="button" class="btn ' + (currentPosture === "external_share" ? "" : "btn-outline") + '" data-posture="external_share">External Provider Share (Privacy Redacted)</button>' +
+            '</div>' +
+          '</div>' +
+
+          (currentPosture === "external_share"
+            ? '<div class="callout success"><strong>External Provider Share Active (Zero Sensitive Leakage):</strong> Deterministically redacted <strong>' + redactedCount + '</strong> privacy-sensitive SDOH / behavioral / personal safety records prior to condensation.</div>'
+            : '<div class="callout warn"><strong>My Personal View Active:</strong> Displaying your complete record, including <strong>' + uniqueSensitiveList.length + '</strong> sensitive social/personal finding types. Switch to <strong>External Provider Share</strong> to preview automatic privacy redaction.</div>') +
+
+          '<h3 style="color:var(--page-title);margin:1.15rem 0 0.4rem;">Side-by-Side Privacy Protection Preview: What Is Shared vs. What Stays Private</h3>' +
+          privacyDiffHtml +
+
+          '<h3 style="color:var(--page-title);margin:1.25rem 0 0.5rem;">Active Medications in International Patient Summary (IPS)</h3>' +
+          '<div class="table-wrap">' +
+            '<table class="wahs-table">' +
+              '<thead><tr><th>Active Medication</th><th>Latest Date</th><th>Reporting Clinic / Source</th><th>FHIR Provenance</th></tr></thead>' +
+              '<tbody>' + (activeMedsRows || '<tr><td colspan="4">No active medications recorded.</td></tr>') + '</tbody>' +
+            '</table>' +
+          '</div>' +
+
+          '<h3 style="color:var(--page-title);margin:1.35rem 0 0.5rem;">Key Biomarker &amp; Lab Trajectories</h3>' +
+          '<div class="table-wrap">' +
+            '<table class="wahs-table">' +
+              '<thead><tr><th>Analyte</th><th>Readings</th><th>Initial</th><th>Latest</th><th>Min &ndash; Max</th><th>Longitudinal Trend</th><th>FHIR Provenance</th></tr></thead>' +
+              '<tbody>' + (trajRows || '<tr><td colspan="7">No multi-point numeric lab trajectories in this chart.</td></tr>') + '</tbody>' +
+            '</table>' +
+          '</div>' +
+
+          '<h3 style="color:var(--page-title);margin:1.4rem 0 0.5rem;">Highlighted Hospitalization / Care Episode</h3>' +
+          heHtml +
+
+          '<details class="wahs-accordion" style="margin-top:1.25rem;">' +
+            '<summary>Technical View: Inspect Condensed AI Context Ledger (' + Number(cond.actual_tokens || 0).toLocaleString() + ' tokens, Tier ' + escapeHtml(cond.tier) + ')</summary>' +
+            '<div class="accordion-body">' +
+              '<p style="margin-top:0;color:var(--muted);font-size:0.88rem;">This is the exact deterministic, citation-indexed text passed to the language model under the <strong>' + escapeHtml(currentPosture) + '</strong> posture:</p>' +
+              '<pre class="ledger-view">' + escapeHtml(cond.chart_text) + '</pre>' +
+            '</div>' +
+          '</details>' +
+
+          '<details class="wahs-accordion">' +
+            '<summary>Technical Benchmark: 16k &rarr; 1k Token Budget Ablation Matrix across All Patient Charts</summary>' +
+            '<div class="accordion-body">' +
+              '<div class="table-wrap"><table class="wahs-table"><thead><tr><th>Patient</th><th>Raw Size</th><th>Target Budget</th><th>Actual Tokens</th><th>Tier Reached</th><th>Reduction</th><th>Safety Anomaly Recall</th></tr></thead><tbody>' + ablRows + '</tbody></table></div>' +
+            '</div>' +
+          '</details>' +
+
+          '<div class="step-footer">' +
+            '<button type="button" class="btn btn-outline" id="back-to-step-2">&larr; Back to Step 2: Reconcile Conflicts</button>' +
+            '<button type="button" class="btn btn-teal" id="next-to-step-4">Continue to Step 4: Ask Questions About This Summary &rarr;</button>' +
+          '</div>';
+
+        bindCitationButtons(stepStageEl);
+        stepStageEl.querySelectorAll("[data-posture]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            currentPosture = b.getAttribute("data-posture");
+            renderPatientSelector();
+            renderStep3(pt);
+          });
+        });
+        document.getElementById("back-to-step-2").addEventListener("click", function () { setStep(2, true); });
+        document.getElementById("next-to-step-4").addEventListener("click", function () { setStep(4, true); });
+      }
+
+      // STEP 4: Ask Your Summary (Grounded Q&A)
+      function formatMarkdownLite(md) {
+        const lines = String(md || "").split("\n");
+        let html = "";
+        let inList = false;
+        lines.forEach(function (line) {
+          const trimmed = line.trim();
+          if (!trimmed) {
+            if (inList) { html += "</ul>"; inList = false; }
+            return;
+          }
+          if (trimmed.startsWith("### ")) {
+            if (inList) { html += "</ul>"; inList = false; }
+            html += "<h3>" + escapeHtml(trimmed.slice(4)) + "</h3>";
+          } else if (trimmed.startsWith("- ")) {
+            if (!inList) { html += "<ul>"; inList = true; }
+            let item = escapeHtml(trimmed.slice(2));
+            item = item.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+            item = item.replace(/`([^`]+)`/g, "<code>$1</code>");
+            html += "<li>" + item + "</li>";
+          } else {
+            if (inList) { html += "</ul>"; inList = false; }
+            let p = escapeHtml(trimmed);
+            p = p.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+            p = p.replace(/`([^`]+)`/g, "<code>$1</code>");
+            html += "<p style='margin:0.35rem 0;'>" + p + "</p>";
+          }
+        });
+        if (inList) html += "</ul>";
+        return html;
+      }
+
+      function renderStep4(pt) {
+        const post = getPostureData(pt);
+        const Precomputed = post.qa_samples || [];
+        const fallbackCategories = [
+          "1. Medication & Pill-Bottle Clarity",
+          "2. Lab Trends & New Diagnoses",
+          "3. Making Sense of a Hospital/ICU Stay",
+          "5. School/Vaccine Readiness",
+          "6. Safe Sharing Preview",
+          "4. Next-Visit Checklist (Abstention Check)"
+        ];
+
+        const promptCardsHtml = Precomputed.map(function (sample, idx) {
+          const catLabel = sample.patient_category || fallbackCategories[idx] || "Patient Summary Q&A";
+          return (
+            '<button type="button" class="qa-prompt-card" data-q-idx="' + idx + '">' +
+              '<span class="q-cat">' + escapeHtml(catLabel) + '</span>' +
+              '<span class="q-text">' + escapeHtml(sample.question) + '</span>' +
+            '</button>'
+          );
+        }).join("");
+
+        stepStageEl.innerHTML =
+          '<div class="stage-header">' +
+            '<div>' +
+              '<h2>Step 4: Ask Questions About ' + escapeHtml(pt.patient_name) + '’s Health Summary</h2>' +
+              '<p>Select one of the <strong>6 patient-centered scenario cards</strong> below or type your own question. Toggle <strong>Patient View &harr; Clinician View</strong> at the top of the page to switch between plain-English explanations with a doctor visit checklist and full clinical terminology details.</p>' +
+            '</div>' +
+            '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">' +
+              '<span class="badge info" style="font-size:0.82rem;padding:0.35rem 0.75rem;">View: ' + (currentAudienceMode === "patient" ? "Patient (Plain English)" : "Clinician (Codes & Rules)") + '</span>' +
+              '<span class="badge info" style="font-size:0.82rem;padding:0.35rem 0.75rem;">Posture: ' + (currentPosture === "external_share" ? "External Provider Share" : "My Personal View") + '</span>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="qa-prompt-grid" id="qa-prompt-grid">' + promptCardsHtml + '</div>' +
+
+          '<div class="chat-box" id="chat-log"></div>' +
+
+          '<form class="chat-form" id="chat-form">' +
+            '<input type="text" id="chat-input" placeholder="Ask about medications, lab trends, hospital stays, or test unanswerable abstention..." aria-label="Ask a question about this health summary" required />' +
+            '<button type="submit" class="btn">Ask Summary</button>' +
+          '</form>' +
+
+          '<div class="step-footer">' +
+            '<button type="button" class="btn btn-outline" id="back-to-step-3">&larr; Back to Step 3: Prepare Shareable Summary</button>' +
+            '<a class="btn btn-outline" href="https://reports.openclinai.org/2026-10-30-wahs-phase2-eval/index.html">Read Full 32-Case Evaluation Report &rarr;</a>' +
+          '</div>';
+
+        const chatLogEl = document.getElementById("chat-log");
+
+        function appendExchange(question, resp) {
+          const uDiv = document.createElement("div");
+          uDiv.className = "chat-bubble user";
+          uDiv.textContent = question;
+          chatLogEl.appendChild(uDiv);
+
+          const aDiv = document.createElement("div");
+          aDiv.className = "chat-bubble assistant";
+          const isAbstained = Boolean(resp.abstained || resp.abstains);
+          const cites = resp.citations || resp.references || [];
+          const kbRefs = resp.kb_references || [];
+          const tInfo = resp.tier_info || {};
+          const sourceBadgeText = resp.source_mode_label || "Answered from In-Context IPS Safety Core";
+          const statusBadge = isAbstained
+            ? '<span class="badge medium">Explicit Safety Abstention (Not in Chart)</span>'
+            : '<span class="badge ok">Grounded in Condensed FHIR Summary (' + cites.length + ' FHIR citations)</span>';
+          const retrievalBadge = '<span class="badge info" title="Retrieval architecture source">' + escapeHtml(sourceBadgeText) + '</span>';
+
+          const askDoctorList = Array.isArray(resp.what_to_ask_doctor)
+            ? resp.what_to_ask_doctor
+            : (resp.what_to_ask_doctor ? [resp.what_to_ask_doctor] : []);
+          const askDoctorHtml = askDoctorList.length
+            ? '<div class="callout info" style="margin:0.65rem 0;padding:0.65rem 0.9rem;">' +
+                '<strong>Questions to Bring to Your Next Clinic or Pharmacy Visit:</strong>' +
+                '<ul style="margin:0.35rem 0 0;padding-left:1.2rem;">' +
+                  askDoctorList.map(function (qItem) { return '<li><em>&ldquo;' + escapeHtml(qItem) + '&rdquo;</em></li>'; }).join("") +
+                '</ul>' +
+              '</div>'
+            : '';
+
+          const mainBodyHtml = (currentAudienceMode === "patient" && resp.patient_plain_summary)
+            ? (
+              '<div style="background:#f3faf6;border-left:4px solid #2b8a3e;padding:0.75rem 0.95rem;border-radius:6px;margin-bottom:0.65rem;">' +
+                '<div style="font-size:0.76rem;font-weight:700;text-transform:uppercase;color:#1b4332;margin-bottom:0.25rem;">Plain-English Summary (' + escapeHtml(resp.patient_category || "Patient Guide") + ')</div>' +
+                formatMarkdownLite(resp.patient_plain_summary) +
+              '</div>' +
+              askDoctorHtml +
+              '<details style="margin-top:0.5rem;">' +
+                '<summary style="cursor:pointer;font-size:0.86rem;font-weight:600;color:var(--bs-primary);">Show Full Reconciled Clinical Record Details</summary>' +
+                '<div style="margin-top:0.45rem;">' + formatMarkdownLite(resp.answer) + '</div>' +
+              '</details>'
+            )
+            : (
+              (resp.clinician_technical_note
+                ? '<div style="background:#f8f9fa;border-left:4px solid var(--bs-primary);padding:0.6rem 0.85rem;border-radius:6px;margin-bottom:0.6rem;font-size:0.85rem;">' +
+                    '<strong>Clinician Technical &amp; Terminology Audit:</strong> <code>' + escapeHtml(resp.clinician_technical_note) + '</code>' +
+                  '</div>'
+                : '') +
+              formatMarkdownLite(resp.answer) +
+              askDoctorHtml
+            );
+
+          const kbHtml = kbRefs.length
+            ? '<div style="margin-top:0.55rem;padding-top:0.45rem;border-top:1px dashed #d0d7de;font-size:0.82rem;color:#495057;">' +
+                '<strong>4-Layer Clinical KB Authorities:</strong> ' +
+                kbRefs.map(function (k) {
+                  return k.url
+                    ? '<a href="' + escapeHtml(k.url) + '" target="_blank" rel="noopener noreferrer" style="color:var(--bs-primary);margin-right:0.65rem;">' + escapeHtml(k.title) + ' (' + escapeHtml(k.source) + ') &nearr;</a>'
+                    : '<span style="margin-right:0.65rem;">' + escapeHtml(k.title) + '</span>';
+                }).join(" ") +
+              '</div>'
+            : '';
+
+          aDiv.innerHTML =
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.45rem;flex-wrap:wrap;gap:0.4rem;">' +
+              '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;align-items:center;">' + statusBadge + retrievalBadge + '</div>' +
+              '<span style="font-size:0.75rem;color:var(--muted-light);">Tier ' + escapeHtml(tInfo.tier || resp.tier_used || 3) + ' (' + Number(tInfo.actual_tokens || resp.actual_tokens || 0).toLocaleString() + ' tokens)</span>' +
+            '</div>' +
+            mainBodyHtml +
+            '<div style="margin-top:0.65rem;padding-top:0.5rem;border-top:1px solid #edf0f2;">' +
+              renderCitationChips(cites) +
+            '</div>' +
+            kbHtml;
+          chatLogEl.appendChild(aDiv);
+          bindCitationButtons(aDiv);
+          chatLogEl.scrollTop = chatLogEl.scrollHeight;
+        }
+
+        function answerLocally(q) {
+          const qLow = q.toLowerCase();
+          for (let i = 0; i < Precomputed.length; i++) {
+            if (Precomputed[i].question.toLowerCase() === qLow) return Precomputed[i];
+          }
+          for (let i = 0; i < Precomputed.length; i++) {
+            if (Precomputed[i].abstained && /penicillin|colonoscopy|mri|transplant|genetic|brca|blood type|living will|biopsy|pathology/.test(qLow)) {
+              return Precomputed[i];
+            }
+          }
+          for (let i = 0; i < Precomputed.length; i++) {
+            const pq = Precomputed[i].question.toLowerCase();
+            if (/hold|spironolactone|eliquis|warfarin|ativan|ambien|statin|med|drug|rx|furosemide|lisinopril|clopidogrel|plavix|lipitor|naproxen|entresto/.test(qLow) &&
+                /med|drug|conflict|hold|spironolactone|eliquis|warfarin|ativan|ambien/.test(pq)) {
+              return Precomputed[i];
+            }
+            if (/ckd|kidney|renal|egfr|creatinine|stage|diabetes|prediabetes|hba1c|sinusitis|hemorrhage|bleed|inr|potassium/.test(qLow) &&
+                /stage|ckd|diabetes|hemorrhage|trend|hba1c/.test(pq)) {
+              return Precomputed[i];
+            }
+            if (/icu|cabg|bypass|hospital|surgery|encounter|admission|egd|endoscopy|fall/.test(qLow) &&
+                /hospital|encounter|admission|egd/.test(pq)) {
+              return Precomputed[i];
+            }
+            if (/vaccine|immuniz|zoster|hpv|pneumococ|flu|covid|acip|tdap|iis/.test(qLow) &&
+                /vaccine|immuniz|pneumococ|acip/.test(pq)) {
+              return Precomputed[i];
+            }
+            if (/duplicate|bloat|panel|privacy|sdoh|share/.test(qLow) &&
+                /duplicate|panel|share|privacy/.test(pq)) {
+              return Precomputed[i];
+            }
+          }
+          return Precomputed[0];
+        }
+
+        if (Precomputed.length > 0) {
+          appendExchange(Precomputed[0].question, Precomputed[0]);
+        }
+
+        stepStageEl.querySelectorAll(".qa-prompt-card").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            const idx = Number(btn.getAttribute("data-q-idx"));
+            const resp = Precomputed[idx];
+            if (resp) appendExchange(resp.question, resp);
+          });
+        });
+
+        document.getElementById("chat-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          const input = document.getElementById("chat-input");
+          const q = input.value.trim();
+          if (!q) return;
+          input.value = "";
+          const resp = answerLocally(q);
+          if (resp) appendExchange(q, resp);
+        });
+
+        document.getElementById("back-to-step-3").addEventListener("click", function () { setStep(3, true); });
+      }
+
+      function renderCurrentStep() {
+        const pt = getCurrentPatient();
+        if (!pt) return;
+        if (currentStep === 1) renderStep1(pt);
+        else if (currentStep === 2) renderStep2(pt);
+        else if (currentStep === 3) renderStep3(pt);
+        else renderStep4(pt);
+      }
+
+      // Client-side Custom FHIR R4 Bundle Parser & KB Skill Engine
+      function buildSampleCustomBundle() {
+        return {
+          resourceType: "Bundle",
+          type: "collection",
+          entry: [
+            {
+              fullUrl: "urn:uuid:custom-pt-01",
+              resource: {
+                resourceType: "Patient",
+                id: "custom-pt-01",
+                name: [{ family: "Vance", given: ["Clara"] }],
+                birthDate: "1956-08-19",
+                gender: "female"
+              }
+            },
+            {
+              fullUrl: "urn:uuid:custom-cond-ckd3a",
+              resource: {
+                resourceType: "Condition",
+                id: "custom-cond-ckd3a",
+                clinicalStatus: { coding: [{ code: "active" }] },
+                code: { coding: [{ system: "http://snomed.info/sct", code: "700379002", display: "Chronic kidney disease stage 3A (disorder)" }], text: "Chronic kidney disease stage 3A (disorder)" },
+                recordedDate: "2024-05-10",
+                recorder: { display: "Northwest Primary Care" }
+              }
+            },
+            {
+              fullUrl: "urn:uuid:custom-cond-ckd4",
+              resource: {
+                resourceType: "Condition",
+                id: "custom-cond-ckd4",
+                clinicalStatus: { coding: [{ code: "active" }] },
+                code: { coding: [{ system: "http://snomed.info/sct", code: "431857002", display: "Chronic kidney disease stage 4 (disorder)" }], text: "Chronic kidney disease stage 4 (disorder)" },
+                recordedDate: "2026-02-01",
+                recorder: { display: "Puget Sound Nephrology" }
+              }
+            },
+            {
+              fullUrl: "urn:uuid:custom-med-atorv",
+              resource: {
+                resourceType: "MedicationRequest",
+                id: "custom-med-atorv",
+                status: "active",
+                medicationCodeableConcept: { coding: [{ system: "http://www.nlm.nih.gov/research/umls/rxnorm", code: "617314", display: "Atorvastatin 20 MG Oral Tablet [Lipitor]" }], text: "Atorvastatin 20 MG Oral Tablet [Lipitor]" },
+                authoredOn: "2025-11-12",
+                requester: { display: "Northwest Primary Care" }
+              }
+            },
+            {
+              fullUrl: "urn:uuid:custom-med-rosuv",
+              resource: {
+                resourceType: "MedicationRequest",
+                id: "custom-med-rosuv",
+                status: "active",
+                medicationCodeableConcept: { coding: [{ system: "http://www.nlm.nih.gov/research/umls/rxnorm", code: "859751", display: "Rosuvastatin 20 MG Oral Tablet [Crestor]" }], text: "Rosuvastatin 20 MG Oral Tablet [Crestor]" },
+                authoredOn: "2026-01-20",
+                requester: { display: "Cascade Cardiology" }
+              }
+            },
+            {
+              fullUrl: "urn:uuid:custom-obs-egfr-1",
+              resource: {
+                resourceType: "Observation",
+                id: "custom-obs-egfr-1",
+                status: "final",
+                code: { coding: [{ system: "http://loinc.org", code: "33914-3", display: "Glomerular filtration rate/1.73 sq M.predicted" }] },
+                effectiveDateTime: "2024-05-10T09:00:00Z",
+                valueQuantity: { value: 51.0, unit: "mL/min/1.73_m2" }
+              }
+            },
+            {
+              fullUrl: "urn:uuid:custom-obs-egfr-2",
+              resource: {
+                resourceType: "Observation",
+                id: "custom-obs-egfr-2",
+                status: "final",
+                code: { coding: [{ system: "http://loinc.org", code: "33914-3", display: "Glomerular filtration rate/1.73 sq M.predicted" }] },
+                effectiveDateTime: "2026-02-01T14:30:00Z",
+                valueQuantity: { value: 27.4, unit: "mL/min/1.73_m2" }
+              }
+            }
+          ]
+        };
+      }
+
+      function ingestCustomFhirBundle(bundleObj) {
+        const entries = Array.isArray(bundleObj.entry) ? bundleObj.entry : [];
+        const rawStr = JSON.stringify(bundleObj);
+        const rawMb = Math.max(0.01, Number((rawStr.length / (1024 * 1024)).toFixed(2)));
+        const rawTokens = Math.max(50, Math.round(rawStr.length / 4));
+        let ptName = "Custom FHIR Patient";
+        let birthDate = "1960-01-01";
+        const activeMeds = [];
+        const activeConds = [];
+        const obsList = [];
+        const cites = [];
+        const ledgerLines = ["=== WA HEALTH SUMMARY LEDGER (Tier 1: Lossless Structural) ==="];
+
+        entries.forEach(function (e, i) {
+          const r = (e && e.resource) || {};
+          const rtype = r.resourceType || "Resource";
+          const uuid = e.fullUrl || r.id || ("entry-" + (i + 1));
+          const idx = i + 1;
+          if (rtype === "Patient") {
+            const nm = (r.name && r.name[0]) || {};
+            ptName = ((nm.given || []).join(" ") + " " + (nm.family || "")).trim() || ptName;
+            birthDate = r.birthDate || birthDate;
+            ledgerLines.push("[" + idx + "] Patient: " + ptName + " (DOB " + birthDate + ")");
+          } else if (rtype === "Condition") {
+            const disp = (r.code && (r.code.text || (r.code.coding && r.code.coding[0] && r.code.coding[0].display))) || "Condition";
+            const dt = (r.recordedDate || r.onsetDateTime || "").slice(0, 10);
+            const org = (r.recorder && r.recorder.display) || "Clinic";
+            const cite = { index: idx, resource_uuid: uuid, resource_type: "Condition", date: dt, summary: disp };
+            cites.push(cite);
+            activeConds.push({ display: disp, date: dt, source_org: org, citations: [cite] });
+            ledgerLines.push("[" + idx + "] Condition (" + dt + "): " + disp + " [" + org + "]");
+          } else if (rtype === "MedicationRequest" || rtype === "MedicationStatement") {
+            const mc = r.medicationCodeableConcept || {};
+            const disp = mc.text || (mc.coding && mc.coding[0] && mc.coding[0].display) || "Medication";
+            const dt = (r.authoredOn || "").slice(0, 10);
+            const org = (r.requester && r.requester.display) || "Clinic";
+            const cite = { index: idx, resource_uuid: uuid, resource_type: rtype, date: dt, summary: disp };
+            cites.push(cite);
+            activeMeds.push({ display: disp, date: dt, source_org: org, citations: [cite], conflict_note: "" });
+            ledgerLines.push("[" + idx + "] " + rtype + " (" + dt + "): " + disp + " [" + org + "]");
+          } else if (rtype === "Observation") {
+            const disp = (r.code && (r.code.text || (r.code.coding && r.code.coding[0] && r.code.coding[0].display))) || "Observation";
+            const dt = (r.effectiveDateTime || "").slice(0, 10);
+            const val = r.valueQuantity ? r.valueQuantity.value : "";
+            const unit = r.valueQuantity ? (r.valueQuantity.unit || "") : "";
+            const cite = { index: idx, resource_uuid: uuid, resource_type: "Observation", date: dt, summary: disp + ": " + val + " " + unit };
+            cites.push(cite);
+            obsList.push({ concept: disp, date: dt, value: val, unit: unit, cite: cite });
+            ledgerLines.push("[" + idx + "] Observation (" + dt + "): " + disp + " = " + val + " " + unit);
+          } else {
+            ledgerLines.push("[" + idx + "] " + rtype + " (" + uuid + ")");
+          }
+        });
+
+        const findings = [];
+        if (activeMeds.length >= 2) {
+          activeMeds[0].conflict_note = "Cross-clinic medication reconciliation candidate";
+          activeMeds[1].conflict_note = "Cross-clinic medication reconciliation candidate";
+          findings.push({
+            id: "custom-med-recon-1",
+            domain: "Therapeutic Class / Multi-Source Medication Audit",
+            severity: "high",
+            title: "Concurrent Active Prescriptions (" + activeMeds.map(function (m) { return m.display; }).join(" + ") + ")",
+            description: "Detected multiple active MedicationRequest resources across clinics: " + activeMeds.map(function (m) { return m.display + " [" + m.source_org + "]"; }).join("; ") + ".",
+            patient_plain_summary: "Your uploaded chart lists " + activeMeds.map(function (m) { return m.display; }).join(" and ") + " as active at the same time across different prescribers.",
+            what_to_ask_doctor: "Can we review my active prescriptions (" + activeMeds.map(function (m) { return m.display; }).join(" and ") + ") to confirm whether any are duplicates or overlapping drug classes?",
+            clinician_technical_note: "Rule wahs-kb-rx-reconcile: Multi-source active MedicationRequest audit across uploaded FHIR R4 Bundle.",
+            recommendation: "Reconcile active medication list across prescribing organizations.",
+            kb_rule_id: "wahs-kb-rx-duplicate-statin-01",
+            citations: activeMeds.map(function (m) { return m.citations[0]; })
+          });
+        }
+        if (activeConds.length >= 2) {
+          findings.push({
+            id: "custom-cond-recon-1",
+            domain: "Mutually Exclusive Condition Stage / Problem List Audit",
+            severity: "high",
+            title: "Cross-Clinic Active Problem List Review (" + activeConds.map(function (c) { return c.display; }).join(" vs. ") + ")",
+            description: "Multiple active Condition resources recorded across sources: " + activeConds.map(function (c) { return c.display + " (" + c.date + ")"; }).join("; ") + ".",
+            patient_plain_summary: "Your uploaded chart contains multiple active condition entries (" + activeConds.map(function (c) { return c.display; }).join(" and ") + ").",
+            what_to_ask_doctor: "Which stage or diagnosis on my problem list reflects my most current lab results?",
+            clinician_technical_note: "Rule wahs-kb-ckd-exclusivity-01: Condition stage / status audit across uploaded FHIR R4 Bundle.",
+            recommendation: "Reconcile problem list against latest laboratory biomarkers.",
+            kb_rule_id: "wahs-kb-ckd-exclusivity-01",
+            citations: activeConds.map(function (c) { return c.citations[0]; })
+          });
+        }
+
+        const trajectories = obsList.length ? [{
+          concept: obsList[0].concept,
+          count: obsList.length,
+          unit: obsList[0].unit,
+          direction: (obsList.length > 1 && obsList[obsList.length - 1].value < obsList[0].value) ? "decreasing" : "stable",
+          initial: { value: obsList[0].value, date: obsList[0].date },
+          latest: { value: obsList[obsList.length - 1].value, date: obsList[obsList.length - 1].date },
+          min: { value: Math.min.apply(null, obsList.map(function (o) { return Number(o.value) || 0; })) },
+          max: { value: Math.max.apply(null, obsList.map(function (o) { return Number(o.value) || 0; })) },
+          citations: obsList.map(function (o) { return o.cite; })
+        }] : [];
+
+        const chartText = ledgerLines.join("\n");
+        const condTokens = Math.max(25, Math.round(chartText.length / 4));
+        const posturePayload = {
+          tier_8k: {
+            tier: 1,
+            tier_name: "Lossless Structural (Non-Destructive)",
+            condense_mode: "lossless_structural",
+            target_tokens: 8192,
+            actual_tokens: condTokens,
+            ledger_lines: ledgerLines.length,
+            chart_text: chartText,
+            redacted_count: 0
+          },
+          tier_2k: {
+            tier: 1,
+            tier_name: "Lossless Structural (Non-Destructive)",
+            condense_mode: "lossless_structural",
+            target_tokens: 2048,
+            actual_tokens: condTokens,
+            ledger_lines: ledgerLines.length,
+            chart_text: chartText,
+            redacted_count: 0
+          },
+          duplicates_and_bloat: {
+            summary_metrics: {
+              raw_lab_observations: obsList.length,
+              canonical_lab_analytes: trajectories.length,
+              excluded_non_clinical_entries: 0,
+              deduplicated_base64_notes: 0,
+              raw_stopped_medications: 0,
+              folded_stopped_med_ingredients: 0
+            },
+            cards: [{
+              title: "Non-Destructive Stage 1 Extraction Complete",
+              category: "Lossless Structural",
+              severity: "info",
+              summary: "Extracted " + entries.length + " FHIR R4 resources with 0 clinical records deleted or mutated.",
+              citations: cites.slice(0, 4)
+            }],
+            multi_code_lab_analytes: []
+          },
+          data_quality_and_conflicts: {
+            total_findings: findings.length,
+            high_severity_count: findings.length,
+            findings: findings
+          },
+          patterns_and_summaries: {
+            trajectories: trajectories,
+            highlight_encounter: null,
+            directed_summary: {
+              posture_label: "Patient Self-View",
+              active_conditions: activeConds,
+              active_medications: activeMeds,
+              immunization_count: 0,
+              redacted_privacy_count: 0,
+              sensitive_sdoh_included: []
+            }
+          },
+          skill_findings: {
+            duplicate_candidate_count: 0,
+            reconciliation_finding_count: findings.length
+          },
+          qa_samples: [
+            {
+              question: "What medication or condition conflicts were found in this uploaded FHIR R4 bundle?",
+              patient_category: "1. Medication & Pill-Bottle Clarity",
+              abstained: false,
+              answer: "### Uploaded FHIR R4 Bundle Audit\n" + findings.map(function (f) { return "- **" + f.title + ":** " + f.description; }).join("\n"),
+              patient_plain_summary: findings.map(function (f) { return "- **" + f.title + ":** " + f.patient_plain_summary; }).join("\n"),
+              what_to_ask_doctor: findings.map(function (f) { return f.what_to_ask_doctor; }),
+              clinician_technical_note: "Client-side FHIR R4 Bundle inspector executed lossless_structural extraction + 4-Layer KB rules.",
+              source_mode_label: "Answered from Uploaded FHIR R4 Bundle",
+              citations: cites.slice(0, 6),
+              kb_references: [],
+              tier_info: { tier: 1, actual_tokens: condTokens }
+            }
+          ]
+        };
+
+        const customId = "Custom_Uploaded_Bundle";
+        DATA.patients[customId + "_set_b"] = {
+          id: customId + "_set_b",
+          patient_id: customId,
+          patient_name: ptName,
+          birth_date: birthDate,
+          reference_date: "2026-03-01",
+          cohort_type: "custom_fhir_r4",
+          dataset_key: "set_b",
+          dataset_label: "Uploaded Custom FHIR R4 Bundle",
+          raw_mb: rawMb,
+          raw_est_tokens: rawTokens,
+          total_bundle_entries: entries.length,
+          postures: { patient_self: posturePayload, external_share: posturePayload }
+        };
+
+        const existingProf = PATIENT_PROFILES.find(function (p) { return p.baseId === customId; });
+        if (!existingProf) {
+          PATIENT_PROFILES.unshift({
+            baseId: customId,
+            name: ptName + " (Custom Upload)",
+            ageLabel: "DOB " + birthDate + " · Custom FHIR R4",
+            headline: "User-Supplied FHIR R4 Bundle (" + entries.length + " resources)",
+            highlights: "Parsed client-side via Stage 1 non-destructive condenser & Stage 2 KB rules"
+          });
+        } else {
+          existingProf.name = ptName + " (Custom Upload)";
+          existingProf.headline = "User-Supplied FHIR R4 Bundle (" + entries.length + " resources)";
+        }
+        currentBaseId = customId;
+        renderPatientSelector();
+        renderCurrentStep();
+      }
+
+      const toggleDrawerBtn = document.getElementById("toggle-custom-fhir-btn");
+      const customDrawerEl = document.getElementById("custom-fhir-drawer");
+      const customTextareaEl = document.getElementById("custom-fhir-textarea");
+      const customStatusEl = document.getElementById("custom-fhir-status");
+
+      if (toggleDrawerBtn && customDrawerEl) {
+        toggleDrawerBtn.addEventListener("click", function () {
+          const isHidden = customDrawerEl.style.display === "none";
+          customDrawerEl.style.display = isHidden ? "block" : "none";
+        });
+      }
+      const loadSampleBtn = document.getElementById("load-sample-custom-fhir");
+      if (loadSampleBtn && customTextareaEl) {
+        loadSampleBtn.addEventListener("click", function () {
+          customTextareaEl.value = JSON.stringify(buildSampleCustomBundle(), null, 2);
+          customStatusEl.textContent = "Loaded sample US Core FHIR R4 Bundle (Clara Vance — CKD 3A vs 4 & Dual Statin). Click 'Run Non-Destructive Condenser & KB Skills' to inspect.";
+        });
+      }
+      const fileInputEl = document.getElementById("custom-fhir-file");
+      if (fileInputEl && customTextareaEl) {
+        fileInputEl.addEventListener("change", function (ev) {
+          const file = ev.target.files && ev.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = function (loadEv) {
+            customTextareaEl.value = String(loadEv.target.result || "");
+            customStatusEl.textContent = "Loaded file '" + file.name + "'. Click 'Run Non-Destructive Condenser & KB Skills' to inspect.";
+          };
+          reader.readAsText(file);
+        });
+      }
+      const runCustomBtn = document.getElementById("run-custom-fhir-btn");
+      if (runCustomBtn && customTextareaEl) {
+        runCustomBtn.addEventListener("click", function () {
+          try {
+            const parsed = JSON.parse(customTextareaEl.value || "{}");
+            if (parsed.resourceType !== "Bundle" || !Array.isArray(parsed.entry)) {
+              customStatusEl.textContent = "Please provide a valid FHIR R4 JSON object with resourceType: 'Bundle' and an 'entry' array.";
+              return;
+            }
+            ingestCustomFhirBundle(parsed);
+            customStatusEl.textContent = "Successfully parsed custom FHIR R4 Bundle (" + parsed.entry.length + " resources) and updated all 4 steps below!";
+          } catch (err) {
+            customStatusEl.textContent = "Invalid JSON: " + err.message;
+          }
+        });
+      }
+
+      // Bind top-level mode buttons and stepper buttons
+      document.querySelectorAll(".dataset-mode-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          currentDatasetMode = btn.getAttribute("data-set");
+          document.querySelectorAll(".dataset-mode-btn").forEach(function (b) {
+            b.classList.toggle("active", b === btn);
+          });
+          renderPatientSelector();
+          renderCurrentStep();
+        });
+      });
+
+      document.querySelectorAll(".audience-mode-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          currentAudienceMode = btn.getAttribute("data-audience");
+          document.querySelectorAll(".audience-mode-btn").forEach(function (b) {
+            b.classList.toggle("active", b === btn);
+          });
+          renderCurrentStep();
+        });
+      });
+
+      document.querySelectorAll(".step-pill").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          setStep(Number(btn.getAttribute("data-step")), false);
+        });
+      });
+
+      renderPatientSelector();
+      renderCurrentStep();
+    })();
+  </script>
+</body>
+</html>

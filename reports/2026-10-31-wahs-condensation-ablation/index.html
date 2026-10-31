@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WAHS+ Slice 4 Report — Condensation-Level Information-Loss Ablation &amp; Hybrid Full-Chart Queryability</title>
+  <style>
+    :root {
+      --bg: #f8fafc; --surface: #ffffff; --text: #0f172a; --muted: #475569;
+      --border: #e2e8f0; --accent: #0284c7; --emerald: #059669; --amber: #d97706;
+    }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 2rem 1.25rem 4rem; line-height: 1.6; }
+    .container { max-width: 1120px; margin: 0 auto; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04); }
+    .badge { display: inline-block; padding: 0.22rem 0.65rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    h1 { font-size: 1.85rem; margin: 0.5rem 0 0.5rem; letter-spacing: -0.02em; }
+    h2 { font-size: 1.28rem; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-top: 0.75rem; }
+    th, td { border-bottom: 1px solid var(--border); padding: 0.65rem 0.6rem; text-align: left; vertical-align: top; }
+    th { background: #f1f5f9; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    code { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; background: #f1f5f9; padding: 0.1rem 0.35rem; border-radius: 4px; }
+    .nav-bar { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; font-size: 0.88rem; }
+    .nav-bar a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <nav class="nav-bar" aria-label="Report navigation">
+      <a href="/">&larr; All OpenClinAI Reports</a>
+      <a href="https://openclinai.org/wahs/">WAHS+ Project Overview</a>
+      <a href="https://openclinai.org/wahs/design-report/">Architecture &amp; Design Report</a>
+      <a href="https://wahs-demo.openclinai.org/">Interactive Patient &amp; Clinician Demo</a>
+    </nav>
+
+    <div class="card">
+      <span class="badge">WA Health Summary &middot; Condensation &amp; Retrieval Ablation (W6 &amp; W7)</span>
+      <h1>Condensation-Tier Information-Loss Ablation, Hybrid Full-Chart Queryability &amp; Messy Multi-EHR Cohort Evaluation</h1>
+      <p>
+        This report answers two core Phase 3 engineering questions:
+        <strong>(1) How much clinical detail is lost as we condense a multi-megabyte patient chart down from 16,384 tokens (Tier 1) to 2,048 tokens (Tier 4), and can on-demand full-chart lookup tools recover deep historical facts without blowing up the prompt context?</strong>
+        and <strong>(2) How does our 4-Layer clinical lookup perform when 25%&ndash;60% of incoming EHR entries lack standard SNOMED/RxNorm/LOINC codes or contain free-text clinical notes that contradict active medication lists?</strong>
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>01 &middot; Horizon-Stratified Condensation &amp; Hybrid Retrieval Ablation (160 Evaluation Cells)</h2>
+      <p>
+        We evaluated five condensation and retrieval configurations across all 32 WAHS clinical evaluation cases, stratified by <strong>Question Horizon</strong>:
+        <em>Current Active State</em> (active meds, allergies, active conditions, privacy redaction),
+        <em>24-Month Trend</em> (eGFR, HbA1c, immunization series),
+        <em>Full-Text Note / Perioperative Detail</em> (e.g., November 2023 CABG perioperative <code>Cefazolin 2000 MG Injection</code>), and
+        <em>Deep Historical / Abstention Probes</em>.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Condensation &amp; Retrieval Arm</th>
+            <th>Token Budget</th>
+            <th>Headline Score</th>
+            <th>Current Active State</th>
+            <th>24-Month Trend</th>
+            <th>Full-Text Note / Periop</th>
+            <th>Deep Historical / Abstain</th>
+            <th>Overflow Tool Calls</th>
+            <th>Privacy Leaks</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Tier 1 (16,384 tokens · Static In-Context)</strong><br><code>wahs-tier1-16k-static</code></td><td><code>16,384</code></td><td><strong>94.0 / 100</strong></td><td>100.0%</td><td>100.0%</td><td><strong>100.0%</strong></td><td>100.0%</td><td><code>0</code></td><td><code>0</code></td></tr><tr><td><strong>Tier 2 (8,192 tokens · Static In-Context)</strong><br><code>wahs-tier2-8k-static</code></td><td><code>8,192</code></td><td><strong>94.0 / 100</strong></td><td>100.0%</td><td>100.0%</td><td><strong>100.0%</strong></td><td>100.0%</td><td><code>0</code></td><td><code>0</code></td></tr><tr><td><strong>Tier 3 (4,096 tokens · Static In-Context)</strong><br><code>wahs-tier3-4k-static</code></td><td><code>4,096</code></td><td><strong>88.5 / 100</strong></td><td>100.0%</td><td>92.0%</td><td><strong>64.3%</strong></td><td>100.0%</td><td><code>0</code></td><td><code>0</code></td></tr><tr><td><strong>Tier 4 (2,048 tokens · Static IPS Micro-Capsule, No Lookup Tools)</strong><br><code>wahs-tier4-2k-static</code></td><td><code>2,048</code></td><td><strong>75.1 / 100</strong></td><td>100.0%</td><td>65.3%</td><td><strong>50.0%</strong></td><td>100.0%</td><td><code>0</code></td><td><code>0</code></td></tr><tr><td><strong>Tier 4 (2,048 tokens · IPS Core + On-Demand Full-Chart Lookup Tools)</strong><br><code>wahs-tier4-2k-hybrid-tools</code></td><td><code>2,048</code></td><td><strong>92.6 / 100</strong></td><td>100.0%</td><td>100.0%</td><td><strong>100.0%</strong></td><td>100.0%</td><td><code>53</code></td><td><code>0</code></td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:0.9rem;color:var(--muted);font-size:0.88rem;">
+        <strong>Key Finding:</strong> Under non-destructive <code>lossless_structural</code> condensation without pre-baked conflict hints (<code>W12</code> / <code>W13</code>), generous budgets (<code>16,384t</code> and <code>8,192t</code>) score <strong>94.0 / 100</strong>, while tighter static windows degrade monotonically to <strong>88.5 / 100</strong> at <code>4,096t</code> and <strong>75.1 / 100</strong> at <code>2,048t</code> as historical immunizations, resolved conditions, and 2023 perioperative records fall outside the static window. Enabling the read-only overflow lookup tools (<code>search_chart_entries</code>, <code>get_lab_history</code>, <code>read_clinical_note</code> in <code>wahs-tier4-2k-hybrid-tools</code>) recovers <strong>+17.5 points</strong> (to <strong>92.6 / 100</strong>) while keeping the base prompt inside <code>2,048</code> tokens and maintaining <strong>0 privacy leaks</strong> in opt-in <code>external_share</code> mode.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>02 &middot; Messy Synthetic Cohort (Set C) &amp; De-Identified Real Clinical Summaries (Pathway A + Pathway B)</h2>
+      <p>
+        To avoid circularity from evaluating only clean Synthea codes, we evaluated both <strong>Pathway A (Set C — Pragmatic Messy Multi-Source)</strong>, which strips standard SNOMED/RxNorm/CVX/LOINC codes from 25% of clinical entries and injects free-text clinical note hold/stop instructions that contradict active <code>MedicationRequest</code> resources, and <strong>Pathway B (De-Identified Real Clinical Summaries)</strong> modeled on MIMIC-IV cardiorenal discharge summaries and SMART IPS transition records (where 40%&ndash;60% of entries carry free-text descriptions only).
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>FHIR Bundle Fixture</th>
+            <th>Data Pathway</th>
+            <th>Pre-Coded Lookup (Layer 1 Only)</th>
+            <th>Layer 2/3 Text &amp; Ingredient Recovery</th>
+            <th>Overall Concept Resolution</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>Byron202_Emard19.json</code></td><td>Pathway A — Set A/B</td><td><code>100.0%</code></td><td><code>+0.0%</code></td><td><strong><code>100.0%</code></strong></td></tr><tr><td><code>Byron202_Emard19_messy.json</code></td><td>Pathway A — Set C (Messy Uncoded + Note Contradiction)</td><td><code>75.9%</code></td><td><code>+22.6%</code></td><td><strong><code>98.5%</code></strong></td></tr><tr><td><code>Byron202_Emard19_multisource.json</code></td><td>Pathway A — Set A/B</td><td><code>100.0%</code></td><td><code>+0.0%</code></td><td><strong><code>100.0%</code></strong></td></tr><tr><td><code>Lamar193_Beer512.json</code></td><td>Pathway A — Set A/B</td><td><code>100.0%</code></td><td><code>+0.0%</code></td><td><strong><code>100.0%</code></strong></td></tr><tr><td><code>Lamar193_Beer512_messy.json</code></td><td>Pathway A — Set C (Messy Uncoded + Note Contradiction)</td><td><code>81.2%</code></td><td><code>+18.1%</code></td><td><strong><code>99.3%</code></strong></td></tr><tr><td><code>Lamar193_Beer512_multisource.json</code></td><td>Pathway A — Set A/B</td><td><code>100.0%</code></td><td><code>+0.0%</code></td><td><strong><code>100.0%</code></strong></td></tr><tr><td><code>MIMIC_IV_Cardiorenal_Summary.json</code></td><td>Pathway B (De-Identified Real Clinical Summary)</td><td><code>40.0%</code></td><td><code>+60.0%</code></td><td><strong><code>100.0%</code></strong></td></tr><tr><td><code>Maurice742_Auer97.json</code></td><td>Pathway A — Set A/B</td><td><code>100.0%</code></td><td><code>+0.0%</code></td><td><strong><code>100.0%</code></strong></td></tr><tr><td><code>Maurice742_Auer97_messy.json</code></td><td>Pathway A — Set C (Messy Uncoded + Note Contradiction)</td><td><code>84.5%</code></td><td><code>+12.8%</code></td><td><strong><code>97.3%</code></strong></td></tr><tr><td><code>Maurice742_Auer97_multisource.json</code></td><td>Pathway A — Set A/B</td><td><code>100.0%</code></td><td><code>+0.0%</code></td><td><strong><code>100.0%</code></strong></td></tr><tr><td><code>SMART_IPS_Transition_Summary.json</code></td><td>Pathway B (De-Identified Real Clinical Summary)</td><td><code>60.0%</code></td><td><code>+40.0%</code></td><td><strong><code>100.0%</code></strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</body>
+</html>

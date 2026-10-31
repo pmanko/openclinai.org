@@ -144,6 +144,7 @@ def gather(slug: str) -> dict:
     family = str(meta.get("report_family") or "chartsearchai")
     out: dict = {
         "family": family,
+        "evaluation_modality": str(meta.get("evaluation_modality") or ""),
         "reader_led": False,
         # Facts frozen beside a report whose packet no longer carries its results.
         "cells": meta.get("cells"),
@@ -151,6 +152,8 @@ def gather(slug: str) -> dict:
         "date": meta.get("date"),
         "scout": list(meta.get("scout") or []),
         "scoreline": str(meta.get("scoreline") or ""),
+        # Who judged, frozen with the scores; a run that recorded no judge says so.
+        "judging": _judging_line(meta.get("judging")),
     }
     rdir = _run_dir_for(slug)
     if not rdir or not ((rdir / "results.json").is_file() if family == "catalyst" else (rdir / "results.jsonl").is_file()):
@@ -266,6 +269,13 @@ def _https(link) -> dict | None:
     return None
 
 
+def _judging_line(judging) -> str:
+    """The sentence naming the judge a report's scores came from, or the absence of one."""
+    if isinstance(judging, dict) and judging.get("sentence"):
+        return str(judging["sentence"])
+    return ""
+
+
 def _scout_table(scout: list[dict], labels: dict | None = None) -> str:
     if not scout:
         return '<div class="unscored">This run is an answer comparison only — not yet scored.</div>'
@@ -330,7 +340,17 @@ def _scout_table(scout: list[dict], labels: dict | None = None) -> str:
     return table
 
 
-FAMILY_LABELS = {"chartsearchai": "ChartSearchAI", "catalyst": "Catalyst SQL"}
+FAMILY_LABELS = {
+    "chartsearchai": "ChartSearchAI",
+    "catalyst": "Catalyst SQL",
+    "wahs": "WA Health Summary",
+}
+
+MODALITY_LABELS = {
+    "deterministic_pipeline": "Deterministic Pipeline Gate",
+    "condensation_retrieval_ablation": "Condensation & Retrieval Ablation",
+    "live_model_and_team_eval": "Live Model & KB Team Evaluation",
+}
 
 
 def _family(entry: dict, gathered: dict) -> str:
@@ -370,12 +390,20 @@ def _card(entry: dict) -> str:
     if g["patients"]:
         facts.append(esc(g["patients"]))
     if g["cells"] is not None:
-        unit = "conversations" if g.get("family") == "catalyst" else "graded answers"
+        modality = str(entry.get("evaluation_modality") or g.get("evaluation_modality") or "")
+        if g.get("family") == "catalyst":
+            unit = "conversations"
+        elif modality == "deterministic_pipeline":
+            unit = "rubric cases"
+        else:
+            unit = "graded answers"
         facts.append(f'{g["cells"]} {unit}')
     if g["date"]:
         facts.append(esc(g["date"]))
     subtitle = " · ".join(facts)
     family = _family(entry, g)
+    modality = str(entry.get("evaluation_modality") or g.get("evaluation_modality") or "")
+    modality_label = MODALITY_LABELS.get(modality, modality)
     if family == "catalyst":
         # Labels name the question each page answers, not the artifact kind.
         links = [f'<a class="btn" href="{esc(slug)}/index.html">Read the report</a>']
@@ -405,6 +433,7 @@ def _card(entry: dict) -> str:
     )
     if g["scout"] and not unavailable:
         statistics = '<div class="report-table-scroll" role="region" aria-label="Recorded score tables" tabindex="0">' + statistics + '</div>'
+        statistics += ('<p class="judged-by">' + esc(g["judging"] or "Judge not recorded for this run.") + '</p>')
     takeaway = (f'<p class="takeaway"><span class="tk">Takeaway</span>{esc(entry["takeaway"])}</p>'
                 if entry.get("takeaway") else "")
     # Earlier runs of the same comparison stay published but are listed under the
@@ -416,6 +445,8 @@ def _card(entry: dict) -> str:
                         f'{" " + esc(e["note"]) if e.get("note") else ""}</li>' for e in earlier)
                     + '</ul></div>')
     family_label = FAMILY_LABELS.get(family, family)
+    if modality_label:
+        family_label = f"{family_label} · {modality_label}"
     return f"""  <article class="card" data-family="{esc(family)}">
   <header class="card-head">
     <div class="titles"><span class="family {esc(family)}">{esc(family_label)}</span><h2>{esc(entry["title"])}</h2><div class="slug">{subtitle}</div></div>
@@ -456,13 +487,14 @@ _STYLE_CORE = """
     border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;}
   .filter button[aria-pressed="true"]{background:var(--accent);color:var(--btn-fg);border-color:var(--accent);}
   body[data-filter="chartsearchai"] .card:not([data-family="chartsearchai"]),
-  body[data-filter="catalyst"] .card:not([data-family="catalyst"]){display:none;}
+  body[data-filter="catalyst"] .card:not([data-family="catalyst"]),
+  body[data-filter="wahs"] .card:not([data-family="wahs"]){display:none;}
   .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px 24px;margin-bottom:22px;}
   .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:6px;}
   .titles h2{margin:0;font-size:20px;color:var(--ink);font-weight:600;line-height:1.3;}
   .family{display:inline-block;margin:0 0 6px;padding:2px 7px;border:1px solid var(--border);
     border-radius:999px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;}
-  .family.catalyst{color:var(--accent);border-color:var(--accent);}
+  .family.catalyst,.family.wahs{color:var(--accent);border-color:var(--accent);}
   .titles .slug{color:var(--muted);font-size:13px;margin-top:4px;}
   .links{display:flex;gap:8px;flex-wrap:wrap;}
   .btn{display:inline-block;text-decoration:none;background:var(--accent);color:var(--btn-fg);
@@ -470,6 +502,7 @@ _STYLE_CORE = """
   .btn.ghost{background:transparent;color:var(--accent);}
   .btn:hover{filter:brightness(1.1);}
   .summary{color:var(--text);font-size:14.5px;margin:10px 0 16px;max-width:760px;}
+  p.judged-by{margin:8px 0 0;font-size:12.5px;color:var(--muted);}
   table.scout{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--panel2);
     border:1px solid var(--border);border-radius:8px;overflow:hidden;}
   table.scout th,table.scout td{padding:8px 12px;text-align:right;border-bottom:1px solid var(--border);}

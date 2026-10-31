@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WAHS+ Slice 5 Report — Local Model Selection (1.5B–35B), Prompt Engineering &amp; Orchestrated KB Agent Teams</title>
+  <style>
+    :root {
+      --bg: #f8fafc; --surface: #ffffff; --text: #0f172a; --muted: #475569;
+      --border: #e2e8f0; --accent: #7c3aed; --emerald: #059669;
+    }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 2rem 1.25rem 4rem; line-height: 1.6; }
+    .container { max-width: 1120px; margin: 0 auto; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04); }
+    .badge { display: inline-block; padding: 0.22rem 0.65rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; background: #f3e8ff; color: #6d28d9; border: 1px solid #d8b4fe; }
+    h1 { font-size: 1.85rem; margin: 0.5rem 0 0.5rem; letter-spacing: -0.02em; }
+    h2 { font-size: 1.28rem; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-top: 0.75rem; }
+    th, td { border-bottom: 1px solid var(--border); padding: 0.65rem 0.6rem; text-align: left; vertical-align: top; }
+    th { background: #f1f5f9; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    code { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; background: #f1f5f9; padding: 0.1rem 0.35rem; border-radius: 4px; }
+    .nav-bar { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; font-size: 0.88rem; }
+    .nav-bar a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .btn-dash { display: inline-block; background: var(--accent); color: #fff; padding: 0.55rem 1rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.88rem; margin-top: 0.5rem; }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <nav class="nav-bar" aria-label="Report navigation">
+      <a href="/">&larr; All OpenClinAI Reports</a>
+      <a href="dashboard.html">Interactive Per-Question Model &amp; Citation Dashboard &rarr;</a>
+      <a href="https://openclinai.org/wahs/">WAHS+ Project Overview</a>
+      <a href="https://wahs-demo.openclinai.org/">Interactive Patient &amp; Clinician Demo</a>
+    </nav>
+
+    <div class="card">
+      <span class="badge">WA Health Summary &middot; Live Model &amp; KB Team Evaluation (W8)</span>
+      <h1>Local Model Selection (1.5B&ndash;35B), Prompt Engineering &amp; Orchestrated KB Agent Teams</h1>
+      <p>
+        This report evaluates open-weight local models running on our 64 GB Apple Silicon testbed via <code>llama-router</code> and compares four prompt-engineering and multi-agent orchestration architectures over condensed WAHS+ FHIR R4 charts:
+        <strong>(1) Single-Pass Raw Condensed</strong>,
+        <strong>(2) Single-Pass + 4-Layer KB Alerts &amp; Temporal Anchors (<code>dry_multiplier=0</code>)</strong>,
+        <strong>(3) Cross-Family Checked Single Pass (<code>Gemma 4 12B</code> Writer + <code>Qwen 3.5 9B</code> Reviewer)</strong>, and
+        <strong>(4) 4-Agent Orchestrated WAHS+ KB Team (<code>team-wahs-kb</code>)</strong>.
+      </p>
+      <a class="btn-dash" href="dashboard.html">Open Interactive Per-Question Model &amp; Citation Inspector (dashboard.html) &rarr;</a>
+    </div>
+
+    <div class="card">
+      <h2>01 &middot; 4-Arm Prompt Engineering &amp; Orchestrated KB Agent Team Comparison (128 Evaluation Cells)</h2>
+      <p>
+        Comparing a single LLM reading the condensed chart alone (<code>single-raw-condensed</code>) against KB-augmented and orchestrated multi-agent teams isolates exactly how much accuracy comes from deterministic 4-Layer KB pre-annotation vs. specialist agent routing and cross-family verification.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Architecture / Prompt Setup</th>
+            <th>Benchmark /100</th>
+            <th>Accuracy (Entailment)</th>
+            <th>Completeness (Weighted Rubric)</th>
+            <th>Relevance (Pass Rate)</th>
+            <th>Patient Readability (FK Grade)</th>
+            <th>Mean Local Latency</th>
+            <th>Privacy / Safety Leaks</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>4-Agent Orchestrated WAHS+ KB Team (Router + W12 Chart-Hygiene/KB Specialists + W7 Overflow Lookup + Plain-Language Synthesizer)</strong><br><code>team-wahs-kb</code></td><td><strong>93.0 / 100</strong></td><td>10.0 / 10</td><td>10.0 / 10</td><td>7.2 / 10</td><td><code>13.2</code></td><td><code>13172 ms</code></td><td><code>0</code></td></tr><tr><td><strong>Cross-Family Checked Single Pass (Gemma 4 12B Writer + Qwen 3.5 9B Reviewer + W12 Skills, 4k Window without W7 Overflow Tools)</strong><br><code>single-xcheck-labeled</code></td><td><strong>88.5 / 100</strong></td><td>9.1 / 10</td><td>9.6 / 10</td><td>7.4 / 10</td><td><code>13.4</code></td><td><code>11255 ms</code></td><td><code>0</code></td></tr><tr><td><strong>Single Pass + Layer-1 RxNorm KB Normalization (Gemma 4 12B, 4k Window without W12 Stage/Note Skills or W7 Overflow Tools)</strong><br><code>single-kb-augmented</code></td><td><strong>85.5 / 100</strong></td><td>8.8 / 10</td><td>9.3 / 10</td><td>6.5 / 10</td><td><code>16.6</code></td><td><code>10648 ms</code></td><td><code>0</code></td></tr><tr><td><strong>Single Pass over Unhinted lossless_structural Condensed FHIR Ledger Only (Gemma 4 12B, No KB Normalization or W12 Skills)</strong><br><code>single-raw-condensed</code></td><td><strong>83.5 / 100</strong></td><td>8.4 / 10</td><td>9.0 / 10</td><td>6.4 / 10</td><td><code>16.4</code></td><td><code>8038 ms</code></td><td><code>0</code></td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:0.9rem;color:var(--muted);font-size:0.88rem;">
+        <strong>Key Finding:</strong> Over an unhinted <code>lossless_structural</code> <code>4,096</code>-token chart (<code>W12</code> / <code>W13</code>), a single LLM pass without KB normalization or chart-hygiene skills (<code>single-raw-condensed</code>, <strong>83.5 / 100</strong>) misses cross-clinic brand-vs-generic duplicates (<em>Plavix</em> vs. <em>Clopidogrel</em>, <em>Prinivil</em> vs. <em>Lisinopril</em>) and multi-source stage/note contradictions. Adding Layer-1 RxNorm KB normalization (<code>single-kb-augmented</code>, <strong>85.5 / 100</strong>) resolves in-window medication/vaccine rules, adding <code>W12</code> Chart-Hygiene &amp; Reconciliation Skills with cross-family <code>Qwen 3.5 9B</code> verification (<code>single-xcheck-labeled</code>, <strong>88.5 / 100</strong>) resolves multi-source stage/note contradictions and plain-language synthesis, and the full 4-Agent Orchestrated WAHS+ KB Team with <code>W7</code> overflow lookup tools (<code>team-wahs-kb</code>) achieves <strong>93.0 / 100</strong>.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>02 &middot; 3-Stage Local Model Screening Funnel (1.5B to 35B Open-Weight Inventory)</h2>
+      <p>
+        We screened seven local GGUF models configured in <code>scripts/llama-router.ini</code> across a 3-stage funnel:
+        <strong>Stage 1 (Deterministic Safety &amp; Format Gate)</strong> requiring 100% <code>[N]</code> citation syntax compliance, zero <code>external_share</code> privacy leaks, and 100% abstention on unrecorded facts;
+        <strong>Stage 2 (Multi-Source Conflict Recall)</strong> across Set B and Set C messy charts; and
+        <strong>Stage 3 (Team Role Assignment)</strong> balancing accuracy against memory footprint and latency.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Local Model ID (GGUF)</th>
+            <th>Size Tier</th>
+            <th>Memory Footprint</th>
+            <th>Stage 1 Safety &amp; Format Gate</th>
+            <th>Stage 2 Reconcile Benchmark</th>
+            <th>Recommended WAHS+ Architecture Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>qwen2.5-coder-1.5b-instruct-q4_k_m</code></td><td>Tier S (1B–2B Ultra-Light Edge)</td><td><code>1.1 GB</code></td><td><strong>FAIL (78% citation syntax)</strong></td><td><strong>68.4 / 100</strong></td><td>Too small for multi-clinic clinical reasoning; drops [N] brackets on long lists.</td></tr><tr><td><code>medgemma-1.5-4b</code></td><td>Tier A (4B Fast Clinical Specialist)</td><td><code>3.4 GB</code></td><td><strong>PASS (100% privacy &amp; abstention)</strong></td><td><strong>89.2 / 100</strong></td><td>Fast Specialist Worker (Medication &amp; Lab sub-agent in team-wahs-kb).</td></tr><tr><td><code>gemma-e4b</code></td><td>Tier A (4B Long-Context Generalist)</td><td><code>3.6 GB</code></td><td><strong>PASS (100% privacy &amp; abstention)</strong></td><td><strong>91.0 / 100</strong></td><td>Laptop Edge Default when memory budget is &lt; 6 GB.</td></tr><tr><td><code>qwen3.5-9b (Q8_0)</code></td><td>Tier B (8B–14B Single-Slice Workhorse)</td><td><code>9.8 GB</code></td><td><strong>PASS (100% privacy &amp; abstention)</strong></td><td><strong>95.4 / 100</strong></td><td>Cross-Family Reviewer &amp; Atomic Entailment Checker (port 57642).</td></tr><tr><td><code>gemma-4-12b (Q8_0)</code></td><td>Tier B (8B–14B Single-Slice Workhorse)</td><td><code>13.1 GB</code></td><td><strong>PASS (100% privacy &amp; abstention)</strong></td><td><strong>98.4 / 100</strong></td><td>Primary Clinical Writer &amp; Patient Plain-Language Synthesizer (port 59951).</td></tr><tr><td><code>medgemma-27b / gemma-26b-a4b</code></td><td>Tier C (26B–35B Local Heavyweight)</td><td><code>18.5 GB</code></td><td><strong>PASS (100% privacy &amp; abstention)</strong></td><td><strong>98.9 / 100</strong></td><td>High-capacity single-model alternative; +0.5 pt over 12B at 2.3x latency.</td></tr><tr><td><code>qwen3.6-35b-a3b (UD-Q4_K_M MoE)</code></td><td>Tier C (26B–35B Local MoE Specialist)</td><td><code>21.2 GB</code></td><td><strong>PASS (100% privacy &amp; abstention)</strong></td><td><strong>99.1 / 100</strong></td><td>Independent Local Judge &amp; Deep-Reasoning Escalation Tier.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</body>
+</html>
