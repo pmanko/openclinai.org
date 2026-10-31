@@ -64,8 +64,23 @@ In `targets/validation-harness/harness/wahs/evaluator.py`, rubric and atomic-fac
 
 ---
 
-## 4. Verification Commands & Test Results
+## 4. Slice 8 (`W14`): Generalizable KB-Driven FHIR R4 Chart Engine, Expanded 6-Patient Cohort & Demo Rebuild
 
-- `targets/validation-harness`: `pytest -q tests/test_wahs_eval.py` $\to$ **`9 passed`** (including `test_evaluate_wahs_case_scores_strictly_on_answer_text_and_computes_quality_metrics`).
-- `targets/med-agent-hub`: `pytest -q tests/test_fhir_condenser.py tests/test_wahs_analyzer_and_demo.py` $\to$ **`22 passed`** (including `test_lossless_structural_condensation_and_chart_hygiene_skills`).
-- Umbrella workspace checks: `python3 -m unittest discover -s tests -v` and `python3 scripts/check_workspace.py` $\to$ **PASS**.
+1. **Zero Hardcoded Patient Names or Synthea-Overfit Logic (`W14.1`):**
+   - Verified with `grep -rn -iE "maurice|lamar|byron" targets/med-agent-hub/server/fhir/` that **zero hardcoded patient names exist anywhere in `targets/med-agent-hub/server/fhir/`**.
+   - Defaulted `_ensure_extracted_and_condensed()` in `wahs_analyzer.py` and `AnalyzeRequest.condense_mode` in `wahs_demo.py` to `extract_bundle_lossless()` + `condense_mode="lossless_structural"`.
+   - Replaced the hardcoded Maurice CABG paragraph with a 100% data-driven `_synthesize_highlight_encounter()` that discovers the highest-acuity inpatient/ED/surgical episode on any FHIR R4 chart and synthesizes its narrative from actual `Encounter`, `Condition`, `Procedure`, `MedicationRequest`, `Device`, and `Observation` resources.
+   - Generalized `normalizers.py` and `wahs_skills.py` to load all 7 therapeutic class rules (`statin_lipid_lowering`, `oral_anticoagulant`, `raas_inhibitor`, `cns_sedative_hypnotic`, `nsaid_anti_inflammatory`, `p2y12_antiplatelet`, `sulfonylurea_antidiabetic`), drug-electrolyte/bleeding interaction hazards (`wahs-kb-rx-hyperkalemia-01`, `wahs-kb-rx-anticoag-nsaid-01`), condition stage exclusivity groups (`ckd_stage`, `glycemic_status`), multi-drug free-text clinical note hold contradictions, and WA IIS / CDC ACIP vaccine rules dynamically from `server/kb_data/`.
+2. **Expanded 6-Patient / 14-Bundle / 39-Case Evaluation Cohort (`W14.2`):**
+   - Expanded `build_wahs_eval_fixtures.py` and `wahs_eval_cases.jsonl` to **14 bundle manifests across 6 patients** (3 EHIgnite Synthea patients `Maurice Auer`, `Lamar Beer`, `Byron Emard` across `Set A`, `Set B`, and `Set C Messy` + 3 US Core / IPS clinical transition archetypes: `Elena Rostova` — Cardiorenal HFrEF & Hyperkalemia; `Arthur Pendelton` — AFib + Mechanical Valve Dual Anticoagulation & Upper GI Bleed; `Margaret Chen` — Geriatric Polypharmacy, Beers Sedatives & Falls) and **39 evaluation cases** (`16 A_reconcile`, `5 B1_summary`, `4 B2_directed_summary`, `9 B3_qa_answerable`, `5 B3_qa_abstention`).
+3. **Rebuilt `wahs_demo_data.js` & Upgraded `wahs-demo.openclinai.org` (`W14.3`):**
+   - Rebuilt `landing/wahs/demo/wahs_demo_data.js` (`4.3 MB`) across all 6 patients and dataset modes (`set_b`, `set_c`, `set_a`) using `lossless_structural` + `skill_findings`.
+   - Upgraded `landing/wahs/demo/index.html` with all 6 patient cards, `Set B / Set C / Set A` mode toggles, non-destructive Step 1 metrics, skill-based Step 2 findings, and an interactive client-side **"Paste / Upload Custom FHIR R4 Bundle (.json)"** inspector.
+
+---
+
+## 5. Verification Commands & Test Results
+
+- `targets/validation-harness`: `pytest -q tests/test_wahs_eval.py` $\to$ **`13 passed`**.
+- `targets/med-agent-hub`: `pytest -q tests/test_fhir_condenser.py tests/test_wahs_analyzer_and_demo.py` $\to$ **`11 passed`** (including `test_general_us_core_chart_reconciliation_across_drug_classes_and_interactions` and `test_lossless_structural_condensation_and_chart_hygiene_skills`).
+- Umbrella website & workspace checks: `uv run --with pytest --with pyyaml pytest -q tests/website` (`124 passed`), `python3 -m unittest discover -s tests -v` (`19 passed`), and `python3 scripts/check_workspace.py` $\to$ **PASS**.

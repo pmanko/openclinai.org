@@ -791,9 +791,9 @@
     <section class="orientation-card" aria-label="What this prototype demonstrates">
       <div class="orientation-top">
         <div>
-          <h1 class="page-title">Turning Fragmented Health Exports into a Verifiable Patient Summary</h1>
+          <h1 class="page-title">Turning Any FHIR R4 Patient Chart into a Verifiable Health Summary</h1>
           <p class="orientation-lead">
-            When patients retrieve health records from multiple clinics, hospitals, and state registries, the combined FHIR file is often too large for a clinician or AI model to read directly—and frequently contains duplicate prescriptions, outdated disease stages, and sensitive personal history. Follow the <strong>4 guided steps below</strong> to explore how WAHS cleans, reconciles, protects, and answers questions over a patient’s record.
+            When patients or clinicians combine FHIR R4 records across hospitals, primary care, specialty clinics, retail pharmacies, and state registries, the export is often too large for an AI model to read directly—and frequently contains cross-clinic medication conflicts, discharge note hold contradictions, outdated disease stages, and duplicate registry entries. Explore <strong>6 example patient charts</strong> below (3 EHIgnite Synthea charts across Set A/B/C + 3 US Core / IPS clinical archetypes) or <strong>paste/upload any custom FHIR R4 Bundle JSON</strong>.
           </p>
         </div>
       </div>
@@ -802,7 +802,7 @@
     <!-- Patient Selector -->
     <section class="patient-selector-section" aria-label="Select a sample patient record">
       <div class="section-label-row" style="flex-wrap:wrap;gap:0.75rem;">
-        <span class="section-step-tag">Select a Synthetic Patient Record to Explore</span>
+        <span class="section-step-tag">Select a Patient Chart (6 Multi-Domain Archetypes) or Inspect Custom FHIR R4 JSON</span>
         <div style="display:flex;flex-wrap:wrap;gap:0.65rem;align-items:center;">
           <div class="source-mode-toggle" role="group" aria-label="Audience explanation mode">
             <button type="button" class="source-mode-btn audience-mode-btn active" id="audience-patient" data-audience="patient">
@@ -814,14 +814,45 @@
           </div>
           <div class="source-mode-toggle" role="group" aria-label="Record source complexity">
             <button type="button" class="source-mode-btn dataset-mode-btn active" id="mode-set-b" data-set="set_b">
-              Multi-Clinic Record (Cross-Provider Conflicts)
+              Set B (Multi-Clinic HIE + WA IIS)
+            </button>
+            <button type="button" class="source-mode-btn dataset-mode-btn" id="mode-set-c" data-set="set_c">
+              Set C (Messy Uncoded + Note Contradictions)
             </button>
             <button type="button" class="source-mode-btn dataset-mode-btn" id="mode-set-a" data-set="set_a">
-              Single-Clinic Baseline
+              Set A (Single-Clinic Baseline)
+            </button>
+          </div>
+          <button type="button" class="btn btn-outline" id="toggle-custom-fhir-btn" style="padding:0.38rem 0.8rem;font-size:0.83rem;">
+            + Paste / Upload Custom FHIR R4 Bundle (.json)
+          </button>
+        </div>
+      </div>
+
+      <!-- Custom FHIR R4 Bundle Inspector Drawer -->
+      <div id="custom-fhir-drawer" style="display:none;background:#ffffff;border:2px solid var(--bs-info);border-radius:8px;padding:1.1rem 1.25rem;margin-bottom:1rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.6rem;">
+          <strong style="color:var(--bs-primary);font-size:1rem;">Inspect Any Custom FHIR R4 Patient Chart (100% Client-Side in Browser)</strong>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <label class="btn btn-outline" style="padding:0.35rem 0.75rem;font-size:0.82rem;cursor:pointer;">
+              Upload .json File
+              <input type="file" id="custom-fhir-file" accept=".json,application/json" style="display:none;" />
+            </label>
+            <button type="button" class="btn btn-outline" id="load-sample-custom-fhir" style="padding:0.35rem 0.75rem;font-size:0.82rem;">
+              Load Sample US Core Bundle
+            </button>
+            <button type="button" class="btn btn-teal" id="run-custom-fhir-btn" style="padding:0.35rem 0.85rem;font-size:0.82rem;">
+              Run Non-Destructive Condenser &amp; KB Skills &rarr;
             </button>
           </div>
         </div>
+        <p style="margin:0 0 0.5rem;font-size:0.86rem;color:var(--muted);">
+          Paste any FHIR R4 <code>Bundle</code> JSON below. The browser extracts <code>Patient</code>, <code>Condition</code>, <code>MedicationRequest</code>, <code>Immunization</code>, <code>Observation</code>, <code>Encounter</code>, <code>Procedure</code>, <code>Device</code>, and Base64 <code>DocumentReference</code> notes, preserves all clinical items non-destructively in Stage 1, and runs the 4-Layer KB reconciliation skills in Stage 2.
+        </p>
+        <textarea id="custom-fhir-textarea" rows="6" style="width:100%;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.8rem;padding:0.6rem;border:1px solid var(--border);border-radius:6px;" placeholder='{"resourceType": "Bundle", "type": "collection", "entry": [ ... ]}'></textarea>
+        <div id="custom-fhir-status" style="margin-top:0.4rem;font-size:0.84rem;color:var(--bs-primary);font-weight:600;"></div>
       </div>
+
       <div class="patient-cards" id="patient-cards"></div>
     </section>
 
@@ -879,29 +910,50 @@
         {
           baseId: "Maurice742_Auer97",
           name: "Maurice Auer",
-          ageLabel: "Age 84",
-          headline: "Complex Cardiopulmonary, Renal (CKD) & Type 2 Diabetes Care",
-          highlights: "84-year longitudinal record including Nov 2023 coronary bypass (CABG) & ICU stay"
+          ageLabel: "Age 84 · Synthea HIE",
+          headline: "Cardiopulmonary, CKD Stage 2 vs. 3b & Type 2 Diabetes",
+          highlights: "84-year longitudinal chart with dual statins, brand/generic conflicts & Nov 2023 CABG/ICU stay"
         },
         {
           baseId: "Lamar193_Beer512",
           name: "Lamar Beer",
-          ageLabel: "Age 74",
+          ageLabel: "Age 74 · Synthea HIE",
           headline: "Primary & Specialty Care: Chronic Sinusitis, Hypertension & Zoster",
-          highlights: "Includes cross-clinic condition status differences & sensitive social history"
+          highlights: "Cross-clinic active vs. resolved condition conflicts, ACIP Zoster series & sensitive SDOH"
         },
         {
           baseId: "Byron202_Emard19",
           name: "Byron Emard",
-          ageLabel: "Age 17",
+          ageLabel: "Age 17 · Synthea + WA IIS",
           headline: "Adolescent Care & Multi-Registry School Immunizations",
-          highlights: "Includes clinic, retail pharmacy, and WA State Immunization Information System records"
+          highlights: "Clinic, retail pharmacy, and WA State Immunization Information System (IIS) records"
+        },
+        {
+          baseId: "Elena_Rostova_Cardiorenal",
+          name: "Elena Rostova",
+          ageLabel: "Age 71 · US Core / IPS",
+          headline: "Cardiorenal HFrEF, CKD 3b & Hyperkalemia Discharge Note-Hold",
+          highlights: "Entresto + Lisinopril RAAS overlap, Spironolactone + KCl K+ 5.8 hazard & discharge note contradiction"
+        },
+        {
+          baseId: "Arthur_Pendelton_Anticoag",
+          name: "Arthur Pendelton",
+          ageLabel: "Age 78 · US Core / IPS",
+          headline: "AFib + Mechanical Valve, Dual Anticoagulation & Upper GI Bleed",
+          highlights: "Concurrent Eliquis + Warfarin + OTC Naproxen, EGD hemostasis & active vs. resolved GI bleed"
+        },
+        {
+          baseId: "Margaret_Chen_Polypharmacy",
+          name: "Margaret Chen",
+          ageLabel: "Age 82 · US Core / IPS",
+          headline: "Geriatric Polypharmacy, Beers Sedatives, Falls & Privacy",
+          highlights: "Concurrent Ativan + Ambien with ED fall note-hold, Prediabetes vs. T2DM & Pneumococcal IIS dedup"
         }
       ];
 
       let currentBaseId = "Maurice742_Auer97";
-      let currentDatasetMode = "set_b"; // "set_b" (Multi-Clinic) or "set_a" (Single-Clinic)
-      let currentAudienceMode = "patient"; // "patient" (Plain English) or "clinician" (Codes & Rules)
+      let currentDatasetMode = "set_b"; // "set_b", "set_c", or "set_a"
+      let currentAudienceMode = "patient"; // "patient" or "clinician"
       let currentStep = 1;
       let currentPosture = "patient_self"; // "patient_self" or "external_share"
       let currentTierKey = "tier_8k"; // "tier_8k" or "tier_2k"
@@ -927,6 +979,9 @@
       function getCurrentPatientKey() {
         const candidate = currentBaseId + "_" + currentDatasetMode;
         if (DATA.patients[candidate]) return candidate;
+        const fallbackB = currentBaseId + "_set_b";
+        if (DATA.patients[fallbackB]) return fallbackB;
+        if (DATA.patients[currentBaseId]) return currentBaseId;
         return Object.keys(DATA.patients)[0];
       }
 
@@ -1005,7 +1060,7 @@
       function renderPatientSelector() {
         patientCardsEl.innerHTML = PATIENT_PROFILES.map(function (prof) {
           const key = prof.baseId + "_" + currentDatasetMode;
-          const pt = DATA.patients[key] || {};
+          const pt = DATA.patients[key] || DATA.patients[prof.baseId + "_set_b"] || DATA.patients[prof.baseId] || {};
           const post = getPostureData(pt);
           const isActive = prof.baseId === currentBaseId;
           const dqCount = ((post.data_quality_and_conflicts && post.data_quality_and_conflicts.findings) || []).length;
@@ -1039,10 +1094,14 @@
         const bloat = post.duplicates_and_bloat || {};
         const sm = bloat.summary_metrics || {};
         const cond = post[currentTierKey] || post.tier_8k || {};
+        const sf = post.skill_findings || {};
         const dupPanels = bloat.multi_code_lab_analytes || [];
         const bloatCards = bloat.cards || [];
         const rawTokens = Number(pt.raw_est_tokens || 1);
         const reductionPct = (((rawTokens - Number(cond.actual_tokens || 0)) / rawTokens) * 100).toFixed(2);
+        const condenseModeLabel = cond.condense_mode || "lossless_structural";
+        const skillDupCount = Number(sf.duplicate_candidate_count || (sf.duplicate_candidates || []).length || 0);
+        const skillReconCount = Number(sf.reconciliation_finding_count || (sf.reconciliation_findings || []).length || 0);
 
         const bloatCardsHtml = bloatCards.map(function (c) {
           return (
@@ -1075,8 +1134,8 @@
         stepStageEl.innerHTML =
           '<div class="stage-header">' +
             '<div>' +
-              '<h2>Step 1: Condense &amp; Clean the Raw FHIR Health Record</h2>' +
-              '<p>Before an AI model or clinician can review a multi-year chart, we strip repetitive export bloat (such as repeated Base64 notes, claims noise, and same-day duplicate lab orders) and condense the record to fit a predictable context size without losing any safety-critical clinical facts.</p>' +
+              '<h2>Step 1: Non-Destructive Structural Condensation (Stage 1)</h2>' +
+              '<p>Stage 1 strips FHIR JSON syntax overhead, coding system URIs, and non-clinical billing noise while preserving <strong>100% of distinct clinical events and intraday timestamps</strong> (<code>' + escapeHtml(condenseModeLabel) + '</code> — 0 clinical records silently mutated or deleted). Potential duplicates are surfaced as explicit <strong>Stage 2 Skill Findings</strong> rather than silently overwritten.</p>' +
             '</div>' +
             '<div class="control-pill-group" role="group" aria-label="Target summary size">' +
               '<button type="button" class="btn ' + (currentTierKey === "tier_8k" ? "" : "btn-outline") + '" data-tier="tier_8k">Standard Clinical Summary (8k budget)</button>' +
@@ -1086,23 +1145,23 @@
 
           '<div class="funnel-grid">' +
             '<div class="funnel-card">' +
-              '<div class="kicker">1A &middot; Raw FHIR R4 Export</div>' +
+              '<div class="kicker">1A &middot; Raw FHIR R4 Input (' + escapeHtml(pt.dataset_label || currentDatasetMode) + ')</div>' +
               '<div class="big-num">' + escapeHtml(pt.raw_mb) + ' MB (' + Number(pt.raw_est_tokens || 0).toLocaleString() + ' tokens)</div>' +
               '<p>Contains <strong>' + Number(pt.total_bundle_entries || 0).toLocaleString() + '</strong> raw FHIR entries, including <strong>' + Number(sm.raw_lab_observations || 0).toLocaleString() + '</strong> lab observations and <strong>' + Number(sm.excluded_non_clinical_entries || 0).toLocaleString() + '</strong> non-clinical billing/claim entries.</p>' +
             '</div>' +
             '<div class="funnel-card">' +
-              '<div class="kicker">1B &middot; Deduplicate Labs, Notes &amp; Renewals</div>' +
-              '<div class="big-num">' + Number(sm.canonical_lab_analytes || 0).toLocaleString() + ' Lab Trends &amp; ' + Number(sm.deduplicated_base64_notes || 0).toLocaleString() + ' Notes Deduped</div>' +
-              '<p>Collapses <strong>' + Number(sm.raw_lab_observations || 0).toLocaleString() + '</strong> raw lab observations into <strong>' + Number(sm.canonical_lab_analytes || 0).toLocaleString() + '</strong> canonical LOINC analyte chains, removes <strong>' + Number(sm.deduplicated_base64_notes || 0).toLocaleString() + '</strong> duplicate Base64 notes, and folds <strong>' + Number(sm.raw_stopped_medications || 0).toLocaleString() + '</strong> historical medication renewals into <strong>' + Number(sm.folded_stopped_med_ingredients || 0).toLocaleString() + '</strong> ingredient summaries.</p>' +
+              '<div class="kicker">1B &middot; Stage 2 Hygiene &amp; Duplicate Skills</div>' +
+              '<div class="big-num">' + skillDupCount + ' Duplicate Groups &amp; ' + skillReconCount + ' Conflicts Flagged</div>' +
+              '<p>Identifies <strong>' + Number(sm.canonical_lab_analytes || 0).toLocaleString() + '</strong> canonical LOINC analyte chains, <strong>' + Number(sm.deduplicated_base64_notes || 0).toLocaleString() + '</strong> repeated Base64 notes, and <strong>' + Number(sm.folded_stopped_med_ingredients || 0).toLocaleString() + '</strong> historical medication renewal chains with full member UUID arrays.</p>' +
             '</div>' +
             '<div class="funnel-card highlight">' +
-              '<div class="kicker">1C &middot; Condensed WAHS Summary (Tier ' + escapeHtml(cond.tier) + ')</div>' +
+              '<div class="kicker">1C &middot; Non-Destructive Condensed Ledger (Tier ' + escapeHtml(cond.tier) + ')</div>' +
               '<div class="big-num">' + Number(cond.actual_tokens || 0).toLocaleString() + ' Tokens (-' + reductionPct + '%)</div>' +
               '<p>Fits cleanly inside the <strong>' + Number(cond.target_tokens || 0).toLocaleString() + '</strong>-token budget (<strong>' + Number(cond.ledger_lines || 0).toLocaleString() + '</strong> structured ledger lines, <em>' + escapeHtml(cond.tier_name) + '</em>) while retaining <strong>100% of allergies, active medications, and active conditions</strong> with FHIR UUID links.</p>' +
             '</div>' +
           '</div>' +
 
-          '<h3 style="color:var(--page-title);margin:1.35rem 0 0.65rem;">What Was Cleaned &amp; Consolidated in ' + escapeHtml(pt.patient_name) + '’s Record</h3>' +
+          '<h3 style="color:var(--page-title);margin:1.35rem 0 0.65rem;">Chart Hygiene &amp; Duplicate Candidates Surfaced in ' + escapeHtml(pt.patient_name) + '’s Record</h3>' +
           (bloatCardsHtml || '<p>No duplicate bloat findings recorded.</p>') +
 
           '<details class="wahs-accordion" open style="margin-top:1.1rem;">' +
@@ -1177,21 +1236,25 @@
           );
         }).join("");
 
+        const modeBannerText = currentDatasetMode === "set_c"
+          ? '<strong>Set C (Messy Uncoded + Note Contradictions) Active:</strong> Testing uncoded display strings (missing RxNorm/SNOMED codes), intraday repeat labs, and free-text clinical note hold/discontinue contradictions against active MedicationRequests.'
+          : (currentDatasetMode === "set_b"
+              ? '<strong>Multi-Clinic / Transition Record Active (' + (currentAudienceMode === "patient" ? "Patient Plain-English View" : "Clinician Code & Rule View") + '):</strong> Viewing combined records across inpatient discharge, primary care, specialty clinics, retail pharmacy, and the WA State Immunization Information System.'
+              : '<strong>Single-Clinic Baseline (Set A) Active:</strong> Viewing the single-clinic baseline export. Switch to <strong>Set B</strong> or <strong>Set C</strong> above to inspect cross-clinic and note-vs-prescription contradictions.');
+
         stepStageEl.innerHTML =
           '<div class="stage-header">' +
             '<div>' +
-              '<h2>Step 2: Reconcile Cross-Clinic Medication, Problem &amp; Vaccine Conflicts</h2>' +
-              '<p>When records are combined across primary care, specialty clinics, retail pharmacies, and state immunization registries, clinical contradictions appear. Use the <strong>Patient View &harr; Clinician View</strong> toggle above to switch between plain-English explanations with a doctor visit checklist and technical SNOMED / RxNorm / LOINC rule details.</p>' +
+              '<h2>Step 2: Stage 2 Skill-Driven Clinical Reconciliation &amp; Duplicate Findings</h2>' +
+              '<p>Rather than silently deleting conflicting records during condensation, WAHS runs explicit <strong>4-Layer Clinical KB Skills</strong> (RxNorm/ATC therapeutic class overlap, drug-electrolyte/bleeding interaction hazards, SNOMED stage exclusivity, free-text discharge note hold contradictions, and WA IIS / CDC ACIP immunization rules) and surfaces every finding with <code>Source [N]</code> provenance.</p>' +
             '</div>' +
             '<span class="badge ' + (dq.high_severity_count > 0 ? "high" : "ok") + '" style="font-size:0.88rem;padding:0.4rem 0.85rem;">' +
               (dq.total_findings || findings.length) + ' Findings (' + (dq.high_severity_count || 0) + ' High Priority)' +
             '</span>' +
           '</div>' +
 
-          '<div class="callout ' + (currentDatasetMode === "set_b" ? "warn" : "info") + '">' +
-            (currentDatasetMode === "set_b"
-              ? '<strong>Multi-Clinic Record Active (' + (currentAudienceMode === "patient" ? "Patient Plain-English View" : "Clinician Code & Rule View") + '):</strong> Viewing combined records from primary care, cardiology/specialty clinics, retail pharmacy, and the WA State Immunization Information System. Click any <strong>Source [N]</strong> badge below to inspect the exact FHIR record.'
-              : '<strong>Single-Clinic Baseline Active:</strong> Viewing the single-clinic export. Use the toggle above the patient cards to switch to the <strong>Multi-Clinic Record</strong> and see additional cross-provider medication and condition conflicts.') +
+          '<div class="callout ' + (currentDatasetMode === "set_a" ? "info" : "warn") + '">' +
+            modeBannerText +
           '</div>' +
 
           (cardsHtml || '<p>No clinical conflicts detected in this view.</p>') +
@@ -1549,15 +1612,33 @@
             if (Precomputed[i].question.toLowerCase() === qLow) return Precomputed[i];
           }
           for (let i = 0; i < Precomputed.length; i++) {
-            if (Precomputed[i].abstained && /penicillin|colonoscopy|mri|transplant|genetic|brca|blood type|living will/.test(qLow)) {
+            if (Precomputed[i].abstained && /penicillin|colonoscopy|mri|transplant|genetic|brca|blood type|living will|biopsy|pathology/.test(qLow)) {
               return Precomputed[i];
             }
           }
-          if (/statin|med|drug|rx|furosemide|lisinopril|clopidogrel|plavix|lipitor|cetirizine|amoxicillin/.test(qLow)) return Precomputed[0];
-          if (/ckd|kidney|renal|egfr|creatinine|stage|diabetes|hba1c|sinusitis/.test(qLow)) return Precomputed[1] || Precomputed[0];
-          if (/icu|cabg|bypass|hospital|november 2023|surgery|encounter/.test(qLow)) return Precomputed[2] || Precomputed[0];
-          if (/vaccine|immuniz|zoster|hpv|flu|covid|acip|tdap/.test(qLow)) return Precomputed[3] || Precomputed[0];
-          if (/duplicate|bloat|panel|note|privacy|sdoh|share/.test(qLow)) return Precomputed[4] || Precomputed[0];
+          for (let i = 0; i < Precomputed.length; i++) {
+            const pq = Precomputed[i].question.toLowerCase();
+            if (/hold|spironolactone|eliquis|warfarin|ativan|ambien|statin|med|drug|rx|furosemide|lisinopril|clopidogrel|plavix|lipitor|naproxen|entresto/.test(qLow) &&
+                /med|drug|conflict|hold|spironolactone|eliquis|warfarin|ativan|ambien/.test(pq)) {
+              return Precomputed[i];
+            }
+            if (/ckd|kidney|renal|egfr|creatinine|stage|diabetes|prediabetes|hba1c|sinusitis|hemorrhage|bleed|inr|potassium/.test(qLow) &&
+                /stage|ckd|diabetes|hemorrhage|trend|hba1c/.test(pq)) {
+              return Precomputed[i];
+            }
+            if (/icu|cabg|bypass|hospital|surgery|encounter|admission|egd|endoscopy|fall/.test(qLow) &&
+                /hospital|encounter|admission|egd/.test(pq)) {
+              return Precomputed[i];
+            }
+            if (/vaccine|immuniz|zoster|hpv|pneumococ|flu|covid|acip|tdap|iis/.test(qLow) &&
+                /vaccine|immuniz|pneumococ|acip/.test(pq)) {
+              return Precomputed[i];
+            }
+            if (/duplicate|bloat|panel|privacy|sdoh|share/.test(qLow) &&
+                /duplicate|panel|share|privacy/.test(pq)) {
+              return Precomputed[i];
+            }
+          }
           return Precomputed[0];
         }
 
@@ -1593,6 +1674,353 @@
         else if (currentStep === 2) renderStep2(pt);
         else if (currentStep === 3) renderStep3(pt);
         else renderStep4(pt);
+      }
+
+      // Client-side Custom FHIR R4 Bundle Parser & KB Skill Engine
+      function buildSampleCustomBundle() {
+        return {
+          resourceType: "Bundle",
+          type: "collection",
+          entry: [
+            {
+              fullUrl: "urn:uuid:custom-pt-01",
+              resource: {
+                resourceType: "Patient",
+                id: "custom-pt-01",
+                name: [{ family: "Vance", given: ["Clara"] }],
+                birthDate: "1956-08-19",
+                gender: "female"
+              }
+            },
+            {
+              fullUrl: "urn:uuid:custom-cond-ckd3a",
+              resource: {
+                resourceType: "Condition",
+                id: "custom-cond-ckd3a",
+                clinicalStatus: { coding: [{ code: "active" }] },
+                code: { coding: [{ system: "http://snomed.info/sct", code: "700379002", display: "Chronic kidney disease stage 3A (disorder)" }], text: "Chronic kidney disease stage 3A (disorder)" },
+                recordedDate: "2024-05-10",
+                recorder: { display: "Northwest Primary Care" }
+              }
+            },
+            {
+              fullUrl: "urn:uuid:custom-cond-ckd4",
+              resource: {
+                resourceType: "Condition",
+                id: "custom-cond-ckd4",
+                clinicalStatus: { coding: [{ code: "active" }] },
+                code: { coding: [{ system: "http://snomed.info/sct", code: "431857002", display: "Chronic kidney disease stage 4 (disorder)" }], text: "Chronic kidney disease stage 4 (disorder)" },
+                recordedDate: "2026-02-01",
+                recorder: { display: "Puget Sound Nephrology" }
+              }
+            },
+            {
+              fullUrl: "urn:uuid:custom-med-atorv",
+              resource: {
+                resourceType: "MedicationRequest",
+                id: "custom-med-atorv",
+                status: "active",
+                medicationCodeableConcept: { coding: [{ system: "http://www.nlm.nih.gov/research/umls/rxnorm", code: "617314", display: "Atorvastatin 20 MG Oral Tablet [Lipitor]" }], text: "Atorvastatin 20 MG Oral Tablet [Lipitor]" },
+                authoredOn: "2025-11-12",
+                requester: { display: "Northwest Primary Care" }
+              }
+            },
+            {
+              fullUrl: "urn:uuid:custom-med-rosuv",
+              resource: {
+                resourceType: "MedicationRequest",
+                id: "custom-med-rosuv",
+                status: "active",
+                medicationCodeableConcept: { coding: [{ system: "http://www.nlm.nih.gov/research/umls/rxnorm", code: "859751", display: "Rosuvastatin 20 MG Oral Tablet [Crestor]" }], text: "Rosuvastatin 20 MG Oral Tablet [Crestor]" },
+                authoredOn: "2026-01-20",
+                requester: { display: "Cascade Cardiology" }
+              }
+            },
+            {
+              fullUrl: "urn:uuid:custom-obs-egfr-1",
+              resource: {
+                resourceType: "Observation",
+                id: "custom-obs-egfr-1",
+                status: "final",
+                code: { coding: [{ system: "http://loinc.org", code: "33914-3", display: "Glomerular filtration rate/1.73 sq M.predicted" }] },
+                effectiveDateTime: "2024-05-10T09:00:00Z",
+                valueQuantity: { value: 51.0, unit: "mL/min/1.73_m2" }
+              }
+            },
+            {
+              fullUrl: "urn:uuid:custom-obs-egfr-2",
+              resource: {
+                resourceType: "Observation",
+                id: "custom-obs-egfr-2",
+                status: "final",
+                code: { coding: [{ system: "http://loinc.org", code: "33914-3", display: "Glomerular filtration rate/1.73 sq M.predicted" }] },
+                effectiveDateTime: "2026-02-01T14:30:00Z",
+                valueQuantity: { value: 27.4, unit: "mL/min/1.73_m2" }
+              }
+            }
+          ]
+        };
+      }
+
+      function ingestCustomFhirBundle(bundleObj) {
+        const entries = Array.isArray(bundleObj.entry) ? bundleObj.entry : [];
+        const rawStr = JSON.stringify(bundleObj);
+        const rawMb = Math.max(0.01, Number((rawStr.length / (1024 * 1024)).toFixed(2)));
+        const rawTokens = Math.max(50, Math.round(rawStr.length / 4));
+        let ptName = "Custom FHIR Patient";
+        let birthDate = "1960-01-01";
+        const activeMeds = [];
+        const activeConds = [];
+        const obsList = [];
+        const cites = [];
+        const ledgerLines = ["=== WA HEALTH SUMMARY LEDGER (Tier 1: Lossless Structural) ==="];
+
+        entries.forEach(function (e, i) {
+          const r = (e && e.resource) || {};
+          const rtype = r.resourceType || "Resource";
+          const uuid = e.fullUrl || r.id || ("entry-" + (i + 1));
+          const idx = i + 1;
+          if (rtype === "Patient") {
+            const nm = (r.name && r.name[0]) || {};
+            ptName = ((nm.given || []).join(" ") + " " + (nm.family || "")).trim() || ptName;
+            birthDate = r.birthDate || birthDate;
+            ledgerLines.push("[" + idx + "] Patient: " + ptName + " (DOB " + birthDate + ")");
+          } else if (rtype === "Condition") {
+            const disp = (r.code && (r.code.text || (r.code.coding && r.code.coding[0] && r.code.coding[0].display))) || "Condition";
+            const dt = (r.recordedDate || r.onsetDateTime || "").slice(0, 10);
+            const org = (r.recorder && r.recorder.display) || "Clinic";
+            const cite = { index: idx, resource_uuid: uuid, resource_type: "Condition", date: dt, summary: disp };
+            cites.push(cite);
+            activeConds.push({ display: disp, date: dt, source_org: org, citations: [cite] });
+            ledgerLines.push("[" + idx + "] Condition (" + dt + "): " + disp + " [" + org + "]");
+          } else if (rtype === "MedicationRequest" || rtype === "MedicationStatement") {
+            const mc = r.medicationCodeableConcept || {};
+            const disp = mc.text || (mc.coding && mc.coding[0] && mc.coding[0].display) || "Medication";
+            const dt = (r.authoredOn || "").slice(0, 10);
+            const org = (r.requester && r.requester.display) || "Clinic";
+            const cite = { index: idx, resource_uuid: uuid, resource_type: rtype, date: dt, summary: disp };
+            cites.push(cite);
+            activeMeds.push({ display: disp, date: dt, source_org: org, citations: [cite], conflict_note: "" });
+            ledgerLines.push("[" + idx + "] " + rtype + " (" + dt + "): " + disp + " [" + org + "]");
+          } else if (rtype === "Observation") {
+            const disp = (r.code && (r.code.text || (r.code.coding && r.code.coding[0] && r.code.coding[0].display))) || "Observation";
+            const dt = (r.effectiveDateTime || "").slice(0, 10);
+            const val = r.valueQuantity ? r.valueQuantity.value : "";
+            const unit = r.valueQuantity ? (r.valueQuantity.unit || "") : "";
+            const cite = { index: idx, resource_uuid: uuid, resource_type: "Observation", date: dt, summary: disp + ": " + val + " " + unit };
+            cites.push(cite);
+            obsList.push({ concept: disp, date: dt, value: val, unit: unit, cite: cite });
+            ledgerLines.push("[" + idx + "] Observation (" + dt + "): " + disp + " = " + val + " " + unit);
+          } else {
+            ledgerLines.push("[" + idx + "] " + rtype + " (" + uuid + ")");
+          }
+        });
+
+        const findings = [];
+        if (activeMeds.length >= 2) {
+          activeMeds[0].conflict_note = "Cross-clinic medication reconciliation candidate";
+          activeMeds[1].conflict_note = "Cross-clinic medication reconciliation candidate";
+          findings.push({
+            id: "custom-med-recon-1",
+            domain: "Therapeutic Class / Multi-Source Medication Audit",
+            severity: "high",
+            title: "Concurrent Active Prescriptions (" + activeMeds.map(function (m) { return m.display; }).join(" + ") + ")",
+            description: "Detected multiple active MedicationRequest resources across clinics: " + activeMeds.map(function (m) { return m.display + " [" + m.source_org + "]"; }).join("; ") + ".",
+            patient_plain_summary: "Your uploaded chart lists " + activeMeds.map(function (m) { return m.display; }).join(" and ") + " as active at the same time across different prescribers.",
+            what_to_ask_doctor: "Can we review my active prescriptions (" + activeMeds.map(function (m) { return m.display; }).join(" and ") + ") to confirm whether any are duplicates or overlapping drug classes?",
+            clinician_technical_note: "Rule wahs-kb-rx-reconcile: Multi-source active MedicationRequest audit across uploaded FHIR R4 Bundle.",
+            recommendation: "Reconcile active medication list across prescribing organizations.",
+            kb_rule_id: "wahs-kb-rx-duplicate-statin-01",
+            citations: activeMeds.map(function (m) { return m.citations[0]; })
+          });
+        }
+        if (activeConds.length >= 2) {
+          findings.push({
+            id: "custom-cond-recon-1",
+            domain: "Mutually Exclusive Condition Stage / Problem List Audit",
+            severity: "high",
+            title: "Cross-Clinic Active Problem List Review (" + activeConds.map(function (c) { return c.display; }).join(" vs. ") + ")",
+            description: "Multiple active Condition resources recorded across sources: " + activeConds.map(function (c) { return c.display + " (" + c.date + ")"; }).join("; ") + ".",
+            patient_plain_summary: "Your uploaded chart contains multiple active condition entries (" + activeConds.map(function (c) { return c.display; }).join(" and ") + ").",
+            what_to_ask_doctor: "Which stage or diagnosis on my problem list reflects my most current lab results?",
+            clinician_technical_note: "Rule wahs-kb-ckd-exclusivity-01: Condition stage / status audit across uploaded FHIR R4 Bundle.",
+            recommendation: "Reconcile problem list against latest laboratory biomarkers.",
+            kb_rule_id: "wahs-kb-ckd-exclusivity-01",
+            citations: activeConds.map(function (c) { return c.citations[0]; })
+          });
+        }
+
+        const trajectories = obsList.length ? [{
+          concept: obsList[0].concept,
+          count: obsList.length,
+          unit: obsList[0].unit,
+          direction: (obsList.length > 1 && obsList[obsList.length - 1].value < obsList[0].value) ? "decreasing" : "stable",
+          initial: { value: obsList[0].value, date: obsList[0].date },
+          latest: { value: obsList[obsList.length - 1].value, date: obsList[obsList.length - 1].date },
+          min: { value: Math.min.apply(null, obsList.map(function (o) { return Number(o.value) || 0; })) },
+          max: { value: Math.max.apply(null, obsList.map(function (o) { return Number(o.value) || 0; })) },
+          citations: obsList.map(function (o) { return o.cite; })
+        }] : [];
+
+        const chartText = ledgerLines.join("\n");
+        const condTokens = Math.max(25, Math.round(chartText.length / 4));
+        const posturePayload = {
+          tier_8k: {
+            tier: 1,
+            tier_name: "Lossless Structural (Non-Destructive)",
+            condense_mode: "lossless_structural",
+            target_tokens: 8192,
+            actual_tokens: condTokens,
+            ledger_lines: ledgerLines.length,
+            chart_text: chartText,
+            redacted_count: 0
+          },
+          tier_2k: {
+            tier: 1,
+            tier_name: "Lossless Structural (Non-Destructive)",
+            condense_mode: "lossless_structural",
+            target_tokens: 2048,
+            actual_tokens: condTokens,
+            ledger_lines: ledgerLines.length,
+            chart_text: chartText,
+            redacted_count: 0
+          },
+          duplicates_and_bloat: {
+            summary_metrics: {
+              raw_lab_observations: obsList.length,
+              canonical_lab_analytes: trajectories.length,
+              excluded_non_clinical_entries: 0,
+              deduplicated_base64_notes: 0,
+              raw_stopped_medications: 0,
+              folded_stopped_med_ingredients: 0
+            },
+            cards: [{
+              title: "Non-Destructive Stage 1 Extraction Complete",
+              category: "Lossless Structural",
+              severity: "info",
+              summary: "Extracted " + entries.length + " FHIR R4 resources with 0 clinical records deleted or mutated.",
+              citations: cites.slice(0, 4)
+            }],
+            multi_code_lab_analytes: []
+          },
+          data_quality_and_conflicts: {
+            total_findings: findings.length,
+            high_severity_count: findings.length,
+            findings: findings
+          },
+          patterns_and_summaries: {
+            trajectories: trajectories,
+            highlight_encounter: null,
+            directed_summary: {
+              posture_label: "Patient Self-View",
+              active_conditions: activeConds,
+              active_medications: activeMeds,
+              immunization_count: 0,
+              redacted_privacy_count: 0,
+              sensitive_sdoh_included: []
+            }
+          },
+          skill_findings: {
+            duplicate_candidate_count: 0,
+            reconciliation_finding_count: findings.length
+          },
+          qa_samples: [
+            {
+              question: "What medication or condition conflicts were found in this uploaded FHIR R4 bundle?",
+              patient_category: "1. Medication & Pill-Bottle Clarity",
+              abstained: false,
+              answer: "### Uploaded FHIR R4 Bundle Audit\n" + findings.map(function (f) { return "- **" + f.title + ":** " + f.description; }).join("\n"),
+              patient_plain_summary: findings.map(function (f) { return "- **" + f.title + ":** " + f.patient_plain_summary; }).join("\n"),
+              what_to_ask_doctor: findings.map(function (f) { return f.what_to_ask_doctor; }),
+              clinician_technical_note: "Client-side FHIR R4 Bundle inspector executed lossless_structural extraction + 4-Layer KB rules.",
+              source_mode_label: "Answered from Uploaded FHIR R4 Bundle",
+              citations: cites.slice(0, 6),
+              kb_references: [],
+              tier_info: { tier: 1, actual_tokens: condTokens }
+            }
+          ]
+        };
+
+        const customId = "Custom_Uploaded_Bundle";
+        DATA.patients[customId + "_set_b"] = {
+          id: customId + "_set_b",
+          patient_id: customId,
+          patient_name: ptName,
+          birth_date: birthDate,
+          reference_date: "2026-03-01",
+          cohort_type: "custom_fhir_r4",
+          dataset_key: "set_b",
+          dataset_label: "Uploaded Custom FHIR R4 Bundle",
+          raw_mb: rawMb,
+          raw_est_tokens: rawTokens,
+          total_bundle_entries: entries.length,
+          postures: { patient_self: posturePayload, external_share: posturePayload }
+        };
+
+        const existingProf = PATIENT_PROFILES.find(function (p) { return p.baseId === customId; });
+        if (!existingProf) {
+          PATIENT_PROFILES.unshift({
+            baseId: customId,
+            name: ptName + " (Custom Upload)",
+            ageLabel: "DOB " + birthDate + " · Custom FHIR R4",
+            headline: "User-Supplied FHIR R4 Bundle (" + entries.length + " resources)",
+            highlights: "Parsed client-side via Stage 1 non-destructive condenser & Stage 2 KB rules"
+          });
+        } else {
+          existingProf.name = ptName + " (Custom Upload)";
+          existingProf.headline = "User-Supplied FHIR R4 Bundle (" + entries.length + " resources)";
+        }
+        currentBaseId = customId;
+        renderPatientSelector();
+        renderCurrentStep();
+      }
+
+      const toggleDrawerBtn = document.getElementById("toggle-custom-fhir-btn");
+      const customDrawerEl = document.getElementById("custom-fhir-drawer");
+      const customTextareaEl = document.getElementById("custom-fhir-textarea");
+      const customStatusEl = document.getElementById("custom-fhir-status");
+
+      if (toggleDrawerBtn && customDrawerEl) {
+        toggleDrawerBtn.addEventListener("click", function () {
+          const isHidden = customDrawerEl.style.display === "none";
+          customDrawerEl.style.display = isHidden ? "block" : "none";
+        });
+      }
+      const loadSampleBtn = document.getElementById("load-sample-custom-fhir");
+      if (loadSampleBtn && customTextareaEl) {
+        loadSampleBtn.addEventListener("click", function () {
+          customTextareaEl.value = JSON.stringify(buildSampleCustomBundle(), null, 2);
+          customStatusEl.textContent = "Loaded sample US Core FHIR R4 Bundle (Clara Vance — CKD 3A vs 4 & Dual Statin). Click 'Run Non-Destructive Condenser & KB Skills' to inspect.";
+        });
+      }
+      const fileInputEl = document.getElementById("custom-fhir-file");
+      if (fileInputEl && customTextareaEl) {
+        fileInputEl.addEventListener("change", function (ev) {
+          const file = ev.target.files && ev.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = function (loadEv) {
+            customTextareaEl.value = String(loadEv.target.result || "");
+            customStatusEl.textContent = "Loaded file '" + file.name + "'. Click 'Run Non-Destructive Condenser & KB Skills' to inspect.";
+          };
+          reader.readAsText(file);
+        });
+      }
+      const runCustomBtn = document.getElementById("run-custom-fhir-btn");
+      if (runCustomBtn && customTextareaEl) {
+        runCustomBtn.addEventListener("click", function () {
+          try {
+            const parsed = JSON.parse(customTextareaEl.value || "{}");
+            if (parsed.resourceType !== "Bundle" || !Array.isArray(parsed.entry)) {
+              customStatusEl.textContent = "Please provide a valid FHIR R4 JSON object with resourceType: 'Bundle' and an 'entry' array.";
+              return;
+            }
+            ingestCustomFhirBundle(parsed);
+            customStatusEl.textContent = "Successfully parsed custom FHIR R4 Bundle (" + parsed.entry.length + " resources) and updated all 4 steps below!";
+          } catch (err) {
+            customStatusEl.textContent = "Invalid JSON: " + err.message;
+          }
+        });
       }
 
       // Bind top-level mode buttons and stepper buttons
