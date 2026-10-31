@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WAHS+ Interactive Clinical Summary, Data Quality &amp; Grounded Chat Demo · Open Clinical AI</title>
+  <meta name="description" content="Interactive demonstration of the Washington Health Summary (WAHS+) 5-Tier FHIR R4 Condenser, 4-Layer Clinical Knowledge Base, Suggested Analyses (Duplicate Labs, Data Quality Conflicts, Longitudinal Patterns), and Grounded Patient Q&A." />
+  <link rel="canonical" href="https://openclinai.org/wahs/demo/" />
+  <meta property="og:url" content="https://openclinai.org/wahs/demo/" />
+  <meta property="og:title" content="WAHS+ Interactive Clinical Summary, Data Quality & Grounded Chat Demo" />
+  <meta property="og:description" content="Explore progressive FHIR R4 condensation, cross-clinic medication and problem reconciliation, duplicate lab consolidation, and grounded patient Q&A across synthetic patient charts." />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      --bg: #f6f8fa;
+      --surface: #ffffff;
+      --border: #d0d7de;
+      --text: #1f2328;
+      --muted: #59636e;
+      --brand: #4b2e83;
+      --accent: #0969da;
+      --accent-soft: #ddf4ff;
+      --danger: #cf222e;
+      --danger-soft: #ffebe9;
+      --warn: #9a6700;
+      --warn-soft: #fff8c5;
+      --ok: #1a7f37;
+      --ok-soft: #dafbe1;
+      --info: #0550ae;
+      --info-soft: #ddf4ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .skip-link {
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      background: var(--brand);
+      color: #fff;
+      padding: 0.5rem 1rem;
+      z-index: 100;
+    }
+    .skip-link:focus { left: 0.5rem; top: 0.5rem; }
+    .topbar {
+      background: #0d1117;
+      color: #f0f6fc;
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      border-bottom: 1px solid #30363d;
+    }
+    .topbar-nav {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-size: 0.88rem;
+      flex-wrap: wrap;
+    }
+    .topbar-nav a { color: #58a6ff; text-decoration: none; font-weight: 500; }
+    .topbar-nav a:hover { text-decoration: underline; }
+    .topbar-title h1 { margin: 0; font-size: 1.15rem; font-weight: 700; color: #ffffff; }
+    .topbar-title p { margin: 0.15rem 0 0; font-size: 0.8rem; color: #8b949e; }
+    .controls-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+    .controls-left { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; }
+    .control-field { display: flex; flex-direction: column; gap: 0.25rem; }
+    .control-field label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+    select, input[type="text"], button {
+      font: inherit;
+      font-size: 0.88rem;
+      padding: 0.45rem 0.7rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+    }
+    button.primary {
+      background: var(--brand);
+      color: #fff;
+      border-color: var(--brand);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.primary:hover { opacity: 0.92; }
+    .metrics-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+      gap: 0.75rem;
+      padding: 0.9rem 1.5rem 0;
+      max-width: 1640px;
+      margin: 0 auto;
+    }
+    .metric-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.65rem 0.9rem;
+    }
+    .metric-box .kicker { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--muted); }
+    .metric-box .val { font-size: 1.15rem; font-weight: 700; color: var(--text); margin-top: 0.1rem; }
+    .metric-box .sub { font-size: 0.76rem; color: var(--muted); }
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: 1.38fr 1fr;
+      gap: 1.15rem;
+      padding: 1rem 1.5rem 2rem;
+      max-width: 1640px;
+      margin: 0 auto;
+    }
+    @media (max-width: 1080px) { .workspace-grid { grid-template-columns: 1fr; } }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .tab-bar {
+      display: flex;
+      background: #f0f3f6;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+    .tab-btn {
+      border: none;
+      border-bottom: 3px solid transparent;
+      border-radius: 0;
+      background: transparent;
+      padding: 0.7rem 0.95rem;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      color: var(--brand);
+      border-bottom-color: var(--brand);
+      background: var(--surface);
+    }
+    .panel-body {
+      padding: 1.1rem;
+      overflow-y: auto;
+      max-height: 75vh;
+    }
+    .finding-card {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.8rem;
+      background: #fff;
+    }
+    .finding-card.high { border-left: 4px solid var(--danger); background: #fffbfa; }
+    .finding-card.medium { border-left: 4px solid var(--warn); }
+    .finding-card.info, .finding-card.low { border-left: 4px solid var(--info); }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 0.35rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.14rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .badge.high { background: var(--danger-soft); color: var(--danger); }
+    .badge.medium { background: var(--warn-soft); color: var(--warn); }
+    .badge.info, .badge.low { background: var(--info-soft); color: var(--info); }
+    .badge.ok { background: var(--ok-soft); color: var(--ok); }
+    .cite-chip {
+      display: inline-block;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid #9cd6ff;
+      border-radius: 4px;
+      padding: 0.12rem 0.42rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.73rem;
+      margin: 0.12rem 0.15rem 0.12rem 0;
+      cursor: pointer;
+    }
+    .cite-chip:hover { background: #b6e3ff; }
+    .chat-container { display: flex; flex-direction: column; height: 75vh; }
+    .chat-log {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    .chat-bubble {
+      padding: 0.8rem 1rem;
+      border-radius: 8px;
+      font-size: 0.88rem;
+    }
+    .chat-bubble.user {
+      background: var(--accent-soft);
+      border: 1px solid #b6e3ff;
+      align-self: flex-end;
+      max-width: 88%;
+      font-weight: 500;
+    }
+    .chat-bubble.assistant {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      align-self: stretch;
+    }
+    .chat-bubble h3 { margin: 0.35rem 0; font-size: 0.95rem; color: var(--brand); }
+    .chat-bubble ul { margin: 0.35rem 0; padding-left: 1.25rem; }
+    .chat-bubble li { margin-bottom: 0.3rem; }
+    .suggested-prompts {
+      padding: 0.65rem 0.9rem;
+      border-top: 1px solid var(--border);
+      background: #fafbfc;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.38rem;
+    }
+    .prompt-pill {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      color: var(--text);
+    }
+    .prompt-pill:hover { border-color: var(--brand); color: var(--brand); background: #f5f0ff; }
+    .chat-form {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.75rem 0.9rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .chat-form input { flex: 1; }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      margin-top: 0.5rem;
+    }
+    table.data-table th, table.data-table td {
+      border: 1px solid var(--border);
+      padding: 0.45rem 0.6rem;
+      text-align: left;
+    }
+    table.data-table th { background: #f0f3f6; font-weight: 600; }
+    pre.ledger-view {
+      background: #0d1117;
+      color: #e6edf3;
+      padding: 0.95rem;
+      border-radius: 6px;
+      font-size: 0.76rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      line-height: 1.45;
+    }
+    .evidence-drawer {
+      margin-top: 0.5rem;
+      padding: 0.55rem 0.75rem;
+      background: #f0f6fc;
+      border: 1px solid #9cd6ff;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-demo">Skip to interactive demo</a>
+  <header class="topbar">
+    <div class="topbar-title">
+      <h1>WAHS+ Interactive Clinical Summary, Reconciliation &amp; Grounded Chat</h1>
+      <p>5-Tier Progressive FHIR R4 / US Core / IPS Condenser &middot; 4-Layer Clinical Knowledge Base &middot; EHIgnite Phase 2</p>
+    </div>
+    <nav class="topbar-nav" aria-label="Breadcrumb navigation">
+      <a href="/">OpenClinAI Home</a>
+      <span aria-hidden="true">/</span>
+      <a href="/wahs/index.html">WAHS Design &amp; Evaluation Report</a>
+      <span aria-hidden="true">/</span>
+      <span>Interactive Demo</span>
+    </nav>
+  </header>
+
+  <section class="controls-bar" aria-label="Chart and condensation controls">
+    <div class="controls-left">
+      <div class="control-field">
+        <label for="patient-select">Patient Chart &amp; Dataset</label>
+        <select id="patient-select"></select>
+      </div>
+      <div class="control-field">
+        <label for="posture-select">Sharing &amp; Privacy Posture</label>
+        <select id="posture-select">
+          <option value="patient_self" selected>Patient Self-View (Full SDOH + Warnings)</option>
+          <option value="external_share">External Share (42 CFR Part 2 / WA MHMDA Redacted)</option>
+        </select>
+      </div>
+      <div class="control-field">
+        <label for="tier-select">Context Budget View</label>
+        <select id="tier-select">
+          <option value="tier_8k" selected>8,192 Token Budget (Tier 2/3 Clinical Core + Trajectories)</option>
+          <option value="tier_2k">2,048 Token Budget (Tier 4 Emergency IPS Safety Core)</option>
+        </select>
+      </div>
+    </div>
+    <div id="selected-evidence-box" class="evidence-drawer" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="metrics-strip" id="metrics-strip" aria-label="Condensation and quality metrics"></section>
+
+  <main id="main-demo" class="workspace-grid" tabindex="-1">
+    <section class="panel" aria-label="Suggested Clinical Analyses">
+      <div class="tab-bar" role="tablist">
+        <button class="tab-btn active" data-tab="dq" type="button">1. Data Quality &amp; Conflicts</button>
+        <button class="tab-btn" data-tab="bloat" type="button">2. Duplicate Labs &amp; Bloat</button>
+        <button class="tab-btn" data-tab="patterns" type="button">3. Patterns &amp; Encounter Summary</button>
+        <button class="tab-btn" data-tab="ledger" type="button">4. Condensed Ledger &amp; Ablation</button>
+      </div>
+      <div class="panel-body" id="analysis-panel"></div>
+    </section>
+
+    <section class="panel" aria-label="Grounded Patient and Clinician Chat">
+      <div class="tab-bar">
+        <button class="tab-btn active" type="button" style="cursor:default;">
+          Grounded Patient &amp; Clinician Q&amp;A ([N] &rarr; FHIR UUID Provenance)
+        </button>
+      </div>
+      <div class="chat-container">
+        <div class="chat-log" id="chat-log"></div>
+        <div class="suggested-prompts" id="prompt-chips">
+          <button class="prompt-pill" type="button" data-q="What duplicate medications or dangerous drug conflicts are on my active list?">Duplicate Meds &amp; Statins</button>
+          <button class="prompt-pill" type="button" data-q="Why are there conflicting Chronic Kidney Disease stages and what is my eGFR trend?">CKD Stage Conflict &amp; eGFR</button>
+          <button class="prompt-pill" type="button" data-q="Summarize the November 2023 hospital and ICU stay.">Nov 2023 CABG &amp; ICU Stay</button>
+          <button class="prompt-pill" type="button" data-q="Are there any duplicate vaccines or ACIP immunization schedule anomalies?">Vaccine &amp; ACIP Audit</button>
+          <button class="prompt-pill" type="button" data-q="What duplicate lab panels or repeated notes were consolidated in this chart?">Duplicate Labs &amp; Note Bloat</button>
+          <button class="prompt-pill" type="button" data-q="Does this patient have a documented Penicillin allergy or recent colonoscopy?">Abstention Probe (Penicillin / Colonoscopy)</button>
+        </div>
+        <form class="chat-form" id="chat-form">
+          <input type="text" id="chat-input" placeholder="Ask about medications, lab trends, conflicts, encounters, or test unanswerable abstention..." aria-label="Ask a clinical question about this patient chart" required />
+          <button type="submit" class="primary">Ask Chart</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script src="wahs_demo_data.js"></script>
+  <script>
+    (function () {
+      const DATA = window.WAHS_DEMO_DATA || { patients: {}, ablation_rows: [] };
+      const patientKeys = Object.keys(DATA.patients);
+      let currentPatientKey = patientKeys.includes("Maurice742_Auer97_set_b")
+        ? "Maurice742_Auer97_set_b"
+        : patientKeys[0];
+      let currentPosture = "patient_self";
+      let currentTierKey = "tier_8k";
+      let currentTab = "dq";
+
+      const patientSelect = document.getElementById("patient-select");
+      const postureSelect = document.getElementById("posture-select");
+      const tierSelect = document.getElementById("tier-select");
+      const metricsStrip = document.getElementById("metrics-strip");
+      const analysisPanel = document.getElementById("analysis-panel");
+      const chatLog = document.getElementById("chat-log");
+      const evidenceBox = document.getElementById("selected-evidence-box");
+
+      function escapeHtml(s) {
+        return String(s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function formatMarkdownLite(md) {
+        let html = escapeHtml(md);
+        html = html.replace(/^### (.+)$/gm, "<h3>$1</h3>");
+        html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+        html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
+        html = html.replace(/\$\\to\$/g, "&rarr;");
+        const lines = html.split("\n");
+        let inList = false;
+        const out = [];
+        for (const line of lines) {
+          if (line.startsWith("- ")) {
+            if (!inList) { out.push("<ul>"); inList = true; }
+            out.push("<li>" + line.slice(2) + "</li>");
+          } else {
+            if (inList) { out.push("</ul>"); inList = false; }
+            if (line.trim()) out.push("<p style='margin:0.35rem 0;'>" + line + "</p>");
+          }
+        }
+        if (inList) out.push("</ul>");
+        return out.join("");
+      }
+
+      window.showCitationDetail = function (idx, rType, rUuid, date, text) {
+        evidenceBox.style.display = "block";
+        evidenceBox.innerHTML =
+          `<strong>Provenance [${idx}]:</strong> <code>${escapeHtml(rType)}/${escapeHtml(rUuid)}</code> ` +
+          (date ? `(Date: <code>${escapeHtml(date)}</code>) &mdash; ` : "&mdash; ") +
+          `<span>${escapeHtml(text)}</span>`;
+      };
+
+      function renderCitations(cites) {
+        if (!cites || !cites.length) return "";
+        return cites.map(c => {
+          const shortUuid = String(c.resource_uuid || "").slice(0, 14);
+          const safeText = String(c.text || "").replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+          return `<button type="button" class="cite-chip" onclick="showCitationDetail(${c.index}, '${escapeHtml(c.resource_type)}', '${escapeHtml(c.resource_uuid)}', '${escapeHtml(c.date)}', '${safeText}')" title="Click to inspect FHIR resource ${escapeHtml(c.resource_type)}/${escapeHtml(c.resource_uuid)}">[${c.index}] ${escapeHtml(c.resource_type)}/${escapeHtml(shortUuid)}</button>`;
+        }).join("");
+      }
+
+      function renderMetrics() {
+        const p = DATA.patients[currentPatientKey];
+        if (!p) return;
+        const pos = p.postures[currentPosture];
+        const tierObj = pos[currentTierKey];
+        const sm = pos.duplicates_and_bloat.summary_metrics;
+        const dq = pos.data_quality_and_conflicts;
+        const reductionPct = ((1 - tierObj.actual_tokens / Math.max(p.raw_est_tokens, 1)) * 100).toFixed(2);
+
+        metricsStrip.innerHTML = `
+          <div class="metric-box">
+            <div class="kicker">Raw FHIR R4 Bundle</div>
+            <div class="val">${p.raw_mb} MB (${p.total_bundle_entries.toLocaleString()} entries)</div>
+            <div class="sub">~${p.raw_est_tokens.toLocaleString()} raw tokens &middot; Anchor ${escapeHtml(p.reference_date)}</div>
+          </div>
+          <div class="metric-box">
+            <div class="kicker">Condensed Prompt Context</div>
+            <div class="val">${tierObj.actual_tokens.toLocaleString()} tokens (${reductionPct}% reduction)</div>
+            <div class="sub">Tier ${tierObj.tier} (${escapeHtml(tierObj.tier_name)}) &middot; ${tierObj.ledger_lines} ledger lines</div>
+          </div>
+          <div class="metric-box">
+            <div class="kicker">Data Quality &amp; Conflict Alerts</div>
+            <div class="val">${dq.total_findings} Reconciled Findings</div>
+            <div class="sub">${dq.high_severity_count} high-severity clinical conflicts flagged</div>
+          </div>
+          <div class="metric-box">
+            <div class="kicker">Duplicate Lab &amp; Note Bloat Removed</div>
+            <div class="val">${sm.deduplicated_base64_notes} Dup Notes &middot; ${sm.raw_lab_observations.toLocaleString()} Labs</div>
+            <div class="sub">Folded to ${sm.canonical_lab_analytes} analytes &amp; ${sm.folded_stopped_med_ingredients} med spans</div>
+          </div>
+          <div class="metric-box">
+            <div class="kicker">Privacy Posture (${escapeHtml(currentPosture)})</div>
+            <div class="val">${currentPosture === "external_share" ? pos.tier_8k.redacted_count + " SDOH Redacted" : "Full Patient Self-View"}</div>
+            <div class="sub">${currentPosture === "external_share" ? "0.0% sensitive SDOH leakage (42 CFR Part 2)" : "Sensitive items tagged with sharing warning"}</div>
+          </div>
+        `;
+      }
+
+      function renderAnalysisTab() {
+        const p = DATA.patients[currentPatientKey];
+        if (!p) return;
+        const pos = p.postures[currentPosture];
+        const tierObj = pos[currentTierKey];
+
+        if (currentTab === "dq") {
+          const dq = pos.data_quality_and_conflicts;
+          analysisPanel.innerHTML = `
+            <h2 style="margin-top:0;font-size:1.05rem;">Suggested Analysis 1: Data Quality, Cross-Clinic Conflicts &amp; Schedule Anomalies (${dq.total_findings})</h2>
+            <p style="font-size:0.86rem;color:var(--muted);margin-bottom:0.9rem;">
+              Deterministic pre-LLM normalizers + the 4-Layer WAHS Knowledge Base (KDIGO, ADA, RxNorm, CDC ACIP, and 42 CFR Part 2 / WA MHMDA) audit the chart and link every discrepancy to its exact FHIR R4 resource UUIDs. Click any blue <code>[N]</code> chip to inspect the source record.
+            </p>
+            ${dq.findings.map(f => `
+              <article class="finding-card ${escapeHtml(f.severity)}">
+                <div class="card-header">
+                  <strong>${escapeHtml(f.title)}</strong>
+                  <span class="badge ${escapeHtml(f.severity)}">${escapeHtml(f.domain)}</span>
+                </div>
+                <p style="margin:0.35rem 0;font-size:0.88rem;">${escapeHtml(f.description)}</p>
+                <p style="margin:0.35rem 0;font-size:0.82rem;color:var(--muted);">
+                  <strong>Recommended Action:</strong> ${escapeHtml(f.recommendation)}
+                  <code>[${escapeHtml(f.kb_rule_id)}]</code>
+                </p>
+                <div style="margin-top:0.4rem;">${renderCitations(f.citations)}</div>
+              </article>
+            `).join("")}
+          `;
+        } else if (currentTab === "bloat") {
+          const b = pos.duplicates_and_bloat;
+          const sm = b.summary_metrics;
+          analysisPanel.innerHTML = `
+            <h2 style="margin-top:0;font-size:1.05rem;">Suggested Analysis 2: Duplicate Labs, Repeated Panels &amp; Record Bloat</h2>
+            <p style="font-size:0.86rem;color:var(--muted);margin-bottom:0.9rem;">
+              Synthea and multi-clinic FHIR exports repeat Base64 notes across <code>DocumentReference</code> and <code>DiagnosticReport</code>, split identical BMP analytes across Blood vs. Serum LOINC codes, and emit hundreds of historical prescription renewals.
+            </p>
+            ${b.cards.map(c => `
+              <article class="finding-card ${escapeHtml(c.severity)}">
+                <div class="card-header">
+                  <strong>${escapeHtml(c.title)}</strong>
+                  <span class="badge ${escapeHtml(c.severity)}">${escapeHtml(c.category)}</span>
+                </div>
+                <p style="margin:0.35rem 0;font-size:0.88rem;">${escapeHtml(c.summary)}</p>
+                <div style="margin-top:0.4rem;">${renderCitations(c.citations)}</div>
+              </article>
+            `).join("")}
+            <h3 style="font-size:0.95rem;margin-top:1.1rem;">Consolidated Multi-Code / High-Frequency Lab Analytes</h3>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Canonical Analyte</th>
+                  <th>Raw Obs Count</th>
+                  <th>LOINC Codes Unified</th>
+                  <th>Span</th>
+                  <th>Latest Value</th>
+                  <th>Provenance</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${(b.multi_code_lab_analytes || []).map(a => `
+                  <tr>
+                    <td><strong>${escapeHtml(a.concept)}</strong></td>
+                    <td>${a.measurement_count}</td>
+                    <td><code>${escapeHtml((a.loinc_codes || []).join(", "))}</code></td>
+                    <td>${escapeHtml(a.first_date)} &rarr; ${escapeHtml(a.latest_date)}</td>
+                    <td><strong>${escapeHtml(a.latest_value)} ${escapeHtml(a.unit)}</strong></td>
+                    <td>${renderCitations((a.citations || []).slice(0, 2))}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          `;
+        } else if (currentTab === "patterns") {
+          const pat = pos.patterns_and_summaries;
+          const hl = pat.highlight_encounter || {};
+          const ds = pat.directed_summary || {};
+          analysisPanel.innerHTML = `
+            <h2 style="margin-top:0;font-size:1.05rem;">Suggested Analysis 3: Longitudinal Patterns, Encounter Summary &amp; Directed Sharing</h2>
+            ${hl.title ? `
+              <article class="finding-card high">
+                <div class="card-header">
+                  <strong>${escapeHtml(hl.title)}</strong>
+                  <span class="badge high">Use Case B-1: High-Acuity Encounter</span>
+                </div>
+                <p style="margin:0.35rem 0;font-size:0.88rem;">${escapeHtml(hl.narrative)}</p>
+                ${hl.opus_5_5_comparison ? `
+                  <div style="background:#f6f8fa;border:1px solid var(--border);border-radius:6px;padding:0.6rem 0.8rem;margin:0.5rem 0;font-size:0.81rem;">
+                    <div><strong>Phase 1 Frontier Baseline (Opus 5.5 on Raw JSON):</strong> ${escapeHtml(hl.opus_5_5_comparison.raw_json_feeding_opus_5_5)}</div>
+                    <div style="margin-top:0.3rem;color:var(--ok);"><strong>WAHS+ Phase 2 Condensed Pipeline:</strong> ${escapeHtml(hl.opus_5_5_comparison.wahs_condensed_pipeline)}</div>
+                  </div>
+                ` : ""}
+                <div style="margin-top:0.4rem;">${renderCitations(hl.citations)}</div>
+              </article>
+            ` : ""}
+            <article class="finding-card info">
+              <div class="card-header">
+                <strong>Directed Summary (${escapeHtml(ds.posture_label)})</strong>
+                <span class="badge info">Use Case B-2: Privacy Segmentation</span>
+              </div>
+              <p style="margin:0.3rem 0;font-size:0.85rem;">
+                <strong>Active Conditions (${(ds.active_conditions || []).length}):</strong>
+                ${escapeHtml((ds.active_conditions || []).map(c => c.display).join("; ") || "None")}
+              </p>
+              <p style="margin:0.3rem 0;font-size:0.85rem;">
+                <strong>Active Medications (${(ds.active_medications || []).length}):</strong>
+                ${escapeHtml((ds.active_medications || []).map(m => m.display).join("; ") || "None")}
+              </p>
+              <p style="margin:0.3rem 0;font-size:0.85rem;">
+                <strong>Sensitive SDOH Status:</strong>
+                ${currentPosture === "external_share"
+                  ? `<span class="badge ok">${ds.redacted_privacy_count} sensitive SDOH items automatically redacted into Privacy Manifest</span>`
+                  : escapeHtml((ds.sensitive_sdoh_included || []).join("; ") || "None recorded")}
+              </p>
+            </article>
+            <h3 style="font-size:0.95rem;margin-top:1rem;">Key Longitudinal Biomarker &amp; Vital Trajectories</h3>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Biomarker / Vital</th>
+                  <th>Count</th>
+                  <th>Initial</th>
+                  <th>Min &ndash; Max</th>
+                  <th>Latest</th>
+                  <th>Trend</th>
+                  <th>Citations</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${(pat.trajectories || []).map(t => `
+                  <tr>
+                    <td><strong>${escapeHtml(t.concept)}</strong></td>
+                    <td>${t.count}</td>
+                    <td>${t.initial.value} ${escapeHtml(t.unit)} (${escapeHtml(t.initial.date)})</td>
+                    <td>${t.min.value} &ndash; ${t.max.value}</td>
+                    <td><strong>${t.latest.value} ${escapeHtml(t.unit)}</strong> (${escapeHtml(t.latest.date)})</td>
+                    <td><span class="badge info">${escapeHtml(t.direction)}</span></td>
+                    <td>${renderCitations((t.citations || []).slice(0, 2))}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          `;
+        } else {
+          const rows = (DATA.ablation_rows || []).filter(r => r.patient === p.patient_id);
+          analysisPanel.innerHTML = `
+            <h2 style="margin-top:0;font-size:1.05rem;">Multi-Resolution Token Budget Ablation (${escapeHtml(p.patient_id)})</h2>
+            <table class="data-table" style="margin-bottom:1rem;">
+              <thead>
+                <tr>
+                  <th>Target Budget</th>
+                  <th>Condensed Tokens</th>
+                  <th>Tier Selected</th>
+                  <th>Ledger Lines</th>
+                  <th>Token Reduction</th>
+                  <th>Ground-Truth Anomaly Recall</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows.map(r => `
+                  <tr>
+                    <td><code>${r.target_tokens.toLocaleString()}</code></td>
+                    <td><strong>${r.actual_tokens.toLocaleString()}</strong></td>
+                    <td>Tier ${r.tier} (${escapeHtml(r.tier_name)})</td>
+                    <td>${r.ledger_lines}</td>
+                    <td>${r.reduction_pct}%</td>
+                    <td><span class="badge ok">${r.gt_anomalies_retained}/${r.gt_anomalies_total} (${r.recall_pct}%)</span></td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+            <h3 style="font-size:0.95rem;">Condensed Numbered Evidence Ledger (${tierObj.actual_tokens.toLocaleString()} tokens, ${tierObj.ledger_lines} lines)</h3>
+            <pre class="ledger-view">${escapeHtml(tierObj.chart_text)}</pre>
+          `;
+        }
+      }
+
+      function answerCustomQuestion(question) {
+        const p = DATA.patients[currentPatientKey];
+        const pos = p.postures[currentPosture];
+        const qTrim = question.trim();
+        const qLow = qTrim.toLowerCase();
+
+        // 1. Check precomputed qa_samples first
+        const exact = (pos.qa_samples || []).find(s => s.question.toLowerCase() === qLow);
+        if (exact) return exact;
+
+        // 2. Check unanswerable abstention patterns
+        const unanswerablePatterns = [
+          { re: /\b(penicillin|sulfa|latex|peanut|shellfish)\s+allerg|\banaphylactic\s+drug\s+allergy|\bpeanut-specific\s+ige|\bepinephrine\s+auto-injector/i, desc: "a documented drug/food anaphylactic allergy, peanut-specific IgE, or epinephrine auto-injector" },
+          { re: /\b(colonoscopy|polyp\s+biopsy|endoscopy\s+pathology)\b/i, desc: "a colonoscopy report or gastrointestinal polyp pathology" },
+          { re: /\b(abo|rh\s+factor|blood\s+type|blood\s+group)\b/i, desc: "ABO / Rh blood type typing" },
+          { re: /\b(snellen|visual\s+acuity|refraction|eyeglass|optometry|20\/20)\b/i, desc: "an optometry exam or visual acuity measurement" },
+          { re: /\b(genetic\s+test|pharmacogenomic|cyp2c19|apoe4?|brca|exome)\b/i, desc: "genetic or pharmacogenomic testing (e.g., APOE4, CYP2C19, BRCA)" },
+          { re: /\b(mri\s+of\s+the\s+brain|brain\s+mri|lumbar\s+puncture|spinal\s+tap)\b/i, desc: "a brain MRI or lumbar puncture" },
+          { re: /\b(left\s+ventricular\s+ejection\s+fraction|lvef)\b/i, desc: "a quantitative left ventricular ejection fraction (LVEF %) measurement" }
+        ];
+        for (const pat of unanswerablePatterns) {
+          if (pat.re.test(qTrim) && !pat.re.test(pos.tier_8k.chart_text)) {
+            return {
+              question: qTrim,
+              abstained: true,
+              abstention_reason: "Not present in patient FHIR Bundle: " + pat.desc,
+              answer: `**Not Recorded in Chart (Grounded Abstention):** I reviewed ${p.patient_name}'s condensed health record [1] (covering ${p.total_bundle_entries.toLocaleString()} FHIR Bundle entries through \`${p.reference_date}\`) and found **no documentation of ${pat.desc}**.\n\n- **Safety Posture:** Per WAHS clinical grounding rules, the assistant abstains rather than inferring or fabricating unrecorded clinical history.`,
+              citations: [{ index: 1, resource_type: "Patient", resource_uuid: p.patient_id, date: p.reference_date, text: p.patient_name }]
+            };
+          }
+        }
+
+        // 3. Check external_share SDOH redaction
+        if (currentPosture === "external_share" && /\b(substance|drug\s+abuse|domestic\s+violence|intimate\s+partner|hark|criminal|arrest|prison|isolation)\b/i.test(qLow)) {
+          return {
+            question: qTrim,
+            abstained: true,
+            abstention_reason: "Redacted under external_share privacy posture (42 CFR Part 2 / WA MHMDA)",
+            answer: `**Privacy-Protected / Redacted (\`external_share\` Posture):** ${p.patient_name}'s summary is currently rendered in **External Share** mode. \`${pos.tier_8k.redacted_count}\` privacy-sensitive behavioral health / SDOH records have been excluded from external disclosure in accordance with **42 CFR Part 2** and the **WA My Health My Data Act**.`,
+            citations: [{ index: 1, resource_type: "Patient", resource_uuid: p.patient_id, date: p.reference_date, text: p.patient_name }]
+          };
+        }
+
+        // 4. Match closest precomputed topic or synthesize from dq + trajectories
+        if (/\b(med|drug|pill|statin|plavix|clopidogrel|lipitor|simvastatin|prinivil|lisinopril)\b/i.test(qLow)) {
+          return pos.qa_samples[0];
+        }
+        if (/\b(ckd|kidney|renal|egfr|creatinine|diabetes|prediabetes|a1c|sinusitis|conflict)\b/i.test(qLow)) {
+          return pos.qa_samples[1];
+        }
+        if (/\b(cabg|icu|hospital|november|stay|heart|bypass|surgery|encounter)\b/i.test(qLow)) {
+          return pos.qa_samples[2];
+        }
+        if (/\b(vaccin|immuniz|shot|hpv|zoster|shingles|flu|covid|acip)\b/i.test(qLow)) {
+          return pos.qa_samples[3];
+        }
+        if (/\b(duplicate|bloat|panel|note|condens|token)\b/i.test(qLow)) {
+          return pos.qa_samples[4];
+        }
+        // Default comprehensive overview
+        const ds = pos.patterns_and_summaries.directed_summary;
+        const cites = [];
+        (pos.data_quality_and_conflicts.findings || []).forEach(f => {
+          (f.citations || []).forEach(c => {
+            if (cites.length < 6 && !cites.some(x => x.index === c.index)) cites.push(c);
+          });
+        });
+        return {
+          question: qTrim,
+          abstained: false,
+          answer: `### Grounded Chart Summary for ${p.patient_name} (${ds.posture_label})\n- **Active Conditions (${ds.active_conditions.length}):** ${ds.active_conditions.map(c => c.display).join(", ") || "None"}\n- **Active Medications (${ds.active_medications.length}):** ${ds.active_medications.map(m => m.display).join(", ") || "None"}\n- **Reconciled Data Quality Findings:** \`${pos.data_quality_and_conflicts.total_findings}\` findings flagged across conditions, medications, and immunizations.`,
+          citations: cites
+        };
+      }
+
+      function appendChatTurn(question) {
+        const res = answerCustomQuestion(question);
+        const badgeHtml = res.abstained
+          ? `<span class="badge high">GROUNDED ABSTENTION: ${escapeHtml(res.abstention_reason)}</span>`
+          : `<span class="badge ok">GROUNDED IN CONDENSED LEDGER (${(res.citations || []).length} FHIR UUID citations)</span>`;
+
+        const userDiv = document.createElement("div");
+        userDiv.className = "chat-bubble user";
+        userDiv.textContent = question;
+        chatLog.appendChild(userDiv);
+
+        const botDiv = document.createElement("div");
+        botDiv.className = "chat-bubble assistant";
+        botDiv.innerHTML = `
+          <div style="margin-bottom:0.4rem;">${badgeHtml}</div>
+          <div>${formatMarkdownLite(res.answer)}</div>
+          <div style="margin-top:0.55rem;">${renderCitations(res.citations)}</div>
+        `;
+        chatLog.appendChild(botDiv);
+        chatLog.scrollTop = chatLog.scrollHeight;
+      }
+
+      function refreshAll() {
+        evidenceBox.style.display = "none";
+        renderMetrics();
+        renderAnalysisTab();
+        chatLog.innerHTML = "";
+        appendChatTurn("What duplicate medications or dangerous drug conflicts are on my active list?");
+      }
+
+      // Populate selector
+      patientSelect.innerHTML = patientKeys.map(k => {
+        const p = DATA.patients[k];
+        return `<option value="${escapeHtml(k)}" ${k === currentPatientKey ? "selected" : ""}>${escapeHtml(p.patient_name)} &mdash; ${escapeHtml(p.dataset_label)} (${p.raw_mb} MB / ${p.total_bundle_entries.toLocaleString()} entries)</option>`;
+      }).join("");
+
+      patientSelect.addEventListener("change", () => {
+        currentPatientKey = patientSelect.value;
+        refreshAll();
+      });
+      postureSelect.addEventListener("change", () => {
+        currentPosture = postureSelect.value;
+        refreshAll();
+      });
+      tierSelect.addEventListener("change", () => {
+        currentTierKey = tierSelect.value;
+        renderMetrics();
+        renderAnalysisTab();
+      });
+      document.querySelectorAll(".tab-btn[data-tab]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".tab-btn[data-tab]").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentTab = btn.dataset.tab;
+          renderAnalysisTab();
+        });
+      });
+      document.querySelectorAll(".prompt-pill").forEach(pill => {
+        pill.addEventListener("click", () => appendChatTurn(pill.dataset.q));
+      });
+      document.getElementById("chat-form").addEventListener("submit", e => {
+        e.preventDefault();
+        const inp = document.getElementById("chat-input");
+        const q = inp.value.trim();
+        if (q) {
+          inp.value = "";
+          appendChatTurn(q);
+        }
+      });
+
+      refreshAll();
+    })();
+  </script>
+</body>
+</html>

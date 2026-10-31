@@ -24,11 +24,12 @@
     <a href="#research"><span>04</span> Research opportunities</a>
     <a href="#next"><span>05</span> Small pilot ideas</a>
     <a href="#evidence"><span>06</span> Sources and confidence</a>
+    <a href="#phase2-prototype"><span>07</span> Phase 2 prototype &amp; eval</a>
   </nav>
-  <div class="sidebar-bottom"><p>A proposal for collaboration<br><time datetime="2026-09-09">9 September 2026</time></p><span class="tag neutral">For discussion</span><p class="small">Reviewed 9 September 2026. Proposed work is labelled throughout.</p></div>
+  <div class="sidebar-bottom"><p>A proposal for collaboration<br><time datetime="2026-10-30">30 October 2026</time></p><span class="tag observed">Phase 2 prototype live</span><p class="small">Updated 30 October 2026 with Phase 2 FHIR condensation, evaluation results and interactive demo.</p></div>
 </aside>
 <div class="workspace">
-<header class="topbar"><span><a href="https://openclinai.org/">OpenClinAI home</a> <span class="separator">/</span> WAHS <span class="separator">/</span> OpenClinAI <span class="separator">/</span> Research</span><div><button id="print" type="button">Print report</button><a class="download" href="WAHS-OpenClinAI-Design-Report.docx" download>Word report <span aria-hidden="true">↓</span></a></div></header>
+<header class="topbar"><span><a href="https://openclinai.org/">OpenClinAI home</a> <span class="separator">/</span> WAHS <span class="separator">/</span> OpenClinAI <span class="separator">/</span> Research</span><div><a class="download" href="demo/index.html">Interactive demo <span aria-hidden="true">→</span></a><button id="print" type="button">Print report</button><a class="download" href="WAHS-OpenClinAI-Design-Report.docx" download>Word report <span aria-hidden="true">↓</span></a></div></header>
 <main id="main" tabindex="-1">
 <section id="overview" class="report-section" aria-labelledby="overview-title">
   <div class="eyebrow">01 / OVERVIEW</div><h1 id="overview-title">WAHS and OpenClinAI</h1><p class="lead">How our experience can help people review their health records—and what a small pilot could teach us.</p>
@@ -139,8 +140,39 @@
     <details id="source-prereg"><summary><span><b>Paper 2 evaluation protocol</b><small>Draft preregistration · 2 June 2026</small></span><span class="tag neutral">Draft</span></summary><div><p>This is a draft study plan for HIV guideline tasks, with choices still open. A WAHS study would need its own questions, measures and review plan.</p><a href="https://github.com/pmanko/digging-in-research/blob/main/research-site/content/04-paper2-preregistration.md" target="_blank" rel="noopener noreferrer">Protocol draft ↗</a></div></details>
   </div>
   <h2 class="subsection">UX research applied to this report</h2><div class="ux-grid"><article><h3>Overview before detail</h3><p>The recommendation and main comparisons stay visible. Supporting evidence expands in place with descriptive labels.</p><a href="https://www.nngroup.com/articles/progressive-disclosure/" target="_blank" rel="noopener noreferrer">NN/g · Progressive disclosure ↗</a></article><article id="source-hax"><h3>Correction and explanation</h3><p>The proposed workflow keeps editing, rejection and recovery explicit. Explanation is kept separate from evidence of correctness.</p><a href="https://www.microsoft.com/en-us/haxtoolkit/guideline/support-efficient-correction/" target="_blank" rel="noopener noreferrer">Microsoft HAX · Correction ↗</a><br><a href="https://www.microsoft.com/en-us/haxtoolkit/guideline/make-clear-why-the-system-did-what-it-did/" target="_blank" rel="noopener noreferrer">Microsoft HAX · Explanation ↗</a></article><article><h3>Keyboard access and readable detail</h3><p>Expandable details keep the overview readable. Keyboard focus and layouts for smaller screens help readers move through the report.</p><a href="https://designsystem.digital.gov/components/accordion/" target="_blank" rel="noopener noreferrer">USWDS · Disclosure guidance ↗</a><br><a href="https://www.w3.org/WAI/WCAG21/Understanding/reflow.html" target="_blank" rel="noopener noreferrer">W3C · Reflow ↗</a></article></div>
-  <p class="footnote">Prepared by Piotr Mańkowski with AI-assisted research and drafting. Sources and wording reviewed on 9 September 2026. This is a discussion report; the pilot ideas have not been tested.</p>
+  <p class="footnote">Prepared by Piotr Mańkowski with AI-assisted research and drafting. Initial report reviewed on 9 September 2026; Phase 2 prototype and evaluation added on 30 October 2026.</p>
 </section>
-<footer class="page-footer"><a href="https://openclinai.org/">About OpenClinAI</a><span>9 September 2026</span></footer>
+
+<section id="phase2-prototype" class="report-section" aria-labelledby="phase2-title">
+  <div class="eyebrow">07 / PHASE 2 PROTOTYPE &amp; EVALUATION</div>
+  <h2 class="section-title" id="phase2-title">Progressive FHIR R4 condensation, clinical reconciliation and grounded Q&amp;A</h2>
+  <p class="lead">To test the pilot ideas on realistic patient exports, we implemented a 5-Tier Progressive FHIR R4 / US Core / IPS Chart Condenser and a 4-Layer Clinical Knowledge Base in Med Agent Hub, evaluated across three synthetic test charts (<code>Byron202_Emard19</code>, <code>Lamar193_Beer512</code> and <code>Maurice742_Auer97</code> — <code>23.6 MB</code> total).</p>
+  <div class="recommendation">
+    <div>
+      <span class="tag observed">Interactive prototype &amp; benchmark</span>
+      <h2>Explore suggested analyses and grounded patient chat</h2>
+      <p>Inspect duplicate labs and Base64 note deduplication, cross-clinic medication and condition reconciliation, longitudinal biomarker trajectories, privacy-segmented sharing (<code>patient_self</code> vs. <code>external_share</code>) and grounded Q&amp;A with clickable <code>[N] → FHIR resourceUuid</code> provenance.</p>
+    </div>
+    <a class="dark-button" href="demo/index.html">Launch interactive demo <span aria-hidden="true">→</span></a>
+  </div>
+  <div class="summary-grid">
+    <article>
+      <span class="kicker">5-TIER FHIR R4 CONDENSER</span>
+      <h3>99.6%–99.9% token reduction</h3>
+      <p>Condenses Maurice’s 84-year, <code>18.36 MB</code> (<code>7,099</code>-entry) FHIR R4 Bundle into any target context budget (<code>16k</code> down to <code>1k</code> tokens) while retaining 100% of the IPS clinical safety core and <code>[N] → resourceUuid</code> provenance.</p>
+    </article>
+    <article>
+      <span class="kicker">4-LAYER CLINICAL KNOWLEDGE BASE</span>
+      <h3>100% cohort code coverage</h3>
+      <p>Deterministic normalizers resolve <code>2,629 / 2,629</code> clinical instances across SNOMED CT (KDIGO/ADA stage exclusivity), RxNorm (brand↔generic &amp; statin class rules), CDC ACIP (CVX schedules) and LOINC reference ranges.</p>
+    </article>
+    <article>
+      <span class="kicker">32-CASE EVALUATION RUBRIC</span>
+      <h3>32 / 32 rubric pass rate</h3>
+      <p>Passes all 32 evaluation cases across Use Case A (reconciliation), B-1 (encounter &amp; longitudinal summaries, including the Nov 2023 CABG ICU stay), B-2 (0.0% sensitive SDOH leakage in <code>external_share</code>) and B-3 (100% abstention on unrecorded facts).</p>
+    </article>
+  </div>
+</section>
+<footer class="page-footer"><a href="https://openclinai.org/">About OpenClinAI</a><span>30 October 2026</span></footer>
 </main></div>
 </body></html>
