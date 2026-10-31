@@ -60,6 +60,6 @@ def test_maven_runner_rejects_stale_reports_and_setup_errors(tmp_path):
 
 
 def test_unrelated_failure_does_not_satisfy_named_mutation_probe():
-    run = Run(1, 2, ['tests.example::other: assertion failed'], Path('log'))
+    run = Run(1, 2, ['tests.example::other: boundary assertion failed'], Path('log'))
     assert not _expect_red(run, 'head', 'mutation', ['tests/example.py::boundary'])[0]
     assert _expect_red(run, 'head', 'mutation', ['tests/example.py::other'])[0]
