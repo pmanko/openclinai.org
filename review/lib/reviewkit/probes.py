@@ -44,6 +44,7 @@ class Run:
     failed: list[str]
     log: Path
     failed_ids: list[dict] = field(default_factory=list)
+    executed_cases: set[tuple[str, str]] = field(default_factory=set)
 
 
 class Ledger:
@@ -113,9 +114,18 @@ def _run(runner: str, wt: Path, tests: list[str], log: Path) -> Run:
     proc = subprocess.run([str(RUNNERS / f"{runner}.sh"), str(wt), str(log), *tests],
                           capture_output=True, text=True, env=clean_env())
     ran, failed, failed_ids = 0, [], []
+    executed_cases = set()
     for line in proc.stdout.splitlines():
         if line.startswith("RAN "):
             ran = int(line.split()[1])
+        elif line.startswith("EXECUTED "):
+            try:
+                identity = json.loads(line[len("EXECUTED "):])
+                if not isinstance(identity, list) or len(identity) != 2 or any(not isinstance(v, str) for v in identity):
+                    raise ValueError("invalid executed test identity")
+                executed_cases.add(tuple(identity))
+            except (ValueError, TypeError):
+                return Run(2, ran, failed, log)
         elif line.startswith("FAILED_ID "):
             try:
                 identity = json.loads(line[len("FAILED_ID "):])
@@ -136,7 +146,7 @@ def _run(runner: str, wt: Path, tests: list[str], log: Path) -> Run:
                                    "name": re.split(r"#|::", identity)[-1],
                                    "full_name": identity,
                                    "selectors": [test for test in tests if _matches_test(identity, test, wt)]})
-    return Run(proc.returncode, ran, failed, log, failed_ids)
+    return Run(proc.returncode, ran, failed, log, failed_ids, executed_cases)
 
 
 def _first(run: Run, tests: list[str] = ()) -> str:
@@ -170,8 +180,10 @@ def _expect_red(run: Run, sha7: str, what: str, tests: list[str] = ()) -> tuple[
     return False, f"BLOCK {sha7} {what}: runner error {run.code} (see {run.log})"
 
 
-def _expect_green(run: Run, sha7: str) -> tuple[bool, str]:
+def _expect_green(run: Run, sha7: str, required_cases: set[tuple[str, str]] | None = None) -> tuple[bool, str]:
     if run.code == 0 and run.ran > 0:
+        if required_cases and not required_cases.issubset(run.executed_cases):
+            return False, f"BLOCK {sha7}: tests that supplied red evidence did not execute after restoration"
         return True, f"green {sha7}: {run.ran} passed"
     reason = {1: f"{len(run.failed)} of {run.ran} failed: {_first(run)}",
               2: "the build fails", 3: "no named test ran"}.get(run.code, f"runner error {run.code}")
@@ -220,6 +232,7 @@ def probe_commit(repo: Path, sha: str) -> Outcome:
                 "Tests:, or add Probe: skip (<reason>)"])
         logs = work_dir() / "logs" / repo_name(repo)
         lines, ok = [], True
+        required_cases = set()
         try:
             if behavioral:
                 for change in behavioral:
@@ -227,7 +240,9 @@ def probe_commit(repo: Path, sha: str) -> Outcome:
                         (wt / change.path).unlink()
                     else:
                         git(wt, "checkout", "-q", f"{sha}^", "--", change.path)
-                good, line = _expect_red(_run(runner, wt, tests, logs / f"{sha7}-revert.log"),
+                reverted = _run(runner, wt, tests, logs / f"{sha7}-revert.log")
+                required_cases = {(i['file'], i['full_name']) for i in reverted.failed_ids}
+                good, line = _expect_red(reverted,
                                          sha7, f"revert of {len(behavioral)} main file(s)", tests)
                 ok &= good
                 lines.append(line)
@@ -235,7 +250,7 @@ def probe_commit(repo: Path, sha: str) -> Outcome:
             else:
                 lines.append(f"skip  {sha7} revert: " + ("main code changes only in comments or blank lines"
                              if main else "no main code changed"))
-            good, line = _expect_green(_run(runner, wt, tests, logs / f"{sha7}-green.log"), sha7)
+            good, line = _expect_green(_run(runner, wt, tests, logs / f"{sha7}-green.log"), sha7, required_cases)
             ok &= good
             lines.append(line)
             for n, mutation in enumerate(trailers.mutations, 1):
@@ -254,13 +269,14 @@ def probe_commit(repo: Path, sha: str) -> Outcome:
                                  f"occurs {count} times in {mutation.path}; it must occur once")
                     continue
                 target.write_text(text.replace(mutation.old, mutation.new), encoding="utf-8")
-                good, line = _expect_red(
-                    _run(runner, wt, tests, logs / f"{sha7}-mutation{n}.log"),
+                mutated = _run(runner, wt, tests, logs / f"{sha7}-mutation{n}.log")
+                required_cases = {(i['file'], i['full_name']) for i in mutated.failed_ids}
+                good, line = _expect_red(mutated,
                     sha7, f"mutation {mutation.label()}", tests)
                 ok &= good
                 lines.append(line)
                 _reset(wt, sha)
-                restored, restored_line = _expect_green(_run(runner, wt, tests, logs / f"{sha7}-restored{n}.log"), sha7)
+                restored, restored_line = _expect_green(_run(runner, wt, tests, logs / f"{sha7}-restored{n}.log"), sha7, required_cases)
                 ok &= restored
                 lines.append(restored_line)
         finally:

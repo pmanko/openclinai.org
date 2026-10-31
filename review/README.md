@@ -74,6 +74,13 @@ the exact consumer commit; `NO_CONSUMER=1` omits this comparison explicitly.
 Report and worktree paths include the encoded GitHub repository identity. Saved
 human answers are archived and requested again when their review prompt or thread
 snapshot changes.
+Test adapters record the identities of executed cases. Every case that supplied
+red evidence must execute and pass after restoration; an unrelated passing test
+cannot replace a skipped target.
+
+Reports carry `scope: source_review`: complete file coverage and no findings do
+not certify tests, deployed behavior or acceptance. Unavailable execution remains
+visible in the test evidence; source completion is not a merge approval.
 
 The default is a local source review. `FIX=1` explicitly permits the fixer to
 commit and push between rounds, only after a complete, current review. Full evaluation reports remain local unless

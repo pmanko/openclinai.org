@@ -22,7 +22,7 @@ reports are rejected. Evidence: `work/review/vitest-exit-fixture/`.
 
 Verification:
 
-- `targets/validation-harness/.venv/bin/python -m pytest tests/review -q`: 42 passed.
+- `targets/validation-harness/.venv/bin/python -m pytest tests/review -q`: 46 passed.
 - `python3 -m unittest discover -s tests -v`: 19 passed.
 - `python3 scripts/check_workspace.py`: passed in an isolated clean checkout with
   all recorded component pins initialized. The active implementation checkout remains
@@ -43,6 +43,25 @@ Verification:
   and `wahs-contract-fixed-output.json`.
 
 Follow-up verification:
+
+- An isolated-checkout review exposed inherited pytest root configuration and a
+  file-URL error in the Vitest test fixture. Pytest now anchors identities to the
+  supplied project root; the fixture converts native paths to file URLs. The real
+  Vitest runner already passed with the encoded repository path. The three focused
+  encoded-path checks pass after repair. The same review reproduced a broken head
+  passing its probe by skipping the previously failing case. All adapters now record
+  executed case identities, and green/restored evidence requires the actual red
+  cases to execute. The conditional-skip regression rejects that false success.
+  Direct regressions also protect explicit fix authorization, refusal to mutate
+  tests, and execution of probes for comment-like prompt content. Reports now label
+  their scope as source review explicitly; unavailable execution remains recorded
+  without establishing runtime acceptance. Forced interruption recovery remains
+  an untested lifecycle case rather than a claimed result.
+  Real Vitest and the Maven adapter with fixture JUnit reports both accepted the
+  restored passing target and rejected a skipped target beside an unrelated pass
+  (`work/pr-inventory/tooling-executed-cases-real.log`). Removing each of the three
+  newly covered guards made its targeted regression fail
+  (`work/pr-inventory/tooling-final-guard-mutations.log`).
 
 - The second tooling review reproduced ambiguous Python/Maven test matching,
   acceptance of an unavailable explicitly selected consumer, and report/answer

@@ -104,7 +104,7 @@ def test_vitest_runner_rejects_process_errors_and_incomplete_evidence(tmp_path):
             ('' if reason == 'missing' else
              f'Path(os.environ["REVIEW_VITEST_EVIDENCE"]).write_text({json.dumps(encoded_metadata)})\n' if reason == 'malformed' else
              'reporter=next(x.split("=",1)[1] for x in sys.argv if x.startswith("--reporter=") and x.endswith(".mjs"))\n' +
-             'subprocess.run(["node", "-e", "import(process.argv[1]).then(({default:R})=>new R().onTestRunEnd([],Array(Number(process.argv[2])).fill({}),process.argv[3]))", reporter, ' + repr(str(errors)) + ', ' + repr(reason) + '], check=True)\n') +
+             'subprocess.run(["node", "-e", ' + repr("import(require('node:url').pathToFileURL(process.argv[1]).href).then(({default:R})=>new R().onTestRunEnd([],Array(Number(process.argv[2])).fill({}),process.argv[3]))") + ', reporter, ' + repr(str(errors)) + ', ' + repr(reason) + '], check=True)\n') +
             f'sys.exit({process_exit})\n')
         stub.chmod(0o755)
         result = subprocess.run([str(ROOT / 'review/bin/runners/vitest.sh'), str(tmp_path), str(log), 'fixture.test.js'], capture_output=True)
@@ -114,6 +114,7 @@ def test_vitest_runner_rejects_process_errors_and_incomplete_evidence(tmp_path):
             selected = ['fixture.test.js#behavior']
             run = _run('vitest', tmp_path, selected, log)
             assert _expect_red(run, 'head', 'mutation', selected)[0]
+            assert (str(tmp_path / 'fixture.test.js'), 'suite behavior') in run.executed_cases
             assert run.failed_ids[0]['full_name'] == 'suite behavior'
             assert not _expect_red(run, 'head', 'mutation', ['other.test.js#behavior'])[0]
             assert not _expect_red(run, 'head', 'mutation', ['fixture.test.js#unrelated'])[0]
@@ -190,6 +191,9 @@ def test_failed_cleanup_cannot_reuse_old_assertions(tmp_path, runner):
 def test_same_named_failure_in_another_file_or_class_is_not_the_requested_test(tmp_path, monkeypatch, runner):
     from reviewkit.probes import _run
     if runner == 'pytest':
+        (tmp_path / 'pytest.ini').write_text('[pytest]\n')
+        tmp_path = tmp_path / 'nested-project'
+        tmp_path.mkdir()
         (tmp_path / 'test_intended.py').write_text('import pytest\npytestmark = getattr(pytest.mark, "skip")\ndef test_boundary(): assert False\n')
         (tmp_path / 'test_other.py').write_text('def test_boundary(): assert False\n')
         selected = ['test_intended.py::test_boundary', 'test_other.py']
@@ -211,3 +215,4 @@ def test_same_named_failure_in_another_file_or_class_is_not_the_requested_test(t
     assert not _expect_red(result, 'head', 'mutation', selected)[0]
     result = _run(runner, tmp_path, correct, tmp_path / 'correct.log')
     assert _expect_red(result, 'head', 'mutation', correct)[0]
+    assert {(i['file'], i['full_name']) for i in result.failed_ids}.issubset(result.executed_cases)

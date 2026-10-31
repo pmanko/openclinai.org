@@ -14,7 +14,7 @@ PY
   -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false) > "$log" 2>&1
 rc=$?
 python3 - "$dir" "$rc" <<'PY'
-import sys
+import json, sys
 from pathlib import Path
 import xml.etree.ElementTree as ET
 ran = failed = errors = 0
@@ -25,6 +25,7 @@ try:
             if case.find('error') is not None:
                 errors += 1; continue
             ran += 1
+            print('EXECUTED ' + json.dumps([case.get('classname', ''), case.get('classname', '') + '#' + case.get('name', '')]))
             failure = case.find('failure')
             if failure is not None:
                 failed += 1

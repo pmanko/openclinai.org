@@ -103,6 +103,52 @@ def test_a_failed_restoration_run_blocks_the_probe(project, monkeypatch):
     assert not result.ok
 
 
+def test_skipping_the_failing_case_cannot_turn_a_broken_head_green(project):
+    sys.path.insert(0, str(ROOT / 'review/lib'))
+    from reviewkit import probes
+    commit(project, {'calc.py': 'enabled = True\n' + BROKEN}, 'Setup\n\nProbe: skip (fixture setup)')
+    tests = TEST + ('\nimport pytest\nimport calc\n'
+        '@getattr(pytest.mark, "skipif")(not calc.enabled, reason="backend disabled")\n'
+        'def test_boundary():\n    assert clamp(-5, 0, 10) == 0\n')
+    commit(project, {'calc.py': 'enabled = False\n' + BROKEN, 'tests/test_calc.py': tests},
+           'Disable backend\n\nTests: tests/test_calc.py::test_boundary, tests/test_calc.py::test_inside')
+    result = probes.probe_commit(project, 'HEAD')
+    assert not result.ok
+    assert any('did not execute' in line for line in result.lines)
+
+
+def test_a_mutation_must_not_execute_modified_tests(project, monkeypatch):
+    sys.path.insert(0, str(ROOT / 'review/lib'))
+    from reviewkit import probes
+    source = TEST + '\n'
+    commit(project, {'tests/test_calc.py': source},
+           'Test fixture\n\nMutation: tests/test_calc.py "assert clamp(5, 0, 10) == 5" -> "assert True"')
+    original = probes._run
+    observed = []
+    def runner(kind, wt, tests, log):
+        observed.append((wt / 'tests/test_calc.py').read_text())
+        return original(kind, wt, tests, log)
+    monkeypatch.setattr(probes, '_run', runner)
+    result = probes.probe_commit(project, 'HEAD')
+    assert not result.ok
+    assert observed == [source]
+
+
+def test_comment_like_prompt_content_is_probed_as_executable_input(project):
+    sys.path.insert(0, str(ROOT / 'review/lib'))
+    from reviewkit import probes
+    (project / 'server/prompts').mkdir(parents=True)
+    production = 'from pathlib import Path\ndef prompt(): return (Path(__file__).parent / "server/prompts/example.txt").read_text()\n'
+    before = 'from calc import prompt\ndef test_prompt(): assert prompt() == "// old\\n"\n'
+    commit(project, {'calc.py': production, 'server/prompts/example.txt': '// old\n',
+                     'tests/test_calc.py': before}, 'Setup\n\nProbe: skip (fixture setup)')
+    commit(project, {'server/prompts/example.txt': '// new\n',
+                     'tests/test_calc.py': before.replace('// old', '// new')}, 'Change prompt behavior')
+    result = probes.probe_commit(project, 'HEAD')
+    assert result.ok and result.status == 'probed'
+    assert len(result.lines) == 2
+
+
 def test_a_fix_whose_test_passes_without_it_is_refused(project):
     weak = TEST + "\n\ndef test_top():\n    assert clamp(50, 0, 10) == 10\n"
     commit(project, {"calc.py": CALC.replace("return", "return  "), "tests/test_calc.py": weak},

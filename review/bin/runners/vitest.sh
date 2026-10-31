@@ -42,7 +42,10 @@ for (const f of r.testResults) {
   }
   if (f.status === "failed" && !f.assertionResults.some(a => a.status === "failed")) broken++;
   for (const a of f.assertionResults) {
-    if (a.status === "passed" || a.status === "failed") ran++;
+    if (a.status === "passed" || a.status === "failed") {
+      ran++;
+      console.log("EXECUTED " + JSON.stringify([f.name, a.fullName]));
+    }
     if (a.status === "failed") { failed++;
       const selectors = requested.filter(id => {
         const split = id.indexOf("#");

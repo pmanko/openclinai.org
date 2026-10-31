@@ -53,6 +53,50 @@ def test_review_checks_the_actual_checkout_revision_and_cleanliness(tmp_path):
         verify(tmp_path, revision)
 
 
+def test_fixer_requires_explicit_authorization(tmp_path, monkeypatch):
+    import runpy
+    from types import SimpleNamespace
+    api = runpy.run_path(str(REVIEW))
+    state = api['main'].__globals__
+    monkeypatch.setitem(state, 'UMBRELLA', tmp_path)
+    monkeypatch.setitem(state, 'work_dir', lambda: tmp_path / 'work')
+    monkeypatch.setitem(state, 'upstream', lambda *args: ('origin', 'fixture/repo'))
+    monkeypatch.setitem(state, 'fetch_pr', lambda *args: 'head')
+    monkeypatch.setitem(state, 'current_identity', lambda *args: dict(headRefOid='head', baseRefOid='base', baseRefName='main'))
+    def fake_git(repo, *args):
+        if args[0] == 'rev-parse': return 'head' if args[1] == 'HEAD' else 'base'
+        if args[0] == 'diff': return 'calc.py'
+        return ''
+    monkeypatch.setitem(state, 'git', fake_git)
+    def checkout(repo, path, revision, branch=None):
+        path.mkdir(parents=True, exist_ok=True)
+        (path / 'calc.py').write_text('value = 1\n')
+        return path
+    monkeypatch.setitem(state, 'worktree', checkout)
+    def threads(command, **kwargs):
+        Path(command[3]).write_text(json.dumps(dict(base='main', head_branch='fix', author='fixture')))
+        return SimpleNamespace(returncode=0)
+    monkeypatch.setattr(state['subprocess'], 'run', threads)
+    roles = []
+    def role(args, name, wt, prompt, output):
+        roles.append(name)
+        return '```json\n' + json.dumps(dict(head='head', reviewed_files=['calc.py'],
+            unreviewed_files=[], tests=[dict(command='fixture test', result='not run: fixture dependency unavailable')],
+            findings=[dict(file='calc.py', line=1, finding='boundary fails', blocking=True,
+                           failure_mode='boundary is incorrect', evidence='fixture assertion failed')])) + '\n```'
+    monkeypatch.setitem(state, 'run_role', role)
+    argv = ['review.py', '--repo', 'umbrella', '--repository', 'fixture/repo', '--pr', '1',
+            '--agent', 'codex', '--rounds', '2', '--no-consumer']
+    for flag, expected in [([], ['reviewer']), (['--fix'], ['reviewer', 'fixer', 'reviewer'])]:
+        roles.clear()
+        monkeypatch.setattr(sys, 'argv', argv + flag)
+        assert api['main']() == 0
+        assert roles == expected
+        report = json.loads(next((tmp_path / 'work').rglob('result.json')).read_text())
+        assert report['scope'] == 'source_review'
+        assert report['tests'][0]['result'].startswith('not run:')
+
+
 def test_a_round_records_findings_and_downgrades_unevidenced_blockers(tmp_path):
     upstream = tmp_path / "github.com" / "openmrs" / "calc.git"
     git(tmp_path, "init", "-q", "--bare", "-b", "main", str(upstream))

@@ -618,7 +618,7 @@ def main() -> int:
                                or fresh["baseRefName"] != meta["base"]))
         if args.stack and layers:
             stale |= current_identity(slug, layers[-1]["number"])["headRefOid"] != target
-        data.update(repo=args.repo, repository=slug, pr=args.pr, requested_head=head, base=base,
+        data.update(scope="source_review", repo=args.repo, repository=slug, pr=args.pr, requested_head=head, base=base,
                     base_branch=meta["base"], identity_after=fresh,
                     consumer_repo=consumer,
                     consumer_head=consumer_sha if consumer else None,
