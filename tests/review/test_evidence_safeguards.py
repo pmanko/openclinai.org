@@ -71,3 +71,31 @@ def test_executable_inputs_are_classified_without_freezing_prose():
                  'datasets/validation/scenarios/example.json', 'datasets/wahs/cases.jsonl'):
         assert classify(path) == 'main'
     assert classify('docs/usage.md') == 'other'
+
+
+def test_vitest_runner_rejects_process_errors_and_incomplete_evidence(tmp_path):
+    import json
+    stub = tmp_path / 'node_modules/.bin/vitest'
+    stub.parent.mkdir(parents=True)
+    log = tmp_path / 'run.log'
+    cases = [('passed', 0, 0, 'passed', 0), ('failed', 1, 0, 'failed', 1),
+             ('pending', 0, 0, 'passed', 3), ('passed', 1, 0, 'passed', 2),
+             ('failed', 1, 1, 'failed', 2), ('passed', 0, 0, 'interrupted', 2),
+             ('passed', 0, 0, 'missing', 2), ('passed', 0, 1, 'passed', 2),
+             ('passed', 0, 0, 'malformed', 2)]
+    for status, process_exit, errors, reason, expected in cases:
+        report = {'testResults': [{'status': 'failed' if status == 'failed' else 'passed',
+                  'assertionResults': [{'status': status, 'fullName': 'behavior', 'failureMessages': ['wrong']}]}]}
+        metadata = {'reason': reason, 'unhandled_errors': errors}
+        encoded_metadata = '{bad' if reason == 'malformed' else json.dumps(metadata)
+        # A stale sidecar must not stand in for an interrupted reporter.
+        Path(str(log) + '.execution.json').write_text(json.dumps({'reason': 'passed', 'unhandled_errors': 0}))
+        stub.write_text('#!' + sys.executable + '\nimport os,json,sys\n'
+            'from pathlib import Path\n'
+            'output=next(x.split("=",1)[1] for x in sys.argv if x.startswith("--outputFile.json="))\n'
+            f'Path(output).write_text({json.dumps(json.dumps(report))})\n' +
+            ('' if reason == 'missing' else f'Path(os.environ["REVIEW_VITEST_EVIDENCE"]).write_text({json.dumps(encoded_metadata)})\n') +
+            f'sys.exit({process_exit})\n')
+        stub.chmod(0o755)
+        result = subprocess.run([str(ROOT / 'review/bin/runners/vitest.sh'), str(tmp_path), str(log), 'fixture.test.js'], capture_output=True)
+        assert result.returncode == expected, (status, process_exit, errors, reason, result.stdout, result.stderr)

@@ -13,10 +13,16 @@ assertions from collection errors. Pytest uses isolated bytecode lookup for ever
 CI exposed a stale-bytecode case when equal-length fixture edits shared a timestamp. Probe evidence is re-executed, mutations preserve
 tests, and restoration is checked. Historical hook baselines are not current evidence.
 Fixing/pushing between rounds and evaluation publication require explicit options.
+The Vitest adapter now records run completion and unhandled errors separately from
+its assertion JSON. A real Vitest 4.1.6 run with one passing assertion and an unhandled
+rejection previously returned green through the adapter. The repaired adapter returns
+an infrastructure error; real pass, assertion failure, skip, and mixed assertion/runtime
+error fixtures returned 0, 1, 3 and 2 respectively. Missing or interrupted execution
+reports are rejected. Evidence: `work/review/vitest-exit-fixture/`.
 
 Verification:
 
-- `targets/validation-harness/.venv/bin/python -m pytest tests/review -q`: 34 passed.
+- `targets/validation-harness/.venv/bin/python -m pytest tests/review -q`: 35 passed.
 - `python3 -m unittest discover -s tests -v`: 19 passed.
 - `python3 scripts/check_workspace.py`: passed in an isolated clean checkout with
   all recorded component pins initialized. The active implementation checkout remains
