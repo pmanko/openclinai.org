@@ -74,4 +74,5 @@ separate: a source review does not establish deployed-runtime acceptance.
 
 Probes require executed tests. Skips, collection errors and dependency failures
 cannot prove behavior. Mutations preserve tests and require a passing restoration.
-Hub profiles and prompts are executable inputs; prose remains review-only.
+Hub profiles and prompts, harness scenarios/comparison sets, and WAHS dataset inputs
+are executable inputs; prose remains review-only.

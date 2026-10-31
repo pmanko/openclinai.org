@@ -33,7 +33,9 @@ _SCISSORS = "# ------------------------ >8 ------------------------"
 def classify(path: str) -> str:
     if TEST_PATH.search(path):
         return "test"
-    if path == "server/levels.yaml" or path.startswith("server/prompts/"):
+    if (path == "server/levels.yaml" or path.startswith("server/prompts/")
+            or (path.startswith(("datasets/validation/scenarios/", "datasets/validation/comparison_sets/",
+                                 "datasets/wahs/")) and path.endswith((".json", ".jsonl", ".yaml", ".yml")))):
         return "main"
     if path.endswith(CODE_EXT) and not BUILD_CONFIG.search(path):
         return "main"
@@ -95,6 +97,8 @@ def code_changed(repo: Path, sha: str, change: Change) -> bool:
     suffix = Path(change.path).suffix
     before = git(repo, "show", f"{sha}^:{change.path}")
     after = git(repo, "show", f"{sha}:{change.path}")
+    if suffix not in CODE_EXT:
+        return before != after
     return strip_comments(before, suffix) != strip_comments(after, suffix)
 
 

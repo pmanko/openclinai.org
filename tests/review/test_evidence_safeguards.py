@@ -63,3 +63,11 @@ def test_unrelated_failure_does_not_satisfy_named_mutation_probe():
     run = Run(1, 2, ['tests.example::other: boundary assertion failed'], Path('log'))
     assert not _expect_red(run, 'head', 'mutation', ['tests/example.py::boundary'])[0]
     assert _expect_red(run, 'head', 'mutation', ['tests/example.py::other'])[0]
+
+
+def test_executable_inputs_are_classified_without_freezing_prose():
+    from reviewkit.commits import classify
+    for path in ('server/levels.yaml', 'server/prompts/example.txt',
+                 'datasets/validation/scenarios/example.json', 'datasets/wahs/cases.jsonl'):
+        assert classify(path) == 'main'
+    assert classify('docs/usage.md') == 'other'

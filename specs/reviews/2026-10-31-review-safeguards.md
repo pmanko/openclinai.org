@@ -13,7 +13,7 @@ Fixing/pushing between rounds and evaluation publication require explicit option
 
 Verification:
 
-- `targets/validation-harness/.venv/bin/python -m pytest tests/review -q`: 32 passed.
+- `targets/validation-harness/.venv/bin/python -m pytest tests/review -q`: 33 passed.
 - `python3 -m unittest discover -s tests -v`: 19 passed.
 - `python3 scripts/check_workspace.py`: passed in an isolated clean checkout with
   all recorded component pins initialized. The active implementation checkout remains
