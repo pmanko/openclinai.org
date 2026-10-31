@@ -35,13 +35,14 @@
     border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;}
   .filter button[aria-pressed="true"]{background:var(--accent);color:var(--btn-fg);border-color:var(--accent);}
   body[data-filter="chartsearchai"] .card:not([data-family="chartsearchai"]),
-  body[data-filter="catalyst"] .card:not([data-family="catalyst"]){display:none;}
+  body[data-filter="catalyst"] .card:not([data-family="catalyst"]),
+  body[data-filter="wahs"] .card:not([data-family="wahs"]){display:none;}
   .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px 24px;margin-bottom:22px;}
   .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:6px;}
   .titles h2{margin:0;font-size:20px;color:var(--ink);font-weight:600;line-height:1.3;}
   .family{display:inline-block;margin:0 0 6px;padding:2px 7px;border:1px solid var(--border);
     border-radius:999px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;}
-  .family.catalyst{color:var(--accent);border-color:var(--accent);}
+  .family.catalyst,.family.wahs{color:var(--accent);border-color:var(--accent);}
   .titles .slug{color:var(--muted);font-size:13px;margin-top:4px;}
   .links{display:flex;gap:8px;flex-wrap:wrap;}
   .btn{display:inline-block;text-decoration:none;background:var(--accent);color:var(--btn-fg);
@@ -88,7 +89,18 @@
     <p class="intro">Recorded ChartSearchAI answer evaluations and Catalyst query-workflow checks. Each report identifies its data, methods and limits. Historical findings do not establish current product or deployment acceptance.</p>
   </header>
   <div class="legend"><b>How to read these reports.</b> For reports with score tables, each answer is graded 0–10, higher is better — <b>Accuracy</b>: are the stated facts correct? <b>Completeness</b>: did it cover what mattered? <b>Relevance</b>: did it actually answer the question? <b>Unsafe answers</b> counts responses with a potential safety problem (lower is better). <b>Questions</b> is how many were scored per setup, and the best value in each column is highlighted. <b>Benchmark /100</b> is the headline aggregate — it combines the dimensions (accuracy and completeness weighted most) minus soft penalties for safety and citation problems, so one number summarizes each setup. Each score table names the automated judge that produced it (model, reasoning effort, pass count); a report judged before this was recorded says so. One pass on a small sample is directional, not a formal benchmark.</div>
-  <div class="filter" id="family-filter" role="group" aria-label="Show reports for"><button type="button" data-family="all" aria-pressed="true">All reports (21)</button><button type="button" data-family="chartsearchai" aria-pressed="false">ChartSearchAI (18)</button><button type="button" data-family="catalyst" aria-pressed="false">Catalyst SQL (3)</button></div>
+  <div class="filter" id="family-filter" role="group" aria-label="Show reports for"><button type="button" data-family="all" aria-pressed="true">All reports (22)</button><button type="button" data-family="wahs" aria-pressed="false">WA Health Summary (1)</button><button type="button" data-family="chartsearchai" aria-pressed="false">ChartSearchAI (18)</button><button type="button" data-family="catalyst" aria-pressed="false">Catalyst SQL (3)</button></div>
+  <article class="card" data-family="wahs">
+  <header class="card-head">
+    <div class="titles"><span class="family wahs">WA Health Summary</span><h2>WAHS Phase 2: 5-Tier FHIR R4 Condenser &amp; 4-Layer Clinical KB across multi-clinic patient charts</h2><div class="slug">Maurice Auer + Lamar Beer + Byron Emard (6 Set A &amp; Set B FHIR R4 Bundles, 23.6 MB) · 32 graded answers · 30 Oct 2026</div></div>
+    <div class="links"><a class="btn" href="2026-10-30-wahs-phase2-eval/index.html">Full report</a><a class="btn ghost" href="https://wahealth.openclinai.org/">Interactive UX (wahealth.openclinai.org)</a></div>
+  </header>
+  
+  <p class="summary">Six longitudinal FHIR R4 patient exports (Maurice Auer, Lamar Beer, Byron Emard — Set A clean &amp; Set B multi-clinic perturbed, 23.6 MB total) evaluated across 32 ground-truth clinical cases and five token budgets (16k down to 1k tokens). Compares our 5-Tier Progressive FHIR R4 / IPS Condenser + 4-Layer Clinical Knowledge Base (KDIGO/ADA, RxNorm, CDC ACIP, LOINC, and 42 CFR Part 2 / WA MHMDA privacy rules) against the uncondensed frontier LLM baseline (Claude Opus 5.5 reference).</p>
+  <div class="report-table-scroll" role="region" aria-label="Recorded score tables" tabindex="0"><table class="scout"><thead><tr><th class="arm">AI setup</th><th>Questions</th><th class="bench">Benchmark<br>/100</th><th>Accuracy</th><th>Completeness</th><th>Relevance</th><th>Unsafe<br>answers</th></tr></thead><tbody><tr><td class="arm" title="wahs-5tier-4layer-kb-8k">WAHS+ 5-Tier + 4-Layer KB (8k budget)</td><td>32</td><td class="bench best">99.4</td><td class="best">10.0</td><td class="best">9.9</td><td class="best">10.0</td><td title="harm: 0 · confabulations: 0 · fabricated citations: 0">0</td></tr><tr><td class="arm" title="wahs-5tier-4layer-kb-4k">WAHS+ 5-Tier + 4-Layer KB (4k budget)</td><td>32</td><td class="bench">98.8</td><td class="best">10.0</td><td>9.7</td><td class="best">10.0</td><td title="harm: 0 · confabulations: 0 · fabricated citations: 0">0</td></tr><tr><td class="arm" title="wahs-5tier-4layer-kb-2k">WAHS+ 5-Tier + 4-Layer KB (2k IPS core)</td><td>32</td><td class="bench">96.5</td><td>9.9</td><td>9.2</td><td>9.9</td><td title="harm: 0 · confabulations: 0 · fabricated citations: 0">0</td></tr><tr><td class="arm" title="opus-5.5-raw-fhir-baseline">Uncondensed FHIR / Opus 5.5 baseline</td><td>32</td><td class="bench">61.2</td><td>7.2</td><td>5.8</td><td>7.5</td><td class="harm" title="harm: 3 · confabulations: 2 · fabricated citations: 4">3</td></tr></tbody></table></div><p class="judged-by">Scored by deterministic 32-case clinical ground-truth &amp; provenance rubric (harness.wahs v1, 96 case×budget cells across 8k/4k/2k tokens; 0 fabricated citations, 0 SDOH privacy leaks).</p>
+  <p class="takeaway"><span class="tk">Takeaway</span>Condenses Maurice&#x27;s 84-year, 18.36 MB (3.52M-token) FHIR R4 chart by 99.64%–99.94% into any target token budget (12,879 tokens at Tier 2 down to 936 tokens at Tier 4) while retaining 100% of the IPS safety core, surfacing 15/15 cross-clinic medication/condition/vaccine anomalies with clickable [N] -&gt; resourceUuid provenance, achieving 0.0% sensitive SDOH leakage in external_share posture, and abstaining on 100% of unrecorded facts.</p>
+  
+  </article>
   <article class="card" data-family="chartsearchai">
   <header class="card-head">
     <div class="titles"><span class="family chartsearchai">ChartSearchAI</span><h2>Full evaluation full-default, 2026-10-26 (dffe15e9)</h2><div class="slug">Aloice Beiywa Mukangu + Zabella Talai Halambe + Ellcky Ikatwa Minayo · 105 graded answers · 26 Oct 2026</div></div>

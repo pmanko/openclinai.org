@@ -339,7 +339,11 @@ def _scout_table(scout: list[dict], labels: dict | None = None) -> str:
     return table
 
 
-FAMILY_LABELS = {"chartsearchai": "ChartSearchAI", "catalyst": "Catalyst SQL"}
+FAMILY_LABELS = {
+    "chartsearchai": "ChartSearchAI",
+    "catalyst": "Catalyst SQL",
+    "wahs": "WA Health Summary",
+}
 
 
 def _family(entry: dict, gathered: dict) -> str:
@@ -466,13 +470,14 @@ _STYLE_CORE = """
     border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;}
   .filter button[aria-pressed="true"]{background:var(--accent);color:var(--btn-fg);border-color:var(--accent);}
   body[data-filter="chartsearchai"] .card:not([data-family="chartsearchai"]),
-  body[data-filter="catalyst"] .card:not([data-family="catalyst"]){display:none;}
+  body[data-filter="catalyst"] .card:not([data-family="catalyst"]),
+  body[data-filter="wahs"] .card:not([data-family="wahs"]){display:none;}
   .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px 24px;margin-bottom:22px;}
   .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:6px;}
   .titles h2{margin:0;font-size:20px;color:var(--ink);font-weight:600;line-height:1.3;}
   .family{display:inline-block;margin:0 0 6px;padding:2px 7px;border:1px solid var(--border);
     border-radius:999px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;}
-  .family.catalyst{color:var(--accent);border-color:var(--accent);}
+  .family.catalyst,.family.wahs{color:var(--accent);border-color:var(--accent);}
   .titles .slug{color:var(--muted);font-size:13px;margin-top:4px;}
   .links{display:flex;gap:8px;flex-wrap:wrap;}
   .btn{display:inline-block;text-decoration:none;background:var(--accent);color:var(--btn-fg);

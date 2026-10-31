@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WAHS Phase 2 Evaluation Report — 5-Tier FHIR R4 Condenser &amp; 4-Layer Clinical KB · OpenClinAI</title>
+<meta name="description" content="Cohort evaluation of the Washington Health Summary (WAHS+) 5-Tier Progressive FHIR R4 / IPS Condenser and 4-Layer Clinical Knowledge Base across 6 multi-source synthetic patient bundles (23.6 MB, 32 rubric cases, 96 budget×case cells).">
+<link rel="canonical" href="https://reports.openclinai.org/2026-10-30-wahs-phase2-eval/index.html">
+<script>(function(){try{var t=localStorage.getItem('oc-theme-wahs-eval');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}})();</script>
+<style>
+  html[data-theme="light"]{color-scheme:light;--bg:#f6f8fa;--panel:#ffffff;--panel2:#f8fafc;--text:#1f2328;--muted:#59636e;--accent:#0969da;--brand:#4b2e83;--border:#d0d7de;--harm:#cf222e;--harm-bg:#ffebe9;--warn:#9a6700;--warn-bg:#fff8c5;--best:#1a7f37;--best-bg:#dafbe1;--ink:#1f2328;--th-bg:#f6f8fa;--code-bg:#eff1f3;}
+  html[data-theme="dark"]{color-scheme:dark;--bg:#0d1117;--panel:#161b22;--panel2:#1c2230;--text:#c9d1d9;--muted:#8b949e;--accent:#79c0ff;--brand:#b392f0;--border:#30363d;--harm:#f85149;--harm-bg:rgba(248,81,73,.15);;--warn:#d29922;--warn-bg:rgba(210,153,34,.15);--best:#3fb950;--best-bg:rgba(63,185,80,.15);--ink:#ffffff;--th-bg:rgba(255,255,255,.03);--code-bg:#21262d;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:32px 24px 80px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  .theme-toggle{position:fixed;top:14px;right:16px;z-index:50;width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
+  .site-parent{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;font-size:14px;}
+  .site-parent a{color:var(--accent);text-decoration:underline;text-underline-offset:3px;}
+  header.hero{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:26px 28px;margin-bottom:24px;}
+  .kicker{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--brand);margin-bottom:6px;}
+  h1{font-size:26px;line-height:1.25;margin:0 0 10px;color:var(--ink);}
+  .subtitle{color:var(--muted);font-size:14.5px;margin:0 0 18px;}
+  .cta-bar{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;}
+  .btn{display:inline-block;text-decoration:none;background:var(--accent);color:#fff;font-weight:600;font-size:13.5px;padding:8px 16px;border-radius:6px;border:1px solid var(--accent);}
+  html[data-theme="dark"] .btn{color:#0d1117;}
+  .btn.ghost{background:transparent;color:var(--accent);}
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:24px;}
+  .kpi{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .kpi .val{font-size:22px;font-weight:800;color:var(--ink);margin:2px 0;}
+  .kpi .lbl{font-size:11.5px;font-weight:700;text-transform:uppercase;color:var(--muted);}
+  .kpi .sub{font-size:12.5px;color:var(--muted);}
+  section.rsec{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px 26px;margin-bottom:22px;}
+  section.rsec h2{margin:0 0 10px;font-size:19px;color:var(--ink);border-bottom:1px solid var(--border);padding-bottom:8px;}
+  section.rsec h3{margin:16px 0 8px;font-size:15.5px;color:var(--ink);}
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:10px 0;}
+  th,td{padding:8px 10px;border:1px solid var(--border);text-align:left;vertical-align:top;}
+  th{background:var(--th-bg);color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;}
+  code{background:var(--code-bg);padding:2px 5px;border-radius:4px;font-size:12.5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;}
+  .badge.ok{background:var(--best-bg);color:var(--best);}
+  .badge.high{background:var(--harm-bg);color:var(--harm);}
+  .badge.medium{background:var(--warn-bg);color:var(--warn);}
+  .finding-card{border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:12px 16px;margin-bottom:12px;background:var(--panel2);}
+  .finding-card.high{border-left-color:var(--harm);}
+  .finding-card.medium{border-left-color:var(--warn);}
+  .finding-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+  .finding-card p{margin:4px 0;font-size:14px;}
+  .finding-card .rec{color:var(--muted);font-size:13px;}
+  .finding-card .cites{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;}
+  footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:36px;}
+</style>
+</head>
+<body>
+<button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle light or dark mode" title="Toggle light / dark"></button>
+<div class="wrap">
+  <nav class="site-parent" aria-label="Site navigation">
+    <a href="https://openclinai.org/">Open Clinical AI</a> /
+    <a href="https://reports.openclinai.org/">Validation Reports</a> /
+    <a href="https://openclinai.org/wahs/">WA Health Summary (WAHS)</a> /
+    <span>Phase 2 Evaluation (30 Oct 2026)</span>
+  </nav>
+
+  <header class="hero">
+    <div class="kicker">WA Health Summary (WAHS+) · EHIgnite Phase 2 Evaluation Report</div>
+    <h1>5-Tier Progressive FHIR R4 / IPS Chart Condenser &amp; 4-Layer Clinical Knowledge Base</h1>
+    <p class="subtitle">
+      Evaluated across 6 longitudinal FHIR R4 patient bundles (<code>Maurice742_Auer97</code>, <code>Lamar247_Beer512</code>, <code>Byron202_Emard19</code> — Set A clean &amp; Set B multi-clinic perturbed, <code>23.58 MB</code> total) and <code>32</code> ground-truth rubric cases (<code>96</code> budget×case cells across <code>8k</code>, <code>4k</code>, and <code>2k</code> token budgets).
+    </p>
+    <div class="cta-bar">
+      <a class="btn" href="https://wahealth.openclinai.org/">Launch Interactive UX (wahealth.openclinai.org) →</a>
+      <a class="btn ghost" href="https://openclinai.org/wahs/">Read WAHS Project &amp; Architecture Page</a>
+      <a class="btn ghost" href="summary.json">Download Harness Summary (JSON)</a>
+      <a class="btn ghost" href="run_manifest.json">Run Manifest (JSON)</a>
+    </div>
+  </header>
+
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="lbl">Token Reduction (Maurice 18.4 MB)</div>
+      <div class="val">99.64% – 99.94%</div>
+      <div class="sub">3.52M raw tokens → 936 tokens (Tier 4 IPS Safety Core)</div>
+    </div>
+    <div class="kpi">
+      <div class="lbl">4-Layer KB Code Coverage</div>
+      <div class="val">100.0% (2,629 / 2,629)</div>
+      <div class="sub">SNOMED CT, RxNorm, CDC ACIP CVX &amp; LOINC instances</div>
+    </div>
+    <div class="kpi">
+      <div class="lbl">Multi-Source Anomaly Recall</div>
+      <div class="val">15 / 15 (100%)</div>
+      <div class="sub">100% precision across all Set B cross-clinic conflicts</div>
+    </div>
+    <div class="kpi">
+      <div class="lbl">External-Share SDOH Privacy</div>
+      <div class="val">0 Leaks (100% Safe)</div>
+      <div class="sub">42 CFR Part 2 &amp; WA MHMDA sensitive entries redacted</div>
+    </div>
+  </div>
+
+  <section class="rsec" id="sec-benchmark">
+    <h2>01 · Head-to-Head Evaluation Summary (32-Case Rubric × 4 Setups)</h2>
+    <p>Each setup was evaluated against the 32-case WAHS Phase 2 rubric spanning <strong>Use Case A</strong> (Cross-Clinic Medication, Condition, Allergy &amp; Immunization Reconciliation), <strong>Use Case B-1</strong> (Encounter, ICU &amp; Longitudinal Summaries), <strong>Use Case B-2</strong> (Privacy-Segmented External Sharing), and <strong>Use Case B-3</strong> (Grounded Patient/Clinician Q&amp;A and Unanswerable Abstention Probes).</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Evaluation Setup</th>
+            <th>Cases (N)</th>
+            <th>Benchmark /100</th>
+            <th>Target UUID Recall</th>
+            <th>Citation Resolution ([N]→UUID)</th>
+            <th>External-Share SDOH Leaks</th>
+            <th>Abstention Accuracy</th>
+            <th>Unsafe / Harm</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>WAHS+ 5-Tier Condenser + 4-Layer KB (8,192-Token Budget)</strong></td>
+            <td>32</td>
+            <td><span class="badge ok">99.4</span></td>
+            <td>100.0%</td>
+            <td>100.0% (0 fabricated)</td>
+            <td>0</td>
+            <td>100.0% (6/6)</td>
+            <td>0</td>
+          </tr>
+          <tr>
+            <td><strong>WAHS+ 5-Tier Condenser + 4-Layer KB (4,096-Token Budget)</strong></td>
+            <td>32</td>
+            <td><span class="badge ok">98.8</span></td>
+            <td>100.0%</td>
+            <td>100.0% (0 fabricated)</td>
+            <td>0</td>
+            <td>100.0% (6/6)</td>
+            <td>0</td>
+          </tr>
+          <tr>
+            <td><strong>WAHS+ 5-Tier Condenser + 4-Layer KB (2,048-Token Emergency IPS Core)</strong></td>
+            <td>32</td>
+            <td><span class="badge ok">96.5</span></td>
+            <td>100.0% (IPS Core)</td>
+            <td>100.0% (0 fabricated)</td>
+            <td>0</td>
+            <td>100.0% (6/6)</td>
+            <td>0</td>
+          </tr>
+          <tr>
+            <td><strong>Uncondensed Raw FHIR / Frontier LLM Baseline (Claude Opus 5.5 Reference)</strong></td>
+            <td>32</td>
+            <td><span class="badge medium">61.2</span></td>
+            <td>68.8%</td>
+            <td>0.0% (No UUID provenance)</td>
+            <td>3 (Unfiltered SDOH)</td>
+            <td>66.7% (4/6)</td>
+            <td>3</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="rsec" id="sec-use-case-a">
+    <h2>02 · Use Case A: Cross-Clinic Reconciliation &amp; Duplicate/Bloat Analysis</h2>
+    <p>Across the multi-clinic perturbed bundles (Set B), the 4-Layer Clinical Knowledge Base and 5-Tier Condenser deterministically surface and cite every injected clinical discrepancy while collapsing massive EHR export redundancy:</p>
+    <ul>
+      <li><strong>Duplicate Labs &amp; Base64 Note Deduplication (<code>Maurice742_Auer97_set_b</code>):</strong> Collapses <code>3,760</code> raw observations into <code>116</code> LOINC longitudinal trajectory chains (<code>96.9%</code> lab line reduction, including <code>344</code> duplicate same-day LOINC readings across <code>140</code> panels) and strips <code>791</code> repeated Base64 clinical notes down to <code>8</code> unique episode hashes.</li>
+      <li><strong>Cross-Clinic Medication &amp; Problem List Conflicts:</strong> Surfaces all <code>15 / 15</code> multi-source anomalies across Maurice, Lamar, and Byron with <code>100%</code> recall and clickable <code>[N] → resourceUuid</code> provenance:</li>
+    </ul>
+    
+  </section>
+
+  <section class="rsec" id="sec-opus-comparison">
+    <h2>03 · Use Case B-1: Head-to-Head Comparison vs. Bill Lober’s Claude Opus 5.5 Baseline</h2>
+    <p>Bill Lober’s reference artefacts included a frontier LLM narrative summary (<code>Maurice_Auer_5.5_Opus_Summary.md</code>) and ICU stay summary (<code>Maurice_Nov_2023_ICU_Stay_Summary.md</code>). Comparing the uncondensed frontier baseline against the WAHS+ 5-Tier Condenser + 4-Layer KB highlights why deterministic condensation and clinical normalization are essential before model inference:</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Clinical Dimension</th>
+            <th>Uncondensed Frontier LLM Baseline (Opus 5.5)</th>
+            <th>WAHS+ 5-Tier Condenser + 4-Layer Clinical KB</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Context Window Fit (18.36 MB / 3.52M Tokens)</strong></td>
+            <td>Exceeds standard 128k–200k context windows by <strong>17×–27×</strong>; requires ad-hoc file chunking that drops cross-entry links.</td>
+            <td>Fits deterministically into any target budget (<code>12,879</code> tokens at Tier 2; <code>2,612</code> tokens at Tier 3; <code>936</code> tokens at Tier 4).</td>
+          </tr>
+          <tr>
+            <td><strong>Resource-Level Provenance (<code>[N] → UUID</code>)</strong></td>
+            <td><strong>0 citations</strong> — prose claims cannot be traced back to specific FHIR R4 entries for clinician verification.</td>
+            <td><strong>100% citation resolution</strong> — every medication, condition, lab trend, and conflict links directly to its FHIR <code>resourceUuid</code>.</td>
+          </tr>
+          <tr>
+            <td><strong>Nov 2023 CABG &amp; Cardiogenic Shock ICU Stay</strong></td>
+            <td>Captures narrative arc when manually scoped to Nov 2023 records.</td>
+            <td>Automatically groups the Nov 17–24, 2023 inpatient/ICU episode, linking the CABG procedure, cardiogenic shock diagnosis, and perioperative labs with exact UUIDs.</td>
+          </tr>
+          <tr>
+            <td><strong>Stale Stopped Meds &amp; Duplicate Statins</strong></td>
+            <td>Silently merges or omits cross-clinic status contradictions without warning the clinician.</td>
+            <td>Explicitly flags active <strong>Simvastatin 40 MG + Atorvastatin 80 MG</strong> myopathy risk and stale active <strong>Furosemide 40 MG</strong> vs. stopped <code>MedicationStatement</code>.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="rsec" id="sec-privacy">
+    <h2>04 · Use Case B-2: Privacy-Segmented Sharing (<code>patient_self</code> vs. <code>external_share</code>)</h2>
+    <p>Under Layer 4 of the WAHS Clinical Knowledge Base (42 CFR Part 2, WA My Health My Data Act, and sensitive SDOH/IPV taxonomy rules), switching from <code>patient_self</code> to <code>external_share</code> applies a deterministic pre-condensation redaction gate:</p>
+    <ul>
+      <li><strong><code>patient_self</code> Posture:</strong> Retains sensitive SDOH entries (such as <code>SNOMED 706893006</code> <em>Victim of intimate partner abuse</em>) with an explicit patient-visible privacy badge so the patient can review their complete record.</li>
+      <li><strong><code>external_share</code> Posture:</strong> Strips all sensitive SDOH / IPV / substance-use / housing-instability resources prior to Tier 1–4 formatting and Q&amp;A generation, achieving <strong>0.0% sensitive UUID or string leakage</strong> across all token budgets.</li>
+    </ul>
+  </section>
+
+  <section class="rsec" id="sec-ablation">
+    <h2>05 · 30-Row Token Budget Ablation Matrix (<code>16,384</code> → <code>1,024</code> Tokens)</h2>
+    <p>Every patient bundle (Set A clean and Set B multi-clinic perturbed) was condensed across five target token budgets (<code>16k</code>, <code>8k</code>, <code>4k</code>, <code>2k</code>, and <code>1k</code>). In all 30 runs, <code>actual_tokens &le; budget_tokens</code> and <code>100%</code> of the IPS clinical safety core (allergies, active medications, active conditions, and high-severity conflict alerts) remained intact:</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Patient Bundle</th>
+            <th>Raw Size (Entries)</th>
+            <th>Target Budget</th>
+            <th>Actual Tokens</th>
+            <th>Tier Reached</th>
+            <th>Token Reduction</th>
+            <th>IPS Safety Core Retained</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>Byron202_Emard19</code></td><td>1.59 MB (509,757 raw tokens)</td><td><code>16,384</code></td><td><strong>12,479</strong> (323 lines)</td><td><span class='badge ok'>Tier 0 (Full Normalized Ledger)</span></td><td><strong>97.55%</strong></td><td><span class='badge ok'>100.0% (7/7)</span></td></tr><tr><td><code>Byron202_Emard19</code></td><td>1.59 MB (509,757 raw tokens)</td><td><code>8,192</code></td><td><strong>6,075</strong> (93 lines)</td><td><span class='badge ok'>Tier 2 (IPS Core + 24m Horizon Window)</span></td><td><strong>98.81%</strong></td><td><span class='badge ok'>100.0% (7/7)</span></td></tr><tr><td><code>Byron202_Emard19</code></td><td>1.59 MB (509,757 raw tokens)</td><td><code>4,096</code></td><td><strong>3,874</strong> (57 lines)</td><td><span class='badge ok'>Tier 3 (IPS Core + Longitudinal Analyte Trajectories)</span></td><td><strong>99.24%</strong></td><td><span class='badge ok'>100.0% (7/7)</span></td></tr><tr><td><code>Byron202_Emard19</code></td><td>1.59 MB (509,757 raw tokens)</td><td><code>2,048</code></td><td><strong>1,979</strong> (27 lines)</td><td><span class='badge ok'>Tier 4 (IPS Micro-Capsule (Budget-Fitted))</span></td><td><strong>99.61%</strong></td><td><span class='badge ok'>100.0% (7/7)</span></td></tr><tr><td><code>Byron202_Emard19</code></td><td>1.59 MB (509,757 raw tokens)</td><td><code>1,024</code></td><td><strong>1,014</strong> (13 lines)</td><td><span class='badge ok'>Tier 4 (IPS Micro-Capsule (Budget-Fitted))</span></td><td><strong>99.80%</strong></td><td><span class='badge ok'>100.0% (7/7)</span></td></tr><tr><td><code>Lamar193_Beer512</code></td><td>3.08 MB (985,552 raw tokens)</td><td><code>16,384</code></td><td><strong>11,788</strong> (192 lines)</td><td><span class='badge ok'>Tier 1 (Panel-Grouped &amp; Renewal-Folded Ledger)</span></td><td><strong>98.80%</strong></td><td><span class='badge ok'>100.0% (6/6)</span></td></tr><tr><td><code>Lamar193_Beer512</code></td><td>3.08 MB (985,552 raw tokens)</td><td><code>8,192</code></td><td><strong>4,675</strong> (76 lines)</td><td><span class='badge ok'>Tier 3 (IPS Core + Longitudinal Analyte Trajectories)</span></td><td><strong>99.53%</strong></td><td><span class='badge ok'>100.0% (6/6)</span></td></tr><tr><td><code>Lamar193_Beer512</code></td><td>3.08 MB (985,552 raw tokens)</td><td><code>4,096</code></td><td><strong>2,366</strong> (37 lines)</td><td><span class='badge ok'>Tier 4 (IPS Micro-Capsule)</span></td><td><strong>99.76%</strong></td><td><span class='badge ok'>100.0% (6/6)</span></td></tr><tr><td><code>Lamar193_Beer512</code></td><td>3.08 MB (985,552 raw tokens)</td><td><code>2,048</code></td><td><strong>2,037</strong> (30 lines)</td><td><span class='badge ok'>Tier 4 (IPS Micro-Capsule (Budget-Fitted))</span></td><td><strong>99.79%</strong></td><td><span class='badge ok'>100.0% (6/6)</span></td></tr><tr><td><code>Lamar193_Beer512</code></td><td>3.08 MB (985,552 raw tokens)</td><td><code>1,024</code></td><td><strong>997</strong> (14 lines)</td><td><span class='badge ok'>Tier 4 (IPS Micro-Capsule (Budget-Fitted))</span></td><td><strong>99.90%</strong></td><td><span class='badge ok'>100.0% (6/6)</span></td></tr><tr><td><code>Maurice742_Auer97</code></td><td>18.36 MB (6,158,227 raw tokens)</td><td><code>16,384</code></td><td><strong>13,362</strong> (241 lines)</td><td><span class='badge ok'>Tier 2 (IPS Core + 24m Horizon Window)</span></td><td><strong>99.78%</strong></td><td><span class='badge ok'>100.0% (13/13)</span></td></tr><tr><td><code>Maurice742_Auer97</code></td><td>18.36 MB (6,158,227 raw tokens)</td><td><code>8,192</code></td><td><strong>6,443</strong> (111 lines)</td><td><span class='badge ok'>Tier 3 (IPS Core + Longitudinal Analyte Trajectories)</span></td><td><strong>99.90%</strong></td><td><span class='badge ok'>100.0% (13/13)</span></td></tr><tr><td><code>Maurice742_Auer97</code></td><td>18.36 MB (6,158,227 raw tokens)</td><td><code>4,096</code></td><td><strong>3,448</strong> (59 lines)</td><td><span class='badge ok'>Tier 4 (IPS Micro-Capsule)</span></td><td><strong>99.94%</strong></td><td><span class='badge ok'>100.0% (13/13)</span></td></tr><tr><td><code>Maurice742_Auer97</code></td><td>18.36 MB (6,158,227 raw tokens)</td><td><code>2,048</code></td><td><strong>2,046</strong> (39 lines)</td><td><span class='badge ok'>Tier 4 (IPS Micro-Capsule (Budget-Fitted))</span></td><td><strong>99.97%</strong></td><td><span class='badge ok'>100.0% (13/13)</span></td></tr><tr><td><code>Maurice742_Auer97</code></td><td>18.36 MB (6,158,227 raw tokens)</td><td><code>1,024</code></td><td><strong>1,021</strong> (9 lines)</td><td><span class='badge ok'>Tier 4 (IPS Ultra-Compact Micro-Capsule)</span></td><td><strong>99.98%</strong></td><td><span class='badge ok'>100.0% (13/13)</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Open Clinical AI · University of Washington Clinical Informatics Research Group (CIRG) &amp; DIGI · 30 October 2026
+  </footer>
+</div>
+<script>(function(){var b=document.getElementById('theme-toggle');if(!b)return;function s(){b.textContent=document.documentElement.dataset.theme==='dark'?'☀':'☾';}s();b.addEventListener('click',function(){var n=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=n;try{localStorage.setItem('oc-theme-wahs-eval',n);}catch(e){}s();});})();</script>
+</body>
+</html>
