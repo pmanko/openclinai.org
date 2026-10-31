@@ -51,6 +51,17 @@ def fetch_pr(checkout: Path, remote: str, pr: int) -> str:
     return git(checkout, "rev-parse", f"refs/review/pr/{pr}").strip()
 
 
+def current_identity(slug: str, pr: int) -> dict:
+    out = subprocess.run(["gh", "pr", "view", str(pr), "-R", slug, "--json",
+                          "headRefOid,baseRefOid,baseRefName"],
+                         capture_output=True, text=True, check=True).stdout
+    identity = json.loads(out)
+    if not isinstance(identity, dict) or any(not isinstance(identity.get(k), str) or not identity[k]
+            for k in ("headRefOid", "baseRefOid", "baseRefName")):
+        raise ValueError("PR identity is unavailable")
+    return identity
+
+
 def worktree(checkout: Path, path: Path, ref: str, branch: str | None = None) -> Path:
     if not (path / ".git").exists():
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -565,10 +576,15 @@ def main() -> int:
         data = last_json(answer)
         changed = git(wt, "diff", "--name-only", f"{base}...{target}").splitlines()
         validate_review(data, target, changed)
-        fresh = fetch_pr(checkout, remote, args.pr)
+        fresh = current_identity(slug, args.pr) if not args.head else None
+        stale = bool(fresh and (fresh["headRefOid"] != head or fresh["baseRefOid"] != base
+                               or fresh["baseRefName"] != meta["base"]))
+        if args.stack and layers:
+            stale |= current_identity(slug, layers[-1]["number"])["headRefOid"] != target
         data.update(repo=args.repo, repository=slug, pr=args.pr, requested_head=head, base=base,
+                    base_branch=meta["base"], identity_after=fresh,
                     consumer_head=consumer_sha if consumer else None,
-                    execution=("superseded" if not args.head and fresh != head else "partial" if data["unreviewed_files"] else "complete"),
+                    execution=("superseded" if stale else "partial" if data["unreviewed_files"] else "complete"),
                     behavior_verification="see evidence; not inferred from source review",
                     findings=settle(data["findings"]))
         data["dependency_files"] = {str(p.relative_to(wt)): hashlib.sha256(p.read_bytes()).hexdigest()

@@ -2,7 +2,8 @@
 
 The review driver now supports explicit fork identities and the umbrella, Hub and
 harness checkouts. Review reports account for changed files and preserve requested,
-examined, base and consumer revisions. Invalid results fail; incomplete or stale
+examined, base and consumer revisions. PR head, base and stack-top identity are
+checked again after the review. Invalid results fail; incomplete or stale
 source reviews remain undetermined. Source review does not certify runtime behavior.
 
 The pytest and Maven runners read fresh JUnit results, exclude skipped cases, and separate

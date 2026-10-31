@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 REVIEW = ROOT / "review" / "bin" / "review.py"
 
 GH = """#!/usr/bin/env python3
-import json, sys
+import json, os, sys
 if sys.argv[1:3] == ["api", "graphql"]:
     print(json.dumps({"data": {"repository": {"pullRequest": {
         "number": 1, "title": "Clamp", "body": "Fixes the low end", "url": "u",
@@ -22,6 +22,8 @@ if sys.argv[1:3] == ["api", "graphql"]:
         "isResolved": False, "isOutdated": False, "path": "calc.py", "line": 2,
         "originalLine": 2, "comments": {"nodes": [{"author": {"login": "maint"},
         "createdAt": "2026-10-20T00:00:00Z", "body": "Low end?", "url": "c1"}]}}]}}}}}))
+elif sys.argv[1:3] == ["pr", "view"]:
+    print(os.environ["REVIEW_IDENTITY"])
 else:
     print("[]")
 """
@@ -42,6 +44,7 @@ def test_a_round_records_findings_and_downgrades_unevidenced_blockers(tmp_path):
         "--allow-empty", "-m", "base")
     git(repo, "remote", "add", "upstream", str(upstream))
     git(repo, "push", "-q", "upstream", "main")
+    base = git(repo, "rev-parse", "HEAD")
     (repo / "calc.py").write_text("x = 1\n")
     git(repo, "add", "calc.py")
     git(repo, "-c", "user.email=d@example.test", "-c", "user.name=D", "commit", "-q", "-m", "fix")
@@ -54,6 +57,8 @@ def test_a_round_records_findings_and_downgrades_unevidenced_blockers(tmp_path):
     (stub / "gh").chmod(0o755)
     work = tmp_path / "work"
     env = {**os.environ, "PATH": f"{stub}:{os.environ['PATH']}", "REVIEW_WORK": str(work)}
+    identity = dict(headRefOid=head, baseRefOid=base, baseRefName="main")
+    env["REVIEW_IDENTITY"] = json.dumps(identity)
     cmd = [sys.executable, str(REVIEW), "--pr", "1", "--repo", "querystore",
            "--checkout", str(repo), "--agent", "human", "--effort", "low"]
 
@@ -76,3 +81,14 @@ def test_a_round_records_findings_and_downgrades_unevidenced_blockers(tmp_path):
     findings = json.loads((out_dir / "findings-1.json").read_text())["findings"]
     assert [f["blocking"] for f in findings] == [False, True]
     assert "downgraded" in findings[0]
+
+    # A source review with no findings cannot certify a changed PR comparison.
+    answer["findings"] = []
+    (out_dir / "reviewer-1.md").write_text("```json\n" + json.dumps(answer) + "\n```\n")
+    for changed in ({"headRefOid": base}, {"baseRefOid": head}, {"baseRefName": "release"}):
+        env["REVIEW_IDENTITY"] = json.dumps({**identity, **changed})
+        result = subprocess.run(cmd, env=env, capture_output=True, text=True)
+        assert result.returncode == 0, result.stderr
+        report = json.loads((out_dir / "result.json").read_text())
+        assert report["execution"] == "superseded"
+        assert report["assessment"] == "undetermined"

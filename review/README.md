@@ -74,7 +74,7 @@ commit and push between rounds. Full evaluation reports remain local unless
 `PUBLISH_EVALUATION=1` or `PUBLISH=<run directory>` is selected.
 
 Reports must identify the examined revision and account for every changed file.
-Incomplete coverage is `partial`; a changed PR head is `superseded`. Neither can
+Incomplete coverage is `partial`; a changed PR head, base or stack top is `superseded`. Neither can
 produce `no_findings`. Findings, execution status and behavior verification are
 separate: a source review does not establish deployed-runtime acceptance.
 
