@@ -144,6 +144,7 @@ def gather(slug: str) -> dict:
     family = str(meta.get("report_family") or "chartsearchai")
     out: dict = {
         "family": family,
+        "evaluation_modality": str(meta.get("evaluation_modality") or ""),
         "reader_led": False,
         # Facts frozen beside a report whose packet no longer carries its results.
         "cells": meta.get("cells"),
@@ -345,6 +346,12 @@ FAMILY_LABELS = {
     "wahs": "WA Health Summary",
 }
 
+MODALITY_LABELS = {
+    "deterministic_pipeline": "Deterministic Pipeline Gate",
+    "condensation_retrieval_ablation": "Condensation & Retrieval Ablation",
+    "live_model_and_team_eval": "Live Model & KB Team Evaluation",
+}
+
 
 def _family(entry: dict, gathered: dict) -> str:
     return str(entry.get("family") or gathered.get("family") or "chartsearchai")
@@ -383,12 +390,20 @@ def _card(entry: dict) -> str:
     if g["patients"]:
         facts.append(esc(g["patients"]))
     if g["cells"] is not None:
-        unit = "conversations" if g.get("family") == "catalyst" else "graded answers"
+        modality = str(entry.get("evaluation_modality") or g.get("evaluation_modality") or "")
+        if g.get("family") == "catalyst":
+            unit = "conversations"
+        elif modality == "deterministic_pipeline":
+            unit = "rubric cases"
+        else:
+            unit = "graded answers"
         facts.append(f'{g["cells"]} {unit}')
     if g["date"]:
         facts.append(esc(g["date"]))
     subtitle = " · ".join(facts)
     family = _family(entry, g)
+    modality = str(entry.get("evaluation_modality") or g.get("evaluation_modality") or "")
+    modality_label = MODALITY_LABELS.get(modality, modality)
     if family == "catalyst":
         # Labels name the question each page answers, not the artifact kind.
         links = [f'<a class="btn" href="{esc(slug)}/index.html">Read the report</a>']
@@ -430,6 +445,8 @@ def _card(entry: dict) -> str:
                         f'{" " + esc(e["note"]) if e.get("note") else ""}</li>' for e in earlier)
                     + '</ul></div>')
     family_label = FAMILY_LABELS.get(family, family)
+    if modality_label:
+        family_label = f"{family_label} · {modality_label}"
     return f"""  <article class="card" data-family="{esc(family)}">
   <header class="card-head">
     <div class="titles"><span class="family {esc(family)}">{esc(family_label)}</span><h2>{esc(entry["title"])}</h2><div class="slug">{subtitle}</div></div>
