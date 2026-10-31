@@ -124,6 +124,9 @@ def settle(findings: list[dict]) -> list[dict]:
 
 def run_role(args, role: str, workdir: Path, prompt: str, out: Path) -> str:
     prompt_file = out.with_suffix(".prompt.md")
+    scratch = out.parent / "scratch"
+    scratch.mkdir(exist_ok=True)
+    prompt += f"\nKeep all working scripts and logs in {scratch}, never /tmp. Preserve reproduction scripts there.\n"
     if role != "fixer":
         prompt += ("\nYour final message is saved as your answer: do not write it to a file, and "
                    "leave the repository as you found it.\n")

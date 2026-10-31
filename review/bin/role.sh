@@ -12,7 +12,7 @@ tools="Bash Read Grep Glob WebFetch"
 [ "$role" = fixer ] && tools="$tools Edit Write"
 case $agent in
   claude) (cd "$workdir" && claude -p --allowedTools "$tools" < "$prompt") > "$out" ;;
-  codex)  codex exec -C "$workdir" -s workspace-write -m "$model" -c "model_reasoning_effort=\"$reasoning\"" \
+  codex)  codex exec -C "$workdir" --add-dir "$(dirname "$out")" -s workspace-write -m "$model" -c "model_reasoning_effort=\"$reasoning\"" \
             -o "$out" - < "$prompt" > "$out.log" 2>&1 ;;
   gemini) (cd "$workdir" && gemini --approval-mode yolo -p "Follow the instructions given on stdin." < "$prompt") > "$out" ;;
   human)

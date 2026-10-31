@@ -14,13 +14,14 @@ Verification:
 
 - `targets/validation-harness/.venv/bin/python -m pytest tests/review -q`: 30 passed.
 - `python3 -m unittest discover -s tests -v`: 19 passed.
-- `python3 scripts/check_workspace.py`: failed because four components are
-  uninitialized and the Hub/harness checkouts are at PR heads rather than umbrella pins.
+- `python3 scripts/check_workspace.py`: passed in an isolated clean checkout with
+  all recorded component pins initialized. The active implementation checkout remains
+  at PR heads and is not used as pin-validation evidence.
 - Harness #205: interface repair `5597288`, diagnostic correction `0059042`;
   seven focused tests and 1,209 full-suite tests passed before the diagnostic-only
   correction; seven focused tests passed again afterward. Remote checks passed.
 - Harness #203: calibration-gate repair `1143a89`; seven focused tests and
-  1,191 full-suite tests passed. Remote checks pending at this record's creation.
+  1,191 full-suite tests passed. Remote checks passed.
 - The actual Hub router with a synthetic two-patient catalog and fixed harness client
   selected the requested patient, preserved the observed 906-token count, resolved
   citations and recognized abstention. No model or deployed service was involved.
