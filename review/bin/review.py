@@ -30,8 +30,8 @@ ACTIVE_RESULT = None
 REPOS = {"chartsearchai": "targets/chartsearchai", "esm": "targets/chartsearchai-esm",
          "querystore": "targets/querystore", "hub": "targets/med-agent-hub",
          "harness": "targets/validation-harness", "umbrella": "."}
-# The repository on the other side of each one's contract, checked out at the umbrella's
-# gitlink (the stack top) so a reviewer can read what the consumer sends and expects.
+# The other side of the contract. Select its feature revision explicitly when stacks
+# differ; otherwise use its current local checkout and record that limitation.
 CONSUMERS = {"querystore": "chartsearchai", "chartsearchai": "querystore", "esm": "chartsearchai", "hub": "harness", "harness": "hub"}
 OPENMRS = re.compile(r"github\.com[:/]+(openmrs/[^/\s]+?)(\.git)?$")
 
