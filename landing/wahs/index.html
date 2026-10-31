@@ -53,7 +53,7 @@
 <p class="overview-lead">People receiving care across multiple clinics, hospitals, and pharmacies often end up with large, fragmented health exports filled with repeated lab panels, duplicate notes, outdated problem-list stages, and conflicting medication lists. The WA Health Summary workstream explores how clinical rules and open-weight AI can condense these exports into a clear, verifiable summary that patients control and clinicians can trust.</p>
 <div class="project-actions">
 <a class="button button-primary" href="https://wahs-demo.openclinai.org/">Open the interactive WAHS demo <span aria-hidden="true">→</span></a>
-<a class="button button-secondary" href="https://reports.openclinai.org/2026-10-30-wahs-phase2-eval/index.html">Read the evaluation report <span aria-hidden="true">→</span></a>
+<a class="button button-secondary" href="https://reports.openclinai.org/2026-10-31-wahs-live-model-team-eval/index.html">Read the Phase 3 evaluation reports <span aria-hidden="true">→</span></a>
 </div>
 </div>
 </div>
@@ -64,19 +64,19 @@
 <h2>Four steps from a raw health export to a shareable summary</h2>
 <div class="workflow-grid">
 <article>
-<span>01 · Condense</span>
-<h3>Clean and condense large records</h3>
-<p>Multi-year FHIR R4 exports can exceed 18 megabytes and 7,000 entries—far too large for a clinician to scan or a language model to read at once. A progressive 5-tier condenser removes duplicate notes, groups repeated lab readings into longitudinal trends, and fits the record into a predictable size while keeping every allergy, active medication, and active condition intact.</p>
+<span>01 · Condense (Non-Destructive)</span>
+<h3>Condense without mutating clinical content</h3>
+<p>Multi-year FHIR R4 exports can exceed 18 megabytes and 7,000 entries—far too large for a clinician to scan or a language model to read at once. Our content-invariant structural condenser (`W12`) strips FHIR transport boilerplate and collapses byte-identical Base64 note attachments while keeping active problems, active medications, allergies, immunizations, and intraday lab timestamps verbatim—exposing older overflow history on demand via read-only chart lookup tools (`W7`).</p>
 </article>
 <article>
-<span>02 · Reconcile</span>
-<h3>Catch cross-clinic conflicts</h3>
-<p>When records arrive from separate clinics or registries, the same medication may appear under both brand and generic names, two drugs from the same class may be listed as active simultaneously, or earlier disease stages may remain marked active alongside newer stages. Deterministic clinical checks highlight these discrepancies so patients and clinicians can review them.</p>
+<span>02 · Reconcile (Skill Findings)</span>
+<h3>Surface duplicates &amp; conflicts as findings</h3>
+<p>In a multi-clinic health summary, duplicate orders, same-day registry entries, and overlapping disease stages are clinical findings about care fragmentation—never noise to be silently deleted during ingestion. Dedicated chart-hygiene and reconciliation skills inspect the unmutated chart and surface reviewable Finding Cards (with `Source A vs. Source B` provenance and next-visit checklists) for patients and clinicians.</p>
 </article>
 <article>
-<span>03 · Protect privacy</span>
-<h3>Choose what to include before sharing</h3>
-<p>Health records frequently contain sensitive social, behavioral, or personal findings (such as domestic violence screening, justice involvement, or housing instability) stored alongside medical diagnoses. Patients can review their complete personal record in a self-view while automatically redacting sensitive entries when preparing a summary to share with an external provider.</p>
+<span>03 · Optional Privacy (Deferred W9)</span>
+<h3>Opt-in selective disclosure before external sharing</h3>
+<p>Health records can contain sensitive social, behavioral, or personal findings alongside medical diagnoses. Rather than baking redaction unconditionally into the general chart condenser, sensitive-record classification, patient-selected redaction, and cryptographic `sd-fhir` (`sd-hash`) / SMART Health Links JWE obfuscation are designed as an optional capability in the deferred Secure FHIR Bundle workstream (`W9`).</p>
 </article>
 <article>
 <span>04 · Ground &amp; verify</span>
@@ -88,16 +88,16 @@
 
 <section class="page-width project-callout" id="use-cases">
 <div>
-<p class="section-kicker">What we evaluate</p>
+<p class="section-kicker">What we evaluate &amp; current status</p>
 <h2>Grounded summaries and questions backed by source records</h2>
 <p>Every summary statement, conflict alert, and chat answer links directly to the underlying FHIR record identifier and date. When a question asks about a test, allergy, or procedure that is not in the patient’s chart, the system explicitly states that the information is not documented rather than guessing.</p>
-<p class="scope-note">Tested across synthetic patient records representing an 84-year-old adult with complex heart, kidney, and diabetes care, a 74-year-old adult with multi-clinic specialty records, and a 17-year-old adolescent with school and state registry immunizations.</p>
+<p class="scope-note">Evaluated across 11 FHIR R4 bundles (`Set A` natural, `Set B` multi-clinic perturbations, `Set C` uncoded/note-contradiction messy records, and 2 de-identified real clinical summary fixtures from MIMIC-IV-on-FHIR / SMART IPS) across 3 separated evaluation modalities: Deterministic Pipeline Gate (`W4`), Condensation &amp; Retrieval Ablation (`W7`), and Unhinted Live Local Model &amp; KB Team Evaluation (`W8`/`W13`). Deferred tracks: Optional Secure FHIR Bundle (`W9`), CIRG 4-VM H200 GPU server benchmarking (`W10`), and partner-supplied WAHS summaries (`W11`).</p>
 </div>
 <div class="resource-panel">
 <h3>Try the workflows</h3>
-<p>Walk through condensation, conflict reconciliation, privacy controls, and grounded Q&amp;A step by step.</p>
+<p>Walk through non-destructive condensation, skill-based conflict findings, optional privacy preview, and grounded Q&amp;A step by step.</p>
 <a class="text-link" href="https://wahs-demo.openclinai.org/">Launch interactive UX (wahs-demo.openclinai.org) <span aria-hidden="true">→</span></a>
-<a class="text-link" href="https://reports.openclinai.org/2026-10-30-wahs-phase2-eval/index.html">Inspect the 32-case evaluation report <span aria-hidden="true">→</span></a>
+<a class="text-link" href="https://reports.openclinai.org/2026-10-31-wahs-live-model-team-eval/index.html">Inspect the live model &amp; KB team report <span aria-hidden="true">→</span></a>
 <a class="text-link" href="design-report/index.html">Open the detailed design &amp; architecture dashboard <span aria-hidden="true">→</span></a>
 </div>
 </section>
@@ -180,69 +180,69 @@
 </section>
 
 <section class="section page-width resource-section" id="open-questions" aria-labelledby="open-questions-title">
-<p class="section-kicker">Critical Review &amp; Phase 3 Roadmap</p>
-<h2 id="open-questions-title">Open questions, current limitations, and next target areas</h2>
-<p>Our Phase 2 prototype and evaluation validate the deterministic pre-LLM foundation (condensing large FHIR bundles and running clinical rule checks), but important research and engineering questions remain before live clinical or patient-facing deployment. See <a href="design-report/index.html#phase3-roadmap">Section 09 of the detailed design &amp; architecture dashboard</a> for the complete technical analysis, model inventory, and experimental design.</p>
+<p class="section-kicker">Critical Review, Phase 3 Status &amp; Deferred Tracks</p>
+<h2 id="open-questions-title">Implementation status, open questions, and next target areas</h2>
+<p>Our local Phase 3 validation (`W4`–`W8` &amp; `W12`–`W13`) separates non-destructive structural condensation from skill-based conflict findings and evaluates three distinct modalities (`Deterministic Pipeline Gate`, `Condensation &amp; Retrieval Ablation`, and `Live Model &amp; KB Team Evaluation`), while explicitly tracking deferred team and infrastructure workstreams (`W9`–`W11`). See <a href="design-report/index.html#phase3-roadmap">Section 09 of the detailed design &amp; architecture dashboard</a> for the complete technical analysis, saturation audit, model inventory, and experimental design.</p>
 <div class="resource-groups">
 <section class="resource-group">
 <h3>Evaluation rigor &amp; realistic data</h3>
 <ul class="resource-links">
 <li>
 <a href="design-report/index.html#audit-and-eval">
-<span class="resource-link-title">From rule checks to live LLM benchmarking <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Phase 2 evaluates deterministic Python condensation and rule templates. Phase 3 pairs live open-weight LLM runs with OpenAI HealthBench weighted physician rubrics, Stanford MedHELM, and VeriFact/FActScore atomic claim entailment.</span>
+<span class="resource-link-title">From rule checks to de-saturated live LLM benchmarking (W4 &amp; W13) <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Separating deterministic pipeline gates from unscripted live open-weight LLM runs over unhinted charts, scored with HealthBench weighted criteria, VeriFact atomic entailment, fractional UUID recall, and readability grading.</span>
 </a>
 </li>
 <li>
 <a href="design-report/index.html#messy-data">
-<span class="resource-link-title">Realistic, messy multi-EHR synthetic &amp; de-identified data <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Expanding beyond three clean Synthea records to 8 patient personas with a 6-Layer EHR Messiness Injector (missing codes, OCR/free-text clinical notes, conflicting sig text, C-CDA/EHI imports) and MIMIC-IV-on-FHIR cases.</span>
+<span class="resource-link-title">Pragmatic messy synthetic (Set C) &amp; real clinical summaries (W6) <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Evaluated across 11 bundles (`Set A/B`, `Set C` with 25% stripped codes and note-vs-medication contradictions, plus 2 de-identified MIMIC-IV-on-FHIR / SMART IPS summary fixtures), with partner WAHS summaries queued in `W11`.</span>
 </a>
 </li>
 <li>
 <a href="design-report/index.html#patient-scenarios">
-<span class="resource-link-title">Patient-centered question taxonomy first <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Centering scenarios on what patients and caregivers actually ask (“Are two doctors prescribing me the same pill?”, “What changed during my hospital stay?”, “What should I ask at my next visit?”) with clinician insight secondary.</span>
+<span class="resource-link-title">Patient-centered question taxonomy first (W5) <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Centering scenarios on what patients and caregivers actually ask (“Are two doctors prescribing me the same pill?”, “What changed during my hospital stay?”, “What should I ask at my next visit?”) with a secondary Clinician View toggle.</span>
 </a>
 </li>
 </ul>
 </section>
 <section class="resource-group">
-<h3>Models, GPU compute &amp; orchestration</h3>
+<h3>Models, non-destructive condensation &amp; skills</h3>
 <ul class="resource-links">
 <li>
 <a href="design-report/index.html#gpu-and-models">
-<span class="resource-link-title">Shared GPU execution &amp; model selection funnel <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Running and screening models from 1B–4B edge/browser tiers up to 8B–35B server models (Gemma 4, MedGemma, Qwen 3, Granite 4.2) on the UW CIRG NVIDIA H200 server (<code>uwcirg/llm-configs</code>).</span>
+<span class="resource-link-title">Local model screening (W8) &amp; deferred CIRG H200 GPU run (W10) <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Local screening from 1.5B–35B GGUF models on 64 GB unified memory, with 4-VM shared NVIDIA H200 MIG server benchmarking (`uwcirg/llm-configs`) queued for `W10` next week.</span>
 </a>
 </li>
 <li>
 <a href="design-report/index.html#prompting-and-teams">
-<span class="resource-link-title">Prompt engineering &amp; orchestrated KB agent teams <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Comparing single-pass prompting, cross-family label-only review, and multi-agent specialist orchestration for knowledge-base-grounded medication, lab, and guideline queries.</span>
+<span class="resource-link-title">Prompt engineering &amp; orchestrated KB agent teams (W8 &amp; W13) <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Comparing single-pass raw prompting, KB-augmented prompting, cross-family label-only review, and 4-agent specialist orchestration over unhinted charts.</span>
 </a>
 </li>
 <li>
 <a href="design-report/index.html#condensation-and-retrieval">
-<span class="resource-link-title">Condensation tiers &amp; full-chart queryability <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Keeping the compact Tier 2–4 IPS safety core in prompt context while making the full Tier 0/1 historical chart queryable on demand via scoped MCP FHIR tools and local embeddings.</span>
+<span class="resource-link-title">Condensation tiers &amp; full-chart queryability (W7) <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Keeping the compact IPS safety core in prompt context while making the full Tier 0 historical chart queryable on demand via read-only overflow lookup tools (`search_chart_entries`, `get_lab_history`, `read_clinical_note`).</span>
 </a>
 </li>
 <li>
 <a href="design-report/index.html#non-destructive-condensation">
-<span class="resource-link-title">Open question (W12): Non-destructive condensation vs. skill-based deduplication &amp; optional privacy <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Decoupling lossless syntactic FHIR compression from semantic deduplication, conflict cleaning, and optional sensitive-record redaction (deferred to the W9 Secure FHIR Bundle workstream).</span>
+<span class="resource-link-title">Non-destructive condensation vs. skill-based deduplication (W12) <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Running condensation in `lossless_structural` mode without mutating clinical content or pre-tagging conflicts, while surfacing duplicates and discrepancies via explicit chart-hygiene and reconciliation skills.</span>
 </a>
 </li>
 </ul>
 </section>
 <section class="resource-group">
-<h3>Cryptographic FHIR privacy</h3>
+<h3>Deferred optional privacy &amp; audit links</h3>
 <ul class="resource-links">
 <li>
 <a href="design-report/index.html#fhir-privacy-crypto">
-<span class="resource-link-title">Selective disclosure &amp; element-level FHIR obfuscation <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Connecting pre-condensation DS4P filtering with UW DIGI’s <code>ips-selective-disclosures</code> (IETF SD-JWT salted <code>sd-hash</code> extensions on FHIR elements/entries) and SMART Health Links JWE encryption.</span>
+<span class="resource-link-title">Deferred (W9): Optional privacy &amp; element-level FHIR obfuscation <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Keeping sensitive-record redaction strictly optional outside the general condenser, scoped to the deferred `W9` Secure FHIR Bundle workstream (`DIGI-UW/ips-selective-disclosures` SD-JWT `sd-hash` + SMART Health Links JWE).</span>
 </a>
 </li>
 <li>
@@ -282,14 +282,14 @@
 <ul class="resource-links">
 <li>
 <a href="https://reports.openclinai.org/2026-10-31-wahs-live-model-team-eval/index.html">
-<span class="resource-link-title">Slice 5 report: Local model selection &amp; KB agent teams <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">3-stage local model screening funnel (1.5B–35B GGUF) and 4-arm comparison of single-pass prompting, cross-family verification, and orchestrated KB specialist teams (128 cells).</span>
+<span class="resource-link-title">Slice 5 &amp; W13 report: Local model selection &amp; KB agent teams <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">3-stage local model screening funnel (1.5B–35B GGUF) and de-saturated 4-arm comparison over unhinted `lossless_structural` charts (`83.5 → 85.5 → 88.5 → 93.0 / 100`; 128 cells).</span>
 </a>
 </li>
 <li>
 <a href="https://reports.openclinai.org/2026-10-31-wahs-condensation-ablation/index.html">
-<span class="resource-link-title">Slices 3 &amp; 4 report: Condensation ablation &amp; messy multi-EHR cohort <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Horizon-stratified condensation ablation (16k to 2k static vs. 2k + on-demand full-chart lookup tools; 160 cells) plus Set C uncoded/note-contradiction and de-identified real clinical summary fixtures.</span>
+<span class="resource-link-title">Slices 3, 4 &amp; W13 report: Condensation ablation &amp; messy multi-EHR cohort <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Unhinted `lossless_structural` condensation ablation (`94.0` at 16k/8k → `88.5` at 4k → `75.1` at 2k static vs. `92.6 / 100` with `W7` overflow lookup tools; 160 cells) plus Set C and real summary fixtures.</span>
 </a>
 </li>
 <li>
