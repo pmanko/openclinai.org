@@ -612,7 +612,7 @@ def main() -> int:
         blocking = [f for f in data["findings"] if f.get("blocking")]
         print(f"round {k}: {len(blocking)} blocking, "
               f"{len(data['findings']) - len(blocking)} questions -> {out_dir / f'round-{k}.md'}")
-        if not blocking or k == args.rounds or not args.fix:
+        if data["execution"] != "complete" or not blocking or k == args.rounds or not args.fix:
             break
         if args.agent == "human":
             print("fix the blocking findings on the PR branch, push, and re-run")

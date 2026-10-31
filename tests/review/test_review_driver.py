@@ -129,3 +129,12 @@ def test_a_round_records_findings_and_downgrades_unevidenced_blockers(tmp_path):
     assert report["consumer_repo"] == "umbrella"
     assert report["consumer_head"] == consumer_head
     assert git(out_dir / "consumer/umbrella", "rev-parse", "HEAD") == consumer_head
+
+    # Even explicitly requested fix rounds must not act on a superseded report.
+    answer["findings"] = [{"file": "calc.py", "line": 1, "finding": "x breaks y", "blocking": True,
+                            "failure_mode": "y fails", "evidence": "fixture assertion failed"}]
+    (out_dir / "reviewer-1.md").write_text("```json\n" + json.dumps(answer) + "\n```\n")
+    env["REVIEW_IDENTITY"] = json.dumps({**identity, "headRefOid": base})
+    result = subprocess.run([*cmd, "--fix", "--rounds", "2"], env=env, capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert json.loads((out_dir / "result.json").read_text())["execution"] == "superseded"

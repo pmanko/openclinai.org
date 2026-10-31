@@ -72,7 +72,7 @@ not establish a defect in a different producer/consumer pair. The report records
 the exact consumer commit; `NO_CONSUMER=1` omits this comparison explicitly.
 
 The default is a local source review. `FIX=1` explicitly permits the fixer to
-commit and push between rounds. Full evaluation reports remain local unless
+commit and push between rounds, only after a complete, current review. Full evaluation reports remain local unless
 `PUBLISH_EVALUATION=1` or `PUBLISH=<run directory>` is selected.
 
 Reports must identify the examined revision and account for every changed file.
