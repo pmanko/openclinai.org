@@ -5,14 +5,15 @@ harness checkouts. Review reports account for changed files and preserve request
 examined, base and consumer revisions. Invalid results fail; incomplete or stale
 source reviews remain undetermined. Source review does not certify runtime behavior.
 
-The pytest runner reads fresh JUnit results, excludes skipped cases, and separates
-assertions from collection errors. Probe evidence is re-executed, mutations preserve
+The pytest and Maven runners read fresh JUnit results, exclude skipped cases, and separate
+assertions from collection errors. Pytest uses isolated bytecode lookup for every run;
+CI exposed a stale-bytecode case when equal-length fixture edits shared a timestamp. Probe evidence is re-executed, mutations preserve
 tests, and restoration is checked. Historical hook baselines are not current evidence.
 Fixing/pushing between rounds and evaluation publication require explicit options.
 
 Verification:
 
-- `targets/validation-harness/.venv/bin/python -m pytest tests/review -q`: 30 passed.
+- `targets/validation-harness/.venv/bin/python -m pytest tests/review -q`: 32 passed.
 - `python3 -m unittest discover -s tests -v`: 19 passed.
 - `python3 scripts/check_workspace.py`: passed in an isolated clean checkout with
   all recorded component pins initialized. The active implementation checkout remains

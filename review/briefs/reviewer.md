@@ -61,7 +61,7 @@ answer, and where given a read-only checkout of the consumer repository at its s
    keeps (cues, idioms, families, mappings, wire names, enum values) is diffed entry by
    entry: list both sides and report every entry present on one side only, and read the
    consumer's ADR decisions that touch that rule.
-8. **Sweep again** until a pass finds nothing new. Do not invent findings.
+8. **Finish the pass.** Complete changed-file coverage before additional probes. Run focused tests and reproduce the highest-impact candidates; report other candidates with their evidence limits. Do not repeat full suites or open-ended sweeps. Preserve useful reproductions in the supplied scratch directory. Do not invent findings.
 
 ## Effort
 

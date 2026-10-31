@@ -9,7 +9,9 @@ elif [ -x .venv/bin/python ]; then py="$PWD/.venv/bin/python"
 else py=python3; fi
 report="$log.xml"
 rm -f "$report"
-"$py" -m pytest -q -rfE -p no:cacheprovider --junitxml="$report" "${ids[@]}" > "$log" 2>&1
+cache=$(mktemp -d "${log}.bytecode.XXXXXX") || exit 2
+trap 'rmdir "$cache" 2>/dev/null || true' EXIT
+"$py" -B -X "pycache_prefix=$cache" -m pytest -q -rfE -p no:cacheprovider --junitxml="$report" "${ids[@]}" > "$log" 2>&1
 rc=$?
 "$py" - "$report" "$rc" <<'PY'
 import sys, xml.etree.ElementTree as ET

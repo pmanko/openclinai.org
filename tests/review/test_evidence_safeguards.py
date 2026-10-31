@@ -36,3 +36,30 @@ def test_report_rejects_wrong_revision_missing_findings_and_omitted_files():
     validate(good, 'sha', ['a.py'])
     for bad in [{**good, 'head': 'old'}, {**good, 'findings': None}, {**good, 'reviewed_files': []}]:
         with pytest.raises(ValueError): validate(bad, 'sha', ['a.py'])
+
+
+def test_maven_runner_rejects_stale_reports_and_setup_errors(tmp_path):
+    stub = tmp_path / 'bin'
+    stub.mkdir()
+    mvn = stub / 'mvn'
+    reports = tmp_path / 'target/surefire-reports'
+    reports.mkdir(parents=True)
+    for kind, expected in [('pass', 0), ('failure', 1), ('error', 2), ('skipped', 3), ('stale', 3)]:
+        (reports / 'TEST-stale.xml').write_text('<testsuite><testcase name="old"/></testsuite>')
+        content = '' if kind == 'pass' else '<' + kind + '/>'
+        xml = '<testsuite><testcase name="behavior">' + content + '</testcase></testsuite>'
+        mvn.write_text('#!/bin/sh\n' + ('' if kind == 'stale' else
+                       "printf '%s' '" + xml + "' > target/surefire-reports/TEST-case.xml\n") +
+                       ('exit 1\n' if kind in ('failure', 'error') else 'exit 0\n'))
+        mvn.chmod(0o755)
+        result = subprocess.run([str(ROOT / 'review/bin/runners/maven.sh'), str(tmp_path),
+                                 str(tmp_path / 'run.log'), 'ExampleTest'],
+                                env={**os.environ, 'PATH': str(stub) + os.pathsep + os.environ['PATH']},
+                                capture_output=True)
+        assert result.returncode == expected, result.stdout + result.stderr
+
+
+def test_unrelated_failure_does_not_satisfy_named_mutation_probe():
+    run = Run(1, 2, ['tests.example::other: assertion failed'], Path('log'))
+    assert not _expect_red(run, 'head', 'mutation', ['tests/example.py::boundary'])[0]
+    assert _expect_red(run, 'head', 'mutation', ['tests/example.py::other'])[0]

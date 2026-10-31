@@ -117,6 +117,9 @@ def _first(run: Run, tests: list[str] = ()) -> str:
 
 def _expect_red(run: Run, sha7: str, what: str, tests: list[str] = ()) -> tuple[bool, str]:
     if run.code == 1 and run.ran > 0 and run.failed:
+        named = [re.split(r"#|::", test)[-1] for test in tests if "#" in test or "::" in test]
+        if named and not any(name in failure for name in named for failure in run.failed):
+            return False, f"BLOCK {sha7} {what}: intended test did not fail"
         return True, f"red   {sha7} {what}: {len(run.failed)} of {run.ran} failed: {_first(run, tests)}"
     if run.code == 2:
         return False, f"BLOCK {sha7} {what}: infrastructure failure (see {run.log})"
