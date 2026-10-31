@@ -61,7 +61,7 @@ def test_fixer_requires_explicit_authorization(tmp_path, monkeypatch, stack_chan
     api = runpy.run_path(str(REVIEW))
     state = api['main'].__globals__
     target = 'top' if stack_changed else 'head'
-    monkeypatch.setitem(state, 'stack', lambda *args: [dict(head='top', number=2, title='top')])
+    monkeypatch.setitem(state, 'stack', lambda *args: [dict(head='top', base='base', number=2, title='top', created_at='2026')])
     monkeypatch.setitem(state, 'UMBRELLA', tmp_path)
     monkeypatch.setitem(state, 'work_dir', lambda: tmp_path / 'work')
     monkeypatch.setitem(state, 'upstream', lambda *args: ('fork', 'fixture/repo'))
@@ -102,6 +102,11 @@ def test_fixer_requires_explicit_authorization(tmp_path, monkeypatch, stack_chan
     for flag, expected in [([], ['reviewer']), (['--fix'], ['reviewer'] if stack_changed else ['reviewer', 'fixer', 'reviewer'])]:
         roles.clear()
         monkeypatch.setattr(sys, 'argv', argv + flag)
+        if stack_changed and flag:
+            with pytest.raises(SystemExit):
+                api['main']()
+            assert roles == []
+            continue
         assert api['main']() == 0
         assert roles == expected
         report = json.loads(next((tmp_path / 'work').rglob('result.json')).read_text())

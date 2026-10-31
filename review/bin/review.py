@@ -25,6 +25,7 @@ UMBRELLA = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(UMBRELLA / "review" / "lib"))
 from reviewkit.git import git  # noqa: E402
 from reviewkit.probes import work_dir  # noqa: E402
+from reviewkit.stack import consolidate, merge_ledger  # noqa: E402
 
 BIN = UMBRELLA / "review" / "bin"
 BRIEFS = UMBRELLA / "review" / "briefs"
@@ -93,19 +94,34 @@ def worktree(checkout: Path, path: Path, ref: str, branch: str | None = None) ->
 def stack(checkout: Path, remote: str, slug: str, author: str, pr: int, head: str) -> list[dict]:
     """Open PRs by the same author whose heads lie on one line with this PR's head."""
     out = subprocess.run(["gh", "pr", "list", "-R", slug, "--author", author, "--state", "open",
-                          "--json", "number,title,headRefName", "-L", "100"],
+                          "--json", "number,title,headRefName,baseRefName,baseRefOid,createdAt", "-L", "1000"],
                          capture_output=True, text=True, check=True).stdout
+    candidates = json.loads(out)
+    if len(candidates) >= 1000:
+        raise ValueError("Stack discovery reached its result cap; refusing an incomplete stack")
     layers = []
-    for p in json.loads(out):
+    from reviewkit.stack import ancestor
+    anc = lambda a, b: ancestor(checkout, a, b)
+    for p in candidates:
         sha = fetch_pr(checkout, remote, p["number"])
-        anc = lambda a, b: subprocess.run(["git", "-C", str(checkout), "merge-base",
-                                           "--is-ancestor", a, b]).returncode == 0
-        if anc(sha, head) or anc(head, sha):
-            count = int(git(checkout, "rev-list", "--count", sha, f"^{remote}/main").strip() or 0)
-            layers.append({**p, "head": sha, "commits": count})
+        commits = set(git(checkout, "rev-list", sha, f"^{remote}/main").splitlines())
+        layers.append({**p, "head": sha, "base": p["baseRefOid"], "created_at": p["createdAt"],
+                       "commits": len(commits), "feature_commits": commits})
+    selected = {pr}
+    if pr not in {p['number'] for p in layers}:
+        raise ValueError('Requested PR is missing from stack discovery')
+    while True:
+        included = [p for p in layers if p['number'] in selected]
+        additions = {p['number'] for p in layers if any(
+            p['baseRefName'] == q['headRefName'] or q['baseRefName'] == p['headRefName'] or
+            bool(p['feature_commits'] & q['feature_commits']) for q in included)}
+        if additions.issubset(selected): break
+        selected.update(additions)
+    layers = [{k: v for k, v in p.items() if k != 'feature_commits'}
+              for p in layers if p['number'] in selected]
     ordered = sorted(layers, key=lambda l: l["commits"])
     if any(not anc(a["head"], b["head"]) for a, b in zip(ordered, ordered[1:])):
-        raise SystemExit("Ambiguous stack: descendant branches diverge")
+        raise SystemExit("Connected stack has divergent heads; use a curated consolidation manifest with each examined revision")
     return ordered
 
 
@@ -520,6 +536,8 @@ def main() -> int:
         ap.error("--no-consumer cannot select a consumer repository or revision")
     if args.base and not args.head:
         ap.error("--base needs --head")
+    if args.stack and args.fix:
+        ap.error("--stack is report-only; fix an explicitly selected owning PR separately")
     if args.head and args.stack:
         ap.error("--head reviews one local layer; --stack reads the pushed stack")
     if args.measure:
@@ -582,10 +600,18 @@ def main() -> int:
         if previous.exists():
             inputs.append(f"- Previous round: {previous}")
         target = head
+        requested_base = base
+        ledger_path = work_dir() / "stacks" / repository_key / "issues.json"
         if args.stack:
             layers = stack(checkout, remote, slug, meta["author"], args.pr, head)
             target = layers[-1]["head"] if layers else head
+            if layers:
+                base = layers[0]["base"]
+                inputs[1] = f"- Base of the complete stack: {base}"
             brief += "\n" + (BRIEFS / "stack.md").read_text()
+            inputs.append("- Layer snapshots: " + json.dumps(layers))
+            if ledger_path.exists():
+                inputs.append("- Known issue identities (reuse root-cause keys; absence is not resolution): " + ledger_path.read_text())
             inputs.append("- Stack, bottom to top (the checkout is the merged top "
                           f"{target[:7]}):\n" + "\n".join(
                               f"  - #{l['number']} {l['title']} ({l['head'][:7]})" for l in layers))
@@ -615,17 +641,45 @@ def main() -> int:
         changed = git(wt, "diff", "--name-only", f"{base}...{target}").splitlines()
         validate_review(data, target, changed)
         fresh = current_identity(slug, args.pr) if not args.head else None
-        stale = bool(fresh and (fresh["headRefOid"] != head or fresh["baseRefOid"] != base
+        stale = bool(fresh and (fresh["headRefOid"] != head or fresh["baseRefOid"] != requested_base
                                or fresh["baseRefName"] != meta["base"]))
         if args.stack and layers:
-            stale |= current_identity(slug, layers[-1]["number"])["headRefOid"] != target
-        data.update(scope="source_review", repo=args.repo, repository=slug, pr=args.pr, requested_head=head, base=base,
+            for layer in layers:
+                current = current_identity(slug, layer["number"])
+                stale |= (current["headRefOid"] != layer["head"] or current["baseRefOid"] != layer["base"])
+        data.update(scope="source_review", repo=args.repo, repository=slug, pr=args.pr, requested_head=head, base=base, pr_base=requested_base,
                     base_branch=meta["base"], identity_after=fresh,
                     consumer_repo=consumer,
                     consumer_head=consumer_sha if consumer else None,
                     execution=("superseded" if stale else "partial" if data["unreviewed_files"] or missing_consumer else "complete"),
                     behavior_verification="see evidence; not inferred from source review",
                     findings=settle(data["findings"]))
+        if args.stack and not stale:
+            # Attribution is structural data, not a prose suggestion. A stack
+            # report cannot publish one independent action item per occurrence.
+            observations, decisions = [], []
+            for index, finding in enumerate(data['findings']):
+                required = ('issue_key', 'introduced_commit', 'origin_file', 'origin_evidence', 'owner_pr', 'affected_prs')
+                if any(name not in finding for name in required):
+                    raise ValueError('Stack finding lacks canonical identity or introduction evidence')
+                occurrence_ids = []
+                for number in finding['affected_prs']:
+                    layer = next((p for p in layers if p['number'] == number), None)
+                    if layer is None:
+                        raise ValueError('Affected PR is outside the examined stack')
+                    oid = f"{index}:{number}"
+                    occurrence_ids.append(oid)
+                    observations.append(dict(id=oid, pr=number, head=layer['head'], finding=finding))
+                decisions.append(dict(issue_key=finding['issue_key'], title=finding['finding'],
+                    introduced_commit=finding['introduced_commit'], origin_file=finding['origin_file'],
+                    origin_evidence=finding['origin_evidence'], owner_pr=finding['owner_pr'],
+                    status=finding.get('attribution_status', 'open'), occurrences=occurrence_ids,
+                    regression_of=finding.get('regression_of')))
+            data['stack_plan'] = consolidate(slug, checkout, layers, observations, decisions)
+            if data['stack_plan']['attribution_pending'] and data['execution'] == 'complete':
+                data['execution'] = 'partial'
+            if data['execution'] == 'complete':
+                merge_ledger(ledger_path, data['stack_plan'])
         data["dependency_files"] = {str(p.relative_to(wt)): hashlib.sha256(p.read_bytes()).hexdigest()
                                     for name in ("uv.lock", "poetry.lock", "yarn.lock", "package-lock.json", "pyproject.toml")
                                     if (p := wt / name).is_file()}

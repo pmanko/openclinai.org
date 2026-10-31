@@ -101,3 +101,40 @@ are executable inputs; prose remains review-only.
 The Vitest adapter also requires a fresh execution report from its test-run-end
 reporter. Passing assertions with an unhandled runtime error are infrastructure
 failures, and an interrupted or missing report cannot prove a mutation failed.
+
+### Reviewing a stack without duplicate issues
+
+`STACK=1` reviews the selected connected stack as one change set. It is report-only;
+combining it with `FIX=1` is rejected. Each finding needs a stable root-cause key,
+an inspected introducing or activating commit, its source file, one owning PR,
+and the revisions actually observed to be affected. Git history checks ownership
+against each PR's base, including branches cut before a lower PR was amended.
+Ambiguous stack topology or attribution stops completion instead of selecting an
+arbitrary owner. A missing later observation never proves an issue resolved.
+
+The repository-scoped issue ledger in `work/review/stacks/` retains identity and
+observations between runs. Wording or line-number changes do not create a new issue.
+Different causes in the same file stay separate; a regression needs a new introducing
+change and a link to its prior issue. Semantic grouping is an explicit review decision,
+not a fuzzy text match. Baseline issues are labelled separately from newly introduced
+issues. A tracking discussion does not establish ownership.
+
+For an existing campaign, `review/bin/consolidate.py plan manifest.json --output plan.json`
+validates a curated manifest containing `repository`, `checkout`, `layers`,
+`occurrences`, `decisions`, and existing `review_urls`. The resulting bodies put full
+issue descriptions on the owner and links on observed affected PRs. Original
+observations remain in the plan; headline counts distinguish unique issues from
+references. Cross-repository aliases must resolve to an owned issue using
+`reviewkit.stack.canonical_links`. For a campaign with cross-repository references,
+wrap the manifests in a `repositories` list; the plan command validates all targets
+before rendering any bodies.
+
+Publication is a separate, explicitly authorized step:
+`review/bin/consolidate.py apply updates.json --output receipts.json --authorize-publication`.
+The inspected update list contains repository, PR, head, base, existing review ID,
+new body and its SHA-256, and the expected existing body SHA-256. It updates only the
+signed-in user's existing comment reviews. It checks the whole batch before writing,
+rechecks each PR and body immediately before its update, and reads each result back.
+A changed revision or human-edited body stops publication. Retrying an already applied
+plan performs no duplicate write. Review submission commits remain historical: updating
+a body does not rerun its probes or certify the current head.

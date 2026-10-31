@@ -73,7 +73,12 @@ make review-replies PR=<n> [REPO=]              draft thread replies from the la
 | high | plus security and performance dimensions, uncertain findings returned as questions, a refutation pass on each blocking finding |
 
 `STACK=1` adds the contracts between layers (what one PR emits against what the PRs
-above and below consume) and reads the stack's merged top. `ROUNDS` above 1 with explicit `FIX=1` repeats
+above and below consume) and reads the stack's merged top. Stack reviews require canonical issue identities and
+introducing-PR attribution; affected descendants receive links to the owner. Divergent
+connected branches require a curated manifest instead of an assumed merged top.
+`STACK=1` is report-only and cannot be combined with `FIX=1`. See
+[the tooling procedure](../review/README.md#reviewing-a-stack-without-duplicate-issues)
+for consolidation and guarded updates of existing reviews. `ROUNDS` above 1 with explicit `FIX=1` repeats
 review and fix until the reviewer records zero blocking findings on the pushed head,
 and every round after a clean one is blocking-only. `SCENARIOS`, `GATE` and `FULL` are off
 unless named. `FULL=1` runs the harness on `SET` (default `full-default`) against the set's two
