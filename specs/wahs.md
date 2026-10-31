@@ -2,14 +2,29 @@
 
 Patient-mediated clinical summarization, cross-clinic FHIR R4 reconciliation, privacy segmentation, and citation-grounded Q&A developed in collaboration with UW CIRG and the Washington State Department of Health.
 
-## Architecture and boundaries
+## Foundational specs and background context
 
-- **Med Agent Hub (`targets/med-agent-hub`):** Owns the 5-Tier Progressive FHIR R4 / US Core / IPS Chart Condenser (`server/fhir/condenser.py`), the 4-Layer Deterministic Clinical Knowledge Base (`server/kb_data/`), on-demand full-chart retrieval tools, and WAHS model/team execution profiles.
-- **Validation Harness (`targets/validation-harness`):** Owns the offline and HTTP WAHS evaluation runner (`harness/wahs/evaluator.py`), weighted patient-centered rubrics, atomic claim/citation entailment scoring, and run manifests with explicit `evaluation_modality` separation:
-  1. `deterministic_pipeline` — Pre-LLM condensation budget compliance, IPS safety core retention, deterministic KB rule recall, and zero-leakage privacy redaction (reported as gate pass rates, never conflated with generative LLM scores).
-  2. `condensation_retrieval_ablation` — Information-loss and recall curves across `Tier 1 (16k)` through `Tier 4 (2k)` static condensation vs. `Tier 4 (2k) + On-Demand Full-Chart Retrieval Tools` stratified by question horizon.
-  3. `live_model_and_team_eval` — Head-to-head live LLM and multi-agent KB team comparisons over identical condensed inputs, scored on the standard OpenClinAI `scout` axes (`Benchmark /100`, `Accuracy`, `Completeness`, `Relevance`, `Unsafe answers`) with per-question `comparison.html` and `dashboard.html` drill-down.
-- **Umbrella (`openclinai.org`):** Owns the public project overview ([`landing/wahs/index.html`](../landing/wahs/index.html)), detailed technical design dashboard ([`landing/wahs/design-report/index.html`](../landing/wahs/design-report/index.html)), interactive prototype (`landing/wahs/demo/` deployed to `https://wahs-demo.openclinai.org/`), report staging (`scripts/stage-report.py` & `scripts/build-reports-index.py`), and curated validation reports (`reports/` deployed to `https://reports.openclinai.org/`).
+- **Umbrella architecture & evaluation protocols:**
+  - [Architecture boundaries](architecture.md) — separation between umbrella publication, `med-agent-hub` runtime/condensation, and `validation-harness` offline/HTTP evaluation.
+  - [Checked answers (`specs/checked-answers.md`)](checked-answers.md) — 10-stage Hub verification pipeline, cross-family label-only review (`single-12b-xcheck`), and narrow citation entailment grounder.
+  - [Confidence labels (`specs/confidence-labels.md`)](confidence-labels.md) — check precision, avoiding false contradiction flags, and disabling `dry_multiplier` repetition penalty corruption on clinical lists.
+  - [Blind multi-judge protocol (`specs/judging.md`)](judging.md) — blinded multi-pass judging, judge cards, and strip-labels evaluation.
+  - [Provider parity & local inference efficiency (`specs/provider-parity.md`)](provider-parity.md) — reading chart context once per request and reusing temporal facts on the local Mac `llama-router`.
+- **Public WAHS documentation & standards backing:**
+  - [WAHS Project Overview (`landing/wahs/index.html`)](../landing/wahs/index.html)
+  - [WAHS Design & Architecture Dashboard — Sections 08 & 09 (`landing/wahs/design-report/index.html`)](../landing/wahs/design-report/index.html) — HL7 FHIR IPS / ISO 27269, US Core R4, KDIGO 2024 CKD, ADA Diabetes, NLM RxNorm, CDC ACIP CVX, 42 CFR Part 2, WA My Health My Data Act (RCW 19.373), HL7 AI Transparency on FHIR (`AI-Provenance`), OpenAI HealthBench, Stanford MedHELM, and VeriFact/FActScore.
+  - [Interactive WAHS Prototype (`landing/wahs/demo/index.html`)](../landing/wahs/demo/index.html)
+  - [Phase 2 Evaluation Report (`reports/2026-10-30-wahs-phase2-eval/index.html`)](../reports/2026-10-30-wahs-phase2-eval/index.html)
+
+## Separation of evaluation modalities
+
+Every WAHS evaluation run declares its `evaluation_modality` in `run_manifest.json` and `meta.json`, staged via [`scripts/stage-report.py`](../scripts/stage-report.py) and rendered with a distinct modality badge in [`scripts/build-reports-index.py`](../scripts/build-reports-index.py):
+
+1. **`deterministic_pipeline` (`Deterministic Pipeline Gate`):** Evaluates the deterministic Python 5-Tier Condenser and 4-Layer Clinical KB rules (token budget compliance, IPS safety core retention, deterministic conflict recall, and zero-leakage privacy redaction). Reported as deterministic gate pass rates, never conflated with generative LLM judge scores.
+2. **`condensation_retrieval_ablation` (`Condensation & Retrieval Ablation`):** Evaluates information retention across `Tier 1 (16k)` through `Tier 4 (2k)` static condensation vs. `Tier 4 (2k) + On-Demand Full-Chart Lookup Tools` stratified by question horizon (*Current Active State*, *24-Month Trend*, *Deep Historical >2 Years*, *Full-Text Note Detail*).
+3. **`live_model_and_team_eval` (`Live Model & KB Team Evaluation`):** Evaluates live local open-weight models and multi-agent KB setups over identical condensed inputs, scored on the standard OpenClinAI `scout` axes (`Benchmark /100`, `Accuracy`, `Completeness`, `Relevance`, `Unsafe answers`) with per-question `comparison.html` and `dashboard.html` drill-down.
+
+---
 
 ## Target path
 
@@ -17,15 +32,68 @@ Patient-mediated clinical summarization, cross-clinic FHIR R4 reconciliation, pr
 
 - [x] **W1 · 5-Tier Progressive FHIR R4 / IPS Condenser:** Condenses longitudinal FHIR R4 bundles (`1.6 MB` to `18.8 MB`, up to `3.52M` raw tokens) into strict `16k`, `8k`, `4k`, `2k`, and `1k` token budgets while retaining 100% of the IPS safety core and `[N] -> resourceUuid` provenance ([med-agent-hub#54](https://github.com/pmanko/med-agent-hub/pull/54)).
 - [x] **W2 · Multi-Source Perturbation Fixtures & 4-Layer Clinical KB:** Deterministic Set A / Set B synthetic cohort (`Byron202_Emard19`, `Lamar193_Beer512`, `Maurice742_Auer97`), 15 cross-clinic anomalies, and SNOMED CT / RxNorm / CDC ACIP / LOINC + 42 CFR Part 2 & WA MHMDA normalizers ([med-agent-hub#55](https://github.com/pmanko/med-agent-hub/pull/55), [med-agent-hub#56](https://github.com/pmanko/med-agent-hub/pull/56)).
-- [x] **W3 · Phase 2 Evaluation Runner, Interactive Prototype & Public Pages:** Initial 32-case rubric runner ([validation-harness#205](https://github.com/pmanko/clinical-ai-validation-harness/pull/205)), interactive walkthrough at `https://wahs-demo.openclinai.org/`, project pages at `https://openclinai.org/wahs/` and `https://openclinai.org/wahs/design-report/`, and Phase 2 report with plain-English metric definitions and candid methodological audit at `https://reports.openclinai.org/2026-10-30-wahs-phase2-eval/index.html` ([med-agent-hub#57](https://github.com/pmanko/med-agent-hub/pull/57), [openclinai.org#33](https://github.com/pmanko/openclinai.org/pull/33)).
+- [x] **W3 · Phase 2 Evaluation Runner, Interactive Prototype & Public Pages:** Initial 32-case rubric runner ([validation-harness#205](https://github.com/pmanko/clinical-ai-validation-harness/pull/205)), interactive walkthrough at `https://wahs-demo.openclinai.org/`, project pages at `https://openclinai.org/wahs/` and `https://openclinai.org/wahs/design-report/`, and Phase 2 report with plain-English metric definitions, candid methodological audit, and `Deterministic Pipeline Gate` modality badge at `https://reports.openclinai.org/2026-10-30-wahs-phase2-eval/index.html` ([med-agent-hub#57](https://github.com/pmanko/med-agent-hub/pull/57), [openclinai.org#33](https://github.com/pmanko/openclinai.org/pull/33)).
+
+---
 
 ### Phase 3 active local slices
 
-- [ ] **W4 · Slice 1 — Evaluation Modality Separation, Atomic Entailment & Report Revamp:** Align `harness.wahs` scorer keys (`abstained` + redaction notice check), add explicit `evaluation_modality` support in `harness/wahs/`, `scripts/stage-report.py`, and `scripts/build-reports-index.py` (separating deterministic pipeline verification from live LLM/team `scout` tables), upgrade `wahs_eval_cases.jsonl` to HealthBench-style weighted patient-centered rubrics with VeriFact/MiniCheck atomic claim entailment verification, and revamp `reports/2026-10-30-wahs-phase2-eval/`.
-- [ ] **W5 · Slice 2 — Patient-Centered Scenario Taxonomy & Interactive Demo Upgrade (`wahs-demo.openclinai.org`):** Reframe default scenarios and questions around primary patient needs (*medication clarity, lab trends, hospital stay summary, next-visit checklist, school vaccine readiness, safe sharing*), add a persistent **Patient View (Plain English) ↔ Clinician View (Codes & Rules)** toggle, and surface Step 4 hybrid chart lookups.
-- [ ] **W6 · Slice 3 — Pragmatic Messy Synthetic Personas & De-Identified Real Clinical Summaries:** Expand the cohort with additional patient personas plus a lightweight messiness pass (~25% stripped standard codes to raw `code.text` + free-text note vs. `MedicationRequest.status` contradictions) alongside 2 de-identified real clinical summary fixtures (MIMIC-IV-on-FHIR / SMART Sandbox).
-- [ ] **W7 · Slice 4 — Hybrid Full-Chart Queryability & Condensation-Level Ablation (`Tier 0 -> Tier 4`):** Implement on-demand read-only FHIR retrieval tools (`search_chart_entries`, `get_lab_history`, `read_clinical_note`) over Tier 0/1 overflow records so the full chart remains queryable when condensed to `1k–4k` tokens, and evaluate recall across condensation tiers and question horizons (`condensation_retrieval_ablation` modality).
-- [ ] **W8 · Slice 5 — Local Model Selection Funnel, Prompt Engineering & Orchestrated KB Agent Teams (`live_model_and_team_eval` modality):** Screen local open-weight models (`1B–4B` edge to `8B–31B` on the 64 GB Mac `llama-router`), run controlled ablations comparing single-pass prompting, deterministic 4-Layer KB pre-attachment, cross-family label-only review (`single-12b-xcheck`), and parallel specialist KB agent teams (`team-wahs-kb`), and stage the resulting packet (`index.html`, `comparison.html`, `dashboard.html`) cleanly to `reports.openclinai.org` via `scripts/stage-report.py`.
+#### W4 · Slice 1 — Evaluation Methodology, Atomic Entailment & Report Revamp (`deterministic_pipeline` & harness foundation)
+- **Foundational context:** [Blind judging (`specs/judging.md`)](judging.md), [Confidence labels (`specs/confidence-labels.md`)](confidence-labels.md), [Design Report §9.1](../landing/wahs/design-report/index.html#audit-and-eval), [`scripts/stage-report.py`](../scripts/stage-report.py), [`scripts/build-reports-index.py`](../scripts/build-reports-index.py).
+- **Execution checklist:**
+  - [x] **W4.0:** Wire `"wahs"` family support and `MODALITY_LABELS` (`Deterministic Pipeline Gate`, `Condensation & Retrieval Ablation`, `Live Model & KB Team Evaluation`) into [`scripts/stage-report.py`](../scripts/stage-report.py) and [`scripts/build-reports-index.py`](../scripts/build-reports-index.py).
+  - [ ] **W4.1:** Fix `harness/wahs/evaluator.py` schema alignment (`abstained` vs. `abstains` key + redaction notice transparency banner exclusion) and add `evaluation_modality` to `run_wahs_suite()` and `summary.json`.
+  - [ ] **W4.2:** Upgrade `wahs_eval_cases.jsonl` and `WahsEvalCase` with HealthBench-style weighted criteria (`positive_rubric_items`, `negative_penalty_items`) and VeriFact/MiniCheck-style atomic claim entailment checks (`citation_entailment_assertions` catching citation value/date/status distortion).
+  - [ ] **W4.3:** Re-score the frozen Phase 2 deterministic run (`96 / 96` cells passed in [`reports/2026-10-30-wahs-phase2-eval/summary.json`](../reports/2026-10-30-wahs-phase2-eval/summary.json)) and revamp [`reports/2026-10-30-wahs-phase2-eval/index.html`](../reports/2026-10-30-wahs-phase2-eval/index.html) so deterministic gate verification is presented with visual architecture diagrams and plain-English scorecards rather than conflated with generative LLM scores.
+- **Acceptance criteria:**
+  - [ ] `pytest -q tests/test_wahs_eval.py` in `targets/validation-harness` passes 100% with unit tests covering weighted rubrics, citation distortion detection, `abstained` key handling, and redaction notice exemption.
+  - [ ] Offline re-score (`python3 -m harness.cli wahs score`) produces `96 / 96` (`100.0%`) in `summary.json` for the deterministic baseline with `"evaluation_modality": "deterministic_pipeline"`.
+  - [ ] `pytest -q tests/website` and `python3 scripts/check_workspace.py` pass with zero broken links.
+
+#### W5 · Slice 2 — Patient-Centered Scenario Taxonomy & Interactive Demo Upgrade (`wahs-demo.openclinai.org`)
+- **Foundational context:** [Design Report §03 Human Review Workflow](../landing/wahs/design-report/index.html#workflow), [Design Report §9.7 Patient-Centered Scenario Taxonomy](../landing/wahs/design-report/index.html#patient-scenarios), [`landing/wahs/demo/index.html`](../landing/wahs/demo/index.html), [`landing/wahs/demo/wahs_demo_data.js`](../landing/wahs/demo/wahs_demo_data.js).
+- **Execution checklist:**
+  - [ ] **W5.1:** Rewrite default prompts, summary bullets, and conflict cards in [`landing/wahs/demo/wahs_demo_data.js`](../landing/wahs/demo/wahs_demo_data.js) and `targets/med-agent-hub/server/fhir/wahs_analyzer.py` around the 6-category Patient Question Taxonomy (*Medication & Pill-Bottle Clarity*, *Lab Trends & New Diagnoses*, *Making Sense of a Hospital/ICU Stay*, *Next-Visit Checklist*, *School/Vaccine Readiness*, *Safe Sharing Preview*).
+  - [ ] **W5.2:** Add a persistent **"Patient View (Plain English) ↔ Clinician View (Codes & Rules)"** toggle in [`landing/wahs/demo/index.html`](../landing/wahs/demo/index.html) and [`landing/wahs/demo/wahs_demo_data.js`](../landing/wahs/demo/wahs_demo_data.js) so patients see warm, actionable guidance by default while clinicians can toggle to inspect SNOMED/RxNorm/LOINC codes and KDIGO/ACIP rule IDs.
+  - [ ] **W5.3:** Enhance Step 3 (*Protect Privacy*) with a clear side-by-side diff of what stays visible vs. what is removed in `external_share` mode, and add a Step 4 (*Ask & Verify*) source indicator showing whether an answer came from the in-context IPS Safety Core or an on-demand full-chart lookup.
+- **Acceptance criteria:**
+  - [ ] Default view in `landing/wahs/demo/` uses 6th–8th grade patient-centered language with zero unexplained informatics acronyms; toggling to *Clinician View* reveals full SNOMED/RxNorm/LOINC/KDIGO/ACIP identifiers.
+  - [ ] All interactive controls (patient selector, Step 1–4 tabs, token budget selector, `patient_self` vs. `external_share` toggle, `Patient ↔ Clinician` view toggle, and `[N] -> resourceUuid` drawer) work dynamically and pass `pytest -q tests/website`.
+
+#### W6 · Slice 3 — Pragmatic Messy Synthetic Personas & De-Identified Real Clinical Summaries (Both Data Pathways)
+- **Foundational context:** [Design Report §9.2 Messy Multi-EHR Data](../landing/wahs/design-report/index.html#messy-data), `targets/med-agent-hub/scripts/build_wahs_eval_fixtures.py`.
+- **Execution checklist:**
+  - [ ] **W6.1 (Pathway A — Pragmatic Synthetic Messiness):** Extend `build_wahs_eval_fixtures.py` with a lightweight, deterministic messiness pass (`Set C — Messy Multi-Source`): strip standard SNOMED/RxNorm/LOINC codes on ~25% of conflicting entries (leaving only `code.text` or local hospital descriptions) and inject 3 free-text clinical note vs. structured `MedicationRequest.status` contradictions (e.g., note states *"Hold lisinopril until potassium rechecked"* while structured status stays `active`).
+  - [ ] **W6.2 (Pathway B — De-Identified Real Clinical Summary Fixtures):** Add 2 de-identified real clinical discharge/summary fixtures (derived from public MIMIC-IV-on-FHIR / SMART Sandbox multi-encounter records) with corresponding ground-truth reconciliation and Q&A cases.
+- **Acceptance criteria:**
+  - [ ] Deterministic fixture build produces reproducible SHA-256 bundles and quantifies the exact drop in code-only lookup coverage on uncoded entries (~75% vs. 100% on clean Synthea), providing the testbed for LLM fallback in Slices 4–5.
+
+#### W7 · Slice 4 — Hybrid Full-Chart Queryability Engine & Condensation-Level Ablation (`condensation_retrieval_ablation`)
+- **Foundational context:** [Design Report §9.5 Condensation Tiers & Hybrid Full-Chart Queryability](../landing/wahs/design-report/index.html#condensation-and-retrieval), [Provider parity (`specs/provider-parity.md`)](provider-parity.md), `targets/med-agent-hub/server/fhir/condenser.py`.
+- **Execution checklist:**
+  - [ ] **W7.1:** Implement read-only full-chart overflow lookup tools in `targets/med-agent-hub/server/fhir/` (`search_chart_entries`, `get_lab_history`, `read_clinical_note`) that search the uncondensed `Tier 0/1` patient store when a question asks for historical details omitted from the `Tier 3/4` (`1k–4k` token) condensed prompt.
+  - [ ] **W7.2:** Execute the Condensation-Tier Information-Loss Ablation across `16k (Tier 1)`, `8k (Tier 2)`, `4k (Tier 3)`, `2k Static (Tier 4)`, and `2k + On-Demand Lookup Tools` stratified across 4 question horizons (*Current Active State*, *24-Month Trend*, *Deep Historical >2 Years*, *Full-Text Note Detail*).
+  - [ ] **W7.3:** Stage and publish the ablation results under `evaluation_modality="condensation_retrieval_ablation"`.
+- **Acceptance criteria:**
+  - [ ] Static `Tier 4 (2k)` retains 100% recall on *Current Active State* IPS core questions while `Tier 4 (2k) + On-Demand Lookup Tools` recovers $\ge 90\%$ of *Deep Historical* and *Full-Text Note* facts that static `2k` condensation drops, while respecting `external_share` privacy redaction across all tool calls (`0` leaks).
+
+#### W8 · Slice 5 — Local Model Selection (`1B–31B`), Prompt Engineering & Orchestrated KB Agent Teams (`live_model_and_team_eval`)
+- **Foundational context:** [Checked answers (`specs/checked-answers.md`)](checked-answers.md), [Confidence labels (`specs/confidence-labels.md`)](confidence-labels.md), [Blind judging (`specs/judging.md`)](judging.md), [Design Report §9.3–9.4 Models, Prompting & Teams](../landing/wahs/design-report/index.html#gpu-and-models).
+- **Execution checklist:**
+  - [ ] **W8.1 (3-Stage Local Model Screening Funnel on 64 GB Mac `llama-router` / Ollama):** Screen candidate local open-weight models across size tiers:
+    - *Edge / Fast (`1B–4B`):* `MedGemma 1.5 4B`, `Gemma 4 E4B`, `Qwen 3 4B`
+    - *Single-Slice Workhorses (`8B–14B`):* `Gemma 4 12B (Q8_0)`, `Qwen 3.5 9B (Q8_0)`, `Granite 4.2 8B`
+    - *Larger Local Specialists (`27B–35B`):* `Gemma 4 31B (Q4_K_M)`, `Qwen 3.6 35B-A3B (MoE)`
+  - [ ] **W8.2 (Prompt Engineering & 4-Arm Orchestrated KB Agent Team Ablation):** Compare four architectures over identical condensed charts:
+    1. `single-raw-condensed`: Single LLM pass over the condensed FHIR ledger alone.
+    2. `single-kb-augmented`: Single LLM pass with pre-attached 4-Layer KB rule alerts, temporal anchors (`[2023-11-20 · 2y 11m ago]`), and `dry_multiplier = 0`.
+    3. `single-xcheck-labeled`: Writer (`Gemma 4 12B`) + cross-family Reviewer (`Qwen 3.5 9B` / `Granite 4.2 8B`) + narrow citation entailment grounder attaching verification badges.
+    4. `team-wahs-kb`: Router dispatching parallel domain specialists (*Medication & RxNorm Agent*, *Lab & KDIGO/ADA Trend Agent*, *ACIP Immunization & Care-Gap Agent*) + plain-language *Patient Synthesizer*.
+  - [ ] **W8.3 (Clean Publication via `stage-report.py`):** Render `report.html`, `comparison.html`, and `dashboard.html` with `evaluation_modality="live_model_and_team_eval"` and publish via [`scripts/publish-report.sh`](../scripts/publish-report.sh).
+- **Acceptance criteria:**
+  - [ ] Staged report packet includes full per-arm `scout` metrics (`Benchmark /100`, `Accuracy`, `Completeness`, `Relevance`, `Unsafe answers`, `TTFT / Latency`), interactive per-question model output & citation inspection in `dashboard.html`, and passes `scripts/build-reports-index.py --check-archive` and `tests/website`.
+
+---
 
 ### Deferred team-discussion, external-infrastructure & partner tracks
 
