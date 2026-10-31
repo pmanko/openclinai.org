@@ -483,6 +483,34 @@
       </table>
     </div>
   </div>
+
+  <div id="non-destructive-condensation" class="subsection">
+    <h2>9.8 Open Architectural Question (W12): Non-Destructive Structural Condensation vs. Skill-Based Chart Deduplication</h2>
+    <p>A critical clinical safety question in multi-EHR summarization is: <strong>How general is our “condense and clean” step, can we run condensation without mutating clinical content, and should duplicate/conflict cleanup happen during chart ingestion or be executed as an explicit downstream skill that surfaces findings to the user?</strong></p>
+    <div class="two-column">
+      <article class="panel">
+        <span class="kicker">CANDID AUDIT OF CURRENT PIPELINE COUPLING</span>
+        <h3>Where ingestion currently crosses from syntactic compression into semantic mutation</h3>
+        <p>In health informatics standards (HL7 IPS and the HL7 <em>Clinical Information Reconciliation and Incorporation [CIRI]</em> framework) and clinical LLM faithfulness research, <strong>syntactic compression</strong> (stripping verbose FHIR JSON boilerplate) must be strictly separated from <strong>semantic deduplication and reconciliation</strong>. Auditing our current <code>extractors.py</code> and <code>condenser.py</code> reveals five places where these layers are currently interleaved:</p>
+        <ul class="checklist">
+          <li><strong>1. Pre-Annotation of Conflicts Inside the Extractor (<code>extract_bundle</code>):</strong> Currently, <code>extract_bundle()</code> calls <code>detect_condition_conflicts()</code>, <code>detect_medication_conflicts()</code>, and <code>annotate_immunization_anomalies()</code> during ingestion, mutating rendered chart lines with <code>[conflict_note]</code> tags. The condenser then relies on <code>if x.conflict_note</code> to avoid folding anomalous records—meaning any clinical duplicate not anticipated by hard-coded extractor rules risks being folded away before an LLM or skill ever inspects it.</li>
+          <li><strong>2. Intraday Lab &amp; Vital Collapse by Calendar Date (<code>YYYY-MM-DD</code>):</strong> In <code>_build_lab_trajectories()</code> (<code>if p.date not in seen_dates</code>) and <code>_group_vitals_by_date()</code> (<code>if label in seen_disp: continue</code>), multiple measurements on the same calendar day are collapsed to a single value. While benign on outpatient Synthea records, in an acute hospital or ICU admission (e.g., morning K+ <code>5.8 mEq/L</code> corrected to afternoon K+ <code>4.2 mEq/L</code>), day-level deduplication silently erases intraday clinical swings.</li>
+          <li><strong>3. Synthea-Assumed Note Section Stripping (<code>_extract_unique_note_narrative</code>):</strong> The extractor strips Markdown sections titled <code># Medications</code>, <code># Allergies</code>, or <code># Past Medical History</code> assuming they are verbatim Synthea template dumps. On real HIE discharge summaries, those narrative sections frequently carry critical free-text reconciliation notes (e.g., <em>“Patient taking half-dose every other day”</em>).</li>
+          <li><strong>4. Historical Medication Folding by Ingredient (<code>_fold_stopped_medications</code>):</strong> Folding stopped prescriptions by <code>(ingredient_key, setting)</code> under <code>latest.display</code> preserves UUIDs but hides historical dose titrations (e.g., <code>Furosemide 20 MG → 40 MG → 80 MG</code>) in the condensed text.</li>
+          <li><strong>5. Blood vs. Serum Analyte Merging (<code>_canonical_analyte_name</code>):</strong> Merging point-of-care whole-blood and central-lab serum/plasma series into a single trajectory aids high-level trend viewing but obscures assay-specific reference differences.</li>
+        </ul>
+      </article>
+      <article class="panel">
+        <span class="kicker">TARGET 2-STAGE ARCHITECTURE (W12)</span>
+        <h3>Path to 100% content-preserving condensation + skill-based reconciliation findings</h3>
+        <p>Because Slice 4 (<code>W7</code>) established <strong>Hybrid On-Demand Overflow Lookup Tools</strong> (<code>search_chart_entries</code>, <code>get_lab_history</code>, <code>read_clinical_note</code>), we no longer need lossy semantic folding or ingestion-time deduplication to fit small model context budgets. Our target architecture splits the pipeline into two strictly separated stages:</p>
+        <ol class="steps reading-steps">
+          <li><span>01</span><h3>Stage 1 · Content-Invariant Structural Condensation (<code>lossless_structural</code> mode)</h3><p><strong>Zero clinical content mutation:</strong> Strip only FHIR transport syntax (JSON braces, <code>urn:uuid:</code> prefixes, redundant <code>coding[]</code> URIs, non-clinical <code>Claim</code>/<code>ExplanationOfBenefit</code> billing resources) and deduplicate <em>only</em> cryptographic byte-identical attachments (<code>SHA-256</code> match across <code>DocumentReference</code> and <code>DiagnosticReport.presentedForm</code>, preserving all <code>memberUuids</code>). Keep 100% of active problems, active medications, allergies, immunizations, and recent labs/notes <strong>verbatim as unmerged individual lines</strong> (including intraday timestamps <code>YYYY-MM-DDTHH:MM</code> when multiple same-day readings exist). Older historical records beyond the token budget remain unmodified in the Tier 0 store, indexed in the <code>[Completeness Manifest]</code> and retrievable verbatim via the <code>W7</code> lookup tools.</p></li>
+          <li><span>02</span><h3>Stage 2 · Chart Hygiene, Deduplication &amp; Reconciliation as Explicit Agentic Skills</h3><p><strong>Duplicates are clinical findings, never silent deletions:</strong> In a multi-EHR patient summary, even apparent duplicates (two <code>Lisinopril 10 MG</code> orders from PCP and Cardiology, or two same-day <code>Immunization</code> entries from a clinic and a state registry) represent actionable multi-source fragmentation. Instead of cleaning or merging them during condensation, explicit downstream skills—<code>duplicate_and_redundancy_skill</code>, <code>medication_reconciliation_skill</code>, and <code>condition_stage_reconciliation_skill</code>—inspect the unmutated chart and surface structured <strong>Chart Hygiene &amp; Reconciliation Findings</strong> (with <code>Source A vs. Source B</code> provenance and patient/clinician action checklists) while leaving the underlying clinical record untouched.</p></li>
+        </ol>
+      </article>
+    </div>
+  </div>
 </section>
 <footer class="page-footer"><a href="https://openclinai.org/">About OpenClinAI</a><span>30 October 2026</span></footer>
 </main></div>
