@@ -74,6 +74,8 @@ commit and push between rounds. Full evaluation reports remain local unless
 `PUBLISH_EVALUATION=1` or `PUBLISH=<run directory>` is selected.
 
 Reports must identify the examined revision and account for every changed file.
+The driver also verifies that the source and consumer checkouts retain their
+supplied revisions and have no pending changes when the reviewer finishes.
 Incomplete coverage is `partial`; a changed PR head, base or stack top is `superseded`. Neither can
 produce `no_findings`. Findings, execution status and behavior verification are
 separate: a source review does not establish deployed-runtime acceptance.

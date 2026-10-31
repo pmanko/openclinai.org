@@ -34,6 +34,25 @@ def git(cwd, *args):
                           text=True).stdout.strip()
 
 
+def test_review_checks_the_actual_checkout_revision_and_cleanliness(tmp_path):
+    import pytest
+    import runpy
+    verify = runpy.run_path(str(REVIEW))["verify_checkout"]
+    git(tmp_path, "init", "-q")
+    (tmp_path / "behavior.py").write_text("value = 1\n")
+    git(tmp_path, "add", "behavior.py")
+    git(tmp_path, "-c", "user.email=d@example.test", "-c", "user.name=D", "commit", "-qm", "base")
+    revision = git(tmp_path, "rev-parse", "HEAD")
+    verify(tmp_path, revision)
+    (tmp_path / "behavior.py").write_text("value = 2\n")
+    with pytest.raises(ValueError):
+        verify(tmp_path, revision)
+    git(tmp_path, "add", "behavior.py")
+    git(tmp_path, "-c", "user.email=d@example.test", "-c", "user.name=D", "commit", "-qm", "changed")
+    with pytest.raises(ValueError):
+        verify(tmp_path, revision)
+
+
 def test_a_round_records_findings_and_downgrades_unevidenced_blockers(tmp_path):
     upstream = tmp_path / "github.com" / "openmrs" / "calc.git"
     git(tmp_path, "init", "-q", "--bare", "-b", "main", str(upstream))

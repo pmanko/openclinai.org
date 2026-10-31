@@ -62,6 +62,12 @@ def current_identity(slug: str, pr: int) -> dict:
     return identity
 
 
+def verify_checkout(path: Path, revision: str) -> None:
+    """A model-reported revision cannot override the checkout it actually used."""
+    if git(path, "rev-parse", "HEAD").strip() != revision or git(path, "status", "--porcelain").strip():
+        raise ValueError(f"review checkout changed during execution: {path}")
+
+
 def worktree(checkout: Path, path: Path, ref: str, branch: str | None = None) -> Path:
     if not (path / ".git").exists():
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -573,6 +579,9 @@ def main() -> int:
                           f"{consumer_wt}")
         answer = run_role(args, "reviewer", wt, brief + "\n## Inputs\n\n" + "\n".join(inputs) + "\n",
                           out_dir / f"reviewer-{k}.md")
+        verify_checkout(wt, target)
+        if consumer:
+            verify_checkout(consumer_wt, consumer_sha)
         data = last_json(answer)
         changed = git(wt, "diff", "--name-only", f"{base}...{target}").splitlines()
         validate_review(data, target, changed)
