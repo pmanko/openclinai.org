@@ -36,8 +36,24 @@ Verification:
   Script and observed output: `work/review/applicability/verify-wahs-contract-fixed.py`
   and `wahs-contract-fixed-output.json`.
 
-The open-PR campaign collects reviews serially by repository and base-branch
-dependency, with explicit consumer revisions for the different feature branches.
+Follow-up verification:
+
+- Harness #205 at `c528770` also resolves generated `patient_bundle` filenames to
+  catalog IDs while preserving explicit `patient_id` values. The regression failed
+  for both filename and relative-path input before the fix. All 12 focused tests
+  and 1,214 full-suite tests passed (36 skipped, 3 slow tests excluded); CI passed.
+  `work/review/applicability/verify-wahs-generated-case.py` exercised the actual
+  Hub `bdba18f` router with a file-backed synthetic catalog. All four requests
+  returned 200 for the intended patient; token, citation and abstention checks passed.
+- Frontend fork #21 at `b7d9c9b` repairs the missing generated translations and
+  validation errors exposed by umbrella #31. Lint, type checks, 780 tests and the
+  production build passed; CI passed. Umbrella #31 pins this and the harness fix
+  at `97e625b`; 19 unit tests and the post-commit workspace check passed. Live stack
+  smoke remains unrun because automatic approval review rejected its data-clearing
+  option pending installation approval.
+
+The open-PR campaign collects reviews serially by repository, base-branch
+dependency and actual commit ancestry, with explicit consumer revisions for the different feature branches.
 Its results are in `work/review/campaign/results-resumed.json`; per-PR findings and
 execution reports are under `work/review/<component>-<PR>/`. The local
 `work/review/campaign/report.html` includes follow-up adjudications and evidence.

@@ -5,8 +5,8 @@ hooks, scripts and briefs that a person or any agent runs the same way.
 
 ## Hooks (L0 and L1)
 
-`make review-hooks-install` points `core.hooksPath` of the umbrella and the three
-OpenMRS component checkouts (and their worktrees) at `review/hooks/`, and records the
+`make review-hooks-install` points `core.hooksPath` of the umbrella, Hub, harness,
+and three OpenMRS component checkouts (and their worktrees) at `review/hooks/`, and records the
 component commits already pushed to the forks as historical baseline records. These
 records do not certify tests or exempt rebased changes from fresh probes. Remove with `git -C <checkout> config --unset core.hooksPath`.
 
