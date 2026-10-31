@@ -1,7 +1,7 @@
 # Washington Health Summary (WAHS+) Phase 3 Local Validation & Refinement Record (`W4`–`W8`, `W12`–`W13`)
 
 **Date:** 2026-10-31  
-**Umbrella Branch / PR:** `wahs/phase2-eval-and-demo` ([openclinai.org#33](https://github.com/pmanko/openclinai.org/pull/33))  
+**Umbrella Branch / PR:** `wahs/phase2-eval-and-demo` ([openclinai.org#31](https://github.com/pmanko/openclinai.org/pull/31))  
 **Component Branches:** `targets/med-agent-hub` (`s6/wahs-eval-and-demo`), `targets/validation-harness` (`wahs/eval-runner`)  
 **Published Evaluation Reports:**
 - [`reports/2026-10-30-wahs-phase2-eval/`](../../reports/2026-10-30-wahs-phase2-eval/index.html) (`deterministic_pipeline_gate`, `32 / 32` cases)
