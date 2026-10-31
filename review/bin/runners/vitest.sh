@@ -11,7 +11,7 @@ done
 pattern=""
 if [ ${#names[@]} -gt 0 ]; then pattern=$(IFS='|'; echo "${names[*]}"); fi
 json="$log.json"; execution="$log.execution.json"
-rm -f "$json" "$execution"
+rm -f "$json" "$execution" || { echo "RAN 0"; exit 2; }
 (cd "$dir" && TZ=UTC REVIEW_VITEST_EVIDENCE="$execution" node_modules/.bin/vitest run \
   --reporter=default --reporter=json --reporter="$runner_dir/vitest-evidence.mjs" \
   --outputFile.json="$json" "${files[@]}" ${pattern:+-t "$pattern"}) > "$log" 2>&1

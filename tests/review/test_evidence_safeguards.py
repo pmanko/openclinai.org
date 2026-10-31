@@ -1,8 +1,10 @@
 """Probe outcomes must reflect executed assertions, not setup or skipped tests."""
 import os
+import json
 import subprocess
 import sys
 from pathlib import Path
+import pytest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'review/lib'))
 from reviewkit.probes import Run, _expect_green, _expect_red
@@ -128,3 +130,57 @@ def test_maven_interruption_cannot_prove_a_mutation_failed(tmp_path):
     stub.chmod(0o755)
     result = subprocess.run([str(ROOT / 'review/bin/runners/maven.sh'), str(tmp_path), str(tmp_path/'run.log'), 'ExampleTest#behavior'], env={**os.environ, 'PATH': str(stub.parent)+os.pathsep+os.environ['PATH']}, capture_output=True)
     assert result.returncode == 2, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize('runner', ['maven', 'pytest', 'vitest'])
+def test_failed_cleanup_cannot_reuse_old_assertions(tmp_path, runner):
+    """A failed attempt to remove old evidence must not certify a new run."""
+    stub = tmp_path / 'bin'
+    stub.mkdir()
+    marker = tmp_path / 'executed'
+    log = tmp_path / 'run.log'
+    env = {**os.environ, 'PATH': str(stub) + os.pathsep + os.environ['PATH']}
+    xml = '<testsuite><testcase classname="Fixture" name="behavior"><failure message="old failure"/></testcase></testsuite>'
+    protected = None
+    if runner == 'maven':
+        protected = tmp_path / 'target/surefire-reports'
+        protected.mkdir(parents=True)
+        obsolete = protected / 'TEST-old.xml'
+        if os.geteuid() == 0:
+            # Root bypasses mode bits, but unlink still rejects a directory.
+            obsolete.mkdir()
+        else:
+            obsolete.write_text(xml)
+        executable = stub / 'mvn'
+    else:
+        # Simulate the external cleanup command refusing an existing report.
+        (stub / 'rm').write_text('#!/bin/sh\nexit 1\n')
+        (stub / 'rm').chmod(0o755)
+        if runner == 'pytest':
+            Path(str(log) + '.xml').write_text(xml)
+            executable = stub / 'prepared-python'
+            env['REVIEW_PYTHON'] = str(executable)
+        else:
+            executable = tmp_path / 'node_modules/.bin/vitest'
+            executable.parent.mkdir(parents=True)
+            Path(str(log) + '.json').write_text(json.dumps({'testResults': [{
+                'status': 'failed', 'name': str(tmp_path / 'fixture.test.js'),
+                'assertionResults': [{'status': 'failed', 'title': 'behavior',
+                    'fullName': 'behavior', 'failureMessages': ['old failure']}]}]}))
+            Path(str(log) + '.execution.json').write_text(json.dumps({
+                'reason': 'failed', 'unhandled_errors': 0}))
+    executable.write_text('#!' + sys.executable + '\nimport os,sys\nfrom pathlib import Path\n' +
+        (f'if "-m" not in sys.argv:\n os.execv({sys.executable!r}, [{sys.executable!r}, *sys.argv[1:]])\n'
+         if runner == 'pytest' else '') +
+        f'Path({str(marker)!r}).write_text("ran")\nraise SystemExit(1)\n')
+    executable.chmod(0o755)
+    if protected:
+        protected.chmod(0o555)
+    try:
+        result = subprocess.run([str(ROOT / f'review/bin/runners/{runner}.sh'),
+            str(tmp_path), str(log), 'Fixture#behavior'], env=env, capture_output=True)
+    finally:
+        if protected:
+            protected.chmod(0o755)
+    assert result.returncode == 2, result.stdout + result.stderr
+    assert not marker.exists(), 'Tests started despite unavailable fresh evidence'

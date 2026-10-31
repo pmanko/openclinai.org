@@ -3,7 +3,7 @@
 set -u
 dir=$1 log=$2; shift 2
 tests=$(IFS=,; echo "$*")
-python3 - "$dir" <<'PY'
+python3 - "$dir" <<'PY' || { echo "RAN 0"; exit 2; }
 import sys
 from pathlib import Path
 root = Path(sys.argv[1]).resolve()

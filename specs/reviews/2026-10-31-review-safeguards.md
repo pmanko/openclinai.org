@@ -22,7 +22,7 @@ reports are rejected. Evidence: `work/review/vitest-exit-fixture/`.
 
 Verification:
 
-- `targets/validation-harness/.venv/bin/python -m pytest tests/review -q`: 36 passed.
+- `targets/validation-harness/.venv/bin/python -m pytest tests/review -q`: 39 passed.
 - `python3 -m unittest discover -s tests -v`: 19 passed.
 - `python3 scripts/check_workspace.py`: passed in an isolated clean checkout with
   all recorded component pins initialized. The active implementation checkout remains
@@ -43,6 +43,14 @@ Verification:
   and `wahs-contract-fixed-output.json`.
 
 Follow-up verification:
+
+- All three test adapters now stop before executing tests when old evidence cannot
+  be removed. A read-only Maven results directory previously caused its stale
+  assertion failure to be accepted as a new failure; it now returns an execution
+  error with zero executed tests. Three regressions failed before the repair and
+  passed afterward, covering Maven, pytest and Vitest. Evidence is under
+  `work/review/applicability/stale-cleanup/` and in
+  `work/pr-inventory/tooling-cleanup-red.log` and `tooling-cleanup-green.log`.
 
 - The tooling's own source review reproduced four defects: reply drafting erased
   the saved result, focused Vitest runs rejected deselected tests, named tests
