@@ -38,7 +38,7 @@ agent runs it. What the maintainer's process is, and where ours fell short on th
 | Layer | When | Cost | What it does |
 | --- | --- | --- | --- |
 | L0 Guards | every commit, blocking | none | secrets (hard block), focused or disabled tests, a new test file with no assertion, a mocked unit under test, trailer syntax |
-| L1 Probes | every push, blocking | one test run per probed commit | revert probe: the commit's tests fail with its main-code change reverted and pass with it restored (a file changed only in comments or blank lines is not reverted); mutation probe: the tests fail under the mutation the commit names |
+| L1 Probes | every push, blocking | one head run, plus a revert when needed and two runs per mutation | revert probe: the commit's tests fail with its main-code change reverted and pass with it restored (a file changed only in comments or blank lines is not reverted); mutation probe: the tests fail under the mutation the commit names |
 | L2 Review | on request | 100 to 300k tokens per PR per pass | a fresh session per role runs the brief at the chosen effort and returns findings as JSON; a stack pass reads the merged top for contracts between layers |
 | L3 Scenarios | on request, optional | one harness run | the validation harness replays a comparison set against the deployed head and checks machine-readable expectations; the umbrella builds and deploys the head first |
 | L4 Model gate | on request, optional, slice changes only | two harness runs | a pre-registered gate (comparison set, dataset, baseline, threshold) run on base and head; the record quotes the number |
@@ -55,10 +55,11 @@ report is the validation thread's output and feeds publication.
 ## Parameters
 
 ```
-make review PR=<n> [REPO=chartsearchai|esm|querystore] [AGENT=claude|codex|gemini|human]
+make review PR=<n> [REPO=umbrella|hub|harness|chartsearchai|esm|querystore] [AGENT=claude|codex|gemini|human]
             [EFFORT=low|medium|high] [ROUNDS=1] [STACK=1] [SCENARIOS=<set>] [GATE=<name>]
             [FULL=1] [SET=full-default] [PROFILES=<advertised Hub profiles>] [BASELINE=<run id>]
             [HEAD=<local ref> BASE=<local ref>]  review the layer before it is pushed
+            [REPOSITORY=<owner/repo> CONSUMER_REPO=<alias> CONSUMER_HEAD=<commit>]  choose the fork and paired component
             [MODEL=gpt-6.1-sol REASONING=medium]  the reviewer's model and effort (never a personal config's)
 make review MEASURE=<set> GOLD=<gold file>      a gate's baseline, before the gate is written
 make review FULL=1 [SET=] [PROFILES=]           the full evaluation without a PR
@@ -72,7 +73,7 @@ make review-replies PR=<n> [REPO=]              draft thread replies from the la
 | high | plus security and performance dimensions, uncertain findings returned as questions, a refutation pass on each blocking finding |
 
 `STACK=1` adds the contracts between layers (what one PR emits against what the PRs
-above and below consume) and reads the stack's merged top. `ROUNDS` above 1 repeats
+above and below consume) and reads the stack's merged top. `ROUNDS` above 1 with explicit `FIX=1` repeats
 review and fix until the reviewer records zero blocking findings on the pushed head,
 and every round after a clean one is blocking-only. `SCENARIOS`, `GATE` and `FULL` are off
 unless named. `FULL=1` runs the harness on `SET` (default `full-default`) against the set's two
@@ -83,6 +84,9 @@ never by editing a list here. `BASELINE=<run id>` adds a comparison with an earl
 report; without it the report stands on its own.
 
 ## Layout
+
+Review output names include the URL-encoded GitHub owner and repository, so two
+forks with the same component alias and PR number cannot share reports or answers.
 
 ```
 review/
@@ -96,7 +100,7 @@ review/
     stack.md             the cross-layer dimension for STACK=1
     judge.md             the harness rubric, for FULL=1
   bin/
-    threads.py           open threads per PR into work/review/<repo>-<pr>/threads.json
+    threads.py           open threads per PR into work/review/<component>-<encoded-repository>-<pr>/threads.json
     probe                [--repo] <commit>...: revert the main files, expect red; restore,
                          expect green; apply each Mutation:, expect red; --baseline records
                          already-pushed commits
@@ -148,9 +152,8 @@ Mutation: api/src/main/java/.../QueryStoreServiceImpl.java "candidateLimit" -> "
 
 The pre-push hook probes every commit the push adds (not on any remote yet) that
 touches main code, in a persistent probe worktree under `work/review/wt/<repo>` so Maven
-compiles incrementally. A patch already probed with the same trailers is not probed again
-after a rebase; commits pushed before the hooks were installed are recorded as the
-baseline. Mutation strings use JSON escapes, so a multi-line edit is one trailer.
+compiles incrementally. Probes execute afresh even after a rebase; historical baseline records are not
+verification evidence. Mutation strings use JSON escapes, so a multi-line edit is one trailer.
 
 ## Roles
 
@@ -225,9 +228,9 @@ and a person at a terminal.
   with. The report, not the score, is what publication consumes.
 - Every harness run starts the live dashboard (`make validate-dashboard`,
   http://localhost:8099), which follows the newest run. When an L5 run is judged, the run
-  step freezes that dashboard beside the report and publishes both to the reports site
+  step freezes that dashboard beside the report and, when explicitly requested, publishes both to the reports site
   (`scripts/publish-report.sh`), so a PR or record can link the published page;
-  `NO_PUBLISH=1` keeps them local, `PUBLISH=<run dir>` publishes a judged run later, and
+  reports stay local by default; `PUBLISH_EVALUATION=1` publishes them, `PUBLISH=<run dir>` publishes a judged run later, and
   `L5_RESUME=<run dir>` with `PROFILES=` adds arms to a finished run without re-running
   the cells it already completed.
 
@@ -281,8 +284,8 @@ threads and no consumer checkout, and ran once.
 - [x] Carried threads: `threads.py` attaches the replaced PR's threads under
       `previous`; the brief treats an unanswered ask there as open
       ([record](reviews/2026-10-21-harness-reproduction.md#reproduced-25)).
-- [x] The consumer checkout: `review.py` adds the other repository at its stack top
-      and the brief's step 7 checks the two sides of the contract
+- [x] The consumer checkout: `review.py` adds the selected repository at the supplied revision,
+      or records its current local commit when none is supplied, and the brief's step 7 checks the two sides of the contract
       ([record](reviews/2026-10-21-harness-reproduction.md#third-run-on-the-missed-cases)).
 - [x] The states around the diff: the brief's step 6 names the restart, resume,
       blank-input, missing-store, cap and recovery cases

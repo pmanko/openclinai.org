@@ -3,8 +3,8 @@
 Revert probe: the commit's tests fail with its main-code files put back to the parent
 and pass at the commit. Mutation probe: each Mutation: trailer, applied at the commit,
 makes the tests fail. Probes run in a persistent worktree per repository so builds stay
-incremental. A commit whose patch was already probed with the same trailers, or recorded
-as pushed before the probes existed, is not probed again.
+incremental. Every requested probe is executed afresh; historical baseline and patch identity
+do not establish current behavioral evidence.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .commits import code_changed, commit_changes, commit_trailers, derived_tests, detect_runner
+from .commits import classify, code_changed, commit_changes, commit_trailers, derived_tests, detect_runner
 from .git import clean_env, common_dir, git, patch_id, repo_name, toplevel
 
 UMBRELLA = Path(__file__).resolve().parents[3]
@@ -33,7 +33,7 @@ def work_dir() -> Path:
 class Outcome:
     sha: str
     ok: bool
-    status: str  # probed, skip, cached, baseline, no-main, blocked
+    status: str  # probed, skip, baseline, no-main, blocked
     lines: list[str] = field(default_factory=list)
 
 
@@ -43,6 +43,8 @@ class Run:
     ran: int
     failed: list[str]
     log: Path
+    failed_ids: list[dict] = field(default_factory=list)
+    executed_cases: set[tuple[str, str]] = field(default_factory=set)
 
 
 class Ledger:
@@ -53,17 +55,6 @@ class Ledger:
         if not self.path.exists():
             return []
         return [json.loads(l) for l in self.path.read_text().splitlines() if l.strip()]
-
-    def find(self, pid: str, trailer_key: str) -> dict | None:
-        for rec in reversed(self.records()):
-            if rec.get("patch_id") != pid:
-                continue
-            if rec["status"] == "baseline" and not trailer_key:
-                return rec
-            if rec["status"] in ("probed", "skip") and rec["ok"] \
-                    and rec.get("trailers", "") == trailer_key:
-                return rec
-        return None
 
     def append(self, rec: dict) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -95,31 +86,97 @@ def _reset(wt: Path, sha: str) -> None:
     git(wt, "clean", "-fdq", "-e", "node_modules")
 
 
+def _matches_test(identity: str, selector: str, root: Path | None = None) -> bool:
+    """Match a reported case to its file/class and method, never its method alone."""
+    parts = re.split(r"#|::", selector, maxsplit=1)
+    if len(parts) < 2:
+        return False
+    source, qualified = parts
+    python_case = source.endswith(".py")
+    reported_source, separator, reported_name = identity.partition("::" if python_case else "#")
+    if not separator:
+        return False
+    if python_case:
+        path = Path(source)
+        if path.is_absolute() and root is not None:
+            try:
+                path = path.relative_to(root)
+            except ValueError:
+                return False
+        source = str(path.with_suffix("")).replace("/", ".")
+    elif "." not in source:
+        reported_source = reported_source.rsplit(".", 1)[-1]
+    method, parameterized, parameters = qualified.partition("[")
+    expected = source + "." + re.sub(r"#|::", ".", method)
+    if parameterized:
+        expected += "[" + parameters
+    actual = reported_source + "." + reported_name
+    return actual == expected or (not parameterized and actual.startswith(expected + "["))
+
+
 def _run(runner: str, wt: Path, tests: list[str], log: Path) -> Run:
     log.parent.mkdir(parents=True, exist_ok=True)
     proc = subprocess.run([str(RUNNERS / f"{runner}.sh"), str(wt), str(log), *tests],
                           capture_output=True, text=True, env=clean_env())
-    ran, failed = 0, []
+    ran, failed, failed_ids = 0, [], []
+    executed_cases = set()
     for line in proc.stdout.splitlines():
         if line.startswith("RAN "):
             ran = int(line.split()[1])
+        elif line.startswith("EXECUTED "):
+            try:
+                identity = json.loads(line[len("EXECUTED "):])
+                if not isinstance(identity, list) or len(identity) != 2 or any(not isinstance(v, str) for v in identity):
+                    raise ValueError("invalid executed test identity")
+                executed_cases.add(tuple(identity))
+            except (ValueError, TypeError):
+                return Run(2, ran, failed, log)
+        elif line.startswith("FAILED_ID "):
+            try:
+                identity = json.loads(line[len("FAILED_ID "):])
+                if (not isinstance(identity, dict) or
+                        any(not isinstance(identity.get(key), str) for key in ("file", "name", "full_name")) or
+                        not isinstance(identity.get("selectors"), list) or
+                        any(not isinstance(v, str) for v in identity["selectors"])):
+                    raise ValueError("invalid test identity")
+                failed_ids.append(identity)
+            except (ValueError, TypeError):
+                return Run(2, ran, failed, log)
         elif line.startswith("FAILED "):
-            failed.append(line[7:].strip())
-    return Run(proc.returncode, ran, failed, log)
+            failure = line[7:].strip()
+            failed.append(failure)
+            if runner in ("pytest", "maven"):
+                identity = failure.split(": ", 1)[0]
+                failed_ids.append({"file": re.split(r"#|::", identity)[0],
+                                   "name": re.split(r"#|::", identity)[-1],
+                                   "full_name": identity,
+                                   "selectors": [test for test in tests if _matches_test(identity, test, wt)]})
+    return Run(proc.returncode, ran, failed, log, failed_ids, executed_cases)
 
 
 def _first(run: Run, tests: list[str] = ()) -> str:
     """The failure to quote: one from a named test when there is one, else the first."""
-    names = [re.split(r"#|::", t)[-1] for t in tests]
-    named = [f for f in run.failed if any(n and n in f for n in names)]
+    identities = {identity.get("full_name") for identity in run.failed_ids
+                  if any(test in identity.get("selectors", []) for test in tests)}
+    identified = [failure for failure in run.failed if failure.split(": ", 1)[0] in identities]
+    if identified:
+        return identified[0][:160]
+    named = [f for f in run.failed if any(_matches_test(f.split(": ", 1)[0], test) for test in tests)]
     return ((named or run.failed or [""])[0])[:160]
 
 
 def _expect_red(run: Run, sha7: str, what: str, tests: list[str] = ()) -> tuple[bool, str]:
-    if run.code == 1:
+    if run.code == 1 and run.ran > 0 and run.failed:
+        named = [test for test in tests if "#" in test or "::" in test]
+        failed_cases = [failure.split(": ", 1)[0] for failure in run.failed]
+        matched = (any(test in identity["selectors"] for test in named for identity in run.failed_ids)
+                   if run.failed_ids else any(_matches_test(case, test)
+                                             for test in named for case in failed_cases))
+        if named and not matched:
+            return False, f"BLOCK {sha7} {what}: intended test did not fail"
         return True, f"red   {sha7} {what}: {len(run.failed)} of {run.ran} failed: {_first(run, tests)}"
     if run.code == 2:
-        return True, f"red   {sha7} {what}: the build fails (see {run.log})"
+        return False, f"BLOCK {sha7} {what}: infrastructure failure (see {run.log})"
     if run.code == 0:
         return False, (f"BLOCK {sha7} {what}: {run.ran} passed; the tests do not "
                        "detect it")
@@ -128,15 +185,17 @@ def _expect_red(run: Run, sha7: str, what: str, tests: list[str] = ()) -> tuple[
     return False, f"BLOCK {sha7} {what}: runner error {run.code} (see {run.log})"
 
 
-def _expect_green(run: Run, sha7: str) -> tuple[bool, str]:
-    if run.code == 0:
+def _expect_green(run: Run, sha7: str, required_cases: set[tuple[str, str]] | None = None) -> tuple[bool, str]:
+    if run.code == 0 and run.ran > 0:
+        if required_cases and not required_cases.issubset(run.executed_cases):
+            return False, f"BLOCK {sha7}: tests that supplied red evidence did not execute after restoration"
         return True, f"green {sha7}: {run.ran} passed"
     reason = {1: f"{len(run.failed)} of {run.ran} failed: {_first(run)}",
               2: "the build fails", 3: "no named test ran"}.get(run.code, f"runner error {run.code}")
     return False, f"BLOCK {sha7} at the commit: {reason} (see {run.log})"
 
 
-def probe_commit(repo: Path, sha: str, force: bool = False) -> Outcome:
+def probe_commit(repo: Path, sha: str) -> Outcome:
     sha = git(repo, "rev-parse", sha).strip()
     sha7 = sha[:7]
     changes = commit_changes(repo, sha)
@@ -157,11 +216,6 @@ def probe_commit(repo: Path, sha: str, force: bool = False) -> Outcome:
     ledger = Ledger(repo)
     pid = patch_id(repo, sha) or sha
     key = trailers.key()
-    previous = None if force else ledger.find(pid, key)
-    if previous:
-        what = ("pushed before the probes were installed" if previous["status"] == "baseline"
-                else f"same patch as {previous['sha'][:7]}")
-        return Outcome(sha, True, "cached", [f"skip  {sha7} {what}"])
     record = {"sha": sha, "patch_id": pid, "trailers": key}
     if trailers.skip:
         line = f"skip  {sha7} Probe: skip ({trailers.skip})"
@@ -183,6 +237,7 @@ def probe_commit(repo: Path, sha: str, force: bool = False) -> Outcome:
                 "Tests:, or add Probe: skip (<reason>)"])
         logs = work_dir() / "logs" / repo_name(repo)
         lines, ok = [], True
+        required_cases = set()
         try:
             if behavioral:
                 for change in behavioral:
@@ -190,7 +245,9 @@ def probe_commit(repo: Path, sha: str, force: bool = False) -> Outcome:
                         (wt / change.path).unlink()
                     else:
                         git(wt, "checkout", "-q", f"{sha}^", "--", change.path)
-                good, line = _expect_red(_run(runner, wt, tests, logs / f"{sha7}-revert.log"),
+                reverted = _run(runner, wt, tests, logs / f"{sha7}-revert.log")
+                required_cases = {(i['file'], i['full_name']) for i in reverted.failed_ids}
+                good, line = _expect_red(reverted,
                                          sha7, f"revert of {len(behavioral)} main file(s)", tests)
                 ok &= good
                 lines.append(line)
@@ -198,11 +255,17 @@ def probe_commit(repo: Path, sha: str, force: bool = False) -> Outcome:
             else:
                 lines.append(f"skip  {sha7} revert: " + ("main code changes only in comments or blank lines"
                              if main else "no main code changed"))
-            good, line = _expect_green(_run(runner, wt, tests, logs / f"{sha7}-green.log"), sha7)
+            good, line = _expect_green(_run(runner, wt, tests, logs / f"{sha7}-green.log"), sha7, required_cases)
             ok &= good
             lines.append(line)
             for n, mutation in enumerate(trailers.mutations, 1):
+                if classify(mutation.path) == "test":
+                    ok = False
+                    lines.append(f"BLOCK {sha7}: mutations must preserve tests")
+                    continue
                 target = wt / mutation.path
+                if not target.resolve().is_relative_to(wt.resolve()):
+                    raise ValueError("mutation path escapes review checkout")
                 text = target.read_text(encoding="utf-8") if target.is_file() else ""
                 count = text.count(mutation.old)
                 if count != 1:
@@ -211,12 +274,16 @@ def probe_commit(repo: Path, sha: str, force: bool = False) -> Outcome:
                                  f"occurs {count} times in {mutation.path}; it must occur once")
                     continue
                 target.write_text(text.replace(mutation.old, mutation.new), encoding="utf-8")
-                good, line = _expect_red(
-                    _run(runner, wt, tests, logs / f"{sha7}-mutation{n}.log"),
+                mutated = _run(runner, wt, tests, logs / f"{sha7}-mutation{n}.log")
+                required_cases = {(i['file'], i['full_name']) for i in mutated.failed_ids}
+                good, line = _expect_red(mutated,
                     sha7, f"mutation {mutation.label()}", tests)
                 ok &= good
                 lines.append(line)
                 _reset(wt, sha)
+                restored, restored_line = _expect_green(_run(runner, wt, tests, logs / f"{sha7}-restored{n}.log"), sha7, required_cases)
+                ok &= restored
+                lines.append(restored_line)
         finally:
             _reset(wt, sha)
     ledger.append({**record, "status": "probed", "ok": ok, "tests": tests, "lines": lines})

@@ -25,5 +25,5 @@ signed_off: <who agreed the threshold>
    more than one.
 3. Commit it, then `make review PR=<n> REPO=<module> GATE=<name>`: the base (the layer
    below, or `GATE_BASE=<ref>`) and the head are each deployed, run and scored; the head's
-   number against the threshold decides. The record is `work/review/<repo>-<pr>/gate-<name>.md`;
+   number against the threshold decides. The record is `work/review/<component>-<encoded-repository>-<pr>/gate-<name>.md`;
    cite it in a dated review under `specs/reviews/`.
