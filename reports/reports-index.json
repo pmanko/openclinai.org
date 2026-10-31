@@ -5,14 +5,14 @@
     {
       "slug": "2026-10-30-wahs-phase2-eval",
       "title": "WA Health Summary (WAHS) Phase 2: Multi-Clinic FHIR R4 Chart Condensation, Conflict Reconciliation & Privacy-Segmented Sharing",
-      "summary": "Evaluates whether a patient-held health summary tool can safely condense massive, multi-clinic FHIR R4 longitudinal exports (up to 18.4 MB / 3.52M tokens per patient) into LLM-ready clinical briefs while reconciling cross-provider conflicts and enforcing privacy laws. Tested across six synthetic patient bundles (Maurice Auer, Lamar Beer, and Byron Emard in clean single-clinic Set A and multi-clinic perturbed Set B cohorts) and 32 clinical ground-truth cases covering four target workflows: (1) cross-clinic medication, problem-list, allergy, and immunization reconciliation; (2) encounter, ICU, and longitudinal clinical summarization; (3) privacy-segmented external sharing under 42 CFR Part 2 and WA My Health My Data Act (MHMDA); and (4) citation-grounded patient/clinician Q&A with abstention on unrecorded facts.",
-      "takeaway": "Our 5-Tier Progressive FHIR R4 / IPS Condenser and 4-Layer Clinical Knowledge Base scored 99.4/100 (at an 8k-token budget) to 96.5/100 (at a 2k-token emergency IPS budget), versus 61.2/100 for the uncondensed frontier LLM baseline (Claude Opus 5.5 reference). Deterministic pre-condensation cuts Maurice Auer's 84-year, 18.36 MB chart by 99.64%\u201399.94% while preserving 100% of the IPS safety core, detecting 15/15 injected cross-clinic medication/condition/vaccine discrepancies with clickable [N] -> resourceUuid provenance, preventing 100% of sensitive SDOH leaks in external_share mode (0 leaks vs. 3 in the uncondensed baseline), and abstaining on 6/6 unanswerable prompts.",
+      "summary": "Evaluates whether our deterministic 5-Tier FHIR R4 chart condenser and 4-Layer clinical rule engine can shrink multi-clinic health exports (up to 18.4 MB / 3.52M tokens per patient) into compact, source-linked summaries while catching cross-provider conflicts and redacting sensitive records on external share. Tested across six synthetic patient bundles (Maurice Auer, Lamar Beer, and Byron Emard in clean single-clinic Set A and multi-clinic perturbed Set B cohorts) and 32 clinical test cases covering: (1) cross-clinic medication, condition, allergy, and vaccine conflict detection; (2) hospital/ICU and longitudinal summarization; (3) sensitive SDOH/privacy redaction under 42 CFR Part 2 and WA My Health My Data Act; and (4) source-linked Q&A with explicit 'not in chart' abstention.",
+      "takeaway": "At this Phase 2 deterministic verification stage, the condensed chart + clinical rule pipeline scored 99.4/100 (at an 8,000-token budget) to 96.5/100 (at a 2,000-token emergency summary budget), compared against 61.2/100 for an uncondensed raw-FHIR reference baseline (Claude Opus 5.5). Condensing Maurice Auer's 84-year, 18.36 MB chart reduces token volume by 99.64%–99.94% while keeping 100% of active allergies, medications, and conditions, catching all 15/15 injected cross-clinic conflicts with clickable [N] -> resourceUuid record links, preventing 100% of sensitive SDOH leaks in external_share mode, and abstaining on 6/6 unrecorded facts. Section 09 of the report documents a candid methodological audit and the Phase 3 plan for live open-weight LLM evaluation.",
       "family": "wahs",
       "arms": {
-        "wahs-5tier-4layer-kb-8k": "WAHS+ 5-Tier + 4-Layer KB (8k budget)",
-        "wahs-5tier-4layer-kb-4k": "WAHS+ 5-Tier + 4-Layer KB (4k budget)",
-        "wahs-5tier-4layer-kb-2k": "WAHS+ 5-Tier + 4-Layer KB (2k IPS core)",
-        "opus-5.5-raw-fhir-baseline": "Uncondensed FHIR / Opus 5.5 baseline"
+        "wahs-5tier-4layer-kb-8k": "Condensed Chart + Clinical Rules (8,000-token budget)",
+        "wahs-5tier-4layer-kb-4k": "Condensed Chart + Clinical Rules (4,000-token budget)",
+        "wahs-5tier-4layer-kb-2k": "Emergency Summary Core + Clinical Rules (2,000-token budget)",
+        "opus-5.5-raw-fhir-baseline": "Uncondensed Raw FHIR Baseline (Claude Opus 5.5 reference)"
       },
       "guide": {
         "label": "Interactive UX (wahs-demo.openclinai.org)",

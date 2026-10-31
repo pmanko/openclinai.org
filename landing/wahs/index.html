@@ -179,6 +179,77 @@
 </div>
 </section>
 
+<section class="section page-width resource-section" id="open-questions" aria-labelledby="open-questions-title">
+<p class="section-kicker">Critical Review &amp; Phase 3 Roadmap</p>
+<h2 id="open-questions-title">Open questions, current limitations, and next target areas</h2>
+<p>Our Phase 2 prototype and evaluation validate the deterministic pre-LLM foundation (condensing large FHIR bundles and running clinical rule checks), but important research and engineering questions remain before live clinical or patient-facing deployment. See <a href="design-report/index.html#phase3-roadmap">Section 09 of the detailed design &amp; architecture dashboard</a> for the complete technical analysis, model inventory, and experimental design.</p>
+<div class="resource-groups">
+<section class="resource-group">
+<h3>Evaluation rigor &amp; realistic data</h3>
+<ul class="resource-links">
+<li>
+<a href="design-report/index.html#audit-and-eval">
+<span class="resource-link-title">From rule checks to live LLM benchmarking <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Phase 2 evaluates deterministic Python condensation and rule templates. Phase 3 pairs live open-weight LLM runs with OpenAI HealthBench weighted physician rubrics, Stanford MedHELM, and VeriFact/FActScore atomic claim entailment.</span>
+</a>
+</li>
+<li>
+<a href="design-report/index.html#messy-data">
+<span class="resource-link-title">Realistic, messy multi-EHR synthetic &amp; de-identified data <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Expanding beyond three clean Synthea records to 8 patient personas with a 6-Layer EHR Messiness Injector (missing codes, OCR/free-text clinical notes, conflicting sig text, C-CDA/EHI imports) and MIMIC-IV-on-FHIR cases.</span>
+</a>
+</li>
+<li>
+<a href="design-report/index.html#patient-scenarios">
+<span class="resource-link-title">Patient-centered question taxonomy first <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Centering scenarios on what patients and caregivers actually ask (“Are two doctors prescribing me the same pill?”, “What changed during my hospital stay?”, “What should I ask at my next visit?”) with clinician insight secondary.</span>
+</a>
+</li>
+</ul>
+</section>
+<section class="resource-group">
+<h3>Models, GPU compute &amp; orchestration</h3>
+<ul class="resource-links">
+<li>
+<a href="design-report/index.html#gpu-and-models">
+<span class="resource-link-title">Shared GPU execution &amp; model selection funnel <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Running and screening models from 1B–4B edge/browser tiers up to 8B–35B server models (Gemma 4, MedGemma, Qwen 3, Granite 4.2) on the UW CIRG NVIDIA H200 server (<code>uwcirg/llm-configs</code>).</span>
+</a>
+</li>
+<li>
+<a href="design-report/index.html#prompting-and-teams">
+<span class="resource-link-title">Prompt engineering &amp; orchestrated KB agent teams <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Comparing single-pass prompting, cross-family label-only review, and multi-agent specialist orchestration for knowledge-base-grounded medication, lab, and guideline queries.</span>
+</a>
+</li>
+<li>
+<a href="design-report/index.html#condensation-and-retrieval">
+<span class="resource-link-title">Condensation tiers &amp; full-chart queryability <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Keeping the compact Tier 2–4 IPS safety core in prompt context while making the full Tier 0/1 historical chart queryable on demand via scoped MCP FHIR tools and local embeddings.</span>
+</a>
+</li>
+</ul>
+</section>
+<section class="resource-group">
+<h3>Cryptographic FHIR privacy</h3>
+<ul class="resource-links">
+<li>
+<a href="design-report/index.html#fhir-privacy-crypto">
+<span class="resource-link-title">Selective disclosure &amp; element-level FHIR obfuscation <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Connecting pre-condensation DS4P filtering with UW DIGI’s <code>ips-selective-disclosures</code> (IETF SD-JWT salted <code>sd-hash</code> extensions on FHIR elements/entries) and SMART Health Links JWE encryption.</span>
+</a>
+</li>
+<li>
+<a href="https://reports.openclinai.org/2026-10-30-wahs-phase2-eval/index.html#sec-audit">
+<span class="resource-link-title">Phase 2 evaluation audit &amp; plain-English metric guide <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Plain-language definitions of all evaluation metrics, exact measurement formulas, and candid disclosure of current prototype caveats.</span>
+</a>
+</li>
+</ul>
+</section>
+</div>
+</section>
+
 <section class="section page-width resource-section" aria-labelledby="resources-title">
 <h2 id="resources-title">Demonstrations, evaluations, and design resources</h2>
 <p>Explore the interactive patient summary prototype, read the recorded evaluation findings, or inspect the detailed technical design dashboard.</p>

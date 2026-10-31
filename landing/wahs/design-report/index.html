@@ -26,6 +26,7 @@
     <a href="#evidence"><span>06</span> Sources and confidence</a>
     <a href="#phase2-prototype"><span>07</span> Phase 2 prototype &amp; eval</a>
     <a href="#research-foundation"><span>08</span> Research &amp; standards backing</a>
+    <a href="#phase3-roadmap"><span>09</span> Critical audit &amp; Phase 3 plan</a>
   </nav>
   <div class="sidebar-bottom"><p>A proposal for collaboration<br><time datetime="2026-10-30">30 October 2026</time></p><span class="tag observed">Phase 2 prototype live</span><p class="small">Updated 30 October 2026 with Phase 2 FHIR condensation, evaluation results and interactive demo.</p></div>
 </aside>
@@ -233,6 +234,254 @@
         <li><strong>Progressive Disclosure &amp; Explicit Abstention:</strong> Following <a href="https://www.nngroup.com/articles/progressive-disclosure/" target="_blank" rel="noopener noreferrer">NN/g Progressive Disclosure ↗</a> and <a href="https://www.w3.org/WAI/WCAG21/Understanding/reflow.html" target="_blank" rel="noopener noreferrer">W3C WCAG 2.1 ↗</a>, the interactive prototype leads users through four focused steps and abstains 100% of the time when queried about undocumented clinical facts.</li>
       </ul>
     </article>
+  </div>
+</section>
+
+<section id="phase3-roadmap" class="report-section" aria-labelledby="phase3-roadmap-title">
+  <div class="eyebrow">09 / CRITICAL AUDIT, OPEN QUESTIONS &amp; PHASE 3 TECHNICAL ROADMAP</div>
+  <h2 class="section-title" id="phase3-roadmap-title">Candid review of Phase 2, modern evaluation methodology &amp; next target areas</h2>
+  <p class="lead">To guide Phase 3 of the WA Health Summary collaboration, we conducted a critical audit of our Phase 2 demo data, rule engine, and evaluation suite, and synthesized concrete engineering plans across evaluation methodology, messy synthetic/anonymized data generation, GPU server execution, model selection, multi-agent KB orchestration, hybrid full-chart retrieval, cryptographic FHIR privacy, and patient-centered scenario design.</p>
+
+  <div id="audit-and-eval" class="subsection">
+    <h2>9.1 Candid Audit of What We Built &amp; Up-to-Date Evaluation Methodology</h2>
+    <div class="two-column">
+      <article class="panel">
+        <span class="kicker">CRITICAL AUDIT OF PHASE 2</span>
+        <h3>Four methodological gaps in our current prototype &amp; benchmark</h3>
+        <ul class="checklist">
+          <li><strong>Deterministic Verification vs. Live Generative LLM Evaluation:</strong> Our Phase 2 evaluator (<code>wahs_analyzer.py</code>) tests deterministic Python normalization and structured templates over condensed FHIR ledgers rather than live open-weight LLM generation (<code>Gemma 4</code>, <code>Qwen 3</code>, <code>MedGemma</code>). Thus, the <code>99.4 / 100</code> headline score validates our pre-LLM condensation and rule engine, <em>not</em> generative model fidelity. Meanwhile, the <code>61.2 / 100</code> Opus 5.5 row is a reconstructed reference baseline from Phase 1 observations over manually sliced JSON rather than a live side-by-side harness run over all 32 prompts.</li>
+          <li><strong>Co-Designed Perturbations &amp; Rule Tables (Ceiling Effect):</strong> The 15 multi-clinic conflicts in Set B and the 4-Layer lookup tables were co-designed in the same sprint over the exact SNOMED/RxNorm/CVX/LOINC codes present in the three test bundles. Because generator and detector share a finite code vocabulary, recall hits <code>100%</code> by construction.</li>
+          <li><strong>Clean Synthea Regularity &amp; Tiny Cohort (<code>N = 3</code>):</strong> Three clean Synthea patients have 100% coded entries (<code>2,629 / 2,629</code>). Real multi-EHR patient exports and Epic EHI dumps contain uncoded free-text problems, local charge codes, OCR/scanned PDF notes, and garbled sig strings where deterministic lookup alone drops sharply.</li>
+          <li><strong>Evaluator Schema Drift &amp; Jargon:</strong> An audit between our in-process report script (<code>32 / 32</code>) and standalone HTTP harness runner (<code>summary.json</code>, <code>81 / 96</code> cells) exposed a field-name mismatch (<code>abstained</code> vs. <code>abstains</code>) and a substring false positive where the redaction banner triggered the forbidden-term check. We also remediated opaque metrics (e.g., <em>“4-Layer KB Code Coverage”</em> → <em>Medical Code Recognition Rate</em>) across the published evaluation report.</li>
+        </ul>
+      </article>
+      <article class="panel">
+        <span class="kicker">MODERN EVALUATION METHODOLOGY</span>
+        <h3>Grounding Phase 3 in AI research, industry rubrics &amp; shared tooling</h3>
+        <ul class="checklist">
+          <li><strong>OpenAI HealthBench (2025) Weighted Physician Rubrics:</strong> Replaces binary pass/fail keyword checks with instance-specific, clinician-authored rubric criteria carrying positive weights for required clinical context/actions and negative penalties for dangerous omissions, false reassurance, or clinical jargon in patient answers (<a href="https://openai.com/index/healthbench/" target="_blank" rel="noopener noreferrer">OpenAI HealthBench ↗</a>).</li>
+          <li><strong>Stanford MedHELM &amp; MedAgentBench:</strong> Evaluates real-world EHR decision-support and multi-step FHIR agent workflows rather than multiple-choice licensing exams (<a href="https://crfm.stanford.edu/helm/medhelm/latest/" target="_blank" rel="noopener noreferrer">Stanford MedHELM ↗</a>).</li>
+          <li><strong>VeriFact (2025), FActScore &amp; MiniCheck Atomic Entailment:</strong> Decomposes every LLM response into atomic clinical propositions and verifies via Natural Language Inference (NLI) that each cited <code>[N] → FHIR resourceUuid</code> actually entails the claim—catching <em>citation distortion</em> where a model cites a real lab or note while misstating its value or date.</li>
+          <li><strong>Shared Open Tooling &amp; OpenClinAI Blind Judging:</strong> Integrates <a href="https://www.promptfoo.dev/" target="_blank" rel="noopener noreferrer">Promptfoo ↗</a> (declarative prompt/model matrices &amp; red-teaming), <a href="https://docs.confident-ai.com/" target="_blank" rel="noopener noreferrer">DeepEval / Ragas ↗</a> (faithfulness &amp; context recall), and our blind multi-judge protocol (<code>Claude Opus 5.5</code> + <code>GPT-6-Astra</code> with stripped check labels).</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+
+  <div id="messy-data" class="subsection">
+    <h2>9.2 Generating Realistic, Messy Multi-EHR Synthetic &amp; De-Identified Patient Data</h2>
+    <p>To stress-test condensation, reconciliation, and LLM reasoning under realistic clinical messiness, Phase 3 expands our test corpus from 3 clean Synthea files to <strong>8 patient personas (25–50 longitudinal bundles)</strong> using a 3-prong data pipeline:</p>
+    <div class="two-column">
+      <article class="panel">
+        <span class="kicker">8 TARGET PATIENT PERSONAS</span>
+        <h3>Diverse clinical trajectories &amp; multi-portal fragmentation</h3>
+        <ul class="checklist">
+          <li><strong>P1 · Older Adult Multimorbidity &amp; Post-ICU Transition</strong> (Maurice expansion: CHF, CKD 3b→4, T2DM, post-CABG anticoagulant + statin conflicts).</li>
+          <li><strong>P2 · Pediatric / Adolescent Split-Custody &amp; School/IIS Registry</strong> (Byron expansion: urgent care + school clinic + WA IIS immunization interval conflicts).</li>
+          <li><strong>P3 · Severe Atopy, Anaphylaxis &amp; Specialty Biologics</strong> (Lamar expansion: missing rescue epinephrine + unmerged surgical latex allergy).</li>
+          <li><strong>P4 · Maternal / Perinatal High-Risk Care</strong> (Gestational diabetes, preeclampsia monitoring, postpartum blood pressure &amp; OB vs. PCP handoff).</li>
+          <li><strong>P5 · Oncology Survivorship &amp; Multi-Center Infusion</strong> (Academic cancer center chemo/immunotherapy + community ED febrile neutropenia + cardiotoxicity monitoring).</li>
+          <li><strong>P6 · Dual-Protected Behavioral Health, Chronic Pain &amp; SDOH</strong> (42 CFR Part 2 buprenorphine/SUD + IPV screening + WA MHMDA reproductive health segmentation).</li>
+          <li><strong>P7 · Rural-to-Urban Transfer &amp; Bilingual Caregiver Navigation</strong> (Critical access hospital ED + urban tertiary referral + Spanish/English caregiver summary needs).</li>
+          <li><strong>P8 · Rare / Autoimmune Diagnostic Odyssey</strong> (3+ rheumatology/GI portals, conflicting working diagnoses, biologic washout periods, normal/negative abstention probes).</li>
+        </ul>
+      </article>
+      <article class="panel">
+        <span class="kicker">6-LAYER EHR MESSINESS INJECTOR &amp; REAL CORPS</span>
+        <h3>Simulating real-world health-system entropy</h3>
+        <ul class="checklist">
+          <li><strong>1. Terminology &amp; Code Stripping (30–40% of entries):</strong> Drops standard SNOMED/RxNorm/LOINC codes from a subset of entries, leaving only local hospital codes or raw <code>code.text</code> (e.g., <code>“T2DM w/o comp”</code>, <code>“lasix 40 po qd”</code>).</li>
+          <li><strong>2. Conflicting &amp; Free-Text Sig Instructions:</strong> Injects clinician notes saying <em>“Hold lisinopril until potassium rechecked”</em> while <code>MedicationRequest.status</code> remains <code>active</code>.</li>
+          <li><strong>3. Copy-Forwarded &amp; Stale Note Bloat:</strong> Injects 10–15 sequential progress notes with 85% copy-pasted physical exam text where one buried line changes a medication dose.</li>
+          <li><strong>4. OCR &amp; Scanned Document Noise:</strong> Simulates faxed outside discharge summaries and scanned lab PDFs inside <code>DocumentReference</code> attachments.</li>
+          <li><strong>5. Partial C-CDA-to-FHIR &amp; Epic EHI Artifacts:</strong> Simulates lossy C-CDA conversions (<code>MedicationStatement</code> with missing requester/dates) and raw EHI export tables.</li>
+          <li><strong>6. De-Identified Real Clinical Anchors:</strong> Supplements synthetic cohorts with <strong>PhysioNet MIMIC-IV-on-FHIR v2.1</strong> (real ICU/ED stays paired with MIMIC-IV-Note discharge summaries) and public SMART Sandbox / Sync for Science multi-vendor bundles.</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+
+  <div id="gpu-and-models" class="subsection">
+    <h2>9.3 CIRG GPU Server Execution Plan &amp; Candidate Open-Weight Model Inventory</h2>
+    <p>We inspected the UW CIRG GPU server configuration (<a href="https://github.com/uwcirg/llm-configs/pull/2" target="_blank" rel="noopener noreferrer"><code>uwcirg/llm-configs#2</code> ↗</a> &amp; <a href="https://github.com/uwcirg/llm-configs/pull/3" target="_blank" rel="noopener noreferrer"><code>#3</code> ↗</a>) running Traefik + LiteLLM + Ollama/vLLM on NVIDIA H200 hardware (141 GB HBM3e full GPU or <code>MIG 1g.18gb</code> / <code>2g.35gb</code> slices), alongside our local 64 GB unified-memory Mac <code>llama-router</code> setup.</p>
+    <div class="note"><strong>Key server configuration findings from <code>uwcirg/llm-configs</code>:</strong> (1) Raise <code>OLLAMA_MAX_LOADED_MODELS</code> from <code>2</code> to <code>3–4</code> (or pin one model per stage) so concurrent calls to <code>embed/nomic-embed-text</code> + writer + reviewer do not thrash VRAM; (2) explicitly pass <code>num_ctx: 16384</code> or <code>32768</code> per API call so Ollama does not silently truncate condensed charts at its 2k/4k default; (3) enable <code>OLLAMA_FLASH_ATTENTION=1</code> and <code>OLLAMA_KV_CACHE_TYPE=q8_0</code> (or deploy <strong>vLLM</strong> with <code>--enable-prefix-caching</code> so repeated Q&amp;A and rubric checks over the same patient ledger reuse the KV cache at &gt;80% prefill speedup); and (4) enforce <code>turn_off_message_logging: true</code> in LiteLLM for zero PHI persistence.</div>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="Candidate model inventory across size tiers">
+      <table class="capability-table">
+        <caption class="sr-only">Candidate open-weight models from 1B edge to 70B server tiers for WAHS Phase 3 screening</caption>
+        <thead>
+          <tr>
+            <th scope="col">Tier &amp; Target Hardware</th>
+            <th scope="col">Candidate Open-Weight Models</th>
+            <th scope="col">VRAM Footprint (Quantization)</th>
+            <th scope="col">Primary Role in WAHS+ Architecture</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Tier S · Edge / Browser / Mobile<br><small><code>0.3B – 4B</code> · WebGPU / Laptop / CPU</small></th>
+            <td><code>MedGemma 1.5 4B-IT</code> · <code>Gemma 4 E4B</code> · <code>Qwen 3 1.7B / 4B</code> · <code>Llama 3.2 3B</code> · <code>MiniCheck-Flan-T5-Large (770M)</code></td>
+            <td><code>1.5 – 4.5 GB</code> (<code>Q4_K_M</code> / <code>Q8_0</code>)</td>
+            <td>Zero-server client-side summarization over Tier 3/4 condensed capsules (<code>&le; 4k</code> tokens); fast claim-level NLI entailment verification (<code>MiniCheck</code>); query intent routing.</td>
+          </tr>
+          <tr>
+            <th scope="row">Tier M · Single MIG Slice / Workhorse<br><small><code>7B – 14B</code> · H200 <code>MIG 1g.18gb</code> (18 GB)</small></th>
+            <td><code>Gemma 4 12B-IT (Q8_0)</code> · <code>Qwen 3.5 9B (Q8_0)</code> · <code>IBM Granite 4.2 8B</code> · <code>Ministral 3 14B</code> · <code>DeepSeek-R1-Distill-Qwen-14B</code></td>
+            <td><code>6.5 – 14.5 GB</code> (fits in 18 GB slice with 16k KV cache)</td>
+            <td>Primary production workhorse for Tier 2/3 chart summarization, cross-clinic conflict explanation, and cross-family label-only review (<code>single-12b-xcheck</code>).</td>
+          </tr>
+          <tr>
+            <th scope="row">Tier L · Dual-MIG / Half-GPU Specialist<br><small><code>24B – 35B</code> · <code>MIG 2g.35gb</code> / <code>3g.71gb</code></small></th>
+            <td><code>Gemma 4 31B-IT (Q4_K_M)</code> · <code>MedGemma 27B-Text-IT</code> · <code>Qwen 3.8 27B</code> · <code>Qwen 3.6 35B-A3B (MoE, 3B active)</code> · <code>Nemotron 3 Nano 30B-A3B</code></td>
+            <td><code>16 – 22 GB</code> weights + KV cache</td>
+            <td>High-accuracy multi-source reconciliation, complex ICU/longitudinal narrative synthesis, and fast MoE specialist verification (<code>3B</code> active parameters per token).</td>
+          </tr>
+          <tr>
+            <th scope="row">Tier XL · Full H200 Server Ceiling / Judge<br><small><code>70B – 120B+</code> · Full H200 (141 GB HBM3e)</small></th>
+            <td><code>Llama 3.3 70B-Instruct</code> · <code>Qwen 2.5/3 72B-Instruct</code> · <code>OpenBioLLM-70B</code></td>
+            <td><code>42 – 75 GB</code> (<code>Q4_K_M</code> / <code>FP8</code>)</td>
+            <td>Local open-weight reference ceiling, gold-standard synthetic perturbation authoring, and local LLM-as-a-Judge calibration.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted"><strong>3-Stage Screening Funnel:</strong> Stage 1 (Deterministic Gate, N=10 cases): reject any model with &lt;95% citation formatting compliance, &gt;0 SDOH privacy leaks, or &lt;90% abstention accuracy. Stage 2 (Throughput &amp; Tier Sensitivity, N=32 cases × 3 budgets): measure TTFT, tokens/sec, and recall degradation from 8k → 2k tokens. Stage 3 (Full Multi-Persona Blind-Judged Benchmark, N=100+ cases): dual-judge HealthBench + VeriFact scoring.</p>
+  </div>
+
+  <div id="prompting-and-teams" class="subsection">
+    <h2>9.4 Prompt Engineering &amp; Orchestrated Agent Teams for KB-Based Queries</h2>
+    <div class="two-column">
+      <article class="panel">
+        <span class="kicker">PROMPT ENGINEERING FOR SMALL/MIDSIZE MODELS</span>
+        <h3>Five empirically validated prompting levers</h3>
+        <ul class="checklist">
+          <li><strong>1. Pre-Injected Temporal &amp; Reference-Date Anchor:</strong> Always supply the chart’s reference date and pre-computed relative intervals (e.g., <code>[2023-11-20 · 2y 11m ago]</code>) so 4B–14B models never perform raw calendar arithmetic.</li>
+          <li><strong>2. Deterministic KB Fact Sheet Pre-Attachment:</strong> Inject matched 4-Layer KB findings (RxNorm ingredient matches, KDIGO eGFR stage rules, ACIP intervals) as an explicit <code>[CLINICAL RULE ALERTS]</code> block above the condensed ledger so the LLM explains verified findings rather than memorizing ontology tables.</li>
+          <li><strong>3. Constrained <code>[N]</code> Bracket Citation Grammar:</strong> Require every clinical assertion to carry an inline <code>[N]</code> index from the condensed ledger or explicitly state <code>“Not documented in the provided health summary.”</code></li>
+          <li><strong>4. Evidence-First Ordering &amp; Sampling Control:</strong> Place the condensed ledger at the top of the prompt (maximizing prefix-cache hits), repeat the user question at the bottom, and disable aggressive repetition penalties (<code>dry_multiplier = 0</code>, <code>temperature = 0.0–0.2</code>) that corrupt medication lists.</li>
+          <li><strong>5. Audience Dual-Register Prompting:</strong> Separate <em>Patient Mode</em> (6th–8th grade plain English, empowering questions to ask the care team) from <em>Clinician Mode</em> (problem-oriented assessment &amp; plan with LOINC/RxNorm codes).</li>
+        </ul>
+      </article>
+      <article class="panel">
+        <span class="kicker">ORCHESTRATED AGENT TEAM EXPERIMENTS</span>
+        <h3>When do multi-agent teams beat a single model on KB queries?</h3>
+        <p>Drawing on our <code>med-agent-hub</code> findings (<code>specs/checked-answers.md</code>), letting a second agent blindly rewrite a draft often deletes valid clinical details (<em>verifier over-rejection</em>). Instead, Phase 3 tests four controlled architectures on KB-heavy queries:</p>
+        <ul class="checklist">
+          <li><strong>Arm 1 — Single Model + Raw Condensed Ledger:</strong> Baseline single pass without KB rule pre-injection.</li>
+          <li><strong>Arm 2 — Single Model + Deterministic 4-Layer KB Pre-Injection:</strong> Single LLM call augmented with deterministic RxNorm/SNOMED/ACIP/LOINC rule outputs.</li>
+          <li><strong>Arm 3 — Cross-Family Label-Only Checked Pipeline (<code>single-12b-xcheck</code>):</strong> Writer (<code>Gemma 4 12B</code>) drafts the answer; a cross-family Reviewer (<code>Qwen 3.5 9B</code> or <code>Granite 4.2 8B</code>) and narrow Entailment Grounder check each claim against the KB and cited FHIR records, attaching verification badges or triggering a single targeted repair pass.</li>
+          <li><strong>Arm 4 — Orchestrated Specialist KB Team (<code>team-wahs-kb</code>):</strong> A lightweight Router dispatches parallel domain specialists—<strong>Medication &amp; RxNorm Specialist</strong>, <strong>Lab &amp; KDIGO/ADA Trend Specialist</strong>, and <strong>ACIP Immunization &amp; Care-Gap Specialist</strong>—followed by a Synthesizer and Privacy/Provenance Gatekeeper.</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+
+  <div id="condensation-and-retrieval" class="subsection">
+    <h2>9.5 Evaluating Condensation Tiers &amp; Keeping the Full Chart Queryable</h2>
+    <p>Condensing an 18.4 MB chart down to <code>2k–8k</code> tokens guarantees that the <strong>IPS Safety Core</strong> (active allergies, active meds, active problems, recent labs) is always in context, but aggressive condensation (Tier 3/4) intentionally drops older encounters, historical stopped medications, and full free-text clinical notes. To evaluate information loss across tiers and keep <strong>100% of the full chart queryable</strong> even for small-context models, Phase 3 introduces a <strong>Two-Tier Hybrid Memory Architecture</strong>:</p>
+    <div class="two-column">
+      <article class="panel">
+        <span class="kicker">HYBRID FULL-CHART QUERYABILITY</span>
+        <h3>Always-On IPS Core + On-Demand Tier 0/1 Retrieval Tools</h3>
+        <ol class="steps reading-steps">
+          <li><span>01</span><h3>Always-In-Context Safety Core (<code>1k–4k</code> tokens)</h3><p>Every prompt includes the Tier 3/4 condensed IPS summary so the model never misses an active allergy, active drug conflict, or chronic condition.</p></li>
+          <li><span>02</span><h3>Scoped MCP / Function-Calling Chart Tools</h3><p>When a question asks about historical details omitted from the condensed view (e.g., <em>“Why was Furosemide stopped in 2022?”</em> or <em>“What did my 2019 cardiology note say?”</em>), the model calls read-only FHIR retrieval tools: <code>search_chart_entries(query, resource_types, date_range)</code>, <code>get_lab_history(loinc_code)</code>, and <code>read_clinical_note(document_uuid)</code>.</p></li>
+          <li><span>03</span><h3>Ephemeral Client/Server Embeddings</h3><p>Indexes Tier 0/1 overflow entries in an ephemeral in-memory vector index using <code>nomic-embed-text</code> (on the CIRG LiteLLM endpoint) or browser-side <code>Transformers.js</code>, returning top-<em>k</em> historical FHIR entries with exact <code>[N] → resourceUuid</code> provenance.</p></li>
+        </ol>
+      </article>
+      <article class="panel">
+        <span class="kicker">5×4 CONDENSATION ABLATION EXPERIMENT</span>
+        <h3>How condensation interacts with model selection</h3>
+        <p>We will evaluate a <strong>5 (Condensation Configurations: Tier 1 16k, Tier 2 8k, Tier 3 4k, Tier 4 2k static, and Tier 4 2k + On-Demand Retrieval) × 4 (Model Classes: 4B, 9B–12B, 27B–31B, 35B-A3B MoE)</strong> factorial matrix across four question horizons:</p>
+        <ul class="checklist">
+          <li><strong>Current Active State Queries:</strong> Expected flat performance from Tier 1 to Tier 4 (100% answered from the IPS Safety Core).</li>
+          <li><strong>24-Month Trend &amp; Conflict Queries:</strong> High accuracy at Tiers 1–3; slight dip at static Tier 4 recovered by Hybrid Retrieval.</li>
+          <li><strong>Deep Historical Queries (&gt;2 Years Ago):</strong> Sharp drop at static Tiers 3–4 (by design), testing whether <strong>Tier 4 (2k) + On-Demand Tool Retrieval</strong> recovers &gt;95% of full-chart recall at one-fifth the token cost.</li>
+          <li><strong>Model Selection Implication:</strong> Static Tier 3/4 summaries only require strong reading comprehension (enabling <code>4B–8B</code> models), whereas Hybrid Full-Chart Queryability requires reliable tool-calling (favoring <code>Qwen 3 8B/27B</code>, <code>Gemma 4 12B/31B</code>, or <code>Granite 4.2 8B</code>).</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+
+  <div id="fhir-privacy-crypto" class="subsection">
+    <h2>9.6 Privacy Implementation &amp; Encrypting/Obfuscating Specific Parts of a FHIR Bundle</h2>
+    <p>How does WAHS+’s privacy segmentation connect to prior cryptographic FHIR privacy work across UW DIGI and CIRG? Our review links three complementary mechanisms—including Ian Bacher’s proof-of-concept in <a href="https://github.com/DIGI-UW/ips-selective-disclosures" target="_blank" rel="noopener noreferrer"><code>DIGI-UW/ips-selective-disclosures</code> (<code>sd-fhir</code>) ↗</a> and <a href="https://github.com/uwcirg/shl-ips" target="_blank" rel="noopener noreferrer"><code>uwcirg/shl-ips</code> ↗</a>—into a unified <strong>Three-Layer FHIR Privacy &amp; Selective-Disclosure Architecture</strong>:</p>
+    <div class="two-column">
+      <article class="panel">
+        <span class="kicker">PRIOR UW DIGI &amp; CIRG CRYPTOGRAPHIC WORK</span>
+        <h3>Element- &amp; Entry-Level Obfuscation via <code>sd-fhir</code> (SD-JWT) and SHL (JWE)</h3>
+        <ul class="checklist">
+          <li><strong>1. IETF SD-JWT Selective Disclosure on FHIR (<code>DIGI-UW/ips-selective-disclosures</code>):</strong> In Ian Bacher’s <code>sd-fhir</code> package, any sensitive FHIR resource in <code>Bundle.entry[]</code> or primitive field (e.g., <code>Patient.address</code>, <code>Patient.telecom</code>, or a sensitive <code>Condition</code>) marked with extension <code>http://smart.who.int/icvp/StructureDefinition/SelectiveDisclosure</code> is extracted by <code>buildDisclosureFrame()</code>. In the shared FHIR JSON, the sensitive element is <strong>replaced in-place by a salted SHA-256/SHA-512 cryptographic digest</strong> stored inside an <code>http://smart.who.int/icvp/Extension/sd-hash</code> extension (<code>valueBase64Binary</code>), while the underlying <code>[salt, key, value]</code> disclosures travel separately in a companion <code>fhirR4.Parameters</code> resource. This keeps the redacted FHIR Bundle 100% schema-valid and allows an issuer’s signature to be verified without revealing the obfuscated entries!</li>
+          <li><strong>2. SMART Health Links Payload &amp; Sub-Bundle Encryption (<code>uwcirg/shl-ips</code>):</strong> Uses <strong>JSON Web Encryption (JWE, RFC 7516, <code>A256GCM</code>)</strong> where the 256-bit decryption key is carried in the client-side URL fragment (<code>shlink:/...</code>) and never sent to the hosting server. High-sensitivity resources can also be wrapped in a separately encrypted JWE sub-bundle or <code>_extension</code> unlocked only with a secondary recipient key or patient passcode.</li>
+          <li><strong>3. QueryStore Read-Projection Redaction &amp; HL7 DS4P:</strong> Aligns with QueryStore’s defense-in-depth read-boundary projection and HL7 FHIR Data Segmentation for Privacy (<code>meta.security</code> labels for <code>42 CFR Part 2</code>, <code>SDOH</code>, and <code>WA MHMDA</code>).</li>
+        </ul>
+      </article>
+      <article class="panel">
+        <span class="kicker">UNIFIED WAHS+ PRIVACY PIPELINE</span>
+        <h3>How all three layers work together in Phase 3</h3>
+        <ol class="steps reading-steps">
+          <li><span>01</span><h3>Tag (DS4P + 4-Layer KB)</h3><p>Automatically tag sensitive FHIR resources and fields (SDOH, IPV, substance use, behavioral/reproductive health) with <code>meta.security</code> and <code>SelectiveDisclosure</code> extensions.</p></li>
+          <li><span>02</span><h3>Gate Before LLM Inference</h3><p>In <code>external_share</code> mode, strip withheld resources <em>before</em> Tier 1–4 condensation and LLM prompting so sensitive facts never enter model context or embeddings.</p></li>
+          <li><span>03</span><h3>Obfuscate in Exported FHIR (<code>sd-fhir</code>)</h3><p>Replace withheld <code>Bundle.entry[]</code> resources or fields with salted <code>sd-hash</code> extensions so the exported IPS Bundle remains FHIR-valid and cryptographically verifiable without exposing the hidden text.</p></li>
+          <li><span>04</span><h3>Encrypt for Sharing (SHL JWE)</h3><p>Package the selective-disclosure IPS Bundle into a JWE-encrypted SMART Health Link (<code>uwcirg/shl-ips</code>) with recipient-scoped disclosure parameters.</p></li>
+        </ol>
+      </article>
+    </div>
+  </div>
+
+  <div id="patient-scenarios" class="subsection">
+    <h2>9.7 Patient-Centered Scenario Design (Primary) vs. Provider Insight (Secondary)</h2>
+    <p>Grounded in OpenNotes / patient-portal research and the WAHS team’s design discussions, our scenarios and interactive examples prioritize <strong>what patients and caregivers actually need to understand, verify, and ask</strong> when navigating care across clinics—treating clinician/informatics framing as a secondary toggle:</p>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="Patient-centered question taxonomy vs provider secondary view">
+      <table class="capability-table">
+        <caption class="sr-only">Six patient-centered question categories contrasted with secondary provider views</caption>
+        <thead>
+          <tr>
+            <th scope="col">Patient Need Category</th>
+            <th scope="col">Primary Patient-Centered Question (Default UX Framing)</th>
+            <th scope="col">What the Patient Needs in the Answer</th>
+            <th scope="col">Secondary Provider / Clinical View (Toggle)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">1 · Medication Safety &amp; Pill-Bottle Clarity</th>
+            <td><em>“Two different clinics gave me pill lists—am I accidentally taking two blood thinners or two cholesterol pills that do the same thing?”</em></td>
+            <td>Plain-language brand↔generic matching (<em>Plavix = Clopidogrel</em>), clear warning not to stop a heart medication without calling the prescriber, and the exact clinic/date of each prescription.</td>
+            <td>RxNorm ingredient/class conflict alert, P2Y12 / HMG-CoA duplication rule ID, and source <code>MedicationRequest</code> UUIDs.</td>
+          </tr>
+          <tr>
+            <th scope="row">2 · Understanding Lab Trends &amp; New Diagnoses</th>
+            <td><em>“My kidney lab numbers (eGFR) have been changing over the last two years—what do they mean, and why does my chart list three different stages of kidney disease?”</em></td>
+            <td>Simple explanation of what eGFR measures, visual trend over time, why old problem-list labels stick around, and what to ask at the next visit.</td>
+            <td>KDIGO 2024 G-stage exclusivity check, serial LOINC trajectory table, and uncoded G4 progression flag.</td>
+          </tr>
+          <tr>
+            <th scope="row">3 · Making Sense of a Hospital / ICU Stay</th>
+            <td><em>“What actually happened during my November 2023 heart surgery and ICU stay, and what changed in my care afterward?”</em></td>
+            <td>Clear timeline of why they were admitted, what surgery was performed, what devices (stent/valve) were placed, and what medications changed at discharge.</td>
+            <td>Episode-grouped inpatient encounter summary with SNOMED procedure codes, ICU diagnoses, and discharge reconciliation.</td>
+          </tr>
+          <tr>
+            <th scope="row">4 · Preparing for an Upcoming Appointment</th>
+            <td><em>“I’m seeing a new specialist next week—what are the top 3 questions or chart errors I should bring up with them?”</em></td>
+            <td>Actionable, printable checklist of unresolved medication discrepancies, missing emergency prescriptions (e.g., EpiPen), or overdue follow-ups.</td>
+            <td>Pre-visit clinical gap &amp; reconciliation brief with linked FHIR provenance.</td>
+          </tr>
+          <tr>
+            <th scope="row">5 · School, Camp &amp; Immunization Readiness</th>
+            <td><em>“Is my child up to date on vaccines for school, and why does the state registry show a problem with one of his shots?”</em></td>
+            <td>Clear vaccine status table, plain explanation of why a dose given too early may need to be repeated, and which clinic recorded each shot.</td>
+            <td>CDC ACIP CVX minimum-interval validation and WA IIS deduplication log.</td>
+          </tr>
+          <tr>
+            <th scope="row">6 · Sharing Safely &amp; Protecting Personal Privacy</th>
+            <td><em>“If I share this summary link with a physical therapist or school nurse, what personal or social history is hidden, and what stays visible?”</em></td>
+            <td>Side-by-side preview of what is kept vs. removed (with <code>sd-hash</code> selective disclosure), reassuring the patient that active allergies and meds remain intact.</td>
+            <td>42 CFR Part 2 / WA MHMDA / DS4P segmentation manifest and cryptographic <code>sd-hash</code> verification.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </section>
 <footer class="page-footer"><a href="https://openclinai.org/">About OpenClinAI</a><span>30 October 2026</span></footer>

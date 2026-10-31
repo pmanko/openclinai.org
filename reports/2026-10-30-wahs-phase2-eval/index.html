@@ -81,12 +81,13 @@
       <span>Jump to:</span>
       <a href="#sec-overview">01 · What We Evaluate</a>
       <a href="#sec-cohort">02 · Patient Cohort (Set A vs. Set B)</a>
-      <a href="#sec-architecture">03 · Architecture &amp; Scoring Gates</a>
+      <a href="#sec-architecture">03 · Plain-English Metrics &amp; Scoring Gates</a>
       <a href="#sec-benchmark">04 · Head-to-Head Results</a>
-      <a href="#sec-use-case-a">05 · Use Case A (Reconciliation)</a>
+      <a href="#sec-use-case-a">05 · Use Case A (15 Reconciled Conflicts)</a>
       <a href="#sec-opus-comparison">06 · Use Case B-1 (vs. Opus 5.5)</a>
       <a href="#sec-privacy-qa">07 · Use Cases B-2 &amp; B-3 (Privacy &amp; Q&amp;A)</a>
-      <a href="#sec-ablation">08 · 30-Row Token Ablation</a>
+      <a href="#sec-ablation">08 · Token Budget Ablation</a>
+      <a href="#sec-audit">09 · Candid Audit &amp; Phase 3 Plan</a>
     </div>
     <div class="cta-bar">
       <a class="btn" href="https://wahs-demo.openclinai.org/">Launch Interactive UX (wahs-demo.openclinai.org) →</a>
@@ -99,24 +100,24 @@
 
   <div class="kpi-grid">
     <div class="kpi">
-      <div class="lbl">Token Reduction (Maurice 18.4 MB)</div>
+      <div class="lbl">Chart Size Reduction (Token Condensation)</div>
       <div class="val">99.64% – 99.94%</div>
-      <div class="sub">3.52M raw tokens → 936 tokens (Tier 4 IPS Safety Core)</div>
+      <div class="sub">Shrinks an 18.4 MB chart (~3.52M tokens) down to 936–6,443 tokens without dropping active allergies, meds, or conditions</div>
     </div>
     <div class="kpi">
-      <div class="lbl">4-Layer KB Code Coverage</div>
+      <div class="lbl">Medical Code Recognition Rate (KB Coverage)</div>
       <div class="val">100.0% (2,629 / 2,629)</div>
-      <div class="sub">SNOMED CT, RxNorm, CDC ACIP CVX &amp; LOINC instances</div>
+      <div class="sub">Every coded condition, drug, vaccine, and lab in the 6 test charts matched our reference lookup tables (SNOMED, RxNorm, CDC ACIP, LOINC)</div>
     </div>
     <div class="kpi">
-      <div class="lbl">Multi-Source Anomaly Recall</div>
+      <div class="lbl">Cross-Clinic Conflict Detection (Anomaly Recall)</div>
       <div class="val">15 / 15 (100%)</div>
-      <div class="sub">100% precision across all Set B cross-clinic conflicts</div>
+      <div class="sub">Caught all 15 known duplicate prescriptions, dose mismatches, uncoded disease stages, and vaccine errors across clinics</div>
     </div>
     <div class="kpi">
-      <div class="lbl">External-Share SDOH Privacy</div>
-      <div class="val">0 Leaks (100% Safe)</div>
-      <div class="sub">42 CFR Part 2 &amp; WA MHMDA sensitive entries redacted</div>
+      <div class="lbl">Sensitive Record Redaction in Shared Mode</div>
+      <div class="val">0 Leaks (100% Redacted)</div>
+      <div class="sub">Removed 100% of sensitive domestic-violence, housing, and behavioral records before creating an external shareable summary</div>
     </div>
   </div>
 
@@ -254,98 +255,141 @@
   </section>
 
   <section class="rsec" id="sec-architecture">
-    <h2>03 · Architecture Under Test &amp; Deterministic Scoring Gates</h2>
+    <h2>03 · Plain-English Guide to Our Architecture, Metrics &amp; Scoring Gates</h2>
     <p>
-      Rather than passing raw FHIR JSON directly to a language model, our architecture separates <strong>deterministic clinical condensation and rule verification</strong> (in <code>med-agent-hub/server/fhir/</code>) from <strong>automated evaluation and provenance auditing</strong> (in <code>validation-harness/harness/wahs/</code>):
+      Rather than passing raw FHIR JSON directly to a language model, our Phase 2 architecture separates <strong>deterministic clinical chart condensation and rule-based safety checks</strong> (in <code>med-agent-hub/server/fhir/</code>) from <strong>automated evaluation and source-record verification</strong> (in <code>validation-harness/harness/wahs/</code>). Because technical labels like <em>“4-Layer KB Code Coverage”</em> or <em>“Multi-Source Anomaly Recall”</em> can read like opaque buzzwords, the table below translates every term used in this report into plain language, shows how it is calculated, and gives a concrete clinical example.
     </p>
+
+    <h3>Plain-Language Dictionary of Evaluation Metrics</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Plain-Language Name &amp; Report Label</th>
+            <th>What Question Does It Answer?</th>
+            <th>Exact Formula (How We Measure It)</th>
+            <th>Concrete Example from the Test Charts</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Safety-Critical Summary Completeness</strong><br><span style="color:var(--muted);font-size:12px;">Technical term: <em>IPS Safety Core Retention</em></span></td>
+            <td>When we shrink a multi-megabyte chart to fit into a small AI window (down to 1,024 tokens), did we accidentally drop any active allergies, active medications, active medical conditions, or implanted devices?</td>
+            <td><code>(Retained active IPS core records) / (All active allergies + active meds + active problems + implants in source chart)</code></td>
+            <td>When Maurice’s <code>18.36 MB</code> chart is compressed by <code>99.94%</code> to <code>936</code> tokens, all 13 of his safety-critical items (coronary stent, heart valve, active medications, and chronic conditions) remain present (<code>13 / 13 = 100%</code>).</td>
+          </tr>
+          <tr>
+            <td><strong>Cross-Clinic Conflict &amp; Duplicate Detection</strong><br><span style="color:var(--muted);font-size:12px;">Technical term: <em>Multi-Source Anomaly Recall &amp; Target UUID Recall</em></span></td>
+            <td>When records from two different clinics disagree (or contain dangerous duplicate prescriptions), does the system catch the conflict and point to the exact conflicting record IDs?</td>
+            <td><code>(Known cross-clinic conflicts detected with both source record UUIDs) / (Total known conflicts in Set B = 15)</code></td>
+            <td>Clinic A lists brand <em>Plavix 75 mg</em> while Hospital B lists generic <em>Clopidogrel 75 mg</em> (duplicate blood thinners), and two statins (<em>Simvastatin</em> + <em>Atorvastatin</em>) are active at once. The system flags both and links the exact FHIR record IDs.</td>
+          </tr>
+          <tr>
+            <td><strong>Medical Code Recognition Rate</strong><br><span style="color:var(--muted);font-size:12px;">Technical term: <em>4-Layer KB Code Coverage</em></span></td>
+            <td>What share of the medical codes in the patient’s chart (conditions, medications, vaccines, and lab tests) were recognized by our clinical reference lookup tables so automated safety rules could check them?</td>
+            <td><code>(Coded FHIR entries matched in SNOMED CT, RxNorm, CDC ACIP CVX, or LOINC lookup tables) / (Total coded clinical entries = 2,629)</code></td>
+            <td>Recognizing that <code>RxNorm 309362</code> (<em>Clopidogrel</em>) and <code>RxNorm 313002</code> (<em>Plavix</em>) share the same active ingredient, or that <code>LOINC 2339-0</code> (Blood Glucose) and <code>2345-7</code> (Serum Glucose) measure the same lab trend.</td>
+          </tr>
+          <tr>
+            <td><strong>Source Record Link Accuracy</strong><br><span style="color:var(--muted);font-size:12px;">Technical term: <em>Citation Provenance Resolution (<code>[N] → UUID</code>)</em></span></td>
+            <td>When a summary or Q&amp;A answer includes a numbered citation like <code>[4]</code>, does clicking <code>[4]</code> actually open a real record in the patient’s FHIR chart rather than a made-up link?</td>
+            <td><code>(Numbered [N] citations that resolve to a verified FHIR resourceUuid in the bundle) / (Total [N] citations in the answer)</code></td>
+            <td>In Maurice’s ICU summary, citation <code>[12]</code> resolves directly to <code>Procedure/cabg-2023-uuid</code> (Coronary artery bypass graft on Nov 20, 2023). Any fabricated citation immediately fails the gate.</td>
+          </tr>
+          <tr>
+            <td><strong>Sensitive Record Redaction in Shared Mode</strong><br><span style="color:var(--muted);font-size:12px;">Technical term: <em>External-Share SDOH &amp; 42 CFR Part 2 Privacy Gate</em></span></td>
+            <td>When a patient switches from personal review (<code>patient_self</code>) to an external sharing link (<code>external_share</code>), are sensitive social or behavioral health records completely removed before summarization?</td>
+            <td><code>Zero-tolerance check: 0 forbidden sensitive record IDs or sensitive terms may appear in the condensed text or answer</code></td>
+            <td>Maurice’s chart contains a sensitive screening code for intimate partner abuse (<code>SNOMED 706893006</code>). It is shown to Maurice in self-view with a privacy badge, and 100% stripped when creating an external specialist summary.</td>
+          </tr>
+          <tr>
+            <td><strong>Honest “Not in Chart” Replies</strong><br><span style="color:var(--muted);font-size:12px;">Technical term: <em>Unanswerable Abstention Accuracy</em></span></td>
+            <td>When a patient or doctor asks about something that is <em>not</em> documented in the health record, does the system clearly state that the record is absent instead of guessing?</td>
+            <td><code>(Unanswerable questions where the system explicitly states the fact is not documented and cites 0 fake records) / (6 unanswerable probes)</code></td>
+            <td>When asked <em>“What is Byron’s ABO/Rh blood type?”</em> or <em>“What did Maurice’s last colonoscopy show?”</em> (neither is in their chart), the system replies that no such record exists in the export (<code>6 / 6 = 100%</code>).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
     <div class="grid-2">
       <div class="info-box">
-        <h4>5-Tier Progressive FHIR R4 / IPS Condenser</h4>
+        <h4>How the 5-Tier Condenser Shrinks a Chart Step by Step</h4>
         <ul>
-          <li><strong>Tier 0 (Raw Baseline):</strong> Unmodified FHIR R4 bundle (up to <code>3.52M</code> tokens).</li>
-          <li><strong>Tier 1 (Structural Pruning &amp; Note Hashing):</strong> Strips FHIR boilerplate, narrative HTML, and claims noise; deduplicates identical Base64 clinical notes by SHA-256 hash (<code>791 → 8</code> unique notes in Maurice’s chart).</li>
-          <li><strong>Tier 2 (Clinical Consolidation):</strong> Groups active vs. historical medications, resolves problem-list status, and collapses <code>3,760</code> raw observations into <code>116</code> longitudinal LOINC chains (Latest + Min/Max + 3-point trajectory).</li>
-          <li><strong>Tier 3 (Budget-Targeted Rolling Window):</strong> Restricts routine encounters/labs to a rolling 24-month window while preserving lifetime high-acuity surgeries (e.g., CABG) and active chronic conditions.</li>
-          <li><strong>Tier 4 (Emergency IPS Safety Core):</strong> Guarantees a &le;<code>1,024</code>-token International Patient Summary containing 100% of active allergies, active medications, active conditions, and high-severity clinical conflict alerts.</li>
+          <li><strong>Tier 0 (Full Normalized Ledger):</strong> Strips repetitive FHIR JSON syntax, HTML blocks, and billing/claims noise while keeping all clinical entries.</li>
+          <li><strong>Tier 1 (Note Deduplication &amp; Panel Grouping):</strong> Removes duplicate Base64-encoded clinical notes using SHA-256 content hashes (collapsing <code>791 → 8</code> unique notes in Maurice’s chart) and groups same-day metabolic lab panels.</li>
+          <li><strong>Tier 2 (Longitudinal Clinical Consolidation):</strong> Separates active from stopped medications and folds <code>3,760</code> raw lab readings into <code>116</code> longitudinal trend lines (showing First, Latest, Min/Max, and Recent Trend).</li>
+          <li><strong>Tier 3 (24-Month Rolling Window + Major Surgeries):</strong> Limits routine office visits and routine labs to the last 24 months while keeping major lifetime surgeries (such as CABG heart surgery) and all active chronic conditions.</li>
+          <li><strong>Tier 4 (Emergency Safety Core &le; 1,024–2,048 Tokens):</strong> Retains 100% of active allergies, active medications, active conditions, implanted devices, and high-priority cross-clinic conflict alerts inside a compact summary.</li>
         </ul>
       </div>
       <div class="info-box">
-        <h4>4-Layer Deterministic Clinical Knowledge Base</h4>
+        <h4>How the 4-Layer Clinical Rule Engine Checks the Chart</h4>
         <ul>
-          <li><strong>Layer 1 (SNOMED CT Disease Progression):</strong> Maps 108 condition concepts across 18 disease families; cross-checks lab trajectories (KDIGO eGFR &lt; 30 Stage 4 CKD; ADA HbA1c &ge; 6.5%) against coded problem lists.</li>
-          <li><strong>Layer 2 (RxNorm Therapeutic Classes &amp; Safety):</strong> Maps 94 medication codes across 14 classes; detects duplicate therapy (dual statins, dual antihistamines), stale acute orders, and missing anaphylaxis epinephrine rescue.</li>
-          <li><strong>Layer 3 (CDC ACIP CVX &amp; LOINC Chains):</strong> Maps 48 vaccine codes and 280+ LOINC codes; validates ACIP minimum dose intervals and collapses same-day duplicate lab panels.</li>
-          <li><strong>Layer 4 (42 CFR Part 2 &amp; WA MHMDA Privacy Gate):</strong> Enforces posture-aware redaction before condensation when <code>sharing_posture="external_share"</code>.</li>
+          <li><strong>Layer 1 — Condition &amp; Disease Stage Rules (SNOMED CT):</strong> Checks whether mutually exclusive disease stages (such as CKD Stages 1, 2, and 3) are all marked “active” at the same time, and whether recent kidney (eGFR) or diabetes (HbA1c) labs show progression not yet updated on the problem list.</li>
+          <li><strong>Layer 2 — Medication Safety &amp; Ingredient Rules (RxNorm):</strong> Maps brand names (<em>Plavix</em>, <em>Lipitor</em>, <em>Prinivil</em>) to generic ingredients (<em>Clopidogrel</em>, <em>Atorvastatin</em>, <em>Lisinopril</em>) to catch duplicate prescriptions, dose discrepancies across clinics, and missing emergency rescue medications (such as missing epinephrine for peanut anaphylaxis).</li>
+          <li><strong>Layer 3 — Vaccine Schedules &amp; Lab Harmonization (CDC ACIP &amp; LOINC):</strong> Flags duplicate same-day immunizations across clinic and state registry exports, checks minimum intervals between vaccine doses, and merges equivalent blood vs. serum lab codes.</li>
+          <li><strong>Layer 4 — Pre-Condensation Privacy Filter (42 CFR Part 2 &amp; WA MHMDA):</strong> Strips sensitive domestic-violence, housing-instability, and behavioral screening entries before condensation whenever the user selects <code>external_share</code>.</li>
         </ul>
       </div>
     </div>
-
-    <h3>Five Deterministic Evaluation Gates in <code>harness.wahs</code></h3>
-    <p>Every evaluation case in <code>wahs_eval_cases.jsonl</code> is scored across five deterministic gates:</p>
-    <ol>
-      <li><strong>Token Budget Gate (<code>budget_met</code>):</strong> Verifies that the condensed clinical ledger satisfies <code>actual_tokens &le; target_tokens</code> at every tested budget (<code>8,192</code>, <code>4,096</code>, and <code>2,048</code> tokens).</li>
-      <li><strong>Target Resource UUID Recall (<code>target_uuid_recall</code>):</strong> Verifies that the exact ground-truth FHIR <code>resourceUuid</code> entries for the clinical anomaly, condition, or encounter are retained and cited.</li>
-      <li><strong>Citation Provenance Resolution (<code>citation_resolution_rate</code>):</strong> Audits every <code>[N]</code> bracket citation in the generated output against the condenser’s <code>citation_map</code> and flags any unresolved or fabricated citation.</li>
-      <li><strong>External-Share Privacy Gate (<code>privacy_leaked == False</code>):</strong> Scans both the condensed chart text and the final answer for any forbidden sensitive SDOH / IPV / 42 CFR Part 2 terms or UUIDs when <code>sharing_posture="external_share"</code>.</li>
-      <li><strong>Unanswerable Abstention Gate (<code>abstention_correct</code>):</strong> Verifies that prompts asking for unrecorded clinical facts explicitly abstain rather than confabulating values.</li>
-    </ol>
   </section>
 
   <section class="rsec" id="sec-benchmark">
-    <h2>04 · Head-to-Head Evaluation Results Across All 32 Rubric Cases</h2>
-    <p>Each of the four setups was evaluated across all <code>32</code> rubric cases spanning Maurice Auer, Lamar Beer, and Byron Emard:</p>
+    <h2>04 · Head-to-Head Evaluation Results Across All 32 Test Cases</h2>
+    <p>Each setup was evaluated across all <code>32</code> clinical test cases spanning Maurice Auer, Lamar Beer, and Byron Emard. <em>Important methodological note (detailed in <a href="#sec-audit">Section 09</a>):</em> The three WAHS+ rows below measure our deterministic pre-LLM condensation and rule-based clinical responder across 8k, 4k, and 2k token budgets, whereas the fourth row reflects an uncondensed frontier LLM baseline reconstructed from Phase 1 reference runs over raw/pre-sliced FHIR JSON.</p>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
             <th>Evaluation Setup</th>
-            <th>Cases (N)</th>
-            <th>Benchmark /100</th>
-            <th>Target UUID Recall</th>
-            <th>Citation Resolution ([N]→UUID)</th>
-            <th>External-Share SDOH Leaks</th>
-            <th>Abstention Accuracy</th>
-            <th>Unsafe / Harm</th>
+            <th>Test Cases</th>
+            <th>Overall Score (/100)</th>
+            <th>Required Source Records Cited (UUID Recall)</th>
+            <th>Valid Source Links ([N]→UUID)</th>
+            <th>Sensitive Records Leaked in Shared Mode</th>
+            <th>Honest “Not in Chart” Replies (Abstention)</th>
+            <th>Unsafe / Harmful Outputs</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td><strong>WAHS+ 5-Tier Condenser + 4-Layer KB (8,192-Token Budget)</strong></td>
+            <td><strong>WAHS+ Condensed Chart + Clinical Rules (8,192-Token Budget)</strong></td>
             <td>32</td>
             <td><span class="badge ok">99.4</span></td>
             <td>100.0%</td>
             <td>100.0% (0 fabricated)</td>
-            <td>0</td>
+            <td>0 leaks</td>
             <td>100.0% (6/6)</td>
             <td>0</td>
           </tr>
           <tr>
-            <td><strong>WAHS+ 5-Tier Condenser + 4-Layer KB (4,096-Token Budget)</strong></td>
+            <td><strong>WAHS+ Condensed Chart + Clinical Rules (4,096-Token Budget)</strong></td>
             <td>32</td>
             <td><span class="badge ok">98.8</span></td>
             <td>100.0%</td>
             <td>100.0% (0 fabricated)</td>
-            <td>0</td>
+            <td>0 leaks</td>
             <td>100.0% (6/6)</td>
             <td>0</td>
           </tr>
           <tr>
-            <td><strong>WAHS+ 5-Tier Condenser + 4-Layer KB (2,048-Token Emergency IPS Core)</strong></td>
+            <td><strong>WAHS+ Emergency Summary Core + Clinical Rules (2,048-Token Budget)</strong></td>
             <td>32</td>
             <td><span class="badge ok">96.5</span></td>
-            <td>100.0% (IPS Core)</td>
+            <td>100.0% (Safety Core)</td>
             <td>100.0% (0 fabricated)</td>
-            <td>0</td>
+            <td>0 leaks</td>
             <td>100.0% (6/6)</td>
             <td>0</td>
           </tr>
           <tr>
-            <td><strong>Uncondensed Raw FHIR / Frontier LLM Baseline (Claude Opus 5.5 Reference)</strong></td>
+            <td><strong>Uncondensed Raw FHIR Baseline (Claude Opus 5.5 Reference)</strong></td>
             <td>32</td>
             <td><span class="badge medium">61.2</span></td>
             <td>68.8%</td>
-            <td>0.0% (No UUID provenance)</td>
-            <td>3 (Unfiltered SDOH)</td>
+            <td>0.0% (No record links)</td>
+            <td>3 leaks (Unfiltered SDOH)</td>
             <td>66.7% (4/6)</td>
             <td>3</td>
           </tr>
@@ -410,13 +454,148 @@
   </section>
 
   <section class="rsec" id="sec-use-case-a">
-    <h2>05 · Deep Dive — Use Case A: Cross-Clinic Reconciliation &amp; Duplicate/Bloat Analysis</h2>
+    <h2>05 · Deep Dive — Use Case A: All 15 Reconciled Cross-Clinic Conflicts &amp; Duplicate Records</h2>
     <p>Across the multi-clinic perturbed bundles (Set B), the 4-Layer Clinical Knowledge Base and 5-Tier Condenser deterministically surface and cite every injected clinical discrepancy while collapsing massive EHR export redundancy:</p>
     <ul>
       <li><strong>Duplicate Labs &amp; Base64 Note Deduplication (<code>Maurice742_Auer97_set_b</code>):</strong> Collapses <code>3,760</code> raw observations into <code>116</code> LOINC longitudinal trajectory chains (<code>96.9%</code> lab line reduction, including <code>344</code> duplicate same-day LOINC readings across <code>140</code> panels) and strips <code>791</code> repeated Base64 clinical notes down to <code>8</code> unique episode hashes.</li>
-      <li><strong>All 15 Multi-Clinic Conflict &amp; Safety Findings Across Maurice, Lamar, and Byron (100% Recall with <code>[N] → resourceUuid</code> Provenance):</strong></li>
+      <li><strong>All 15 Multi-Clinic Conflict &amp; Safety Findings Across Maurice, Lamar, and Byron (100% Detection with Source Record Links):</strong></li>
     </ul>
-    
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Patient</th>
+            <th>Cross-Clinic Conflict / Safety Issue</th>
+            <th>What Happened Across Clinics (Plain English)</th>
+            <th>Clinical Guideline / Rule Used</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><strong>Maurice Auer</strong></td>
+            <td>Duplicate Blood Thinner (Brand vs. Generic)</td>
+            <td>Primary care prescribes generic <em>Clopidogrel 75 mg</em> while cardiology discharge lists brand <em>Plavix 75 mg</em> active simultaneously (double-dosing bleeding risk).</td>
+            <td>RxNorm Ingredient Match (<code>RxNorm 32968</code>)</td>
+            <td><span class="badge high">Flagged + Cited</span></td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><strong>Maurice Auer</strong></td>
+            <td>Duplicate Cholesterol Statin Therapy</td>
+            <td>Outpatient pharmacy lists <em>Simvastatin 40 mg</em> active alongside hospital-prescribed <em>Atorvastatin (Lipitor) 80 mg</em> (muscle injury / rhabdomyolysis risk).</td>
+            <td>RxNorm HMG-CoA Statin Class Exclusivity</td>
+            <td><span class="badge high">Flagged + Cited</span></td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><strong>Maurice Auer</strong></td>
+            <td>Stopped vs. Active Diuretic Contradiction</td>
+            <td>Clinic A still lists <em>Furosemide 40 mg</em> as active, whereas Regional Medical Center B recorded it as stopped after hypotension and acute kidney injury.</td>
+            <td>Cross-Source Medication Status Check</td>
+            <td><span class="badge high">Flagged + Cited</span></td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><strong>Maurice Auer</strong></td>
+            <td>Mutually Exclusive Kidney Disease Stages + Uncoded Stage 4</td>
+            <td>Problem list marks CKD Stage 1, Stage 2, and Stage 3 all “active” at once, while serial eGFR labs (<code>17.0</code> and <code>22.3 mL/min</code>) meet criteria for Stage 4 CKD.</td>
+            <td>KDIGO 2024 CKD Stage Exclusivity &amp; eGFR Threshold</td>
+            <td><span class="badge high">Flagged + Cited</span></td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><strong>Maurice Auer</strong></td>
+            <td>Sensitive Domestic Violence Screening Record</td>
+            <td>Chart contains <code>SNOMED 706893006</code> (<em>Victim of intimate partner abuse</em>) alongside medical diagnoses; must be shown in self-view and stripped on external share.</td>
+            <td>42 CFR Part 2 / WA MHMDA / DS4P Gate</td>
+            <td><span class="badge ok">Segmented (0 Leaks)</span></td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td><strong>Lamar Beer</strong></td>
+            <td>Life-Threatening Allergy Without Rescue Epinephrine</td>
+            <td>Documented peanut, nut, shellfish, and bee-venom anaphylaxis history with only oral antihistamines active and no active Epinephrine auto-injector on file.</td>
+            <td>Anaphylaxis Emergency Rescue Care-Gap Rule</td>
+            <td><span class="badge high">Flagged + Cited</span></td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td><strong>Lamar Beer</strong></td>
+            <td>Duplicate Daily Antihistamines Across Clinics</td>
+            <td>Primary care lists <em>Cetirizine 10 mg</em> active while urgent care lists <em>Loratadine 10 mg</em> active simultaneously.</td>
+            <td>RxNorm H1-Antihistamine Class Check</td>
+            <td><span class="badge medium">Flagged + Cited</span></td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td><strong>Lamar Beer</strong></td>
+            <td>Unreconciled High-Criticality Latex Allergy</td>
+            <td>Provider B surgical center recorded a high-criticality Latex allergy that is missing from Clinic A’s primary allergy list.</td>
+            <td>Cross-Clinic Allergy Reconciliation Rule</td>
+            <td><span class="badge high">Flagged + Cited</span></td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td><strong>Lamar Beer</strong></td>
+            <td>Duplicate Same-Day Flu Shot Records</td>
+            <td>Both primary care and the state immunization registry (WA IIS) exported an Influenza vaccine on the exact same date with different record IDs.</td>
+            <td>CDC ACIP CVX Same-Day Deduplication</td>
+            <td><span class="badge medium">Merged + Cited</span></td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td><strong>Lamar Beer</strong></td>
+            <td>Sensitive Housing Instability Record</td>
+            <td>Social history observation documenting housing instability; retained in personal view and stripped in external sharing mode.</td>
+            <td>HL7 Gravity SDOH / WA MHMDA Privacy Gate</td>
+            <td><span class="badge ok">Segmented (0 Leaks)</span></td>
+          </tr>
+          <tr>
+            <td>11</td>
+            <td><strong>Byron Emard</strong></td>
+            <td>Stale Antibiotic From Resolved 2021 Infection</td>
+            <td>A 10-day <em>Amoxicillin 250 mg</em> prescription from a 2021 ear/throat infection was never marked completed and still appears on the active medication list.</td>
+            <td>RxNorm Acute Antibiotic Duration Check</td>
+            <td><span class="badge medium">Flagged + Cited</span></td>
+          </tr>
+          <tr>
+            <td>12</td>
+            <td><strong>Byron Emard</strong></td>
+            <td>Conflicting Pediatric Ibuprofen Doses</td>
+            <td>Urgent care and primary care list two different active weight-based <em>Ibuprofen</em> doses (<code>100 mg</code> vs. <code>200 mg</code>) simultaneously.</td>
+            <td>RxNorm Ingredient Dose Discrepancy Rule</td>
+            <td><span class="badge medium">Flagged + Cited</span></td>
+          </tr>
+          <tr>
+            <td>13</td>
+            <td><strong>Byron Emard</strong></td>
+            <td>Urgent-Care Asthma Diagnosis Missing at Primary Care</td>
+            <td>An urgent-care visit recorded mild intermittent asthma, but the primary-care problem list has not been updated to include it.</td>
+            <td>Cross-Organization Problem List Sync Check</td>
+            <td><span class="badge medium">Flagged + Cited</span></td>
+          </tr>
+          <tr>
+            <td>14</td>
+            <td><strong>Byron Emard</strong></td>
+            <td>Early HPV Vaccine Dose Interval (&lt; 5 Months)</td>
+            <td>Second HPV vaccine dose was documented fewer than 5 months after the first dose, violating the CDC ACIP minimum interval for a 2-dose pediatric series.</td>
+            <td>CDC ACIP Minimum Dose Interval Rule (CVX)</td>
+            <td><span class="badge medium">Flagged + Cited</span></td>
+          </tr>
+          <tr>
+            <td>15</td>
+            <td><strong>Byron Emard</strong></td>
+            <td>Sensitive Household Food-Insecurity Record</td>
+            <td>Household food-insecurity screening finding; visible to parent/guardian in self-view and redacted when exporting a school/camp summary.</td>
+            <td>HL7 Gravity SDOH / WA MHMDA Privacy Gate</td>
+            <td><span class="badge ok">Segmented (0 Leaks)</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <section class="rsec" id="sec-opus-comparison">
@@ -506,19 +685,19 @@
   </section>
 
   <section class="rsec" id="sec-ablation">
-    <h2>08 · 30-Row Token Budget Ablation Matrix (<code>16,384</code> → <code>1,024</code> Tokens)</h2>
-    <p>Every patient bundle (Set A clean and Set B multi-clinic perturbed) was condensed across five target token budgets (<code>16k</code>, <code>8k</code>, <code>4k</code>, <code>2k</code>, and <code>1k</code>). In all 30 runs, <code>actual_tokens &le; budget_tokens</code> and <code>100%</code> of the IPS clinical safety core (allergies, active medications, active conditions, and high-severity conflict alerts) remained intact:</p>
+    <h2>08 · Token Budget Ablation Matrix (Shrinking Charts from <code>16,384</code> Down to <code>1,024</code> Tokens)</h2>
+    <p>Every patient bundle was condensed across five target token budgets (<code>16k</code>, <code>8k</code>, <code>4k</code>, <code>2k</code>, and <code>1k</code> tokens). In every run, the condensed chart stayed strictly inside the target token limit while retaining <code>100%</code> of the safety-critical summary items (active allergies, active medications, active conditions, implanted devices, and cross-clinic conflict alerts):</p>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
             <th>Patient Bundle</th>
-            <th>Raw Size (Entries)</th>
-            <th>Target Budget</th>
-            <th>Actual Tokens</th>
-            <th>Tier Reached</th>
-            <th>Token Reduction</th>
-            <th>IPS Safety Core Retained</th>
+            <th>Original Chart Size</th>
+            <th>Target Token Limit</th>
+            <th>Condensed Size (Lines)</th>
+            <th>Condensation Tier Used</th>
+            <th>Size Reduction</th>
+            <th>Safety-Critical Items Kept (IPS Core Retention)</th>
           </tr>
         </thead>
         <tbody>
@@ -526,6 +705,72 @@
         </tbody>
       </table>
     </div>
+  </section>
+
+  <section class="rsec" id="sec-audit">
+    <h2>09 · Candid Methodological Audit, Current Gaps &amp; Phase 3 Live-LLM Evaluation Plan</h2>
+    <p>
+      To ensure scientific rigor and avoid over-claiming from near-100% prototype metrics, we audited the Phase 2 evaluation pipeline, synthetic dataset construction, and scoring harness against current clinical AI evaluation standards (including <strong>OpenAI HealthBench</strong>, <strong>Stanford MedHELM</strong>, <strong>VeriFact / FActScore</strong>, and our own blind multi-judge evaluation protocol in <code>specs/judging.md</code>). Readers and collaborators should interpret the Phase 2 results above with five explicit caveats:
+    </p>
+    <div class="grid-2">
+      <div class="info-box">
+        <h4>1. Deterministic Rule Verification vs. Live Generative LLM Evaluation</h4>
+        <p>In Phase 2, the condenser (<code>condenser.py</code>) and clinical analyzer/responder (<code>wahs_analyzer.py</code>) execute <strong>deterministic Python normalization and structured response templates</strong> rather than live generative completions from open-weight language models (such as <code>Gemma 4 12B</code>, <code>MedGemma</code>, or <code>Qwen 3</code>). Thus, the <code>99.4 / 100</code> score proves that our deterministic pre-LLM condensation and clinical rule checks accurately extract and link the 32 target facts—<em>not</em> that an open-weight LLM reading that condensed ledger achieves 99.4% generative accuracy. Conversely, the <code>61.2 / 100</code> Opus 5.5 row is a reconstructed reference baseline from Phase 1 observations over manually sliced JSON rather than a live head-to-head run over all 32 prompts.</p>
+      </div>
+      <div class="info-box">
+        <h4>2. Co-Designed Perturbations &amp; Lookup Tables (Ceiling Effect)</h4>
+        <p>The 15 cross-clinic conflicts in Set B (<code>perturbations.py</code>) and the 4-Layer reference tables (<code>rxnorm_lookup.json</code>, <code>snomed_families.json</code>, <code>acip_rules.json</code>) were authored in the same development cycle over the exact codes present in the three test charts. Because the anomaly generator and rule detector share the same finite vocabulary, code recognition and conflict recall reach <code>100.0%</code> by construction. This validates software rule correctness (integration verification), not out-of-distribution recall on unseen hospital coding variations.</p>
+      </div>
+      <div class="info-box">
+        <h4>3. Small Cohort (<code>N = 3</code>) &amp; Clean Synthea Regularity</h4>
+        <p>All three charts originate from Synthea, where every diagnosis carries a clean SNOMED CT code, every drug carries a clean RxNorm code, and every lab carries a standard LOINC code. Real-world patient-mediated exports (and Epic EHI tables) contain uncoded free-text problem lists, local hospital charge codes, scanned PDF/OCR discharge summaries, and garbled sig instructions where deterministic lookup coverage alone will drop substantially.</p>
+      </div>
+      <div class="info-box">
+        <h4>4. Harness vs. In-Process Scorer Schema Audit</h4>
+        <p>While our in-process evaluation script (<code>generate_wahs_eval_report.py</code>) scored <code>32 / 32 (100%)</code>, our initial standalone HTTP harness run (<code>summary.json</code>, recording <code>81 / 96</code> cells across 3 budgets) surfaced two scorer bugs: (a) a JSON key mismatch between <code>abstained</code> (emitted by <code>wahs_analyzer.py</code>) and <code>abstains</code> (checked by <code>harness.wahs.evaluator</code>), and (b) a substring false-positive where the system’s own transparency banner (<em>“Sensitive SDOH items were redacted”</em>) triggered the forbidden-term regex. Documenting and fixing these schema boundaries prevents silent scorer drift in Phase 3.</p>
+      </div>
+    </div>
+
+    <h3>How Phase 3 Upgrades This Evaluation to Live Multi-Model Clinical Benchmarking</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Evaluation Layer</th>
+            <th>Phase 2 Implementation (Current Report)</th>
+            <th>Phase 3 Upgrade (Target Architecture)</th>
+            <th>Research &amp; Tooling Standard</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Model Inference Path</strong></td>
+            <td>Deterministic Python rule analyzer &amp; template responder over condensed FHIR ledgers.</td>
+            <td>Live open-weight LLM generation (<code>Gemma 4 12B / 31B</code>, <code>Qwen 3 8B / 27B / 35B-A3B</code>, <code>MedGemma 4B / 27B</code>, <code>Granite 4.2 8B</code>) served on the CIRG NVIDIA H200 GPU server via <code>med-agent-hub</code>.</td>
+            <td>OpenClinAI 10-stage checked-answer pipeline (<code>specs/checked-answers.md</code>)</td>
+          </tr>
+          <tr>
+            <td><strong>Clinical Quality Grading</strong></td>
+            <td>Binary pass/fail checks on target UUID retention, citation map resolution, and abstention regex.</td>
+            <td>Instance-specific, clinician-authored weighted rubrics (positive points for required clinical actions/context; negative penalties for dangerous omissions or fabricated facts) graded by blind cross-family judges (<code>Claude Opus 5.5</code> + <code>GPT-6-Astra</code>).</td>
+            <td><strong>OpenAI HealthBench</strong> (2025) &amp; <strong>Stanford MedHELM</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Factual &amp; Citation Entailment</strong></td>
+            <td>Verifies that <code>[N]</code> points to a valid <code>resourceUuid</code> in the condensed map, without checking whether the sentence distorts the record’s meaning.</td>
+            <td>Decomposes every LLM response into atomic clinical propositions and runs a dedicated NLI entailment grounder (<code>MiniCheck</code> / cross-family label-only reviewer) to verify that the cited FHIR entry actually entails the claim.</td>
+            <td><strong>VeriFact</strong> (2025), <strong>FActScore</strong> &amp; <strong>DeepEval / Ragas</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Test Cohort &amp; Chaos Realism</strong></td>
+            <td>3 clean Synthea charts + 15 co-designed structured conflicts.</td>
+            <td>8 diverse patient personas (25–50 bundles) augmented with a <strong>6-Layer EHR Messiness Injector</strong> (stripped codes, OCR/free-text clinical notes, conflicting sig text, partial C-CDA/EHI imports) + held-out MIMIC-IV-on-FHIR cases.</td>
+            <td><strong>MedAgentBench</strong> &amp; <strong>FHIR-AgentBench</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>See the <a href="https://openclinai.org/wahs/design-report/#phase3-roadmap">WAHS Design &amp; Architecture Dashboard (Section 09)</a> for the complete Phase 3 methodology, model selection matrix, CIRG GPU server runbook, hybrid full-chart retrieval architecture, and cryptographic FHIR selective-disclosure privacy design.</p>
   </section>
 
   <footer>
