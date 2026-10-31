@@ -127,7 +127,9 @@ def test_maven_interruption_cannot_prove_a_mutation_failed(tmp_path):
     report.parent.mkdir(parents=True)
     xml = '<testsuite><testcase classname="ExampleTest" name="behavior"><failure message="expected 1"/></testcase></testsuite>'
     stub.write_text('#!' + sys.executable + '\nfrom pathlib import Path\n' +
-                    "Path('target/surefire-reports/TEST-current.xml').write_text(" + repr(xml) + ')\nraise SystemExit(137)\n')
+                    "Path('target/surefire-reports/TEST-current.xml').write_text(" + repr(xml) + ')\n' +
+                    'print("[INFO] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0")\n' +
+                    'print("[ERROR]   ExampleTest.behavior: expected 1")\nraise SystemExit(137)\n')
     stub.chmod(0o755)
     result = subprocess.run([str(ROOT / 'review/bin/runners/maven.sh'), str(tmp_path), str(tmp_path/'run.log'), 'ExampleTest#behavior'], env={**os.environ, 'PATH': str(stub.parent)+os.pathsep+os.environ['PATH']}, capture_output=True)
     assert result.returncode == 2, result.stdout + result.stderr
@@ -232,6 +234,8 @@ def test_a_specific_parameter_case_requires_an_exact_identity(tmp_path, monkeypa
     result = _run('pytest', tmp_path, selected, tmp_path / 'run.log')
     assert result.code == 1 and result.ran == 1
     assert not _expect_red(result, 'head', 'mutation', selected)[0]
+    standalone = _run('pytest', tmp_path, selected[:1], tmp_path / 'selected-case.log')
+    assert standalone.code == 3 and standalone.ran == 0
     unparameterized = ['test_fixture.py::test_boundary']
     result = _run('pytest', tmp_path, unparameterized, tmp_path / 'all-cases.log')
     assert _expect_red(result, 'head', 'mutation', unparameterized)[0]

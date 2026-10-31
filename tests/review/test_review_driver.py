@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 REVIEW = ROOT / "review" / "bin" / "review.py"
@@ -53,18 +54,21 @@ def test_review_checks_the_actual_checkout_revision_and_cleanliness(tmp_path):
         verify(tmp_path, revision)
 
 
-def test_fixer_requires_explicit_authorization(tmp_path, monkeypatch):
+@pytest.mark.parametrize("stack_changed", [False, True])
+def test_fixer_requires_explicit_authorization(tmp_path, monkeypatch, stack_changed):
     import runpy
     from types import SimpleNamespace
     api = runpy.run_path(str(REVIEW))
     state = api['main'].__globals__
+    target = 'top' if stack_changed else 'head'
+    monkeypatch.setitem(state, 'stack', lambda *args: [dict(head='top', number=2, title='top')])
     monkeypatch.setitem(state, 'UMBRELLA', tmp_path)
     monkeypatch.setitem(state, 'work_dir', lambda: tmp_path / 'work')
-    monkeypatch.setitem(state, 'upstream', lambda *args: ('origin', 'fixture/repo'))
+    monkeypatch.setitem(state, 'upstream', lambda *args: ('fork', 'fixture/repo'))
     monkeypatch.setitem(state, 'fetch_pr', lambda *args: 'head')
     monkeypatch.setitem(state, 'current_identity', lambda *args: dict(headRefOid='head', baseRefOid='base', baseRefName='main'))
     def fake_git(repo, *args):
-        if args[0] == 'rev-parse': return 'head' if args[1] == 'HEAD' else 'base'
+        if args[0] == 'rev-parse': return target if args[1] == 'HEAD' else 'base'
         if args[0] == 'diff': return 'calc.py'
         return ''
     monkeypatch.setitem(state, 'git', fake_git)
@@ -74,26 +78,37 @@ def test_fixer_requires_explicit_authorization(tmp_path, monkeypatch):
         return path
     monkeypatch.setitem(state, 'worktree', checkout)
     def threads(command, **kwargs):
-        Path(command[3]).write_text(json.dumps(dict(base='main', head_branch='fix', author='fixture')))
+        Path(command[3]).write_text(json.dumps(dict(base='main', head_branch='fix;false', author='fixture')))
         return SimpleNamespace(returncode=0)
     monkeypatch.setattr(state['subprocess'], 'run', threads)
     roles = []
     def role(args, name, wt, prompt, output):
         roles.append(name)
-        return '```json\n' + json.dumps(dict(head='head', reviewed_files=['calc.py'],
+        if name == 'fixer':
+            import shlex
+            command = prompt.split('- Push with: ', 1)[1].strip()
+            tokens = shlex.shlex(command, posix=True, punctuation_chars=True)
+            tokens.whitespace_split = True
+            assert list(tokens) == ['git', 'push', '--', 'fork', 'HEAD:fix;false']
+        return '```json\n' + json.dumps(dict(head=target, reviewed_files=['calc.py'],
             unreviewed_files=[], tests=[dict(command='fixture test', result='not run: fixture dependency unavailable')],
             findings=[dict(file='calc.py', line=1, finding='boundary fails', blocking=True,
                            failure_mode='boundary is incorrect', evidence='fixture assertion failed')])) + '\n```'
     monkeypatch.setitem(state, 'run_role', role)
     argv = ['review.py', '--repo', 'umbrella', '--repository', 'fixture/repo', '--pr', '1',
             '--agent', 'codex', '--rounds', '2', '--no-consumer']
-    for flag, expected in [([], ['reviewer']), (['--fix'], ['reviewer', 'fixer', 'reviewer'])]:
+    if stack_changed:
+        argv.append('--stack')
+    for flag, expected in [([], ['reviewer']), (['--fix'], ['reviewer'] if stack_changed else ['reviewer', 'fixer', 'reviewer'])]:
         roles.clear()
         monkeypatch.setattr(sys, 'argv', argv + flag)
         assert api['main']() == 0
         assert roles == expected
         report = json.loads(next((tmp_path / 'work').rglob('result.json')).read_text())
         assert report['scope'] == 'source_review'
+        assert report['execution'] == ('superseded' if stack_changed else 'complete')
+        if stack_changed:
+            assert report['assessment'] == 'undetermined'
         assert report['tests'][0]['result'].startswith('not run:')
 
 
@@ -234,3 +249,26 @@ def test_a_round_records_findings_and_downgrades_unevidenced_blockers(tmp_path):
     assert report["execution"] == "error" and report["assessment"] == "undetermined"
     assert report["requested_consumer_repo"] == "hub"
     assert report["requested_consumer_head"] == consumer_head
+
+
+def test_full_evaluation_publishes_only_when_explicitly_requested(tmp_path, monkeypatch):
+    import runpy
+    from types import SimpleNamespace
+    from contextlib import nullcontext
+    api = runpy.run_path(str(REVIEW))
+    state = api['run_full'].__globals__
+    published = []
+    for name, value in dict(work_dir=lambda: tmp_path,
+            run_environment=lambda *args: nullcontext({}), run_set=lambda *args: tmp_path,
+            run_role=lambda *args: '```json\n[]\n```', arm_table=lambda *args: [],
+            harness=lambda *args: SimpleNamespace(stdout='fixture report'),
+            subprocess=SimpleNamespace(run=lambda *args, **kwargs: SimpleNamespace(returncode=0)),
+            publish_full=lambda *args: published.append(args) or 'fixture-url').items():
+        monkeypatch.setitem(state, name, value)
+    for index, (opt_in, suppress, expected) in enumerate([(False, False, 0), (True, False, 1), (True, True, 0)]):
+        monkeypatch.setitem(state, 'time', SimpleNamespace(strftime=lambda *args: str(index)))
+        args = SimpleNamespace(profiles=None, set='fixture', resume=None, baseline=None,
+                               publish_evaluation=opt_in, no_publish=suppress)
+        published.clear()
+        assert api['run_full'](args) == 0
+        assert len(published) == expected

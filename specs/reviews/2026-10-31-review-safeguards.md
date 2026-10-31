@@ -22,7 +22,7 @@ reports are rejected. Evidence: `work/review/vitest-exit-fixture/`.
 
 Verification:
 
-- `targets/validation-harness/.venv/bin/python -m pytest tests/review -q`: 50 passed.
+- `targets/validation-harness/.venv/bin/python -m pytest tests/review -q`: 52 passed.
 - `python3 -m unittest discover -s tests -v`: 19 passed.
 - `python3 scripts/check_workspace.py`: passed in an isolated clean checkout with
   all recorded component pins initialized. The active implementation checkout remains
@@ -44,6 +44,14 @@ Verification:
 
 Follow-up verification:
 
+- Authorized fixer instructions now use the selected remote and quote the branch
+  reference. A recording fixture previously selected `fork` but received an
+  `origin` push command. No actual push was performed by that fixture. Committed
+  regressions also cover stack-top freshness, publication opt-in, standalone
+  parameter selectors and Maven interruption with partial console assertion output.
+  Removing each safeguard or restoring the old adapter fails its focused regression
+  (`work/pr-inventory/tooling-remaining-guards-red.log`).
+
 - Parameterized test selectors now preserve their literal case IDs, including
   brackets, hashes and double colons. A skipped selected case can no longer borrow
   failure evidence from a similarly named case. Three of four cases fail against the
@@ -62,8 +70,10 @@ Follow-up verification:
   Direct regressions also protect explicit fix authorization, refusal to mutate
   tests, and execution of probes for comment-like prompt content. Reports now label
   their scope as source review explicitly; unavailable execution remains recorded
-  without establishing runtime acceptance. Forced interruption recovery remains
-  an untested lifecycle case rather than a claimed result.
+  without establishing runtime acceptance. A later fixture killed a probe after
+  source reversion; restarting restored clean source and reran all required checks
+  successfully. Interpreter outage/recovery and concurrent probes also passed
+  (`work/review/umbrella-pmanko%2Fopenclinai.org-32/scratch/round2/lifecycle.py`).
   Real Vitest and the Maven adapter with fixture JUnit reports both accepted the
   restored passing target and rejected a skipped target beside an unrelated pass
   (`work/pr-inventory/tooling-executed-cases-real.log`). Removing each of the three

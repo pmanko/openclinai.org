@@ -13,6 +13,7 @@ import json
 import os
 import re
 import shutil
+import shlex
 import subprocess
 import sys
 import time
@@ -644,7 +645,7 @@ def main() -> int:
                           head, branch=meta["head_branch"])
         run_role(args, "fixer", fix_wt, (BRIEFS / "fixer.md").read_text() +
                  f"\n## Inputs\n\n- Findings to fix: {out_dir / f'findings-{k}.json'}\n"
-                 f"- Push with: git push origin HEAD:{meta['head_branch']}\n",
+                 f"- Push with: git push -- {shlex.quote(remote)} {shlex.quote('HEAD:' + meta['head_branch'])}\n",
                  out_dir / f"fixer-{k}.md")
     status = 0
     head = fetch_pr(checkout, remote, args.pr)
