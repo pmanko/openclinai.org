@@ -923,6 +923,11 @@
         return DATA.patients[getCurrentPatientKey()];
       }
 
+      function getPostureData(pt) {
+        if (!pt || !pt.postures) return {};
+        return pt.postures[currentPosture] || pt.postures.patient_self || {};
+      }
+
       function showCitationInspector(idx, uuid, rtype, date, summary) {
         inspectorTitleEl.textContent = "Verified FHIR Source Record [" + idx + "]";
         inspectorBodyEl.innerHTML =
@@ -937,10 +942,13 @@
         if (!citations || !citations.length) return "";
         return citations.map(function (c) {
           const idx = c.index || "?";
-          const uuid = c.resourceUuid || "";
-          const rtype = c.resourceType || "FHIR";
+          const uuid = c.resource_uuid || c.resourceUuid || "";
+          const rtype = c.resource_type || c.resourceType || "FHIR";
           const date = c.date || "";
-          const sum = c.summary || "";
+          const sum = c.text || c.summary || "";
+          const countBadge = (c.member_uuid_count && c.member_uuid_count > 1)
+            ? " &middot; " + c.member_uuid_count + " merged"
+            : "";
           return (
             '<button type="button" class="cite-chip" ' +
             'data-idx="' + escapeHtml(idx) + '" ' +
@@ -949,7 +957,7 @@
             'data-date="' + escapeHtml(date) + '" ' +
             'data-sum="' + escapeHtml(sum) + '" ' +
             'title="Click to inspect FHIR resource ' + escapeHtml(uuid) + '">' +
-            'Source [' + escapeHtml(idx) + '] &middot; ' + escapeHtml(rtype) + (date ? " (" + escapeHtml(date) + ")" : "") +
+            'Source [' + escapeHtml(idx) + '] &middot; ' + escapeHtml(rtype) + (date ? " (" + escapeHtml(date) + ")" : "") + countBadge +
             '</button>'
           );
         }).join(" ");
@@ -969,7 +977,7 @@
         });
       }
 
-      function setStep(stepNum) {
+      function setStep(stepNum, shouldScroll) {
         currentStep = stepNum;
         document.querySelectorAll(".step-pill").forEach(function (btn) {
           const isMatch = Number(btn.getAttribute("data-step")) === stepNum;
@@ -977,15 +985,19 @@
           btn.setAttribute("aria-selected", isMatch ? "true" : "false");
         });
         renderCurrentStep();
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        if (shouldScroll) {
+          const stepper = document.querySelector(".workflow-stepper");
+          if (stepper) stepper.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
       }
 
       function renderPatientSelector() {
         patientCardsEl.innerHTML = PATIENT_PROFILES.map(function (prof) {
           const key = prof.baseId + "_" + currentDatasetMode;
           const pt = DATA.patients[key] || {};
+          const post = getPostureData(pt);
           const isActive = prof.baseId === currentBaseId;
-          const dqCount = ((pt.analyses && pt.analyses.data_quality && pt.analyses.data_quality.findings) || []).length;
+          const dqCount = ((post.data_quality_and_conflicts && post.data_quality_and_conflicts.findings) || []).length;
           return (
             '<button type="button" class="patient-card ' + (isActive ? "active" : "") + '" data-base="' + prof.baseId + '">' +
               '<div class="patient-card-head">' +
@@ -994,7 +1006,7 @@
               '</div>' +
               '<p class="patient-desc"><strong>' + escapeHtml(prof.headline) + '</strong><br>' + escapeHtml(prof.highlights) + '</p>' +
               '<div class="patient-stats">' +
-                'Raw FHIR: <strong>' + escapeHtml(pt.raw_mb) + ' MB</strong> (' + Number(pt.raw_entries || 0).toLocaleString() + ' entries) &middot; ' +
+                'Raw FHIR: <strong>' + escapeHtml(pt.raw_mb) + ' MB</strong> (' + Number(pt.total_bundle_entries || 0).toLocaleString() + ' entries) &middot; ' +
                 '<strong>' + dqCount + '</strong> reconciliation findings' +
               '</div>' +
             '</button>'
@@ -1012,21 +1024,39 @@
 
       // STEP 1: Condense & Clean Record
       function renderStep1(pt) {
-        const bloat = pt.analyses.duplicates_and_bloat;
-        const cond = (pt.condensed[currentPosture] || pt.condensed.patient_self)[currentTierKey];
-        const dupPanels = bloat.duplicate_lab_panels || [];
+        const post = getPostureData(pt);
+        const bloat = post.duplicates_and_bloat || {};
+        const sm = bloat.summary_metrics || {};
+        const cond = post[currentTierKey] || post.tier_8k || {};
+        const dupPanels = bloat.multi_code_lab_analytes || [];
+        const bloatCards = bloat.cards || [];
+        const rawTokens = Number(pt.raw_est_tokens || 1);
+        const reductionPct = (((rawTokens - Number(cond.actual_tokens || 0)) / rawTokens) * 100).toFixed(2);
 
-        const dupRows = dupPanels.slice(0, 12).map(function (p) {
-          const ex = (p.examples || []).map(function (e) {
-            return escapeHtml(e.date) + " (" + e.count + "&times;: " + escapeHtml((e.values || []).join(", ")) + ")";
-          }).join("; ");
+        const bloatCardsHtml = bloatCards.map(function (c) {
+          return (
+            '<div class="finding-card ' + escapeHtml(c.severity || "info") + '">' +
+              '<div class="finding-top">' +
+                '<h3 class="finding-title">' + escapeHtml(c.title) + '</h3>' +
+                '<span class="badge ' + escapeHtml(c.severity || "info") + '">' + escapeHtml(c.category || "Condensation") + '</span>' +
+              '</div>' +
+              '<p style="margin:0.35rem 0;">' + escapeHtml(c.summary) + '</p>' +
+              '<div style="margin-top:0.5rem;">' + renderCitationChips(c.citations) + '</div>' +
+            '</div>'
+          );
+        }).join("");
+
+        const dupRows = dupPanels.slice(0, 15).map(function (p) {
+          const loincs = (p.loinc_codes || []).join(", ");
+          const dupDatesCount = (p.same_day_duplicate_dates || []).length;
           return (
             "<tr>" +
-              "<td><strong>" + escapeHtml(p.analyte) + "</strong></td>" +
-              "<td><code>" + escapeHtml(p.loinc || "—") + "</code></td>" +
-              "<td>" + p.duplicate_dates_count + " dates</td>" +
-              "<td><strong>" + p.extra_readings_count + "</strong> extra readings</td>" +
-              "<td>" + ex + "</td>" +
+              "<td><strong>" + escapeHtml(p.concept) + "</strong>" + (p.has_blood_vs_serum_split ? ' <span class="badge info">Blood/Serum Split</span>' : "") + "</td>" +
+              "<td><code>" + escapeHtml(loincs || "—") + "</code></td>" +
+              "<td><strong>" + Number(p.measurement_count || 0).toLocaleString() + "</strong> readings</td>" +
+              "<td>" + dupDatesCount + " same-day duplicate dates</td>" +
+              "<td>" + escapeHtml(p.first_date) + " &rarr; " + escapeHtml(p.latest_date) + " (<strong>" + escapeHtml(p.latest_value) + " " + escapeHtml(p.unit) + "</strong>)</td>" +
+              "<td>" + renderCitationChips(p.citations) + "</td>" +
             "</tr>"
           );
         }).join("");
@@ -1035,50 +1065,50 @@
           '<div class="stage-header">' +
             '<div>' +
               '<h2>Step 1: Condense &amp; Clean the Raw FHIR Health Record</h2>' +
-              '<p>Before an AI model or clinician can review a multi-year chart, we strip repetitive export bloat (such as repeated Base64 notes and same-day duplicate lab orders) and condense the record to fit a predictable context size without losing any safety-critical clinical facts.</p>' +
+              '<p>Before an AI model or clinician can review a multi-year chart, we strip repetitive export bloat (such as repeated Base64 notes, claims noise, and same-day duplicate lab orders) and condense the record to fit a predictable context size without losing any safety-critical clinical facts.</p>' +
             '</div>' +
             '<div class="control-pill-group" role="group" aria-label="Target summary size">' +
-              '<button type="button" class="btn ' + (currentTierKey === "tier_8k" ? "" : "btn-outline") + '" data-tier="tier_8k">Standard Clinical Summary (8k tokens)</button>' +
-              '<button type="button" class="btn ' + (currentTierKey === "tier_2k" ? "" : "btn-outline") + '" data-tier="tier_2k">Compact Emergency Summary (2k tokens)</button>' +
+              '<button type="button" class="btn ' + (currentTierKey === "tier_8k" ? "" : "btn-outline") + '" data-tier="tier_8k">Standard Clinical Summary (8k budget)</button>' +
+              '<button type="button" class="btn ' + (currentTierKey === "tier_2k" ? "" : "btn-outline") + '" data-tier="tier_2k">Compact Emergency Summary (2k budget)</button>' +
             '</div>' +
           '</div>' +
 
           '<div class="funnel-grid">' +
             '<div class="funnel-card">' +
               '<div class="kicker">1A &middot; Raw FHIR R4 Export</div>' +
-              '<div class="big-num">' + escapeHtml(pt.raw_mb) + ' MB (' + Number(pt.raw_est_tokens).toLocaleString() + ' tokens)</div>' +
-              '<p>Contains <strong>' + Number(pt.raw_entries).toLocaleString() + '</strong> raw FHIR entries, including <strong>' + Number(bloat.raw_observations_total).toLocaleString() + '</strong> observations and <strong>' + Number(bloat.notes_raw_total).toLocaleString() + '</strong> clinical notes—far too large for standard AI context windows.</p>' +
+              '<div class="big-num">' + escapeHtml(pt.raw_mb) + ' MB (' + Number(pt.raw_est_tokens || 0).toLocaleString() + ' tokens)</div>' +
+              '<p>Contains <strong>' + Number(pt.total_bundle_entries || 0).toLocaleString() + '</strong> raw FHIR entries, including <strong>' + Number(sm.raw_lab_observations || 0).toLocaleString() + '</strong> lab observations and <strong>' + Number(sm.excluded_non_clinical_entries || 0).toLocaleString() + '</strong> non-clinical billing/claim entries.</p>' +
             '</div>' +
             '<div class="funnel-card">' +
-              '<div class="kicker">1B &middot; Deduplicate Labs &amp; Notes</div>' +
-              '<div class="big-num">' + Number(bloat.unique_lab_chains).toLocaleString() + ' Lab Trends &amp; ' + Number(bloat.notes_unique_kept).toLocaleString() + ' Notes</div>' +
-              '<p>Collapses <strong>' + Number(bloat.raw_observations_total).toLocaleString() + '</strong> raw lab/vital entries into <strong>' + Number(bloat.unique_lab_chains).toLocaleString() + '</strong> longitudinal LOINC trajectories (removing <strong>' + Number(bloat.duplicate_lab_readings_total).toLocaleString() + '</strong> same-day duplicate readings) and strips <strong>' + Number(bloat.notes_duplicates_dropped).toLocaleString() + '</strong> repeated notes.</p>' +
+              '<div class="kicker">1B &middot; Deduplicate Labs, Notes &amp; Renewals</div>' +
+              '<div class="big-num">' + Number(sm.canonical_lab_analytes || 0).toLocaleString() + ' Lab Trends &amp; ' + Number(sm.deduplicated_base64_notes || 0).toLocaleString() + ' Notes Deduped</div>' +
+              '<p>Collapses <strong>' + Number(sm.raw_lab_observations || 0).toLocaleString() + '</strong> raw lab observations into <strong>' + Number(sm.canonical_lab_analytes || 0).toLocaleString() + '</strong> canonical LOINC analyte chains, removes <strong>' + Number(sm.deduplicated_base64_notes || 0).toLocaleString() + '</strong> duplicate Base64 notes, and folds <strong>' + Number(sm.raw_stopped_medications || 0).toLocaleString() + '</strong> historical medication renewals into <strong>' + Number(sm.folded_stopped_med_ingredients || 0).toLocaleString() + '</strong> ingredient summaries.</p>' +
             '</div>' +
             '<div class="funnel-card highlight">' +
-              '<div class="kicker">1C &middot; Condensed WAHS Summary (Tier ' + cond.tier + ')</div>' +
-              '<div class="big-num">' + Number(cond.actual_tokens).toLocaleString() + ' Tokens (-' + bloat.token_reduction_8k_pct + '%)</div>' +
-              '<p>Fits cleanly inside the <strong>' + Number(cond.target_tokens).toLocaleString() + '</strong>-token budget (' + Number(cond.records_count).toLocaleString() + ' structured lines) while retaining <strong>100% of allergies, active medications, and active conditions</strong> with FHIR UUID links.</p>' +
+              '<div class="kicker">1C &middot; Condensed WAHS Summary (Tier ' + escapeHtml(cond.tier) + ')</div>' +
+              '<div class="big-num">' + Number(cond.actual_tokens || 0).toLocaleString() + ' Tokens (-' + reductionPct + '%)</div>' +
+              '<p>Fits cleanly inside the <strong>' + Number(cond.target_tokens || 0).toLocaleString() + '</strong>-token budget (<strong>' + Number(cond.ledger_lines || 0).toLocaleString() + '</strong> structured ledger lines, <em>' + escapeHtml(cond.tier_name) + '</em>) while retaining <strong>100% of allergies, active medications, and active conditions</strong> with FHIR UUID links.</p>' +
             '</div>' +
           '</div>' +
 
-          '<div class="callout info">' +
-            '<strong>Why this matters for WA Health Summary:</strong> Instead of truncating the patient’s chart when it exceeds a model’s context limit, the 5-Tier Condenser preserves the complete International Patient Summary (IPS) safety core first and progressively summarizes historical routine visits and normal lab repeats.' +
-          '</div>' +
+          '<h3 style="color:var(--page-title);margin:1.35rem 0 0.65rem;">What Was Cleaned &amp; Consolidated in ' + escapeHtml(pt.patient_name) + '’s Record</h3>' +
+          (bloatCardsHtml || '<p>No duplicate bloat findings recorded.</p>') +
 
-          '<details class="wahs-accordion" open>' +
-            '<summary>Inspect Consolidated Same-Day Duplicate Lab Panels (' + dupPanels.length + ' LOINC analytes consolidated)</summary>' +
+          '<details class="wahs-accordion" open style="margin-top:1.1rem;">' +
+            '<summary>Inspect Consolidated Multi-Code &amp; Same-Day Duplicate Lab Panels (' + dupPanels.length + ' canonical analytes)</summary>' +
             '<div class="accordion-body">' +
               (dupRows
-                ? '<div class="table-wrap"><table class="wahs-table"><thead><tr><th>Lab Analyte</th><th>LOINC</th><th>Duplicate Dates</th><th>Redundant Readings Merged</th><th>Sample Duplicate Timestamps</th></tr></thead><tbody>' + dupRows + '</tbody></table></div>'
-                : '<p>No same-day duplicate numeric lab readings in this bundle.</p>') +
+                ? '<div class="table-wrap"><table class="wahs-table"><thead><tr><th>Lab Analyte</th><th>LOINC Codes Merged</th><th>Total Readings</th><th>Same-Day Duplicates</th><th>Date Span &amp; Latest Value</th><th>Source Provenance</th></tr></thead><tbody>' + dupRows + '</tbody></table></div>'
+                : '<p>No multi-code or same-day duplicate numeric lab panels in this bundle.</p>') +
             '</div>' +
           '</details>' +
 
           '<div class="step-footer">' +
-            '<span style="color:var(--muted);font-size:0.9rem;">All safety-critical records are preserved with <code>[N] &rarr; FHIR resourceUuid</code> provenance.</span>' +
+            '<span style="color:var(--muted);font-size:0.9rem;">Click any <strong>Source [N]</strong> button above to inspect the underlying FHIR resource UUID and merged record count.</span>' +
             '<button type="button" class="btn btn-teal" id="next-to-step-2">Continue to Step 2: Reconcile Cross-Clinic Conflicts &rarr;</button>' +
           '</div>';
 
+        bindCitationButtons(stepStageEl);
         stepStageEl.querySelectorAll("[data-tier]").forEach(function (b) {
           b.addEventListener("click", function () {
             currentTierKey = b.getAttribute("data-tier");
@@ -1086,24 +1116,26 @@
           });
         });
         document.getElementById("next-to-step-2").addEventListener("click", function () {
-          setStep(2);
+          setStep(2, true);
         });
       }
 
       // STEP 2: Reconcile Cross-Clinic Conflicts
       function renderStep2(pt) {
-        const dq = pt.analyses.data_quality;
+        const post = getPostureData(pt);
+        const dq = post.data_quality_and_conflicts || {};
         const findings = dq.findings || [];
 
         const cardsHtml = findings.map(function (f) {
+          const domainLabel = f.domain || f.category || "Clinical Rule";
           return (
             '<div class="finding-card ' + escapeHtml(f.severity) + '">' +
               '<div class="finding-top">' +
                 '<h3 class="finding-title">' + escapeHtml(f.title) + '</h3>' +
-                '<span class="badge ' + escapeHtml(f.severity) + '">' + escapeHtml(f.severity.toUpperCase()) + ' &middot; ' + escapeHtml(f.category.replace(/_/g, " ")) + '</span>' +
+                '<span class="badge ' + escapeHtml(f.severity) + '">' + escapeHtml((f.severity || "").toUpperCase()) + ' &middot; ' + escapeHtml(domainLabel) + '</span>' +
               '</div>' +
-              '<p style="margin:0.35rem 0;"><strong>What was found:</strong> ' + escapeHtml(f.detail) + '</p>' +
-              '<p style="margin:0.35rem 0;color:var(--muted);"><strong>Suggested Review Action:</strong> ' + escapeHtml(f.recommendation) + '</p>' +
+              '<p style="margin:0.35rem 0;"><strong>What was found:</strong> ' + escapeHtml(f.description || f.detail) + '</p>' +
+              '<p style="margin:0.35rem 0;color:var(--muted);"><strong>Suggested Clinical / Registry Action:</strong> ' + escapeHtml(f.recommendation) + '</p>' +
               '<div style="margin-top:0.55rem;">' + renderCitationChips(f.citations) + '</div>' +
             '</div>'
           );
@@ -1115,8 +1147,8 @@
               '<h2>Step 2: Reconcile Cross-Clinic Medication, Problem &amp; Vaccine Conflicts</h2>' +
               '<p>When records are combined across primary care, specialty clinics, retail pharmacies, and state immunization registries, clinical contradictions appear. Our 4-Layer Clinical Knowledge Base (RxNorm, KDIGO/ADA staging rules, CDC ACIP vaccine schedules, and LOINC) flags these issues automatically so the patient and clinician can review them.</p>' +
             '</div>' +
-            '<span class="badge ' + (dq.high_severity > 0 ? "high" : "ok") + '" style="font-size:0.88rem;padding:0.4rem 0.85rem;">' +
-              dq.total_findings + ' Findings (' + dq.high_severity + ' High Priority, ' + dq.medium_severity + ' Medium)' +
+            '<span class="badge ' + (dq.high_severity_count > 0 ? "high" : "ok") + '" style="font-size:0.88rem;padding:0.4rem 0.85rem;">' +
+              (dq.total_findings || findings.length) + ' Findings (' + (dq.high_severity_count || 0) + ' High Priority)' +
             '</span>' +
           '</div>' +
 
@@ -1134,42 +1166,73 @@
           '</div>';
 
         bindCitationButtons(stepStageEl);
-        document.getElementById("back-to-step-1").addEventListener("click", function () { setStep(1); });
-        document.getElementById("next-to-step-3").addEventListener("click", function () { setStep(3); });
+        document.getElementById("back-to-step-1").addEventListener("click", function () { setStep(1, true); });
+        document.getElementById("next-to-step-3").addEventListener("click", function () { setStep(3, true); });
       }
 
       // STEP 3: Prepare & Share Summary (Privacy Posture + Clinical Summary Tables)
       function renderStep3(pt) {
-        const pat = pt.analyses.patterns;
-        const cond = (pt.condensed[currentPosture] || pt.condensed.patient_self)[currentTierKey];
+        const post = getPostureData(pt);
+        const selfPost = (pt.postures && pt.postures.patient_self) || post;
+        const pat = post.patterns_and_summaries || {};
+        const ds = pat.directed_summary || {};
+        const selfDs = (selfPost.patterns_and_summaries && selfPost.patterns_and_summaries.directed_summary) || {};
+        const cond = post[currentTierKey] || post.tier_8k || {};
+        const he = pat.highlight_encounter || null;
 
-        const trajRows = (pat.trajectories || []).map(function (t) {
-          const arrow = t.direction === "down" ? "&darr; Decreasing" : (t.direction === "up" ? "&uarr; Increasing" : "&rarr; Stable");
+        const activeMedsRows = (ds.active_medications || []).map(function (m) {
           return (
             "<tr>" +
-              "<td><strong>" + escapeHtml(t.analyte) + "</strong></td>" +
-              "<td><code>" + escapeHtml(t.loinc || "—") + "</code></td>" +
-              "<td>" + t.count + "</td>" +
-              "<td>" + escapeHtml(t.first.value) + " " + escapeHtml(t.unit) + " <small>(" + escapeHtml(t.first.date) + ")</small></td>" +
-              "<td><strong>" + escapeHtml(t.latest.value) + " " + escapeHtml(t.unit) + "</strong> <small>(" + escapeHtml(t.latest.date) + ")</small></td>" +
-              "<td>" + escapeHtml(t.min.value) + " &ndash; " + escapeHtml(t.max.value) + "</td>" +
-              "<td>" + arrow + " (" + (t.delta >= 0 ? "+" : "") + t.delta + ")</td>" +
+              "<td><strong>" + escapeHtml(m.display) + "</strong>" +
+                (m.conflict_note ? '<div style="margin-top:0.25rem;"><span class="badge high">Conflict: ' + escapeHtml(m.conflict_note) + '</span></div>' : "") +
+              "</td>" +
+              "<td>" + escapeHtml(m.date || "—") + "</td>" +
+              "<td>" + escapeHtml(m.source_org || "Primary Care") + "</td>" +
+              "<td>" + renderCitationChips(m.citations) + "</td>" +
             "</tr>"
           );
         }).join("");
 
-        const epCards = (pat.major_episodes || []).map(function (ep) {
+        const trajRows = (pat.trajectories || []).map(function (t) {
+          const dir = String(t.direction || "");
+          const arrow = dir.indexOf("dec") === 0 || dir === "down"
+            ? "&darr; Decreasing"
+            : (dir.indexOf("inc") === 0 || dir === "up" ? "&uarr; Increasing" : "&rarr; Stable");
+          const initObj = t.initial || t.first || {};
+          const latestObj = t.latest || {};
+          const minObj = t.min || {};
+          const maxObj = t.max || {};
           return (
-            '<div class="finding-card info">' +
-              '<div class="finding-top">' +
-                '<h3 class="finding-title">' + escapeHtml(ep.date) + ' &middot; ' + escapeHtml(ep.title) + '</h3>' +
-                '<span class="badge info">' + escapeHtml(ep.type) + '</span>' +
-              '</div>' +
-              '<p style="margin:0.3rem 0;">' + escapeHtml(ep.summary) + '</p>' +
-              '<div style="margin-top:0.4rem;">' + renderCitationChips([{ index: ep.index, resourceUuid: ep.resourceUuid, resourceType: ep.type, date: ep.date, summary: ep.title }]) + '</div>' +
-            '</div>'
+            "<tr>" +
+              "<td><strong>" + escapeHtml(t.concept || t.analyte) + "</strong></td>" +
+              "<td>" + Number(t.count || 0).toLocaleString() + "</td>" +
+              "<td>" + escapeHtml(initObj.value) + " " + escapeHtml(t.unit) + " <small>(" + escapeHtml(initObj.date) + ")</small></td>" +
+              "<td><strong>" + escapeHtml(latestObj.value) + " " + escapeHtml(t.unit) + "</strong> <small>(" + escapeHtml(latestObj.date) + ")</small></td>" +
+              "<td>" + escapeHtml(minObj.value) + " &ndash; " + escapeHtml(maxObj.value) + "</td>" +
+              "<td>" + arrow + "</td>" +
+              "<td>" + renderCitationChips(t.citations) + "</td>" +
+            "</tr>"
           );
         }).join("");
+
+        const heHtml = he
+          ? (
+            '<div class="finding-card info">' +
+              '<div class="finding-top">' +
+                '<h3 class="finding-title">' + escapeHtml(he.title) + '</h3>' +
+                '<span class="badge info">' + escapeHtml(he.window) + '</span>' +
+              '</div>' +
+              '<p style="margin:0.4rem 0;">' + escapeHtml(he.narrative) + '</p>' +
+              (he.opus_5_5_comparison
+                ? '<div class="callout info" style="margin:0.65rem 0;">' +
+                    '<div><strong>Uncondensed Baseline (Opus 5.5):</strong> ' + escapeHtml(he.opus_5_5_comparison.raw_json_feeding_opus_5_5) + '</div>' +
+                    '<div style="margin-top:0.3rem;"><strong>WAHS Condensed Pipeline:</strong> ' + escapeHtml(he.opus_5_5_comparison.wahs_condensed_pipeline) + '</div>' +
+                  '</div>'
+                : '') +
+              '<div style="margin-top:0.5rem;">' + renderCitationChips(he.citations) + '</div>' +
+            '</div>'
+          )
+          : '<p>No high-acuity inpatient/ICU stay highlighted for this patient.</p>';
 
         const ablRows = (DATA.ablation_rows || []).map(function (r) {
           return (
@@ -1185,6 +1248,9 @@
           );
         }).join("");
 
+        const uniqueSensitiveList = Array.from(new Set(selfDs.sensitive_sdoh_included || []));
+        const redactedCount = cond.redacted_count || ds.redacted_privacy_count || uniqueSensitiveList.length || 0;
+
         stepStageEl.innerHTML =
           '<div class="stage-header">' +
             '<div>' +
@@ -1198,22 +1264,30 @@
           '</div>' +
 
           (currentPosture === "external_share"
-            ? '<div class="callout success"><strong>External Provider Share Active (Zero Sensitive Leakage):</strong> Redacted <strong>' + cond.redacted_count + '</strong> privacy-sensitive SDOH / personal history entries from the shared summary (' + escapeHtml((cond.redacted_items || []).map(function(x){return x.display;}).join("; ") || "0 sensitive items") + ').</div>'
-            : '<div class="callout warn"><strong>My Personal View Active:</strong> Displaying your complete record, including any sensitive social history items flagged in Step 2. Switch to <strong>External Provider Share</strong> to preview automatic privacy redaction.</div>') +
+            ? '<div class="callout success"><strong>External Provider Share Active (Zero Sensitive Leakage):</strong> Deterministically redacted <strong>' + redactedCount + '</strong> privacy-sensitive SDOH / behavioral / personal safety records prior to condensation (' + escapeHtml(uniqueSensitiveList.join("; ") || "sensitive items stripped") + ').</div>'
+            : '<div class="callout warn"><strong>My Personal View Active:</strong> Displaying your complete record, including <strong>' + uniqueSensitiveList.length + '</strong> sensitive social/personal finding types (' + escapeHtml(uniqueSensitiveList.join("; ") || "none") + '). Switch to <strong>External Provider Share</strong> to preview automatic privacy redaction.</div>') +
 
-          '<h3 style="color:var(--page-title);margin:1.25rem 0 0.5rem;">Key Biomarker &amp; Lab Trajectories</h3>' +
+          '<h3 style="color:var(--page-title);margin:1.25rem 0 0.5rem;">Active Medications in International Patient Summary (IPS)</h3>' +
           '<div class="table-wrap">' +
             '<table class="wahs-table">' +
-              '<thead><tr><th>Analyte</th><th>LOINC</th><th>Readings</th><th>Initial</th><th>Latest</th><th>Min &ndash; Max</th><th>Longitudinal Trend</th></tr></thead>' +
+              '<thead><tr><th>Active Medication</th><th>Latest Date</th><th>Reporting Clinic / Source</th><th>FHIR Provenance</th></tr></thead>' +
+              '<tbody>' + (activeMedsRows || '<tr><td colspan="4">No active medications recorded.</td></tr>') + '</tbody>' +
+            '</table>' +
+          '</div>' +
+
+          '<h3 style="color:var(--page-title);margin:1.35rem 0 0.5rem;">Key Biomarker &amp; Lab Trajectories</h3>' +
+          '<div class="table-wrap">' +
+            '<table class="wahs-table">' +
+              '<thead><tr><th>Analyte</th><th>Readings</th><th>Initial</th><th>Latest</th><th>Min &ndash; Max</th><th>Longitudinal Trend</th><th>FHIR Provenance</th></tr></thead>' +
               '<tbody>' + (trajRows || '<tr><td colspan="7">No multi-point numeric lab trajectories in this chart.</td></tr>') + '</tbody>' +
             '</table>' +
           '</div>' +
 
-          '<h3 style="color:var(--page-title);margin:1.4rem 0 0.5rem;">Major Hospitalizations, ICU Stays &amp; Procedures</h3>' +
-          (epCards || '<p>No high-acuity hospitalizations recorded.</p>') +
+          '<h3 style="color:var(--page-title);margin:1.4rem 0 0.5rem;">Highlighted Hospitalization / Care Episode</h3>' +
+          heHtml +
 
           '<details class="wahs-accordion" style="margin-top:1.25rem;">' +
-            '<summary>Technical View: Inspect Condensed AI Context Ledger (' + Number(cond.actual_tokens).toLocaleString() + ' tokens, Tier ' + cond.tier + ')</summary>' +
+            '<summary>Technical View: Inspect Condensed AI Context Ledger (' + Number(cond.actual_tokens || 0).toLocaleString() + ' tokens, Tier ' + escapeHtml(cond.tier) + ')</summary>' +
             '<div class="accordion-body">' +
               '<p style="margin-top:0;color:var(--muted);font-size:0.88rem;">This is the exact deterministic, citation-indexed text passed to the language model under the <strong>' + escapeHtml(currentPosture) + '</strong> posture:</p>' +
               '<pre class="ledger-view">' + escapeHtml(cond.chart_text) + '</pre>' +
@@ -1236,11 +1310,12 @@
         stepStageEl.querySelectorAll("[data-posture]").forEach(function (b) {
           b.addEventListener("click", function () {
             currentPosture = b.getAttribute("data-posture");
+            renderPatientSelector();
             renderStep3(pt);
           });
         });
-        document.getElementById("back-to-step-2").addEventListener("click", function () { setStep(2); });
-        document.getElementById("next-to-step-4").addEventListener("click", function () { setStep(4); });
+        document.getElementById("back-to-step-2").addEventListener("click", function () { setStep(2, true); });
+        document.getElementById("next-to-step-4").addEventListener("click", function () { setStep(4, true); });
       }
 
       // STEP 4: Ask Your Summary (Grounded Q&A)
@@ -1276,41 +1351,31 @@
       }
 
       function renderStep4(pt) {
+        const post = getPostureData(pt);
+        const Precomputed = post.qa_samples || [];
+
+        const promptCardsHtml = Precomputed.map(function (sample, idx) {
+          const catLabel = sample.abstained
+            ? "Safety Abstention Probe"
+            : (idx === 0 ? "Medication & Conflict Audit" : (idx === 1 ? "Longitudinal Trajectory" : "Clinical Summary Q&A"));
+          return (
+            '<button type="button" class="qa-prompt-card" data-q-idx="' + idx + '">' +
+              '<span class="q-cat">' + escapeHtml(catLabel) + '</span>' +
+              '<span class="q-text">' + escapeHtml(sample.question) + '</span>' +
+            '</button>'
+          );
+        }).join("");
+
         stepStageEl.innerHTML =
           '<div class="stage-header">' +
             '<div>' +
-              '<h2>Step 4: Ask Questions About Your Health Summary</h2>' +
-              '<p>Ask a question in plain language or click one of the curated clinical prompts below. Every claim in the answer is linked to a verifiable FHIR record (<code>Source [N]</code>), and the assistant explicitly abstains when asked about facts not documented in the chart.</p>' +
+              '<h2>Step 4: Ask Questions About ' + escapeHtml(pt.patient_name) + '’s Health Summary</h2>' +
+              '<p>Ask a question in plain language or click one of the curated clinical prompts below. Every claim in the answer is linked to a verifiable FHIR record (<code>Source [N]</code>) and Clinical Knowledge Base authority, and the assistant explicitly abstains when asked about facts not documented in the chart.</p>' +
             '</div>' +
             '<span class="badge info" style="font-size:0.85rem;padding:0.35rem 0.75rem;">Posture: ' + (currentPosture === "external_share" ? "External Provider Share" : "My Personal View") + '</span>' +
           '</div>' +
 
-          '<div class="qa-prompt-grid" id="qa-prompt-grid">' +
-            '<button type="button" class="qa-prompt-card" data-q="What duplicate medications or dangerous drug conflicts are on my active list?">' +
-              '<span class="q-cat">Medication Safety</span>' +
-              '<span class="q-text">What duplicate medications or drug conflicts are on my active list?</span>' +
-            '</button>' +
-            '<button type="button" class="qa-prompt-card" data-q="Why are there conflicting Chronic Kidney Disease stages and what is my eGFR trend?">' +
-              '<span class="q-cat">Kidney &amp; Lab Trends</span>' +
-              '<span class="q-text">Why are there conflicting CKD stages and what is my eGFR trend?</span>' +
-            '</button>' +
-            '<button type="button" class="qa-prompt-card" data-q="Summarize the November 2023 hospital and ICU stay.">' +
-              '<span class="q-cat">Hospital &amp; ICU Summary</span>' +
-              '<span class="q-text">Summarize the November 2023 coronary bypass &amp; ICU hospitalization.</span>' +
-            '</button>' +
-            '<button type="button" class="qa-prompt-card" data-q="Are there any duplicate vaccines or ACIP immunization schedule anomalies?">' +
-              '<span class="q-cat">Immunization Audit</span>' +
-              '<span class="q-text">Are there any duplicate vaccines or ACIP schedule anomalies?</span>' +
-            '</button>' +
-            '<button type="button" class="qa-prompt-card" data-q="What duplicate lab panels or repeated notes were consolidated in this chart?">' +
-              '<span class="q-cat">Record Condensation</span>' +
-              '<span class="q-text">What duplicate lab panels or repeated notes were consolidated?</span>' +
-            '</button>' +
-            '<button type="button" class="qa-prompt-card" data-q="Does this patient have a documented Penicillin allergy or recent colonoscopy?">' +
-              '<span class="q-cat">Safety Abstention Probe</span>' +
-              '<span class="q-text">Does this patient have a Penicillin allergy or recent colonoscopy?</span>' +
-            '</button>' +
-          '</div>' +
+          '<div class="qa-prompt-grid" id="qa-prompt-grid">' + promptCardsHtml + '</div>' +
 
           '<div class="chat-box" id="chat-log"></div>' +
 
@@ -1325,7 +1390,6 @@
           '</div>';
 
         const chatLogEl = document.getElementById("chat-log");
-        const Precomputed = pt.precomputed_chat || [];
 
         function appendExchange(question, resp) {
           const uDiv = document.createElement("div");
@@ -1335,18 +1399,34 @@
 
           const aDiv = document.createElement("div");
           aDiv.className = "chat-bubble assistant";
-          const statusBadge = resp.abstains
+          const isAbstained = Boolean(resp.abstained || resp.abstains);
+          const cites = resp.citations || resp.references || [];
+          const kbRefs = resp.kb_references || [];
+          const tInfo = resp.tier_info || {};
+          const statusBadge = isAbstained
             ? '<span class="badge medium">Explicit Safety Abstention (Not in Chart)</span>'
-            : '<span class="badge ok">Grounded in Condensed FHIR Summary (' + (resp.references || []).length + ' citations)</span>';
+            : '<span class="badge ok">Grounded in Condensed FHIR Summary (' + cites.length + ' FHIR citations)</span>';
+          const kbHtml = kbRefs.length
+            ? '<div style="margin-top:0.55rem;padding-top:0.45rem;border-top:1px dashed #d0d7de;font-size:0.82rem;color:#495057;">' +
+                '<strong>4-Layer Clinical KB Authorities:</strong> ' +
+                kbRefs.map(function (k) {
+                  return k.url
+                    ? '<a href="' + escapeHtml(k.url) + '" target="_blank" rel="noopener noreferrer" style="color:var(--bs-primary);margin-right:0.65rem;">' + escapeHtml(k.title) + ' (' + escapeHtml(k.source) + ') &nearr;</a>'
+                    : '<span style="margin-right:0.65rem;">' + escapeHtml(k.title) + '</span>';
+                }).join(" ") +
+              '</div>'
+            : '';
+
           aDiv.innerHTML =
             '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.45rem;flex-wrap:wrap;gap:0.4rem;">' +
               statusBadge +
-              '<span style="font-size:0.75rem;color:var(--muted-light);">Tier ' + resp.tier_used + ' (' + resp.actual_tokens + ' tokens)</span>' +
+              '<span style="font-size:0.75rem;color:var(--muted-light);">Tier ' + escapeHtml(tInfo.tier || resp.tier_used || 3) + ' (' + Number(tInfo.actual_tokens || resp.actual_tokens || 0).toLocaleString() + ' tokens)</span>' +
             '</div>' +
             formatMarkdownLite(resp.answer) +
             '<div style="margin-top:0.65rem;padding-top:0.5rem;border-top:1px solid #edf0f2;">' +
-              renderCitationChips(resp.references || []) +
-            '</div>';
+              renderCitationChips(cites) +
+            '</div>' +
+            kbHtml;
           chatLogEl.appendChild(aDiv);
           bindCitationButtons(aDiv);
           chatLogEl.scrollTop = chatLogEl.scrollHeight;
@@ -1357,12 +1437,16 @@
           for (let i = 0; i < Precomputed.length; i++) {
             if (Precomputed[i].question.toLowerCase() === qLow) return Precomputed[i];
           }
-          if (/penicillin|colonoscopy|mri of the brain|organ transplant|peanut/.test(qLow)) return Precomputed[5] || Precomputed[0];
-          if (/statin|med|drug|rx|furosemide|lisinopril|clopidogrel|plavix|lipitor/.test(qLow)) return Precomputed[0];
-          if (/ckd|kidney|renal|egfr|creatinine|stage|diabetes|hba1c/.test(qLow)) return Precomputed[1] || Precomputed[0];
+          for (let i = 0; i < Precomputed.length; i++) {
+            if (Precomputed[i].abstained && /penicillin|colonoscopy|mri|transplant|genetic|brca|blood type|living will/.test(qLow)) {
+              return Precomputed[i];
+            }
+          }
+          if (/statin|med|drug|rx|furosemide|lisinopril|clopidogrel|plavix|lipitor|cetirizine|amoxicillin/.test(qLow)) return Precomputed[0];
+          if (/ckd|kidney|renal|egfr|creatinine|stage|diabetes|hba1c|sinusitis/.test(qLow)) return Precomputed[1] || Precomputed[0];
           if (/icu|cabg|bypass|hospital|november 2023|surgery|encounter/.test(qLow)) return Precomputed[2] || Precomputed[0];
-          if (/vaccine|immuniz|zoster|hpv|flu|covid|acip/.test(qLow)) return Precomputed[3] || Precomputed[0];
-          if (/duplicate|bloat|panel|note/.test(qLow)) return Precomputed[4] || Precomputed[0];
+          if (/vaccine|immuniz|zoster|hpv|flu|covid|acip|tdap/.test(qLow)) return Precomputed[3] || Precomputed[0];
+          if (/duplicate|bloat|panel|note|privacy|sdoh|share/.test(qLow)) return Precomputed[4] || Precomputed[0];
           return Precomputed[0];
         }
 
@@ -1372,9 +1456,9 @@
 
         stepStageEl.querySelectorAll(".qa-prompt-card").forEach(function (btn) {
           btn.addEventListener("click", function () {
-            const q = btn.getAttribute("data-q");
-            const resp = answerLocally(q);
-            if (resp) appendExchange(q, resp);
+            const idx = Number(btn.getAttribute("data-q-idx"));
+            const resp = Precomputed[idx];
+            if (resp) appendExchange(resp.question, resp);
           });
         });
 
@@ -1388,7 +1472,7 @@
           if (resp) appendExchange(q, resp);
         });
 
-        document.getElementById("back-to-step-3").addEventListener("click", function () { setStep(3); });
+        document.getElementById("back-to-step-3").addEventListener("click", function () { setStep(3, true); });
       }
 
       function renderCurrentStep() {
@@ -1414,7 +1498,7 @@
 
       document.querySelectorAll(".step-pill").forEach(function (btn) {
         btn.addEventListener("click", function () {
-          setStep(Number(btn.getAttribute("data-step")));
+          setStep(Number(btn.getAttribute("data-step")), false);
         });
       });
 

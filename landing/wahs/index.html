@@ -78,6 +78,11 @@
 <h3>Choose what to include before sharing</h3>
 <p>Health records frequently contain sensitive social, behavioral, or personal findings (such as domestic violence screening, justice involvement, or housing instability) stored alongside medical diagnoses. Patients can review their complete personal record in a self-view while automatically redacting sensitive entries when preparing a summary to share with an external provider.</p>
 </article>
+<article>
+<span>04 · Ground &amp; verify</span>
+<h3>Ask questions with linked source records</h3>
+<p>Every summary statement, conflict alert, and Q&amp;A response cites the exact FHIR resource identifier and clinical date so a patient or clinician can inspect the underlying record. When asked about facts absent from the chart, the assistant explicitly abstains rather than guessing.</p>
+</article>
 </div>
 </section>
 
@@ -94,6 +99,83 @@
 <a class="text-link" href="https://wahs-demo.openclinai.org/">Launch interactive UX (wahs-demo.openclinai.org) <span aria-hidden="true">→</span></a>
 <a class="text-link" href="https://reports.openclinai.org/2026-10-30-wahs-phase2-eval/index.html">Inspect the 32-case evaluation report <span aria-hidden="true">→</span></a>
 <a class="text-link" href="design-report/index.html">Open the detailed design &amp; architecture dashboard <span aria-hidden="true">→</span></a>
+</div>
+</section>
+
+<section class="section page-width resource-section" id="research-foundation" aria-labelledby="foundation-title">
+<p class="section-kicker">Background &amp; Standards Foundation</p>
+<h2 id="foundation-title">Researched best practices and clinical standards</h2>
+<p>Our condensation, reconciliation, privacy segmentation, and human-in-the-loop review workflows are grounded in established health interoperability standards, clinical practice guidelines, federal and Washington state privacy frameworks, and human-AI interaction research. See the <a href="design-report/index.html#research-foundation">detailed design &amp; research report</a> for the full technical synthesis.</p>
+<div class="resource-groups">
+<section class="resource-group">
+<h3>FHIR &amp; patient summary standards</h3>
+<ul class="resource-links">
+<li>
+<a href="https://build.fhir.org/ig/HL7/fhir-ips/">
+<span class="resource-link-title">HL7 International Patient Summary (IPS) &amp; ISO 27269 <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Defines the mandatory clinical safety core (allergies, active medications, and active problems) preserved across all five condensation tiers.</span>
+</a>
+</li>
+<li>
+<a href="https://hl7.org/fhir/us/core/">
+<span class="resource-link-title">HL7 US Core (FHIR R4) &amp; SMART Health Links <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Standards for patient-mediated longitudinal record retrieval and cross-organizational sharing used by WA Health Summary.</span>
+</a>
+</li>
+<li>
+<a href="https://build.fhir.org/ig/HL7/aitransparency-ig/branches/main/en/StructureDefinition-AI-Provenance.html">
+<span class="resource-link-title">HL7 AI Transparency on FHIR (AI-Provenance) <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Separates supporting FHIR source records, AI model involvement, and recorded human review so automated checks are never conflated with clinical sign-off.</span>
+</a>
+</li>
+</ul>
+</section>
+<section class="resource-group">
+<h3>Clinical terminology &amp; guideline authorities</h3>
+<ul class="resource-links">
+<li>
+<a href="https://kdigo.org/guidelines/ckd-evaluation-and-management/">
+<span class="resource-link-title">KDIGO 2024 CKD &amp; ADA Diabetes Standards <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Grounds Layer 1 SNOMED CT disease progression rules, detecting mutually exclusive CKD stages and uncoded renal or glycemic progression across serial labs.</span>
+</a>
+</li>
+<li>
+<a href="https://www.nlm.nih.gov/research/umls/rxnorm/index.html">
+<span class="resource-link-title">NLM RxNorm &amp; DailyMed / MedlinePlus <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Grounds Layer 2 brand-to-generic ingredient normalization (e.g., Clopidogrel vs. Plavix, Lisinopril vs. Prinivil) and therapeutic class duplication checks.</span>
+</a>
+</li>
+<li>
+<a href="https://www.cdc.gov/vaccines/hcp/imz-schedules/index.html">
+<span class="resource-link-title">CDC ACIP Immunization Schedules &amp; LOINC <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Grounds Layer 3 vaccine interval validation (CVX) and longitudinal consolidation of blood-versus-serum LOINC laboratory panels.</span>
+</a>
+</li>
+</ul>
+</section>
+<section class="resource-group">
+<h3>Privacy segmentation &amp; human-AI interaction</h3>
+<ul class="resource-links">
+<li>
+<a href="https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2">
+<span class="resource-link-title">42 CFR Part 2 &amp; WA My Health My Data Act (RCW 19.373) <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Federal and Washington statutes informing Layer 4 pre-condensation redaction of substance-use, behavioral health, and intimate partner violence findings before external sharing.</span>
+</a>
+</li>
+<li>
+<a href="https://www.healthit.gov/topic/privacy-security-and-hipaa">
+<span class="resource-link-title">ONC Cures Act Privacy &amp; HL7 FHIR DS4P <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Data Segmentation for Privacy (DS4P) principles distinguishing patient self-review (<code>patient_self</code>) from external provider sharing (<code>external_share</code>).</span>
+</a>
+</li>
+<li>
+<a href="https://www.microsoft.com/en-us/haxtoolkit/">
+<span class="resource-link-title">Microsoft HAX Toolkit &amp; NN/g Progressive Disclosure <span aria-hidden="true">→</span></span>
+<span class="resource-link-description">Human-AI interaction guidelines for efficient correction, source explainability, keeping original records immutable, and preserving unresolved differences.</span>
+</a>
+</li>
+</ul>
+</section>
 </div>
 </section>
 

@@ -25,6 +25,7 @@
     <a href="#next"><span>05</span> Small pilot ideas</a>
     <a href="#evidence"><span>06</span> Sources and confidence</a>
     <a href="#phase2-prototype"><span>07</span> Phase 2 prototype &amp; eval</a>
+    <a href="#research-foundation"><span>08</span> Research &amp; standards backing</a>
   </nav>
   <div class="sidebar-bottom"><p>A proposal for collaboration<br><time datetime="2026-10-30">30 October 2026</time></p><span class="tag observed">Phase 2 prototype live</span><p class="small">Updated 30 October 2026 with Phase 2 FHIR condensation, evaluation results and interactive demo.</p></div>
 </aside>
@@ -173,6 +174,64 @@
       <span class="kicker">32-CASE EVALUATION RUBRIC</span>
       <h3>32 / 32 rubric pass rate</h3>
       <p>Passes all 32 evaluation cases across Use Case A (reconciliation), B-1 (encounter &amp; longitudinal summaries, including the Nov 2023 CABG ICU stay), B-2 (0.0% sensitive SDOH leakage in <code>external_share</code>) and B-3 (100% abstention on unrecorded facts).</p>
+    </article>
+  </div>
+</section>
+
+<section id="research-foundation" class="report-section" aria-labelledby="research-foundation-title">
+  <div class="eyebrow">08 / RESEARCH &amp; STANDARDS FOUNDATION</div>
+  <h2 class="section-title" id="research-foundation-title">Research-based backing, clinical standards &amp; regulatory architecture</h2>
+  <p class="lead">Why patient-mediated multi-clinic summaries cannot rely on raw FHIR prompting alone—and how health interoperability standards, clinical practice guidelines, privacy law, and human-AI interaction research ground each layer of the WAHS+ architecture.</p>
+
+  <div class="two-column">
+    <article class="panel">
+      <span class="kicker">1 · LONG-CONTEXT CLINICAL NLP &amp; IPS PRIORITIZATION</span>
+      <h3>Why deterministic condensation must precede model inference</h3>
+      <p>Empirical evaluations of frontier language models over long clinical documents consistently demonstrate position-bias degradation (<em>“Lost in the Middle”</em>; <a href="https://arxiv.org/abs/2307.03172" target="_blank" rel="noopener noreferrer">Liu et al., TACL 2024 ↗</a>) and severe token inflation when serialized FHIR R4 JSON is supplied directly. In our synthetic cohort, an 84-year longitudinal record (<code>Maurice742_Auer97</code>) spans <code>18.36 MB</code> and ~<code>3.52M</code> raw tokens—17× to 27× larger than 128k–200k context windows—where over 95% of tokens consist of repeated Base64 encounter notes, administrative claims (<code>Claim</code> / <code>ExplanationOfBenefit</code>), and serial laboratory flowsheets.</p>
+      <p>To prevent ad-hoc truncation from dropping active allergies or cross-clinic medications, our 5-Tier Condenser implements the priority hierarchy of the <strong>HL7 International Patient Summary (IPS)</strong> and <strong>ISO 27269</strong>:</p>
+      <ul class="checklist">
+        <li><strong>Mandatory IPS Safety Core (Protected across Tiers 1–4):</strong> Allergies and intolerances, active medications, and active problem-list conditions are never truncated, even at the 1,024-token emergency tier.</li>
+        <li><strong>SHA-256 Note Payload Deduplication:</strong> Eliminates copy-forwarded and dual-indexed Base64 clinical notes across <code>DocumentReference</code> and <code>DiagnosticReport.presentedForm[]</code> while retaining unique clinical narratives.</li>
+        <li><strong>Longitudinal LOINC Trajectory Folding:</strong> Collapses thousands of serial numeric observations into canonical per-analyte chains (Initial, Latest, Min/Max, Count, and Trend Direction) with preserved member UUID lists.</li>
+      </ul>
+      <p><a href="https://build.fhir.org/ig/HL7/fhir-ips/" target="_blank" rel="noopener noreferrer">HL7 FHIR IPS Implementation Guide ↗</a> · <a href="https://www.iso.org/standard/79491.html" target="_blank" rel="noopener noreferrer">ISO 27269 IPS Standard ↗</a> · <a href="https://hl7.org/fhir/us/core/" target="_blank" rel="noopener noreferrer">HL7 US Core (FHIR R4) ↗</a></p>
+    </article>
+
+    <article class="panel">
+      <span class="kicker">2 · MULTI-SOURCE RECONCILIATION &amp; CLINICAL ONTOLOGIES</span>
+      <h3>Deterministic terminology normalization paired with LLM synthesis</h3>
+      <p>When patients aggregate records across unaffiliated clinics via <a href="https://docs.smarthealthit.org/smart-health-links/" target="_blank" rel="noopener noreferrer">SMART Health Links ↗</a> or TEFCA patient-access exchange, semantic heterogeneity causes unassisted language models to miss critical safety conflicts: one clinic prescribes brand <em>Plavix 75 mg</em> while another lists generic <em>Clopidogrel 75 mg</em>; primary care retains <em>CKD Stage 1, 2, and 3</em> simultaneously active while serial eGFR labs demonstrate progression; or retail pharmacy and state registry (WA IIS) exports report overlapping immunizations.</p>
+      <p>Our <strong>4-Layer Clinical Knowledge Base</strong> executes deterministic ontology and guideline checks prior to narrative generation:</p>
+      <ul class="checklist">
+        <li><strong>Layer 1 — SNOMED CT &amp; Disease Stage Exclusivity:</strong> Applies <a href="https://kdigo.org/guidelines/ckd-evaluation-and-management/" target="_blank" rel="noopener noreferrer">KDIGO 2024 CKD Guidelines ↗</a> and <a href="https://diabetesjournals.org/care/issue/48/Supplement_1" target="_blank" rel="noopener noreferrer">ADA Standards of Care ↗</a> to detect mutually exclusive active disease stages and uncoded renal/glycemic progression.</li>
+        <li><strong>Layer 2 — RxNorm &amp; DailyMed Medication Safety:</strong> Maps brand and generic prescriptions to canonical <a href="https://www.nlm.nih.gov/research/umls/rxnorm/index.html" target="_blank" rel="noopener noreferrer">NLM RxNorm ↗</a> ingredients and therapeutic classes (<a href="https://medlineplus.gov/druginformation.html" target="_blank" rel="noopener noreferrer">DailyMed / MedlinePlus ↗</a>), flagging duplicate antiplatelet/statin/ACE-inhibitor therapy and active-vs-stopped contradictions.</li>
+        <li><strong>Layer 3 — CDC ACIP &amp; LOINC Harmonization:</strong> Cross-checks vaccine CVX codes against <a href="https://www.cdc.gov/vaccines/hcp/imz-schedules/index.html" target="_blank" rel="noopener noreferrer">CDC ACIP schedules ↗</a> and merges blood-versus-serum <a href="https://loinc.org/" target="_blank" rel="noopener noreferrer">LOINC ↗</a> codes (e.g., <code>2339-0</code> vs. <code>2345-7</code> for glucose).</li>
+      </ul>
+    </article>
+  </div>
+
+  <div class="two-column" style="margin-top:18px;">
+    <article class="panel">
+      <span class="kicker">3 · DATA SEGMENTATION FOR PRIVACY (DS4P) &amp; STATE/FEDERAL LAW</span>
+      <h3>Enforcing <code>patient_self</code> vs. <code>external_share</code> before condensation</h3>
+      <p>Modern EHR problem lists and observation flowsheets routinely store sensitive Social Determinants of Health (SDOH), substance-use screening (<a href="https://cde.nlm.nih.gov/formView?tinyId=7k762198c" target="_blank" rel="noopener noreferrer">NIDA DAST-10 ↗</a>), intimate partner violence (<code>SNOMED 706893006</code>), and justice-involvement findings alongside medical diagnoses. If an LLM summarizes the raw bundle first and attempts to filter sensitive topics only in the output prompt, sensitive context can leak into clinical reasoning or citations.</p>
+      <p>Layer 4 of our architecture implements pre-condensation data segmentation aligned with federal and Washington state privacy frameworks:</p>
+      <ul class="checklist">
+        <li><strong>42 CFR Part 2 &amp; Behavioral Health Confidentiality:</strong> Protects substance-use disorder screening and treatment records from unauthorized redisclosure (<a href="https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2" target="_blank" rel="noopener noreferrer">42 CFR Part 2 ↗</a>).</li>
+        <li><strong>Washington State My Health My Data Act (RCW 19.373):</strong> Establishes strict consumer consent requirements for sharing Washington residents’ health data (<a href="https://app.leg.wa.gov/RCW/default.aspx?cite=19.373" target="_blank" rel="noopener noreferrer">WA RCW 19.373 ↗</a>).</li>
+        <li><strong>HL7 FHIR DS4P &amp; Gravity Project SDOH Taxonomy:</strong> In <code>patient_self</code> mode, sensitive items remain visible with explicit privacy badges so the patient knows what is in their chart; in <code>external_share</code> mode, sensitive resources are stripped deterministically before Tier 1–4 condensation, guaranteeing <code>0.0%</code> token or UUID leakage (<a href="https://www.healthit.gov/topic/privacy-security-and-hipaa" target="_blank" rel="noopener noreferrer">ONC Privacy Guidance ↗</a>).</li>
+      </ul>
+    </article>
+
+    <article class="panel">
+      <span class="kicker">4 · VERIFIABLE AI PROVENANCE &amp; HUMAN-IN-THE-LOOP AGENCY</span>
+      <h3>Three-layer transparency and calibration of trust</h3>
+      <p>Clinical decision-support research shows that fluent AI explanations can induce over-reliance unless users can verify source records directly and distinguish automated checks from human clinical sign-off. Our UX and data model synthesize three complementary standards:</p>
+      <ul class="checklist">
+        <li><strong>HL7 AI Transparency on FHIR (<code>AI-Provenance</code>):</strong> Distinguishes (1) supporting chart records (<code>[N] → FHIR resourceUuid</code>), (2) the AI system and condensation tier that transformed them, and (3) recorded human review or patient annotation (<a href="https://build.fhir.org/ig/HL7/aitransparency-ig/branches/main/en/StructureDefinition-AI-Provenance.html" target="_blank" rel="noopener noreferrer">HL7 AI-Provenance Profile ↗</a>).</li>
+        <li><strong>Microsoft HAX Guidelines (G9 Correction &amp; G11 Explainability):</strong> Keeps original FHIR resources immutable, supports accept/edit/reject/defer conflict workflows, and surfaces the exact clinical rule behind each flag (<a href="https://www.microsoft.com/en-us/haxtoolkit/" target="_blank" rel="noopener noreferrer">Microsoft HAX Toolkit ↗</a>).</li>
+        <li><strong>Progressive Disclosure &amp; Explicit Abstention:</strong> Following <a href="https://www.nngroup.com/articles/progressive-disclosure/" target="_blank" rel="noopener noreferrer">NN/g Progressive Disclosure ↗</a> and <a href="https://www.w3.org/WAI/WCAG21/Understanding/reflow.html" target="_blank" rel="noopener noreferrer">W3C WCAG 2.1 ↗</a>, the interactive prototype leads users through four focused steps and abstains 100% of the time when queried about undocumented clinical facts.</li>
+      </ul>
     </article>
   </div>
 </section>
