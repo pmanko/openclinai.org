@@ -3,6 +3,41 @@
   "scoring_note": "For reports with score tables, each answer is graded 0\u201310, higher is better \u2014 <b>Accuracy</b>: are the stated facts correct? <b>Completeness</b>: did it cover what mattered? <b>Relevance</b>: did it actually answer the question? <b>Unsafe answers</b> counts responses with a potential safety problem (lower is better). <b>Questions</b> is how many were scored per setup, and the best value in each column is highlighted. <b>Benchmark /100</b> is the headline aggregate \u2014 it combines the dimensions (accuracy and completeness weighted most) minus soft penalties for safety and citation problems, so one number summarizes each setup. Each score table names the automated judge that produced it (model, reasoning effort, pass count); a report judged before this was recorded says so. One pass on a small sample is directional, not a formal benchmark.",
   "runs": [
     {
+      "slug": "2026-10-31-wahs-live-model-team-eval",
+      "title": "WA Health Summary (WAHS) Slice 5: Local Model Selection (1.5B\u201335B), Prompt Engineering & Orchestrated KB Agent Teams",
+      "summary": "Evaluates seven open-weight local GGUF models (1.5B to 35B on 64 GB Apple Silicon via llama-router) across a 3-stage clinical screening funnel and compares four prompt-engineering and multi-agent architectures over condensed FHIR R4 charts (32 clinical cases \u00d7 4 architectures = 128 cells): (1) Single-Pass Raw Condensed (no pre-attached KB rules); (2) Single-Pass + 4-Layer KB Alerts & Temporal Anchors (dry_multiplier = 0); (3) Cross-Family Checked Single Pass (Gemma 4 12B writer + Qwen 3.5 9B reviewer + narrow citation grounder); and (4) 4-Agent Orchestrated WAHS+ KB Team (Router + Medication/RxNorm, Lab/KDIGO, and ACIP Immunization specialists + Plain-Language Patient Synthesizer).",
+      "takeaway": "A single LLM pass over the condensed chart alone (single-raw-condensed, 88.2/100) misses cross-clinic brand-vs-generic duplicates (Plavix vs. Clopidogrel, Prinivil vs. Lisinopril) and subtle CDC ACIP age-at-initiation rules unless RxNorm ingredient and ACIP rule annotations are pre-attached. Injecting the 4-Layer KB alerts + temporal anchors with dry_multiplier=0 (single-kb-augmented) raises the score to 100.0/100, while single-xcheck-labeled and team-wahs-kb achieve 100.0/100 with cross-family claim verification, zero external_share privacy leaks, and a 7th-grade patient readability level.",
+      "family": "wahs",
+      "arms": {
+        "team-wahs-kb": "4-Agent Orchestrated WAHS+ KB Team (Router + Med/Lab/ACIP Specialists + Patient Synthesizer)",
+        "single-xcheck-labeled": "Cross-Family Checked Single Pass (Gemma 4 12B Writer + Qwen 3.5 9B Reviewer)",
+        "single-kb-augmented": "Single Pass + 4-Layer KB Alerts & Temporal Anchors (Gemma 4 12B, dry_multiplier=0)",
+        "single-raw-condensed": "Single Pass over Raw Condensed FHIR Ledger Only (Gemma 4 12B, No Pre-Attached KB Rules)"
+      },
+      "guide": {
+        "label": "Interactive Per-Question Model & Citation Dashboard",
+        "url": "https://reports.openclinai.org/2026-10-31-wahs-live-model-team-eval/dashboard.html"
+      }
+    },
+    {
+      "slug": "2026-10-31-wahs-condensation-ablation",
+      "title": "WA Health Summary (WAHS) Slices 3 & 4: Condensation-Tier Information-Loss Ablation, Hybrid Full-Chart Lookup & Messy Multi-EHR Cohort",
+      "summary": "Measures the information-loss curve across five FHIR R4 condensation and retrieval setups (16k Tier 1, 8k Tier 2, 4k Tier 3, 2k Static Tier 4, and 2k + On-Demand Full-Chart Lookup Tools; 32 cases \u00d7 5 arms = 160 cells) stratified across four question horizons (Current Active State, 24-Month Trend, Full-Text Note / Perioperative Detail, and Deep Historical / Abstention). Also evaluates Pathway A Set C (messy multi-source bundles with 25% stripped clinical codes and free-text note vs. active medication contradictions) and Pathway B (de-identified real clinical summary fixtures modeled on MIMIC-IV cardiorenal discharge and SMART IPS transition records with 40%\u201360% uncoded entries).",
+      "takeaway": "Static Tier 4 (2,048 tokens) retains 100% recall on Current Active State IPS core facts and 24-Month Trends, but drops historical inpatient perioperative details (scoring 96.5/100 overall and 33.3% on Full-Text Note / Perioperative queries when restricted to the static 2k capsule). Enabling the read-only overflow lookup tools (search_chart_entries, get_lab_history, read_clinical_note) recovers 100.0% of deep historical and perioperative facts (100.0/100) while keeping the base prompt inside 2,048 tokens and enforcing 0 privacy leaks in external_share mode. Across messy and real clinical summary bundles where pre-coded lookup drops to 40%\u201384.5%, Layer 2/3 text and ingredient normalization recovers 97.3%\u2013100.0% of clinical concepts.",
+      "family": "wahs",
+      "arms": {
+        "wahs-tier1-16k-static": "Tier 1 (16,384 tokens \u00b7 Static In-Context)",
+        "wahs-tier2-8k-static": "Tier 2 (8,192 tokens \u00b7 Static In-Context)",
+        "wahs-tier3-4k-static": "Tier 3 (4,096 tokens \u00b7 Static In-Context)",
+        "wahs-tier4-2k-static": "Tier 4 (2,048 tokens \u00b7 Static IPS Micro-Capsule, No Lookup Tools)",
+        "wahs-tier4-2k-hybrid-tools": "Tier 4 (2,048 tokens \u00b7 IPS Core + On-Demand Full-Chart Lookup Tools)"
+      },
+      "guide": {
+        "label": "Interactive Patient & Clinician Demo (wahs-demo.openclinai.org)",
+        "url": "https://wahs-demo.openclinai.org/"
+      }
+    },
+    {
       "slug": "2026-10-30-wahs-phase2-eval",
       "title": "WA Health Summary (WAHS) Phase 2: Multi-Clinic FHIR R4 Chart Condensation, Conflict Reconciliation & Privacy-Segmented Sharing",
       "summary": "Evaluates whether our deterministic 5-Tier FHIR R4 chart condenser and 4-Layer clinical rule engine can shrink multi-clinic health exports (up to 18.4 MB / 3.52M tokens per patient) into compact, source-linked summaries while catching cross-provider conflicts and redacting sensitive records on external share. Tested across six synthetic patient bundles (Maurice Auer, Lamar Beer, and Byron Emard in clean single-clinic Set A and multi-clinic perturbed Set B cohorts) and 32 clinical test cases covering: (1) cross-clinic medication, condition, allergy, and vaccine conflict detection; (2) hospital/ICU and longitudinal summarization; (3) sensitive SDOH/privacy redaction under 42 CFR Part 2 and WA My Health My Data Act; and (4) source-linked Q&A with explicit 'not in chart' abstention.",

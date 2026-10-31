@@ -801,15 +801,25 @@
 
     <!-- Patient Selector -->
     <section class="patient-selector-section" aria-label="Select a sample patient record">
-      <div class="section-label-row">
+      <div class="section-label-row" style="flex-wrap:wrap;gap:0.75rem;">
         <span class="section-step-tag">Select a Synthetic Patient Record to Explore</span>
-        <div class="source-mode-toggle" role="group" aria-label="Record source complexity">
-          <button type="button" class="source-mode-btn active" id="mode-set-b" data-set="set_b">
-            Multi-Clinic Record (Cross-Provider Conflicts)
-          </button>
-          <button type="button" class="source-mode-btn" id="mode-set-a" data-set="set_a">
-            Single-Clinic Baseline
-          </button>
+        <div style="display:flex;flex-wrap:wrap;gap:0.65rem;align-items:center;">
+          <div class="source-mode-toggle" role="group" aria-label="Audience explanation mode">
+            <button type="button" class="source-mode-btn audience-mode-btn active" id="audience-patient" data-audience="patient">
+              Patient View (Plain English &amp; Doctor Checklist)
+            </button>
+            <button type="button" class="source-mode-btn audience-mode-btn" id="audience-clinician" data-audience="clinician">
+              Clinician View (SNOMED / RxNorm / LOINC &amp; KB Rules)
+            </button>
+          </div>
+          <div class="source-mode-toggle" role="group" aria-label="Record source complexity">
+            <button type="button" class="source-mode-btn dataset-mode-btn active" id="mode-set-b" data-set="set_b">
+              Multi-Clinic Record (Cross-Provider Conflicts)
+            </button>
+            <button type="button" class="source-mode-btn dataset-mode-btn" id="mode-set-a" data-set="set_a">
+              Single-Clinic Baseline
+            </button>
+          </div>
         </div>
       </div>
       <div class="patient-cards" id="patient-cards"></div>
@@ -891,6 +901,7 @@
 
       let currentBaseId = "Maurice742_Auer97";
       let currentDatasetMode = "set_b"; // "set_b" (Multi-Clinic) or "set_a" (Single-Clinic)
+      let currentAudienceMode = "patient"; // "patient" (Plain English) or "clinician" (Codes & Rules)
       let currentStep = 1;
       let currentPosture = "patient_self"; // "patient_self" or "external_share"
       let currentTierKey = "tier_8k"; // "tier_8k" or "tier_2k"
@@ -1128,13 +1139,38 @@
 
         const cardsHtml = findings.map(function (f) {
           const domainLabel = f.domain || f.category || "Clinical Rule";
+          const plainBody = f.patient_plain_summary || f.description || f.detail || "";
+          const askDoc = f.what_to_ask_doctor || "";
+          const techNote = f.clinician_technical_note || f.description || "";
+          const ruleBadge = f.kb_rule_id ? ' <code style="font-size:0.75rem;color:var(--bs-primary);">' + escapeHtml(f.kb_rule_id) + '</code>' : '';
+
+          if (currentAudienceMode === "patient") {
+            return (
+              '<div class="finding-card ' + escapeHtml(f.severity) + '">' +
+                '<div class="finding-top">' +
+                  '<h3 class="finding-title">' + escapeHtml(f.title) + '</h3>' +
+                  '<span class="badge ' + escapeHtml(f.severity) + '">Plain-English Alert &middot; ' + escapeHtml(domainLabel) + '</span>' +
+                '</div>' +
+                '<p style="margin:0.4rem 0;font-size:0.96rem;"><strong>What this means for you:</strong> ' + escapeHtml(plainBody) + '</p>' +
+                (askDoc
+                  ? '<div class="callout info" style="margin:0.55rem 0;padding:0.65rem 0.9rem;">' +
+                      '<strong>What to Ask Your Doctor or Pharmacist at Your Next Visit:</strong><br>' +
+                      '<em>&ldquo;' + escapeHtml(askDoc) + '&rdquo;</em>' +
+                    '</div>'
+                  : '') +
+                '<div style="margin-top:0.55rem;">' + renderCitationChips(f.citations) + '</div>' +
+              '</div>'
+            );
+          }
+
           return (
             '<div class="finding-card ' + escapeHtml(f.severity) + '">' +
               '<div class="finding-top">' +
-                '<h3 class="finding-title">' + escapeHtml(f.title) + '</h3>' +
+                '<h3 class="finding-title">' + escapeHtml(f.title) + ruleBadge + '</h3>' +
                 '<span class="badge ' + escapeHtml(f.severity) + '">' + escapeHtml((f.severity || "").toUpperCase()) + ' &middot; ' + escapeHtml(domainLabel) + '</span>' +
               '</div>' +
-              '<p style="margin:0.35rem 0;"><strong>What was found:</strong> ' + escapeHtml(f.description || f.detail) + '</p>' +
+              '<p style="margin:0.35rem 0;"><strong>Clinical Reconciliation Detail:</strong> ' + escapeHtml(f.description || f.detail) + '</p>' +
+              '<p style="margin:0.35rem 0;font-size:0.88rem;color:#2b3a4a;"><strong>4-Layer KB &amp; Terminology Audit:</strong> <code>' + escapeHtml(techNote) + '</code></p>' +
               '<p style="margin:0.35rem 0;color:var(--muted);"><strong>Suggested Clinical / Registry Action:</strong> ' + escapeHtml(f.recommendation) + '</p>' +
               '<div style="margin-top:0.55rem;">' + renderCitationChips(f.citations) + '</div>' +
             '</div>'
@@ -1145,7 +1181,7 @@
           '<div class="stage-header">' +
             '<div>' +
               '<h2>Step 2: Reconcile Cross-Clinic Medication, Problem &amp; Vaccine Conflicts</h2>' +
-              '<p>When records are combined across primary care, specialty clinics, retail pharmacies, and state immunization registries, clinical contradictions appear. Our 4-Layer Clinical Knowledge Base (RxNorm, KDIGO/ADA staging rules, CDC ACIP vaccine schedules, and LOINC) flags these issues automatically so the patient and clinician can review them.</p>' +
+              '<p>When records are combined across primary care, specialty clinics, retail pharmacies, and state immunization registries, clinical contradictions appear. Use the <strong>Patient View &harr; Clinician View</strong> toggle above to switch between plain-English explanations with a doctor visit checklist and technical SNOMED / RxNorm / LOINC rule details.</p>' +
             '</div>' +
             '<span class="badge ' + (dq.high_severity_count > 0 ? "high" : "ok") + '" style="font-size:0.88rem;padding:0.4rem 0.85rem;">' +
               (dq.total_findings || findings.length) + ' Findings (' + (dq.high_severity_count || 0) + ' High Priority)' +
@@ -1154,7 +1190,7 @@
 
           '<div class="callout ' + (currentDatasetMode === "set_b" ? "warn" : "info") + '">' +
             (currentDatasetMode === "set_b"
-              ? '<strong>Multi-Clinic Record Active:</strong> Viewing combined records from primary care, cardiology/specialty clinics, retail pharmacy, and the WA State Immunization Information System. Click any <strong>Source [N]</strong> badge below to inspect the exact FHIR record.'
+              ? '<strong>Multi-Clinic Record Active (' + (currentAudienceMode === "patient" ? "Patient Plain-English View" : "Clinician Code & Rule View") + '):</strong> Viewing combined records from primary care, cardiology/specialty clinics, retail pharmacy, and the WA State Immunization Information System. Click any <strong>Source [N]</strong> badge below to inspect the exact FHIR record.'
               : '<strong>Single-Clinic Baseline Active:</strong> Viewing the single-clinic export. Use the toggle above the patient cards to switch to the <strong>Multi-Clinic Record</strong> and see additional cross-provider medication and condition conflicts.') +
           '</div>' +
 
@@ -1250,6 +1286,32 @@
 
         const uniqueSensitiveList = Array.from(new Set(selfDs.sensitive_sdoh_included || []));
         const redactedCount = cond.redacted_count || ds.redacted_privacy_count || uniqueSensitiveList.length || 0;
+        const retainedItems = (ds.privacy_diff && ds.privacy_diff.retained_in_external_share) || [
+          "Active medical diagnoses & heart/kidney conditions (" + (ds.active_conditions || []).length + " entries)",
+          "Active medications & duplicate-therapy safety alerts (" + (ds.active_medications || []).length + " entries)",
+          "Allergies & implantable medical devices",
+          "Key lab trends (eGFR, Creatinine, HbA1c) & immunization history (" + Number(ds.immunization_count || 0) + " doses)"
+        ];
+        const removedItems = uniqueSensitiveList.length
+          ? uniqueSensitiveList
+          : ["Substance use screenings (DAST-10 / 42 CFR Part 2)", "Intimate partner violence / HARK safety screenings", "Sensitive housing instability & criminal-justice SDOH records"];
+
+        const privacyDiffHtml =
+          '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin:1rem 0 1.35rem;">' +
+            '<div style="border:1px solid #b7e4c7;background:#f3faf6;border-radius:8px;padding:1rem 1.15rem;">' +
+              '<div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;color:#1b4332;margin-bottom:0.35rem;">What Stays Visible in External Share (Clinical Safety Core)</div>' +
+              '<ul style="margin:0.35rem 0 0;padding-left:1.2rem;font-size:0.9rem;color:#212529;">' +
+                retainedItems.map(function (item) { return '<li style="margin-bottom:0.25rem;">' + escapeHtml(item) + '</li>'; }).join("") +
+              '</ul>' +
+            '</div>' +
+            '<div style="border:1px solid #f5c2c7;background:#fff5f5;border-radius:8px;padding:1rem 1.15rem;">' +
+              '<div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;color:#842029;margin-bottom:0.35rem;">Automatically Removed in External Share (42 CFR Part 2 &amp; WA MHMDA)</div>' +
+              '<p style="margin:0.2rem 0 0.4rem;font-size:0.86rem;color:#58151c;"><strong>' + redactedCount + ' sensitive records</strong> (' + removedItems.length + ' finding categories) are stripped before prompt construction when sharing externally:</p>' +
+              '<ul style="margin:0;padding-left:1.2rem;font-size:0.9rem;color:#842029;">' +
+                removedItems.map(function (item) { return '<li style="margin-bottom:0.25rem;"><strong>' + escapeHtml(item) + '</strong></li>'; }).join("") +
+              '</ul>' +
+            '</div>' +
+          '</div>';
 
         stepStageEl.innerHTML =
           '<div class="stage-header">' +
@@ -1264,8 +1326,11 @@
           '</div>' +
 
           (currentPosture === "external_share"
-            ? '<div class="callout success"><strong>External Provider Share Active (Zero Sensitive Leakage):</strong> Deterministically redacted <strong>' + redactedCount + '</strong> privacy-sensitive SDOH / behavioral / personal safety records prior to condensation (' + escapeHtml(uniqueSensitiveList.join("; ") || "sensitive items stripped") + ').</div>'
-            : '<div class="callout warn"><strong>My Personal View Active:</strong> Displaying your complete record, including <strong>' + uniqueSensitiveList.length + '</strong> sensitive social/personal finding types (' + escapeHtml(uniqueSensitiveList.join("; ") || "none") + '). Switch to <strong>External Provider Share</strong> to preview automatic privacy redaction.</div>') +
+            ? '<div class="callout success"><strong>External Provider Share Active (Zero Sensitive Leakage):</strong> Deterministically redacted <strong>' + redactedCount + '</strong> privacy-sensitive SDOH / behavioral / personal safety records prior to condensation.</div>'
+            : '<div class="callout warn"><strong>My Personal View Active:</strong> Displaying your complete record, including <strong>' + uniqueSensitiveList.length + '</strong> sensitive social/personal finding types. Switch to <strong>External Provider Share</strong> to preview automatic privacy redaction.</div>') +
+
+          '<h3 style="color:var(--page-title);margin:1.15rem 0 0.4rem;">Side-by-Side Privacy Protection Preview: What Is Shared vs. What Stays Private</h3>' +
+          privacyDiffHtml +
 
           '<h3 style="color:var(--page-title);margin:1.25rem 0 0.5rem;">Active Medications in International Patient Summary (IPS)</h3>' +
           '<div class="table-wrap">' +
@@ -1353,11 +1418,17 @@
       function renderStep4(pt) {
         const post = getPostureData(pt);
         const Precomputed = post.qa_samples || [];
+        const fallbackCategories = [
+          "1. Medication & Pill-Bottle Clarity",
+          "2. Lab Trends & New Diagnoses",
+          "3. Making Sense of a Hospital/ICU Stay",
+          "5. School/Vaccine Readiness",
+          "6. Safe Sharing Preview",
+          "4. Next-Visit Checklist (Abstention Check)"
+        ];
 
         const promptCardsHtml = Precomputed.map(function (sample, idx) {
-          const catLabel = sample.abstained
-            ? "Safety Abstention Probe"
-            : (idx === 0 ? "Medication & Conflict Audit" : (idx === 1 ? "Longitudinal Trajectory" : "Clinical Summary Q&A"));
+          const catLabel = sample.patient_category || fallbackCategories[idx] || "Patient Summary Q&A";
           return (
             '<button type="button" class="qa-prompt-card" data-q-idx="' + idx + '">' +
               '<span class="q-cat">' + escapeHtml(catLabel) + '</span>' +
@@ -1370,9 +1441,12 @@
           '<div class="stage-header">' +
             '<div>' +
               '<h2>Step 4: Ask Questions About ' + escapeHtml(pt.patient_name) + '’s Health Summary</h2>' +
-              '<p>Ask a question in plain language or click one of the curated clinical prompts below. Every claim in the answer is linked to a verifiable FHIR record (<code>Source [N]</code>) and Clinical Knowledge Base authority, and the assistant explicitly abstains when asked about facts not documented in the chart.</p>' +
+              '<p>Select one of the <strong>6 patient-centered scenario cards</strong> below or type your own question. Toggle <strong>Patient View &harr; Clinician View</strong> at the top of the page to switch between plain-English explanations with a doctor visit checklist and full clinical terminology details.</p>' +
             '</div>' +
-            '<span class="badge info" style="font-size:0.85rem;padding:0.35rem 0.75rem;">Posture: ' + (currentPosture === "external_share" ? "External Provider Share" : "My Personal View") + '</span>' +
+            '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">' +
+              '<span class="badge info" style="font-size:0.82rem;padding:0.35rem 0.75rem;">View: ' + (currentAudienceMode === "patient" ? "Patient (Plain English)" : "Clinician (Codes & Rules)") + '</span>' +
+              '<span class="badge info" style="font-size:0.82rem;padding:0.35rem 0.75rem;">Posture: ' + (currentPosture === "external_share" ? "External Provider Share" : "My Personal View") + '</span>' +
+            '</div>' +
           '</div>' +
 
           '<div class="qa-prompt-grid" id="qa-prompt-grid">' + promptCardsHtml + '</div>' +
@@ -1403,9 +1477,46 @@
           const cites = resp.citations || resp.references || [];
           const kbRefs = resp.kb_references || [];
           const tInfo = resp.tier_info || {};
+          const sourceBadgeText = resp.source_mode_label || "Answered from In-Context IPS Safety Core";
           const statusBadge = isAbstained
             ? '<span class="badge medium">Explicit Safety Abstention (Not in Chart)</span>'
             : '<span class="badge ok">Grounded in Condensed FHIR Summary (' + cites.length + ' FHIR citations)</span>';
+          const retrievalBadge = '<span class="badge info" title="Retrieval architecture source">' + escapeHtml(sourceBadgeText) + '</span>';
+
+          const askDoctorList = Array.isArray(resp.what_to_ask_doctor)
+            ? resp.what_to_ask_doctor
+            : (resp.what_to_ask_doctor ? [resp.what_to_ask_doctor] : []);
+          const askDoctorHtml = askDoctorList.length
+            ? '<div class="callout info" style="margin:0.65rem 0;padding:0.65rem 0.9rem;">' +
+                '<strong>Questions to Bring to Your Next Clinic or Pharmacy Visit:</strong>' +
+                '<ul style="margin:0.35rem 0 0;padding-left:1.2rem;">' +
+                  askDoctorList.map(function (qItem) { return '<li><em>&ldquo;' + escapeHtml(qItem) + '&rdquo;</em></li>'; }).join("") +
+                '</ul>' +
+              '</div>'
+            : '';
+
+          const mainBodyHtml = (currentAudienceMode === "patient" && resp.patient_plain_summary)
+            ? (
+              '<div style="background:#f3faf6;border-left:4px solid #2b8a3e;padding:0.75rem 0.95rem;border-radius:6px;margin-bottom:0.65rem;">' +
+                '<div style="font-size:0.76rem;font-weight:700;text-transform:uppercase;color:#1b4332;margin-bottom:0.25rem;">Plain-English Summary (' + escapeHtml(resp.patient_category || "Patient Guide") + ')</div>' +
+                formatMarkdownLite(resp.patient_plain_summary) +
+              '</div>' +
+              askDoctorHtml +
+              '<details style="margin-top:0.5rem;">' +
+                '<summary style="cursor:pointer;font-size:0.86rem;font-weight:600;color:var(--bs-primary);">Show Full Reconciled Clinical Record Details</summary>' +
+                '<div style="margin-top:0.45rem;">' + formatMarkdownLite(resp.answer) + '</div>' +
+              '</details>'
+            )
+            : (
+              (resp.clinician_technical_note
+                ? '<div style="background:#f8f9fa;border-left:4px solid var(--bs-primary);padding:0.6rem 0.85rem;border-radius:6px;margin-bottom:0.6rem;font-size:0.85rem;">' +
+                    '<strong>Clinician Technical &amp; Terminology Audit:</strong> <code>' + escapeHtml(resp.clinician_technical_note) + '</code>' +
+                  '</div>'
+                : '') +
+              formatMarkdownLite(resp.answer) +
+              askDoctorHtml
+            );
+
           const kbHtml = kbRefs.length
             ? '<div style="margin-top:0.55rem;padding-top:0.45rem;border-top:1px dashed #d0d7de;font-size:0.82rem;color:#495057;">' +
                 '<strong>4-Layer Clinical KB Authorities:</strong> ' +
@@ -1419,10 +1530,10 @@
 
           aDiv.innerHTML =
             '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.45rem;flex-wrap:wrap;gap:0.4rem;">' +
-              statusBadge +
+              '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;align-items:center;">' + statusBadge + retrievalBadge + '</div>' +
               '<span style="font-size:0.75rem;color:var(--muted-light);">Tier ' + escapeHtml(tInfo.tier || resp.tier_used || 3) + ' (' + Number(tInfo.actual_tokens || resp.actual_tokens || 0).toLocaleString() + ' tokens)</span>' +
             '</div>' +
-            formatMarkdownLite(resp.answer) +
+            mainBodyHtml +
             '<div style="margin-top:0.65rem;padding-top:0.5rem;border-top:1px solid #edf0f2;">' +
               renderCitationChips(cites) +
             '</div>' +
@@ -1485,13 +1596,23 @@
       }
 
       // Bind top-level mode buttons and stepper buttons
-      document.querySelectorAll(".source-mode-btn").forEach(function (btn) {
+      document.querySelectorAll(".dataset-mode-btn").forEach(function (btn) {
         btn.addEventListener("click", function () {
           currentDatasetMode = btn.getAttribute("data-set");
-          document.querySelectorAll(".source-mode-btn").forEach(function (b) {
+          document.querySelectorAll(".dataset-mode-btn").forEach(function (b) {
             b.classList.toggle("active", b === btn);
           });
           renderPatientSelector();
+          renderCurrentStep();
+        });
+      });
+
+      document.querySelectorAll(".audience-mode-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          currentAudienceMode = btn.getAttribute("data-audience");
+          document.querySelectorAll(".audience-mode-btn").forEach(function (b) {
+            b.classList.toggle("active", b === btn);
+          });
           renderCurrentStep();
         });
       });
