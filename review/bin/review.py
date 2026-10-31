@@ -131,7 +131,9 @@ def run_role(args, role: str, workdir: Path, prompt: str, out: Path) -> str:
         prompt += ("\nYour final message is saved as your answer: do not write it to a file, and "
                    "leave the repository as you found it.\n")
     prompt_file.write_text(prompt)
-    rc = subprocess.run([str(BIN / "role.sh"), args.agent, role, str(workdir),
+    role_script = out.with_suffix(".role.sh")
+    role_script.write_bytes((BIN / "role.sh").read_bytes())
+    rc = subprocess.run(["bash", str(role_script), args.agent, role, str(workdir),
                          str(prompt_file), str(out)]).returncode
     if rc == 3:
         sys.exit(3)
