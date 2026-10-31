@@ -216,3 +216,22 @@ def test_same_named_failure_in_another_file_or_class_is_not_the_requested_test(t
     result = _run(runner, tmp_path, correct, tmp_path / 'correct.log')
     assert _expect_red(result, 'head', 'mutation', correct)[0]
     assert {(i['file'], i['full_name']) for i in result.failed_ids}.issubset(result.executed_cases)
+
+
+@pytest.mark.parametrize('wanted,other,separator', [
+    ('case', 'case][other', '::'), ('case#part', 'case.part', '::'),
+    ('case::part', 'case.part', '::'), ('case#part', 'case.part', '#')])
+def test_a_specific_parameter_case_requires_an_exact_identity(tmp_path, monkeypatch, wanted, other, separator):
+    from reviewkit.probes import _run
+    (tmp_path / 'test_fixture.py').write_text('import pytest\n'
+        f'@pytest.mark.parametrize("x", [pytest.param(1, id={wanted!r}, marks=getattr(pytest.mark, "skip")), '
+        f'pytest.param(2, id={other!r})])\n'
+        'def test_boundary(x): assert x == 0\n')
+    monkeypatch.setenv('REVIEW_PYTHON', sys.executable)
+    selected = [f'test_fixture.py{separator}test_boundary[{wanted}]', 'test_fixture.py']
+    result = _run('pytest', tmp_path, selected, tmp_path / 'run.log')
+    assert result.code == 1 and result.ran == 1
+    assert not _expect_red(result, 'head', 'mutation', selected)[0]
+    unparameterized = ['test_fixture.py::test_boundary']
+    result = _run('pytest', tmp_path, unparameterized, tmp_path / 'all-cases.log')
+    assert _expect_red(result, 'head', 'mutation', unparameterized)[0]

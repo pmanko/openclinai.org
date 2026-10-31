@@ -22,7 +22,7 @@ reports are rejected. Evidence: `work/review/vitest-exit-fixture/`.
 
 Verification:
 
-- `targets/validation-harness/.venv/bin/python -m pytest tests/review -q`: 46 passed.
+- `targets/validation-harness/.venv/bin/python -m pytest tests/review -q`: 50 passed.
 - `python3 -m unittest discover -s tests -v`: 19 passed.
 - `python3 scripts/check_workspace.py`: passed in an isolated clean checkout with
   all recorded component pins initialized. The active implementation checkout remains
@@ -43,6 +43,13 @@ Verification:
   and `wahs-contract-fixed-output.json`.
 
 Follow-up verification:
+
+- Parameterized test selectors now preserve their literal case IDs, including
+  brackets, hashes and double colons. A skipped selected case can no longer borrow
+  failure evidence from a similarly named case. Three of four cases fail against the
+  previous implementation; all four pass after repair. Unparameterized selectors still
+  accept their executed cases. Evidence: `work/pr-inventory/tooling-parameter-red.log`
+  and `tooling-parameter-green.log`.
 
 - An isolated-checkout review exposed inherited pytest root configuration and a
   file-URL error in the Vitest test fixture. Pytest now anchors identities to the

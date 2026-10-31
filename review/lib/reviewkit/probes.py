@@ -88,11 +88,15 @@ def _reset(wt: Path, sha: str) -> None:
 
 def _matches_test(identity: str, selector: str, root: Path | None = None) -> bool:
     """Match a reported case to its file/class and method, never its method alone."""
-    parts = re.split(r"#|::", selector)
+    parts = re.split(r"#|::", selector, maxsplit=1)
     if len(parts) < 2:
         return False
-    source, *symbols = parts
-    if source.endswith(".py"):
+    source, qualified = parts
+    python_case = source.endswith(".py")
+    reported_source, separator, reported_name = identity.partition("::" if python_case else "#")
+    if not separator:
+        return False
+    if python_case:
         path = Path(source)
         if path.is_absolute() and root is not None:
             try:
@@ -100,13 +104,14 @@ def _matches_test(identity: str, selector: str, root: Path | None = None) -> boo
             except ValueError:
                 return False
         source = str(path.with_suffix("")).replace("/", ".")
-    expected = ".".join([source, *symbols])
-    actual = re.sub(r"#|::", ".", identity)
-    if "#" in selector and not selector.split("#", 1)[0].endswith(".py"):
-        actual_class, _, method = identity.partition("#")
-        if "." not in source:
-            actual = actual_class.rsplit(".", 1)[-1] + "." + method
-    return actual == expected or actual.startswith(expected + "[")
+    elif "." not in source:
+        reported_source = reported_source.rsplit(".", 1)[-1]
+    method, parameterized, parameters = qualified.partition("[")
+    expected = source + "." + re.sub(r"#|::", ".", method)
+    if parameterized:
+        expected += "[" + parameters
+    actual = reported_source + "." + reported_name
+    return actual == expected or (not parameterized and actual.startswith(expected + "["))
 
 
 def _run(runner: str, wt: Path, tests: list[str], log: Path) -> Run:

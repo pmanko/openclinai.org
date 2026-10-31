@@ -2,7 +2,11 @@
 # Use a prepared component environment. Never install partial dependencies implicitly.
 set -u
 dir=$1 log=$2; shift 2
-ids=(); for id in "$@"; do ids+=("${id/\#/::}"); done
+ids=()
+for id in "$@"; do
+  prefix=${id%%::*}
+  if [[ $prefix == *#* ]]; then ids+=("${id/\#/::}"); else ids+=("$id"); fi
+done
 cd "$dir" || exit 2
 dir=$PWD
 if [ -n "${REVIEW_PYTHON:-}" ]; then py=$REVIEW_PYTHON
