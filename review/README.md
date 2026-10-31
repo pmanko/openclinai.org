@@ -63,8 +63,10 @@ The runner never installs pytest alone as a substitute for component dependencie
 Reports record dependency-file hashes and supplied consumer revisions. Missing
 consumer checkouts and unexecuted tests remain explicit gaps.
 
-Use `CONSUMER_HEAD=<commit>` to select the matching feature branch in the other
-repository. Without it the driver uses that component's current local checkout,
+Use `CONSUMER_REPO=<checkout alias> CONSUMER_HEAD=<commit>` to select the repository
+and feature revision on the other side of this particular contract. The default
+consumer maps Hub and harness to each other; a Hub export called by umbrella scripts
+needs `CONSUMER_REPO=umbrella`. Without an explicit revision the driver uses that component's current local checkout,
 which may belong to a different experiment. A mismatch against that revision does
 not establish a defect in a different producer/consumer pair. The report records
 the exact consumer commit; `NO_CONSUMER=1` omits this comparison explicitly.

@@ -111,3 +111,21 @@ def test_a_round_records_findings_and_downgrades_unevidenced_blockers(tmp_path):
         report = json.loads((out_dir / "result.json").read_text())
         assert report["execution"] == "superseded"
         assert report["assessment"] == "undetermined"
+
+    # Select a consumer outside the default pair, from an independent Git history.
+    import shutil
+    umbrella = tmp_path / "umbrella"
+    shutil.copytree(ROOT / "review", umbrella / "review")
+    git(umbrella, "init", "-q")
+    git(umbrella, "-c", "user.email=d@example.test", "-c", "user.name=D", "commit", "-qm",
+        "consumer", "--allow-empty")
+    consumer_head = git(umbrella, "rev-parse", "HEAD")
+    env["REVIEW_IDENTITY"] = json.dumps(identity)
+    selected = [cmd[0], str(umbrella / "review/bin/review.py"), *cmd[2:],
+                "--consumer-repo", "umbrella", "--consumer-head", consumer_head]
+    result = subprocess.run(selected, env=env, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    report = json.loads((out_dir / "result.json").read_text())
+    assert report["consumer_repo"] == "umbrella"
+    assert report["consumer_head"] == consumer_head
+    assert git(out_dir / "consumer/umbrella", "rev-parse", "HEAD") == consumer_head

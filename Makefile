@@ -424,6 +424,7 @@ REVIEW_ARGS = $(if $(REPOSITORY),--repository $(REPOSITORY)) $(if $(FIX),--fix) 
 	$(if $(MEASURE),--measure $(MEASURE) --gold $(GOLD)) \
 	$(if $(THREADS_UNTIL),--threads-until $(THREADS_UNTIL)) $(if $(NO_CONSUMER),--no-consumer) \
 	$(if $(CONSUMER_HEAD),--consumer-head $(CONSUMER_HEAD)) \
+	$(if $(CONSUMER_REPO),--consumer-repo $(CONSUMER_REPO)) \
 	$(if $(HEAD),--head $(HEAD)) $(if $(BASE),--base $(BASE))
 
 review: export REVIEW_MODEL ?= $(MODEL)

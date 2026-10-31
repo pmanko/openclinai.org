@@ -498,10 +498,13 @@ def main() -> int:
     ap.add_argument("--checkout", help="a checkout other than the umbrella's for --repo")
     ap.add_argument("--threads-until", help="ISO instant: review the PR as it stood then")
     ap.add_argument("--consumer-head", help="Explicit consumer revision for cross-repository review")
+    ap.add_argument("--consumer-repo", choices=REPOS, help="Override the component on the other side of this contract")
     ap.add_argument("--no-consumer", action="store_true", help="omit the other repository's checkout")
     ap.add_argument("--head", help="review this local ref instead of the PR's pushed head (review before the push)")
     ap.add_argument("--base", help="with --head: the local ref of the layer below, instead of the remote base branch")
     args = ap.parse_args()
+    if args.no_consumer and (args.consumer_head or args.consumer_repo):
+        ap.error("--no-consumer cannot select a consumer repository or revision")
     if args.base and not args.head:
         ap.error("--base needs --head")
     if args.head and args.stack:
@@ -567,7 +570,9 @@ def main() -> int:
                           f"{target[:7]}):\n" + "\n".join(
                               f"  - #{l['number']} {l['title']} ({l['head'][:7]})" for l in layers))
         worktree(checkout, wt, target)
-        consumer = None if args.no_consumer else CONSUMERS.get(args.repo)
+        consumer = None if args.no_consumer else args.consumer_repo or CONSUMERS.get(args.repo)
+        if args.consumer_head and not consumer:
+            ap.error("--consumer-head needs a consumer; select one with --consumer-repo")
         if consumer and not (UMBRELLA / REPOS[consumer] / ".git").exists():
             inputs.append(f"- Consumer {consumer} is unavailable; its contract is unverified.")
             consumer = None
@@ -592,6 +597,7 @@ def main() -> int:
             stale |= current_identity(slug, layers[-1]["number"])["headRefOid"] != target
         data.update(repo=args.repo, repository=slug, pr=args.pr, requested_head=head, base=base,
                     base_branch=meta["base"], identity_after=fresh,
+                    consumer_repo=consumer,
                     consumer_head=consumer_sha if consumer else None,
                     execution=("superseded" if stale else "partial" if data["unreviewed_files"] else "complete"),
                     behavior_verification="see evidence; not inferred from source review",
