@@ -3,38 +3,48 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WAHS Phase 2 Evaluation Report — 5-Tier FHIR R4 Condenser &amp; 4-Layer Clinical KB · OpenClinAI</title>
-<meta name="description" content="Cohort evaluation of the Washington Health Summary (WAHS+) 5-Tier Progressive FHIR R4 / IPS Condenser and 4-Layer Clinical Knowledge Base across 6 multi-source synthetic patient bundles (23.6 MB, 32 rubric cases, 96 budget×case cells).">
+<title>WA Health Summary (WAHS) Phase 2 Evaluation Report — Multi-Clinic FHIR R4 Condensation, Reconciliation &amp; Privacy · OpenClinAI</title>
+<meta name="description" content="Comprehensive evaluation of the Washington Health Summary (WAHS+) 5-Tier Progressive FHIR R4 / IPS Condenser and 4-Layer Clinical Knowledge Base across 6 multi-source synthetic patient bundles (23.6 MB, 32 clinical rubric cases, 96 budget×case cells).">
 <link rel="canonical" href="https://reports.openclinai.org/2026-10-30-wahs-phase2-eval/index.html">
 <script>(function(){try{var t=localStorage.getItem('oc-theme-wahs-eval');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}})();</script>
 <style>
-  html[data-theme="light"]{color-scheme:light;--bg:#f6f8fa;--panel:#ffffff;--panel2:#f8fafc;--text:#1f2328;--muted:#59636e;--accent:#0969da;--brand:#4b2e83;--border:#d0d7de;--harm:#cf222e;--harm-bg:#ffebe9;--warn:#9a6700;--warn-bg:#fff8c5;--best:#1a7f37;--best-bg:#dafbe1;--ink:#1f2328;--th-bg:#f6f8fa;--code-bg:#eff1f3;}
-  html[data-theme="dark"]{color-scheme:dark;--bg:#0d1117;--panel:#161b22;--panel2:#1c2230;--text:#c9d1d9;--muted:#8b949e;--accent:#79c0ff;--brand:#b392f0;--border:#30363d;--harm:#f85149;--harm-bg:rgba(248,81,73,.15);;--warn:#d29922;--warn-bg:rgba(210,153,34,.15);--best:#3fb950;--best-bg:rgba(63,185,80,.15);--ink:#ffffff;--th-bg:rgba(255,255,255,.03);--code-bg:#21262d;}
+  html[data-theme="light"]{color-scheme:light;--bg:#f6f8fa;--panel:#ffffff;--panel2:#f8fafc;--text:#1f2328;--muted:#59636e;--accent:#0969da;--brand:#164680;--teal:#149691;--border:#d0d7de;--harm:#cf222e;--harm-bg:#ffebe9;--warn:#9a6700;--warn-bg:#fff8c5;--best:#1a7f37;--best-bg:#dafbe1;--ink:#1f2328;--th-bg:#f6f8fa;--code-bg:#eff1f3;}
+  html[data-theme="dark"]{color-scheme:dark;--bg:#0d1117;--panel:#161b22;--panel2:#1c2230;--text:#c9d1d9;--muted:#8b949e;--accent:#79c0ff;--brand:#79c0ff;--teal:#39d353;--border:#30363d;--harm:#f85149;--harm-bg:rgba(248,81,73,.15);--warn:#d29922;--warn-bg:rgba(210,153,34,.15);--best:#3fb950;--best-bg:rgba(63,185,80,.15);--ink:#ffffff;--th-bg:rgba(255,255,255,.03);--code-bg:#21262d;}
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:32px 24px 80px;}
-  .wrap{max-width:1080px;margin:0 auto;}
+  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:32px 24px 80px;}
+  .wrap{max-width:1100px;margin:0 auto;}
   .theme-toggle{position:fixed;top:14px;right:16px;z-index:50;width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
   .site-parent{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;font-size:14px;}
   .site-parent a{color:var(--accent);text-decoration:underline;text-underline-offset:3px;}
-  header.hero{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:26px 28px;margin-bottom:24px;}
-  .kicker{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--brand);margin-bottom:6px;}
-  h1{font-size:26px;line-height:1.25;margin:0 0 10px;color:var(--ink);}
-  .subtitle{color:var(--muted);font-size:14.5px;margin:0 0 18px;}
-  .cta-bar{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;}
+  header.hero{background:var(--panel);border:1px solid var(--border);border-top:4px solid var(--brand);border-radius:12px;padding:28px 30px;margin-bottom:24px;}
+  .kicker{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--brand);margin-bottom:6px;}
+  h1{font-size:27px;line-height:1.25;margin:0 0 12px;color:var(--ink);}
+  .subtitle{color:var(--muted);font-size:15px;margin:0 0 16px;max-width:940px;}
+  .toc-bar{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0;padding:12px 14px;background:var(--panel2);border:1px solid var(--border);border-radius:8px;font-size:13px;}
+  .toc-bar span{font-weight:700;color:var(--muted);margin-right:4px;}
+  .toc-bar a{color:var(--accent);text-decoration:none;font-weight:600;padding:2px 6px;border-radius:4px;}
+  .toc-bar a:hover{text-decoration:underline;}
+  .cta-bar{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;}
   .btn{display:inline-block;text-decoration:none;background:var(--accent);color:#fff;font-weight:600;font-size:13.5px;padding:8px 16px;border-radius:6px;border:1px solid var(--accent);}
   html[data-theme="dark"] .btn{color:#0d1117;}
   .btn.ghost{background:transparent;color:var(--accent);}
-  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:24px;}
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:24px;}
   .kpi{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
   .kpi .val{font-size:22px;font-weight:800;color:var(--ink);margin:2px 0;}
   .kpi .lbl{font-size:11.5px;font-weight:700;text-transform:uppercase;color:var(--muted);}
   .kpi .sub{font-size:12.5px;color:var(--muted);}
-  section.rsec{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px 26px;margin-bottom:22px;}
-  section.rsec h2{margin:0 0 10px;font-size:19px;color:var(--ink);border-bottom:1px solid var(--border);padding-bottom:8px;}
-  section.rsec h3{margin:16px 0 8px;font-size:15.5px;color:var(--ink);}
+  section.rsec{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:24px 28px;margin-bottom:22px;}
+  section.rsec h2{margin:0 0 12px;font-size:20px;color:var(--ink);border-bottom:1px solid var(--border);padding-bottom:8px;}
+  section.rsec h3{margin:18px 0 8px;font-size:16px;color:var(--ink);}
+  section.rsec p{margin:8px 0 12px;}
+  .grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin:14px 0;}
+  .info-box{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+  .info-box h4{margin:0 0 6px;font-size:14.5px;color:var(--ink);}
+  .info-box p,.info-box ul{margin:4px 0;font-size:13.5px;color:var(--text);}
+  .info-box ul{padding-left:18px;}
   .table-wrap{overflow-x:auto;}
-  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:10px 0;}
-  th,td{padding:8px 10px;border:1px solid var(--border);text-align:left;vertical-align:top;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:12px 0;}
+  th,td{padding:9px 11px;border:1px solid var(--border);text-align:left;vertical-align:top;}
   th{background:var(--th-bg);color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;}
   code{background:var(--code-bg);padding:2px 5px;border-radius:4px;font-size:12.5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
   .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;}
@@ -45,7 +55,7 @@
   .finding-card.high{border-left-color:var(--harm);}
   .finding-card.medium{border-left-color:var(--warn);}
   .finding-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
-  .finding-card p{margin:4px 0;font-size:14px;}
+  .finding-card p{margin:4px 0;font-size:13.5px;}
   .finding-card .rec{color:var(--muted);font-size:13px;}
   .finding-card .cites{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;}
   footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:36px;}
@@ -63,14 +73,26 @@
 
   <header class="hero">
     <div class="kicker">WA Health Summary (WAHS+) · EHIgnite Phase 2 Evaluation Report</div>
-    <h1>5-Tier Progressive FHIR R4 / IPS Chart Condenser &amp; 4-Layer Clinical Knowledge Base</h1>
+    <h1>Multi-Clinic FHIR R4 Chart Condensation, Cross-Provider Conflict Reconciliation &amp; Privacy-Segmented Sharing</h1>
     <p class="subtitle">
-      Evaluated across 6 longitudinal FHIR R4 patient bundles (<code>Maurice742_Auer97</code>, <code>Lamar247_Beer512</code>, <code>Byron202_Emard19</code> — Set A clean &amp; Set B multi-clinic perturbed, <code>23.58 MB</code> total) and <code>32</code> ground-truth rubric cases (<code>96</code> budget×case cells across <code>8k</code>, <code>4k</code>, and <code>2k</code> token budgets).
+      An end-to-end validation study evaluating whether our <strong>5-Tier Progressive FHIR R4 / IPS Condenser</strong> and <strong>4-Layer Clinical Knowledge Base</strong> can transform massive, multi-clinic patient FHIR R4 exports (up to <code>18.36 MB</code> / <code>3.52M</code> raw tokens per chart) into token-bounded, citation-grounded clinical summaries while reconciling cross-provider conflicts and enforcing federal/state privacy statutes.
     </p>
+    <div class="toc-bar" aria-label="Report sections">
+      <span>Jump to:</span>
+      <a href="#sec-overview">01 · What We Evaluate</a>
+      <a href="#sec-cohort">02 · Patient Cohort (Set A vs. Set B)</a>
+      <a href="#sec-architecture">03 · Architecture &amp; Scoring Gates</a>
+      <a href="#sec-benchmark">04 · Head-to-Head Results</a>
+      <a href="#sec-use-case-a">05 · Use Case A (Reconciliation)</a>
+      <a href="#sec-opus-comparison">06 · Use Case B-1 (vs. Opus 5.5)</a>
+      <a href="#sec-privacy-qa">07 · Use Cases B-2 &amp; B-3 (Privacy &amp; Q&amp;A)</a>
+      <a href="#sec-ablation">08 · 30-Row Token Ablation</a>
+    </div>
     <div class="cta-bar">
       <a class="btn" href="https://wahealth.openclinai.org/">Launch Interactive UX (wahealth.openclinai.org) →</a>
-      <a class="btn ghost" href="https://openclinai.org/wahs/">Read WAHS Project &amp; Architecture Page</a>
-      <a class="btn ghost" href="summary.json">Download Harness Summary (JSON)</a>
+      <a class="btn ghost" href="https://openclinai.org/wahs/">WAHS Project Overview Page</a>
+      <a class="btn ghost" href="https://openclinai.org/wahs/design-report/">Phase 1 Design &amp; Architecture Report</a>
+      <a class="btn ghost" href="summary.json">Harness Summary (JSON)</a>
       <a class="btn ghost" href="run_manifest.json">Run Manifest (JSON)</a>
     </div>
   </header>
@@ -98,9 +120,180 @@
     </div>
   </div>
 
+  <section class="rsec" id="sec-overview">
+    <h2>01 · Executive Abstract: What We Are Evaluating &amp; Why It Matters</h2>
+    <p>
+      <strong>WA Health Summary (WAHS)</strong> is a patient-mediated clinical summary application developed by the University of Washington Clinical Informatics Research Group (CIRG) and the Washington State Department of Health. Using SMART Health Links and patient-authorized TEFCA / patient-portal FHIR R4 connections, individuals can pull their clinical records from multiple hospitals, primary care clinics, and pharmacies into a single personal health summary based on the HL7 International Patient Summary (IPS) standard.
+    </p>
+    <p>
+      When patients aggregate multi-decade records from multiple health systems and attempt to use AI to summarize their chart or prepare for an appointment, four critical failure modes appear in standard LLM pipelines:
+    </p>
+    <div class="grid-2">
+      <div class="info-box">
+        <h4>1. Context Window Overflow &amp; EHR Bloat</h4>
+        <p>A complex chronic-disease patient chart (<code>Maurice742_Auer97</code>, 84 years of care) exports as an <strong>18.36 MB FHIR R4 bundle</strong> containing <code>7,660</code> resources and ~<code>3.52 million</code> raw tokens — exceeding standard 128k–200k LLM context windows by <strong>17× to 27×</strong>. Nearly 97% of observation entries are repetitive lab values, vital-sign flowsheets, claims noise, and duplicate Base64-encoded notes.</p>
+      </div>
+      <div class="info-box">
+        <h4>2. Silent Cross-Clinic Contradictions</h4>
+        <p>When Clinic A and Regional Medical Center B both export records for the same patient, dangerous discrepancies arise: duplicate high-intensity statins prescribed concurrently, a diuretic stopped at one clinic after hypotension/AKI but still listed active at another, or unrecorded CKD progression across serial eGFR labs.</p>
+      </div>
+      <div class="info-box">
+        <h4>3. Unaudited Privacy Leakage on External Share</h4>
+        <p>Patients frequently share a health summary with an external specialist, caregiver, or community provider. Raw FHIR exports contain sensitive Social Determinants of Health (SDOH), intimate partner violence (IPV), behavioral health, and reproductive/substance-use records governed by <strong>42 CFR Part 2</strong> and the <strong>WA My Health My Data Act (MHMDA)</strong>.</p>
+      </div>
+      <div class="info-box">
+        <h4>4. Missing Resource Provenance &amp; Hallucinations</h4>
+        <p>Prompting a frontier LLM directly over truncated FHIR JSON produces fluent narrative prose with <strong>zero verifiable links back to source FHIR resources</strong>, and models frequently guess when asked about unrecorded facts (such as blood type, advance directives, or genetic panels).</p>
+      </div>
+    </div>
+
+    <h3>The Four Target Use Cases Evaluated in This Report</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Use Case ID</th>
+            <th>Clinical Workflow</th>
+            <th>What the Evaluation Tests</th>
+            <th>Rubric Cases</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Use Case A</strong></td>
+            <td><strong>Multi-Source Clinical Reconciliation &amp; Duplicate Consolidation</strong></td>
+            <td>Can the system reconcile conflicting medication lists (active vs. stopped, therapeutic duplication, dose changes), detect unrecorded condition progression from lab trends, flag missing emergency antidotes, and collapse duplicate same-day LOINC labs and Base64 notes across clinics?</td>
+            <td>14 cases</td>
+          </tr>
+          <tr>
+            <td><strong>Use Case B-1</strong></td>
+            <td><strong>Encounter, ICU &amp; Longitudinal Clinical Summarization</strong></td>
+            <td>Can the system generate clinician-grade longitudinal and hospital/ICU stay summaries (including Maurice Auer’s Nov 2023 4-vessel CABG &amp; cardiogenic shock stay) that match or exceed Bill Lober’s Claude Opus 5.5 reference summaries while fitting inside strict 2k–8k token budgets?</td>
+            <td>6 cases</td>
+          </tr>
+          <tr>
+            <td><strong>Use Case B-2</strong></td>
+            <td><strong>Privacy-Segmented External Sharing (<code>patient_self</code> vs. <code>external_share</code>)</strong></td>
+            <td>Does switching from <code>patient_self</code> to <code>external_share</code> deterministically redact all sensitive SDOH, IPV (<code>SNOMED 706893006</code>), housing-instability, and 42 CFR Part 2 / WA MHMDA protected entries before condensation and Q&amp;A generation?</td>
+            <td>6 cases</td>
+          </tr>
+          <tr>
+            <td><strong>Use Case B-3</strong></td>
+            <td><strong>Citation-Grounded Patient/Clinician Q&amp;A &amp; Abstention</strong></td>
+            <td>Does every clinical claim resolve via <code>[N] → resourceUuid</code> to a real FHIR R4 resource in the patient bundle, and does the system abstain 100% of the time when asked about facts absent from the chart?</td>
+            <td>6 cases</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="rsec" id="sec-cohort">
+    <h2>02 · Synthetic Patient Cohort &amp; Multi-Source Perturbation Design (Set A vs. Set B)</h2>
+    <p>
+      To test both single-system condensation fidelity and multi-clinic conflict detection against known ground truth, we evaluate six FHIR R4 longitudinal patient bundles (<code>23.58 MB</code> total) spanning three clinically distinct patients from the UW CIRG / EHIgnite synthetic cohort:
+    </p>
+    <ul>
+      <li><strong>Set A (Clean Single-Clinic Baseline):</strong> The original Synthea FHIR R4 longitudinal export for each patient, representing records from a single primary health system.</li>
+      <li><strong>Set B (Multi-Clinic Perturbed Cohort):</strong> Augments each Set A bundle with realistic cross-organization FHIR resources authored by a second health system (<em>Provider B Regional Medical Center</em>, <em>Outpatient Pharmacy Network</em>, or <em>WA IIS Immunization Registry</em>) containing <strong>15 ground-truth clinical discrepancies</strong> recorded in <code>ground_truth.json</code>.</li>
+    </ul>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Patient &amp; Demographics</th>
+            <th>Clinical Profile &amp; Longitudinal Arc</th>
+            <th>Set A (Clean Baseline)</th>
+            <th>Set B (Multi-Clinic Perturbed)</th>
+            <th>Injected Multi-Source Discrepancies in Set B</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Maurice Auer</strong><br><code>Maurice742_Auer97</code><br>Age 84 · Male</td>
+            <td><strong>Complex Cardiometabolic, CKD &amp; Critical Care:</strong> Type 2 diabetes, heart failure, CAD with Nov 2023 4-vessel CABG complicated by cardiogenic shock &amp; respiratory failure (ICU stay), progressive CKD Stages 1→4, and sensitive IPV/SDOH history (<code>SNOMED 706893006</code>).</td>
+            <td><code>18.36 MB</code><br><code>7,660</code> entries<br><code>3,522,053</code> raw tokens</td>
+            <td><code>18.37 MB</code><br><code>7,665</code> entries<br><code>3,522,892</code> raw tokens</td>
+            <td><strong>5 Ground-Truth Anomalies:</strong><br>
+              1. Stale active <em>Furosemide 40 MG</em> at Clinic A vs. stopped <code>MedicationStatement</code> at Provider B (post-hypotension/AKI).<br>
+              2. Cross-clinic duplicate statin therapy (<em>Simvastatin 40 MG</em> + <em>Atorvastatin 80 MG</em> — rhabdomyolysis risk).<br>
+              3. Lisinopril dose discrepancy (<code>10 MG</code> vs. <code>20 MG</code> daily across clinics).<br>
+              4. Uncoded Stage 4 CKD progression (serial eGFR <code>17.0</code> &amp; <code>22.3 mL/min</code> &lt; 30 while problem list stops at Stage 3).<br>
+              5. Sensitive SDOH / IPV condition (<code>SNOMED 706893006</code>) requiring posture-dependent redaction.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Lamar Beer</strong><br><code>Lamar193_Beer512</code><br>Age 22 · Male</td>
+            <td><strong>Severe Allergic / Anaphylactic Phenotype:</strong> Shellfish, edible nut, peanut, bee-venom, and mold allergies; prior emergency department visits for allergic reactions; childhood and young-adult immunization series.</td>
+            <td><code>1.78 MB</code><br><code>1,132</code> entries<br><code>356,374</code> raw tokens</td>
+            <td><code>1.78 MB</code><br><code>1,136</code> entries<br><code>356,994</code> raw tokens</td>
+            <td><strong>5 Ground-Truth Anomalies:</strong><br>
+              1. <strong>Care Gap:</strong> High-risk anaphylactic allergies (peanut/nut/venom) with only oral <em>Cetirizine</em> active and <strong>no active Epinephrine Auto-Injector</strong>.<br>
+              2. Cross-clinic duplicate second-generation antihistamines (<em>Cetirizine 10 MG</em> + <em>Loratadine 10 MG</em>).<br>
+              3. Unreconciled high-criticality Latex allergy recorded at Provider B.<br>
+              4. Duplicate Influenza immunization reported on the same date by clinic and pharmacy.<br>
+              5. Sensitive housing instability finding requiring external-share redaction.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Byron Emard</strong><br><code>Byron202_Emard19</code><br>Age 12 · Male</td>
+            <td><strong>Pediatric Preventive &amp; Acute Care:</strong> Routine well-child visits, pediatric growth percentiles, acute viral pharyngitis / otitis media episodes, and ACIP childhood immunization schedule.</td>
+            <td><code>0.82 MB</code><br><code>549</code> entries<br><code>163,682</code> raw tokens</td>
+            <td><code>0.82 MB</code><br><code>553</code> entries<br><code>164,296</code> raw tokens</td>
+            <td><strong>5 Ground-Truth Anomalies:</strong><br>
+              1. Stale active <em>Amoxicillin 250 MG</em> order from a resolved 2021 acute infection.<br>
+              2. Cross-clinic pediatric <em>Ibuprofen</em> weight-based dosing discrepancy (<code>100 MG</code> vs. <code>200 MG</code>).<br>
+              3. Newly documented mild-intermittent asthma diagnosis at urgent care missing from primary care problem list.<br>
+              4. Invalid early HPV vaccine dose interval (&lt; 5 months between doses per CDC ACIP minimum interval rules).<br>
+              5. Sensitive household food-insecurity SDOH entry requiring external-share redaction.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="rsec" id="sec-architecture">
+    <h2>03 · Architecture Under Test &amp; Deterministic Scoring Gates</h2>
+    <p>
+      Rather than passing raw FHIR JSON directly to a language model, our architecture separates <strong>deterministic clinical condensation and rule verification</strong> (in <code>med-agent-hub/server/fhir/</code>) from <strong>automated evaluation and provenance auditing</strong> (in <code>validation-harness/harness/wahs/</code>):
+    </p>
+    <div class="grid-2">
+      <div class="info-box">
+        <h4>5-Tier Progressive FHIR R4 / IPS Condenser</h4>
+        <ul>
+          <li><strong>Tier 0 (Raw Baseline):</strong> Unmodified FHIR R4 bundle (up to <code>3.52M</code> tokens).</li>
+          <li><strong>Tier 1 (Structural Pruning &amp; Note Hashing):</strong> Strips FHIR boilerplate, narrative HTML, and claims noise; deduplicates identical Base64 clinical notes by SHA-256 hash (<code>791 → 8</code> unique notes in Maurice’s chart).</li>
+          <li><strong>Tier 2 (Clinical Consolidation):</strong> Groups active vs. historical medications, resolves problem-list status, and collapses <code>3,760</code> raw observations into <code>116</code> longitudinal LOINC chains (Latest + Min/Max + 3-point trajectory).</li>
+          <li><strong>Tier 3 (Budget-Targeted Rolling Window):</strong> Restricts routine encounters/labs to a rolling 24-month window while preserving lifetime high-acuity surgeries (e.g., CABG) and active chronic conditions.</li>
+          <li><strong>Tier 4 (Emergency IPS Safety Core):</strong> Guarantees a &le;<code>1,024</code>-token International Patient Summary containing 100% of active allergies, active medications, active conditions, and high-severity clinical conflict alerts.</li>
+        </ul>
+      </div>
+      <div class="info-box">
+        <h4>4-Layer Deterministic Clinical Knowledge Base</h4>
+        <ul>
+          <li><strong>Layer 1 (SNOMED CT Disease Progression):</strong> Maps 108 condition concepts across 18 disease families; cross-checks lab trajectories (KDIGO eGFR &lt; 30 Stage 4 CKD; ADA HbA1c &ge; 6.5%) against coded problem lists.</li>
+          <li><strong>Layer 2 (RxNorm Therapeutic Classes &amp; Safety):</strong> Maps 94 medication codes across 14 classes; detects duplicate therapy (dual statins, dual antihistamines), stale acute orders, and missing anaphylaxis epinephrine rescue.</li>
+          <li><strong>Layer 3 (CDC ACIP CVX &amp; LOINC Chains):</strong> Maps 48 vaccine codes and 280+ LOINC codes; validates ACIP minimum dose intervals and collapses same-day duplicate lab panels.</li>
+          <li><strong>Layer 4 (42 CFR Part 2 &amp; WA MHMDA Privacy Gate):</strong> Enforces posture-aware redaction before condensation when <code>sharing_posture="external_share"</code>.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Five Deterministic Evaluation Gates in <code>harness.wahs</code></h3>
+    <p>Every evaluation case in <code>wahs_eval_cases.jsonl</code> is scored across five deterministic gates:</p>
+    <ol>
+      <li><strong>Token Budget Gate (<code>budget_met</code>):</strong> Verifies that the condensed clinical ledger satisfies <code>actual_tokens &le; target_tokens</code> at every tested budget (<code>8,192</code>, <code>4,096</code>, and <code>2,048</code> tokens).</li>
+      <li><strong>Target Resource UUID Recall (<code>target_uuid_recall</code>):</strong> Verifies that the exact ground-truth FHIR <code>resourceUuid</code> entries for the clinical anomaly, condition, or encounter are retained and cited.</li>
+      <li><strong>Citation Provenance Resolution (<code>citation_resolution_rate</code>):</strong> Audits every <code>[N]</code> bracket citation in the generated output against the condenser’s <code>citation_map</code> and flags any unresolved or fabricated citation.</li>
+      <li><strong>External-Share Privacy Gate (<code>privacy_leaked == False</code>):</strong> Scans both the condensed chart text and the final answer for any forbidden sensitive SDOH / IPV / 42 CFR Part 2 terms or UUIDs when <code>sharing_posture="external_share"</code>.</li>
+      <li><strong>Unanswerable Abstention Gate (<code>abstention_correct</code>):</strong> Verifies that prompts asking for unrecorded clinical facts explicitly abstain rather than confabulating values.</li>
+    </ol>
+  </section>
+
   <section class="rsec" id="sec-benchmark">
-    <h2>01 · Head-to-Head Evaluation Summary (32-Case Rubric × 4 Setups)</h2>
-    <p>Each setup was evaluated against the 32-case WAHS Phase 2 rubric spanning <strong>Use Case A</strong> (Cross-Clinic Medication, Condition, Allergy &amp; Immunization Reconciliation), <strong>Use Case B-1</strong> (Encounter, ICU &amp; Longitudinal Summaries), <strong>Use Case B-2</strong> (Privacy-Segmented External Sharing), and <strong>Use Case B-3</strong> (Grounded Patient/Clinician Q&amp;A and Unanswerable Abstention Probes).</p>
+    <h2>04 · Head-to-Head Evaluation Results Across All 32 Rubric Cases</h2>
+    <p>Each of the four setups was evaluated across all <code>32</code> rubric cases spanning Maurice Auer, Lamar Beer, and Byron Emard:</p>
     <div class="table-wrap">
       <table>
         <thead>
@@ -159,20 +352,75 @@
         </tbody>
       </table>
     </div>
+
+    <h3>Breakdown by Clinical Use Case Family</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Use Case Family</th>
+            <th>Cases</th>
+            <th>WAHS+ (8k Budget)</th>
+            <th>WAHS+ (4k Budget)</th>
+            <th>WAHS+ (2k IPS Core)</th>
+            <th>Uncondensed Opus 5.5 Baseline</th>
+            <th>Key Finding</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Use Case A: Multi-Source Reconciliation &amp; Bloat</strong></td>
+            <td>14</td>
+            <td><span class="badge ok">14 / 14 (100%)</span></td>
+            <td><span class="badge ok">14 / 14 (100%)</span></td>
+            <td><span class="badge ok">14 / 14 (100%)</span></td>
+            <td><span class="badge medium">8 / 14 (57.1%)</span></td>
+            <td>4-Layer KB deterministically catches all 15 cross-clinic medication, CKD, allergy, and vaccine conflicts even at the 2k-token emergency tier.</td>
+          </tr>
+          <tr>
+            <td><strong>Use Case B-1: Longitudinal &amp; ICU Summarization</strong></td>
+            <td>6</td>
+            <td><span class="badge ok">6 / 6 (100%)</span></td>
+            <td><span class="badge ok">6 / 6 (100%)</span></td>
+            <td><span class="badge ok">6 / 6 (100%)</span></td>
+            <td><span class="badge ok">5 / 6 (83.3%)</span></td>
+            <td>WAHS+ preserves the Nov 2023 CABG &amp; cardiogenic shock ICU timeline with exact resource UUIDs in &le;2,612 tokens (Tier 3).</td>
+          </tr>
+          <tr>
+            <td><strong>Use Case B-2: Privacy-Segmented External Share</strong></td>
+            <td>6</td>
+            <td><span class="badge ok">6 / 6 (0 leaks)</span></td>
+            <td><span class="badge ok">6 / 6 (0 leaks)</span></td>
+            <td><span class="badge ok">6 / 6 (0 leaks)</span></td>
+            <td><span class="badge high">3 / 6 (3 leaks)</span></td>
+            <td>Pre-condensation Layer 4 filter guarantees 0.0% leakage of IPV/SDOH codes when <code>sharing_posture="external_share"</code>.</td>
+          </tr>
+          <tr>
+            <td><strong>Use Case B-3: Grounded Q&amp;A &amp; Abstention Probes</strong></td>
+            <td>6</td>
+            <td><span class="badge ok">6 / 6 (100%)</span></td>
+            <td><span class="badge ok">6 / 6 (100%)</span></td>
+            <td><span class="badge ok">6 / 6 (100%)</span></td>
+            <td><span class="badge medium">4 / 6 (66.7%)</span></td>
+            <td>100% abstention on unrecorded facts (blood type, colonoscopy, living will, genetic panel, penicillin/pet allergies).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <section class="rsec" id="sec-use-case-a">
-    <h2>02 · Use Case A: Cross-Clinic Reconciliation &amp; Duplicate/Bloat Analysis</h2>
+    <h2>05 · Deep Dive — Use Case A: Cross-Clinic Reconciliation &amp; Duplicate/Bloat Analysis</h2>
     <p>Across the multi-clinic perturbed bundles (Set B), the 4-Layer Clinical Knowledge Base and 5-Tier Condenser deterministically surface and cite every injected clinical discrepancy while collapsing massive EHR export redundancy:</p>
     <ul>
       <li><strong>Duplicate Labs &amp; Base64 Note Deduplication (<code>Maurice742_Auer97_set_b</code>):</strong> Collapses <code>3,760</code> raw observations into <code>116</code> LOINC longitudinal trajectory chains (<code>96.9%</code> lab line reduction, including <code>344</code> duplicate same-day LOINC readings across <code>140</code> panels) and strips <code>791</code> repeated Base64 clinical notes down to <code>8</code> unique episode hashes.</li>
-      <li><strong>Cross-Clinic Medication &amp; Problem List Conflicts:</strong> Surfaces all <code>15 / 15</code> multi-source anomalies across Maurice, Lamar, and Byron with <code>100%</code> recall and clickable <code>[N] → resourceUuid</code> provenance:</li>
+      <li><strong>All 15 Multi-Clinic Conflict &amp; Safety Findings Across Maurice, Lamar, and Byron (100% Recall with <code>[N] → resourceUuid</code> Provenance):</strong></li>
     </ul>
     
   </section>
 
   <section class="rsec" id="sec-opus-comparison">
-    <h2>03 · Use Case B-1: Head-to-Head Comparison vs. Bill Lober’s Claude Opus 5.5 Baseline</h2>
+    <h2>06 · Deep Dive — Use Case B-1: Comparison vs. Bill Lober’s Claude Opus 5.5 Baseline</h2>
     <p>Bill Lober’s reference artefacts included a frontier LLM narrative summary (<code>Maurice_Auer_5.5_Opus_Summary.md</code>) and ICU stay summary (<code>Maurice_Nov_2023_ICU_Stay_Summary.md</code>). Comparing the uncondensed frontier baseline against the WAHS+ 5-Tier Condenser + 4-Layer KB highlights why deterministic condensation and clinical normalization are essential before model inference:</p>
     <div class="table-wrap">
       <table>
@@ -209,17 +457,56 @@
     </div>
   </section>
 
-  <section class="rsec" id="sec-privacy">
-    <h2>04 · Use Case B-2: Privacy-Segmented Sharing (<code>patient_self</code> vs. <code>external_share</code>)</h2>
-    <p>Under Layer 4 of the WAHS Clinical Knowledge Base (42 CFR Part 2, WA My Health My Data Act, and sensitive SDOH/IPV taxonomy rules), switching from <code>patient_self</code> to <code>external_share</code> applies a deterministic pre-condensation redaction gate:</p>
-    <ul>
-      <li><strong><code>patient_self</code> Posture:</strong> Retains sensitive SDOH entries (such as <code>SNOMED 706893006</code> <em>Victim of intimate partner abuse</em>) with an explicit patient-visible privacy badge so the patient can review their complete record.</li>
-      <li><strong><code>external_share</code> Posture:</strong> Strips all sensitive SDOH / IPV / substance-use / housing-instability resources prior to Tier 1–4 formatting and Q&amp;A generation, achieving <strong>0.0% sensitive UUID or string leakage</strong> across all token budgets.</li>
-    </ul>
+  <section class="rsec" id="sec-privacy-qa">
+    <h2>07 · Deep Dive — Use Case B-2 (Privacy-Segmented Sharing) &amp; Use Case B-3 (Grounded Q&amp;A &amp; Abstention)</h2>
+    <p>
+      Under Layer 4 of the WAHS Clinical Knowledge Base (42 CFR Part 2, WA My Health My Data Act, and sensitive SDOH/IPV taxonomy rules), switching from <code>patient_self</code> to <code>external_share</code> applies a deterministic pre-condensation redaction gate prior to Tier 1–4 formatting and Q&amp;A generation:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Patient Bundle</th>
+            <th>Sensitive Finding in Chart</th>
+            <th><code>patient_self</code> Posture (Personal Review)</th>
+            <th><code>external_share</code> Posture (Specialist / Caregiver Link)</th>
+            <th>Leakage Audit</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>Maurice742_Auer97</code> (Set A &amp; Set B)</td>
+            <td><code>SNOMED 706893006</code> — <em>Victim of intimate partner abuse</em></td>
+            <td>Retained with explicit patient-only privacy notice and source UUID citation.</td>
+            <td>Deterministically redacted before condensation; omitted from summary ledger and Q&amp;A context.</td>
+            <td><span class="badge ok">0 Leaks (PASS)</span></td>
+          </tr>
+          <tr>
+            <td><code>Lamar193_Beer512</code> (Set B)</td>
+            <td>Sensitive housing instability / SDOH finding</td>
+            <td>Retained for patient self-review and social-care navigation.</td>
+            <td>Deterministically redacted before condensation and external Q&amp;A.</td>
+            <td><span class="badge ok">0 Leaks (PASS)</span></td>
+          </tr>
+          <tr>
+            <td><code>Byron202_Emard19</code> (Set B)</td>
+            <td>Sensitive household SDOH finding</td>
+            <td>Retained for parent/guardian self-review.</td>
+            <td>Deterministically redacted before condensation and external Q&amp;A.</td>
+            <td><span class="badge ok">0 Leaks (PASS)</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Use Case B-3: Unanswerable Abstention Probes (6 / 6 Correct Abstentions)</h3>
+    <p>
+      To verify that the WAHS Q&amp;A engine never fabricates missing clinical facts, six adversarial abstention probes were executed across the three patients (asking for <em>CYP2C19 / BRCA genetic testing</em>, <em>last colonoscopy polyp pathology</em>, <em>durable power of attorney / living will</em>, <em>penicillin allergy</em>, <em>cat/dog dander allergy</em>, and <em>ABO/Rh blood type</em>). All <code>6 / 6</code> cases abstained cleanly with <code>0</code> hallucinated claims or fabricated citations.
+    </p>
   </section>
 
   <section class="rsec" id="sec-ablation">
-    <h2>05 · 30-Row Token Budget Ablation Matrix (<code>16,384</code> → <code>1,024</code> Tokens)</h2>
+    <h2>08 · 30-Row Token Budget Ablation Matrix (<code>16,384</code> → <code>1,024</code> Tokens)</h2>
     <p>Every patient bundle (Set A clean and Set B multi-clinic perturbed) was condensed across five target token budgets (<code>16k</code>, <code>8k</code>, <code>4k</code>, <code>2k</code>, and <code>1k</code>). In all 30 runs, <code>actual_tokens &le; budget_tokens</code> and <code>100%</code> of the IPS clinical safety core (allergies, active medications, active conditions, and high-severity conflict alerts) remained intact:</p>
     <div class="table-wrap">
       <table>
