@@ -983,16 +983,25 @@
 
     .composer-submit-row {
       display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      padding-top: 0.25rem;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.45rem;
+      padding-top: 0.15rem;
+    }
+    .composer-generate-btn {
+      width: 100%;
+      justify-content: center;
+      padding: 0.88rem 1.4rem;
+      font-size: 1.02rem;
+      font-weight: 800;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 2px 8px rgba(29, 78, 216, 0.18);
     }
     .composer-submit-hint {
-      font-size: 0.86rem;
+      font-size: 0.84rem;
       color: var(--text-secondary);
       font-weight: 500;
+      text-align: center;
     }
 
     .skill-badge {
@@ -1498,10 +1507,10 @@
             <div class="qa-sample-chips" id="qa-sample-chips"></div>
           </div>
 
-          <!-- Single Unified Action Bar -->
+          <!-- Single Full-Width Generate Live Action Bar -->
           <div class="composer-submit-row">
-            <div class="composer-submit-hint" id="composer-active-hint">Ready to generate live clinical synthesis.</div>
-            <button type="submit" id="qa-submit-btn" class="btn btn-primary">⚡ Generate Live</button>
+            <button type="submit" id="qa-submit-btn" class="btn btn-primary composer-generate-btn">⚡ Generate Live</button>
+            <div class="composer-submit-hint" id="composer-active-hint">Select a clinical task or enter a custom prompt above, then click Generate Live.</div>
           </div>
         </form>
 
@@ -2080,7 +2089,7 @@
           megaPanel.innerHTML =
             '<div class="mega-group-heading">' +
               '<span>Everyday Patient Tasks (5)</span>' +
-              '<span>Click any card to run task</span>' +
+              '<span>Click any card to select task</span>' +
             '</div>' +
             '<div class="mega-tiles-grid">' +
               everydaySkills.map(renderTileHtml).join("") +
@@ -2114,12 +2123,23 @@
           qInputEl.value = isCustomMode ? (state.customQuestionResult.question || "") : "";
         }
 
+        const submitBtnEl = document.getElementById("qa-submit-btn");
+        if (submitBtnEl) {
+          if (isCustomMode) {
+            submitBtnEl.textContent = "⚡ Generate Live — 💬 Custom Prompt";
+          } else if (activeSkill) {
+            submitBtnEl.textContent = "⚡ Generate Live — " + activeSkill.icon + " " + activeSkill.title;
+          } else {
+            submitBtnEl.textContent = "⚡ Generate Live";
+          }
+        }
+
         const hintEl = document.getElementById("composer-active-hint");
         if (hintEl) {
           if (isCustomMode) {
-            hintEl.innerHTML = 'Active Mode: <strong>💬 Custom Prompt</strong> — click <strong>⚡ Generate Live</strong> to run or re-run your custom question.';
+            hintEl.innerHTML = 'Active Selection: <strong>💬 Custom Prompt</strong> — click <strong>⚡ Generate Live</strong> above to stream live LLM answer.';
           } else if (activeSkill) {
-            hintEl.innerHTML = 'Active Mode: <strong>' + esc(activeSkill.icon + ' ' + activeSkill.title) + '</strong> — click <strong>⚡ Generate Live</strong> to refresh or enter a custom question above.';
+            hintEl.innerHTML = 'Active Selection: <strong>' + esc(activeSkill.icon + ' ' + activeSkill.title) + '</strong> — click <strong>⚡ Generate Live</strong> above to stream live LLM synthesis.';
           }
         }
 
@@ -2148,7 +2168,7 @@
               if (chosenQa) {
                 state.megaMenuOpen = false;
                 document.getElementById("qa-question-input").value = chosenQa.question;
-                state.customQuestionResult = Object.assign({}, chosenQa, { forceLiveLlm: true });
+                state.customQuestionResult = Object.assign({}, chosenQa);
                 renderSkillsAndQa();
               }
             });
@@ -2493,19 +2513,33 @@
             ? ["Ask your doctor whether this test, allergy, or procedure was recorded at an outside clinic and should be added to your chart."]
             : (qa.what_to_ask_doctor || ["Ask your doctor to review these chart entries with you at your next visit."]);
 
+          const shouldRunLive = !!(forceLiveRefresh || qa.forceLiveLlm);
           const cacheKey = getLlmCacheKey("qa", qa.question);
-          if (forceLiveRefresh || qa.forceLiveLlm) {
+          if (shouldRunLive) {
             delete state.llmCache[cacheKey];
             delete qa.forceLiveLlm;
           }
           const cached = state.llmCache[cacheKey];
 
-          const initialSummaryHtml = cached ? cached.summaryHtml : formatRichText(fallbackSummary);
-          const initialQuestions = cached ? cached.questionsList : fallbackAskList;
+          const initialSummaryHtml = cached
+            ? cached.summaryHtml
+            : (state.llmConnected
+                ? (shouldRunLive
+                    ? '<span style="color: var(--primary); font-weight: 600;">⚡ Preparing live LLM generation...</span>'
+                    : '<div style="color: var(--text-secondary); font-weight: 500;">Ready to generate for <strong>' + esc(qa.question) + '</strong>. Click the full-width <strong>⚡ Generate Live</strong> button above to stream the live synthesis from <code>' + esc(state.llmModel) + '</code> over this condensed chart (<code>' + esc(promptData.leverLabel) + '</code>).</div>')
+                : formatRichText(fallbackSummary));
+          const initialQuestions = cached
+            ? cached.questionsList
+            : (state.llmConnected && !shouldRunLive
+                ? ["Waiting for live generation — click ⚡ Generate Live above to run."]
+                : fallbackAskList);
           const initialCites = cached ? cached.cites : cites;
           const initialPillHtml = cached
             ? "🟢 Live LLM: <strong>" + esc(cached.model) + "</strong> • TTFT " + (cached.ttftMs / 1000).toFixed(2) + "s • Total " + (cached.totalMs / 1000).toFixed(2) + "s"
-            : (state.llmConnected ? "⚡ Preparing live LLM generation..." : "⚪ Precomputed Baseline (LLM Offline)");
+            : (state.llmConnected
+                ? (shouldRunLive ? "⚡ Preparing live LLM generation..." : "⚪ Ready — Click ⚡ Generate Live above to run")
+                : "⚪ Precomputed Baseline (LLM Offline)");
+          const initialPillClass = cached ? "done" : (state.llmConnected && shouldRunLive ? "streaming" : "offline");
 
           const promptPreviewText =
             "Patient: " + pName + " (DOB " + ((p && p.birth_date) || "unknown") + ")\n" +
@@ -2517,7 +2551,7 @@
             '<div class="report-card-header">' +
               '<h3 class="report-card-title">💬 Q: ' + esc(qa.question) + '</h3>' +
               '<div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">' +
-                '<span class="llm-live-pill ' + (cached ? "done" : (state.llmConnected ? "streaming" : "offline")) + '" id="live-llm-telemetry-pill">' + initialPillHtml + '</span>' +
+                '<span class="llm-live-pill ' + initialPillClass + '" id="live-llm-telemetry-pill">' + initialPillHtml + '</span>' +
                 '<span class="skill-badge ' + ((cached ? cached.abstained : qa.abstained) ? "warn" : "info") + '" id="live-llm-status-badge">' +
                   esc((cached ? cached.abstained : qa.abstained) ? "Safety Abstention (Unrecorded Fact)" : "Grounded in Condensed Chart") +
                 '</span>' +
@@ -2549,7 +2583,7 @@
 
           bindCitationClicks(container, p);
 
-          if (state.llmConnected && !cached) {
+          if (state.llmConnected && shouldRunLive) {
             const kbAlerts = (skills || []).map(function (sk) {
               return (sk.structured_rows || []).map(function (r) {
                 return "- [" + sk.title + " | " + r.category + "] " + r.label + ": " + r.detail;
@@ -2578,8 +2612,9 @@
         const skill = skills.find(function (s) { return s.id === state.activeSkillId; }) || skills[0];
         if (!skill) return;
 
+        const shouldRunLive = !!forceLiveRefresh;
         const cacheKey = getLlmCacheKey("skill", skill.id);
-        if (forceLiveRefresh) {
+        if (shouldRunLive) {
           delete state.llmCache[cacheKey];
         }
         const cached = state.llmCache[cacheKey];
@@ -2601,12 +2636,25 @@
           );
         }).join("");
 
-        const initialSummaryHtml = cached ? cached.summaryHtml : formatRichText(skill.plain_english_summary);
-        const initialQuestions = cached ? cached.questionsList : (skill.suggested_remediation || []);
+        const initialSummaryHtml = cached
+          ? cached.summaryHtml
+          : (state.llmConnected
+              ? (shouldRunLive
+                  ? '<span style="color: var(--primary); font-weight: 600;">⚡ Preparing live LLM synthesis...</span>'
+                  : '<div style="color: var(--text-secondary); font-weight: 500;">Ready to generate <strong>' + esc(skill.icon + ' ' + skill.title) + '</strong>. Click the full-width <strong>⚡ Generate Live</strong> button above to stream the live clinical synthesis from <code>' + esc(state.llmModel) + '</code> over this condensed chart (<code>' + esc(promptData.leverLabel) + '</code>).</div>')
+              : formatRichText(skill.plain_english_summary));
+        const initialQuestions = cached
+          ? cached.questionsList
+          : (state.llmConnected && !shouldRunLive
+              ? ["Waiting for live generation — click ⚡ Generate Live above to run."]
+              : (skill.suggested_remediation || []));
         const initialCites = cached ? cached.cites : (skill.citations || []);
         const initialPillHtml = cached
           ? "🟢 Live LLM: <strong>" + esc(cached.model) + "</strong> • TTFT " + (cached.ttftMs / 1000).toFixed(2) + "s • Total " + (cached.totalMs / 1000).toFixed(2) + "s"
-          : (state.llmConnected ? "⚡ Preparing live LLM synthesis..." : "⚪ Precomputed Baseline (LLM Offline)");
+          : (state.llmConnected
+              ? (shouldRunLive ? "⚡ Preparing live LLM synthesis..." : "⚪ Ready — Click ⚡ Generate Live above to run")
+              : "⚪ Precomputed Baseline (LLM Offline)");
+        const initialPillClass = cached ? "done" : (state.llmConnected && shouldRunLive ? "streaming" : "offline");
 
         const pName = cleanName(p && p.patient_name);
         const skillFindingsText = structRows.map(function (r) {
@@ -2623,7 +2671,7 @@
           '<div class="report-card-header">' +
             '<h3 class="report-card-title">' + esc(skill.icon) + ' ' + esc(skill.title) + '</h3>' +
             '<div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">' +
-              '<span class="llm-live-pill ' + (cached ? "done" : (state.llmConnected ? "streaming" : "offline")) + '" id="live-llm-telemetry-pill">' + initialPillHtml + '</span>' +
+              '<span class="llm-live-pill ' + initialPillClass + '" id="live-llm-telemetry-pill">' + initialPillHtml + '</span>' +
               '<span class="skill-badge ' + esc(skill.badge_tone || "info") + '" id="live-llm-status-badge">' + esc(skill.status_badge) + '</span>' +
             '</div>' +
           '</div>' +
@@ -2671,7 +2719,7 @@
 
         bindCitationClicks(container, p);
 
-        if (state.llmConnected && !cached) {
+        if (state.llmConnected && shouldRunLive) {
           const sysMsg =
             "You are the WAHS+ Clinical Chart Assistant helping a patient and their care team understand their condensed health record. Answer the task or question in clear, empathetic plain English using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, colonoscopy, MRI, or fact NOT recorded in the chart, begin your SUMMARY with 'ABSTAIN:' and clearly explain that you checked their chart and there is no record of it, so you abstain for safety rather than guessing. Format your output in two parts:\nSUMMARY:\n2-3 clear plain-English bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 specific questions to review with the clinician.";
 
@@ -2920,6 +2968,8 @@
           const blockCustom = document.getElementById("mode-block-custom");
           const pillTask = document.getElementById("mode-pill-task");
           const pillCustom = document.getElementById("mode-pill-custom");
+          const submitBtnEl = document.getElementById("qa-submit-btn");
+          const hintEl = document.getElementById("composer-active-hint");
           if (val.length > 0) {
             state.megaMenuOpen = false;
             const megaPanel = document.getElementById("task-mega-panel");
@@ -2930,13 +2980,25 @@
             }
             if (pillTask) pillTask.textContent = "Click to Switch to Task";
             if (pillCustom) pillCustom.textContent = "Active Selection";
-          } else if (!state.customQuestionResult) {
+            if (submitBtnEl) submitBtnEl.textContent = "⚡ Generate Live — 💬 Custom Prompt";
+            if (hintEl) hintEl.innerHTML = 'Active Selection: <strong>💬 Custom Prompt</strong> — click <strong>⚡ Generate Live</strong> above to stream live LLM answer.';
+          } else {
+            state.customQuestionResult = null;
             if (blockTask && blockCustom) {
               blockTask.classList.add("active-mode");
               blockCustom.classList.remove("active-mode");
             }
             if (pillTask) pillTask.textContent = "Active Selection";
             if (pillCustom) pillCustom.textContent = "Write or Pick Prompt";
+            const p = currentPatient();
+            const skills = (p && p.skills) || [];
+            const activeSkill = skills.find(function (s) { return s.id === state.activeSkillId; }) || skills[0];
+            if (submitBtnEl && activeSkill) {
+              submitBtnEl.textContent = "⚡ Generate Live — " + activeSkill.icon + " " + activeSkill.title;
+            }
+            if (hintEl && activeSkill) {
+              hintEl.innerHTML = 'Active Selection: <strong>' + esc(activeSkill.icon + ' ' + activeSkill.title) + '</strong> — click <strong>⚡ Generate Live</strong> above to stream live LLM synthesis.';
+            }
           }
         });
       }
