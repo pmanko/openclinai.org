@@ -37,8 +37,12 @@ evidence supports, and every added step has a judged run showing what it buys.
 ## The pipeline today
 
 Stage sets and profiles live in the Hub's `server/levels.yaml`; the engine runs the stages in
-order. A stage is a step; a role is the model that takes it. The checked profile
-(`single-12b-checked`, the product default):
+order. A stage is a step; a role is the model that takes it. Since 28 October 2026
+([D4 record](reviews/2026-10-28-confidence-labels-run-d4.md)), the product default is
+`single-12b-bare` (the deterministic checks only: `context -> answer -> gate -> resolve_refs ->
+indepth -> indepth_gate`, two writer calls and no model reviewer or grounder). The ten-stage
+checked comparison profile (`single-12b-checked`, the earlier default retained as a comparison
+arm):
 
 | Stage | What it does | Model call |
 | --- | --- | --- |
@@ -134,9 +138,10 @@ dated review under `reviews/` for a run.
   harness PRs with their profile-loading tests.
 - [ ] A5 Runs. After A1 and A2 are deployed. Run A, 33 GB resident: bundled, Hub answer-only,
   baseline, folded, noground, `single-12b-xcheck`. Run B, 28 GB resident: `single-31b-xcheck`
-  with the baseline repeated as the in-run control. Judged blind per scenario by gpt-6-astra
-  high, three passes, plus one Claude Opus 5.5 high pass on run A ([judging.md](judging.md)
-  C2 to C5). Evidence: a dated review with, per arm, the judged scores and harm, the latency,
+  with the baseline repeated as the in-run control. Judged blind per scenario by one
+  `gpt-6-astra` high pass and one `claude-opus-5-5` high pass per round (updated 28 October in
+  [judging.md](judging.md); run A's initial three-pass `gpt-6-astra` plan is recorded in the
+  [28 October A2/C review](reviews/2026-10-28-confidence-labels-runs-a2-c.md)). Evidence: a dated review with, per arm, the judged scores and harm, the latency,
   the reviewer's flags against the judges' accuracy (flag precision and missed errors), the
   grounder's verdicts against the judges' citation groundedness, and what `off` loses.
 - [ ] A6 Labels. Owned by [confidence-labels.md](confidence-labels.md) since 27 October: a
@@ -144,7 +149,7 @@ dated review under `reviews/` for a run.
   that spec's LG1, labels are three-way per claim, and the clinician view shows findings
   (L9). This box is ticked when L9 is. Run B runs on the Hub that carries that spec's cheap
   label changes (L2 to L5), with the default repeated as its control.
-- [ ] A7 Default. The product default profile is the arm A5 supports; `single-12b-checked`
+- [x] A7 Default. The product default profile is the arm A5 supports; `single-12b-checked`
   stays only if nothing beats it. Evidence: the Hub PR moving `default: true` and the record
   it cites. Owner, 28 October: `single-12b-bare`, from the
   [D4 record](reviews/2026-10-28-confidence-labels-run-d4.md); the move is on Hub PR #50.

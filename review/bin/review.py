@@ -332,12 +332,24 @@ def profile_arms(offered: dict[str, str], wanted: list[str]) -> dict[str, dict]:
             for profile in wanted}
 
 
+def _resolve_data_root(raw: Path | str | None) -> Path:
+    if not raw:
+        return DATA
+    p = Path(raw)
+    if p.is_absolute():
+        return p.resolve()
+    if p.exists():
+        return p.resolve()
+    return (UMBRELLA / p).resolve()
+
+
 def run_full(args) -> int:
     """L5: the full matrix, extra arms from the Hub's advertised profiles, judged and reported."""
     stamp = time.strftime("%Y%m%d-%H%M%S")
     out_dir = work_dir() / f"full-{stamp}"
-    out_dir.mkdir(parents=True)
-    source = getattr(args, "data_root", None) or DATA
+    out_dir.mkdir(parents=True, exist_ok=True)
+    explicit_data_root = getattr(args, "data_root", None)
+    source = _resolve_data_root( getattr(args, "data_root", None) or DATA )
     data_root = source
     if args.profiles:
         wanted = [p.strip() for p in args.profiles.split(",") if p.strip()]
@@ -358,7 +370,8 @@ def run_full(args) -> int:
         cset_path.write_text(json.dumps(cset, indent=1))
     with run_environment(data_root, args.set, out_dir / "settings-as-found.json") as env:
         run_dir = run_set("validate-run", args.set, out_dir / "run.log", env,
-                          data_root if data_root != DATA else None, args.resume)
+                          data_root if (explicit_data_root is not None or data_root != DATA) else None,
+                          args.resume)
     subprocess.run(["make", "-C", str(HARNESS), "validate-judge-prep", f"RUN={run_dir}"]
                    + (["BLIND=1"] if args.blind else []), check=True, capture_output=True)
     judge_passes(args, run_dir, out_dir)

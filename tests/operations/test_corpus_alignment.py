@@ -93,7 +93,6 @@ def test_verify_corpus_cli_reports_matching_live_ledger(monkeypatch, capsys):
     expected = {"p1": {"chart_snapshot": LEDGER["chart_snapshot"], "mappings": LEDGER["mappings"]}}
     monkeypatch.setattr(VERIFY_CORPUS, "expected_ledgers", lambda *_args: expected)
     monkeypatch.setattr(VERIFY_CORPUS, "hub_ledgers", lambda patients, _container: {"p1": LEDGER})
-    monkeypatch.setattr(VERIFY_CORPUS, "alignment_issues", lambda *_args: [])
     monkeypatch.setattr(VERIFY_CORPUS.sys, "argv", ["verify-validation-corpus.py", "--set", "set"])
 
     assert VERIFY_CORPUS.main() == 0
@@ -101,13 +100,34 @@ def test_verify_corpus_cli_reports_matching_live_ledger(monkeypatch, capsys):
 
 
 def test_verify_corpus_cli_reports_alignment_issues(monkeypatch, capsys):
-    monkeypatch.setattr(VERIFY_CORPUS, "expected_ledgers", lambda *_args: {"p1": {"chart_snapshot": "x", "mappings": []}})
+    monkeypatch.setattr(
+        VERIFY_CORPUS,
+        "expected_ledgers",
+        lambda *_args: {"p1": {"chart_snapshot": "x", "mappings": LEDGER["mappings"]}},
+    )
     monkeypatch.setattr(VERIFY_CORPUS, "hub_ledgers", lambda patients, _container: {"p1": LEDGER})
-    monkeypatch.setattr(VERIFY_CORPUS, "alignment_issues", lambda *_args: ["p1: rendered chart text differs"])
     monkeypatch.setattr(VERIFY_CORPUS.sys, "argv", ["verify-validation-corpus.py", "--set", "set"])
 
     assert VERIFY_CORPUS.main() == 1
     assert "p1: rendered chart text differs" in capsys.readouterr().out
+
+
+def test_verify_corpus_cli_reports_missing_and_reordered_ledgers(monkeypatch, capsys):
+    expected = {"p1": {"chart_snapshot": LEDGER["chart_snapshot"], "mappings": LEDGER["mappings"]}}
+    monkeypatch.setattr(VERIFY_CORPUS, "expected_ledgers", lambda *_args: expected)
+    monkeypatch.setattr(VERIFY_CORPUS, "hub_ledgers", lambda patients, _container: {})
+    monkeypatch.setattr(VERIFY_CORPUS.sys, "argv", ["verify-validation-corpus.py", "--set", "set"])
+
+    assert VERIFY_CORPUS.main() == 1
+    assert "p1: live ledger missing" in capsys.readouterr().out
+
+    reordered = {
+        **LEDGER,
+        "mappings": list(reversed(LEDGER["mappings"])),
+    }
+    monkeypatch.setattr(VERIFY_CORPUS, "hub_ledgers", lambda patients, _container: {"p1": reordered})
+    assert VERIFY_CORPUS.main() == 1
+    assert "p1: mapping content/order differs at index 1" in capsys.readouterr().out
 
 
 def _hub_ledger_module():
@@ -149,3 +169,51 @@ def test_hub_ledgers_report_the_hubs_error(monkeypatch):
     monkeypatch.setattr(module.subprocess, "run", lambda *_a, **_k: Failed())
     with pytest.raises(RuntimeError, match="not configured"):
         module.hub_ledgers(["p1"], "hub")
+
+
+def test_hub_ledgers_and_fixture_capture_handle_interruption_recovery_and_concurrency(tmp_path, monkeypatch):
+    import concurrent.futures
+    from types import SimpleNamespace
+
+    module = _hub_ledger_module()
+    assert module.hub_ledgers([]) == {}
+
+    for bad_stdout in ("", "not-json\n", "{}\n"):
+        monkeypatch.setattr(
+            module.subprocess,
+            "run",
+            lambda *_a, out=bad_stdout, **_k: SimpleNamespace(returncode=0, stdout=out, stderr=""),
+        )
+        with pytest.raises((RuntimeError, json.JSONDecodeError)):
+            module.hub_ledgers(["p1"], "hub")
+
+    fixture = _fixture(tmp_path, "p1")
+    before = fixture.read_text(encoding="utf-8")
+    monkeypatch.setattr(CAPTURE, "ROOT", tmp_path)
+
+    # 1. Interrupted/failing export leaves fixture untouched
+    monkeypatch.setattr(CAPTURE, "hub_ledgers", lambda *_a, **_k: (_ for _ in ()).throw(RuntimeError("HTTP 503")))
+    assert CAPTURE.main(["--fixture", str(fixture)]) == 1
+    assert fixture.read_text(encoding="utf-8") == before
+
+    # 2. Recovery on retry updates fixture cleanly
+    monkeypatch.setattr(CAPTURE, "hub_ledgers", lambda *_a, **_k: {"p1": {**LEDGER, "patient": "p1"}})
+    assert CAPTURE.main(["--fixture", str(fixture)]) == 0
+    assert json.loads(fixture.read_text(encoding="utf-8"))["chart_snapshot"] == LEDGER["chart_snapshot"]
+
+    # 3. Concurrent writers serialize cleanly without corrupting the JSON file
+    with concurrent.futures.ThreadPoolExecutor(2) as pool:
+        rcs = list(pool.map(lambda _: CAPTURE.main(["--fixture", str(fixture)]), range(2)))
+    assert rcs == [0, 0]
+    assert json.loads(fixture.read_text(encoding="utf-8"))["n_records"] == 2
+
+    # 4. Malformed / blank patient UUID rejected before calling export
+    for bad_uuid in ("", None):
+        fixture.write_text(json.dumps({"patient": {"uuid": bad_uuid}}), encoding="utf-8")
+        monkeypatch.setattr(
+            CAPTURE,
+            "hub_ledgers",
+            lambda *_a, **_k: (_ for _ in ()).throw(AssertionError("must not call export")),
+        )
+        assert CAPTURE.main(["--fixture", str(fixture)]) == 1
+

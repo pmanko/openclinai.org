@@ -89,7 +89,11 @@ classification source the deployment supplies.
 - [ ] R4 Series: a trend answer that names two or fewer of a series' in-window readings gets
   the readings appended (up to eight, else count, first, last, lowest, highest); "steady",
   "steadily", "consistent" or "continuous" about a series that changes direction is marked
-  with the readings.
+  with the readings. The eight-reading cutoff bounds the appended deterministic sentence to one
+  compact line so multi-year vital or lab series do not crowd the direct answer, while direction
+  reversals across all in-window readings are still checked and flagged and every individual
+  reading remains inspectable in the cited chart records (tested on >8-reading series in Hub
+  `test_answer_rules.py`).
 - [ ] R5 Drug citation: a drug name followed by a citation to a drug order of another drug
   gets the citation of the order that names it (preferring a record the answer already cites,
   then the latest); with no such order it is marked.

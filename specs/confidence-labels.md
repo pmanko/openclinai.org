@@ -108,7 +108,7 @@ arm), 17 scenarios, 35 turns per arm.
 - [x] **LG1** Bar for visibility (owner decision, set as written on 28 October, [D4 record](reviews/2026-10-28-confidence-labels-run-d4.md#decisions-owner-28-october)): a check may mark what the clinician sees
   when its precision is at least 0.8 on at least 50 marked items across two judged runs, and
   its marks are not a subset of a cheaper check's. A check below the bar runs hidden and is
-  shown only on the dashboard and report. Proposed values; the owner sets them. Status after
+  shown only on the dashboard and report. Status after
   D4: only the deterministic checks mark often enough to measure; the verification review is
   at 0.67 on 6 marks ([record](reviews/2026-10-28-confidence-labels-run-d4.md)).
 
@@ -248,7 +248,7 @@ or it goes. The matrix below replaces the seven-arm matrix for the next run.
 Runs D3 (b7bccdd2) and D4 (2a053c09) measured bare, verify, agree and the built-in reference
 ([D3](reviews/2026-10-28-confidence-labels-run-d3.md), [D4](reviews/2026-10-28-confidence-labels-run-d4.md)). In five judged runs no check has moved a
 judged score, and the judged faults (wrong or missing facts, omitted records, incomplete series)
-are of kinds the checks do not look for. Proposed from D4: bare becomes the default's check set
+are of kinds the checks do not look for. Decided from D4 (owner, 28 October): `single-12b-bare` is the default's check set
 (checked-answers A7); the verification review runs hidden in every round until it has the LG1
 sample; work moves to the answers' faults and to run B. The labelled points of A2, C, D3 and D4
 feed L8 (1123 points, held-out AUROC 0.695, no band at 0.8).

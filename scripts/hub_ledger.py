@@ -26,4 +26,6 @@ def hub_ledgers(patients: list[str], container: str = HUB_CONTAINER) -> dict[str
     if proc.returncode:
         raise RuntimeError(f"Hub QueryStore export failed in {container}: {proc.stderr.strip()}")
     ledgers = [json.loads(line) for line in proc.stdout.splitlines() if line.strip()]
+    if not ledgers or not all(isinstance(l, dict) and l.get("patient") for l in ledgers):
+        raise RuntimeError(f"Hub QueryStore export returned invalid or empty ledger output in {container}")
     return {ledger["patient"]: ledger for ledger in ledgers}

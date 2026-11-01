@@ -4,10 +4,12 @@
 from __future__ import annotations
 
 import argparse
+import fcntl
 import json
 import os
 import sys
 from collections import Counter
+from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
@@ -61,6 +63,19 @@ def _fixture_paths(path: str | None, all_fixtures: bool) -> list[Path]:
     return [candidate if candidate.is_absolute() else ROOT / candidate]
 
 
+@contextmanager
+def _capture_lock(paths: list[Path]):
+    lock_dir = paths[0].parent if paths else ROOT
+    lock_dir.mkdir(parents=True, exist_ok=True)
+    lock_file = lock_dir / ".capture.lock"
+    with open(lock_file, "a+", encoding="utf-8") as fh:
+        fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     selected = parser.add_mutually_exclusive_group(required=True)
@@ -78,7 +93,9 @@ def main(argv: list[str] | None = None) -> int:
         ]
         patients = []
         for path, fixture in fixtures:
-            patient_uuid = str((fixture.get("patient") or {}).get("uuid") or "").strip()
+            patient_obj = fixture.get("patient") if isinstance(fixture, dict) else None
+            raw_uuid = patient_obj.get("uuid") if isinstance(patient_obj, dict) else None
+            patient_uuid = raw_uuid.strip() if isinstance(raw_uuid, str) else ""
             if not patient_uuid:
                 raise ValueError(f"{path} has no patient.uuid")
             patients.append(patient_uuid)
@@ -93,22 +110,23 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     staged: list[tuple[Path, Path, dict[str, Any]]] = []
-    try:
-        for fixture_path, refreshed in prepared:
-            temp_path = fixture_path.with_name(f".{fixture_path.name}.tmp")
-            temp_path.write_text(
-                json.dumps(refreshed, indent=2) + "\n", encoding="utf-8"
-            )
-            staged.append((fixture_path, temp_path, refreshed))
-        for fixture_path, temp_path, refreshed in staged:
-            os.replace(temp_path, fixture_path)
-            print(
-                f"refreshed {fixture_path.relative_to(ROOT)}: "
-                f"{refreshed['n_records']} records"
-            )
-    finally:
-        for _, temp_path, _ in staged:
-            temp_path.unlink(missing_ok=True)
+    with _capture_lock([p for p, _ in prepared]):
+        try:
+            for fixture_path, refreshed in prepared:
+                temp_path = fixture_path.with_name(f".{fixture_path.name}.tmp")
+                temp_path.write_text(
+                    json.dumps(refreshed, indent=2) + "\n", encoding="utf-8"
+                )
+                staged.append((fixture_path, temp_path, refreshed))
+            for fixture_path, temp_path, refreshed in staged:
+                os.replace(temp_path, fixture_path)
+                print(
+                    f"refreshed {fixture_path.relative_to(ROOT)}: "
+                    f"{refreshed['n_records']} records"
+                )
+        finally:
+            for _, temp_path, _ in staged:
+                temp_path.unlink(missing_ok=True)
     return 0
 
 

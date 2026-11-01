@@ -23,9 +23,11 @@ disease-specific definition). The remaining rules:
 | Relative time (In-Depth) | 4 | 1 | 4 | 0 |
 | All | 54 | 11 | 54 | 43 |
 
-The marks repeat a handful of claims across arms and runs (11 distinct), from 3 patients and 17
-scenarios, and the rules were written from these answers, so the table says the rules do what
-they were written for and do not misfire on these answers; it does not say they generalise.
+The marks repeat a handful of claims across arms and runs (11 distinct), from the 2 fixture
+patients (`aloice-mukangu` and `zabella-halambe`; `ellcky-minayo` is excluded as noted under
+Method) across the 17-scenario suite, and the rules were written from these answers, so the
+table says the rules do what they were written for and do not misfire on these answers; it does
+not say they generalise.
 Answer marks count a cell as faulted when the judge's accuracy is below 7 or its citation
 groundedness is partly or unsupported. Two misfires found in this replay were fixed before the
 count (a span quoting the record's own question, "adherence in the past week [11]", and a span
