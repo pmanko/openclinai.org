@@ -7,11 +7,12 @@ container image on GitHub Container Registry. The default baseline is pinned by
 digest in environments/chartsearch-research/hiv-baseline.json; BASELINE=<image>
 selects any other.
 
-  check    is the selected baseline available? (pulls it)
-  restore  load the baseline into the stack with OpenMRS stopped
-  verify   after startup: modules started and the index matches the baseline
-  export   capture the running stack as the local image openclinai-hiv-baseline:local
-  publish  push the exported baseline; without --name it becomes the pinned default
+  check            is the selected baseline available? (pulls it)
+  restore          load the baseline into the stack with OpenMRS stopped
+  verify           after startup: modules started and the index matches the baseline
+  record-deployed  after restart: record rebuilt module artifacts as deployed
+  export           capture the running stack as the local image openclinai-hiv-baseline:local
+  publish          push the exported baseline; without --name it becomes the pinned default
 
 Exit status 3 means the baseline is not available; nothing was changed.
 """
