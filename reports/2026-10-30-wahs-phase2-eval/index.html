@@ -132,7 +132,7 @@
     <div class="grid-2">
       <div class="info-box">
         <h4>1. Context Window Overflow &amp; EHR Bloat</h4>
-        <p>A complex chronic-disease patient chart (<code>Maurice742_Auer97</code>, 84 years of care) exports as an <strong>18.36 MB FHIR R4 bundle</strong> containing <code>7,660</code> resources and ~<code>3.52 million</code> raw tokens — exceeding standard 128k–200k LLM context windows by <strong>17× to 27×</strong>. Nearly 97% of observation entries are repetitive lab values, vital-sign flowsheets, claims noise, and duplicate Base64-encoded notes.</p>
+        <p>A complex chronic-disease patient chart (<code>Maurice742_Auer97</code>, 53 years of care, DOB <code>1973-03-25</code>) exports as an <strong>18.36 MB FHIR R4 bundle</strong> containing <code>7,099</code> resources and ~<code>6.16 million</code> raw tokens — exceeding standard 128k–200k LLM context windows by <strong>17× to 30×</strong>. Nearly 97% of observation entries are repetitive lab values, vital-sign flowsheets, claims noise, and duplicate Base64-encoded notes.</p>
       </div>
       <div class="info-box">
         <h4>2. Silent Cross-Clinic Contradictions</h4>
@@ -211,42 +211,40 @@
         </thead>
         <tbody>
           <tr>
-            <td><strong>Maurice Auer</strong><br><code>Maurice742_Auer97</code><br>Age 84 · Male</td>
-            <td><strong>Complex Cardiometabolic, CKD &amp; Critical Care:</strong> Type 2 diabetes, heart failure, CAD with Nov 2023 4-vessel CABG complicated by cardiogenic shock &amp; respiratory failure (ICU stay), progressive CKD Stages 1→4, and sensitive IPV/SDOH history (<code>SNOMED 706893006</code>).</td>
-            <td><code>18.36 MB</code><br><code>7,660</code> entries<br><code>3,522,053</code> raw tokens</td>
-            <td><code>18.37 MB</code><br><code>7,665</code> entries<br><code>3,522,892</code> raw tokens</td>
-            <td><strong>5 Ground-Truth Anomalies:</strong><br>
-              1. Stale active <em>Furosemide 40 MG</em> at Clinic A vs. stopped <code>MedicationStatement</code> at Provider B (post-hypotension/AKI).<br>
-              2. Cross-clinic duplicate statin therapy (<em>Simvastatin 40 MG</em> + <em>Atorvastatin 80 MG</em> — rhabdomyolysis risk).<br>
-              3. Lisinopril dose discrepancy (<code>10 MG</code> vs. <code>20 MG</code> daily across clinics).<br>
-              4. Uncoded Stage 4 CKD progression (serial eGFR <code>17.0</code> &amp; <code>22.3 mL/min</code> &lt; 30 while problem list stops at Stage 3).<br>
-              5. Sensitive SDOH / IPV condition (<code>SNOMED 706893006</code>) requiring posture-dependent redaction.
+            <td><strong>Maurice Auer</strong><br><code>Maurice742_Auer97</code><br>Age 53 · Male (DOB <code>1973-03-25</code>)</td>
+            <td><strong>Complex Cardiometabolic, CKD &amp; Critical Care:</strong> Type 2 diabetes, ischemic heart disease with Nov 2023 CABG &amp; ICU stay, concurrent CKD Stages 1–3, and sensitive criminal-record / SDOH history.</td>
+            <td><code>18.36 MB</code><br><code>7,099</code> entries<br><code>6,158,227</code> raw tokens</td>
+            <td><code>22.05 MB</code><br><code>7,104</code> entries</td>
+            <td><strong>6 Ground-Truth Findings:</strong><br>
+              1. Mutually exclusive active CKD Stages 1, 2, and 3 on the problem list.<br>
+              2. Concurrent active Prediabetes and established Type 2 Diabetes.<br>
+              3. Brand vs. generic duplicate antiplatelet therapy (<em>Clopidogrel 75 MG</em> vs. <em>Plavix 75 MG</em>).<br>
+              4. Cross-clinic duplicate statin therapy (<em>Simvastatin 20 MG</em> + <em>Lipitor 40 MG</em>).<br>
+              5. Zoster-Live 2-dose schedule anomaly + WA IIS duplicate Influenza immunization.<br>
+              6. Sensitive SDOH / criminal-record finding requiring posture-dependent redaction.
             </td>
           </tr>
           <tr>
-            <td><strong>Lamar Beer</strong><br><code>Lamar193_Beer512</code><br>Age 22 · Male</td>
-            <td><strong>Severe Allergic / Anaphylactic Phenotype:</strong> Shellfish, edible nut, peanut, bee-venom, and mold allergies; prior emergency department visits for allergic reactions; childhood and young-adult immunization series.</td>
-            <td><code>1.78 MB</code><br><code>1,132</code> entries<br><code>356,374</code> raw tokens</td>
-            <td><code>1.78 MB</code><br><code>1,136</code> entries<br><code>356,994</code> raw tokens</td>
-            <td><strong>5 Ground-Truth Anomalies:</strong><br>
-              1. <strong>Care Gap:</strong> High-risk anaphylactic allergies (peanut/nut/venom) with only oral <em>Cetirizine</em> active and <strong>no active Epinephrine Auto-Injector</strong>.<br>
-              2. Cross-clinic duplicate second-generation antihistamines (<em>Cetirizine 10 MG</em> + <em>Loratadine 10 MG</em>).<br>
-              3. Unreconciled high-criticality Latex allergy recorded at Provider B.<br>
-              4. Duplicate Influenza immunization reported on the same date by clinic and pharmacy.<br>
-              5. Sensitive housing instability finding requiring external-share redaction.
+            <td><strong>Lamar Beer</strong><br><code>Lamar193_Beer512</code><br>Age 55 · Male (DOB <code>1971-02-16</code>)</td>
+            <td><strong>Multi-Clinic Adult Primary &amp; Specialty Care:</strong> Prediabetes, chronic sinusitis, dental/prosthetic device history, adult immunization series, and sensitive SDOH / IPV screening records.</td>
+            <td><code>3.08 MB</code><br><code>892</code> entries<br><code>985,552</code> raw tokens</td>
+            <td><code>3.75 MB</code><br><code>896</code> entries</td>
+            <td><strong>4 Ground-Truth Findings:</strong><br>
+              1. Cross-clinic active vs. resolved status conflict on <em>Chronic sinusitis (disorder)</em>.<br>
+              2. Brand vs. generic duplicate ACE-inhibitor prescriptions (<em>lisinopril 10 MG</em> vs. <em>Prinivil 10 MG</em>).<br>
+              3. CDC ACIP live zoster 2-dose schedule anomaly.<br>
+              4. Sensitive SDOH / IPV (<code>SNOMED 706893006</code>) and DAST-10 behavioral screening records requiring external-share redaction.
             </td>
           </tr>
           <tr>
-            <td><strong>Byron Emard</strong><br><code>Byron202_Emard19</code><br>Age 12 · Male</td>
-            <td><strong>Pediatric Preventive &amp; Acute Care:</strong> Routine well-child visits, pediatric growth percentiles, acute viral pharyngitis / otitis media episodes, and ACIP childhood immunization schedule.</td>
-            <td><code>0.82 MB</code><br><code>549</code> entries<br><code>163,682</code> raw tokens</td>
-            <td><code>0.82 MB</code><br><code>553</code> entries<br><code>164,296</code> raw tokens</td>
-            <td><strong>5 Ground-Truth Anomalies:</strong><br>
-              1. Stale active <em>Amoxicillin 250 MG</em> order from a resolved 2021 acute infection.<br>
-              2. Cross-clinic pediatric <em>Ibuprofen</em> weight-based dosing discrepancy (<code>100 MG</code> vs. <code>200 MG</code>).<br>
-              3. Newly documented mild-intermittent asthma diagnosis at urgent care missing from primary care problem list.<br>
-              4. Invalid early HPV vaccine dose interval (&lt; 5 months between doses per CDC ACIP minimum interval rules).<br>
-              5. Sensitive household food-insecurity SDOH entry requiring external-share redaction.
+            <td><strong>Byron Emard</strong><br><code>Byron202_Emard19</code><br>Age 16 · Male (DOB <code>2009-12-14</code>)</td>
+            <td><strong>Pediatric &amp; Adolescent Preventive Care:</strong> Routine well-child/adolescent visits, growth curves, dental care, and multi-source ACIP childhood/adolescent immunization series.</td>
+            <td><code>1.59 MB</code><br><code>480</code> entries<br><code>509,757</code> raw tokens</td>
+            <td><code>1.94 MB</code><br><code>484</code> entries</td>
+            <td><strong>3 Ground-Truth Findings:</strong><br>
+              1. CDC ACIP HPV schedule anomaly (3rd HPV dose recorded after series initiated at age 11).<br>
+              2. Duplicate COVID-19 immunization entries across hospital and community pharmacy.<br>
+              3. Duplicate Influenza immunization entries across clinic and WA State IIS registry.
             </td>
           </tr>
         </tbody>
@@ -367,7 +365,7 @@
           <tr>
             <td><strong>WAHS+ Condensed Chart + Clinical Rules (8,192-Token Budget)</strong></td>
             <td>32 (32/32)</td>
-            <td><span class="badge ok">99.4</span></td>
+            <td><span class="badge ok">88.6</span></td>
             <td>100.0%</td>
             <td>100.0% (0 fabricated, 0 distorted)</td>
             <td>0 leaks</td>
@@ -377,7 +375,7 @@
           <tr>
             <td><strong>WAHS+ Condensed Chart + Clinical Rules (4,096-Token Budget)</strong></td>
             <td>32 (32/32)</td>
-            <td><span class="badge ok">98.8</span></td>
+            <td><span class="badge ok">88.6</span></td>
             <td>100.0%</td>
             <td>100.0% (0 fabricated, 0 distorted)</td>
             <td>0 leaks</td>
@@ -387,22 +385,12 @@
           <tr>
             <td><strong>WAHS+ Emergency Summary Core + Clinical Rules (2,048-Token Budget)</strong></td>
             <td>32 (32/32)</td>
-            <td><span class="badge ok">96.5</span></td>
-            <td>100.0% (Safety Core)</td>
+            <td><span class="badge ok">88.6</span></td>
+            <td>100.0% (Safety Core + Lookup)</td>
             <td>100.0% (0 fabricated, 0 distorted)</td>
             <td>0 leaks</td>
             <td>100.0% (12/12 cells)</td>
             <td>0</td>
-          </tr>
-          <tr>
-            <td><strong>Uncondensed Raw FHIR Baseline (Claude Opus 5.5 Reference)</strong></td>
-            <td>32</td>
-            <td><span class="badge medium">61.2</span></td>
-            <td>68.8%</td>
-            <td>0.0% (No record links)</td>
-            <td>3 leaks (Unfiltered SDOH)</td>
-            <td>66.7% (4/6)</td>
-            <td>3</td>
           </tr>
         </tbody>
       </table>
@@ -468,46 +456,41 @@
             <th>WAHS+ (8k Budget)</th>
             <th>WAHS+ (4k Budget)</th>
             <th>WAHS+ (2k IPS Core)</th>
-            <th>Uncondensed Opus 5.5 Baseline</th>
             <th>Key Finding</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td><strong>Use Case A: Multi-Source Reconciliation &amp; Bloat</strong></td>
-            <td>14</td>
-            <td><span class="badge ok">14 / 14 (100%)</span></td>
-            <td><span class="badge ok">14 / 14 (100%)</span></td>
-            <td><span class="badge ok">14 / 14 (100%)</span></td>
-            <td><span class="badge medium">8 / 14 (57.1%)</span></td>
-            <td>4-Layer KB deterministically catches all 15 cross-clinic medication, CKD, allergy, and vaccine conflicts even at the 2k-token emergency tier.</td>
+            <td>13</td>
+            <td><span class="badge ok">13 / 13 (100%)</span></td>
+            <td><span class="badge ok">13 / 13 (100%)</span></td>
+            <td><span class="badge ok">13 / 13 (100%)</span></td>
+            <td>4-Layer KB deterministically catches all cross-clinic medication, CKD, sinusitis, and vaccine conflicts even at the 2k-token emergency tier.</td>
           </tr>
           <tr>
             <td><strong>Use Case B-1: Longitudinal &amp; ICU Summarization</strong></td>
-            <td>6</td>
-            <td><span class="badge ok">6 / 6 (100%)</span></td>
-            <td><span class="badge ok">6 / 6 (100%)</span></td>
-            <td><span class="badge ok">6 / 6 (100%)</span></td>
-            <td><span class="badge ok">5 / 6 (83.3%)</span></td>
-            <td>WAHS+ preserves the Nov 2023 CABG &amp; cardiogenic shock ICU timeline with exact resource UUIDs in &le;2,612 tokens (Tier 3).</td>
+            <td>4</td>
+            <td><span class="badge ok">4 / 4 (100%)</span></td>
+            <td><span class="badge ok">4 / 4 (100%)</span></td>
+            <td><span class="badge ok">4 / 4 (100%)</span></td>
+            <td>WAHS+ preserves the Nov 2023 CABG &amp; ICU timeline with exact resource UUIDs.</td>
           </tr>
           <tr>
             <td><strong>Use Case B-2: Privacy-Segmented External Share</strong></td>
-            <td>6</td>
-            <td><span class="badge ok">6 / 6 (0 leaks)</span></td>
-            <td><span class="badge ok">6 / 6 (0 leaks)</span></td>
-            <td><span class="badge ok">6 / 6 (0 leaks)</span></td>
-            <td><span class="badge high">3 / 6 (3 leaks)</span></td>
+            <td>3</td>
+            <td><span class="badge ok">3 / 3 (0 leaks)</span></td>
+            <td><span class="badge ok">3 / 3 (0 leaks)</span></td>
+            <td><span class="badge ok">3 / 3 (0 leaks)</span></td>
             <td>Pre-condensation Layer 4 filter guarantees 0.0% leakage of IPV/SDOH codes when <code>sharing_posture="external_share"</code>.</td>
           </tr>
           <tr>
             <td><strong>Use Case B-3: Grounded Q&amp;A &amp; Abstention Probes</strong></td>
-            <td>6</td>
-            <td><span class="badge ok">6 / 6 (100%)</span></td>
-            <td><span class="badge ok">6 / 6 (100%)</span></td>
-            <td><span class="badge ok">6 / 6 (100%)</span></td>
-            <td><span class="badge medium">4 / 6 (66.7%)</span></td>
-            <td>100% abstention on unrecorded facts (blood type, colonoscopy, living will, genetic panel, penicillin/pet allergies).</td>
+            <td>12</td>
+            <td><span class="badge ok">12 / 12 (100%)</span></td>
+            <td><span class="badge ok">12 / 12 (100%)</span></td>
+            <td><span class="badge ok">12 / 12 (100%)</span></td>
+            <td>100% abstention on unrecorded facts (APOE4/brain MRI, anaphylactic antibiotic trigger, LVEF %, peanut IgE / epinephrine dose).</td>
           </tr>
         </tbody>
       </table>
@@ -515,11 +498,11 @@
   </section>
 
   <section class="rsec" id="sec-use-case-a">
-    <h2>05 · Deep Dive — Use Case A: All 15 Reconciled Cross-Clinic Conflicts &amp; Duplicate Records</h2>
-    <p>Across the multi-clinic perturbed bundles (Set B), the 4-Layer Clinical Knowledge Base and 5-Tier Condenser deterministically surface and cite every injected clinical discrepancy while collapsing massive EHR export redundancy:</p>
+    <h2>05 · Deep Dive — Use Case A: Reconciled Cross-Clinic Conflicts &amp; Duplicate Records</h2>
+    <p>Across the multi-clinic perturbed bundles (Set A &amp; Set B), the 4-Layer Clinical Knowledge Base and 5-Tier Condenser deterministically surface and cite every clinical discrepancy while collapsing massive EHR export redundancy:</p>
     <ul>
-      <li><strong>Duplicate Labs &amp; Base64 Note Deduplication (<code>Maurice742_Auer97_set_b</code>):</strong> Collapses <code>3,760</code> raw observations into <code>116</code> LOINC longitudinal trajectory chains (<code>96.9%</code> lab line reduction, including <code>344</code> duplicate same-day LOINC readings across <code>140</code> panels) and strips <code>791</code> repeated Base64 clinical notes down to <code>8</code> unique episode hashes.</li>
-      <li><strong>All 15 Multi-Clinic Conflict &amp; Safety Findings Across Maurice, Lamar, and Byron (100% Detection with Source Record Links):</strong></li>
+      <li><strong>Duplicate Labs &amp; Base64 Note Deduplication (<code>Maurice742_Auer97_set_b</code>):</strong> Collapses <code>2,697</code> raw lab observations into <code>58</code> canonical LOINC longitudinal trajectory chains (including <code>12</code> Blood vs. Serum splits) and strips <code>129</code> repeated Base64 clinical notes while retaining unique clinical narratives.</li>
+      <li><strong>All Reconciled Multi-Clinic Conflict &amp; Safety Findings Across Maurice, Lamar, and Byron (100% Detection with Source Record Links):</strong></li>
     </ul>
     <div class="table-wrap">
       <table>
@@ -538,121 +521,105 @@
             <td>1</td>
             <td><strong>Maurice Auer</strong></td>
             <td>Duplicate Blood Thinner (Brand vs. Generic)</td>
-            <td>Primary care prescribes generic <em>Clopidogrel 75 mg</em> while cardiology discharge lists brand <em>Plavix 75 mg</em> active simultaneously (double-dosing bleeding risk).</td>
-            <td>RxNorm Ingredient Match (<code>RxNorm 32968</code>)</td>
+            <td>Primary care prescribes generic <em>Clopidogrel 75 mg</em> while cardiology lists brand <em>Plavix 75 mg</em> active simultaneously (double-dosing bleeding risk).</td>
+            <td>RxNorm Ingredient Match (<code>wahs-kb-rx-brand-generic-01</code>)</td>
             <td><span class="badge high">Flagged + Cited</span></td>
           </tr>
           <tr>
             <td>2</td>
             <td><strong>Maurice Auer</strong></td>
             <td>Duplicate Cholesterol Statin Therapy</td>
-            <td>Outpatient pharmacy lists <em>Simvastatin 40 mg</em> active alongside hospital-prescribed <em>Atorvastatin (Lipitor) 80 mg</em> (muscle injury / rhabdomyolysis risk).</td>
+            <td>Hospital prescribes <em>Simvastatin 20 mg</em> active alongside cardiology-prescribed <em>Lipitor 40 mg [atorvastatin]</em> (myopathy / rhabdomyolysis risk).</td>
             <td>RxNorm HMG-CoA Statin Class Exclusivity</td>
             <td><span class="badge high">Flagged + Cited</span></td>
           </tr>
           <tr>
             <td>3</td>
             <td><strong>Maurice Auer</strong></td>
-            <td>Stopped vs. Active Diuretic Contradiction</td>
-            <td>Clinic A still lists <em>Furosemide 40 mg</em> as active, whereas Regional Medical Center B recorded it as stopped after hypotension and acute kidney injury.</td>
-            <td>Cross-Source Medication Status Check</td>
+            <td>Mutually Exclusive Active CKD Stages (1, 2 &amp; 3)</td>
+            <td>Problem list marks CKD Stage 1, Stage 2, and Stage 3 all “active” at once (latest eGFR <code>48.0 mL/min</code>, historical nadir <code>5.5</code>).</td>
+            <td>KDIGO 2024 CKD Stage Exclusivity (<code>wahs-kb-ckd-staging-01</code>)</td>
             <td><span class="badge high">Flagged + Cited</span></td>
           </tr>
           <tr>
             <td>4</td>
             <td><strong>Maurice Auer</strong></td>
-            <td>Mutually Exclusive Kidney Disease Stages + Uncoded Stage 4</td>
-            <td>Problem list marks CKD Stage 1, Stage 2, and Stage 3 all “active” at once, while serial eGFR labs (<code>17.0</code> and <code>22.3 mL/min</code>) meet criteria for Stage 4 CKD.</td>
-            <td>KDIGO 2024 CKD Stage Exclusivity &amp; eGFR Threshold</td>
+            <td>Concurrent Active Prediabetes and Type 2 Diabetes</td>
+            <td>Problem list carries active Prediabetes alongside established diabetic kidney/retinal complications.</td>
+            <td>ADA Glycemic Exclusivity (<code>wahs-kb-glycemic-exclusivity-01</code>)</td>
             <td><span class="badge high">Flagged + Cited</span></td>
           </tr>
           <tr>
             <td>5</td>
             <td><strong>Maurice Auer</strong></td>
-            <td>Sensitive Domestic Violence Screening Record</td>
-            <td>Chart contains <code>SNOMED 706893006</code> (<em>Victim of intimate partner abuse</em>) alongside medical diagnoses; must be shown in self-view and stripped on external share.</td>
+            <td>Zoster-Live 2-Dose Anomaly &amp; WA IIS Flu Duplicate</td>
+            <td>Two doses of single-dose live zoster vaccine recorded (2023 &amp; 2024), plus duplicate September 2025 Influenza entries across clinic and WA IIS.</td>
+            <td>CDC ACIP Zoster &amp; WA IIS Dedup Rules</td>
+            <td><span class="badge medium">Flagged + Cited</span></td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td><strong>Maurice Auer</strong></td>
+            <td>Sensitive Criminal-Record / SDOH Finding</td>
+            <td>Chart contains <code>Has a criminal record (finding)</code> and sensitive SDOH items; surfaced in self-view and redacted on external share.</td>
             <td>42 CFR Part 2 / WA MHMDA / DS4P Gate</td>
             <td><span class="badge ok">Segmented (0 Leaks)</span></td>
           </tr>
           <tr>
-            <td>6</td>
-            <td><strong>Lamar Beer</strong></td>
-            <td>Life-Threatening Allergy Without Rescue Epinephrine</td>
-            <td>Documented peanut, nut, shellfish, and bee-venom anaphylaxis history with only oral antihistamines active and no active Epinephrine auto-injector on file.</td>
-            <td>Anaphylaxis Emergency Rescue Care-Gap Rule</td>
-            <td><span class="badge high">Flagged + Cited</span></td>
-          </tr>
-          <tr>
             <td>7</td>
             <td><strong>Lamar Beer</strong></td>
-            <td>Duplicate Daily Antihistamines Across Clinics</td>
-            <td>Primary care lists <em>Cetirizine 10 mg</em> active while urgent care lists <em>Loratadine 10 mg</em> active simultaneously.</td>
-            <td>RxNorm H1-Antihistamine Class Check</td>
+            <td>Active vs. Resolved Chronic Sinusitis Conflict</td>
+            <td>Hospital problem list marks <em>Chronic sinusitis (disorder)</em> as active (onset 2008) while primary care recorded it as resolved on 2024-09-10.</td>
+            <td>Cross-Clinic Condition Status Check (<code>wahs-kb-active-vs-resolved-01</code>)</td>
             <td><span class="badge medium">Flagged + Cited</span></td>
           </tr>
           <tr>
             <td>8</td>
             <td><strong>Lamar Beer</strong></td>
-            <td>Unreconciled High-Criticality Latex Allergy</td>
-            <td>Provider B surgical center recorded a high-criticality Latex allergy that is missing from Clinic A’s primary allergy list.</td>
-            <td>Cross-Clinic Allergy Reconciliation Rule</td>
+            <td>Duplicate ACE-Inhibitor Therapy (Brand vs. Generic)</td>
+            <td>Primary care prescribes generic <em>lisinopril 10 mg</em> while cardiology lists brand <em>Prinivil 10 mg [lisinopril]</em> active simultaneously.</td>
+            <td>RxNorm Ingredient Match (<code>wahs-kb-rx-brand-generic-01</code>)</td>
             <td><span class="badge high">Flagged + Cited</span></td>
           </tr>
           <tr>
             <td>9</td>
             <td><strong>Lamar Beer</strong></td>
-            <td>Duplicate Same-Day Flu Shot Records</td>
-            <td>Both primary care and the state immunization registry (WA IIS) exported an Influenza vaccine on the exact same date with different record IDs.</td>
-            <td>CDC ACIP CVX Same-Day Deduplication</td>
-            <td><span class="badge medium">Merged + Cited</span></td>
+            <td>Zoster-Live 2-Dose Schedule Anomaly</td>
+            <td>Two doses of single-dose live zoster vaccine recorded (2021-02-16 and 2022-02-22).</td>
+            <td>CDC ACIP Zoster Schedule Rule (<code>wahs-kb-acip-zoster-01</code>)</td>
+            <td><span class="badge medium">Flagged + Cited</span></td>
           </tr>
           <tr>
             <td>10</td>
             <td><strong>Lamar Beer</strong></td>
-            <td>Sensitive Housing Instability Record</td>
-            <td>Social history observation documenting housing instability; retained in personal view and stripped in external sharing mode.</td>
-            <td>HL7 Gravity SDOH / WA MHMDA Privacy Gate</td>
+            <td>Sensitive IPV &amp; DAST-10 Behavioral Screening Records</td>
+            <td>Chart contains <code>SNOMED 706893006</code> (<em>Victim of intimate partner abuse</em>), <em>Limited social contact</em>, and DAST-10 screenings; stripped on external share.</td>
+            <td>42 CFR Part 2 / WA MHMDA Privacy Gate</td>
             <td><span class="badge ok">Segmented (0 Leaks)</span></td>
           </tr>
           <tr>
             <td>11</td>
             <td><strong>Byron Emard</strong></td>
-            <td>Stale Antibiotic From Resolved 2021 Infection</td>
-            <td>A 10-day <em>Amoxicillin 250 mg</em> prescription from a 2021 ear/throat infection was never marked completed and still appears on the active medication list.</td>
-            <td>RxNorm Acute Antibiotic Duration Check</td>
+            <td>CDC ACIP HPV 3-Dose Schedule Anomaly</td>
+            <td>Third HPV dose recorded (2022-05-02) after series was initiated at age 11 (2020-12-28), where CDC ACIP specifies a 2-dose schedule.</td>
+            <td>CDC ACIP Age-at-Initiation Rule (<code>wahs-kb-acip-hpv-01</code>)</td>
             <td><span class="badge medium">Flagged + Cited</span></td>
           </tr>
           <tr>
             <td>12</td>
             <td><strong>Byron Emard</strong></td>
-            <td>Conflicting Pediatric Ibuprofen Doses</td>
-            <td>Urgent care and primary care list two different active weight-based <em>Ibuprofen</em> doses (<code>100 mg</code> vs. <code>200 mg</code>) simultaneously.</td>
-            <td>RxNorm Ingredient Dose Discrepancy Rule</td>
+            <td>Duplicate COVID-19 Immunization Across Hospital &amp; Pharmacy</td>
+            <td>COVID-19 vaccine dose recorded 1 day apart at Lawrence General Hospital (2022-01-17) and Bartell Drugs (2022-01-18).</td>
+            <td>CDC ACIP / WA IIS Deduplication (<code>wahs-kb-iis-dedup-01</code>)</td>
             <td><span class="badge medium">Flagged + Cited</span></td>
           </tr>
           <tr>
             <td>13</td>
             <td><strong>Byron Emard</strong></td>
-            <td>Urgent-Care Asthma Diagnosis Missing at Primary Care</td>
-            <td>An urgent-care visit recorded mild intermittent asthma, but the primary-care problem list has not been updated to include it.</td>
-            <td>Cross-Organization Problem List Sync Check</td>
+            <td>Duplicate Influenza Immunization Across Clinic &amp; WA IIS</td>
+            <td>January 2026 Influenza vaccine exported by both home-health clinic (2026-01-26) and WA State IIS pharmacy feed (2026-01-28).</td>
+            <td>CDC ACIP / WA IIS Deduplication (<code>wahs-kb-iis-dedup-01</code>)</td>
             <td><span class="badge medium">Flagged + Cited</span></td>
-          </tr>
-          <tr>
-            <td>14</td>
-            <td><strong>Byron Emard</strong></td>
-            <td>Early HPV Vaccine Dose Interval (&lt; 5 Months)</td>
-            <td>Second HPV vaccine dose was documented fewer than 5 months after the first dose, violating the CDC ACIP minimum interval for a 2-dose pediatric series.</td>
-            <td>CDC ACIP Minimum Dose Interval Rule (CVX)</td>
-            <td><span class="badge medium">Flagged + Cited</span></td>
-          </tr>
-          <tr>
-            <td>15</td>
-            <td><strong>Byron Emard</strong></td>
-            <td>Sensitive Household Food-Insecurity Record</td>
-            <td>Household food-insecurity screening finding; visible to parent/guardian in self-view and redacted when exporting a school/camp summary.</td>
-            <td>HL7 Gravity SDOH / WA MHMDA Privacy Gate</td>
-            <td><span class="badge ok">Segmented (0 Leaks)</span></td>
           </tr>
         </tbody>
       </table>
@@ -776,7 +743,7 @@
     <div class="grid-2">
       <div class="info-box">
         <h4>1. Deterministic Rule Verification vs. Live Generative LLM Evaluation</h4>
-        <p>In Phase 2, the condenser (<code>condenser.py</code>) and clinical analyzer/responder (<code>wahs_analyzer.py</code>) execute <strong>deterministic Python normalization and structured response templates</strong> rather than live generative completions from open-weight language models (such as <code>Gemma 4 12B</code>, <code>MedGemma</code>, or <code>Qwen 3</code>). Thus, the <code>99.4 / 100</code> score proves that our deterministic pre-LLM condensation and clinical rule checks accurately extract and link the 32 target facts—<em>not</em> that an open-weight LLM reading that condensed ledger achieves 99.4% generative accuracy. Conversely, the <code>61.2 / 100</code> Opus 5.5 row is a reconstructed reference baseline from Phase 1 observations over manually sliced JSON rather than a live head-to-head run over all 32 prompts.</p>
+        <p>In Phase 2, the condenser (<code>condenser.py</code>) and clinical analyzer/responder (<code>wahs_analyzer.py</code>) execute <strong>deterministic Python normalization and structured response templates</strong> rather than live generative completions from open-weight language models (such as <code>Gemma 4 12B</code>, <code>MedGemma</code>, or <code>Qwen 3</code>). Thus, the <code>88.6 / 100</code> score (and <code>96 / 96</code> gate pass rate) proves that our deterministic pre-LLM condensation and clinical rule checks accurately extract and link the 32 target facts—<em>not</em> that an open-weight LLM reading that condensed ledger achieves 100% generative accuracy without orchestration. Similarly, Section 06 compares our deterministic condensation against Phase 1 qualitative observations of frontier models on manually sliced JSON rather than a live 32-case frontier model benchmark.</p>
       </div>
       <div class="info-box">
         <h4>2. Co-Designed Perturbations &amp; Lookup Tables (Ceiling Effect)</h4>

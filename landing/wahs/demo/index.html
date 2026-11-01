@@ -1482,15 +1482,20 @@
           <!-- Mode 1: Full-Width Card-Based Clinical Task Mega-Dropdown -->
           <div class="composer-mode-block active-mode" id="mode-block-task">
             <div class="composer-mode-header">
-              <span class="composer-mode-title">📋 1. Pick a Clinical Task</span>
-              <span class="mode-active-pill" id="mode-pill-task">Active Selection</span>
+              <label for="skill-task-select" class="composer-mode-title">📋 1. Pick a Clinical Task</label>
+              <div style="display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap;">
+                <select id="skill-task-select" aria-label="Select Clinical Task" style="padding: 0.32rem 0.65rem; border: 1px solid var(--border-strong); border-radius: 6px; font-size: 0.84rem; font-weight: 600; background: var(--surface); color: var(--text);">
+                  <option value="skill-visit-brief">Prepare for My Next Doctor Visit</option>
+                </select>
+                <span class="mode-active-pill" id="mode-pill-task">Active Selection</span>
+              </div>
             </div>
             <div class="mega-dropdown-wrap" id="task-mega-dropdown">
-              <button type="button" class="mega-trigger-btn" id="task-mega-trigger" aria-expanded="false" aria-controls="task-mega-panel">
+              <button type="button" class="mega-trigger-btn" id="task-mega-trigger" aria-expanded="true" aria-controls="task-mega-panel">
                 <div class="mega-trigger-main" id="task-mega-trigger-main"></div>
                 <div class="mega-trigger-right" id="task-mega-trigger-right"></div>
               </button>
-              <div class="mega-menu-panel" id="task-mega-panel" role="region" aria-label="Clinical Task Tiles"></div>
+              <div class="mega-menu-panel open" id="task-mega-panel" role="region" aria-label="Clinical Task Tiles"></div>
             </div>
           </div>
 
@@ -1615,6 +1620,7 @@
         privacyExternalShare: false,
         audience: "patient",
         activeSkillId: "skill-visit-brief",
+        megaMenuOpen: true,
         customQuestionResult: null,
         llmBaseUrl: "http://127.0.0.1:18081",
         llmConnected: false,
@@ -1624,6 +1630,27 @@
         llmCache: {},
         activeAbortController: null
       };
+
+      const SENSITIVE_SDOH_REGEX = /abuse|violence|criminal|unemployed|housing|isolation|alcohol|drinking|dast-10|substance|limited social contact|intimate partner|audit-c|humiliation|afraid|423315002|706893006|55600006|82666-9/i;
+      const ROOM_EQUIP_REGEX = /dental x-ray|examination table|hospital bed|operating room/i;
+
+      function isSensitiveText(str) {
+        return SENSITIVE_SDOH_REGEX.test(String(str == null ? "" : str));
+      }
+
+      function isSensitiveResource(r) {
+        if (!r) return false;
+        const flags = r.flags || [];
+        if (flags.some(function (f) { return /sensitive|sdoh/i.test(String(f)); })) return true;
+        return isSensitiveText([r.display, r.summary, r.code, r.decodedNoteText].join(" "));
+      }
+
+      function isRoomEquipmentResource(r) {
+        if (!r) return false;
+        const flags = r.flags || [];
+        if (flags.some(function (f) { return /room equipment/i.test(String(f)); })) return true;
+        return r.resourceType === "Device" && ROOM_EQUIP_REGEX.test([r.display, r.summary].join(" "));
+      }
 
       function esc(str) {
         return String(str == null ? "" : str)
@@ -1771,6 +1798,7 @@
             state.browserSearch = "";
             state.selectedResourceIndex = null;
             state.customQuestionResult = null;
+            closeCitationDrawer();
             const searchEl = document.getElementById("browser-search-input");
             if (searchEl) searchEl.value = "";
             renderAll();
@@ -1798,7 +1826,7 @@
         ];
 
         document.getElementById("browser-panel-title").textContent =
-          "Original FHIR R4 Chart — " + cleanName(p.patient_name);
+          "Original FHIR R4 Chart — " + cleanName(p.patient_name) + (state.privacyExternalShare ? " (External-Share Filtered)" : "");
         document.getElementById("browser-total-badge").textContent =
           (fb.total_bundle_entries || 0).toLocaleString() + " bundle entries";
 
@@ -1822,7 +1850,13 @@
         });
 
         const q = (state.browserSearch || "").trim().toLowerCase();
-        const rows = (fb.resources || []).filter(function (r) {
+        const visibleResources = (fb.resources || []).filter(function (r) {
+          if (state.privacyExternalShare && isSensitiveResource(r)) return false;
+          if (state.filterRoomEquip && isRoomEquipmentResource(r)) return false;
+          return true;
+        });
+
+        const rows = visibleResources.filter(function (r) {
           if (state.browserCategory === "All Core Clinical") {
             if (!r.isCoreClinical) return false;
           } else if (r.category !== state.browserCategory) {
@@ -1837,10 +1871,12 @@
 
         const chosen = rows.find(function (r) {
           return r.index === state.selectedResourceIndex;
-        }) || rows[0] || (fb.resources || [])[0];
+        }) || rows[0] || visibleResources[0] || null;
 
         if (chosen) {
           state.selectedResourceIndex = chosen.index;
+        } else {
+          state.selectedResourceIndex = null;
         }
 
         const tbody = document.getElementById("browser-table-body");
@@ -1966,12 +2002,12 @@
           let rawTxt = cell.chart_text || "";
           if (state.filterRoomEquip) {
             rawTxt = rawTxt.split("\n").filter(function (ln) {
-              return !/dental x-ray|examination table|hospital bed/i.test(ln);
+              return !ROOM_EQUIP_REGEX.test(ln);
             }).join("\n");
           }
           if (state.privacyExternalShare) {
             rawTxt = rawTxt.split("\n").filter(function (ln) {
-              return !/abuse|violence|criminal|unemployed|housing|isolation/i.test(ln);
+              return !isSensitiveText(ln);
             }).join("\n");
           }
           rawPre.textContent = rawTxt;
@@ -1981,8 +2017,8 @@
 
           function filterLines(arr, prioritizeMedical) {
             const filtered = (arr || []).filter(function (item) {
-              if (state.filterRoomEquip && /dental x-ray|examination table|hospital bed/i.test(item)) return false;
-              if (state.privacyExternalShare && /abuse|violence|criminal|unemployed|housing|isolation/i.test(item)) return false;
+              if (state.filterRoomEquip && ROOM_EQUIP_REGEX.test(item)) return false;
+              if (state.privacyExternalShare && isSensitiveText(item)) return false;
               return true;
             });
             if (!prioritizeMedical) return filtered;
@@ -2060,6 +2096,15 @@
         const triggerMain = document.getElementById("task-mega-trigger-main");
         const triggerRight = document.getElementById("task-mega-trigger-right");
         const megaPanel = document.getElementById("task-mega-panel");
+        const taskSelectEl = document.getElementById("skill-task-select");
+
+        if (taskSelectEl) {
+          taskSelectEl.innerHTML = skills.map(function (s) {
+            const isSel = s.id === (activeSkill && activeSkill.id);
+            return '<option value="' + esc(s.id) + '"' + (isSel ? ' selected' : '') + '>' + esc(s.title) + ' (' + esc(s.status_badge) + ')</option>';
+          }).join("");
+          taskSelectEl.value = (activeSkill && activeSkill.id) || state.activeSkillId;
+        }
 
         if (triggerMain && activeSkill) {
           const desc = SKILL_PROMPTS[activeSkill.id] || activeSkill.subtitle || "";
@@ -2122,7 +2167,6 @@
               const sid = tile.getAttribute("data-skill-id");
               state.activeSkillId = sid;
               state.customQuestionResult = null;
-              state.megaMenuOpen = false;
               const qIn = document.getElementById("qa-question-input");
               if (qIn) {
                 qIn.value = "";
@@ -2249,12 +2293,12 @@
         let rawLines = String(cell.chart_text || "").split("\n").filter(function (ln) { return ln.trim().length > 0; });
         if (state.filterRoomEquip) {
           rawLines = rawLines.filter(function (ln) {
-            return !/dental x-ray|examination table|hospital bed/i.test(ln);
+            return !ROOM_EQUIP_REGEX.test(ln);
           });
         }
         if (state.privacyExternalShare) {
           rawLines = rawLines.filter(function (ln) {
-            return !/abuse|violence|criminal|unemployed|housing|isolation/i.test(ln);
+            return !isSensitiveText(ln);
           });
         }
 
@@ -2294,15 +2338,34 @@
         const retainedMap = promptData && promptData.retainedMap;
         return (rows || []).filter(function (r) {
           const combinedText = ((r.label || "") + " " + (r.detail || "")).toLowerCase();
-          if (state.filterRoomEquip && /dental x-ray|examination table|hospital bed/i.test(combinedText)) {
+          if (state.filterRoomEquip && ROOM_EQUIP_REGEX.test(combinedText)) {
             return false;
           }
-          if (state.privacyExternalShare && /abuse|violence|criminal|unemployed|housing|isolation/i.test(combinedText)) {
+          if (state.privacyExternalShare && (isSensitiveText(combinedText) || /protected in external share/i.test(r.category || ""))) {
             return false;
           }
           const rUuids = r.resource_uuids || [];
           if (retainedMap && rUuids.length > 0) {
             return rUuids.some(function (u) { return !!retainedMap[String(u)]; });
+          }
+          return true;
+        });
+      }
+
+      function filterCitationsForActivePosture(cites, p) {
+        const fbResources = (p && p.fhir_browser && p.fhir_browser.resources) || [];
+        return (cites || []).filter(function (c) {
+          const uuid = c.resource_uuid || c.resourceUuid || "";
+          const matchedRes = fbResources.find(function (r) {
+            return (uuid && r.id === uuid) || (c.index != null && r.index === c.index);
+          });
+          if (state.privacyExternalShare) {
+            if (isSensitiveText(c.text || "")) return false;
+            if (matchedRes && isSensitiveResource(matchedRes)) return false;
+          }
+          if (state.filterRoomEquip) {
+            if (ROOM_EQUIP_REGEX.test(c.text || "")) return false;
+            if (matchedRes && isRoomEquipmentResource(matchedRes)) return false;
           }
           return true;
         });
@@ -2487,7 +2550,7 @@
           pillEl.className = "llm-live-pill streaming";
           pillEl.innerHTML = "⚡ Streaming <strong>" + esc(state.llmModel) + "</strong>" + (inputTokStr ? " • Input: " + esc(inputTokStr) : "") + "...";
         }
-        if (summaryEl) {
+        if (summaryEl && !fallbackSummary) {
           summaryEl.innerHTML = '<span style="color: var(--primary); font-weight: 600;">⚡ Generating live response from <code>' + esc(state.llmModel) + '</code> over Step 2 condensed chart (' + esc(inputTokStr || "active budget") + ')...</span>';
         }
 
@@ -2666,17 +2729,11 @@
 
           const initialSummaryHtml = cached
             ? cached.summaryHtml
-            : (state.llmConnected
-                ? (shouldRunLive
-                    ? '<span style="color: var(--primary); font-weight: 600;">⚡ Preparing live LLM generation...</span>'
-                    : '<div style="color: var(--text-secondary); font-weight: 500;">Ready to generate for <strong>' + esc(qa.question) + '</strong>. Click the full-width <strong>⚡ Generate Live</strong> button above to stream the live synthesis from profile <code>' + esc(state.llmModel) + '</code> over the Step 2 condensed chart (<code>' + esc(promptData.leverLabel) + '</code>).</div>')
-                : formatRichText(fallbackSummary));
+            : formatRichText(fallbackSummary);
           const initialQuestions = cached
             ? cached.questionsList
-            : (state.llmConnected && !shouldRunLive
-                ? ["Waiting for live generation — click ⚡ Generate Live above to run."]
-                : fallbackAskList);
-          const initialCites = cached ? cached.cites : cites;
+            : fallbackAskList;
+          const initialCites = filterCitationsForActivePosture(cached ? cached.cites : cites, p);
           const initialPillHtml = cached
             ? "🟢 Profile: <strong>" + esc(cached.model) + "</strong> • Input: " + esc(cached.inputTokStr || inputTokSummary) + " • TTFT " + (cached.ttftMs / 1000).toFixed(2) + "s • Total " + (cached.totalMs / 1000).toFixed(2) + "s"
             : (state.llmConnected
@@ -2757,7 +2814,18 @@
 
         const allStructRows = skill.structured_rows || [];
         const structRows = filterKbRowsForCondensedChart(allStructRows, promptData);
-        const rowsHtml = structRows.map(function (r) {
+        const isPrivacyRedactedView = state.privacyExternalShare && skill.id === "skill-privacy-preview";
+        const effectiveStructRows = isPrivacyRedactedView
+          ? [{
+              category: "External-Share Redaction Active",
+              label: allStructRows.length + " Sensitive SDOH / Behavioral / Personal-Safety Record(s) Withheld",
+              detail: "Sensitive social history, behavioral health, and personal-safety findings are stripped from the external-share view, condensed ledger, and LLM prompt under 42 CFR Part 2 / WA My Health My Data Act while retaining 100% of core clinical safety records.",
+              source_org: "WAHS+ Privacy Gate",
+              code: "REDACTED (" + allStructRows.length + ")",
+              tone: "ok"
+            }]
+          : structRows;
+        const rowsHtml = effectiveStructRows.map(function (r) {
           return (
             '<tr>' +
               '<td><span class="skill-badge ' + esc(r.tone || "info") + '">' + esc(r.category) + '</span></td>' +
@@ -2773,25 +2841,29 @@
           );
         }).join("");
 
+        const effectivePlainSummary = isPrivacyRedactedView
+          ? ("External-Share Privacy Redaction Active: **" + allStructRows.length + " sensitive social, behavioral, or personal-safety entry(ies)** have been **redacted and withheld** from this external-share view and prompt context under 42 CFR Part 2 and the WA My Health My Data Act. Your complete medical safety core (allergies, active medical conditions, medications, and implants) remains intact.")
+          : (state.privacyExternalShare && isSensitiveText(skill.plain_english_summary)
+              ? skill.plain_english_summary.split(/(?<=\.)\s+/).filter(function (sent) { return !isSensitiveText(sent); }).join(" ")
+              : skill.plain_english_summary);
+
         const initialSummaryHtml = cached
           ? cached.summaryHtml
-          : (state.llmConnected
-              ? (shouldRunLive
-                  ? '<span style="color: var(--primary); font-weight: 600;">⚡ Preparing live LLM synthesis...</span>'
-                  : '<div style="color: var(--text-secondary); font-weight: 500;">Ready to generate <strong>' + esc(skill.icon + ' ' + skill.title) + '</strong>. Click the full-width <strong>⚡ Generate Live</strong> button above to stream the live clinical synthesis from profile <code>' + esc(state.llmModel) + '</code> over the Step 2 condensed chart (<code>' + esc(promptData.leverLabel) + '</code>).</div>')
-              : formatRichText(skill.plain_english_summary));
+          : formatRichText(effectivePlainSummary);
         const initialQuestions = cached
           ? cached.questionsList
-          : (state.llmConnected && !shouldRunLive
-              ? ["Waiting for live generation — click ⚡ Generate Live above to run."]
-              : (skill.suggested_remediation || []));
-        const initialCites = cached ? cached.cites : (skill.citations || []);
+          : (skill.suggested_remediation || []);
+        const initialCites = filterCitationsForActivePosture(cached ? cached.cites : (skill.citations || []), p);
         const initialPillHtml = cached
           ? "🟢 Profile: <strong>" + esc(cached.model) + "</strong> • Input: " + esc(cached.inputTokStr || inputTokSummary) + " • TTFT " + (cached.ttftMs / 1000).toFixed(2) + "s • Total " + (cached.totalMs / 1000).toFixed(2) + "s"
           : (state.llmConnected
               ? (shouldRunLive ? "⚡ Preparing live LLM synthesis..." : "⚪ Ready (" + esc(inputTokSummary) + ") — Click ⚡ Generate Live")
               : "⚪ Precomputed Baseline (LLM Offline)");
         const initialPillClass = cached ? "done" : (state.llmConnected && shouldRunLive ? "streaming" : "offline");
+        const effectiveBadgeText = isPrivacyRedactedView
+          ? ("External-Share Redaction Active (" + allStructRows.length + " Withheld)")
+          : skill.status_badge;
+        const effectiveBadgeTone = isPrivacyRedactedView ? "ok" : (skill.badge_tone || "info");
 
         const pName = cleanName(p && p.patient_name);
         const skillFindingsText = structRows.map(function (r) {
@@ -2812,7 +2884,7 @@
             '<h3 class="report-card-title">' + esc(skill.icon) + ' ' + esc(skill.title) + '</h3>' +
             '<div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">' +
               '<span class="llm-live-pill ' + initialPillClass + '" id="live-llm-telemetry-pill">' + initialPillHtml + '</span>' +
-              '<span class="skill-badge ' + esc(skill.badge_tone || "info") + '" id="live-llm-status-badge">' + esc(skill.status_badge) + '</span>' +
+              '<span class="skill-badge ' + esc(effectiveBadgeTone) + '" id="live-llm-status-badge">' + esc(effectiveBadgeText) + '</span>' +
             '</div>' +
           '</div>' +
           '<div class="live-generation-hero">' +
@@ -3079,16 +3151,33 @@
 
       document.getElementById("toggle-filter-equip").addEventListener("change", function (e) {
         state.filterRoomEquip = !!e.target.checked;
+        state.selectedResourceIndex = null;
+        closeCitationDrawer();
+        renderFhirBrowser();
         renderCondensationPanel();
         renderSkillsAndQa();
       });
 
       document.getElementById("toggle-privacy-share").addEventListener("change", function (e) {
         state.privacyExternalShare = !!e.target.checked;
+        state.selectedResourceIndex = null;
+        closeCitationDrawer();
         renderContextStrip();
+        renderFhirBrowser();
         renderCondensationPanel();
         renderSkillsAndQa();
       });
+
+      const taskSelectDropdownEl = document.getElementById("skill-task-select");
+      if (taskSelectDropdownEl) {
+        taskSelectDropdownEl.addEventListener("change", function (e) {
+          state.activeSkillId = e.target.value;
+          state.customQuestionResult = null;
+          const qIn = document.getElementById("qa-question-input");
+          if (qIn) qIn.value = "";
+          renderSkillsAndQa();
+        });
+      }
 
       /* Mega-Dropdown Trigger & Custom Prompt Mode Switching */
       const megaTriggerEl = document.getElementById("task-mega-trigger");
@@ -3114,9 +3203,6 @@
           const submitBtnEl = document.getElementById("qa-submit-btn");
           const hintEl = document.getElementById("composer-active-hint");
           if (val.length > 0) {
-            state.megaMenuOpen = false;
-            const megaPanel = document.getElementById("task-mega-panel");
-            if (megaPanel) megaPanel.classList.remove("open");
             if (blockTask && blockCustom) {
               blockTask.classList.remove("active-mode");
               blockCustom.classList.add("active-mode");
@@ -3146,10 +3232,49 @@
         });
       }
 
+      /* Search active patient's visible chart resources for a grounded answer before falling back or abstaining */
+      function searchPatientResourcesForQuestion(p, qText) {
+        const fbResources = ((p && p.fhir_browser && p.fhir_browser.resources) || []).filter(function (r) {
+          if (!r.isCoreClinical || r.resourceType === "Patient") return false;
+          if (state.privacyExternalShare && isSensitiveResource(r)) return false;
+          if (state.filterRoomEquip && isRoomEquipmentResource(r)) return false;
+          return true;
+        });
+        const qLow = String(qText || "").toLowerCase();
+        const stopWords = {
+          does: 1, this: 1, patient: 1, patients: 1, have: 1, has: 1, had: 1, what: 1, when: 1, where: 1,
+          which: 1, were: 1, was: 1, are: 1, there: 1, any: 1, the: 1, for: 1, with: 1, from: 1, into: 1,
+          chart: 1, record: 1, recorded: 1, documented: 1, show: 1, tell: 1, about: 1, history: 1, test: 1,
+          allergy: 1, condition: 1, observation: 1, value: 1, level: 1, result: 1, results: 1
+        };
+        const rawTokens = qLow.replace(/[^a-z0-9-]+/g, " ").split(/\s+/).filter(function (t) {
+          return t.length >= 3 && !stopWords[t];
+        });
+        const synonymGroups = [];
+        rawTokens.forEach(function (tok) {
+          if (tok === "lvef") {
+            synonymGroups.push(["lvef", "ejection fraction", "left ventricular"]);
+          } else if (tok === "penicillin") {
+            synonymGroups.push(["penicillin", "amoxicillin", "ampicillin"]);
+          } else if (tok === "mri") {
+            synonymGroups.push(["mri", "magnetic resonance"]);
+          } else {
+            synonymGroups.push([tok]);
+          }
+        });
+        if (!synonymGroups.length) return [];
+
+        return fbResources.filter(function (r) {
+          const hay = [r.display, r.summary, r.code, r.resourceType, r.decodedNoteText].join(" ").toLowerCase();
+          return synonymGroups.some(function (grp) {
+            return grp.some(function (term) { return hay.indexOf(term) !== -1; });
+          });
+        });
+      }
+
       /* Single Unified Generate Live Form Submission */
       document.getElementById("qa-form").addEventListener("submit", function (e) {
         e.preventDefault();
-        state.megaMenuOpen = false;
         const p = currentPatient();
         if (!p) return;
         const q = (document.getElementById("qa-question-input").value || "").trim();
@@ -3169,9 +3294,55 @@
           return item.question.toLowerCase() === qLow || item.question.toLowerCase().indexOf(qLow) !== -1;
         });
 
-        /* When Live LLM is connected, always stream a fresh live LLM answer for the submitted question */
+        /* First check whether the active patient's chart has direct matching resources for specific queries */
+        const directMatches = searchPatientResourcesForQuestion(p, q);
+        const isSpecificFactQuery = /penicillin|colonoscopy|mri|apoe4|lvef|ejection fraction|peanut|sulfa|allergy|allergies/i.test(qLow) || p.id === "Custom_Uploaded_Bundle";
+        let groundedQaResult = null;
+        if (!matchedQa && directMatches.length > 0 && isSpecificFactQuery) {
+          const topMatches = directMatches.slice(0, 5);
+          const matchLines = topMatches.map(function (r) {
+            return "**" + r.resourceType + ": " + r.display + "**" + (r.summary ? " (" + r.summary + ")" : "") + (r.date ? " on `" + r.date.slice(0, 10) + "`" : "") + " [" + r.index + "]";
+          });
+          groundedQaResult = {
+            question: q,
+            abstained: false,
+            patient_category: "Grounded Chart Lookup",
+            source_mode_label: "Grounded FHIR Resource Match",
+            patient_plain_summary: "Documented in " + cleanName(p.patient_name) + "'s chart: " + matchLines.join("; ") + ".",
+            answer: "Found " + directMatches.length + " matching FHIR resource(s) in " + cleanName(p.patient_name) + "'s chart: " + matchLines.join("; ") + ".",
+            what_to_ask_doctor: ["Review these documented chart entries (" + topMatches.map(function (r) { return "[" + r.index + "] " + r.display; }).join(", ") + ") with your clinician at your next visit."],
+            citations: topMatches.map(function (r) {
+              return {
+                index: r.index,
+                resource_type: r.resourceType,
+                resource_uuid: r.id,
+                text: r.display + (r.summary ? " — " + r.summary : "")
+              };
+            })
+          };
+        } else if (!matchedQa && isSpecificFactQuery && directMatches.length === 0) {
+          groundedQaResult = {
+            question: q,
+            abstained: true,
+            patient_category: "Safety Abstention",
+            source_mode_label: "Verified Chart-Wide Abstention",
+            patient_plain_summary: "Not Recorded in Chart: Checked all clinical resources in " + cleanName(p.patient_name) + "'s FHIR record and found no documented entry for '" + q + "'. Rather than guessing, this assistant abstains when a requested test or allergy is absent from the chart.",
+            answer: "Checked all AllergyIntolerance, Condition, Procedure, DiagnosticReport, and Observation resources in " + cleanName(p.patient_name) + "'s bundle. No matching record exists.",
+            what_to_ask_doctor: ["If you had this test or allergy documented at an outside facility, ask your clinic to import the external record into your chart."],
+            citations: []
+          };
+        }
+
+        const resolvedQa = matchedQa || groundedQaResult;
+        if (resolvedQa) {
+          state.customQuestionResult = Object.assign({}, resolvedQa, { question: q, forceLiveLlm: !!state.llmConnected });
+          renderSkillsAndQa();
+          return;
+        }
+
+        /* When Live LLM is connected, stream a fresh live LLM answer for the submitted question */
         if (state.llmConnected) {
-          state.customQuestionResult = matchedQa ? Object.assign({}, matchedQa, { question: q, forceLiveLlm: true }) : {
+          state.customQuestionResult = {
             question: q,
             forceLiveLlm: true,
             patient_category: "Live LLM Chart Q&A",
@@ -3181,12 +3352,6 @@
             what_to_ask_doctor: [],
             citations: []
           };
-          renderSkillsAndQa();
-          return;
-        }
-
-        if (matchedQa) {
-          state.customQuestionResult = matchedQa;
           renderSkillsAndQa();
           return;
         }
@@ -3215,17 +3380,6 @@
         } else if (/med|pill|prescription|treat/i.test(qLow)) {
           state.activeSkillId = "skill-med-guide";
           state.customQuestionResult = null;
-        } else if (/penicillin|colonoscopy|mri|apoe4|lvef|peanut/i.test(qLow)) {
-          state.customQuestionResult = {
-            question: q,
-            abstained: true,
-            patient_category: "Safety Abstention",
-            source_mode_label: "Verified Chart-Wide Abstention",
-            patient_plain_summary: "Not Recorded in Chart: Your FHIR record does not contain any documented resource for '" + q + "'. Rather than guessing, this assistant abstains when a requested test or allergy is absent from the chart.",
-            answer: "Checked all AllergyIntolerance, Procedure, DiagnosticReport, and Observation resources in " + cleanName(p.patient_name) + "'s bundle. No matching record exists.",
-            what_to_ask_doctor: ["If you had this test or allergy documented at an outside facility, ask your clinic to import the external record into your chart."],
-            citations: []
-          };
         } else {
           state.activeSkillId = "skill-visit-brief";
           state.customQuestionResult = null;
@@ -3540,8 +3694,8 @@
               activeMeds.push(disp);
             } else if (rtype === "AllergyIntolerance") {
               cat = "Allergies";
-              sum = "Criticality: " + (res.criticality || "high");
-              allergies.push(disp);
+              sum = res.criticality ? ("Criticality: " + res.criticality) : "Documented allergy / intolerance";
+              allergies.push(disp + (res.criticality ? " (criticality: " + res.criticality + ")" : ""));
             } else if (rtype === "Observation" || rtype === "DiagnosticReport") {
               cat = "Labs & Vitals";
               const vq = res.valueQuantity || {};
@@ -3560,6 +3714,14 @@
             catCounts[cat] = (catCounts[cat] || 0) + 1;
             if (cat !== "Claims & Billing") catCounts["All Core Clinical"] += 1;
 
+            const itemFlags = [];
+            if (isSensitiveText(disp + " " + sum + " " + (coding.code || ""))) {
+              itemFlags.push("Sensitive / SDOH Record");
+            }
+            if (rtype === "Device" && ROOM_EQUIP_REGEX.test(disp + " " + sum)) {
+              itemFlags.push("Non-Implantable Clinic Room Equipment Artifact");
+            }
+
             resources.push({
               index: idx + 1,
               id: res.id || ("custom-" + (idx + 1)),
@@ -3572,7 +3734,7 @@
               status: res.status || "active",
               sourceOrg: "Uploaded FHIR Bundle",
               code: coding.code || "",
-              flags: [],
+              flags: itemFlags,
               decodedNoteText: "",
               rawJson: res
             });
@@ -3581,30 +3743,108 @@
           const rawEstTok = Math.max(Math.round(rawText.length / 4), 50);
           const coreResources = resources.filter(function (r) { return r.isCoreClinical; });
 
+          /* Build distinct 5-budget x 2-mode condensation cells with longitudinal observation folding in hierarchical mode */
           function buildCustomBudgetCell(modeKey, budgetNum) {
             const maxChars = budgetNum * 4;
-            const selected = [];
+            const maxObsPerDisplay = budgetNum >= 16384 ? 999 : (budgetNum >= 8192 ? 15 : (budgetNum >= 4096 ? 8 : (budgetNum >= 2048 ? 4 : 2)));
+            const candidateItems = [];
             const omittedCounts = {};
+
+            if (modeKey === "hierarchical") {
+              const obsGroups = {};
+              coreResources.forEach(function (r) {
+                if (r.category === "Labs & Vitals") {
+                  const key = r.display.toLowerCase();
+                  if (!obsGroups[key]) obsGroups[key] = [];
+                  obsGroups[key].push(r);
+                } else {
+                  candidateItems.push({
+                    res: r,
+                    uuids: [r.id],
+                    representedCount: 1,
+                    line: "[" + r.index + "] " + r.category + " | " + r.display + (r.summary ? " (" + r.summary.slice(0, 72) + ")" : "")
+                  });
+                }
+              });
+              Object.keys(obsGroups).forEach(function (k) {
+                const grp = obsGroups[k];
+                const first = grp[0];
+                const last = grp[grp.length - 1];
+                if (grp.length === 1) {
+                  candidateItems.push({
+                    res: first,
+                    uuids: [first.id],
+                    representedCount: 1,
+                    line: "[" + first.index + "] " + first.category + " | " + first.display + (first.summary ? " (" + first.summary + ")" : "")
+                  });
+                } else {
+                  const sampleLimit = budgetNum >= 16384 ? Math.min(grp.length, 6) : (budgetNum >= 8192 ? Math.min(grp.length, 4) : (budgetNum >= 4096 ? 2 : (budgetNum >= 2048 ? 1 : 0)));
+                  const recentSlice = sampleLimit > 0 ? grp.slice(-sampleLimit).map(function (x) {
+                    return (x.date ? x.date.slice(0, 10) + ": " : "") + (x.summary || x.display);
+                  }).join("; ") : "";
+                  const foldLine = "[" + last.index + "] " + last.category + " | " + last.display +
+                    " (folded n=" + grp.length + " readings from " + (first.date || "start").slice(0, 10) + " to " + (last.date || "latest").slice(0, 10) +
+                    "; initial " + (first.summary || first.display) + " → latest " + (last.summary || last.display) +
+                    (sampleLimit > 0 ? " | recent window: " + recentSlice : "") + ")";
+                  candidateItems.push({
+                    res: last,
+                    uuids: grp.map(function (x) { return x.id; }),
+                    representedCount: grp.length,
+                    line: foldLine
+                  });
+                }
+              });
+            } else {
+              const obsSeenByDisplay = {};
+              const obsTotalByDisplay = {};
+              coreResources.forEach(function (r) {
+                if (r.category === "Labs & Vitals") {
+                  const k = r.display.toLowerCase();
+                  obsTotalByDisplay[k] = (obsTotalByDisplay[k] || 0) + 1;
+                }
+              });
+              coreResources.forEach(function (r) {
+                if (r.category === "Labs & Vitals") {
+                  const k = r.display.toLowerCase();
+                  obsSeenByDisplay[k] = (obsSeenByDisplay[k] || 0) + 1;
+                  const totalForK = obsTotalByDisplay[k] || 1;
+                  if (totalForK - obsSeenByDisplay[k] >= maxObsPerDisplay) {
+                    omittedCounts[r.category] = (omittedCounts[r.category] || 0) + 1;
+                    return;
+                  }
+                }
+                candidateItems.push({
+                  res: r,
+                  uuids: [r.id],
+                  representedCount: 1,
+                  line: "[" + r.index + "] " + r.resourceType + (r.date ? " (" + r.date + ")" : "") + ": " + r.display + (r.summary ? " — " + r.summary : "")
+                });
+              });
+            }
+
+            const selected = [];
             let usedChars = 0;
-            coreResources.forEach(function (r, idx) {
-              const line = modeKey === "hierarchical"
-                ? ("[" + r.index + "] " + r.category + " | " + r.display + (r.summary ? " (" + r.summary.slice(0, 72) + ")" : ""))
-                : ("[" + r.index + "] " + r.resourceType + " (" + r.date + "): " + r.display + " — " + r.summary);
-              if (usedChars + line.length + 1 <= maxChars || selected.length < Math.min(4, coreResources.length)) {
-                selected.push({ res: r, line: line });
-                usedChars += line.length + 1;
+            candidateItems.forEach(function (item) {
+              if (usedChars + item.line.length + 1 <= maxChars || selected.length < Math.min(2, candidateItems.length)) {
+                selected.push(item);
+                usedChars += item.line.length + 1;
               } else {
-                omittedCounts[r.category] = (omittedCounts[r.category] || 0) + 1;
+                omittedCounts[item.res.category] = (omittedCounts[item.res.category] || 0) + (item.representedCount || 1);
               }
             });
+
             const chartText = selected.map(function (s) { return s.line; }).join("\n");
-            const actualTok = Math.max(Math.round(chartText.length / 4), 12);
-            const omittedTotal = Math.max(0, coreResources.length - selected.length);
+            const actualTok = Math.min(budgetNum, Math.max(Math.round(chartText.length / 4), 1));
+            const omittedTotal = Object.keys(omittedCounts).reduce(function (acc, k) { return acc + (omittedCounts[k] || 0); }, 0);
+            const retainedUuids = [];
+            selected.forEach(function (s) {
+              (s.uuids || [s.res.id]).forEach(function (u) { retainedUuids.push(u); });
+            });
             return {
-              tier: budgetNum >= 8192 ? 1 : (budgetNum >= 4096 ? 2 : (budgetNum >= 2048 ? 3 : 4)),
-              tier_name: budgetNum >= 8192
-                ? "Tier 1 — Full Clinical History"
-                : (budgetNum >= 4096 ? "Tier 2 — Recent Window Condensed" : "Tier 3/4 — Tight Budget Core"),
+              tier: budgetNum >= 16384 ? 1 : (budgetNum >= 8192 ? 2 : (budgetNum >= 4096 ? 3 : (budgetNum >= 2048 ? 4 : 5))),
+              tier_name: budgetNum >= 16384
+                ? "Tier 1 — Full Clinical History (Client-Side Preview)"
+                : (budgetNum >= 8192 ? "Tier 2 — Recent Window Condensed (Client-Side Preview)" : "Tier 3/4/5 — Compact Budget Core (Client-Side Preview)"),
               condense_mode: modeKey,
               target_tokens: budgetNum,
               actual_tokens: actualTok,
@@ -3613,18 +3853,236 @@
               total_extracted_records: coreResources.length,
               omitted_records_count: omittedTotal,
               omitted_sections: omittedCounts,
-              retained_uuids: selected.map(function (s) { return s.res.id; }),
+              retained_uuids: retainedUuids,
               chart_text: chartText,
               human_summary: {
                 allergies: allergies,
                 active_conditions: activeConds,
                 active_medications: activeMeds,
-                labs_and_vitals: labs.slice(0, Math.max(3, Math.floor(budgetNum / 512))),
-                immunizations: [],
-                notes_and_visits: [],
-                what_changed_at_this_lever: "Custom uploaded FHIR R4 Bundle condensed to " + budgetNum + "-token budget (" + modeKey + ")."
+                labs_and_vitals: modeKey === "hierarchical"
+                  ? selected.filter(function (s) { return s.res.category === "Labs & Vitals"; }).map(function (s) { return s.line; })
+                  : labs.slice(-maxObsPerDisplay),
+                immunizations: resources.filter(function (r) { return r.category === "Immunizations"; }).map(function (r) { return r.display; }),
+                notes_and_visits: resources.filter(function (r) { return r.category === "Clinical Notes" || r.category === "Visits & Procedures"; }).map(function (r) { return r.display; }),
+                what_changed_at_this_lever: "Client-Side Structural Preview: uploaded FHIR R4 Bundle condensed to " + budgetNum + "-token budget (" + modeKey + ")."
               }
             };
+          }
+
+          /* Build all 9 patient skills dynamically from the uploaded FHIR bundle's own resources */
+          function buildCustomPatientSkills() {
+            const medRes = resources.filter(function (r) { return r.category === "Medications"; });
+            const condRes = resources.filter(function (r) { return r.category === "Conditions"; });
+            const allergyRes = resources.filter(function (r) { return r.category === "Allergies"; });
+            const labRes = resources.filter(function (r) { return r.category === "Labs & Vitals"; });
+            const immRes = resources.filter(function (r) { return r.category === "Immunizations"; });
+            const noteRes = resources.filter(function (r) { return r.category === "Clinical Notes" || r.category === "Visits & Procedures"; });
+            const sensRes = resources.filter(function (r) { return isSensitiveResource(r); });
+            const claimRes = resources.filter(function (r) { return r.category === "Claims & Billing"; });
+
+            function toCite(r) {
+              return {
+                index: r.index,
+                label: "[" + r.index + "]",
+                resource_type: r.resourceType,
+                resource_uuid: r.id,
+                text: r.resourceType + ": " + r.display + (r.summary ? " (" + r.summary + ")" : "")
+              };
+            }
+            function toRow(r, catLabel, tone) {
+              return {
+                category: catLabel || r.category,
+                label: r.display,
+                detail: r.resourceType + ": " + r.display + (r.summary ? " — " + r.summary : "") + (r.date ? " • Recorded " + r.date.slice(0, 10) : ""),
+                source_org: r.sourceOrg || "Uploaded FHIR Bundle",
+                code: r.resourceType + (r.code ? " (" + r.code + ")" : ""),
+                tone: tone || "info",
+                resource_uuids: [r.id]
+              };
+            }
+
+            const coreSample = [].concat(allergyRes, condRes, medRes, labRes.slice(0, 4));
+            return [
+              {
+                id: "skill-visit-brief",
+                group: "everyday_task",
+                icon: "🩺",
+                title: "Prepare for My Next Doctor Visit",
+                subtitle: "Summary of uploaded conditions, medications, allergies, and labs",
+                status_badge: condRes.length + " Conditions • " + medRes.length + " Meds • " + allergyRes.length + " Allergies",
+                badge_tone: "info",
+                plain_english_summary: "Uploaded Chart Overview for **" + patName + "**: **" + allergyRes.length + " documented allergy(ies)**" +
+                  (allergyRes.length ? " (" + allergyRes.map(function (r) { return r.display + " [" + r.index + "]"; }).join(", ") + ")" : "") +
+                  ", **" + condRes.length + " active condition(s)**" +
+                  (condRes.length ? " (" + condRes.map(function (r) { return r.display + " [" + r.index + "]"; }).join(", ") + ")" : "") +
+                  ", **" + medRes.length + " active medication(s)**, and **" + labRes.length + " lab/vital observation(s)**.",
+                suggested_remediation: ["Review these uploaded FHIR entries with your clinician at your next appointment."],
+                structured_rows: coreSample.map(function (r) { return toRow(r, r.category, "info"); }),
+                citations: coreSample.map(toCite),
+                clinician_technical_note: "Client-side summary computed strictly from the " + resources.length + " resource(s) in the uploaded FHIR R4 Bundle."
+              },
+              {
+                id: "skill-hospital-stay",
+                group: "everyday_task",
+                icon: "🏥",
+                title: "Understand My Recent Hospital Stay",
+                subtitle: "Inpatient encounters, procedures, and discharge notes in uploaded bundle",
+                status_badge: noteRes.length ? (noteRes.length + " Visit/Procedure Record(s)") : "0 Inpatient Stays Recorded",
+                badge_tone: "info",
+                plain_english_summary: noteRes.length
+                  ? ("Uploaded bundle for **" + patName + "** includes **" + noteRes.length + " visit, procedure, or clinical note record(s)**: " + noteRes.slice(0, 4).map(function (r) { return r.display + " [" + r.index + "]"; }).join(", ") + ".")
+                  : ("No Inpatient Encounters or Discharge Notes in Uploaded Bundle: **" + patName + "**'s uploaded FHIR chart contains **0 Encounter, Procedure, or DocumentReference** discharge records."),
+                suggested_remediation: ["If you had a recent hospital admission, upload a bundle that includes your Encounter and DocumentReference discharge summary."],
+                structured_rows: noteRes.map(function (r) { return toRow(r, "Visit / Procedure", "info"); }),
+                citations: noteRes.map(toCite),
+                clinician_technical_note: "Audited uploaded bundle for Encounter, Procedure, and DocumentReference entries."
+              },
+              {
+                id: "skill-med-guide",
+                group: "everyday_task",
+                icon: "💊",
+                title: "Understand My Current Medications",
+                subtitle: "Active prescriptions in uploaded FHIR bundle",
+                status_badge: medRes.length + " Active Medication(s)",
+                badge_tone: "info",
+                plain_english_summary: medRes.length
+                  ? ("**" + patName + "** has **" + medRes.length + " active medication order(s)** in the uploaded bundle: " + medRes.map(function (r) { return "**" + r.display + "** (" + r.summary + ") [" + r.index + "]"; }).join("; ") + ".")
+                  : ("No Active Medications in Uploaded Bundle: **" + patName + "**'s uploaded FHIR chart contains **0 MedicationRequest or MedicationStatement** resources."),
+                suggested_remediation: medRes.length
+                  ? ["Confirm dosing instructions for your " + medRes.length + " listed prescription(s) with your prescriber."]
+                  : ["No medication orders are present in this uploaded bundle."],
+                structured_rows: medRes.map(function (r) { return toRow(r, "Active Medication", "info"); }),
+                citations: medRes.map(toCite),
+                clinician_technical_note: "Extracted strictly from MedicationRequest / MedicationStatement resources in the uploaded bundle."
+              },
+              {
+                id: "skill-lab-trends",
+                group: "everyday_task",
+                icon: "📈",
+                title: "Track My Lab & Vital Trends",
+                subtitle: "Longitudinal observations and biomarkers in uploaded bundle",
+                status_badge: labRes.length + " Observation(s)",
+                badge_tone: "info",
+                plain_english_summary: labRes.length
+                  ? ("**" + patName + "**'s uploaded chart contains **" + labRes.length + " lab/vital observation(s)**, starting with **" + labRes[0].display + "** (" + labRes[0].summary + ") [" + labRes[0].index + "]" +
+                    (labRes.length > 1 ? " through **" + labRes[labRes.length - 1].display + "** (" + labRes[labRes.length - 1].summary + ") [" + labRes[labRes.length - 1].index + "]." : "."))
+                  : ("No Lab or Vital Observations in Uploaded Bundle: **" + patName + "**'s uploaded chart contains **0 Observation or DiagnosticReport** resources."),
+                suggested_remediation: ["Review longitudinal observation trends with your care team."],
+                structured_rows: labRes.slice(0, 10).map(function (r) { return toRow(r, "Observation", "info"); }),
+                citations: labRes.slice(0, 6).map(toCite),
+                clinician_technical_note: "Extracted strictly from Observation and DiagnosticReport entries in the uploaded bundle."
+              },
+              {
+                id: "skill-vaccine-summary",
+                group: "everyday_task",
+                icon: "💉",
+                title: "Check My Vaccine & Preventive History",
+                subtitle: "Documented immunizations in uploaded bundle",
+                status_badge: immRes.length + " Immunization(s)",
+                badge_tone: "info",
+                plain_english_summary: immRes.length
+                  ? ("**" + patName + "**'s uploaded chart lists **" + immRes.length + " immunization record(s)**: " + immRes.map(function (r) { return r.display + " [" + r.index + "]"; }).join(", ") + ".")
+                  : ("No Immunizations in Uploaded Bundle: **" + patName + "**'s uploaded FHIR chart contains **0 Immunization** resources."),
+                suggested_remediation: ["Bring any external vaccine cards to your next primary-care visit."],
+                structured_rows: immRes.map(function (r) { return toRow(r, "Immunization", "info"); }),
+                citations: immRes.map(toCite),
+                clinician_technical_note: "Extracted strictly from Immunization resources in the uploaded bundle."
+              },
+              {
+                id: "skill-med-conflicts",
+                group: "health_check",
+                icon: "⚠️",
+                title: "Medication Conflict & Duplicate Check",
+                subtitle: "Audits uploaded prescriptions for duplicate ingredients or conflicts",
+                status_badge: medRes.length === 0 ? "0 Active Medications" : (medRes.length + " Medication(s) Audited"),
+                badge_tone: medRes.length >= 2 ? "warn" : "ok",
+                plain_english_summary: medRes.length === 0
+                  ? ("No Active Medications or Conflicts in Uploaded Bundle: **" + patName + "**'s uploaded FHIR chart contains **0 MedicationRequest / MedicationStatement resources**. No duplicate prescriptions, brand-vs-generic overlaps, or drug-drug conflicts are present in this uploaded bundle.")
+                  : ("Audited **" + medRes.length + " active medication(s)** in **" + patName + "**'s uploaded bundle: " + medRes.map(function (r) { return "**" + r.display + "** [" + r.index + "]"; }).join(", ") + "."),
+                suggested_remediation: medRes.length === 0
+                  ? ["No medication conflicts detected because 0 medications are present in the uploaded bundle."]
+                  : ["Review all active prescriptions with your pharmacist or prescribing clinician."],
+                structured_rows: medRes.length === 0
+                  ? [{
+                      category: "0 Active Medications",
+                      label: "No Medication Resources in Uploaded Bundle",
+                      detail: "Audited all " + resources.length + " FHIR entry(ies) uploaded for " + patName + "; 0 MedicationRequest or MedicationStatement resources were found.",
+                      source_org: "Uploaded FHIR Bundle",
+                      code: "0 MEDS",
+                      tone: "ok",
+                      resource_uuids: []
+                    }]
+                  : medRes.map(function (r) { return toRow(r, "Medication Audit", medRes.length >= 2 ? "warn" : "ok"); }),
+                citations: medRes.map(toCite),
+                clinician_technical_note: "Client-side medication audit computed strictly over the uploaded bundle's MedicationRequest/MedicationStatement entries."
+              },
+              {
+                id: "skill-condition-conflicts",
+                group: "health_check",
+                icon: "🔍",
+                title: "Condition & Staging Consistency Check",
+                subtitle: "Audits uploaded Condition resources for staging consistency",
+                status_badge: condRes.length ? (condRes.length + " Condition(s) Audited") : "0 Conditions in Bundle",
+                badge_tone: "ok",
+                plain_english_summary: condRes.length
+                  ? ("Audited **" + condRes.length + " Condition resource(s)** in **" + patName + "**'s uploaded chart: " + condRes.map(function (r) { return "**" + r.display + "** [" + r.index + "]"; }).join(", ") + ".")
+                  : ("No Condition Resources in Uploaded Bundle: **" + patName + "**'s uploaded FHIR chart contains **0 Condition** resources."),
+                suggested_remediation: ["Review active problem list items with your clinician."],
+                structured_rows: condRes.map(function (r) { return toRow(r, "Condition Audit", "info"); }),
+                citations: condRes.map(toCite),
+                clinician_technical_note: "Audited Condition resources in the uploaded bundle."
+              },
+              {
+                id: "skill-chart-hygiene",
+                group: "health_check",
+                icon: "🧹",
+                title: "Chart Bloat & Redundancy Audit",
+                subtitle: "Audits uploaded bundle for repeated observations and billing claims",
+                status_badge: resources.length + " Total Entries Audited",
+                badge_tone: "info",
+                plain_english_summary: "Audited **" + resources.length + " total entry(ies)** in **" + patName + "**'s uploaded FHIR bundle (**" + catCounts["All Core Clinical"] + " core clinical**, **" + claimRes.length + " billing/claims**, **" + labRes.length + " observations**).",
+                suggested_remediation: ["Use Step 2 Grouped (Fold Renewals) mode to fold repeated longitudinal observations into a compact trend line."],
+                structured_rows: [
+                  {
+                    category: "Bundle Inventory",
+                    label: resources.length + " Total FHIR Entries Uploaded",
+                    detail: catCounts["All Core Clinical"] + " core clinical resources (" + labRes.length + " observations, " + medRes.length + " medications, " + condRes.length + " conditions, " + allergyRes.length + " allergies) and " + claimRes.length + " billing claims.",
+                    source_org: "Uploaded FHIR Bundle",
+                    code: "BUNDLE-AUDIT",
+                    tone: "info",
+                    resource_uuids: []
+                  }
+                ],
+                citations: resources.slice(0, 3).map(toCite),
+                clinician_technical_note: "Client-side structural hygiene summary for the uploaded FHIR R4 Bundle."
+              },
+              {
+                id: "skill-privacy-preview",
+                group: "health_check",
+                icon: "🔒",
+                title: "Sensitive Record Privacy Preview",
+                subtitle: "Scans uploaded bundle for sensitive SDOH, behavioral, or personal-safety records",
+                status_badge: sensRes.length ? (sensRes.length + " Sensitive Entry(ies) Flagged") : "0 Sensitive Entries Flagged",
+                badge_tone: sensRes.length ? "warn" : "ok",
+                plain_english_summary: sensRes.length
+                  ? ("By default, your full personal health view keeps 100% of your records visible. This read-only preview identified **" + sensRes.length + " sensitive social, behavioral, or personal-safety entry(ies)** in **" + patName + "**'s uploaded chart (" + sensRes.map(function (r) { return "**" + r.display + "** [" + r.index + "]"; }).join(", ") + ") so you can withhold them when enabling External Share.")
+                  : ("Scanned all " + resources.length + " entry(ies) in **" + patName + "**'s uploaded chart for sensitive social history, substance use, or personal-safety records and found **0 sensitive entries flagged**."),
+                suggested_remediation: ["Check 'Preview external-share privacy redaction' in Step 2 to strip flagged sensitive entries from external-share summaries."],
+                structured_rows: sensRes.length
+                  ? sensRes.map(function (r) { return toRow(r, "Protected in External Share", "warn"); })
+                  : [{
+                      category: "No Sensitive SDOH/Behavioral Flags",
+                      label: "0 Sensitive Entries Flagged in Uploaded Bundle",
+                      detail: "Scanned all uploaded resources against 42 CFR Part 2 / WA My Health My Data Act sensitivity categories.",
+                      source_org: "Uploaded FHIR Bundle",
+                      code: "PASS",
+                      tone: "ok",
+                      resource_uuids: []
+                    }],
+                citations: sensRes.map(toCite),
+                clinician_technical_note: "Client-side sensitivity scan over uploaded Condition, Observation, Procedure, and DocumentReference entries."
+              }
+            ];
           }
 
           const budgetsList = [16384, 8192, 4096, 2048, 1024];
@@ -3633,15 +4091,17 @@
             customMatrix.lossless_structural[String(b)] = buildCustomBudgetCell("lossless_structural", b);
             customMatrix.hierarchical[String(b)] = buildCustomBudgetCell("hierarchical", b);
           });
+          const sensitiveCount = resources.filter(function (r) { return isSensitiveResource(r); }).length;
+          const equipCount = resources.filter(function (r) { return isRoomEquipmentResource(r); }).length;
 
           patientsMap[customId] = {
             id: customId,
             patient_id: customId,
             patient_name: patName,
             birth_date: patDob,
-            short_tag: "Custom Uploaded FHIR Bundle",
-            persona_bio: "User-uploaded FHIR R4 Bundle parsed and condensed locally across 5 token budgets in the browser.",
-            key_highlights: entries.length + " FHIR Entries • 5-Tier Browser Condensation",
+            short_tag: "Custom Uploaded FHIR Bundle (Client-Side Preview)",
+            persona_bio: "User-uploaded FHIR R4 Bundle parsed and condensed locally across 5 token budgets in the browser (Client-Side Structural Preview).",
+            key_highlights: entries.length + " FHIR Entries • Client-Side 5-Tier Browser Preview",
             raw_est_tokens: rawEstTok,
             total_bundle_entries: entries.length,
             fhir_browser: {
@@ -3655,11 +4115,11 @@
               raw_json_tokens: rawEstTok,
               non_clinical_claims_count: catCounts["Claims & Billing"] || 0,
               duplicate_base64_notes_count: 0,
-              room_equipment_devices_count: 0,
-              sensitive_sdoh_count: 0
+              room_equipment_devices_count: equipCount,
+              sensitive_sdoh_count: sensitiveCount
             },
             condensation_matrix: customMatrix,
-            skills: (patientsMap[personaIds[0]] && patientsMap[personaIds[0]].skills) || [],
+            skills: buildCustomPatientSkills(),
             postures: { patient_self: { qa_samples: [] }, external_share: { qa_samples: [] } }
           };
 
@@ -3668,6 +4128,8 @@
           }
           state.activePatientId = customId;
           state.selectedResourceIndex = null;
+          state.customQuestionResult = null;
+          closeCitationDrawer();
           modal.classList.remove("open");
           renderAll();
         } catch (err) {

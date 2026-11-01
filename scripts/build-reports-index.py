@@ -239,7 +239,7 @@ def gather(slug: str) -> dict:
     arms = sorted({r.get("backend_id") for r in rows if r.get("backend_id")})
     pts = {(r.get("request") or {}).get("patient") for r in rows if (r.get("request") or {}).get("patient")}
     out["cells"] = len(rows)
-    out["patients"] = _patient_names(rdir, pts)
+    out["patients"] = _patient_names(rdir, pts) or out["patients"]
     out["date"] = out["date"] or datetime.fromtimestamp(
         (rdir / "results.jsonl").stat().st_mtime, timezone.utc).strftime(DATE_FORMAT)
     return out
