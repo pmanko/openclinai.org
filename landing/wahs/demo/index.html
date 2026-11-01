@@ -107,12 +107,12 @@
     .phase-shell-inner {
       max-width: 1520px;
       margin: 0 auto;
-      padding: 0.75rem 2rem;
+      padding: 0.65rem 1.75rem;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 1rem;
+      gap: 0.75rem;
     }
 
     /* Active Context Pill on Left */
@@ -120,35 +120,35 @@
       display: flex;
       align-items: center;
       flex-wrap: wrap;
-      gap: 0.55rem;
-      font-size: 0.9rem;
+      gap: 0.5rem;
+      font-size: 0.88rem;
     }
     .ctx-chip {
       display: inline-flex;
       align-items: center;
-      gap: 0.45rem;
+      gap: 0.4rem;
       background: var(--surface-alt);
       border: 1px solid var(--border);
-      padding: 0.38rem 0.78rem;
+      padding: 0.34rem 0.68rem;
       border-radius: 8px;
       font-weight: 600;
       color: var(--text);
     }
     .ctx-chip code {
       font-family: var(--font-mono);
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       color: var(--primary);
       font-weight: 700;
     }
     .llm-bar-chip {
       display: inline-flex;
       align-items: center;
-      gap: 0.45rem;
+      gap: 0.4rem;
       background: #f0fdf4;
       border: 1px solid #bbf7d0;
-      padding: 0.32rem 0.65rem;
+      padding: 0.28rem 0.58rem;
       border-radius: 8px;
-      font-size: 0.84rem;
+      font-size: 0.82rem;
       font-weight: 600;
       color: #166534;
     }
@@ -159,13 +159,16 @@
     }
     .llm-model-select {
       font-family: var(--font-mono);
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 700;
       color: #0f172a;
       background: #ffffff;
       border: 1px solid #cbd5e1;
       border-radius: 6px;
-      padding: 0.18rem 0.45rem;
+      padding: 0.16rem 0.38rem;
+      max-width: 165px;
+      min-width: 0;
+      text-overflow: ellipsis;
       cursor: pointer;
     }
     .llm-config-btn {
@@ -206,22 +209,22 @@
       display: inline-flex;
       align-items: center;
       background: var(--surface-alt);
-      padding: 0.3rem;
+      padding: 0.26rem;
       border-radius: 12px;
       border: 1px solid var(--border);
-      gap: 0.35rem;
+      gap: 0.3rem;
     }
     .phase-step-tab {
       display: inline-flex;
       align-items: center;
-      gap: 0.55rem;
-      padding: 0.52rem 1.15rem;
+      gap: 0.45rem;
+      padding: 0.44rem 0.88rem;
       border-radius: 9px;
       border: 1px solid transparent;
       background: transparent;
       color: var(--text-secondary);
       cursor: pointer;
-      font-size: 0.94rem;
+      font-size: 0.88rem;
       font-weight: 600;
       transition: all 0.14s ease;
       white-space: nowrap;
@@ -533,6 +536,45 @@
     }
     @media (max-width: 1080px) {
       .phase2-studio-grid { grid-template-columns: 1fr; }
+      .phase2-studio-grid > .panel-card:first-child .panel-body {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1rem;
+        align-items: start;
+      }
+      .phase2-studio-grid > .panel-card:first-child .lever-section {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+      }
+      .browser-table-wrap { max-height: 290px; }
+      .inspector-sticky-card { position: static; }
+    }
+    @media (max-width: 860px) {
+      .phase-shell-inner { padding: 0.65rem 1rem; gap: 0.6rem; }
+      .container { padding: 1rem 1rem 2.5rem; }
+      .phase-step-tab { padding: 0.42rem 0.75rem; font-size: 0.85rem; }
+      .inspector-summary-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 680px) {
+      .topbar-inner { flex-wrap: wrap; gap: 0.5rem; padding: 0.65rem 1rem; }
+      .topbar-links { gap: 0.9rem; font-size: 0.8rem; }
+      .phase-stepper {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .phase-step-tab {
+        justify-content: center;
+        padding: 0.42rem 0.3rem;
+        font-size: 0.78rem;
+        gap: 0.28rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .composer-card { padding: 1rem; }
+      .report-card { padding: 1.1rem; }
     }
 
     .lever-section {
@@ -639,81 +681,112 @@
       margin: 0;
     }
 
-    /* PHASE 3: Readable Skill Menu (Left Rail) + Spacious 3-Part Report Card (Right Stage) */
-    .phase3-master-detail {
-      display: grid;
-      grid-template-columns: 350px 1fr;
-      gap: 1.5rem;
-      align-items: start;
-    }
-    @media (max-width: 1040px) {
-      .phase3-master-detail { grid-template-columns: 1fr; }
+    /* PHASE 3: Unified Task Dropdown + Question Composer + Prominent Live Generation Stage */
+    .phase3-single-stage {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
     }
 
-    .skills-rail-card {
+    .composer-card {
       background: var(--surface);
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border-strong);
       border-radius: var(--radius);
-      padding: 1.15rem;
+      padding: 1.25rem 1.5rem;
       box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
     }
-    .skills-group-title {
-      font-size: 0.78rem;
+    .composer-top-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.85rem;
+    }
+    .task-picker-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.65rem;
+      flex: 1 1 320px;
+      min-width: 0;
+      max-width: 100%;
+    }
+    .task-picker-label {
+      font-size: 0.86rem;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
-      margin: 0 0 0.55rem;
-      padding: 0 0.35rem;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+      white-space: nowrap;
     }
-    .skills-rail-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-      margin-bottom: 1.25rem;
-    }
-    .skills-rail-list:last-child { margin-bottom: 0; }
-
-    .skill-btn-card {
-      background: var(--surface-subtle);
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 0.7rem 0.85rem;
-      text-align: left;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      transition: all 0.12s ease;
-    }
-    .skill-btn-card:hover {
-      background: var(--surface);
-      border-color: #93c5fd;
-    }
-    .skill-btn-card.active {
-      background: var(--primary-light);
-      border-color: var(--primary);
-      box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.08);
-    }
-    .skill-card-head {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .skill-title {
+    .task-select {
+      flex: 1 1 240px;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      padding: 0.62rem 0.95rem;
+      font-size: 0.96rem;
       font-weight: 700;
-      font-size: 0.94rem;
       color: var(--text);
-      line-height: 1.3;
+      background: var(--primary-light);
+      border: 1.5px solid var(--primary-border);
+      border-radius: var(--radius-sm);
+      text-overflow: ellipsis;
+      cursor: pointer;
     }
-    .skill-btn-card.active .skill-title {
-      color: var(--primary);
+    .task-select:focus {
+      outline: 2px solid var(--primary);
+      outline-offset: 1px;
     }
-    .skill-meta-line {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      padding-left: 1.65rem;
+
+    .composer-input-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      align-items: stretch;
+    }
+    .qa-input {
+      flex: 1;
+      min-width: min(100%, 260px);
+      padding: 0.72rem 1rem;
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      font-size: 0.98rem;
+      color: var(--text);
+      background: var(--surface-subtle);
+    }
+    .qa-input:focus {
+      background: var(--surface);
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+    }
+    .qa-sample-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      align-items: center;
+    }
+    .qa-chip {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      border-radius: 999px;
+      padding: 0.3rem 0.8rem;
+      font-size: 0.84rem;
       font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+    }
+    .qa-chip:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+      border-color: var(--primary-border);
     }
 
     .skill-badge {
@@ -734,57 +807,16 @@
     .skill-badge.warn { background: var(--amber-light); color: var(--amber); border: 1px solid var(--amber-border); }
     .skill-badge.ok { background: var(--teal-light); color: var(--teal); border: 1px solid var(--teal-border); }
 
-    /* Right Stage: Q&A Bar + 3-Part Report Card */
-    .qa-bar-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.1rem 1.35rem;
-      margin-bottom: 1.25rem;
-      box-shadow: var(--shadow);
-    }
-    .qa-top-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      align-items: center;
-    }
-    .qa-input {
-      flex: 1;
-      min-width: 260px;
-      padding: 0.6rem 0.95rem;
-      border: 1px solid var(--border-strong);
-      border-radius: var(--radius-sm);
-      font-size: 0.95rem;
-    }
-    .qa-sample-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.45rem;
-      align-items: center;
-      margin-top: 0.75rem;
-    }
-    .qa-chip {
-      background: var(--surface-alt);
-      border: 1px solid var(--border);
-      color: var(--text-secondary);
-      border-radius: 999px;
-      padding: 0.28rem 0.75rem;
-      font-size: 0.83rem;
-      cursor: pointer;
-    }
-    .qa-chip:hover {
-      background: var(--primary-light);
-      color: var(--primary);
-      border-color: var(--primary-border);
-    }
-
+    /* Prominent Live Generation Hero Stage */
     .report-card {
       background: var(--surface);
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: var(--radius);
       padding: 1.5rem 1.75rem;
       box-shadow: var(--shadow-md);
+    }
+    @media (max-width: 680px) {
+      .composer-card, .report-card { padding: 1.1rem 1.15rem; }
     }
     .report-card-header {
       display: flex;
@@ -792,8 +824,8 @@
       align-items: center;
       justify-content: space-between;
       gap: 0.75rem;
-      margin-bottom: 1rem;
-      padding-bottom: 0.85rem;
+      margin-bottom: 1.1rem;
+      padding-bottom: 0.9rem;
       border-bottom: 1px solid var(--border);
     }
     .report-card-title {
@@ -801,23 +833,91 @@
       font-size: 1.25rem;
       font-weight: 800;
       color: var(--text);
+      line-height: 1.3;
+    }
+
+    .live-generation-hero {
+      background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+      border: 1.5px solid #bfdbfe;
+      border-left: 5px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem 1.45rem;
+      margin-bottom: 1.15rem;
+      box-shadow: 0 2px 10px rgba(29, 78, 216, 0.05);
+    }
+    .live-hero-subbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.55rem;
+      border-bottom: 1px dashed #cbd5e1;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
     .report-summary-box {
-      background: #f8fbff;
-      border-left: 4px solid var(--primary);
-      padding: 0.95rem 1.2rem;
-      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-      font-size: 0.98rem;
-      line-height: 1.6;
+      font-size: 1.05rem;
+      line-height: 1.7;
       color: var(--text);
-      margin-bottom: 1.25rem;
+    }
+    .inline-cite-badge {
+      display: inline-flex;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-light);
+      border: 1px solid var(--primary-border);
+      border-radius: 5px;
+      padding: 0.05rem 0.42rem;
+      margin: 0 0.1rem;
+      cursor: pointer;
+      vertical-align: baseline;
+    }
+    .inline-cite-badge:hover {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .evidence-details-drawer {
+      margin-top: 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface-subtle);
+      overflow: hidden;
+    }
+    .evidence-details-drawer summary {
+      padding: 0.75rem 1.1rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .evidence-details-drawer summary:hover {
+      background: var(--surface-alt);
+      color: var(--text);
+    }
+    .evidence-details-body {
+      padding: 1rem 1.15rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
     }
 
     .report-items-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.92rem;
-      margin-bottom: 1.25rem;
+      margin-bottom: 0.5rem;
     }
     .report-items-table th {
       background: var(--surface-alt);
@@ -851,8 +951,8 @@
     .remediation-box ul {
       margin: 0;
       padding-left: 1.25rem;
-      font-size: 0.93rem;
-      line-height: 1.6;
+      font-size: 0.95rem;
+      line-height: 1.62;
       color: var(--text);
     }
     .remediation-box li { margin-bottom: 0.35rem; }
@@ -914,7 +1014,7 @@
       gap: 1rem;
     }
 
-    /* Custom Bundle Modal */
+    /* Custom Bundle & LLM Config Modals */
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -923,16 +1023,17 @@
       z-index: 100;
       align-items: center;
       justify-content: center;
-      padding: 1.25rem;
+      padding: 1rem;
     }
     .modal-backdrop.open { display: flex; }
     .modal-card {
       background: var(--surface);
       border-radius: var(--radius);
-      max-width: 680px;
+      max-width: 640px;
       width: 100%;
-      padding: 1.5rem 1.75rem;
+      padding: 1.4rem 1.5rem;
       box-shadow: var(--shadow-lg);
+      box-sizing: border-box;
     }
     .modal-textarea {
       width: 100%;
@@ -943,6 +1044,21 @@
       border: 1px solid var(--border-strong);
       border-radius: var(--radius-sm);
       margin: 0.65rem 0;
+    }
+    .modal-actions-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+    .modal-preset-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
     }
   </style>
 </head>
@@ -1140,38 +1256,35 @@
     </section>
 
     <!-- ===================================================================== -->
-    <!-- PHASE 3: READABLE SKILL MENU + SPACIOUS 3-PART REPORT CARD & Q&A      -->
+    <!-- PHASE 3: UNIFIED TASK COMPOSER + PROMINENT LIVE GENERATION STAGE      -->
     <!-- ===================================================================== -->
     <section class="phase-panel" id="phase-panel-3" role="tabpanel" aria-labelledby="phase-tab-3">
-      <div class="phase3-master-detail" id="zone-b-section">
-        <!-- Left Rail: Full-Title Readable Menu of 9 Skills -->
-        <aside class="skills-rail-card" aria-label="Suggested Patient Skills">
-          <div class="skills-group-title">Everyday Patient Tasks</div>
-          <div class="skills-rail-list" id="everyday-skills-grid"></div>
-
-          <div class="skills-group-title">Chart Health Checks</div>
-          <div class="skills-rail-list" id="healthcheck-skills-grid"></div>
-        </aside>
-
-        <!-- Right Main Stage: Q&A Bar + Spacious 3-Part Report Card -->
-        <div class="phase3-main-stage">
-          <div class="qa-bar-card">
-            <div class="qa-top-row">
-              <form id="qa-form" style="display: flex; flex: 1; gap: 0.6rem; min-width: 260px;">
-                <input type="text" id="qa-question-input" class="qa-input" placeholder="Ask a question about this chart (e.g., medications, lab trends, hospital stay, unrecorded tests)..." aria-label="Ask a question about this chart" />
-                <button type="submit" id="qa-submit-btn" class="btn btn-primary">Ask</button>
-              </form>
-              <div class="seg-group" id="audience-view-group" aria-label="Audience Mode">
-                <button type="button" class="seg-btn active" data-audience="patient">👤 Patient View</button>
-                <button type="button" class="seg-btn" data-audience="clinician">🩺 Clinician View</button>
-              </div>
+      <div class="phase3-single-stage" id="zone-b-section">
+        <!-- Unified Task Picker + Question Composer Bar -->
+        <div class="composer-card">
+          <div class="composer-top-row">
+            <div class="task-picker-group">
+              <label for="skill-task-select" class="task-picker-label">📋 Clinical Task:</label>
+              <select id="skill-task-select" class="task-select" aria-label="Choose a Clinical Skill or Task"></select>
             </div>
-            <div class="qa-sample-chips" id="qa-sample-chips"></div>
+            <div class="seg-group" id="audience-view-group" aria-label="Audience Mode">
+              <button type="button" class="seg-btn active" data-audience="patient">👤 Patient View</button>
+              <button type="button" class="seg-btn" data-audience="clinician">🩺 Clinician View</button>
+            </div>
           </div>
 
-          <!-- Active 3-Part Report Card -->
-          <div class="report-card" id="active-report-card"></div>
+          <div class="composer-input-row">
+            <form id="qa-form" style="display: flex; flex-wrap: wrap; flex: 1; gap: 0.65rem; min-width: 0;">
+              <input type="text" id="qa-question-input" class="qa-input" placeholder="Select a clinical task above or ask any question about this patient's condensed chart..." aria-label="Ask a question about this chart" />
+              <button type="submit" id="qa-submit-btn" class="btn btn-primary">⚡ Generate Live</button>
+            </form>
+          </div>
+
+          <div class="qa-sample-chips" id="qa-sample-chips"></div>
         </div>
+
+        <!-- Prominent Live Generation Stage -->
+        <div class="report-card" id="active-report-card"></div>
       </div>
     </section>
 
@@ -1213,30 +1326,33 @@
       </p>
       <input type="file" id="custom-fhir-file-input" accept=".json,application/json" style="margin-bottom: 0.5rem; font-size: 0.9rem;" aria-label="Upload FHIR Bundle JSON file" />
       <textarea id="custom-fhir-textarea" class="modal-textarea" placeholder='{"resourceType": "Bundle", "type": "collection", "entry": [ ... ]}' aria-label="Custom FHIR Bundle JSON text"></textarea>
-      <div style="display: flex; justify-content: flex-end; gap: 0.65rem;">
+      <div style="display: flex; justify-content: flex-end; gap: 0.65rem; flex-wrap: wrap;">
         <button type="button" class="btn btn-sm" id="load-sample-uscore-btn">Insert Sample Bundle</button>
         <button type="button" class="btn btn-primary btn-sm" id="apply-custom-fhir-btn">Load Chart</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal for Configuring Live LLM Endpoint (Local llama-server or Tailscale) -->
+  <!-- Modal for Configuring Live LLM Endpoint -->
   <div class="modal-backdrop" id="llm-config-modal" role="dialog" aria-modal="true" aria-labelledby="llm-modal-title">
-    <div class="modal-card" style="width: min(560px, 95vw);">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div class="modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
         <h3 id="llm-modal-title" style="margin: 0; font-size: 1.15rem;">Live LLM Connection Settings</h3>
         <button type="button" class="btn btn-sm" id="close-llm-modal-btn">✕ Close</button>
       </div>
-      <p style="font-size: 0.92rem; color: var(--text-secondary); margin: 0.65rem 0;">
-        Connect to a local OpenAI-compatible <code>llama-server</code> router (<code>http://127.0.0.1:8077</code>) or a Tailscale endpoint (e.g., <code>http://100.119.27.0:8077</code>).
+      <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0.65rem 0; line-height: 1.5;">
+        Connect directly from your browser to a local OpenAI-compatible <code>llama-server</code> router (<code>http://127.0.0.1:8077</code>).
+        <span style="display: block; margin-top: 0.25rem; font-size: 0.82rem; color: var(--text-muted);">
+          Note: Direct browser calls to plain-HTTP non-loopback Tailscale IPs from an HTTPS page are blocked by browser Mixed-Content rules; public remote access via server-hosted <code>med-agent-hub</code> over Tailscale is tracked as a backend deployment step.
+        </span>
       </p>
       <label for="llm-endpoint-input" style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.35rem;">OpenAI-Compatible Base URL</label>
-      <input type="text" id="llm-endpoint-input" class="qa-input" style="width: 100%; margin-bottom: 0.75rem; font-family: var(--font-mono);" value="http://127.0.0.1:8077" />
-      <div id="llm-modal-status" style="font-size: 0.86rem; color: var(--text-secondary); margin-bottom: 0.85rem;"></div>
-      <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.6rem;">
-        <div style="display: flex; gap: 0.45rem;">
+      <input type="text" id="llm-endpoint-input" class="qa-input" style="width: 100%; box-sizing: border-box; margin-bottom: 0.65rem; font-family: var(--font-mono);" value="http://127.0.0.1:8077" />
+      <div id="llm-modal-status-box" style="font-size: 0.86rem; color: var(--text-secondary);"></div>
+      <div class="modal-actions-row">
+        <div class="modal-preset-group">
           <button type="button" class="btn btn-sm" id="preset-local-llm-btn">Local (127.0.0.1:8077)</button>
-          <button type="button" class="btn btn-sm" id="preset-tailscale-llm-btn">Tailscale (100.119.27.0:8077)</button>
+          <button type="button" class="btn btn-sm" id="preset-tailscale-llm-btn" title="Use when serving the page over HTTP or via a local/Tailscale proxy">Tailscale (100.119.27.0:8077)</button>
         </div>
         <button type="button" class="btn btn-primary btn-sm" id="save-llm-endpoint-btn">Connect &amp; Refresh Models</button>
       </div>
@@ -1294,7 +1410,7 @@
         return cleaned || String(rawName || "");
       }
 
-      /* Render inline **bold**, *italic*, `code`, bullet lists, and arrows cleanly */
+      /* Render inline **bold**, *italic*, `code`, bullet lists, [N] citation badges, and arrows cleanly */
       function formatRichText(str) {
         const cleaned = String(str == null ? "" : str)
           .replace(/Maurice742(\s+Marcos263)?\s+Auer97/g, "Maurice Auer")
@@ -1309,7 +1425,13 @@
           .replace(/^\s*[-*•]\s+(.+)$/gm, '<div style="margin-top:0.35rem;">• $1</div>')
           .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
           .replace(/\*([^\s*][^*\n]*[^\s*])\*/g, "<em>$1</em>")
-          .replace(/`([^`]+)`/g, "<code>$1</code>");
+          .replace(/`([^`]+)`/g, "<code>$1</code>")
+          .replace(/\[(\d+(?:\s*,\s*\d+)*)\]/g, function (_m, nums) {
+            return nums.split(",").map(function (n) {
+              const cleanNum = n.trim();
+              return '<button type="button" class="inline-cite-badge" data-inline-cite="' + cleanNum + '" title="Inspect FHIR source [' + cleanNum + ']">[' + cleanNum + ']</button>';
+            }).join(" ");
+          });
       }
 
       /* Clean verbose ledger item strings for the Readable Summary view */
@@ -1512,6 +1634,10 @@
           tr.addEventListener("click", function () {
             state.selectedResourceIndex = parseInt(tr.getAttribute("data-rindex"), 10);
             renderFhirBrowser();
+            if (window.innerWidth <= 1080) {
+              const insp = document.getElementById("resource-inspector");
+              if (insp) insp.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            }
           });
         });
 
@@ -1646,7 +1772,20 @@
         }
       }
 
-      /* PHASE 3: Render Full-Title Skill Menu & Spacious 3-Part Report Card */
+      /* Default natural-language prompt for each of the 9 skills (shown in the integrated question bar) */
+      const SKILL_PROMPTS = {
+        "skill-visit-brief": "Prepare my next doctor visit summary: synthesize my active conditions, current medications, and key questions for my clinician.",
+        "skill-hospital-stay": "Explain my recent hospital stay or major procedure in plain English and summarize what changed at discharge.",
+        "skill-med-guide": "Explain my current active medications, what each prescription treats, and which clinic ordered it.",
+        "skill-lab-trends": "Explain my lab results and biomarker trends over time, highlighting any values moving in the wrong direction.",
+        "skill-vaccine-summary": "Summarize my immunization history and preventive care status.",
+        "skill-med-conflicts": "Check my active medication list for duplicate pills (brand vs. generic), conflicting drugs, or clinical note hold mismatches.",
+        "skill-condition-conflicts": "Check my problem list for outdated or conflicting diagnosis stages across clinics.",
+        "skill-chart-hygiene": "Audit my FHIR chart for duplicate panels, repeated Base64 notes, and non-clinical artifacts.",
+        "skill-privacy-preview": "Preview any sensitive social history or behavioral health records before external sharing."
+      };
+
+      /* PHASE 3: Render Unified Task Dropdown + Question Composer & Prominent Live Generation Stage */
       function renderSkillsAndQa() {
         const p = currentPatient();
         if (!p) return;
@@ -1654,33 +1793,56 @@
         const everydaySkills = skills.filter(function (s) { return s.group === "everyday_task"; });
         const checkSkills = skills.filter(function (s) { return s.group === "health_check"; });
 
-        function renderSkillCards(list, containerId) {
-          const el = document.getElementById(containerId);
-          if (!el) return;
-          el.innerHTML = list.map(function (s) {
-            const isAct = !state.customQuestionResult && state.activeSkillId === s.id;
-            return (
-              '<button type="button" class="skill-btn-card ' + (isAct ? "active" : "") + '" data-skill-id="' + esc(s.id) + '">' +
-                '<div class="skill-card-head">' +
-                  '<span style="font-size: 1.05rem;">' + esc(s.icon) + '</span>' +
-                  '<span class="skill-title">' + esc(s.title) + '</span>' +
-                '</div>' +
-                '<div class="skill-meta-line">' + esc(s.status_badge) + '</div>' +
-              '</button>'
-            );
-          }).join("");
+        const taskSelect = document.getElementById("skill-task-select");
+        if (taskSelect) {
+          const customLabel = state.customQuestionResult
+            ? "💬 Custom Question: " + (state.customQuestionResult.question.length > 58 ? state.customQuestionResult.question.slice(0, 58) + "..." : state.customQuestionResult.question)
+            : "💬 Custom Free-Text Question (Type below or pick a quick chip)";
+          taskSelect.innerHTML =
+            '<optgroup label="Everyday Patient Tasks (5)">' +
+              everydaySkills.map(function (s) {
+                const sel = !state.customQuestionResult && state.activeSkillId === s.id ? " selected" : "";
+                return '<option value="' + esc(s.id) + '"' + sel + '>' + esc(s.icon + " " + s.title + " (" + s.status_badge + ")") + '</option>';
+              }).join("") +
+            '</optgroup>' +
+            '<optgroup label="Chart Health &amp; Safety Checks (4)">' +
+              checkSkills.map(function (s) {
+                const sel = !state.customQuestionResult && state.activeSkillId === s.id ? " selected" : "";
+                return '<option value="' + esc(s.id) + '"' + sel + '>' + esc(s.icon + " " + s.title + " (" + s.status_badge + ")") + '</option>';
+              }).join("") +
+            '</optgroup>' +
+            '<optgroup label="Free-Text Chart Q&amp;A">' +
+              '<option value="__custom__"' + (state.customQuestionResult ? " selected" : "") + '>' + esc(customLabel) + '</option>' +
+            '</optgroup>';
 
-          el.querySelectorAll(".skill-btn-card").forEach(function (btn) {
-            btn.addEventListener("click", function () {
-              state.activeSkillId = btn.getAttribute("data-skill-id");
-              state.customQuestionResult = null;
-              renderSkillsAndQa();
-            });
-          });
+          taskSelect.onchange = function () {
+            const val = taskSelect.value;
+            if (val === "__custom__") {
+              const qIn = document.getElementById("qa-question-input");
+              if (qIn) {
+                qIn.value = "";
+                qIn.focus();
+              }
+              return;
+            }
+            state.activeSkillId = val;
+            state.customQuestionResult = null;
+            const qIn = document.getElementById("qa-question-input");
+            if (qIn) {
+              qIn.value = SKILL_PROMPTS[val] || "";
+            }
+            renderSkillsAndQa();
+          };
         }
 
-        renderSkillCards(everydaySkills, "everyday-skills-grid");
-        renderSkillCards(checkSkills, "healthcheck-skills-grid");
+        const qInputEl = document.getElementById("qa-question-input");
+        if (qInputEl) {
+          if (state.customQuestionResult) {
+            qInputEl.value = state.customQuestionResult.question || "";
+          } else {
+            qInputEl.value = SKILL_PROMPTS[state.activeSkillId] || "";
+          }
+        }
 
         const postureKey = state.privacyExternalShare ? "external_share" : "patient_self";
         const qaSamples = ((p.postures || {})[postureKey] || {}).qa_samples || [];
@@ -1693,7 +1855,7 @@
             : shortSamples;
 
           chipsContainer.innerHTML =
-            '<span style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">Try asking:</span>' +
+            '<span style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">Quick-test questions:</span>' +
             displaySamples.map(function (qa) {
               const origIdx = qaSamples.indexOf(qa);
               return '<button type="button" class="qa-chip" data-qa-idx="' + origIdx + '">' + esc(qa.question) + '</button>';
@@ -2013,7 +2175,10 @@
           }
           if (citesWrapper) {
             citesWrapper.innerHTML = renderCitationsBar(finalCites);
-            bindCitationClicks(citesWrapper, p);
+          }
+          const reportCardEl = document.getElementById("active-report-card");
+          if (reportCardEl) {
+            bindCitationClicks(reportCardEl, p);
           }
         } catch (err) {
           if (err && err.name === "AbortError") return;
@@ -2061,9 +2226,15 @@
             ? "🟢 Live LLM: <strong>" + esc(cached.model) + "</strong> • TTFT " + (cached.ttftMs / 1000).toFixed(2) + "s • Total " + (cached.totalMs / 1000).toFixed(2) + "s"
             : (state.llmConnected ? "⚡ Preparing live LLM generation..." : "⚪ Precomputed Baseline (LLM Offline)");
 
+          const promptPreviewText =
+            "Patient: " + pName + " (DOB " + ((p && p.birth_date) || "unknown") + ")\n" +
+            "Active Phase 2 Condensation Levers: " + promptData.leverLabel + "\n" +
+            promptData.omittedNote + "\n\n" +
+            "Condensed FHIR Chart Ledger:\n" + promptData.ledgerExcerpt;
+
           container.innerHTML =
             '<div class="report-card-header">' +
-              '<h3 class="report-card-title">Q: ' + esc(qa.question) + '</h3>' +
+              '<h3 class="report-card-title">💬 Q: ' + esc(qa.question) + '</h3>' +
               '<div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">' +
                 '<span class="llm-live-pill ' + (cached ? "done" : (state.llmConnected ? "streaming" : "offline")) + '" id="live-llm-telemetry-pill">' + initialPillHtml + '</span>' +
                 '<button type="button" class="btn btn-sm" id="rerun-live-llm-btn" title="Regenerate live response with ' + esc(state.llmModel) + '">↻ Regenerate Live</button>' +
@@ -2072,17 +2243,29 @@
                 '</span>' +
               '</div>' +
             '</div>' +
-            '<div class="report-summary-box" id="live-llm-summary-box">' + initialSummaryHtml + '</div>' +
+            '<div class="live-generation-hero">' +
+              '<div class="live-hero-subbar">' +
+                '<span>✨ Live LLM Clinical Synthesis (' + esc(state.llmModel) + ')</span>' +
+                '<span style="color: var(--text-muted); font-weight: 600;">Context: ' + esc(promptData.leverLabel) + '</span>' +
+              '</div>' +
+              '<div class="report-summary-box" id="live-llm-summary-box">' + initialSummaryHtml + '</div>' +
+            '</div>' +
             '<div class="remediation-box">' +
               '<h4>💬 Questions to Ask Your Doctor</h4>' +
               '<ul id="live-llm-questions-list">' +
                 initialQuestions.map(function (item) { return '<li>' + formatRichText(item) + '</li>'; }).join("") +
               '</ul>' +
             '</div>' +
+            '<div id="live-llm-citations-wrapper">' + renderCitationsBar(initialCites) + '</div>' +
             (state.audience === "clinician" && qa.clinician_technical_note
               ? '<div class="clinician-tech-box"><strong>Clinician Technical Provenance:</strong> ' + esc(qa.clinician_technical_note) + '</div>'
               : '') +
-            '<div id="live-llm-citations-wrapper">' + renderCitationsBar(initialCites) + '</div>';
+            '<details class="evidence-details-drawer">' +
+              '<summary><span>🔍 Inspect Condensed Prompt Context Sent to LLM</span><span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">' + esc(promptData.leverLabel) + '</span></summary>' +
+              '<div class="evidence-drawer-body">' +
+                '<pre class="ledger-pre" style="max-height: 260px;">' + esc(promptPreviewText) + '</pre>' +
+              '</div>' +
+            '</details>';
 
           bindCitationClicks(container, p);
           const rerunBtn = document.getElementById("rerun-live-llm-btn");
@@ -2128,7 +2311,8 @@
         }
         const cached = state.llmCache[cacheKey];
 
-        const rowsHtml = (skill.structured_rows || []).map(function (r) {
+        const structRows = skill.structured_rows || [];
+        const rowsHtml = structRows.map(function (r) {
           return (
             '<tr>' +
               '<td><span class="skill-badge ' + esc(r.tone || "info") + '">' + esc(r.category) + '</span></td>' +
@@ -2151,6 +2335,17 @@
           ? "🟢 Live LLM: <strong>" + esc(cached.model) + "</strong> • TTFT " + (cached.ttftMs / 1000).toFixed(2) + "s • Total " + (cached.totalMs / 1000).toFixed(2) + "s"
           : (state.llmConnected ? "⚡ Preparing live LLM synthesis..." : "⚪ Precomputed Baseline (LLM Offline)");
 
+        const pName = cleanName(p && p.patient_name);
+        const skillFindingsText = structRows.map(function (r) {
+          return "- [" + r.category + "] " + r.label + ": " + r.detail + " (Source: " + r.source_org + ")";
+        }).join("\n");
+        const promptPreviewText =
+          "Patient: " + pName + " (DOB " + ((p && p.birth_date) || "unknown") + ")\n" +
+          "Active Phase 2 Condensation Levers: " + promptData.leverLabel + "\n" +
+          promptData.omittedNote + "\n\n" +
+          "Condensed FHIR Chart Ledger:\n" + promptData.ledgerExcerpt + "\n\n" +
+          "4-Layer Clinical KB Findings for '" + skill.title + "':\n" + (skillFindingsText || "None");
+
         container.innerHTML =
           '<div class="report-card-header">' +
             '<h3 class="report-card-title">' + esc(skill.icon) + ' ' + esc(skill.title) + '</h3>' +
@@ -2160,12 +2355,12 @@
               '<span class="skill-badge ' + esc(skill.badge_tone || "info") + '" id="live-llm-status-badge">' + esc(skill.status_badge) + '</span>' +
             '</div>' +
           '</div>' +
-          '<div class="report-summary-box" id="live-llm-summary-box">' + initialSummaryHtml + '</div>' +
-          '<div style="overflow-x: auto;">' +
-            '<table class="report-items-table">' +
-              '<thead><tr><th style="width: 165px;">Status</th><th style="width: 215px;">Item</th><th>Details</th><th style="width: 165px;">Source Clinic</th></tr></thead>' +
-              '<tbody>' + rowsHtml + '</tbody>' +
-            '</table>' +
+          '<div class="live-generation-hero">' +
+            '<div class="live-hero-subbar">' +
+              '<span>✨ Live LLM Clinical Synthesis (' + esc(state.llmModel) + ')</span>' +
+              '<span style="color: var(--text-muted); font-weight: 600;">Context: ' + esc(promptData.leverLabel) + '</span>' +
+            '</div>' +
+            '<div class="report-summary-box" id="live-llm-summary-box">' + initialSummaryHtml + '</div>' +
           '</div>' +
           '<div class="remediation-box">' +
             '<h4>💡 Suggested Next Steps &amp; Questions for Your Doctor (Read-Only)</h4>' +
@@ -2173,13 +2368,34 @@
               initialQuestions.map(function (item) { return '<li>' + formatRichText(item) + '</li>'; }).join("") +
             '</ul>' +
           '</div>' +
+          '<div id="live-llm-citations-wrapper">' + renderCitationsBar(initialCites) + '</div>' +
           (state.audience === "clinician"
             ? '<div class="clinician-tech-box">' +
                 '<div><strong>KB Rule Provenance:</strong> ' + esc(skill.clinician_technical_note || "Standard clinical rule") + '</div>' +
                 '<div style="margin-top: 0.35rem;"><strong>Condensation Lever Sensitivity:</strong> ' + esc(skill.lever_sensitivity_note || "") + '</div>' +
               '</div>'
             : '') +
-          '<div id="live-llm-citations-wrapper">' + renderCitationsBar(initialCites) + '</div>';
+          '<details class="evidence-details-drawer">' +
+            '<summary>' +
+              '<span>📋 Supporting 4-Layer KB Structured Findings (' + structRows.length + ' items)</span>' +
+              '<span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">Click to expand deterministic table</span>' +
+            '</summary>' +
+            '<div class="evidence-drawer-body" style="overflow-x: auto;">' +
+              '<table class="report-items-table">' +
+                '<thead><tr><th style="width: 155px;">Status</th><th style="width: 205px;">Item</th><th>Details</th><th style="width: 160px;">Source Clinic</th></tr></thead>' +
+                '<tbody>' + rowsHtml + '</tbody>' +
+              '</table>' +
+            '</div>' +
+          '</details>' +
+          '<details class="evidence-details-drawer">' +
+            '<summary>' +
+              '<span>🔍 Inspect Exact Condensed Prompt Sent to LLM</span>' +
+              '<span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">' + esc(promptData.leverLabel) + '</span>' +
+            '</summary>' +
+            '<div class="evidence-drawer-body">' +
+              '<pre class="ledger-pre" style="max-height: 260px;">' + esc(promptPreviewText) + '</pre>' +
+            '</div>' +
+          '</details>';
 
         bindCitationClicks(container, p);
         const rerunBtn = document.getElementById("rerun-live-llm-btn");
@@ -2190,22 +2406,13 @@
         }
 
         if (state.llmConnected && !cached) {
-          const pName = cleanName(p && p.patient_name);
-          const skillFindingsText = (skill.structured_rows || []).map(function (r) {
-            return "- [" + r.category + "] " + r.label + ": " + r.detail + " (Source: " + r.source_org + ")";
-          }).join("\n");
-
           const sysMsg = state.audience === "clinician"
             ? "You are the WAHS+ Clinical Chart Assistant in Clinician View. Answer the clinical task or question concisely using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, procedure, or biomarker NOT recorded anywhere in the chart, begin your SUMMARY with 'ABSTAIN:' and state that no record exists in the chart. Format your output in two parts:\nSUMMARY:\n2-3 concise clinical bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 clinical reconciliation or follow-up items."
             : "You are the WAHS+ Clinical Chart Assistant helping a patient understand their condensed health record. Answer the task or question in clear, empathetic plain English using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, colonoscopy, MRI, or fact NOT recorded in the chart, begin your SUMMARY with 'ABSTAIN:' and clearly explain that you checked their chart and there is no record of it, so you abstain for safety rather than guessing. Format your output in two parts:\nSUMMARY:\n2-3 clear plain-English bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 specific questions the patient can ask their doctor.";
 
           const userMsg =
-            "Patient: " + pName + " (DOB " + (p.birth_date || "unknown") + ")\n" +
-            "Active Phase 2 Condensation Levers: " + promptData.leverLabel + "\n" +
-            promptData.omittedNote + "\n\n" +
-            "Condensed FHIR Chart Ledger:\n" + promptData.ledgerExcerpt + "\n\n" +
-            "4-Layer Clinical KB Findings for '" + skill.title + "':\n" + (skillFindingsText || "None") + "\n\n" +
-            "Task / Question: Synthesize the SUMMARY and QUESTIONS_FOR_DOCTOR for the skill '" + skill.title + "'.";
+            promptPreviewText + "\n\n" +
+            "Task / Question: " + (SKILL_PROMPTS[skill.id] || ("Synthesize the SUMMARY and QUESTIONS_FOR_DOCTOR for the skill '" + skill.title + "'."));
 
           streamLiveLlm(cacheKey, [
             { role: "system", content: sysMsg },
@@ -2281,6 +2488,7 @@
       }
 
       function bindCitationClicks(container, p) {
+        if (!container) return;
         container.querySelectorAll(".cite-chip").forEach(function (chip) {
           chip.addEventListener("click", function () {
             openCitationDrawer(
@@ -2289,6 +2497,21 @@
               chip.getAttribute("data-cite-text") || "",
               p
             );
+          });
+        });
+        container.querySelectorAll(".inline-cite-badge").forEach(function (badge) {
+          badge.addEventListener("click", function () {
+            const num = badge.getAttribute("data-inline-cite");
+            const resolved = resolveLiveCitations("[" + num + "]", p, []);
+            if (resolved && resolved.length) {
+              const c = resolved[0];
+              openCitationDrawer(
+                c.resource_uuid || c.resourceUuid || "",
+                c.resource_type || c.resourceType || "FHIR",
+                c.text || "",
+                p
+              );
+            }
           });
         });
       }
@@ -2430,6 +2653,19 @@
         const postureKey = state.privacyExternalShare ? "external_share" : "patient_self";
         const qaSamples = ((p.postures || {})[postureKey] || {}).qa_samples || [];
         const qLow = q.toLowerCase();
+
+        const matchedSkillId = Object.keys(SKILL_PROMPTS).find(function (sid) {
+          return SKILL_PROMPTS[sid].toLowerCase() === qLow;
+        });
+        if (matchedSkillId) {
+          state.activeSkillId = matchedSkillId;
+          state.customQuestionResult = null;
+          const skills = buildPatientSkills(p);
+          const taskSelect = document.getElementById("skill-task-select");
+          if (taskSelect) taskSelect.value = matchedSkillId;
+          renderActiveReportCard(p, skills, true);
+          return;
+        }
 
         const matchedQa = qaSamples.find(function (item) {
           return item.question.toLowerCase() === qLow || item.question.toLowerCase().indexOf(qLow) !== -1;
