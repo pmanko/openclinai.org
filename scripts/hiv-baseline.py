@@ -325,12 +325,23 @@ def cmd_record_deployed(args: argparse.Namespace) -> int:
     every rebuild as a stale deployment.
     """
     state = args.local_state
+    validated: list[tuple[str, str, str]] = []
     for module in DEPLOYED_MODULES:
         built = state / "module-provenance" / f"{module}-1.0.0-SNAPSHOT.omod.provenance.json"
         if not built.is_file():
             raise RuntimeError(f"no build provenance for {module} at {built}; build the modules first")
-        (state / f"deployed-{module}-omod.json").write_text(built.read_text(encoding="utf-8"), encoding="utf-8")
-        say(f"recorded deployed {module} {json.loads(built.read_text(encoding='utf-8'))['source_commit'][:9]}")
+        raw = built.read_text(encoding="utf-8")
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(f"malformed build provenance for {module} at {built}; build the modules first") from exc
+        commit = payload.get("source_commit") if isinstance(payload, dict) else None
+        if not isinstance(commit, str) or not commit.strip():
+            raise RuntimeError(f"invalid build provenance for {module} at {built}; build the modules first")
+        validated.append((module, raw, commit[:9]))
+    for module, raw, short_commit in validated:
+        (state / f"deployed-{module}-omod.json").write_text(raw, encoding="utf-8")
+        say(f"recorded deployed {module} {short_commit}")
     return 0
 
 
