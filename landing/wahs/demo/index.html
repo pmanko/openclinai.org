@@ -659,9 +659,15 @@
       display: inline-block;
       font-size: 0.78rem;
       font-weight: 700;
-      padding: 0.2rem 0.65rem;
+      padding: 0.22rem 0.65rem;
       border-radius: 999px;
       white-space: nowrap;
+    }
+    .report-items-table .skill-badge {
+      white-space: normal;
+      border-radius: 8px;
+      line-height: 1.35;
+      padding: 0.28rem 0.6rem;
     }
     .skill-badge.info { background: var(--primary-light); color: var(--primary); border: 1px solid var(--primary-border); }
     .skill-badge.warn { background: var(--amber-light); color: var(--amber); border: 1px solid var(--amber-border); }
@@ -1191,14 +1197,20 @@
         return cleaned || String(rawName || "");
       }
 
-      /* Render inline **bold** and `code` safely while stripping Synthea numeric suffixes */
+      /* Render inline **bold**, *italic*, `code`, bullet lists, and arrows cleanly */
       function formatRichText(str) {
-        const withoutDigitsInNames = String(str == null ? "" : str)
+        const cleaned = String(str == null ? "" : str)
           .replace(/Maurice742(\s+Marcos263)?\s+Auer97/g, "Maurice Auer")
           .replace(/Lamar193(\s+Oswaldo857)?\s+Beer512/g, "Lamar Beer")
-          .replace(/Byron202(\s+Carmen818)?\s+Emard19/g, "Byron Emard");
-        return esc(withoutDigitsInNames)
+          .replace(/Byron202(\s+Carmen818)?\s+Emard19/g, "Byron Emard")
+          .replace(/\$\\to\$|\$to\$|\\to/g, "→")
+          .replace(/mL\/min\/\{1\.73_m2\}/g, "mL/min/1.73m²");
+        return esc(cleaned)
+          .replace(/^###\s+(.+)$/gm, '<div style="font-weight:800; color:var(--text); margin:0.85rem 0 0.35rem; font-size:0.98rem;">$1</div>')
+          .replace(/\s+-\s+\*\*([^*]+)\*\*/g, '<div style="margin-top:0.55rem;">• <strong>$1</strong></div>')
+          .replace(/^-\s+\*\*([^*]+)\*\*/gm, '<div style="margin-top:0.4rem;">• <strong>$1</strong></div>')
           .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+          .replace(/\*([^*]+)\*/g, "<em>$1</em>")
           .replace(/`([^`]+)`/g, "<code>$1</code>");
       }
 
@@ -1367,11 +1379,11 @@
           return hay.indexOf(q) !== -1;
         });
 
-        const chosen = (fb.resources || []).find(function (r) {
+        const chosen = rows.find(function (r) {
           return r.index === state.selectedResourceIndex;
         }) || rows[0] || (fb.resources || [])[0];
 
-        if (chosen && state.selectedResourceIndex == null) {
+        if (chosen) {
           state.selectedResourceIndex = chosen.index;
         }
 
@@ -1609,7 +1621,21 @@
         if (state.customQuestionResult) {
           const qa = state.customQuestionResult;
           const cites = qa.citations || [];
-          const askList = qa.what_to_ask_doctor || [];
+          const pName = cleanName(p && p.patient_name);
+          const totalCount = ((p && p.fhir_browser && p.fhir_browser.total_bundle_entries) || (p && p.total_bundle_entries) || 0).toLocaleString();
+          const summaryTxt = qa.abstained
+            ? "Checked all <strong>" + totalCount + "</strong> records in <strong>" + esc(pName) + "</strong>'s chart: there is <strong>no documented record</strong> matching <code>" + esc(qa.question) + "</code>. For patient safety, this assistant abstains rather than guessing or fabricating unrecorded clinical history."
+            : formatRichText(qa.patient_plain_summary || qa.answer);
+          const askList = qa.abstained
+            ? ["Ask your doctor whether this test, allergy, or procedure was recorded at an outside clinic and should be added to your chart."]
+            : (qa.what_to_ask_doctor || []);
+          const detailBlock = (!qa.abstained && qa.patient_plain_summary && qa.answer && qa.patient_plain_summary !== qa.answer)
+            ? '<details ' + (state.audience === "clinician" ? "open " : "") + 'style="margin-bottom: 1.2rem; background: var(--surface-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.75rem 1.1rem;">' +
+                '<summary style="cursor: pointer; font-weight: 700; font-size: 0.9rem; color: var(--primary);">View Full Clinical Evidence Breakdown</summary>' +
+                '<div style="font-size: 0.92rem; color: var(--text-secondary); margin-top: 0.75rem; white-space: pre-wrap; line-height: 1.6;">' + formatRichText(qa.answer) + '</div>' +
+              '</details>'
+            : '';
+
           container.innerHTML =
             '<div class="report-card-header">' +
               '<h3 class="report-card-title">Q: ' + esc(qa.question) + '</h3>' +
@@ -1617,10 +1643,8 @@
                 esc(qa.abstained ? "Safety Abstention (Unrecorded Fact)" : (qa.source_mode_label || "Grounded in Chart")) +
               '</span>' +
             '</div>' +
-            '<div class="report-summary-box">' + formatRichText(qa.patient_plain_summary || qa.answer) + '</div>' +
-            (qa.patient_plain_summary && qa.answer && qa.patient_plain_summary !== qa.answer
-              ? '<div style="font-size: 0.94rem; color: var(--text-secondary); margin-bottom: 1.15rem; white-space: pre-wrap; line-height: 1.6;">' + formatRichText(qa.answer) + '</div>'
-              : '') +
+            '<div class="report-summary-box">' + summaryTxt + '</div>' +
+            detailBlock +
             (askList.length
               ? '<div class="remediation-box"><h4>💬 Questions to Ask Your Doctor</h4><ul>' +
                   askList.map(function (item) { return '<li>' + formatRichText(item) + '</li>'; }).join("") +
@@ -1665,7 +1689,7 @@
           '<div class="report-summary-box">' + formatRichText(skill.plain_english_summary) + '</div>' +
           '<div style="overflow-x: auto;">' +
             '<table class="report-items-table">' +
-              '<thead><tr><th style="width: 170px;">Status</th><th style="width: 240px;">Item</th><th>Details</th><th style="width: 185px;">Source Clinic</th></tr></thead>' +
+              '<thead><tr><th style="width: 165px;">Status</th><th style="width: 215px;">Item</th><th>Details</th><th style="width: 165px;">Source Clinic</th></tr></thead>' +
               '<tbody>' + rowsHtml + '</tbody>' +
             '</table>' +
           '</div>' +
@@ -1688,10 +1712,17 @@
         if (!cites || !cites.length) {
           return '<div class="citations-bar"><span style="font-size: 0.84rem; color: var(--text-muted);">No specific FHIR citations required.</span></div>';
         }
+        const seen = {};
+        const uniqueCites = cites.filter(function (c) {
+          const key = (c.resource_uuid || c.resourceUuid || "") + "|" + (c.index || "");
+          if (seen[key]) return false;
+          seen[key] = true;
+          return true;
+        });
         return (
           '<div class="citations-bar">' +
             '<span style="font-size: 0.84rem; font-weight: 700; color: var(--text-secondary);">Grounded FHIR Sources (click to inspect):</span>' +
-            cites.map(function (c) {
+            uniqueCites.map(function (c) {
               const uuid = c.resource_uuid || c.resourceUuid || "";
               const rtype = c.resource_type || c.resourceType || "FHIR";
               return (
@@ -1805,14 +1836,18 @@
       });
       document.getElementById("drawer-open-in-phase1-btn").addEventListener("click", function () {
         if (state.drawerResourceIndex != null) {
-          state.browserCategory = "All Core Clinical";
+          const p = currentPatient();
+          const fb = (p && p.fhir_browser) || {};
+          const targetRes = (fb.resources || []).find(function (r) {
+            return r.index === state.drawerResourceIndex;
+          });
+          state.browserCategory = (targetRes && targetRes.category) || "All Core Clinical";
           state.browserSearch = "";
           state.selectedResourceIndex = state.drawerResourceIndex;
-          renderFhirBrowser();
         }
         closeCitationDrawer();
-        setPhase("1", false);
-        document.getElementById("zone-a-section").scrollIntoView({ behavior: "smooth", block: "start" });
+        setPhase("1", true);
+        renderFhirBrowser();
       });
 
       /* Interactive Controls Wiring */
