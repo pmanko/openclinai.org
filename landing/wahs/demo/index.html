@@ -1288,6 +1288,7 @@
         <h1 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #ffffff;">Washington Health Summary — Patient Chart Explorer</h1>
       </div>
       <nav class="topbar-links" aria-label="WAHS Navigation">
+        <a href="/wahs/walkthrough/">📖 Walkthrough &amp; Tutorial</a>
         <a href="/wahs/">Overview</a>
         <a href="/wahs/design-report/">Design &amp; Evaluation Report</a>
         <a href="/">OpenClinAI</a>
@@ -1301,12 +1302,12 @@
       <div class="active-context-group" aria-label="Active Patient and Levers">
         <span class="ctx-chip" id="ctx-patient-chip">👤 —</span>
         <span class="ctx-chip" id="ctx-lever-chip"><code>8k • Lossless</code></span>
-        <span class="llm-bar-chip" id="llm-bar-chip" title="Live OpenAI-compatible LLM Router (llama-server)">
-          <span id="llm-status-label">🟢 Live LLM:</span>
-          <select id="llm-model-select" class="llm-model-select" aria-label="Select Live LLM Model">
-            <option value="gemma-4-12b">gemma-4-12b</option>
+        <span class="llm-bar-chip" id="llm-bar-chip" title="Live med-agent-hub Profile &amp; Model Selector (:18081 / :8077 / OpenRouter)">
+          <span id="llm-status-label">🟢 Hub Profile:</span>
+          <select id="llm-model-select" class="llm-model-select" aria-label="Select Hub Profile or Live LLM Model">
+            <option value="wahs-12b-kb">wahs-12b-kb (Gemma 4 12B + KB)</option>
           </select>
-          <button type="button" class="llm-config-btn" id="open-llm-config-btn" aria-label="Configure LLM Endpoint" title="Configure local or Tailscale LLM endpoint">⚙️</button>
+          <button type="button" class="llm-config-btn" id="open-llm-config-btn" aria-label="Configure Hub &amp; OpenRouter Settings" title="Configure med-agent-hub, local router, or OpenRouter API key">⚙️</button>
         </span>
       </div>
 
@@ -1564,28 +1565,28 @@
     </div>
   </div>
 
-  <!-- Modal for Configuring Live LLM Endpoint -->
+  <!-- Modal for Configuring Live LLM Endpoint & OpenRouter -->
   <div class="modal-backdrop" id="llm-config-modal" role="dialog" aria-modal="true" aria-labelledby="llm-modal-title">
     <div class="modal-card">
       <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
-        <h3 id="llm-modal-title" style="margin: 0; font-size: 1.15rem;">Live LLM Connection Settings</h3>
+        <h3 id="llm-modal-title" style="margin: 0; font-size: 1.15rem;">med-agent-hub &amp; OpenRouter Settings</h3>
         <button type="button" class="btn btn-sm" id="close-llm-modal-btn">✕ Close</button>
       </div>
-      <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0.65rem 0; line-height: 1.5;">
-        Connect directly from your browser to a local OpenAI-compatible <code>llama-server</code> router (<code>http://127.0.0.1:8077</code>).
-        <span style="display: block; margin-top: 0.25rem; font-size: 0.82rem; color: var(--text-muted);">
-          Note: Direct browser calls to plain-HTTP non-loopback Tailscale IPs from an HTTPS page are blocked by browser Mixed-Content rules; public remote access via server-hosted <code>med-agent-hub</code> over Tailscale is tracked as a backend deployment step.
-        </span>
+      <p style="font-size: 0.88rem; color: var(--text-secondary); margin: 0.65rem 0; line-height: 1.5;">
+        Connect to <code>med-agent-hub</code> (<code>http://127.0.0.1:18081</code>) to test curated WAHS+ profiles (<code>wahs-12b-kb</code>, <code>wahs-12b-raw</code>, <code>wahs-12b-xcheck</code>, <code>wahs-e4b-kb</code>), or supply an optional <strong>OpenRouter API key</strong> to unlock cloud comparison profiles (Gemma 3 27B, Qwen 2.5 72B, Llama 3.3 70B, Gemini 2.5 Flash, Claude 3.7 Sonnet).
       </p>
-      <label for="llm-endpoint-input" style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.35rem;">OpenAI-Compatible Base URL</label>
-      <input type="text" id="llm-endpoint-input" class="qa-input" style="width: 100%; box-sizing: border-box; margin-bottom: 0.65rem; font-family: var(--font-mono);" value="http://127.0.0.1:8077" />
-      <div id="llm-modal-status-box" style="font-size: 0.86rem; color: var(--text-secondary);"></div>
+      <label for="llm-endpoint-input" style="display: block; font-size: 0.84rem; font-weight: 700; margin-bottom: 0.3rem;">med-agent-hub / OpenAI-Compatible Base URL</label>
+      <input type="text" id="llm-endpoint-input" class="qa-input" style="width: 100%; box-sizing: border-box; margin-bottom: 0.65rem; font-family: var(--font-mono);" value="http://127.0.0.1:18081" aria-label="med-agent-hub or OpenAI-compatible Base URL" />
+      <label for="openrouter-api-key-input" style="display: block; font-size: 0.84rem; font-weight: 700; margin-bottom: 0.3rem;">OpenRouter API Key (Optional — unlocks <code>wahs-openrouter-*</code> profiles)</label>
+      <input type="password" id="openrouter-api-key-input" class="qa-input" style="width: 100%; box-sizing: border-box; margin-bottom: 0.65rem; font-family: var(--font-mono);" placeholder="sk-or-v1-... (saved in browser session only)" aria-label="OpenRouter API Key" />
+      <div id="llm-modal-status-box" style="font-size: 0.85rem; color: var(--text-secondary);"></div>
       <div class="modal-actions-row">
         <div class="modal-preset-group">
-          <button type="button" class="btn btn-sm" id="preset-local-llm-btn">Local (127.0.0.1:8077)</button>
-          <button type="button" class="btn btn-sm" id="preset-tailscale-llm-btn" title="Use when serving the page over HTTP or via a local/Tailscale proxy">Tailscale (100.119.27.0:8077)</button>
+          <button type="button" class="btn btn-sm" id="preset-hub-llm-btn">Hub (127.0.0.1:18081)</button>
+          <button type="button" class="btn btn-sm" id="preset-local-llm-btn">Router (127.0.0.1:8077)</button>
+          <button type="button" class="btn btn-sm" id="preset-openrouter-llm-btn" title="Connect directly to OpenRouter API">OpenRouter Direct</button>
         </div>
-        <button type="button" class="btn btn-primary btn-sm" id="save-llm-endpoint-btn">Connect &amp; Refresh Models</button>
+        <button type="button" class="btn btn-primary btn-sm" id="save-llm-endpoint-btn">Connect &amp; Refresh Profiles</button>
       </div>
     </div>
   </div>
@@ -1615,10 +1616,11 @@
         audience: "patient",
         activeSkillId: "skill-visit-brief",
         customQuestionResult: null,
-        llmBaseUrl: "http://127.0.0.1:8077",
+        llmBaseUrl: "http://127.0.0.1:18081",
         llmConnected: false,
-        llmModel: "gemma-4-12b",
-        llmModels: ["gemma-4-12b"],
+        llmModel: "wahs-12b-kb",
+        llmModels: [],
+        openRouterKey: (typeof sessionStorage !== "undefined" && sessionStorage.getItem("wahs_openrouter_key")) || "",
         llmCache: {},
         activeAbortController: null
       };
@@ -1925,18 +1927,31 @@
         document.getElementById("condensed-stats-pill").textContent =
           rawTok.toLocaleString() + " raw tok → " + cell.actual_tokens.toLocaleString() + " tok (-" + cell.reduction_pct + "%) • " + cell.rendered_records + " lines";
 
-        const omittedMap = cell.omitted_sections || {};
+        const omittedMap = Object.assign({}, cell.omitted_sections || {});
+        if (!Object.keys(omittedMap).length && cell.chart_text) {
+          const ovMatch = cell.chart_text.match(/budget_overflow_omitted:\s*([^\|\n\]]+)/);
+          if (ovMatch && ovMatch[1]) {
+            ovMatch[1].split(",").forEach(function (pair) {
+              const kv = pair.trim().split("=");
+              if (kv.length === 2 && parseInt(kv[1], 10) > 0) {
+                omittedMap[kv[0].trim()] = parseInt(kv[1], 10);
+              }
+            });
+          }
+        }
         const omittedKeys = Object.keys(omittedMap).filter(function (k) { return omittedMap[k] > 0; });
         const omittedBox = document.getElementById("omitted-audit-content");
         if (omittedBox) {
-          if (!omittedKeys.length) {
+          if (!omittedKeys.length && !(cell.omitted_records_count > 0)) {
             omittedBox.innerHTML =
               '<span style="color: var(--teal); font-weight: 600;">✓ 100% of extracted clinical items fit within this token budget.</span>';
           } else {
+            const totalOmitted = omittedKeys.reduce(function (acc, k) { return acc + (omittedMap[k] || 0); }, 0) || cell.omitted_records_count || 0;
             omittedBox.innerHTML =
-              '<div style="color: var(--text-secondary); margin-bottom: 0.3rem;"><strong>Kept 100%:</strong> Allergies, Active Conditions &amp; Active Medications.</div>' +
-              '<div style="color: var(--amber);"><strong>Trimmed for ' + Math.round(cell.target_tokens / 1024) + 'k budget:</strong> ' +
-              omittedKeys.map(function (k) { return esc(k) + " (" + omittedMap[k] + ")"; }).join(", ") +
+              '<div style="color: var(--text-secondary); margin-bottom: 0.3rem;"><strong>Retained in ' + Math.round(cell.target_tokens / 1024) + 'k budget:</strong> ' + cell.rendered_records + ' condensed lines (' + cell.actual_tokens.toLocaleString() + ' tok).</div>' +
+              '<div style="color: var(--amber);"><strong>Trimmed for ' + Math.round(cell.target_tokens / 1024) + 'k budget (' + totalOmitted.toLocaleString() + ' items):</strong> ' +
+              omittedKeys.slice(0, 8).map(function (k) { return esc(k) + " (" + omittedMap[k] + ")"; }).join(", ") +
+              (omittedKeys.length > 8 ? " + " + (omittedKeys.length - 8) + " more categories" : "") +
               '</div>';
           }
         }
@@ -2193,7 +2208,39 @@
         ].join("::");
       }
 
-      /* Extract active Phase 2 condensed ledger lines & metadata for the LLM prompt (deterministic prefix for KV-cache hits) */
+      /* Return active med-agent-hub profile metadata (or synthesized metadata for direct router models) */
+      function getActiveProfileMeta() {
+        const found = (state.llmModels || []).find(function (m) { return m.id === state.llmModel; });
+        const isRaw = String(state.llmModel || "").indexOf("-raw") !== -1;
+        const isXcheck = String(state.llmModel || "").indexOf("-xcheck") !== -1;
+        const isOpenRouter = String(state.llmModel || "").indexOf("openrouter") !== -1 || String(state.llmBaseUrl || "").indexOf("openrouter.ai") !== -1;
+        if (found) {
+          return found;
+        }
+        return {
+          id: state.llmModel,
+          label: state.llmModel,
+          workflow: "wahs",
+          topology: isXcheck ? "xcheck" : "single",
+          provider: isOpenRouter ? "openrouter" : "local",
+          stages: isXcheck ? ["context", "answer", "review", "gate"] : ["context", "answer", "gate"],
+          role_models: isXcheck ? { answer: "gemma-4-12b", review: "qwen3.5-9b" } : { answer: state.llmModel },
+          role_knobs: { answer: { temperature: 0.1, dry: 0.0, maxTokens: 900 } },
+          policies: {
+            provider: isOpenRouter ? "openrouter" : "local",
+            include_kb_findings: !isRaw,
+            overflow_lookup_tools: !isRaw,
+            citation_grounding: "enforce",
+            description: isRaw
+              ? "Unhinted control profile: passes ONLY the Step 2 Condensed FHIR Chart Ledger without 4-Layer Clinical KB hints."
+              : "Checked WAHS+ synthesis profile: combines the Step 2 Condensed FHIR Chart Ledger with 4-Layer Clinical KB Findings."
+          },
+          prompts: { answer: isRaw ? "wahs-raw-unhinted" : "wahs-kb-guided" },
+          system_prompts: {}
+        };
+      }
+
+      /* Extract full active Step 2 condensed ledger lines & metadata for Step 3 (no 44-line clamp) */
       function getActiveCondensedPromptData(p) {
         const modeBucket = (p.condensation_matrix && p.condensation_matrix[state.condenseMode])
           || (p.condensation_matrix && p.condensation_matrix.lossless_structural)
@@ -2211,32 +2258,92 @@
           });
         }
 
-        const priorityLines = [];
-        const secondaryLines = [];
-        rawLines.forEach(function (ln) {
-          const trimmed = ln.length > 230 ? ln.slice(0, 230) + "..." : ln;
-          const isCore = /^(\[\d+\]\s*)?(patient|allergy|condition|medication|documentreference|clinical note|procedure|device)/i.test(trimmed)
-            || /section:|===|---/i.test(trimmed);
-          if (isCore) {
-            priorityLines.push(trimmed);
-          } else {
-            secondaryLines.push(trimmed);
-          }
-        });
-        const selectedLines = priorityLines.concat(secondaryLines).slice(0, 44);
+        const ledgerExcerpt = rawLines.join("\n");
+        const promptLineCount = rawLines.length;
+        const promptTokensEst = (state.filterRoomEquip || state.privacyExternalShare)
+          ? Math.max(Math.round(ledgerExcerpt.length / 4), 40)
+          : (cell.actual_tokens || Math.max(Math.round(ledgerExcerpt.length / 4), 40));
+
+        const retainedArr = cell.retained_uuids || [];
+        let retainedMap = null;
+        if (retainedArr.length > 0) {
+          retainedMap = {};
+          retainedArr.forEach(function (u) { retainedMap[String(u)] = true; });
+        }
+
         const omittedMap = cell.omitted_sections || {};
         const omittedKeys = Object.keys(omittedMap).filter(function (k) { return omittedMap[k] > 0; });
         const omittedNote = omittedKeys.length
-          ? "Note on Phase 2 Budget Lever (" + Math.round(parseInt(state.budget, 10) / 1024) + "k): Trimmed sections at this compact budget: " +
+          ? "Note on Step 2 Budget Lever (" + Math.round(parseInt(state.budget, 10) / 1024) + "k, " + promptTokensEst.toLocaleString() + " condensed tokens, " + promptLineCount + " ledger lines): Trimmed sections at this compact budget: " +
             omittedKeys.map(function (k) { return k + " (" + omittedMap[k] + " omitted)"; }).join(", ") + "."
-          : "All extracted clinical sections fit within the selected " + Math.round(parseInt(state.budget, 10) / 1024) + "k budget.";
+          : "All extracted clinical sections fit within the selected " + Math.round(parseInt(state.budget, 10) / 1024) + "k budget (" + promptTokensEst.toLocaleString() + " condensed tokens, " + promptLineCount + " ledger lines).";
 
         return {
           cell: cell,
-          ledgerExcerpt: selectedLines.join("\n"),
+          ledgerExcerpt: ledgerExcerpt,
+          promptLineCount: promptLineCount,
+          promptTokensEst: promptTokensEst,
+          retainedMap: retainedMap,
           omittedNote: omittedNote,
-          leverLabel: Math.round(parseInt(state.budget, 10) / 1024) + "k • " + (state.condenseMode === "lossless_structural" ? "Lossless" : "Grouped") + (state.privacyExternalShare ? " • External Share Redacted" : "")
+          leverLabel: Math.round(parseInt(state.budget, 10) / 1024) + "k (" + promptTokensEst.toLocaleString() + " tok, " + promptLineCount + " lines) • " + (state.condenseMode === "lossless_structural" ? "Lossless" : "Grouped") + (state.privacyExternalShare ? " • External Share" : "") + (state.filterRoomEquip ? " • No Room Equip" : "")
         };
+      }
+
+      /* Filter 4-Layer KB structured rows strictly to records retained in the active Step 2 condensed chart */
+      function filterKbRowsForCondensedChart(rows, promptData) {
+        const retainedMap = promptData && promptData.retainedMap;
+        return (rows || []).filter(function (r) {
+          const combinedText = ((r.label || "") + " " + (r.detail || "")).toLowerCase();
+          if (state.filterRoomEquip && /dental x-ray|examination table|hospital bed/i.test(combinedText)) {
+            return false;
+          }
+          if (state.privacyExternalShare && /abuse|violence|criminal|unemployed|housing|isolation/i.test(combinedText)) {
+            return false;
+          }
+          const rUuids = r.resource_uuids || [];
+          if (retainedMap && rUuids.length > 0) {
+            return rUuids.some(function (u) { return !!retainedMap[String(u)]; });
+          }
+          return true;
+        });
+      }
+
+      /* Render collapsible Hub Profile Inspector drawer for Step 3 */
+      function renderHubProfileInspectorDrawer(activeProf, includeKb, kbCount) {
+        const policies = activeProf.policies || {};
+        const roleModels = activeProf.role_models || { answer: activeProf.id };
+        const roleKnobs = (activeProf.role_knobs && activeProf.role_knobs.answer) || { temperature: 0.1, maxTokens: 900, dry: 0.0 };
+        const sysPromptText = (activeProf.system_prompts && activeProf.system_prompts.answer) ||
+          (includeKb
+            ? "You are the Washington Health Summary (WAHS+) Clinical & Patient Synthesis Assistant operating inside med-agent-hub (server/prompts/wahs-kb-guided.txt). Combine the Condensed FHIR R4 Chart Ledger + 4-Layer Clinical KB Findings, cite [N] lines, and enforce ABSTAIN on unrecorded facts."
+            : "You are the Washington Health Summary (WAHS+) Raw-Chart Control Assistant operating inside med-agent-hub (server/prompts/wahs-raw-unhinted.txt). Answer ONLY from the raw Condensed FHIR R4 Chart Ledger without 4-Layer Clinical KB hints.");
+        const stagesStr = (activeProf.stages || ["context", "answer", "gate"]).join(" → ");
+        const modelsStr = Object.keys(roleModels).map(function (k) { return k + ": " + roleModels[k]; }).join(" • ");
+        const kbPolicyBadge = includeKb
+          ? '<span class="skill-badge info">4-Layer Clinical KB: ON (' + kbCount + ' retained findings)</span>'
+          : '<span class="skill-badge warn">4-Layer Clinical KB: OFF (Unhinted Raw-Chart Control)</span>';
+
+        return (
+          '<details class="evidence-details-drawer" id="hub-profile-inspector-drawer">' +
+            '<summary>' +
+              '<span>⚙️ Inspect Active Hub Profile (<code>' + esc(activeProf.id) + '</code>)</span>' +
+              '<span style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">' +
+                kbPolicyBadge +
+                '<span>Provider: <code>' + esc(activeProf.provider || "local") + '</code></span>' +
+              '</span>' +
+            '</summary>' +
+            '<div class="evidence-drawer-body">' +
+              '<div class="clinician-tech-box" style="margin-bottom: 0.75rem;">' +
+                '<div><strong>Profile Label:</strong> ' + esc(activeProf.label || activeProf.id) + '</div>' +
+                '<div style="margin-top: 0.25rem;"><strong>Description:</strong> ' + esc(policies.description || "Curated med-agent-hub profile for WAHS+ experimentation.") + '</div>' +
+                '<div style="margin-top: 0.25rem;"><strong>Workflow &amp; Stages:</strong> <code>' + esc(activeProf.workflow || "wahs") + '</code> (' + esc(stagesStr) + ') • <strong>Role Models:</strong> <code>' + esc(modelsStr) + '</code></div>' +
+                '<div style="margin-top: 0.25rem;"><strong>Sampling Knobs:</strong> <code>temperature=' + esc(roleKnobs.temperature) + ', maxTokens=' + esc(roleKnobs.maxTokens || 900) + ', dry=' + esc(roleKnobs.dry || 0) + '</code> • <strong>Policies:</strong> <code>include_kb_findings=' + esc(String(includeKb)) + ', citation_grounding=' + esc(policies.citation_grounding || "enforce") + '</code></div>' +
+              '</div>' +
+              '<div style="font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.35rem;">Configured System Prompt (<code>med-agent-hub:server/prompts/' + esc((activeProf.prompts && activeProf.prompts.answer) || (includeKb ? "wahs-kb-guided" : "wahs-raw-unhinted")) + '.txt</code>):</div>' +
+              '<pre class="ledger-pre" style="max-height: 210px;">' + esc(sysPromptText) + '</pre>' +
+            '</div>' +
+          '</details>'
+        );
       }
 
       /* Map [N] bracket references in live LLM output to clickable FHIR resource citations */
@@ -2354,8 +2461,8 @@
         };
       }
 
-      /* Stream a live completion from the OpenAI-compatible llama-server endpoint */
-      async function streamLiveLlm(cacheKey, messages, p, fallbackCites, fallbackSummary, fallbackQuestions) {
+      /* Stream a live completion from med-agent-hub (:18081), local llama-server (:8077), or OpenRouter */
+      async function streamLiveLlm(cacheKey, messages, p, fallbackCites, fallbackSummary, fallbackQuestions, promptData) {
         if (!state.llmConnected) return;
         if (state.activeAbortController) {
           try { state.activeAbortController.abort(); } catch (e) {}
@@ -2372,24 +2479,41 @@
         const t0 = performance.now();
         let ttftMs = null;
         let accumulated = "";
+        const inputTokStr = promptData
+          ? (promptData.promptTokensEst.toLocaleString() + " tok (" + promptData.promptLineCount + " lines)")
+          : "";
 
         if (pillEl) {
           pillEl.className = "llm-live-pill streaming";
-          pillEl.innerHTML = "⚡ Streaming live from <strong>" + esc(state.llmModel) + "</strong>...";
+          pillEl.innerHTML = "⚡ Streaming <strong>" + esc(state.llmModel) + "</strong>" + (inputTokStr ? " • Input: " + esc(inputTokStr) : "") + "...";
         }
         if (summaryEl) {
-          summaryEl.innerHTML = '<span style="color: var(--primary); font-weight: 600;">⚡ Generating live response from <code>' + esc(state.llmModel) + '</code>...</span>';
+          summaryEl.innerHTML = '<span style="color: var(--primary); font-weight: 600;">⚡ Generating live response from <code>' + esc(state.llmModel) + '</code> over Step 2 condensed chart (' + esc(inputTokStr || "active budget") + ')...</span>';
         }
 
         try {
-          const resp = await fetch(state.llmBaseUrl.replace(/\/+$/, "") + "/v1/chat/completions", {
+          const baseClean = state.llmBaseUrl.replace(/\/+$/, "");
+          const completionsUrl = baseClean.endsWith("/v1")
+            ? (baseClean + "/chat/completions")
+            : (baseClean + "/v1/chat/completions");
+          const reqHeaders = { "Content-Type": "application/json" };
+          if (state.openRouterKey) {
+            reqHeaders["X-OpenRouter-Key"] = state.openRouterKey;
+            if (baseClean.indexOf("openrouter.ai") !== -1) {
+              reqHeaders["Authorization"] = "Bearer " + state.openRouterKey;
+              reqHeaders["HTTP-Referer"] = "https://wahs-demo.openclinai.org";
+              reqHeaders["X-Title"] = "OpenClinAI WAHS+ Explorer";
+            }
+          }
+
+          const resp = await fetch(completionsUrl, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: reqHeaders,
             body: JSON.stringify({
               model: state.llmModel,
               stream: true,
               temperature: 0.1,
-              max_tokens: 260,
+              max_tokens: 900,
               messages: messages
             }),
             signal: controller.signal
@@ -2435,7 +2559,9 @@
                   if (pillEl) {
                     const elapsedSec = ((performance.now() - t0) / 1000).toFixed(1);
                     pillEl.innerHTML =
-                      "⚡ Streaming <strong>" + esc(state.llmModel) + "</strong> • TTFT " + (ttftMs / 1000).toFixed(2) + "s • " + elapsedSec + "s";
+                      "⚡ Streaming <strong>" + esc(state.llmModel) + "</strong>" +
+                      (inputTokStr ? " • Input: " + esc(inputTokStr) : "") +
+                      " • TTFT " + (ttftMs / 1000).toFixed(2) + "s • " + elapsedSec + "s";
                   }
                 }
               } catch (parseErr) {}
@@ -2455,6 +2581,7 @@
             abstained: finalParsed.abstained,
             ttftMs: ttftMs,
             totalMs: totalMs,
+            inputTokStr: inputTokStr,
             model: state.llmModel,
             cites: finalCites
           };
@@ -2472,7 +2599,9 @@
           if (pillEl) {
             pillEl.className = "llm-live-pill done";
             pillEl.innerHTML =
-              "🟢 Live LLM: <strong>" + esc(state.llmModel) + "</strong> • TTFT " + (ttftMs / 1000).toFixed(2) + "s • Total " + (totalMs / 1000).toFixed(2) + "s";
+              "🟢 Profile: <strong>" + esc(state.llmModel) + "</strong>" +
+              (inputTokStr ? " • Input: " + esc(inputTokStr) : "") +
+              " • TTFT " + (ttftMs / 1000).toFixed(2) + "s • Total " + (totalMs / 1000).toFixed(2) + "s";
           }
           if (citesWrapper) {
             citesWrapper.innerHTML = renderCitationsBar(finalCites);
@@ -2500,6 +2629,9 @@
           p,
           state.customQuestionResult ? state.customQuestionResult.question : state.activeSkillId
         );
+        const activeProf = getActiveProfileMeta();
+        const includeKb = !(activeProf && activeProf.policies && activeProf.policies.include_kb_findings === false);
+        const inputTokSummary = promptData.promptTokensEst.toLocaleString() + " tok (" + promptData.promptLineCount + " lines)";
 
         if (state.customQuestionResult) {
           const qa = state.customQuestionResult;
@@ -2521,12 +2653,23 @@
           }
           const cached = state.llmCache[cacheKey];
 
+          const allFilteredKbLines = [];
+          (skills || []).forEach(function (sk) {
+            const retainedRows = filterKbRowsForCondensedChart(sk.structured_rows || [], promptData);
+            retainedRows.forEach(function (r) {
+              allFilteredKbLines.push("- [" + sk.title + " | " + r.category + "] " + r.label + ": " + r.detail);
+            });
+          });
+          const kbAlertsText = includeKb
+            ? (allFilteredKbLines.slice(0, 14).join("\n") || "None flagged in active condensed chart")
+            : "";
+
           const initialSummaryHtml = cached
             ? cached.summaryHtml
             : (state.llmConnected
                 ? (shouldRunLive
                     ? '<span style="color: var(--primary); font-weight: 600;">⚡ Preparing live LLM generation...</span>'
-                    : '<div style="color: var(--text-secondary); font-weight: 500;">Ready to generate for <strong>' + esc(qa.question) + '</strong>. Click the full-width <strong>⚡ Generate Live</strong> button above to stream the live synthesis from <code>' + esc(state.llmModel) + '</code> over this condensed chart (<code>' + esc(promptData.leverLabel) + '</code>).</div>')
+                    : '<div style="color: var(--text-secondary); font-weight: 500;">Ready to generate for <strong>' + esc(qa.question) + '</strong>. Click the full-width <strong>⚡ Generate Live</strong> button above to stream the live synthesis from profile <code>' + esc(state.llmModel) + '</code> over the Step 2 condensed chart (<code>' + esc(promptData.leverLabel) + '</code>).</div>')
                 : formatRichText(fallbackSummary));
           const initialQuestions = cached
             ? cached.questionsList
@@ -2535,17 +2678,19 @@
                 : fallbackAskList);
           const initialCites = cached ? cached.cites : cites;
           const initialPillHtml = cached
-            ? "🟢 Live LLM: <strong>" + esc(cached.model) + "</strong> • TTFT " + (cached.ttftMs / 1000).toFixed(2) + "s • Total " + (cached.totalMs / 1000).toFixed(2) + "s"
+            ? "🟢 Profile: <strong>" + esc(cached.model) + "</strong> • Input: " + esc(cached.inputTokStr || inputTokSummary) + " • TTFT " + (cached.ttftMs / 1000).toFixed(2) + "s • Total " + (cached.totalMs / 1000).toFixed(2) + "s"
             : (state.llmConnected
-                ? (shouldRunLive ? "⚡ Preparing live LLM generation..." : "⚪ Ready — Click ⚡ Generate Live above to run")
+                ? (shouldRunLive ? "⚡ Preparing live LLM generation..." : "⚪ Ready (" + esc(inputTokSummary) + ") — Click ⚡ Generate Live")
                 : "⚪ Precomputed Baseline (LLM Offline)");
           const initialPillClass = cached ? "done" : (state.llmConnected && shouldRunLive ? "streaming" : "offline");
 
           const promptPreviewText =
             "Patient: " + pName + " (DOB " + ((p && p.birth_date) || "unknown") + ")\n" +
-            "Active Phase 2 Condensation Levers: " + promptData.leverLabel + "\n" +
+            "Active Step 2 Condensation Levers: " + promptData.leverLabel + "\n" +
+            "Active Hub Profile: " + state.llmModel + " (include_kb_findings=" + String(includeKb) + ")\n" +
             promptData.omittedNote + "\n\n" +
-            "Condensed FHIR Chart Ledger:\n" + promptData.ledgerExcerpt;
+            "Condensed FHIR Chart Ledger (" + promptData.promptLineCount + " lines):\n" + promptData.ledgerExcerpt +
+            (includeKb ? ("\n\n4-Layer Clinical KB Findings (Filtered to Retained Step 2 Chart):\n" + kbAlertsText) : "\n\n[4-Layer Clinical KB Findings OMITTED by profile policy: Unhinted Raw-Chart Control]");
 
           container.innerHTML =
             '<div class="report-card-header">' +
@@ -2559,8 +2704,8 @@
             '</div>' +
             '<div class="live-generation-hero">' +
               '<div class="live-hero-subbar">' +
-                '<span>✨ Live LLM Clinical Synthesis (' + esc(state.llmModel) + ')</span>' +
-                '<span style="color: var(--text-muted); font-weight: 600;">Context: ' + esc(promptData.leverLabel) + '</span>' +
+                '<span>✨ Live Hub Profile Synthesis (<code>' + esc(state.llmModel) + '</code>)</span>' +
+                '<span style="color: var(--text-muted); font-weight: 600;">Step 2 Input: ' + esc(promptData.leverLabel) + '</span>' +
               '</div>' +
               '<div class="report-summary-box" id="live-llm-summary-box">' + initialSummaryHtml + '</div>' +
             '</div>' +
@@ -2571,40 +2716,31 @@
               '</ul>' +
             '</div>' +
             '<div id="live-llm-citations-wrapper">' + renderCitationsBar(initialCites) + '</div>' +
+            renderHubProfileInspectorDrawer(activeProf, includeKb, allFilteredKbLines.length) +
             '<details class="evidence-details-drawer">' +
-              '<summary><span>🔍 Inspect Condensed Prompt Context Sent to LLM</span><span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">' + esc(promptData.leverLabel) + '</span></summary>' +
+              '<summary><span>🔍 Inspect Full Condensed Prompt Context Sent to LLM (' + promptData.promptLineCount + ' ledger lines)</span><span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">' + esc(promptData.leverLabel) + '</span></summary>' +
               '<div class="evidence-drawer-body">' +
                 (qa.clinician_technical_note
                   ? '<div class="clinician-tech-box" style="margin-bottom: 0.75rem;"><strong>Clinical Provenance:</strong> ' + esc(qa.clinician_technical_note) + '</div>'
                   : '') +
-                '<pre class="ledger-pre" style="max-height: 260px;">' + esc(promptPreviewText) + '</pre>' +
+                '<pre class="ledger-pre" style="max-height: 280px;">' + esc(promptPreviewText) + '</pre>' +
               '</div>' +
             '</details>';
 
           bindCitationClicks(container, p);
 
           if (state.llmConnected && shouldRunLive) {
-            const kbAlerts = (skills || []).map(function (sk) {
-              return (sk.structured_rows || []).map(function (r) {
-                return "- [" + sk.title + " | " + r.category + "] " + r.label + ": " + r.detail;
-              }).join("\n");
-            }).filter(Boolean).slice(0, 4).join("\n");
+            const sysMsg = (activeProf.system_prompts && activeProf.system_prompts.answer) ||
+              (includeKb
+                ? "You are the WAHS+ Clinical Chart Assistant helping a patient and their care team understand their condensed health record. Answer the task or question in clear, empathetic plain English using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, colonoscopy, MRI, or fact NOT recorded in the chart, begin your SUMMARY with 'ABSTAIN:' and clearly explain that you checked their chart and there is no record of it, so you abstain for safety rather than guessing. Format your output in two parts:\nSUMMARY:\n2-3 clear plain-English bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 specific questions to review with the clinician."
+                : "You are the WAHS+ Raw-Chart Control Assistant. Answer the task or question using ONLY the provided Condensed FHIR Chart Ledger without 4-Layer KB hints. Cite specific chart entries using [N] brackets. If a requested record is absent from the active condensed chart, begin your SUMMARY with 'ABSTAIN:'. Format your output in two parts:\nSUMMARY:\n<Concise synthesis with [N] citations>\nQUESTIONS_FOR_DOCTOR:\n- <2-3 specific questions>");
 
-            const sysMsg =
-              "You are the WAHS+ Clinical Chart Assistant helping a patient and their care team understand their condensed health record. Answer the task or question in clear, empathetic plain English using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, colonoscopy, MRI, or fact NOT recorded in the chart, begin your SUMMARY with 'ABSTAIN:' and clearly explain that you checked their chart and there is no record of it, so you abstain for safety rather than guessing. Format your output in two parts:\nSUMMARY:\n2-3 clear plain-English bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 specific questions to review with the clinician.";
-
-            const userMsg =
-              "Patient: " + pName + " (DOB " + (p.birth_date || "unknown") + ")\n" +
-              "Active Phase 2 Condensation Levers: " + promptData.leverLabel + "\n" +
-              promptData.omittedNote + "\n\n" +
-              "Condensed FHIR Chart Ledger:\n" + promptData.ledgerExcerpt + "\n\n" +
-              "4-Layer Clinical KB Findings:\n" + (kbAlerts || "None flagged") + "\n\n" +
-              "Task / Question: " + qa.question;
+            const userMsg = promptPreviewText + "\n\nTask / Question: " + qa.question;
 
             streamLiveLlm(cacheKey, [
               { role: "system", content: sysMsg },
               { role: "user", content: userMsg }
-            ], p, cites, fallbackSummary, fallbackAskList);
+            ], p, cites, fallbackSummary, fallbackAskList, promptData);
           }
           return;
         }
@@ -2619,7 +2755,8 @@
         }
         const cached = state.llmCache[cacheKey];
 
-        const structRows = skill.structured_rows || [];
+        const allStructRows = skill.structured_rows || [];
+        const structRows = filterKbRowsForCondensedChart(allStructRows, promptData);
         const rowsHtml = structRows.map(function (r) {
           return (
             '<tr>' +
@@ -2641,7 +2778,7 @@
           : (state.llmConnected
               ? (shouldRunLive
                   ? '<span style="color: var(--primary); font-weight: 600;">⚡ Preparing live LLM synthesis...</span>'
-                  : '<div style="color: var(--text-secondary); font-weight: 500;">Ready to generate <strong>' + esc(skill.icon + ' ' + skill.title) + '</strong>. Click the full-width <strong>⚡ Generate Live</strong> button above to stream the live clinical synthesis from <code>' + esc(state.llmModel) + '</code> over this condensed chart (<code>' + esc(promptData.leverLabel) + '</code>).</div>')
+                  : '<div style="color: var(--text-secondary); font-weight: 500;">Ready to generate <strong>' + esc(skill.icon + ' ' + skill.title) + '</strong>. Click the full-width <strong>⚡ Generate Live</strong> button above to stream the live clinical synthesis from profile <code>' + esc(state.llmModel) + '</code> over the Step 2 condensed chart (<code>' + esc(promptData.leverLabel) + '</code>).</div>')
               : formatRichText(skill.plain_english_summary));
         const initialQuestions = cached
           ? cached.questionsList
@@ -2650,9 +2787,9 @@
               : (skill.suggested_remediation || []));
         const initialCites = cached ? cached.cites : (skill.citations || []);
         const initialPillHtml = cached
-          ? "🟢 Live LLM: <strong>" + esc(cached.model) + "</strong> • TTFT " + (cached.ttftMs / 1000).toFixed(2) + "s • Total " + (cached.totalMs / 1000).toFixed(2) + "s"
+          ? "🟢 Profile: <strong>" + esc(cached.model) + "</strong> • Input: " + esc(cached.inputTokStr || inputTokSummary) + " • TTFT " + (cached.ttftMs / 1000).toFixed(2) + "s • Total " + (cached.totalMs / 1000).toFixed(2) + "s"
           : (state.llmConnected
-              ? (shouldRunLive ? "⚡ Preparing live LLM synthesis..." : "⚪ Ready — Click ⚡ Generate Live above to run")
+              ? (shouldRunLive ? "⚡ Preparing live LLM synthesis..." : "⚪ Ready (" + esc(inputTokSummary) + ") — Click ⚡ Generate Live")
               : "⚪ Precomputed Baseline (LLM Offline)");
         const initialPillClass = cached ? "done" : (state.llmConnected && shouldRunLive ? "streaming" : "offline");
 
@@ -2662,10 +2799,13 @@
         }).join("\n");
         const promptPreviewText =
           "Patient: " + pName + " (DOB " + ((p && p.birth_date) || "unknown") + ")\n" +
-          "Active Phase 2 Condensation Levers: " + promptData.leverLabel + "\n" +
+          "Active Step 2 Condensation Levers: " + promptData.leverLabel + "\n" +
+          "Active Hub Profile: " + state.llmModel + " (include_kb_findings=" + String(includeKb) + ")\n" +
           promptData.omittedNote + "\n\n" +
-          "Condensed FHIR Chart Ledger:\n" + promptData.ledgerExcerpt + "\n\n" +
-          "4-Layer Clinical KB Findings for '" + skill.title + "':\n" + (skillFindingsText || "None");
+          "Condensed FHIR Chart Ledger (" + promptData.promptLineCount + " lines):\n" + promptData.ledgerExcerpt +
+          (includeKb
+            ? ("\n\n4-Layer Clinical KB Findings for '" + skill.title + "' (Filtered to Retained Step 2 Chart):\n" + (skillFindingsText || "None retained in this budget"))
+            : "\n\n[4-Layer Clinical KB Findings OMITTED by profile policy: Unhinted Raw-Chart Control]");
 
         container.innerHTML =
           '<div class="report-card-header">' +
@@ -2677,8 +2817,8 @@
           '</div>' +
           '<div class="live-generation-hero">' +
             '<div class="live-hero-subbar">' +
-              '<span>✨ Live LLM Clinical Synthesis (' + esc(state.llmModel) + ')</span>' +
-              '<span style="color: var(--text-muted); font-weight: 600;">Context: ' + esc(promptData.leverLabel) + '</span>' +
+              '<span>✨ Live Hub Profile Synthesis (<code>' + esc(state.llmModel) + '</code>)</span>' +
+              '<span style="color: var(--text-muted); font-weight: 600;">Step 2 Input: ' + esc(promptData.leverLabel) + '</span>' +
             '</div>' +
             '<div class="report-summary-box" id="live-llm-summary-box">' + initialSummaryHtml + '</div>' +
           '</div>' +
@@ -2689,9 +2829,10 @@
             '</ul>' +
           '</div>' +
           '<div id="live-llm-citations-wrapper">' + renderCitationsBar(initialCites) + '</div>' +
+          renderHubProfileInspectorDrawer(activeProf, includeKb, structRows.length) +
           '<details class="evidence-details-drawer">' +
             '<summary>' +
-              '<span>📋 Supporting 4-Layer KB Structured Findings (' + structRows.length + ' items)</span>' +
+              '<span>📋 Supporting 4-Layer KB Structured Findings (' + (includeKb ? (structRows.length + " of " + allStructRows.length + " retained at " + Math.round(parseInt(state.budget, 10) / 1024) + "k") : "Bypassed in Raw Control Mode") + ')</span>' +
               '<span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">Click to expand deterministic table</span>' +
             '</summary>' +
             '<div class="evidence-drawer-body" style="overflow-x: auto;">' +
@@ -2709,19 +2850,21 @@
           '</details>' +
           '<details class="evidence-details-drawer">' +
             '<summary>' +
-              '<span>🔍 Inspect Exact Condensed Prompt Sent to LLM</span>' +
+              '<span>🔍 Inspect Full Condensed Prompt Sent to LLM (' + promptData.promptLineCount + ' ledger lines)</span>' +
               '<span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">' + esc(promptData.leverLabel) + '</span>' +
             '</summary>' +
             '<div class="evidence-drawer-body">' +
-              '<pre class="ledger-pre" style="max-height: 260px;">' + esc(promptPreviewText) + '</pre>' +
+              '<pre class="ledger-pre" style="max-height: 280px;">' + esc(promptPreviewText) + '</pre>' +
             '</div>' +
           '</details>';
 
         bindCitationClicks(container, p);
 
         if (state.llmConnected && shouldRunLive) {
-          const sysMsg =
-            "You are the WAHS+ Clinical Chart Assistant helping a patient and their care team understand their condensed health record. Answer the task or question in clear, empathetic plain English using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, colonoscopy, MRI, or fact NOT recorded in the chart, begin your SUMMARY with 'ABSTAIN:' and clearly explain that you checked their chart and there is no record of it, so you abstain for safety rather than guessing. Format your output in two parts:\nSUMMARY:\n2-3 clear plain-English bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 specific questions to review with the clinician.";
+          const sysMsg = (activeProf.system_prompts && activeProf.system_prompts.answer) ||
+            (includeKb
+              ? "You are the WAHS+ Clinical Chart Assistant helping a patient and their care team understand their condensed health record. Answer the task or question in clear, empathetic plain English using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, colonoscopy, MRI, or fact NOT recorded in the chart, begin your SUMMARY with 'ABSTAIN:' and clearly explain that you checked their chart and there is no record of it, so you abstain for safety rather than guessing. Format your output in two parts:\nSUMMARY:\n2-3 clear plain-English bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 specific questions to review with the clinician."
+              : "You are the WAHS+ Raw-Chart Control Assistant. Answer the task or question using ONLY the provided Condensed FHIR Chart Ledger without 4-Layer KB hints. Cite specific chart entries using [N] brackets. If a requested record is absent from the active condensed chart, begin your SUMMARY with 'ABSTAIN:'. Format your output in two parts:\nSUMMARY:\n<Concise synthesis with [N] citations>\nQUESTIONS_FOR_DOCTOR:\n- <2-3 specific questions>");
 
           const userMsg =
             promptPreviewText + "\n\n" +
@@ -2730,7 +2873,7 @@
           streamLiveLlm(cacheKey, [
             { role: "system", content: sysMsg },
             { role: "user", content: userMsg }
-          ], p, skill.citations || [], skill.plain_english_summary, skill.suggested_remediation || []);
+          ], p, skill.citations || [], skill.plain_english_summary, skill.suggested_remediation || [], promptData);
         }
       }
 
@@ -3105,48 +3248,93 @@
         "qwen3.6-35b": true
       };
 
-      /* Live LLM Discovery & Endpoint Wiring */
+      /* Live med-agent-hub Profile & LLM Router Discovery */
       async function probeLiveLlmEndpoint(overrideUrl) {
         const chip = document.getElementById("llm-bar-chip");
         const label = document.getElementById("llm-status-label");
         const select = document.getElementById("llm-model-select");
         const modalStatus = document.getElementById("llm-modal-status-box");
+        const keyInput = document.getElementById("openrouter-api-key-input");
+        if (keyInput && state.openRouterKey && !keyInput.value) {
+          keyInput.value = state.openRouterKey;
+        }
+
+        const savedEp = (localStorage.getItem("wahs_llm_endpoint") || "").replace(/\/+$/, "");
         const candidates = overrideUrl
           ? [overrideUrl.replace(/\/+$/, "")]
           : [
-              (localStorage.getItem("wahs_llm_endpoint") || "").replace(/\/+$/, ""),
+              "http://127.0.0.1:18081",
+              "http://localhost:18081",
+              savedEp,
               "http://127.0.0.1:8077",
-              "http://localhost:8077",
-              "http://100.119.27.0:8077"
-            ].filter(Boolean);
+              "http://localhost:8077"
+            ].filter(function (v, idx, arr) { return !!v && arr.indexOf(v) === idx; });
+
+        const CURATED_OPENROUTER_DIRECT = {
+          "google/gemma-3-27b-it": "OpenRouter — Gemma 3 27B IT",
+          "qwen/qwen-2.5-72b-instruct": "OpenRouter — Qwen 2.5 72B Instruct",
+          "meta-llama/llama-3.3-70b-instruct": "OpenRouter — Llama 3.3 70B Instruct",
+          "google/gemini-2.5-flash": "OpenRouter — Gemini 2.5 Flash",
+          "anthropic/claude-3.7-sonnet": "OpenRouter — Claude 3.7 Sonnet"
+        };
 
         for (let i = 0; i < candidates.length; i++) {
           const base = candidates[i];
           try {
             const ctrl = new AbortController();
             const timer = setTimeout(function () { ctrl.abort(); }, 2500);
-            const res = await fetch(base + "/v1/models", { signal: ctrl.signal });
+            const isDirectOr = base.indexOf("openrouter.ai") !== -1;
+            const probeUrl = isDirectOr
+              ? (base.endsWith("/v1") ? (base + "/models") : (base + "/v1/models"))
+              : (base + "/v1/models?workflow=wahs");
+            const reqHeaders = {};
+            if (state.openRouterKey) {
+              reqHeaders["X-OpenRouter-Key"] = state.openRouterKey;
+              if (isDirectOr) {
+                reqHeaders["Authorization"] = "Bearer " + state.openRouterKey;
+              }
+            }
+            const res = await fetch(probeUrl, { headers: reqHeaders, signal: ctrl.signal });
             clearTimeout(timer);
             if (!res.ok) continue;
             const data = await res.json();
             const rawModels = (data.data || data.models || []).map(function (m) {
               const id = m.id || m.model;
               const isLoaded = (m.status && m.status.value === "loaded") || false;
-              const isHubProfile = m.owned_by === "med-agent-hub";
+              const isHubProfile = m.owned_by === "med-agent-hub" || m.workflow === "wahs";
               const isReady = isHubProfile
                 ? (m.available !== false && m.visibility === "product")
-                : (isLoaded || !!READY_ROUTER_MODELS[id]);
+                : (isDirectOr ? !!CURATED_OPENROUTER_DIRECT[id] : (isLoaded || !!READY_ROUTER_MODELS[id]));
               return {
                 id: id,
-                label: m.label || id,
+                label: m.label || CURATED_OPENROUTER_DIRECT[id] || id,
+                workflow: m.workflow || (isHubProfile ? "wahs" : "router"),
+                topology: m.topology || "single",
+                provider: m.provider || (isDirectOr ? "openrouter" : "local"),
+                stages: m.stages || ["context", "answer", "gate"],
+                role_models: m.role_models || { answer: id },
+                role_knobs: m.role_knobs || { answer: { temperature: 0.1, maxTokens: 900, dry: 0.0 } },
+                policies: m.policies || {
+                  provider: isDirectOr ? "openrouter" : "local",
+                  include_kb_findings: String(id).indexOf("-raw") === -1,
+                  overflow_lookup_tools: String(id).indexOf("-raw") === -1,
+                  citation_grounding: "enforce"
+                },
+                prompts: m.prompts || { answer: String(id).indexOf("-raw") !== -1 ? "wahs-raw-unhinted" : "wahs-kb-guided" },
+                system_prompts: m.system_prompts || {},
+                selection_priority: m.selection_priority != null ? m.selection_priority : 500,
                 loaded: isLoaded,
                 ready: isReady
               };
             }).filter(function (m) { return !!m.id && m.ready; });
+
             const models = rawModels.sort(function (a, b) {
+              if (a.selection_priority !== b.selection_priority) {
+                return a.selection_priority - b.selection_priority;
+              }
               if (a.loaded !== b.loaded) return a.loaded ? -1 : 1;
-              if (a.id === "gemma-4-12b") return -1;
-              if (b.id === "gemma-4-12b") return 1;
+              if (a.id === "wahs-12b-kb" || a.id === "gemma-4-12b") return -1;
+              if (b.id === "wahs-12b-kb" || b.id === "gemma-4-12b") return 1;
               return a.id.localeCompare(b.id);
             });
             if (!models.length) continue;
@@ -3158,8 +3346,8 @@
             const epInput = document.getElementById("llm-endpoint-input");
             if (epInput) epInput.value = base;
 
-            /* Prefer gemma-4-12b if present, else a loaded model, else first model */
             const preferred = models.find(function (m) { return m.id === state.llmModel; }) ||
+                              models.find(function (m) { return m.id === "wahs-12b-kb"; }) ||
                               models.find(function (m) { return m.id === "gemma-4-12b"; }) ||
                               models.find(function (m) { return m.loaded; }) ||
                               models[0];
@@ -3167,14 +3355,21 @@
 
             if (select) {
               select.innerHTML = models.map(function (m) {
-                const tag = m.loaded ? " (Loaded)" : "";
-                return '<option value="' + esc(m.id) + '"' + (m.id === state.llmModel ? " selected" : "") + '>' + esc(m.id + tag) + '</option>';
+                let displayOpt = m.id;
+                if (m.workflow === "wahs" && m.label && m.label !== m.id) {
+                  const shortDesc = m.label.replace(/^WAHS\+\s*/i, "").replace(/^OpenRouter\s*—\s*/i, "☁️ ");
+                  displayOpt = m.id + " (" + shortDesc + ")";
+                } else if (m.loaded) {
+                  displayOpt = m.id + " (Loaded)";
+                }
+                return '<option value="' + esc(m.id) + '"' + (m.id === state.llmModel ? " selected" : "") + '>' + esc(displayOpt) + '</option>';
               }).join("");
             }
+            const isHub = models.some(function (m) { return m.workflow === "wahs"; });
             if (chip) chip.classList.remove("offline");
-            if (label) label.textContent = "🟢 Live LLM:";
+            if (label) label.textContent = isHub ? "🟢 Hub Profile:" : "🟢 Live LLM:";
             if (modalStatus) {
-              modalStatus.innerHTML = '<strong style="color:var(--ok);">🟢 Connected to ' + esc(base) + '</strong> — ' + models.length + ' models available (<code>' + esc(state.llmModel) + '</code> active).';
+              modalStatus.innerHTML = '<strong style="color:var(--ok);">🟢 Connected to ' + esc(base) + '</strong> — ' + models.length + ' ready profile(s)/model(s) available (<code>' + esc(state.llmModel) + '</code> active).';
             }
             if (String(state.activePhase) === "3") {
               renderSkillsAndQa();
@@ -3189,7 +3384,7 @@
         if (chip) chip.classList.add("offline");
         if (label) label.textContent = "⚪ Offline Snapshot:";
         if (modalStatus) {
-          modalStatus.innerHTML = '<strong style="color:var(--warn);">⚪ Local/Tailscale LLM unreachable</strong> — Start `llama-server` on port `8077` or enter your Tailscale URL (`http://100.119.27.0:8077`). Using verified pre-computed outputs as fallback.';
+          modalStatus.innerHTML = '<strong style="color:var(--warn);">⚪ med-agent-hub / Local LLM unreachable</strong> — Start <code>med-agent-hub</code> on port <code>18081</code> or <code>llama-server</code> on port <code>8077</code>. Using verified pre-computed outputs as fallback.';
         }
         return false;
       }
@@ -3207,6 +3402,8 @@
       if (openLlmBtn && llmModal) {
         openLlmBtn.addEventListener("click", function () {
           document.getElementById("llm-endpoint-input").value = state.llmBaseUrl;
+          const keyEl = document.getElementById("openrouter-api-key-input");
+          if (keyEl) keyEl.value = state.openRouterKey || "";
           llmModal.classList.add("open");
         });
       }
@@ -3216,22 +3413,39 @@
           llmModal.classList.remove("open");
         });
       }
+      const presetHubBtn = document.getElementById("preset-hub-llm-btn");
+      if (presetHubBtn) {
+        presetHubBtn.addEventListener("click", function () {
+          document.getElementById("llm-endpoint-input").value = "http://127.0.0.1:18081";
+        });
+      }
       const presetLocalBtn = document.getElementById("preset-local-llm-btn");
       if (presetLocalBtn) {
         presetLocalBtn.addEventListener("click", function () {
           document.getElementById("llm-endpoint-input").value = "http://127.0.0.1:8077";
         });
       }
-      const presetTailscaleBtn = document.getElementById("preset-tailscale-llm-btn");
-      if (presetTailscaleBtn) {
-        presetTailscaleBtn.addEventListener("click", function () {
-          document.getElementById("llm-endpoint-input").value = "http://100.119.27.0:8077";
+      const presetOpenRouterBtn = document.getElementById("preset-openrouter-llm-btn");
+      if (presetOpenRouterBtn) {
+        presetOpenRouterBtn.addEventListener("click", function () {
+          document.getElementById("llm-endpoint-input").value = "https://openrouter.ai/api/v1";
         });
       }
       const saveLlmBtn = document.getElementById("save-llm-endpoint-btn");
       if (saveLlmBtn) {
         saveLlmBtn.addEventListener("click", async function () {
           const val = (document.getElementById("llm-endpoint-input").value || "").trim().replace(/\/+$/, "");
+          const keyEl = document.getElementById("openrouter-api-key-input");
+          if (keyEl) {
+            state.openRouterKey = (keyEl.value || "").trim();
+            if (typeof sessionStorage !== "undefined") {
+              if (state.openRouterKey) {
+                sessionStorage.setItem("wahs_openrouter_key", state.openRouterKey);
+              } else {
+                sessionStorage.removeItem("wahs_openrouter_key");
+              }
+            }
+          }
           if (!val) return;
           const ok = await probeLiveLlmEndpoint(val);
           if (ok && llmModal) {
@@ -3365,28 +3579,60 @@
           });
 
           const rawEstTok = Math.max(Math.round(rawText.length / 4), 50);
-          const customCell = {
-            tier: 1,
-            tier_name: "Tier 1 — Full Clinical History",
-            condense_mode: "lossless_structural",
-            target_tokens: 8192,
-            actual_tokens: Math.min(rawEstTok, 600),
-            reduction_pct: 65.0,
-            rendered_records: resources.length,
-            total_extracted_records: resources.length,
-            omitted_records_count: 0,
-            omitted_sections: {},
-            chart_text: resources.map(function (r) { return "[" + r.index + "] " + r.resourceType + ": " + r.display + " (" + r.summary + ")"; }).join("\n"),
-            human_summary: {
-              allergies: allergies,
-              active_conditions: activeConds,
-              active_medications: activeMeds,
-              labs_and_vitals: labs,
-              immunizations: [],
-              notes_and_visits: [],
-              what_changed_at_this_lever: "Custom uploaded FHIR R4 Bundle condensed in browser."
-            }
-          };
+          const coreResources = resources.filter(function (r) { return r.isCoreClinical; });
+
+          function buildCustomBudgetCell(modeKey, budgetNum) {
+            const maxChars = budgetNum * 4;
+            const selected = [];
+            const omittedCounts = {};
+            let usedChars = 0;
+            coreResources.forEach(function (r, idx) {
+              const line = modeKey === "hierarchical"
+                ? ("[" + r.index + "] " + r.category + " | " + r.display + (r.summary ? " (" + r.summary.slice(0, 72) + ")" : ""))
+                : ("[" + r.index + "] " + r.resourceType + " (" + r.date + "): " + r.display + " — " + r.summary);
+              if (usedChars + line.length + 1 <= maxChars || selected.length < Math.min(4, coreResources.length)) {
+                selected.push({ res: r, line: line });
+                usedChars += line.length + 1;
+              } else {
+                omittedCounts[r.category] = (omittedCounts[r.category] || 0) + 1;
+              }
+            });
+            const chartText = selected.map(function (s) { return s.line; }).join("\n");
+            const actualTok = Math.max(Math.round(chartText.length / 4), 12);
+            const omittedTotal = Math.max(0, coreResources.length - selected.length);
+            return {
+              tier: budgetNum >= 8192 ? 1 : (budgetNum >= 4096 ? 2 : (budgetNum >= 2048 ? 3 : 4)),
+              tier_name: budgetNum >= 8192
+                ? "Tier 1 — Full Clinical History"
+                : (budgetNum >= 4096 ? "Tier 2 — Recent Window Condensed" : "Tier 3/4 — Tight Budget Core"),
+              condense_mode: modeKey,
+              target_tokens: budgetNum,
+              actual_tokens: actualTok,
+              reduction_pct: Number((Math.max(0, (1 - actualTok / Math.max(rawEstTok, 1))) * 100).toFixed(1)),
+              rendered_records: selected.length,
+              total_extracted_records: coreResources.length,
+              omitted_records_count: omittedTotal,
+              omitted_sections: omittedCounts,
+              retained_uuids: selected.map(function (s) { return s.res.id; }),
+              chart_text: chartText,
+              human_summary: {
+                allergies: allergies,
+                active_conditions: activeConds,
+                active_medications: activeMeds,
+                labs_and_vitals: labs.slice(0, Math.max(3, Math.floor(budgetNum / 512))),
+                immunizations: [],
+                notes_and_visits: [],
+                what_changed_at_this_lever: "Custom uploaded FHIR R4 Bundle condensed to " + budgetNum + "-token budget (" + modeKey + ")."
+              }
+            };
+          }
+
+          const budgetsList = [16384, 8192, 4096, 2048, 1024];
+          const customMatrix = { lossless_structural: {}, hierarchical: {} };
+          budgetsList.forEach(function (b) {
+            customMatrix.lossless_structural[String(b)] = buildCustomBudgetCell("lossless_structural", b);
+            customMatrix.hierarchical[String(b)] = buildCustomBudgetCell("hierarchical", b);
+          });
 
           patientsMap[customId] = {
             id: customId,
@@ -3394,8 +3640,8 @@
             patient_name: patName,
             birth_date: patDob,
             short_tag: "Custom Uploaded FHIR Bundle",
-            persona_bio: "User-uploaded FHIR R4 Bundle parsed and condensed locally in the browser.",
-            key_highlights: entries.length + " FHIR Entries • Local Browser Analysis",
+            persona_bio: "User-uploaded FHIR R4 Bundle parsed and condensed locally across 5 token budgets in the browser.",
+            key_highlights: entries.length + " FHIR Entries • 5-Tier Browser Condensation",
             raw_est_tokens: rawEstTok,
             total_bundle_entries: entries.length,
             fhir_browser: {
@@ -3412,10 +3658,7 @@
               room_equipment_devices_count: 0,
               sensitive_sdoh_count: 0
             },
-            condensation_matrix: {
-              lossless_structural: { "16384": customCell, "8192": customCell, "4096": customCell, "2048": customCell, "1024": customCell },
-              hierarchical: { "16384": customCell, "8192": customCell, "4096": customCell, "2048": customCell, "1024": customCell }
-            },
+            condensation_matrix: customMatrix,
             skills: (patientsMap[personaIds[0]] && patientsMap[personaIds[0]].skills) || [],
             postures: { patient_self: { qa_samples: [] }, external_share: { qa_samples: [] } }
           };
