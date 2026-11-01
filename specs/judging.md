@@ -15,12 +15,14 @@ between like judges.
 
 ## Decisions (owner, 26 October 2026)
 
-- One pass by default; before every judging run the owner is asked which judge, effort and
-  how many passes.
+- One pass by default (`JUDGE_PASSES=1`); `JUDGES` (`--judge agent:model:effort[:passes]`) or
+  `REVIEW_MODEL` / `REVIEW_REASONING` select the judge model, effort and pass count (defaulting
+  to the agent's deterministic role settings when omitted).
 - Across passes: median per 0-10 axis, majority per categorical axis; a harm tie counts as
   harmful.
-- A panel of judge families is on request, not the default.
-- Arm identities are blinded to the judge and sessions are split per scenario.
+- A panel of judge families is on request (`JUDGES="..."`), not the default.
+- With `BLIND=1` (`--blind`), arm identities are blinded to the judge and sessions are split
+  per scenario; unblinded single-session judging remains available when `BLIND` is not set.
 - Re-judging the 22 October baseline with gpt-6-astra is on hold.
 
 ## Target path
