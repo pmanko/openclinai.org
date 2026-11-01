@@ -25,6 +25,9 @@ def apply_updates(entries, api, *, authorized=False):
             raise ValueError('Existing review changed; inspect before overwriting')
         return path, review
     # Validate the entire batch before the first write, then each item again.
+    targets = [(entry['repo'], entry['pr'], entry['review_id']) for entry in entries]
+    if len(targets) != len(set(targets)):
+        raise ValueError('Duplicate review target in publication batch')
     for entry in entries:
         inspect(entry)
     receipts = []

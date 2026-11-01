@@ -82,6 +82,33 @@ def test_baseline_and_unattributed_are_not_charged_to_first_pr(stack):
     assert p['attribution_pending']==1 and p['unique_blockers']==0
 
 
+def test_resolved_requires_repaired_revision_and_verification_observation(stack):
+    repo,layers,obs,d,base=copy.deepcopy(stack)
+    # Retaining only the original failing occurrences without a repaired revision / verification observation is rejected.
+    with pytest.raises(ValueError,match='Resolved status requires'):
+        consolidate('owner/repo',repo,layers,obs,[{**d,'status':'resolved','owner_pr':None}])
+    # Even with resolved_commit and resolution_evidence, a verification observation on the repaired revision is required.
+    with pytest.raises(ValueError,match='verification observation'):
+        consolidate('owner/repo',repo,layers,obs,[{
+            **d,'status':'resolved','owner_pr':None,
+            'resolved_commit':layers[2]['head'],
+            'resolution_evidence':'calculate(1) returns 1 on layer 3.',
+        }])
+    # Adding a non-blocking verification observation on layer 3 (repaired head) succeeds and renders resolution evidence.
+    obs.append(dict(id='v3',pr=3,head=layers[2]['head'],finding={
+        'file':'calc.py','line':2,'finding':'Verified calculate(1) returns 1.','blocking':False,
+    }))
+    p=consolidate('owner/repo',repo,layers,obs,[{
+        **d,'status':'resolved','owner_pr':None,'occurrences':['a','b','v3'],
+        'resolved_commit':layers[2]['head'],
+        'resolution_evidence':'calculate(1) returns 1 on layer 3.',
+    }])
+    assert p['unique_blockers']==0
+    rendered=render(p,{})[3]
+    assert 'resolved — zero-denominator' in rendered
+    assert 'calculate(1) returns 1 on layer 3.' in rendered
+
+
 def test_regression_has_separate_owner_and_does_not_reopen_fixed_layer(stack):
     repo,layers,obs,d,base=stack
     obs.append(dict(id='c',pr=4,head=layers[3]['head'],finding=obs[0]['finding']))
