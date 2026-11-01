@@ -218,3 +218,34 @@ def test_dry_run_only_stages_and_never_commits_or_publishes(publisher, tmp_path)
     assert "==> published:" not in result.stdout
     assert git(tmp_path, "log", "-1", "--format=%s") == "Archive"
     assert "reports/example/index.html" in git(tmp_path, "status", "--porcelain")
+
+
+def test_publication_stages_judging_metadata_and_renders_judge_sentence_on_catalog_card(publisher, tmp_path):
+    run_dir = tmp_path / "run"
+    (run_dir / "meta.json").write_text(
+        json.dumps({
+            "scout": [{
+                "backend": "arm-a",
+                "n": 5,
+                "accuracy_mean": 8.2,
+                "completeness_mean": 8.0,
+                "relevance_mean": 8.5,
+                "harm_count": 0,
+                "benchmark_score": 81.6,
+            }],
+            "judging": {
+                "recorded": True,
+                "sentence": "Judged by claude-opus-5-5, reasoning high, Claude Code CLI, pass 1 of 1.",
+            },
+        }),
+        encoding="utf-8",
+    )
+    result = publisher()
+    assert result.returncode == 0, result.stdout + result.stderr
+    staged_meta = json.loads((tmp_path / "reports/example/meta.json").read_text(encoding="utf-8"))
+    assert staged_meta["judging"]["sentence"] == (
+        "Judged by claude-opus-5-5, reasoning high, Claude Code CLI, pass 1 of 1."
+    )
+    catalog_html = (tmp_path / "reports/index.html").read_text(encoding="utf-8")
+    assert "Judged by claude-opus-5-5, reasoning high, Claude Code CLI, pass 1 of 1." in catalog_html
+
