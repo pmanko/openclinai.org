@@ -119,8 +119,9 @@
     .active-context-group {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
-      font-size: 0.92rem;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      font-size: 0.9rem;
     }
     .ctx-chip {
       display: inline-flex;
@@ -128,16 +129,76 @@
       gap: 0.45rem;
       background: var(--surface-alt);
       border: 1px solid var(--border);
-      padding: 0.4rem 0.85rem;
+      padding: 0.38rem 0.78rem;
       border-radius: 8px;
       font-weight: 600;
       color: var(--text);
     }
     .ctx-chip code {
       font-family: var(--font-mono);
-      font-size: 0.84rem;
+      font-size: 0.82rem;
       color: var(--primary);
       font-weight: 700;
+    }
+    .llm-bar-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      padding: 0.32rem 0.65rem;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: #166534;
+    }
+    .llm-bar-chip.offline {
+      background: #fef3c7;
+      border-color: #fde68a;
+      color: #92400e;
+    }
+    .llm-model-select {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #0f172a;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 0.18rem 0.45rem;
+      cursor: pointer;
+    }
+    .llm-config-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 0.84rem;
+      padding: 0.1rem 0.25rem;
+      color: inherit;
+      opacity: 0.85;
+    }
+    .llm-config-btn:hover { opacity: 1; }
+    .llm-live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.26rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid #bbf7d0;
+      background: #f0fdf4;
+      color: #166534;
+    }
+    .llm-live-pill.streaming {
+      background: #eff6ff;
+      border-color: #93c5fd;
+      color: #1d4ed8;
+    }
+    .llm-live-pill.offline {
+      background: var(--surface-alt);
+      border-color: var(--border);
+      color: var(--text-muted);
     }
 
     /* Center 1-Line 3-Phase Stepper */
@@ -908,6 +969,13 @@
       <div class="active-context-group" aria-label="Active Patient and Levers">
         <span class="ctx-chip" id="ctx-patient-chip">👤 —</span>
         <span class="ctx-chip" id="ctx-lever-chip"><code>8k • Lossless</code></span>
+        <span class="llm-bar-chip" id="llm-bar-chip" title="Live OpenAI-compatible LLM Router (llama-server)">
+          <span id="llm-status-label">🟢 Live LLM:</span>
+          <select id="llm-model-select" class="llm-model-select" aria-label="Select Live LLM Model">
+            <option value="gemma-4-12b">gemma-4-12b</option>
+          </select>
+          <button type="button" class="llm-config-btn" id="open-llm-config-btn" aria-label="Configure LLM Endpoint" title="Configure local or Tailscale LLM endpoint">⚙️</button>
+        </span>
       </div>
 
       <div class="phase-stepper" role="tablist" aria-label="Explorer Steps">
@@ -1091,7 +1159,7 @@
             <div class="qa-top-row">
               <form id="qa-form" style="display: flex; flex: 1; gap: 0.6rem; min-width: 260px;">
                 <input type="text" id="qa-question-input" class="qa-input" placeholder="Ask a question about this chart (e.g., medications, lab trends, hospital stay, unrecorded tests)..." aria-label="Ask a question about this chart" />
-                <button type="submit" class="btn btn-primary">Ask</button>
+                <button type="submit" id="qa-submit-btn" class="btn btn-primary">Ask</button>
               </form>
               <div class="seg-group" id="audience-view-group" aria-label="Audience Mode">
                 <button type="button" class="seg-btn active" data-audience="patient">👤 Patient View</button>
@@ -1152,6 +1220,29 @@
     </div>
   </div>
 
+  <!-- Modal for Configuring Live LLM Endpoint (Local llama-server or Tailscale) -->
+  <div class="modal-backdrop" id="llm-config-modal" role="dialog" aria-modal="true" aria-labelledby="llm-modal-title">
+    <div class="modal-card" style="width: min(560px, 95vw);">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 id="llm-modal-title" style="margin: 0; font-size: 1.15rem;">Live LLM Connection Settings</h3>
+        <button type="button" class="btn btn-sm" id="close-llm-modal-btn">✕ Close</button>
+      </div>
+      <p style="font-size: 0.92rem; color: var(--text-secondary); margin: 0.65rem 0;">
+        Connect to a local OpenAI-compatible <code>llama-server</code> router (<code>http://127.0.0.1:8077</code>) or a Tailscale endpoint (e.g., <code>http://100.119.27.0:8077</code>).
+      </p>
+      <label for="llm-endpoint-input" style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.35rem;">OpenAI-Compatible Base URL</label>
+      <input type="text" id="llm-endpoint-input" class="qa-input" style="width: 100%; margin-bottom: 0.75rem; font-family: var(--font-mono);" value="http://127.0.0.1:8077" />
+      <div id="llm-modal-status" style="font-size: 0.86rem; color: var(--text-secondary); margin-bottom: 0.85rem;"></div>
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.6rem;">
+        <div style="display: flex; gap: 0.45rem;">
+          <button type="button" class="btn btn-sm" id="preset-local-llm-btn">Local (127.0.0.1:8077)</button>
+          <button type="button" class="btn btn-sm" id="preset-tailscale-llm-btn">Tailscale (100.119.27.0:8077)</button>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" id="save-llm-endpoint-btn">Connect &amp; Refresh Models</button>
+      </div>
+    </div>
+  </div>
+
   <script src="wahs_demo_data.js"></script>
   <script>
     (function () {
@@ -1176,7 +1267,13 @@
         privacyExternalShare: false,
         audience: "patient",
         activeSkillId: "skill-visit-brief",
-        customQuestionResult: null
+        customQuestionResult: null,
+        llmBaseUrl: "http://127.0.0.1:8077",
+        llmConnected: false,
+        llmModel: "gemma-4-12b",
+        llmModels: ["gemma-4-12b"],
+        llmCache: {},
+        activeAbortController: null
       };
 
       function esc(str) {
@@ -1208,9 +1305,10 @@
         return esc(cleaned)
           .replace(/^###\s+(.+)$/gm, '<div style="font-weight:800; color:var(--text); margin:0.85rem 0 0.35rem; font-size:0.98rem;">$1</div>')
           .replace(/\s+-\s+\*\*([^*]+)\*\*/g, '<div style="margin-top:0.55rem;">• <strong>$1</strong></div>')
-          .replace(/^-\s+\*\*([^*]+)\*\*/gm, '<div style="margin-top:0.4rem;">• <strong>$1</strong></div>')
+          .replace(/^\s*[-*•]\s+\*\*([^*]+)\*\*/gm, '<div style="margin-top:0.4rem;">• <strong>$1</strong></div>')
+          .replace(/^\s*[-*•]\s+(.+)$/gm, '<div style="margin-top:0.35rem;">• $1</div>')
           .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-          .replace(/\*([^*]+)\*/g, "<em>$1</em>")
+          .replace(/\*([^\s*][^*\n]*[^\s*])\*/g, "<em>$1</em>")
           .replace(/`([^`]+)`/g, "<code>$1</code>");
       }
 
@@ -1260,6 +1358,9 @@
         }
 
         renderContextStrip();
+        if (state.activePhase === "3") {
+          renderSkillsAndQa();
+        }
         if (scrollToTop !== false) {
           window.scrollTo({ top: 0, behavior: "smooth" });
         }
@@ -1604,62 +1705,428 @@
               const chosenQa = qaSamples[idx];
               if (chosenQa) {
                 document.getElementById("qa-question-input").value = chosenQa.question;
-                state.customQuestionResult = chosenQa;
+                state.customQuestionResult = Object.assign({}, chosenQa, { forceLiveLlm: true });
                 renderSkillsAndQa();
               }
             });
           });
         }
 
-        renderActiveReportCard(p, skills);
+        renderActiveReportCard(p, skills, false);
       }
 
-      function renderActiveReportCard(p, skills) {
+      /* Build cache key incorporating patient, skill/question, Phase 2 levers, audience, and LLM model */
+      function getLlmCacheKey(kind, idOrQuestion) {
+        return [
+          state.activePatientId,
+          kind,
+          idOrQuestion,
+          state.budget,
+          state.condenseMode,
+          state.filterRoomEquip ? "noEquip" : "withEquip",
+          state.privacyExternalShare ? "extShare" : "self",
+          state.audience,
+          state.llmModel
+        ].join("::");
+      }
+
+      /* Extract active Phase 2 condensed ledger lines & metadata for the LLM prompt (deterministic prefix for KV-cache hits) */
+      function getActiveCondensedPromptData(p) {
+        const modeBucket = (p.condensation_matrix && p.condensation_matrix[state.condenseMode])
+          || (p.condensation_matrix && p.condensation_matrix.lossless_structural)
+          || {};
+        const cell = modeBucket[state.budget] || modeBucket["8192"] || Object.values(modeBucket)[0] || {};
+        let rawLines = String(cell.chart_text || "").split("\n").filter(function (ln) { return ln.trim().length > 0; });
+        if (state.filterRoomEquip) {
+          rawLines = rawLines.filter(function (ln) {
+            return !/dental x-ray|examination table|hospital bed/i.test(ln);
+          });
+        }
+        if (state.privacyExternalShare) {
+          rawLines = rawLines.filter(function (ln) {
+            return !/abuse|violence|criminal|unemployed|housing|isolation/i.test(ln);
+          });
+        }
+
+        const priorityLines = [];
+        const secondaryLines = [];
+        rawLines.forEach(function (ln) {
+          const trimmed = ln.length > 230 ? ln.slice(0, 230) + "..." : ln;
+          const isCore = /^(\[\d+\]\s*)?(patient|allergy|condition|medication|documentreference|clinical note|procedure|device)/i.test(trimmed)
+            || /section:|===|---/i.test(trimmed);
+          if (isCore) {
+            priorityLines.push(trimmed);
+          } else {
+            secondaryLines.push(trimmed);
+          }
+        });
+        const selectedLines = priorityLines.concat(secondaryLines).slice(0, 44);
+        const omittedMap = cell.omitted_sections || {};
+        const omittedKeys = Object.keys(omittedMap).filter(function (k) { return omittedMap[k] > 0; });
+        const omittedNote = omittedKeys.length
+          ? "Note on Phase 2 Budget Lever (" + Math.round(parseInt(state.budget, 10) / 1024) + "k): Trimmed sections at this compact budget: " +
+            omittedKeys.map(function (k) { return k + " (" + omittedMap[k] + " omitted)"; }).join(", ") + "."
+          : "All extracted clinical sections fit within the selected " + Math.round(parseInt(state.budget, 10) / 1024) + "k budget.";
+
+        return {
+          cell: cell,
+          ledgerExcerpt: selectedLines.join("\n"),
+          omittedNote: omittedNote,
+          leverLabel: Math.round(parseInt(state.budget, 10) / 1024) + "k • " + (state.condenseMode === "lossless_structural" ? "Lossless" : "Grouped") + (state.privacyExternalShare ? " • External Share Redacted" : "")
+        };
+      }
+
+      /* Map [N] bracket references in live LLM output to clickable FHIR resource citations */
+      function resolveLiveCitations(llmText, p, fallbackCites) {
+        const fbResources = (p && p.fhir_browser && p.fhir_browser.resources) || [];
+        const byIndex = {};
+        fbResources.forEach(function (r) { byIndex[String(r.index)] = r; });
+
+        const knownByLedgerIndex = {};
+        (fallbackCites || []).forEach(function (c) {
+          if (c.index != null) knownByLedgerIndex[String(c.index)] = c;
+        });
+        ((p && p.skills) || []).forEach(function (sk) {
+          (sk.citations || []).forEach(function (c) {
+            if (c.index != null && !knownByLedgerIndex[String(c.index)]) {
+              knownByLedgerIndex[String(c.index)] = c;
+            }
+          });
+        });
+        ["patient_self", "external_share"].forEach(function (pk) {
+          const samples = (((p && p.postures) || {})[pk] || {}).qa_samples || [];
+          samples.forEach(function (qa) {
+            (qa.citations || []).forEach(function (c) {
+              if (c.index != null && !knownByLedgerIndex[String(c.index)]) {
+                knownByLedgerIndex[String(c.index)] = c;
+              }
+            });
+          });
+        });
+
+        /* Also index lines in the active condensed chart_text by [N] */
+        const modeBucket = (p && p.condensation_matrix && p.condensation_matrix[state.condenseMode])
+          || (p && p.condensation_matrix && p.condensation_matrix.lossless_structural)
+          || {};
+        const cell = modeBucket[state.budget] || modeBucket["8192"] || Object.values(modeBucket)[0] || {};
+        const ledgerLineByIdx = {};
+        String(cell.chart_text || "").split("\n").forEach(function (ln) {
+          const m = ln.match(/^\s*\[(\d+)\]\s*(.+)$/);
+          if (m) ledgerLineByIdx[m[1]] = m[2].trim();
+        });
+
+        const citedIndices = [];
+        const regex = /\[(\d+(?:\s*,\s*\d+)*)\]/g;
+        let m;
+        while ((m = regex.exec(String(llmText || ""))) !== null) {
+          m[1].split(",").forEach(function (part) {
+            const num = part.trim();
+            if (num && citedIndices.indexOf(num) === -1) {
+              citedIndices.push(num);
+            }
+          });
+        }
+
+        const resolved = [];
+        citedIndices.forEach(function (idxStr) {
+          if (knownByLedgerIndex[idxStr]) {
+            resolved.push(knownByLedgerIndex[idxStr]);
+          } else if (byIndex[idxStr]) {
+            const r = byIndex[idxStr];
+            resolved.push({
+              index: r.index,
+              resource_type: r.resourceType,
+              resource_uuid: r.id,
+              text: r.display + (r.summary ? " — " + r.summary : "")
+            });
+          } else if (ledgerLineByIdx[idxStr]) {
+            const lineText = ledgerLineByIdx[idxStr];
+            const dateMatch = lineText.match(/^\((\d{4}-\d{2}-\d{2})\)\s*/);
+            const dateStr = dateMatch ? dateMatch[1] : "";
+            const bodyAfterDate = dateMatch ? lineText.slice(dateMatch[0].length) : lineText;
+            const colonIdx = bodyAfterDate.indexOf(":");
+            const typeLabel = colonIdx !== -1 ? bodyAfterDate.slice(0, colonIdx).trim() : "FHIR";
+            const restText = colonIdx !== -1 ? bodyAfterDate.slice(colonIdx + 1).trim() : bodyAfterDate;
+            const dispPrefix = restText.split("(")[0].trim().toLowerCase();
+            const matchedFb = fbResources.find(function (r) {
+              return (dispPrefix && String(r.display || "").toLowerCase().indexOf(dispPrefix.slice(0, 18)) !== -1)
+                && (!dateStr || String(r.date || "").indexOf(dateStr) === 0);
+            }) || fbResources.find(function (r) {
+              return dispPrefix && String(r.display || "").toLowerCase().indexOf(dispPrefix.slice(0, 18)) !== -1;
+            });
+            resolved.push({
+              index: parseInt(idxStr, 10),
+              resource_type: matchedFb ? matchedFb.resourceType : typeLabel,
+              resource_uuid: matchedFb ? matchedFb.id : ("ledger-" + idxStr),
+              text: lineText
+            });
+          }
+        });
+
+        return resolved.length ? resolved : (fallbackCites || []);
+      }
+
+      /* Parse streamed LLM text into SUMMARY and QUESTIONS_FOR_DOCTOR sections */
+      function parseStreamedSections(rawText) {
+        const cleaned = String(rawText || "").trim();
+        const splitRegex = /(?:^|\n)\s*(?:\*\*|###\s*)?QUESTIONS_FOR_DOCTOR\s*:?(?:\*\*)?/i;
+        const parts = cleaned.split(splitRegex);
+        let summaryPart = (parts[0] || "")
+          .replace(/^(?:\*\*|###\s*)?SUMMARY\s*:?(?:\*\*)?\s*/i, "")
+          .trim();
+        const questionsRaw = (parts[1] || "").trim();
+        const questionsList = questionsRaw
+          ? questionsRaw.split(/\n+/)
+              .map(function (ln) { return ln.replace(/^\s*(?:[-*•]|\d+\.)\s*/, "").trim(); })
+              .filter(function (ln) { return ln.length > 3; })
+          : [];
+        const hasNumericCite = /\[\d+(?:\s*,\s*\d+)*\]/.test(summaryPart);
+        const isAbstained = /^ABSTAIN\s*:/i.test(summaryPart) ||
+          (!hasNumericCite && /\b(?:no (?:documented )?record|not recorded in (?:the |your )?chart|must abstain|abstain from)\b/i.test(summaryPart));
+        summaryPart = summaryPart.replace(/^ABSTAIN\s*:\s*/i, "");
+        return {
+          summary: summaryPart,
+          questions: questionsList,
+          abstained: isAbstained
+        };
+      }
+
+      /* Stream a live completion from the OpenAI-compatible llama-server endpoint */
+      async function streamLiveLlm(cacheKey, messages, p, fallbackCites, fallbackSummary, fallbackQuestions) {
+        if (!state.llmConnected) return;
+        if (state.activeAbortController) {
+          try { state.activeAbortController.abort(); } catch (e) {}
+        }
+        const controller = new AbortController();
+        state.activeAbortController = controller;
+
+        const pillEl = document.getElementById("live-llm-telemetry-pill");
+        const summaryEl = document.getElementById("live-llm-summary-box");
+        const questionsUl = document.getElementById("live-llm-questions-list");
+        const citesWrapper = document.getElementById("live-llm-citations-wrapper");
+        const badgeEl = document.getElementById("live-llm-status-badge");
+
+        const t0 = performance.now();
+        let ttftMs = null;
+        let accumulated = "";
+
+        if (pillEl) {
+          pillEl.className = "llm-live-pill streaming";
+          pillEl.innerHTML = "⚡ Streaming live from <strong>" + esc(state.llmModel) + "</strong>...";
+        }
+        if (summaryEl) {
+          summaryEl.innerHTML = '<span style="color: var(--primary); font-weight: 600;">⚡ Generating live response from <code>' + esc(state.llmModel) + '</code>...</span>';
+        }
+
+        try {
+          const resp = await fetch(state.llmBaseUrl.replace(/\/+$/, "") + "/v1/chat/completions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: state.llmModel,
+              stream: true,
+              temperature: 0.1,
+              max_tokens: 260,
+              messages: messages
+            }),
+            signal: controller.signal
+          });
+
+          if (!resp.ok || !resp.body) {
+            throw new Error("HTTP " + resp.status);
+          }
+
+          const reader = resp.body.getReader();
+          const decoder = new TextDecoder("utf-8");
+          let buffer = "";
+
+          while (true) {
+            const step = await reader.read();
+            if (step.done) break;
+            buffer += decoder.decode(step.value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (let i = 0; i < lines.length; i++) {
+              const ln = lines[i].trim();
+              if (!ln.startsWith("data:")) continue;
+              const dataStr = ln.slice(5).trim();
+              if (dataStr === "[DONE]") break;
+              try {
+                const pkt = JSON.parse(dataStr);
+                const delta = (((pkt.choices || [])[0] || {}).delta || {}).content || "";
+                if (delta) {
+                  if (ttftMs === null) {
+                    ttftMs = Math.round(performance.now() - t0);
+                  }
+                  accumulated += delta;
+                  const parsed = parseStreamedSections(accumulated);
+                  if (summaryEl && parsed.summary) {
+                    summaryEl.innerHTML = formatRichText(parsed.summary);
+                  }
+                  if (questionsUl && parsed.questions.length) {
+                    questionsUl.innerHTML = parsed.questions.map(function (qItem) {
+                      return "<li>" + formatRichText(qItem) + "</li>";
+                    }).join("");
+                  }
+                  if (pillEl) {
+                    const elapsedSec = ((performance.now() - t0) / 1000).toFixed(1);
+                    pillEl.innerHTML =
+                      "⚡ Streaming <strong>" + esc(state.llmModel) + "</strong> • TTFT " + (ttftMs / 1000).toFixed(2) + "s • " + elapsedSec + "s";
+                  }
+                }
+              } catch (parseErr) {}
+            }
+          }
+
+          const totalMs = Math.round(performance.now() - t0);
+          if (ttftMs === null) ttftMs = totalMs;
+          const finalParsed = parseStreamedSections(accumulated);
+          const finalSummaryHtml = formatRichText(finalParsed.summary || fallbackSummary || "");
+          const finalQuestions = finalParsed.questions.length ? finalParsed.questions : (fallbackQuestions || []);
+          const finalCites = resolveLiveCitations(accumulated, p, fallbackCites);
+
+          state.llmCache[cacheKey] = {
+            summaryHtml: finalSummaryHtml,
+            questionsList: finalQuestions,
+            abstained: finalParsed.abstained,
+            ttftMs: ttftMs,
+            totalMs: totalMs,
+            model: state.llmModel,
+            cites: finalCites
+          };
+
+          if (summaryEl) summaryEl.innerHTML = finalSummaryHtml;
+          if (questionsUl && finalQuestions.length) {
+            questionsUl.innerHTML = finalQuestions.map(function (qItem) {
+              return "<li>" + formatRichText(qItem) + "</li>";
+            }).join("");
+          }
+          if (badgeEl && finalParsed.abstained) {
+            badgeEl.className = "skill-badge warn";
+            badgeEl.textContent = "Safety Abstention (Live LLM Verified)";
+          }
+          if (pillEl) {
+            pillEl.className = "llm-live-pill done";
+            pillEl.innerHTML =
+              "🟢 Live LLM: <strong>" + esc(state.llmModel) + "</strong> • TTFT " + (ttftMs / 1000).toFixed(2) + "s • Total " + (totalMs / 1000).toFixed(2) + "s";
+          }
+          if (citesWrapper) {
+            citesWrapper.innerHTML = renderCitationsBar(finalCites);
+            bindCitationClicks(citesWrapper, p);
+          }
+        } catch (err) {
+          if (err && err.name === "AbortError") return;
+          if (pillEl) {
+            pillEl.className = "llm-live-pill offline";
+            pillEl.innerHTML = "⚠️ Live LLM call failed (" + esc(err.message || "offline") + ") — showing baseline";
+          }
+          if (summaryEl && fallbackSummary) {
+            summaryEl.innerHTML = formatRichText(fallbackSummary);
+          }
+        }
+      }
+
+      function renderActiveReportCard(p, skills, forceLiveRefresh) {
         const container = document.getElementById("active-report-card");
         if (!container) return;
+        const promptData = getActiveCondensedPromptData(
+          p,
+          state.customQuestionResult ? state.customQuestionResult.question : state.activeSkillId
+        );
 
         if (state.customQuestionResult) {
           const qa = state.customQuestionResult;
           const cites = qa.citations || [];
           const pName = cleanName(p && p.patient_name);
           const totalCount = ((p && p.fhir_browser && p.fhir_browser.total_bundle_entries) || (p && p.total_bundle_entries) || 0).toLocaleString();
-          const summaryTxt = qa.abstained
-            ? "Checked all <strong>" + totalCount + "</strong> records in <strong>" + esc(pName) + "</strong>'s chart: there is <strong>no documented record</strong> matching <code>" + esc(qa.question) + "</code>. For patient safety, this assistant abstains rather than guessing or fabricating unrecorded clinical history."
-            : formatRichText(qa.patient_plain_summary || qa.answer);
-          const askList = qa.abstained
+          const fallbackSummary = qa.abstained
+            ? "Checked all " + totalCount + " records in " + pName + "'s chart: there is no documented record matching `" + qa.question + "`. For patient safety, this assistant abstains rather than guessing or fabricating unrecorded clinical history."
+            : (qa.patient_plain_summary || qa.answer || "");
+          const fallbackAskList = qa.abstained
             ? ["Ask your doctor whether this test, allergy, or procedure was recorded at an outside clinic and should be added to your chart."]
-            : (qa.what_to_ask_doctor || []);
-          const detailBlock = (!qa.abstained && qa.patient_plain_summary && qa.answer && qa.patient_plain_summary !== qa.answer)
-            ? '<details ' + (state.audience === "clinician" ? "open " : "") + 'style="margin-bottom: 1.2rem; background: var(--surface-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.75rem 1.1rem;">' +
-                '<summary style="cursor: pointer; font-weight: 700; font-size: 0.9rem; color: var(--primary);">View Full Clinical Evidence Breakdown</summary>' +
-                '<div style="font-size: 0.92rem; color: var(--text-secondary); margin-top: 0.75rem; white-space: pre-wrap; line-height: 1.6;">' + formatRichText(qa.answer) + '</div>' +
-              '</details>'
-            : '';
+            : (qa.what_to_ask_doctor || ["Ask your doctor to review these chart entries with you at your next visit."]);
+
+          const cacheKey = getLlmCacheKey("qa", qa.question);
+          if (forceLiveRefresh || qa.forceLiveLlm) {
+            delete state.llmCache[cacheKey];
+            delete qa.forceLiveLlm;
+          }
+          const cached = state.llmCache[cacheKey];
+
+          const initialSummaryHtml = cached ? cached.summaryHtml : formatRichText(fallbackSummary);
+          const initialQuestions = cached ? cached.questionsList : fallbackAskList;
+          const initialCites = cached ? cached.cites : cites;
+          const initialPillHtml = cached
+            ? "🟢 Live LLM: <strong>" + esc(cached.model) + "</strong> • TTFT " + (cached.ttftMs / 1000).toFixed(2) + "s • Total " + (cached.totalMs / 1000).toFixed(2) + "s"
+            : (state.llmConnected ? "⚡ Preparing live LLM generation..." : "⚪ Precomputed Baseline (LLM Offline)");
 
           container.innerHTML =
             '<div class="report-card-header">' +
               '<h3 class="report-card-title">Q: ' + esc(qa.question) + '</h3>' +
-              '<span class="skill-badge ' + (qa.abstained ? "warn" : "info") + '">' +
-                esc(qa.abstained ? "Safety Abstention (Unrecorded Fact)" : (qa.source_mode_label || "Grounded in Chart")) +
-              '</span>' +
+              '<div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">' +
+                '<span class="llm-live-pill ' + (cached ? "done" : (state.llmConnected ? "streaming" : "offline")) + '" id="live-llm-telemetry-pill">' + initialPillHtml + '</span>' +
+                '<button type="button" class="btn btn-sm" id="rerun-live-llm-btn" title="Regenerate live response with ' + esc(state.llmModel) + '">↻ Regenerate Live</button>' +
+                '<span class="skill-badge ' + ((cached ? cached.abstained : qa.abstained) ? "warn" : "info") + '" id="live-llm-status-badge">' +
+                  esc((cached ? cached.abstained : qa.abstained) ? "Safety Abstention (Unrecorded Fact)" : "Grounded in Condensed Chart") +
+                '</span>' +
+              '</div>' +
             '</div>' +
-            '<div class="report-summary-box">' + summaryTxt + '</div>' +
-            detailBlock +
-            (askList.length
-              ? '<div class="remediation-box"><h4>💬 Questions to Ask Your Doctor</h4><ul>' +
-                  askList.map(function (item) { return '<li>' + formatRichText(item) + '</li>'; }).join("") +
-                '</ul></div>'
-              : '') +
+            '<div class="report-summary-box" id="live-llm-summary-box">' + initialSummaryHtml + '</div>' +
+            '<div class="remediation-box">' +
+              '<h4>💬 Questions to Ask Your Doctor</h4>' +
+              '<ul id="live-llm-questions-list">' +
+                initialQuestions.map(function (item) { return '<li>' + formatRichText(item) + '</li>'; }).join("") +
+              '</ul>' +
+            '</div>' +
             (state.audience === "clinician" && qa.clinician_technical_note
               ? '<div class="clinician-tech-box"><strong>Clinician Technical Provenance:</strong> ' + esc(qa.clinician_technical_note) + '</div>'
               : '') +
-            renderCitationsBar(cites);
+            '<div id="live-llm-citations-wrapper">' + renderCitationsBar(initialCites) + '</div>';
+
           bindCitationClicks(container, p);
+          const rerunBtn = document.getElementById("rerun-live-llm-btn");
+          if (rerunBtn) {
+            rerunBtn.addEventListener("click", function () {
+              renderActiveReportCard(p, skills, true);
+            });
+          }
+
+          if (state.llmConnected && !cached) {
+            const kbAlerts = (skills || []).map(function (sk) {
+              return (sk.structured_rows || []).map(function (r) {
+                return "- [" + sk.title + " | " + r.category + "] " + r.label + ": " + r.detail;
+              }).join("\n");
+            }).filter(Boolean).slice(0, 4).join("\n");
+
+            const sysMsg = state.audience === "clinician"
+              ? "You are the WAHS+ Clinical Chart Assistant in Clinician View. Answer the clinical task or question concisely using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, procedure, or biomarker NOT recorded anywhere in the chart, begin your SUMMARY with 'ABSTAIN:' and state that no record exists in the chart. Format your output in two parts:\nSUMMARY:\n2-3 concise clinical bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 clinical reconciliation or follow-up items."
+              : "You are the WAHS+ Clinical Chart Assistant helping a patient understand their condensed health record. Answer the task or question in clear, empathetic plain English using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, colonoscopy, MRI, or fact NOT recorded in the chart, begin your SUMMARY with 'ABSTAIN:' and clearly explain that you checked their chart and there is no record of it, so you abstain for safety rather than guessing. Format your output in two parts:\nSUMMARY:\n2-3 clear plain-English bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 specific questions the patient can ask their doctor.";
+
+            const userMsg =
+              "Patient: " + pName + " (DOB " + (p.birth_date || "unknown") + ")\n" +
+              "Active Phase 2 Condensation Levers: " + promptData.leverLabel + "\n" +
+              promptData.omittedNote + "\n\n" +
+              "Condensed FHIR Chart Ledger:\n" + promptData.ledgerExcerpt + "\n\n" +
+              "4-Layer Clinical KB Findings:\n" + (kbAlerts || "None flagged") + "\n\n" +
+              "Task / Question: " + qa.question;
+
+            streamLiveLlm(cacheKey, [
+              { role: "system", content: sysMsg },
+              { role: "user", content: userMsg }
+            ], p, cites, fallbackSummary, fallbackAskList);
+          }
           return;
         }
 
         const skill = skills.find(function (s) { return s.id === state.activeSkillId; }) || skills[0];
         if (!skill) return;
+
+        const cacheKey = getLlmCacheKey("skill", skill.id);
+        if (forceLiveRefresh) {
+          delete state.llmCache[cacheKey];
+        }
+        const cached = state.llmCache[cacheKey];
 
         const rowsHtml = (skill.structured_rows || []).map(function (r) {
           return (
@@ -1677,16 +2144,23 @@
           );
         }).join("");
 
-        const remHtml = (skill.suggested_remediation || []).map(function (item) {
-          return '<li>' + formatRichText(item) + '</li>';
-        }).join("");
+        const initialSummaryHtml = cached ? cached.summaryHtml : formatRichText(skill.plain_english_summary);
+        const initialQuestions = cached ? cached.questionsList : (skill.suggested_remediation || []);
+        const initialCites = cached ? cached.cites : (skill.citations || []);
+        const initialPillHtml = cached
+          ? "🟢 Live LLM: <strong>" + esc(cached.model) + "</strong> • TTFT " + (cached.ttftMs / 1000).toFixed(2) + "s • Total " + (cached.totalMs / 1000).toFixed(2) + "s"
+          : (state.llmConnected ? "⚡ Preparing live LLM synthesis..." : "⚪ Precomputed Baseline (LLM Offline)");
 
         container.innerHTML =
           '<div class="report-card-header">' +
             '<h3 class="report-card-title">' + esc(skill.icon) + ' ' + esc(skill.title) + '</h3>' +
-            '<span class="skill-badge ' + esc(skill.badge_tone || "info") + '">' + esc(skill.status_badge) + '</span>' +
+            '<div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">' +
+              '<span class="llm-live-pill ' + (cached ? "done" : (state.llmConnected ? "streaming" : "offline")) + '" id="live-llm-telemetry-pill">' + initialPillHtml + '</span>' +
+              '<button type="button" class="btn btn-sm" id="rerun-live-llm-btn" title="Regenerate live skill report with ' + esc(state.llmModel) + '">↻ Regenerate Live</button>' +
+              '<span class="skill-badge ' + esc(skill.badge_tone || "info") + '" id="live-llm-status-badge">' + esc(skill.status_badge) + '</span>' +
+            '</div>' +
           '</div>' +
-          '<div class="report-summary-box">' + formatRichText(skill.plain_english_summary) + '</div>' +
+          '<div class="report-summary-box" id="live-llm-summary-box">' + initialSummaryHtml + '</div>' +
           '<div style="overflow-x: auto;">' +
             '<table class="report-items-table">' +
               '<thead><tr><th style="width: 165px;">Status</th><th style="width: 215px;">Item</th><th>Details</th><th style="width: 165px;">Source Clinic</th></tr></thead>' +
@@ -1695,7 +2169,9 @@
           '</div>' +
           '<div class="remediation-box">' +
             '<h4>💡 Suggested Next Steps &amp; Questions for Your Doctor (Read-Only)</h4>' +
-            '<ul>' + remHtml + '</ul>' +
+            '<ul id="live-llm-questions-list">' +
+              initialQuestions.map(function (item) { return '<li>' + formatRichText(item) + '</li>'; }).join("") +
+            '</ul>' +
           '</div>' +
           (state.audience === "clinician"
             ? '<div class="clinician-tech-box">' +
@@ -1703,9 +2179,39 @@
                 '<div style="margin-top: 0.35rem;"><strong>Condensation Lever Sensitivity:</strong> ' + esc(skill.lever_sensitivity_note || "") + '</div>' +
               '</div>'
             : '') +
-          renderCitationsBar(skill.citations || []);
+          '<div id="live-llm-citations-wrapper">' + renderCitationsBar(initialCites) + '</div>';
 
         bindCitationClicks(container, p);
+        const rerunBtn = document.getElementById("rerun-live-llm-btn");
+        if (rerunBtn) {
+          rerunBtn.addEventListener("click", function () {
+            renderActiveReportCard(p, skills, true);
+          });
+        }
+
+        if (state.llmConnected && !cached) {
+          const pName = cleanName(p && p.patient_name);
+          const skillFindingsText = (skill.structured_rows || []).map(function (r) {
+            return "- [" + r.category + "] " + r.label + ": " + r.detail + " (Source: " + r.source_org + ")";
+          }).join("\n");
+
+          const sysMsg = state.audience === "clinician"
+            ? "You are the WAHS+ Clinical Chart Assistant in Clinician View. Answer the clinical task or question concisely using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, procedure, or biomarker NOT recorded anywhere in the chart, begin your SUMMARY with 'ABSTAIN:' and state that no record exists in the chart. Format your output in two parts:\nSUMMARY:\n2-3 concise clinical bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 clinical reconciliation or follow-up items."
+            : "You are the WAHS+ Clinical Chart Assistant helping a patient understand their condensed health record. Answer the task or question in clear, empathetic plain English using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, colonoscopy, MRI, or fact NOT recorded in the chart, begin your SUMMARY with 'ABSTAIN:' and clearly explain that you checked their chart and there is no record of it, so you abstain for safety rather than guessing. Format your output in two parts:\nSUMMARY:\n2-3 clear plain-English bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 specific questions the patient can ask their doctor.";
+
+          const userMsg =
+            "Patient: " + pName + " (DOB " + (p.birth_date || "unknown") + ")\n" +
+            "Active Phase 2 Condensation Levers: " + promptData.leverLabel + "\n" +
+            promptData.omittedNote + "\n\n" +
+            "Condensed FHIR Chart Ledger:\n" + promptData.ledgerExcerpt + "\n\n" +
+            "4-Layer Clinical KB Findings for '" + skill.title + "':\n" + (skillFindingsText || "None") + "\n\n" +
+            "Task / Question: Synthesize the SUMMARY and QUESTIONS_FOR_DOCTOR for the skill '" + skill.title + "'.";
+
+          streamLiveLlm(cacheKey, [
+            { role: "system", content: sysMsg },
+            { role: "user", content: userMsg }
+          ], p, skill.citations || [], skill.plain_english_summary, skill.suggested_remediation || []);
+        }
       }
 
       function renderCitationsBar(cites) {
@@ -1895,6 +2401,7 @@
       document.getElementById("toggle-filter-equip").addEventListener("change", function (e) {
         state.filterRoomEquip = !!e.target.checked;
         renderCondensationPanel();
+        renderSkillsAndQa();
       });
 
       document.getElementById("toggle-privacy-share").addEventListener("change", function (e) {
@@ -1927,6 +2434,23 @@
         const matchedQa = qaSamples.find(function (item) {
           return item.question.toLowerCase() === qLow || item.question.toLowerCase().indexOf(qLow) !== -1;
         });
+
+        /* When Live LLM is connected, always stream a fresh live LLM answer for the submitted question */
+        if (state.llmConnected) {
+          state.customQuestionResult = matchedQa ? Object.assign({}, matchedQa, { question: q, forceLiveLlm: true }) : {
+            question: q,
+            forceLiveLlm: true,
+            patient_category: "Live LLM Chart Q&A",
+            source_mode_label: "Live Streaming (" + state.llmModel + ")",
+            patient_plain_summary: "Streaming live clinical answer from " + state.llmModel + "...",
+            answer: "",
+            what_to_ask_doctor: [],
+            citations: []
+          };
+          renderSkillsAndQa();
+          return;
+        }
+
         if (matchedQa) {
           state.customQuestionResult = matchedQa;
           renderSkillsAndQa();
@@ -1975,6 +2499,127 @@
         renderSkillsAndQa();
       });
 
+      /* Live LLM Discovery & Endpoint Wiring */
+      async function probeLiveLlmEndpoint(overrideUrl) {
+        const chip = document.getElementById("llm-bar-chip");
+        const label = document.getElementById("llm-status-label");
+        const select = document.getElementById("llm-model-select");
+        const modalStatus = document.getElementById("llm-modal-status-box");
+        const candidates = overrideUrl
+          ? [overrideUrl.replace(/\/+$/, "")]
+          : [
+              (localStorage.getItem("wahs_llm_endpoint") || "").replace(/\/+$/, ""),
+              "http://127.0.0.1:8077",
+              "http://localhost:8077",
+              "http://100.119.27.0:8077"
+            ].filter(Boolean);
+
+        for (let i = 0; i < candidates.length; i++) {
+          const base = candidates[i];
+          try {
+            const ctrl = new AbortController();
+            const timer = setTimeout(function () { ctrl.abort(); }, 2500);
+            const res = await fetch(base + "/v1/models", { signal: ctrl.signal });
+            clearTimeout(timer);
+            if (!res.ok) continue;
+            const data = await res.json();
+            const models = (data.data || data.models || []).map(function (m) {
+              return {
+                id: m.id || m.model,
+                loaded: (m.status && m.status.value === "loaded") || false
+              };
+            }).filter(function (m) { return !!m.id; });
+            if (!models.length) continue;
+
+            state.llmBaseUrl = base;
+            state.llmConnected = true;
+            state.llmModels = models;
+            localStorage.setItem("wahs_llm_endpoint", base);
+            const epInput = document.getElementById("llm-endpoint-input");
+            if (epInput) epInput.value = base;
+
+            /* Prefer gemma-4-12b if present, else a loaded model, else first model */
+            const preferred = models.find(function (m) { return m.id === state.llmModel; }) ||
+                              models.find(function (m) { return m.id === "gemma-4-12b"; }) ||
+                              models.find(function (m) { return m.loaded; }) ||
+                              models[0];
+            state.llmModel = preferred.id;
+
+            if (select) {
+              select.innerHTML = models.map(function (m) {
+                const tag = m.loaded ? " (Loaded)" : "";
+                return '<option value="' + esc(m.id) + '"' + (m.id === state.llmModel ? " selected" : "") + '>' + esc(m.id + tag) + '</option>';
+              }).join("");
+            }
+            if (chip) chip.classList.remove("offline");
+            if (label) label.textContent = "🟢 Live LLM:";
+            if (modalStatus) {
+              modalStatus.innerHTML = '<strong style="color:var(--ok);">🟢 Connected to ' + esc(base) + '</strong> — ' + models.length + ' models available (<code>' + esc(state.llmModel) + '</code> active).';
+            }
+            if (String(state.activePhase) === "3") {
+              renderSkillsAndQa();
+            }
+            return true;
+          } catch (e) {
+            /* try next candidate */
+          }
+        }
+
+        state.llmConnected = false;
+        if (chip) chip.classList.add("offline");
+        if (label) label.textContent = "⚪ Offline Snapshot:";
+        if (modalStatus) {
+          modalStatus.innerHTML = '<strong style="color:var(--warn);">⚪ Local/Tailscale LLM unreachable</strong> — Start `llama-server` on port `8077` or enter your Tailscale URL (`http://100.119.27.0:8077`). Using verified pre-computed outputs as fallback.';
+        }
+        return false;
+      }
+
+      const llmSelectEl = document.getElementById("llm-model-select");
+      if (llmSelectEl) {
+        llmSelectEl.addEventListener("change", function (e) {
+          state.llmModel = e.target.value;
+          renderSkillsAndQa();
+        });
+      }
+
+      const llmModal = document.getElementById("llm-config-modal");
+      const openLlmBtn = document.getElementById("open-llm-config-btn");
+      if (openLlmBtn && llmModal) {
+        openLlmBtn.addEventListener("click", function () {
+          document.getElementById("llm-endpoint-input").value = state.llmBaseUrl;
+          llmModal.classList.add("open");
+        });
+      }
+      const closeLlmBtn = document.getElementById("close-llm-modal-btn");
+      if (closeLlmBtn && llmModal) {
+        closeLlmBtn.addEventListener("click", function () {
+          llmModal.classList.remove("open");
+        });
+      }
+      const presetLocalBtn = document.getElementById("preset-local-llm-btn");
+      if (presetLocalBtn) {
+        presetLocalBtn.addEventListener("click", function () {
+          document.getElementById("llm-endpoint-input").value = "http://127.0.0.1:8077";
+        });
+      }
+      const presetTailscaleBtn = document.getElementById("preset-tailscale-llm-btn");
+      if (presetTailscaleBtn) {
+        presetTailscaleBtn.addEventListener("click", function () {
+          document.getElementById("llm-endpoint-input").value = "http://100.119.27.0:8077";
+        });
+      }
+      const saveLlmBtn = document.getElementById("save-llm-endpoint-btn");
+      if (saveLlmBtn) {
+        saveLlmBtn.addEventListener("click", async function () {
+          const val = (document.getElementById("llm-endpoint-input").value || "").trim().replace(/\/+$/, "");
+          if (!val) return;
+          const ok = await probeLiveLlmEndpoint(val);
+          if (ok && llmModal) {
+            llmModal.classList.remove("open");
+          }
+        });
+      }
+
       /* Custom FHIR Bundle Modal Wiring */
       const modal = document.getElementById("custom-fhir-modal");
       document.getElementById("open-custom-fhir-btn").addEventListener("click", function () {
@@ -1986,6 +2631,7 @@
       document.addEventListener("keydown", function (ev) {
         if (ev.key === "Escape") {
           modal.classList.remove("open");
+          if (llmModal) llmModal.classList.remove("open");
           closeCitationDrawer();
         }
       });
@@ -2166,8 +2812,9 @@
         }
       });
 
-      /* Initial Render */
+      /* Initial Render & Live LLM Discovery */
       renderAll();
+      probeLiveLlmEndpoint();
     })();
   </script>
 </body>
