@@ -695,7 +695,7 @@ def main() -> int:
         if args.agent == "human":
             print("fix the blocking findings on the PR branch, push, and re-run")
             return 3
-        fix_wt = worktree(checkout, work_dir() / "wt-fix" / args.repo / repository_key,
+        fix_wt = worktree(checkout, work_dir() / "wt-fix" / args.repo / repository_key / str(args.pr),
                           head, branch=meta["head_branch"])
         run_role(args, "fixer", fix_wt, (BRIEFS / "fixer.md").read_text() +
                  f"\n## Inputs\n\n- Findings to fix: {out_dir / f'findings-{k}.json'}\n"

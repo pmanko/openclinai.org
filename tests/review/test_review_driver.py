@@ -82,9 +82,11 @@ def test_fixer_requires_explicit_authorization(tmp_path, monkeypatch, stack_chan
         return SimpleNamespace(returncode=0)
     monkeypatch.setattr(state['subprocess'], 'run', threads)
     roles = []
+    fix_worktrees = []
     def role(args, name, wt, prompt, output):
         roles.append(name)
         if name == 'fixer':
+            fix_worktrees.append(wt)
             import shlex
             command = prompt.split('- Push with: ', 1)[1].strip()
             tokens = shlex.shlex(command, posix=True, punctuation_chars=True)
@@ -101,6 +103,7 @@ def test_fixer_requires_explicit_authorization(tmp_path, monkeypatch, stack_chan
         argv.append('--stack')
     for flag, expected in [([], ['reviewer']), (['--fix'], ['reviewer'] if stack_changed else ['reviewer', 'fixer', 'reviewer'])]:
         roles.clear()
+        fix_worktrees.clear()
         monkeypatch.setattr(sys, 'argv', argv + flag)
         if stack_changed and flag:
             with pytest.raises(SystemExit):
@@ -109,6 +112,13 @@ def test_fixer_requires_explicit_authorization(tmp_path, monkeypatch, stack_chan
             continue
         assert api['main']() == 0
         assert roles == expected
+        if not stack_changed and flag:
+            assert fix_worktrees == [tmp_path / 'work' / 'wt-fix' / 'umbrella' / 'fixture%2Frepo' / '1']
+            monkeypatch.setattr(sys, 'argv', ['review.py', '--repo', 'umbrella', '--repository', 'fixture/repo',
+                                              '--pr', '2', '--agent', 'codex', '--rounds', '2', '--no-consumer', '--fix'])
+            assert api['main']() == 0
+            assert fix_worktrees[-1] == tmp_path / 'work' / 'wt-fix' / 'umbrella' / 'fixture%2Frepo' / '2'
+            assert fix_worktrees[0] != fix_worktrees[-1]
         report = json.loads(next((tmp_path / 'work').rglob('result.json')).read_text())
         assert report['scope'] == 'source_review'
         assert report['execution'] == ('superseded' if stack_changed else 'complete')
