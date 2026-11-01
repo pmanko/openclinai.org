@@ -23,12 +23,12 @@ and their disagreement. Neither pass saw the other. Sampling settings are the CL
 
 | Arm | Judge | Accuracy | Completeness | Relevance | Harm | Benchmark /100 |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Bundled 12B | Claude | 6.18 | 6.24 | 6.88 | 0 | 56.1 |
-| Bundled 12B | gpt-6-astra | 6.53 | 7.29 | 7.82 | 1 | 64.9 |
-| Hub answer-only 12B | Claude | 8.71 | 7.71 | 8.82 | 1 | 82.1 |
-| Hub answer-only 12B | gpt-6-astra | 9.06 | 8.71 | 9.06 | 1 | 87.5 |
-| Hub checked 12B | Claude | 8.88 | 7.65 | 8.71 | 1 | 82.5 |
-| Hub checked 12B | gpt-6-astra | 9.24 | 8.65 | 8.88 | 1 | 87.8 |
+| Bundled 12B | Claude | 6.18 | 6.24 | 6.88 | 0 | 55.2 |
+| Bundled 12B | gpt-6-astra | 6.53 | 7.29 | 7.82 | 1 | 64.1 |
+| Hub answer-only 12B | Claude | 8.71 | 7.71 | 8.82 | 1 | 81.6 |
+| Hub answer-only 12B | gpt-6-astra | 9.06 | 8.71 | 9.06 | 1 | 87.0 |
+| Hub checked 12B | Claude | 8.88 | 7.65 | 8.71 | 1 | 82.0 |
+| Hub checked 12B | gpt-6-astra | 9.24 | 8.65 | 8.88 | 1 | 87.3 |
 
 Against the 22 October run (d0e4e2d8, same arms, judged once by `claude -p` with no pinned
 model): bundled 6.65 / 6.0 / 7.59, harm 0; Hub answer-only 8.24 / 7.41 / 8.71, harm 1; Hub
@@ -61,3 +61,6 @@ abstain; gpt-6-astra does not), and `convo-safety-escalation` on both Hub arms (
 - The run itself raised none: 105 of 105 results, no errors, index unchanged.
 - The judge was not recorded anywhere that ships until the second pass was added by hand; the
   judging plan (work/judging-plan-2026-10-26.md, becoming `specs/judging.md`) fixes that.
+
+- The canonical Claude pass evaluated the primary Answer section across all 51 cells and left the 15 In-Depth (`background`) cells unperformed (`n_background: 0`), whereas the secondary `codex-gpt-6-astra-high-p1` pass scored all 15 In-Depth cells.
+- Component revisions above are recorded from the operator's local stack inspection; the raw harness `run_manifest.json` did not auto-populate `git_sha` at run time.
