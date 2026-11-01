@@ -3090,6 +3090,21 @@
         renderSkillsAndQa();
       });
 
+      /* Downloaded GGUFs ready on disk for llama-router (:8077) and used by med-agent-hub product profiles */
+      const READY_ROUTER_MODELS = {
+        "gemma-4-12b": true,
+        "gemma-4-12b-q4": true,
+        "gemma-31b": true,
+        "gemma-26b": true,
+        "gemma-e4b": true,
+        "gemma-e4b-q8": true,
+        "gemma-e2b": true,
+        "medgemma-1.5-4b-q8": true,
+        "qwen2.5-14b": true,
+        "qwen3.5-9b": true,
+        "qwen3.6-35b": true
+      };
+
       /* Live LLM Discovery & Endpoint Wiring */
       async function probeLiveLlmEndpoint(overrideUrl) {
         const chip = document.getElementById("llm-bar-chip");
@@ -3114,12 +3129,26 @@
             clearTimeout(timer);
             if (!res.ok) continue;
             const data = await res.json();
-            const models = (data.data || data.models || []).map(function (m) {
+            const rawModels = (data.data || data.models || []).map(function (m) {
+              const id = m.id || m.model;
+              const isLoaded = (m.status && m.status.value === "loaded") || false;
+              const isHubProfile = m.owned_by === "med-agent-hub";
+              const isReady = isHubProfile
+                ? (m.available !== false && m.visibility === "product")
+                : (isLoaded || !!READY_ROUTER_MODELS[id]);
               return {
-                id: m.id || m.model,
-                loaded: (m.status && m.status.value === "loaded") || false
+                id: id,
+                label: m.label || id,
+                loaded: isLoaded,
+                ready: isReady
               };
-            }).filter(function (m) { return !!m.id; });
+            }).filter(function (m) { return !!m.id && m.ready; });
+            const models = rawModels.sort(function (a, b) {
+              if (a.loaded !== b.loaded) return a.loaded ? -1 : 1;
+              if (a.id === "gemma-4-12b") return -1;
+              if (b.id === "gemma-4-12b") return 1;
+              return a.id.localeCompare(b.id);
+            });
             if (!models.length) continue;
 
             state.llmBaseUrl = base;
