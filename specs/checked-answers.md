@@ -42,7 +42,8 @@ order. A stage is a step; a role is the model that takes it. Since 28 October 20
 `single-12b-bare` (the deterministic checks only: `context -> answer -> gate -> resolve_refs ->
 indepth -> indepth_gate`, two writer calls and no model reviewer or grounder). The ten-stage
 checked comparison profile (`single-12b-checked`, the earlier default retained as a comparison
-arm):
+arm, making six model calls across Answer and In-Depth — three for the Answer path and three for
+the In-Depth path):
 
 | Stage | What it does | Model call |
 | --- | --- | --- |
@@ -130,15 +131,17 @@ dated review under `reviews/` for a run.
   sampling); router sections (`qwen3.5-9b` new) and
   `model_registry.json` entries; the residency check for each arm's pair. Evidence: the
   umbrella PR and `make llama-router-models` output.
-- [ ] A4 Profiles and arms. Hub product profiles sorted after the default, so the app and the
-  harness run them alike; same stages, policies and context as the default: `single-12b-xcheck` (Gemma 4 12B writes, Qwen3.6-35B-A3B reviews and
-  grounds), `single-31b-xcheck` (Gemma 4 31B writes, Qwen3.5-9B reviews and grounds),
-  `single-12b-checked-folded` and `single-12b-checked-noground` (the default pair with the
-  grounding policy changed). Harness arms for each in `backends.json`. Evidence: the Hub and
-  harness PRs with their profile-loading tests.
-- [ ] A5 Runs. After A1 and A2 are deployed. Run A, 33 GB resident: bundled, Hub answer-only,
-  baseline, folded, noground, `single-12b-xcheck`. Run B, 28 GB resident: `single-31b-xcheck`
-  with the baseline repeated as the in-run control. Judged blind per scenario by one
+- [ ] A4 Profiles and arms. Retained Hub product profiles and harness arms in `backends.json`
+  (see [Run plan](#run-plan) below): `single-12b-answer`, `single-12b-bare` (default),
+  `single-12b-verify`, and `single-31b-xcheck` (Gemma 4 31B writes, Qwen3.5-9B reviews and
+  grounds). Historical Run A comparison variants (`single-12b-xcheck`,
+  `single-12b-checked-folded`, and `single-12b-checked-noground`) were evaluated in Runs A–D4
+  and subsequently retired ([confidence-labels.md](confidence-labels.md#pruning-28-october-2026-from-runs-a2-and-c-and-the-ensemble-research)).
+  Evidence: the Hub and harness PRs with their profile-loading tests.
+- [ ] A5 Runs. After A1 and A2 are deployed. Historical Run A (33 GB resident: bundled, Hub
+  answer-only, baseline, plus the now-retired folded, noground, and `single-12b-xcheck` arms)
+  and current Run B (28 GB resident: `single-31b-xcheck` with `single-12b-bare` and
+  `single-12b-verify` repeated as in-run controls). Judged blind per scenario by one
   `gpt-6-astra` high pass and one `claude-opus-5-5` high pass per round (updated 28 October in
   [judging.md](judging.md); run A's initial three-pass `gpt-6-astra` plan is recorded in the
   [28 October A2/C review](reviews/2026-10-28-confidence-labels-runs-a2-c.md)). Evidence: a dated review with, per arm, the judged scores and harm, the latency,

@@ -126,4 +126,4 @@ classification source the deployment supplies.
    window defect fixed after the run.
 4. Next: a general missed-return-visit rule from the temporal facts' return dates and encounters;
    drug class and indication only with a classification source or the chart's current plans.
-3. The rules that clear LG1 keep marking; a rule below it runs hidden until fixed or dropped.
+5. The rules that clear LG1 keep marking; a rule below it runs hidden until fixed or dropped.

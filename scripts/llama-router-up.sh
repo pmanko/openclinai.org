@@ -14,16 +14,117 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 EMPTY_HF="${HOME}/.cache/llama-router-emptyhf"
 ROUTER_PORT="${LLAMA_ROUTER_PORT:-8077}"
 MODEL_DIR="${LLAMA_MODEL_DIR:-${HOME}/.cache/llama-router-models}"
+MODELS_FILE="${LLAMA_MODELS_MANIFEST:-${ROOT}/scripts/llama-router.models.tsv}"
 RUNTIME_DIR="${LLAMA_ROUTER_RUNTIME_DIR:-${ROOT}/artifacts/llama-router}"
 RUNTIME_MODELS="${RUNTIME_DIR}/models"
 READY_TIMEOUT_SECONDS="${LLAMA_ROUTER_READY_TIMEOUT_SECONDS:-60}"
 DAEMON=0
+MODE="run"
+TARGET_ALIAS=""
 
-if [ "${1:-}" = "--daemon" ]; then
+sha256_file() {
+  local path="$1"
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "${path}" | awk '{print $1}'
+  else
+    shasum -a 256 "${path}" | awk '{print $1}'
+  fi
+}
+
+model_record() {
+  local alias="$1"
+  awk -F '\t' -v wanted="${alias}" '
+    $0 !~ /^#/ && NF >= 4 && $1 == wanted { print; found = 1; exit }
+    END { if (!found) exit 1 }
+  ' "${MODELS_FILE}"
+}
+
+verify_model() {
+  local alias="$1" require_present="${2:-1}" record filename expected_sha actual path
+  record="$(model_record "${alias}")" || {
+    echo "ERROR: unsupported llama-router model alias: ${alias}" >&2
+    return 2
+  }
+  IFS=$'\t' read -r _ filename expected_sha _ <<<"${record}"
+  path="${MODEL_DIR}/${alias}.gguf"
+  if [ ! -f "${path}" ] && [ -f "${MODEL_DIR}/${filename}" ]; then
+    path="${MODEL_DIR}/${filename}"
+  fi
+  if [ ! -f "${path}" ]; then
+    if [ "${require_present}" = "1" ]; then
+      echo "ERROR: pinned model is missing: ${MODEL_DIR}/${alias}.gguf (${filename})" >&2
+      return 1
+    fi
+    return 0
+  fi
+  actual="$(sha256_file "${path}")"
+  if [ "${actual}" != "${expected_sha}" ]; then
+    echo "ERROR: model checksum mismatch for ${alias}: ${path}" >&2
+    echo "  expected ${expected_sha}" >&2
+    echo "  actual   ${actual}" >&2
+    return 1
+  fi
+  echo "verified ${alias}: ${path} (${actual})"
+}
+
+verify_models() {
+  local require_present="${1:-1}" alias
+  while IFS=$'\t' read -r alias _; do
+    case "${alias}" in
+      ''|'#'*) continue ;;
+    esac
+    verify_model "${alias}" "${require_present}"
+  done <"${MODELS_FILE}"
+}
+
+fetch_model() {
+  local alias="$1" record filename expected_sha source_url path partial actual
+  record="$(model_record "${alias}")" || {
+    echo "ERROR: unsupported llama-router model alias: ${alias}" >&2
+    return 2
+  }
+  IFS=$'\t' read -r _ filename expected_sha source_url <<<"${record}"
+  mkdir -p "${MODEL_DIR}"
+  path="${MODEL_DIR}/${alias}.gguf"
+  if [ -f "${path}" ]; then
+    verify_model "${alias}" 1
+    return
+  fi
+  partial="${path}.partial"
+  echo "fetching ${alias} (${filename}) from pinned revision"
+  if [ -f "${partial}" ]; then
+    curl --fail --location --continue-at - --output "${partial}" "${source_url}"
+  else
+    curl --fail --location --output "${partial}" "${source_url}"
+  fi
+  actual="$(sha256_file "${partial}")"
+  if [ "${actual}" != "${expected_sha}" ]; then
+    rm -f "${partial}"
+    echo "ERROR: downloaded model checksum mismatch for ${alias}" >&2
+    echo "  expected ${expected_sha}" >&2
+    echo "  actual   ${actual}" >&2
+    return 1
+  fi
+  mv "${partial}" "${path}"
+  echo "installed ${alias}: ${path} (${actual})"
+}
+
+if [ "${1:-}" = "--daemon" ] && [ "$#" -eq 1 ]; then
   DAEMON=1
+elif [ "${1:-}" = "--verify" ] && [ "$#" -le 2 ]; then
+  MODE="verify"
+  TARGET_ALIAS="${2:-}"
+elif [ "${1:-}" = "--fetch" ] && [ "$#" -eq 2 ]; then
+  MODE="fetch"
+  TARGET_ALIAS="$2"
 elif [ "$#" -gt 0 ]; then
-  echo "usage: $0 [--daemon]" >&2
+  echo "usage: $0 [--daemon | --verify [ALIAS] | --fetch ALIAS]" >&2
   exit 2
+fi
+
+if [ "${MODE}" = "fetch" ]; then
+  fetch_model "${TARGET_ALIAS}"
+  exit 0
 fi
 
 if [ ! -d "${MODEL_DIR}" ]; then
@@ -31,6 +132,19 @@ if [ ! -d "${MODEL_DIR}" ]; then
   echo "Place GGUF files there using the filenames in scripts/llama-router.ini," >&2
   echo "or set LLAMA_MODEL_DIR to an existing model directory." >&2
   exit 1
+fi
+
+if [ "${MODE}" = "verify" ]; then
+  if [ -n "${TARGET_ALIAS}" ]; then
+    verify_model "${TARGET_ALIAS}" 1
+  else
+    verify_models 1
+  fi
+  exit 0
+fi
+
+if [ "${LLAMA_SKIP_MODEL_VERIFY:-0}" != "1" ]; then
+  verify_models "${LLAMA_VERIFY_MODELS:-0}" >/dev/null
 fi
 
 mkdir -p "${EMPTY_HF}" "${RUNTIME_DIR}"
