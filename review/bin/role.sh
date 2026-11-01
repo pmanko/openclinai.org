@@ -11,10 +11,13 @@ agent=$1 role=$2 workdir=$3 prompt=$4 out=$5
 # mid-tier model at medium effort unless REVIEW_MODEL / REVIEW_REASONING say otherwise.
 # Claude has its own default model; the Codex default is not one of its models.
 case $agent in
-  claude) model=${REVIEW_MODEL:-claude-sonnet-5-5} ;;
-  *)      model=${REVIEW_MODEL:-gpt-6.1-sol} ;;
+  claude) model=${REVIEW_MODEL:-claude-sonnet-5-5}
+          reasoning=${REVIEW_REASONING:-medium} ;;
+  gemini) model=${REVIEW_MODEL:-unrecorded}
+          reasoning=${REVIEW_REASONING:-unrecorded} ;;
+  *)      model=${REVIEW_MODEL:-gpt-6.1-sol}
+          reasoning=${REVIEW_REASONING:-medium} ;;
 esac
-reasoning=${REVIEW_REASONING:-medium}
 tools="Bash Read Grep Glob WebFetch"
 [ "$role" = fixer ] && tools="$tools Edit Write"
 started=$(date -u +%FT%TZ)
@@ -25,7 +28,11 @@ case $agent in
           codex exec -C "$workdir" -s workspace-write -m "$model" -c "model_reasoning_effort=\"$reasoning\"" \
             -o "$out" - < "$prompt" > "$out.log" 2>&1 ;;
   gemini) version=$(gemini --version 2>/dev/null | head -1)
-          (cd "$workdir" && gemini --approval-mode yolo -p "Follow the instructions given on stdin." < "$prompt") > "$out" ;;
+          if [ -n "${REVIEW_MODEL:-}" ]; then
+            (cd "$workdir" && gemini --approval-mode yolo -m "$model" -p "Follow the instructions given on stdin." < "$prompt") > "$out"
+          else
+            (cd "$workdir" && gemini --approval-mode yolo -p "Follow the instructions given on stdin." < "$prompt") > "$out"
+          fi ;;
   human)
     if [ ! -s "$out" ]; then
       echo "$role: read $prompt, work in $workdir, write your answer to $out, then re-run."

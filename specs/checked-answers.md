@@ -37,8 +37,12 @@ evidence supports, and every added step has a judged run showing what it buys.
 ## The pipeline today
 
 Stage sets and profiles live in the Hub's `server/levels.yaml`; the engine runs the stages in
-order. A stage is a step; a role is the model that takes it. The checked profile
-(`single-12b-checked`, the product default):
+order. A stage is a step; a role is the model that takes it. Since 28 October 2026
+([D4 record](reviews/2026-10-28-confidence-labels-run-d4.md)), the product default is
+`single-12b-bare` (the deterministic checks only: `context -> answer -> gate -> resolve_refs ->
+indepth -> indepth_gate`, two writer calls and no model reviewer or grounder). The ten-stage
+checked comparison profile (`single-12b-checked`, the earlier default retained as a comparison
+arm):
 
 | Stage | What it does | Model call |
 | --- | --- | --- |
@@ -134,9 +138,10 @@ dated review under `reviews/` for a run.
   harness PRs with their profile-loading tests.
 - [ ] A5 Runs. After A1 and A2 are deployed. Run A, 33 GB resident: bundled, Hub answer-only,
   baseline, folded, noground, `single-12b-xcheck`. Run B, 28 GB resident: `single-31b-xcheck`
-  with the baseline repeated as the in-run control. Judged blind per scenario by gpt-6-astra
-  high, three passes, plus one Claude Opus 5.5 high pass on run A ([judging.md](judging.md)
-  C2 to C5). Evidence: a dated review with, per arm, the judged scores and harm, the latency,
+  with the baseline repeated as the in-run control. Judged blind per scenario by one
+  `gpt-6-astra` high pass and one `claude-opus-5-5` high pass per round (updated 28 October in
+  [judging.md](judging.md); run A's initial three-pass `gpt-6-astra` plan is recorded in the
+  [28 October A2/C review](reviews/2026-10-28-confidence-labels-runs-a2-c.md)). Evidence: a dated review with, per arm, the judged scores and harm, the latency,
   the reviewer's flags against the judges' accuracy (flag precision and missed errors), the
   grounder's verdicts against the judges' citation groundedness, and what `off` loses.
 - [ ] A6 Labels. Owned by [confidence-labels.md](confidence-labels.md) since 27 October: a
@@ -144,31 +149,33 @@ dated review under `reviews/` for a run.
   that spec's LG1, labels are three-way per claim, and the clinician view shows findings
   (L9). This box is ticked when L9 is. Run B runs on the Hub that carries that spec's cheap
   label changes (L2 to L5), with the default repeated as its control.
-- [ ] A7 Default. The product default profile is the arm A5 supports; `single-12b-checked`
+- [x] A7 Default. The product default profile is the arm A5 supports; `single-12b-checked`
   stays only if nothing beats it. Evidence: the Hub PR moving `default: true` and the record
-  it cites.
+  it cites. Owner, 28 October: `single-12b-bare`, from the
+  [D4 record](reviews/2026-10-28-confidence-labels-run-d4.md); the move is on Hub PR #50.
 - [ ] A8 Team profiles. Revisited when a task set exists that a single writer cannot serve;
   the entry criterion is written here before any team run. No action now.
 
 ## Run plan
 
-| Arm | Profile | Writer (answer, In-Depth) | Reviewer, grounder | Resident |
+The seven-arm matrix of run A was narrowed by runs A2 to D4 (see
+[confidence-labels.md](confidence-labels.md#pruning-28-october-2026-from-runs-a2-and-c-and-the-ensemble-research)):
+same-model review, the folded and noground variants, DRY on, the 12B cross-check and the
+agreement arm are retired. The arms now:
+
+| Arm | Profile | Writer (answer, In-Depth) | Checks | Resident |
 | --- | --- | --- | --- | --- |
 | bundled | ChartSearchAI built-in | Gemma 4 12B | module's own checks | 13 GB |
-| answer-only | `single-12b-answer` | Gemma 4 12B | none (grounder only) | 13 GB |
-| baseline | `single-12b-checked` | Gemma 4 12B | Gemma 4 12B | 13 GB |
-| folded | `single-12b-checked-folded` | Gemma 4 12B | Gemma 4 12B, grounding in the review | 13 GB |
-| noground | `single-12b-checked-noground` | Gemma 4 12B | Gemma 4 12B, no grounding | 13 GB |
-| arm 3 | `single-12b-xcheck` | Gemma 4 12B | Qwen3.6-35B-A3B | 33 GB |
-| arm 4 | `single-31b-xcheck` | Gemma 4 31B | Qwen3.5-9B | 28 GB |
+| answer-only | `single-12b-answer` | Gemma 4 12B | deterministic, 12B citation check | 13 GB |
+| bare | `single-12b-bare` | Gemma 4 12B | deterministic only | 13 GB |
+| verify | `single-12b-verify` | Gemma 4 12B | deterministic, Qwen3.5-9B verification questions, 12B citation fallback | 23 GB |
+| run B | `single-31b-xcheck` | Gemma 4 31B | deterministic, Qwen3.5-9B review and citations | 28 GB |
 
-Run A holds the first six (about 3.5 hours at 55 s per checked turn, 35 turns per arm); run B
-holds arm 4 and the baseline. The two runs are compared like for like through the judge cards.
-Arm 3 against the first three isolates what self-review and then cross-family review add to
-the same draft; arm 4 against arm 3 asks whether a bigger pair does better; folded and noground
-against the baseline price the grounder.
+Run B holds the 31B arm with bare and verify repeated as its in-run controls.
 
 ## Order of work
 
-A1, then A2 (separate Hub PRs, each rebuilt and pinned with `make chartsearch-smoke`), A3 and
-A4 together, A5, then A6 and A7 from its evidence.
+A1 to A4 built and run A judged (27 October); runs A2, C, D3 and D4 judged (28 October, records
+under `reviews/`). Next: A7 from the [D4 record](reviews/2026-10-28-confidence-labels-run-d4.md)'s
+proposal (bare as the default), run B, A6 once confidence-labels L9 lands, then the Hub stack
+merged and the gitlink moved to fork `main`.

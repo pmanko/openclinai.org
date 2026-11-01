@@ -292,14 +292,27 @@ def test_record_deployed_copies_each_module_build_record(tmp_path):
     assert _calls(log) == []
 
 
-def test_record_deployed_without_a_build_record_fails_and_writes_nothing(tmp_path):
+@pytest.mark.parametrize("second_content", [None, "{not-json", '{"source_commit": ""}'])
+def test_record_deployed_without_a_build_record_fails_and_writes_nothing(tmp_path, second_content):
+    state = tmp_path / "state"
+    builds = state / "module-provenance"
+    builds.mkdir(parents=True)
+    for module, commit in (("chartsearchai", "1" * 40), ("querystore", "2" * 40)):
+        (state / f"deployed-{module}-omod.json").write_text(
+            json.dumps({"source_commit": commit}), encoding="utf-8")
+    (builds / "chartsearchai-1.0.0-SNAPSHOT.omod.provenance.json").write_text(
+        json.dumps({"source_commit": "c" * 40}), encoding="utf-8")
+    if second_content is not None:
+        (builds / "querystore-1.0.0-SNAPSHOT.omod.provenance.json").write_text(
+            second_content, encoding="utf-8")
     log = tmp_path / "calls.log"
 
     result = _run_tool(tmp_path, _stub_bin(tmp_path, log, None), "record-deployed")
 
     assert result.returncode == 1
     assert "build the modules first" in result.stderr
-    assert not list((tmp_path / "state").glob("deployed-*")) if (tmp_path / "state").exists() else True
+    for module, commit in (("chartsearchai", "1" * 40), ("querystore", "2" * 40)):
+        assert json.loads((state / f"deployed-{module}-omod.json").read_text()) == {"source_commit": commit}
 
 
 @pytest.mark.parametrize("image, pulled", [
