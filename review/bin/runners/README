@@ -1,3 +1,6 @@
 runner.sh <project-dir> <log-file> <test-id>...
 Runs the named tests. Prints "RAN <n>" and one "FAILED <test: message>" per failure.
-Exit 0 all passed, 1 a test failed, 2 the build failed, 3 no named test ran.
+Each executed assertion also emits EXECUTED followed by a JSON pair of source and
+full test identity. Skipped cases do not emit this record. Vitest emits FAILED_ID
+metadata to bind failures to file and name selectors.
+Exit 0 all passed, 1 a test failed, 2 execution or evidence failed, 3 no test ran.

@@ -1,15 +1,38 @@
 #!/usr/bin/env bash
 # Test ids: Class or Class#method. REVIEW_MAVEN_ARGS defaults to offline (-o).
+set -u
 dir=$1 log=$2; shift 2
 tests=$(IFS=,; echo "$*")
+python3 - "$dir" <<'PY' || { echo "RAN 0"; exit 2; }
+import sys
+from pathlib import Path
+root = Path(sys.argv[1]).resolve()
+for report in root.glob('**/target/surefire-reports/TEST-*.xml'):
+    if report.resolve().is_relative_to(root): report.unlink()
+PY
 (cd "$dir" && mvn ${REVIEW_MAVEN_ARGS--o} -B test -Dtest="$tests" \
   -Dsurefire.failIfNoSpecifiedTests=false -DfailIfNoTests=false) > "$log" 2>&1
 rc=$?
-ran=$(grep -E '^\[(INFO|WARNING|ERROR)\] Tests run: [0-9]+, Failures: [0-9]+, Errors: [0-9]+, Skipped: [0-9]+$' "$log" \
-  | awk -F'[:,]' '{n += $2 - $8} END {print n + 0}')
-echo "RAN $ran"
-fails='^\[ERROR\]   [A-Z][A-Za-z0-9_$]*\.[A-Za-z0-9_$]+'
-grep -E "$fails" "$log" | sed 's/^\[ERROR\]   /FAILED /' | head -20
-if [ $rc -eq 0 ]; then [ "$ran" -gt 0 ] && exit 0 || exit 3; fi
-grep -qE "$fails" "$log" && exit 1
-exit 2
+python3 - "$dir" "$rc" <<'PY'
+import json, sys
+from pathlib import Path
+import xml.etree.ElementTree as ET
+ran = failed = errors = 0
+try:
+    for report in Path(sys.argv[1]).glob('**/target/surefire-reports/TEST-*.xml'):
+        for case in ET.parse(report).getroot().iter('testcase'):
+            if case.find('skipped') is not None: continue
+            if case.find('error') is not None:
+                errors += 1; continue
+            ran += 1
+            print('EXECUTED ' + json.dumps([case.get('classname', ''), case.get('classname', '') + '#' + case.get('name', '')]))
+            failure = case.find('failure')
+            if failure is not None:
+                failed += 1
+                print('FAILED ' + case.get('classname', '') + '#' + case.get('name', '') + ': ' + failure.get('message', '').split('\n')[0])
+except (OSError, ET.ParseError):
+    errors += 1
+print('RAN ' + str(ran))
+rc = int(sys.argv[2])
+sys.exit(2 if errors or rc not in (0, 1) else 3 if not ran and rc == 0 else 2 if not ran else 1 if failed and rc else 0 if not failed and rc == 0 else 2)
+PY

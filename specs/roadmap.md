@@ -16,7 +16,7 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 | Local HIV research environment | [local-hiv-environment.md](local-hiv-environment.md) | Setup and reset restore the published default baseline in about 5 minutes; Ross's fresh install passed; account context reaches the model; the 18 October module heads need a rebuilt baseline | New default baseline for the 18 October heads; Docker-only prerequisites |
 | Provider parity and local inference efficiency | [provider-parity.md](provider-parity.md) | Hub reads its context once per answer: checked answers take 16–56 s here when the router reuses the chart's temporal facts, 83–204 s when it does not, against 7–51 s built-in | Cross-question reuse; OpenRouter comparison; Ross re-measures |
 | OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | Three gh-stack stacks on the OpenMRS repositories since 21 October, one PR per layer targeting the layer below; the frontend stack (#72–#76) merged 27 October; QueryStore #94–#98 and backend #617–#623 are restacked with the maintainer's rounds 10 and 11 answered ([record](reviews/2026-10-26-upstream-sync.md)) | The maintainer's merge order for QueryStore and the backend; the ESM fork main and umbrella pin moved to the merged upstream |
-| Review process and gates | [review-process.md](review-process.md) | Designed 20 October from the maintainer's documented method ([record](reviews/2026-10-20-maintainer-review-process.md)); nothing built | Owner marks up the design; then hooks and probes, applied to the open round |
+| Review process and gates | [review-process.md](review-process.md) | Hooks, probes and source review implemented; evidence safeguards and Hub/harness support under verification | Review own-repository PRs in stack order; validate evidence and cross-component behavior |
 | Judging | [judging.md](judging.md) | C1 to C5 built on harness #200 and umbrella #28 (judge cards, repeated passes, a judge panel, blinded per-scenario sessions, per-pass drill-down) and used for every run since A2; one gpt-6-astra pass and one Opus pass per round (owner, 28 October); PRs open | Merge harness #200 to #202 and umbrella #28, then tick C1 to C5 |
 | Checked answers | [checked-answers.md](checked-answers.md) | A1 to A4 and A7 (`single-12b-bare` default, owner 28 October) built on Hub #41 to #50; runs A, A2, C, D3 and D4 judged; the arms narrowed to bare, verify and the built-in reference ([D4 record](reviews/2026-10-28-confidence-labels-run-d4.md)) | Run B with the 31B writer, then merge the Hub stack |
 | Confidence labels | [confidence-labels.md](confidence-labels.md) | Findings-not-grades labels built behind the profiles (Hub stack #41 to #50, ESM `findings-view`); five judged runs (A2, C, D3, D4) scored against the judge ([A2 and C](reviews/2026-10-28-confidence-labels-runs-a2-c.md), [D3](reviews/2026-10-28-confidence-labels-run-d3.md), [D4](reviews/2026-10-28-confidence-labels-run-d4.md)): LG1 and the `single-12b-bare` default decided by the owner (28 October), verification review hidden below LG1, entailment scorer closed and removed (L6), calibrated score has no 0.8 band | L9 frontend findings view, run B, and deterministic answer rules |
@@ -32,8 +32,8 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 
 ## Current priorities
 
-1. [Review process and gates](review-process.md): the owner marks up the
-   design; hooks and probes first, applied to the 20 October round.
+1. [Review process and gates](review-process.md): harden evidence handling, support Hub and harness, and review the open fork PRs
+   in dependency order.
 2. [OpenMRS contribution delivery](openmrs-contribution.md): the
    [target path](openmrs-contribution.md#target-path): the fresh-reviewer
    findings in their owning layers, the local boot check of the stack tops, then
