@@ -681,67 +681,257 @@
       margin: 0;
     }
 
-    /* PHASE 3: Unified Task Dropdown + Question Composer + Prominent Live Generation Stage */
+    /* PHASE 3: Card-Based Mega-Dropdown for Clinical Tasks + Separate Custom Prompt Composer + Live Stage */
     .phase3-single-stage {
       max-width: 1180px;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 1.25rem;
+      gap: 1.35rem;
     }
 
     .composer-card {
       background: var(--surface);
       border: 1.5px solid var(--border-strong);
       border-radius: var(--radius);
-      padding: 1.25rem 1.5rem;
+      padding: 1.35rem 1.6rem;
       box-shadow: var(--shadow);
       display: flex;
       flex-direction: column;
-      gap: 0.9rem;
+      gap: 1.1rem;
     }
-    .composer-top-row {
+
+    .composer-mode-block {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      padding: 0.95rem 1.1rem;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      background: var(--surface-subtle);
+      transition: all 0.15s ease;
+    }
+    .composer-mode-block.active-mode {
+      border-color: var(--primary-border);
+      background: #f8fbff;
+      box-shadow: 0 1px 6px rgba(29, 78, 216, 0.05);
+    }
+    .composer-mode-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .composer-mode-title {
+      font-size: 0.84rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+    .composer-mode-block.active-mode .composer-mode-title {
+      color: var(--primary);
+    }
+    .mode-active-pill {
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 0.16rem 0.58rem;
+      border-radius: 999px;
+      background: var(--surface-alt);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .composer-mode-block.active-mode .mode-active-pill {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    /* Full-Width Card-Based Mega-Dropdown Trigger & Tile Grid */
+    .mega-dropdown-wrap {
+      position: relative;
+      width: 100%;
+    }
+    .mega-trigger-btn {
+      width: 100%;
+      text-align: left;
+      background: var(--surface);
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 1.1rem;
+      cursor: pointer;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
       gap: 0.85rem;
+      transition: all 0.14s ease;
     }
-    .task-picker-group {
+    .composer-mode-block.active-mode .mega-trigger-btn {
+      border-color: var(--primary);
+      box-shadow: 0 2px 8px rgba(29, 78, 216, 0.08);
+    }
+    .mega-trigger-btn:hover {
+      border-color: var(--primary);
+      background: #ffffff;
+    }
+    .mega-trigger-main {
       display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.65rem;
-      flex: 1 1 320px;
+      align-items: flex-start;
+      gap: 0.75rem;
       min-width: 0;
-      max-width: 100%;
+      flex: 1 1 280px;
     }
-    .task-picker-label {
-      font-size: 0.86rem;
+    .mega-trigger-icon {
+      font-size: 1.45rem;
+      line-height: 1.1;
+      flex-shrink: 0;
+      margin-top: 0.05rem;
+    }
+    .mega-trigger-text {
+      min-width: 0;
+      flex: 1;
+    }
+    .mega-trigger-title {
+      font-size: 1.04rem;
       font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .mega-trigger-desc {
+      font-size: 0.88rem;
       color: var(--text-secondary);
+      margin-top: 0.2rem;
+      line-height: 1.42;
+    }
+    .mega-trigger-right {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+    .mega-chevron-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-light);
+      border: 1px solid var(--primary-border);
+      padding: 0.32rem 0.7rem;
+      border-radius: 8px;
       white-space: nowrap;
     }
-    .task-select {
-      flex: 1 1 240px;
-      width: 100%;
-      max-width: 100%;
-      min-width: 0;
-      padding: 0.62rem 0.95rem;
-      font-size: 0.96rem;
-      font-weight: 700;
-      color: var(--text);
-      background: var(--primary-light);
-      border: 1.5px solid var(--primary-border);
-      border-radius: var(--radius-sm);
-      text-overflow: ellipsis;
-      cursor: pointer;
+
+    .mega-menu-panel {
+      display: none;
+      margin-top: 0.65rem;
+      background: var(--surface);
+      border: 1.5px solid var(--primary);
+      border-radius: var(--radius);
+      padding: 1.15rem 1.25rem;
+      box-shadow: var(--shadow-lg);
     }
-    .task-select:focus {
-      outline: 2px solid var(--primary);
-      outline-offset: 1px;
+    .mega-menu-panel.open {
+      display: block;
+    }
+    .mega-group-heading {
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin: 0 0 0.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .mega-group-heading + .mega-tiles-grid {
+      margin-bottom: 1.1rem;
+    }
+    .mega-tiles-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+    @media (max-width: 980px) {
+      .mega-tiles-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .mega-tiles-grid { grid-template-columns: 1fr; }
+    }
+    .mega-task-tile {
+      text-align: left;
+      background: var(--surface-subtle);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 0.55rem;
+      transition: all 0.14s ease;
+    }
+    .mega-task-tile:hover {
+      border-color: var(--primary-border);
+      background: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+    .mega-task-tile.active {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      box-shadow: 0 0 0 1px var(--primary);
+    }
+    .mega-tile-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .mega-tile-title {
+      font-size: 0.93rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.32;
+    }
+    .mega-tile-desc {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.42;
+    }
+    .mega-tile-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.4rem;
+      margin-top: 0.15rem;
+    }
+
+    .composer-or-divider {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      color: var(--text-muted);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin: -0.25rem 0;
+    }
+    .composer-or-divider::before,
+    .composer-or-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
     }
 
     .composer-input-row {
@@ -758,10 +948,10 @@
       border-radius: var(--radius-sm);
       font-size: 0.98rem;
       color: var(--text);
-      background: var(--surface-subtle);
+      background: var(--surface);
     }
     .qa-input:focus {
-      background: var(--surface);
+      background: #ffffff;
       border-color: var(--primary);
       outline: none;
       box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
@@ -773,8 +963,8 @@
       align-items: center;
     }
     .qa-chip {
-      background: var(--surface-alt);
-      border: 1px solid var(--border);
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
       color: var(--text-secondary);
       border-radius: 999px;
       padding: 0.3rem 0.8rem;
@@ -783,10 +973,26 @@
       cursor: pointer;
       text-align: left;
     }
-    .qa-chip:hover {
+    .qa-chip:hover,
+    .qa-chip.active {
       background: var(--primary-light);
       color: var(--primary);
-      border-color: var(--primary-border);
+      border-color: var(--primary);
+      font-weight: 600;
+    }
+
+    .composer-submit-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding-top: 0.25rem;
+    }
+    .composer-submit-hint {
+      font-size: 0.86rem;
+      color: var(--text-secondary);
+      font-weight: 500;
     }
 
     .skill-badge {
@@ -797,11 +1003,12 @@
       border-radius: 999px;
       white-space: nowrap;
     }
-    .report-items-table .skill-badge {
+    .report-items-table .skill-badge,
+    .mega-task-tile .skill-badge {
       white-space: normal;
       border-radius: 8px;
       line-height: 1.35;
-      padding: 0.28rem 0.6rem;
+      padding: 0.26rem 0.58rem;
     }
     .skill-badge.info { background: var(--primary-light); color: var(--primary); border: 1px solid var(--primary-border); }
     .skill-badge.warn { background: var(--amber-light); color: var(--amber); border: 1px solid var(--amber-border); }
@@ -1256,34 +1463,49 @@
     </section>
 
     <!-- ===================================================================== -->
-    <!-- PHASE 3: UNIFIED TASK COMPOSER + PROMINENT LIVE GENERATION STAGE      -->
+    <!-- PHASE 3: CARD-BASED TASK MEGA-DROPDOWN + SEPARATE CUSTOM PROMPT STAGE -->
     <!-- ===================================================================== -->
     <section class="phase-panel" id="phase-panel-3" role="tabpanel" aria-labelledby="phase-tab-3">
       <div class="phase3-single-stage" id="zone-b-section">
-        <!-- Unified Task Picker + Question Composer Bar -->
-        <div class="composer-card">
-          <div class="composer-top-row">
-            <div class="task-picker-group">
-              <label for="skill-task-select" class="task-picker-label">📋 Clinical Task:</label>
-              <select id="skill-task-select" class="task-select" aria-label="Choose a Clinical Skill or Task"></select>
+        <!-- Top Card: Prompt & Task Selection (Clinical Task Mega-Dropdown vs. Custom Prompt + Single Generate Live Button) -->
+        <form id="qa-form" class="composer-card">
+          <!-- Mode 1: Full-Width Card-Based Clinical Task Mega-Dropdown -->
+          <div class="composer-mode-block active-mode" id="mode-block-task">
+            <div class="composer-mode-header">
+              <span class="composer-mode-title">📋 1. Pick a Clinical Task</span>
+              <span class="mode-active-pill" id="mode-pill-task">Active Selection</span>
             </div>
-            <div class="seg-group" id="audience-view-group" aria-label="Audience Mode">
-              <button type="button" class="seg-btn active" data-audience="patient">👤 Patient View</button>
-              <button type="button" class="seg-btn" data-audience="clinician">🩺 Clinician View</button>
+            <div class="mega-dropdown-wrap" id="task-mega-dropdown">
+              <button type="button" class="mega-trigger-btn" id="task-mega-trigger" aria-expanded="false" aria-controls="task-mega-panel">
+                <div class="mega-trigger-main" id="task-mega-trigger-main"></div>
+                <div class="mega-trigger-right" id="task-mega-trigger-right"></div>
+              </button>
+              <div class="mega-menu-panel" id="task-mega-panel" role="region" aria-label="Clinical Task Tiles"></div>
             </div>
           </div>
 
-          <div class="composer-input-row">
-            <form id="qa-form" style="display: flex; flex-wrap: wrap; flex: 1; gap: 0.65rem; min-width: 0;">
-              <input type="text" id="qa-question-input" class="qa-input" placeholder="Select a clinical task above or ask any question about this patient's condensed chart..." aria-label="Ask a question about this chart" />
-              <button type="submit" id="qa-submit-btn" class="btn btn-primary">⚡ Generate Live</button>
-            </form>
+          <div class="composer-or-divider" aria-hidden="true">OR</div>
+
+          <!-- Mode 2: Separate Custom / Suggested Prompt Section -->
+          <div class="composer-mode-block" id="mode-block-custom">
+            <div class="composer-mode-header">
+              <label for="qa-question-input" class="composer-mode-title" style="cursor: pointer;">💬 2. Write or Pick a Custom Prompt</label>
+              <span class="mode-active-pill" id="mode-pill-custom">Custom Prompt</span>
+            </div>
+            <div class="composer-input-row">
+              <input type="text" id="qa-question-input" class="qa-input" placeholder="Write your own question about this chart (e.g., medication interactions, lab trends, unrecorded tests)..." aria-label="Write a custom question about this chart" />
+            </div>
+            <div class="qa-sample-chips" id="qa-sample-chips"></div>
           </div>
 
-          <div class="qa-sample-chips" id="qa-sample-chips"></div>
-        </div>
+          <!-- Single Unified Action Bar -->
+          <div class="composer-submit-row">
+            <div class="composer-submit-hint" id="composer-active-hint">Ready to generate live clinical synthesis.</div>
+            <button type="submit" id="qa-submit-btn" class="btn btn-primary">⚡ Generate Live</button>
+          </div>
+        </form>
 
-        <!-- Prominent Live Generation Stage -->
+        <!-- Bottom Card: Prominent Live Generation Results Stage -->
         <div class="report-card" id="active-report-card"></div>
       </div>
     </section>
@@ -1772,75 +1994,132 @@
         }
       }
 
-      /* Default natural-language prompt for each of the 9 skills (shown in the integrated question bar) */
+      /* Concise 1-line descriptions for the 9 Clinical Task tiles in the Card-Based Mega-Dropdown */
       const SKILL_PROMPTS = {
-        "skill-visit-brief": "Prepare my next doctor visit summary: synthesize my active conditions, current medications, and key questions for my clinician.",
-        "skill-hospital-stay": "Explain my recent hospital stay or major procedure in plain English and summarize what changed at discharge.",
-        "skill-med-guide": "Explain my current active medications, what each prescription treats, and which clinic ordered it.",
-        "skill-lab-trends": "Explain my lab results and biomarker trends over time, highlighting any values moving in the wrong direction.",
-        "skill-vaccine-summary": "Summarize my immunization history and preventive care status.",
-        "skill-med-conflicts": "Check my active medication list for duplicate pills (brand vs. generic), conflicting drugs, or clinical note hold mismatches.",
-        "skill-condition-conflicts": "Check my problem list for outdated or conflicting diagnosis stages across clinics.",
-        "skill-chart-hygiene": "Audit my FHIR chart for duplicate panels, repeated Base64 notes, and non-clinical artifacts.",
-        "skill-privacy-preview": "Preview any sensitive social history or behavioral health records before external sharing."
+        "skill-visit-brief": "Synthesize active conditions, current medications, and key questions for your next clinician visit.",
+        "skill-hospital-stay": "Explain recent hospital stays or major procedures in plain English and summarize discharge changes.",
+        "skill-med-guide": "Explain each active medication on your chart, what it treats, and which clinic prescribed it.",
+        "skill-lab-trends": "Track lab results and biomarker trends over time, highlighting values moving out of range.",
+        "skill-vaccine-summary": "Summarize documented immunizations and preventive care status against adult/pediatric schedules.",
+        "skill-med-conflicts": "Audit active prescriptions for brand-vs-generic duplicates, drug conflicts, or clinical note hold mismatches.",
+        "skill-condition-conflicts": "Check the problem list for conflicting or outdated diagnosis stages across different clinics.",
+        "skill-chart-hygiene": "Inspect the FHIR bundle for duplicate lab panels, repeated Base64 notes, and non-clinical artifacts.",
+        "skill-privacy-preview": "Preview sensitive social history or behavioral health records before external sharing."
       };
 
-      /* PHASE 3: Render Unified Task Dropdown + Question Composer & Prominent Live Generation Stage */
+      /* PHASE 3: Render Card-Based Clinical Task Mega-Dropdown + Separate Custom Prompt Composer & Live Stage */
       function renderSkillsAndQa() {
         const p = currentPatient();
         if (!p) return;
         const skills = p.skills || [];
         const everydaySkills = skills.filter(function (s) { return s.group === "everyday_task"; });
         const checkSkills = skills.filter(function (s) { return s.group === "health_check"; });
+        const activeSkill = skills.find(function (s) { return s.id === state.activeSkillId; }) || skills[0];
+        const isCustomMode = !!state.customQuestionResult;
 
-        const taskSelect = document.getElementById("skill-task-select");
-        if (taskSelect) {
-          const customLabel = state.customQuestionResult
-            ? "💬 Custom Question: " + (state.customQuestionResult.question.length > 58 ? state.customQuestionResult.question.slice(0, 58) + "..." : state.customQuestionResult.question)
-            : "💬 Custom Free-Text Question (Type below or pick a quick chip)";
-          taskSelect.innerHTML =
-            '<optgroup label="Everyday Patient Tasks (5)">' +
-              everydaySkills.map(function (s) {
-                const sel = !state.customQuestionResult && state.activeSkillId === s.id ? " selected" : "";
-                return '<option value="' + esc(s.id) + '"' + sel + '>' + esc(s.icon + " " + s.title + " (" + s.status_badge + ")") + '</option>';
-              }).join("") +
-            '</optgroup>' +
-            '<optgroup label="Chart Health &amp; Safety Checks (4)">' +
-              checkSkills.map(function (s) {
-                const sel = !state.customQuestionResult && state.activeSkillId === s.id ? " selected" : "";
-                return '<option value="' + esc(s.id) + '"' + sel + '>' + esc(s.icon + " " + s.title + " (" + s.status_badge + ")") + '</option>';
-              }).join("") +
-            '</optgroup>' +
-            '<optgroup label="Free-Text Chart Q&amp;A">' +
-              '<option value="__custom__"' + (state.customQuestionResult ? " selected" : "") + '>' + esc(customLabel) + '</option>' +
-            '</optgroup>';
+        const blockTask = document.getElementById("mode-block-task");
+        const blockCustom = document.getElementById("mode-block-custom");
+        const pillTask = document.getElementById("mode-pill-task");
+        const pillCustom = document.getElementById("mode-pill-custom");
+        if (blockTask && blockCustom) {
+          blockTask.classList.toggle("active-mode", !isCustomMode);
+          blockCustom.classList.toggle("active-mode", isCustomMode);
+        }
+        if (pillTask) {
+          pillTask.textContent = !isCustomMode ? "Active Selection" : "Click to Switch to Task";
+        }
+        if (pillCustom) {
+          pillCustom.textContent = isCustomMode ? "Active Selection" : "Write or Pick Prompt";
+        }
 
-          taskSelect.onchange = function () {
-            const val = taskSelect.value;
-            if (val === "__custom__") {
+        const triggerBtn = document.getElementById("task-mega-trigger");
+        const triggerMain = document.getElementById("task-mega-trigger-main");
+        const triggerRight = document.getElementById("task-mega-trigger-right");
+        const megaPanel = document.getElementById("task-mega-panel");
+
+        if (triggerMain && activeSkill) {
+          const desc = SKILL_PROMPTS[activeSkill.id] || activeSkill.subtitle || "";
+          triggerMain.innerHTML =
+            '<span class="mega-trigger-icon">' + esc(activeSkill.icon) + '</span>' +
+            '<div class="mega-trigger-text">' +
+              '<div class="mega-trigger-title">' + esc(activeSkill.title) + '</div>' +
+              '<div class="mega-trigger-desc">' + esc(desc) + '</div>' +
+            '</div>';
+        }
+        if (triggerRight && activeSkill) {
+          const openLabel = state.megaMenuOpen ? "Close Task Grid ▴" : "Browse All 9 Tasks ▾";
+          triggerRight.innerHTML =
+            '<span class="skill-badge ' + esc(activeSkill.badge_tone || "info") + '">' + esc(activeSkill.status_badge) + '</span>' +
+            '<span class="mega-chevron-pill">' + openLabel + '</span>';
+        }
+        if (triggerBtn) {
+          triggerBtn.setAttribute("aria-expanded", state.megaMenuOpen ? "true" : "false");
+        }
+
+        function renderTileHtml(s) {
+          const isSel = !isCustomMode && s.id === state.activeSkillId;
+          const desc = SKILL_PROMPTS[s.id] || s.subtitle || "";
+          return (
+            '<button type="button" class="mega-task-tile' + (isSel ? ' active' : '') + '" data-skill-id="' + esc(s.id) + '">' +
+              '<div>' +
+                '<div class="mega-tile-top">' +
+                  '<span class="mega-tile-title">' + esc(s.icon) + ' ' + esc(s.title) + '</span>' +
+                  (isSel ? '<span style="color: var(--primary); font-weight: 800; font-size: 0.85rem;">✓ Active</span>' : '') +
+                '</div>' +
+                '<div class="mega-tile-desc" style="margin-top: 0.35rem;">' + esc(desc) + '</div>' +
+              '</div>' +
+              '<div class="mega-tile-footer">' +
+                '<span class="skill-badge ' + esc(s.badge_tone || "info") + '">' + esc(s.status_badge) + '</span>' +
+              '</div>' +
+            '</button>'
+          );
+        }
+
+        if (megaPanel) {
+          megaPanel.classList.toggle("open", !!state.megaMenuOpen);
+          megaPanel.innerHTML =
+            '<div class="mega-group-heading">' +
+              '<span>Everyday Patient Tasks (5)</span>' +
+              '<span>Click any card to run task</span>' +
+            '</div>' +
+            '<div class="mega-tiles-grid">' +
+              everydaySkills.map(renderTileHtml).join("") +
+            '</div>' +
+            '<div class="mega-group-heading">' +
+              '<span>Chart Health &amp; Safety Checks (4)</span>' +
+              '<span>4-Layer Clinical KB + Live LLM Synthesis</span>' +
+            '</div>' +
+            '<div class="mega-tiles-grid">' +
+              checkSkills.map(renderTileHtml).join("") +
+            '</div>';
+
+          megaPanel.querySelectorAll(".mega-task-tile").forEach(function (tile) {
+            tile.addEventListener("click", function () {
+              const sid = tile.getAttribute("data-skill-id");
+              state.activeSkillId = sid;
+              state.customQuestionResult = null;
+              state.megaMenuOpen = false;
               const qIn = document.getElementById("qa-question-input");
               if (qIn) {
                 qIn.value = "";
-                qIn.focus();
               }
-              return;
-            }
-            state.activeSkillId = val;
-            state.customQuestionResult = null;
-            const qIn = document.getElementById("qa-question-input");
-            if (qIn) {
-              qIn.value = SKILL_PROMPTS[val] || "";
-            }
-            renderSkillsAndQa();
-          };
+              renderSkillsAndQa();
+            });
+          });
         }
 
+        /* Keep custom prompt input strictly for custom/suggested questions — never copy task text into it */
         const qInputEl = document.getElementById("qa-question-input");
         if (qInputEl) {
-          if (state.customQuestionResult) {
-            qInputEl.value = state.customQuestionResult.question || "";
-          } else {
-            qInputEl.value = SKILL_PROMPTS[state.activeSkillId] || "";
+          qInputEl.value = isCustomMode ? (state.customQuestionResult.question || "") : "";
+        }
+
+        const hintEl = document.getElementById("composer-active-hint");
+        if (hintEl) {
+          if (isCustomMode) {
+            hintEl.innerHTML = 'Active Mode: <strong>💬 Custom Prompt</strong> — click <strong>⚡ Generate Live</strong> to run or re-run your custom question.';
+          } else if (activeSkill) {
+            hintEl.innerHTML = 'Active Mode: <strong>' + esc(activeSkill.icon + ' ' + activeSkill.title) + '</strong> — click <strong>⚡ Generate Live</strong> to refresh or enter a custom question above.';
           }
         }
 
@@ -1855,10 +2134,11 @@
             : shortSamples;
 
           chipsContainer.innerHTML =
-            '<span style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">Quick-test questions:</span>' +
+            '<span style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">Suggested prompts:</span>' +
             displaySamples.map(function (qa) {
               const origIdx = qaSamples.indexOf(qa);
-              return '<button type="button" class="qa-chip" data-qa-idx="' + origIdx + '">' + esc(qa.question) + '</button>';
+              const isChipActive = isCustomMode && state.customQuestionResult && state.customQuestionResult.question === qa.question;
+              return '<button type="button" class="qa-chip' + (isChipActive ? ' active' : '') + '" data-qa-idx="' + origIdx + '">' + esc(qa.question) + '</button>';
             }).join("");
 
           chipsContainer.querySelectorAll(".qa-chip").forEach(function (chip) {
@@ -1866,6 +2146,7 @@
               const idx = parseInt(chip.getAttribute("data-qa-idx"), 10);
               const chosenQa = qaSamples[idx];
               if (chosenQa) {
+                state.megaMenuOpen = false;
                 document.getElementById("qa-question-input").value = chosenQa.question;
                 state.customQuestionResult = Object.assign({}, chosenQa, { forceLiveLlm: true });
                 renderSkillsAndQa();
@@ -2043,9 +2324,9 @@
               .filter(function (ln) { return ln.length > 3; })
           : [];
         const hasNumericCite = /\[\d+(?:\s*,\s*\d+)*\]/.test(summaryPart);
-        const isAbstained = /^ABSTAIN\s*:/i.test(summaryPart) ||
+        const isAbstained = /(?:^|\n)\s*(?:[-*•]\s*)?ABSTAIN\s*:/i.test(summaryPart) ||
           (!hasNumericCite && /\b(?:no (?:documented )?record|not recorded in (?:the |your )?chart|must abstain|abstain from)\b/i.test(summaryPart));
-        summaryPart = summaryPart.replace(/^ABSTAIN\s*:\s*/i, "");
+        summaryPart = summaryPart.replace(/(^|\n)\s*([-*•]\s*)?ABSTAIN\s*:\s*/gi, "$1$2");
         return {
           summary: summaryPart,
           questions: questionsList,
@@ -2237,7 +2518,6 @@
               '<h3 class="report-card-title">💬 Q: ' + esc(qa.question) + '</h3>' +
               '<div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">' +
                 '<span class="llm-live-pill ' + (cached ? "done" : (state.llmConnected ? "streaming" : "offline")) + '" id="live-llm-telemetry-pill">' + initialPillHtml + '</span>' +
-                '<button type="button" class="btn btn-sm" id="rerun-live-llm-btn" title="Regenerate live response with ' + esc(state.llmModel) + '">↻ Regenerate Live</button>' +
                 '<span class="skill-badge ' + ((cached ? cached.abstained : qa.abstained) ? "warn" : "info") + '" id="live-llm-status-badge">' +
                   esc((cached ? cached.abstained : qa.abstained) ? "Safety Abstention (Unrecorded Fact)" : "Grounded in Condensed Chart") +
                 '</span>' +
@@ -2257,23 +2537,17 @@
               '</ul>' +
             '</div>' +
             '<div id="live-llm-citations-wrapper">' + renderCitationsBar(initialCites) + '</div>' +
-            (state.audience === "clinician" && qa.clinician_technical_note
-              ? '<div class="clinician-tech-box"><strong>Clinician Technical Provenance:</strong> ' + esc(qa.clinician_technical_note) + '</div>'
-              : '') +
             '<details class="evidence-details-drawer">' +
               '<summary><span>🔍 Inspect Condensed Prompt Context Sent to LLM</span><span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">' + esc(promptData.leverLabel) + '</span></summary>' +
               '<div class="evidence-drawer-body">' +
+                (qa.clinician_technical_note
+                  ? '<div class="clinician-tech-box" style="margin-bottom: 0.75rem;"><strong>Clinical Provenance:</strong> ' + esc(qa.clinician_technical_note) + '</div>'
+                  : '') +
                 '<pre class="ledger-pre" style="max-height: 260px;">' + esc(promptPreviewText) + '</pre>' +
               '</div>' +
             '</details>';
 
           bindCitationClicks(container, p);
-          const rerunBtn = document.getElementById("rerun-live-llm-btn");
-          if (rerunBtn) {
-            rerunBtn.addEventListener("click", function () {
-              renderActiveReportCard(p, skills, true);
-            });
-          }
 
           if (state.llmConnected && !cached) {
             const kbAlerts = (skills || []).map(function (sk) {
@@ -2282,9 +2556,8 @@
               }).join("\n");
             }).filter(Boolean).slice(0, 4).join("\n");
 
-            const sysMsg = state.audience === "clinician"
-              ? "You are the WAHS+ Clinical Chart Assistant in Clinician View. Answer the clinical task or question concisely using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, procedure, or biomarker NOT recorded anywhere in the chart, begin your SUMMARY with 'ABSTAIN:' and state that no record exists in the chart. Format your output in two parts:\nSUMMARY:\n2-3 concise clinical bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 clinical reconciliation or follow-up items."
-              : "You are the WAHS+ Clinical Chart Assistant helping a patient understand their condensed health record. Answer the task or question in clear, empathetic plain English using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, colonoscopy, MRI, or fact NOT recorded in the chart, begin your SUMMARY with 'ABSTAIN:' and clearly explain that you checked their chart and there is no record of it, so you abstain for safety rather than guessing. Format your output in two parts:\nSUMMARY:\n2-3 clear plain-English bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 specific questions the patient can ask their doctor.";
+            const sysMsg =
+              "You are the WAHS+ Clinical Chart Assistant helping a patient and their care team understand their condensed health record. Answer the task or question in clear, empathetic plain English using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, colonoscopy, MRI, or fact NOT recorded in the chart, begin your SUMMARY with 'ABSTAIN:' and clearly explain that you checked their chart and there is no record of it, so you abstain for safety rather than guessing. Format your output in two parts:\nSUMMARY:\n2-3 clear plain-English bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 specific questions to review with the clinician.";
 
             const userMsg =
               "Patient: " + pName + " (DOB " + (p.birth_date || "unknown") + ")\n" +
@@ -2320,7 +2593,7 @@
               '<td style="color: var(--text-secondary);">' + formatRichText(r.detail) + '</td>' +
               '<td>' +
                 '<div style="font-weight: 600; font-size: 0.86rem;">' + esc(r.source_org) + '</div>' +
-                (state.audience === "clinician" && r.code
+                (r.code
                   ? '<div style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted);">' + esc(r.code) + '</div>'
                   : '') +
               '</td>' +
@@ -2351,7 +2624,6 @@
             '<h3 class="report-card-title">' + esc(skill.icon) + ' ' + esc(skill.title) + '</h3>' +
             '<div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">' +
               '<span class="llm-live-pill ' + (cached ? "done" : (state.llmConnected ? "streaming" : "offline")) + '" id="live-llm-telemetry-pill">' + initialPillHtml + '</span>' +
-              '<button type="button" class="btn btn-sm" id="rerun-live-llm-btn" title="Regenerate live skill report with ' + esc(state.llmModel) + '">↻ Regenerate Live</button>' +
               '<span class="skill-badge ' + esc(skill.badge_tone || "info") + '" id="live-llm-status-badge">' + esc(skill.status_badge) + '</span>' +
             '</div>' +
           '</div>' +
@@ -2369,12 +2641,6 @@
             '</ul>' +
           '</div>' +
           '<div id="live-llm-citations-wrapper">' + renderCitationsBar(initialCites) + '</div>' +
-          (state.audience === "clinician"
-            ? '<div class="clinician-tech-box">' +
-                '<div><strong>KB Rule Provenance:</strong> ' + esc(skill.clinician_technical_note || "Standard clinical rule") + '</div>' +
-                '<div style="margin-top: 0.35rem;"><strong>Condensation Lever Sensitivity:</strong> ' + esc(skill.lever_sensitivity_note || "") + '</div>' +
-              '</div>'
-            : '') +
           '<details class="evidence-details-drawer">' +
             '<summary>' +
               '<span>📋 Supporting 4-Layer KB Structured Findings (' + structRows.length + ' items)</span>' +
@@ -2385,6 +2651,12 @@
                 '<thead><tr><th style="width: 155px;">Status</th><th style="width: 205px;">Item</th><th>Details</th><th style="width: 160px;">Source Clinic</th></tr></thead>' +
                 '<tbody>' + rowsHtml + '</tbody>' +
               '</table>' +
+              '<div class="clinician-tech-box" style="margin-top: 0.75rem;">' +
+                '<div><strong>KB Rule Provenance:</strong> ' + esc(skill.clinician_technical_note || "Standard clinical rule") + '</div>' +
+                (skill.lever_sensitivity_note
+                  ? '<div style="margin-top: 0.35rem;"><strong>Condensation Lever Sensitivity:</strong> ' + esc(skill.lever_sensitivity_note) + '</div>'
+                  : '') +
+              '</div>' +
             '</div>' +
           '</details>' +
           '<details class="evidence-details-drawer">' +
@@ -2398,17 +2670,10 @@
           '</details>';
 
         bindCitationClicks(container, p);
-        const rerunBtn = document.getElementById("rerun-live-llm-btn");
-        if (rerunBtn) {
-          rerunBtn.addEventListener("click", function () {
-            renderActiveReportCard(p, skills, true);
-          });
-        }
 
         if (state.llmConnected && !cached) {
-          const sysMsg = state.audience === "clinician"
-            ? "You are the WAHS+ Clinical Chart Assistant in Clinician View. Answer the clinical task or question concisely using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, procedure, or biomarker NOT recorded anywhere in the chart, begin your SUMMARY with 'ABSTAIN:' and state that no record exists in the chart. Format your output in two parts:\nSUMMARY:\n2-3 concise clinical bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 clinical reconciliation or follow-up items."
-            : "You are the WAHS+ Clinical Chart Assistant helping a patient understand their condensed health record. Answer the task or question in clear, empathetic plain English using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, colonoscopy, MRI, or fact NOT recorded in the chart, begin your SUMMARY with 'ABSTAIN:' and clearly explain that you checked their chart and there is no record of it, so you abstain for safety rather than guessing. Format your output in two parts:\nSUMMARY:\n2-3 clear plain-English bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 specific questions the patient can ask their doctor.";
+          const sysMsg =
+            "You are the WAHS+ Clinical Chart Assistant helping a patient and their care team understand their condensed health record. Answer the task or question in clear, empathetic plain English using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, colonoscopy, MRI, or fact NOT recorded in the chart, begin your SUMMARY with 'ABSTAIN:' and clearly explain that you checked their chart and there is no record of it, so you abstain for safety rather than guessing. Format your output in two parts:\nSUMMARY:\n2-3 clear plain-English bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 specific questions to review with the clinician.";
 
           const userMsg =
             promptPreviewText + "\n\n" +
@@ -2634,38 +2899,66 @@
         renderSkillsAndQa();
       });
 
-      document.querySelectorAll("#audience-view-group .seg-btn").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          document.querySelectorAll("#audience-view-group .seg-btn").forEach(function (b) { b.classList.remove("active"); });
-          btn.classList.add("active");
-          state.audience = btn.getAttribute("data-audience");
-          renderSkillsAndQa();
+      /* Mega-Dropdown Trigger & Custom Prompt Mode Switching */
+      const megaTriggerEl = document.getElementById("task-mega-trigger");
+      if (megaTriggerEl) {
+        megaTriggerEl.addEventListener("click", function () {
+          state.megaMenuOpen = !state.megaMenuOpen;
+          const megaPanel = document.getElementById("task-mega-panel");
+          if (megaPanel) megaPanel.classList.toggle("open", state.megaMenuOpen);
+          megaTriggerEl.setAttribute("aria-expanded", state.megaMenuOpen ? "true" : "false");
+          const chev = megaTriggerEl.querySelector(".mega-chevron-pill");
+          if (chev) chev.textContent = state.megaMenuOpen ? "Close Task Grid ▴" : "Browse All 9 Tasks ▾";
         });
-      });
+      }
 
-      /* Free-text Question Form Submission */
+      const qaInputBox = document.getElementById("qa-question-input");
+      if (qaInputBox) {
+        qaInputBox.addEventListener("input", function () {
+          const val = (qaInputBox.value || "").trim();
+          const blockTask = document.getElementById("mode-block-task");
+          const blockCustom = document.getElementById("mode-block-custom");
+          const pillTask = document.getElementById("mode-pill-task");
+          const pillCustom = document.getElementById("mode-pill-custom");
+          if (val.length > 0) {
+            state.megaMenuOpen = false;
+            const megaPanel = document.getElementById("task-mega-panel");
+            if (megaPanel) megaPanel.classList.remove("open");
+            if (blockTask && blockCustom) {
+              blockTask.classList.remove("active-mode");
+              blockCustom.classList.add("active-mode");
+            }
+            if (pillTask) pillTask.textContent = "Click to Switch to Task";
+            if (pillCustom) pillCustom.textContent = "Active Selection";
+          } else if (!state.customQuestionResult) {
+            if (blockTask && blockCustom) {
+              blockTask.classList.add("active-mode");
+              blockCustom.classList.remove("active-mode");
+            }
+            if (pillTask) pillTask.textContent = "Active Selection";
+            if (pillCustom) pillCustom.textContent = "Write or Pick Prompt";
+          }
+        });
+      }
+
+      /* Single Unified Generate Live Form Submission */
       document.getElementById("qa-form").addEventListener("submit", function (e) {
         e.preventDefault();
-        const q = (document.getElementById("qa-question-input").value || "").trim();
-        if (!q) return;
+        state.megaMenuOpen = false;
         const p = currentPatient();
         if (!p) return;
+        const q = (document.getElementById("qa-question-input").value || "").trim();
+
+        /* If custom prompt box is empty, re-run the active Clinical Task live */
+        if (!q) {
+          state.customQuestionResult = null;
+          renderActiveReportCard(p, p.skills || [], true);
+          return;
+        }
+
         const postureKey = state.privacyExternalShare ? "external_share" : "patient_self";
         const qaSamples = ((p.postures || {})[postureKey] || {}).qa_samples || [];
         const qLow = q.toLowerCase();
-
-        const matchedSkillId = Object.keys(SKILL_PROMPTS).find(function (sid) {
-          return SKILL_PROMPTS[sid].toLowerCase() === qLow;
-        });
-        if (matchedSkillId) {
-          state.activeSkillId = matchedSkillId;
-          state.customQuestionResult = null;
-          const skills = buildPatientSkills(p);
-          const taskSelect = document.getElementById("skill-task-select");
-          if (taskSelect) taskSelect.value = matchedSkillId;
-          renderActiveReportCard(p, skills, true);
-          return;
-        }
 
         const matchedQa = qaSamples.find(function (item) {
           return item.question.toLowerCase() === qLow || item.question.toLowerCase().indexOf(qLow) !== -1;
