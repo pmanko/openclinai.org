@@ -113,16 +113,8 @@ if [ "${DRIFT_RC}" -ne 0 ]; then
 fi
 echo "    corpus index OK — every type satisfies the shared validation drift policy"
 
-echo "==> [4b/5] verify live ledger dates match committed validation fixtures"
-if [ -z "${QUERYSTORE_USERNAME:-}" ] || [ -z "${QUERYSTORE_PASSWORD:-}" ]; then
-  echo "ERROR: QUERYSTORE_USERNAME and QUERYSTORE_PASSWORD are required for corpus alignment" >&2
-  exit 1
-fi
-python3 scripts/verify-validation-corpus.py \
-  --set "${SET}" \
-  --endpoint "${BASE}/ws/rest/v1/querystore/patientrecord" \
-  --username "${QUERYSTORE_USERNAME}" \
-  --password "${QUERYSTORE_PASSWORD}"
+echo "==> [4b/5] verify the Hub's live ledgers match committed validation fixtures"
+python3 scripts/verify-validation-corpus.py --set "${SET}"
 
 echo "==> [5/5] verify everything answers"
 fail=0

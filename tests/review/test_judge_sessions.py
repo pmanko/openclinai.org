@@ -147,8 +147,94 @@ def test_one_new_pass_on_an_unjudged_run_is_promoted(tmp_path, monkeypatch):
     assert not [c for c in calls if c[0] == "cmd" and "scripts/judge-aggregate.py" in c[1]]
 
 
+def test_profile_arms_take_the_product_title_the_hub_advertises():
+    review = _review()
+    arms = review.profile_arms({"single-12b-xcheck": "Checked answer (12B writer, Qwen checker)"},
+                               ["single-12b-xcheck", "unlabelled"])
+
+    assert arms["hub-profile-single-12b-xcheck"]["label"] == "Checked answer (12B writer, Qwen checker)"
+    assert arms["hub-profile-single-12b-xcheck"]["modelName"] == "single-12b-xcheck"
+    assert arms["hub-profile-unlabelled"]["label"] == "unlabelled"
+
 def test_last_json_forgives_a_trailing_comma_in_the_verdict_block():
     review = _review()
     answer = "Scored.\n```json\n[{\"scenario_id\": \"s1\", \"accuracy\": 8,}, ]\n```\n"
 
     assert review.last_json(answer) == [{"scenario_id": "s1", "accuracy": 8}]
+
+
+def test_run_full_resolves_relative_and_custom_data_root_before_forwarding(tmp_path, monkeypatch):
+    from contextlib import contextmanager
+
+    review = _review()
+    custom_root = tmp_path / "custom-data"
+    (custom_root / "comparison_sets").mkdir(parents=True)
+    (custom_root / "backends.json").write_text(
+        json.dumps({"arm1": {"label": "Arm 1", "kind": "builtin"}}), encoding="utf-8"
+    )
+    (custom_root / "comparison_sets" / "demo.json").write_text(
+        json.dumps({"backend_ids": ["arm1"], "scenario_ids": ["s1"]}), encoding="utf-8"
+    )
+
+    seen_env_roots = []
+    seen_set_roots = []
+    fake_run_dir = tmp_path / "run-out"
+    fake_run_dir.mkdir()
+    (fake_run_dir / "judge.jsonl").write_text(
+        json.dumps({"scenario_id": "s1", "backend_id": "arm1", "accuracy": 9,
+                    "completeness": 9, "relevance": 9, "harm": 0}) + "\n",
+        encoding="utf-8",
+    )
+
+    @contextmanager
+    def fake_env(data_root, set_id, record):
+        seen_env_roots.append(data_root)
+        yield {}
+
+    def fake_run_set(target, cset, out, env=None, data_root=None, resume=None):
+        seen_set_roots.append(data_root)
+        return fake_run_dir
+
+    call_idx = {"n": 0}
+
+    def fake_work_dir():
+        call_idx["n"] += 1
+        return tmp_path / f"work-{call_idx['n']}"
+
+    monkeypatch.setattr(review, "work_dir", fake_work_dir)
+    monkeypatch.setattr(review, "run_environment", fake_env)
+    monkeypatch.setattr(review, "run_set", fake_run_set)
+    monkeypatch.setattr(review, "judge_passes", lambda *_a, **_k: ["p1"])
+    monkeypatch.setattr(review, "harness", lambda *_a, **_k: SimpleNamespace(stdout="report.html\n", returncode=0))
+    monkeypatch.setattr(review, "judging", lambda *_a, **_k: {"sentence": "Judged."})
+    monkeypatch.setattr(review, "advertised_profiles", lambda: {"p-extra": "Extra Profile"})
+    monkeypatch.setattr(review.subprocess, "run", lambda *_a, **_k: SimpleNamespace(stdout="", stderr="", returncode=0))
+
+    # 1. Without profiles, relative path to datasets/validation resolves to absolute Path
+    args_rel = SimpleNamespace(
+        data_root=Path("targets/validation-harness/datasets/validation"),
+        profiles=None, set="demo", resume=None, blind=False, baseline=None, no_publish=True,
+    )
+    assert review.run_full(args_rel) == 0
+    assert seen_env_roots[-1].is_absolute()
+    assert seen_set_roots[-1] is not None and seen_set_roots[-1].is_absolute()
+
+    # 2. Custom data_root without profiles forwards custom_root
+    args_custom = SimpleNamespace(
+        data_root=custom_root,
+        profiles=None, set="demo", resume=None, blind=False, baseline=None, no_publish=True,
+    )
+    assert review.run_full(args_custom) == 0
+    assert seen_env_roots[-1] == custom_root.resolve()
+    assert seen_set_roots[-1] == custom_root.resolve()
+
+    # 3. Custom data_root with profiles copies from custom_root and forwards the staged copy
+    args_prof = SimpleNamespace(
+        data_root=custom_root,
+        profiles="p-extra", set="demo", resume=None, blind=False, baseline=None, no_publish=True,
+    )
+    assert review.run_full(args_prof) == 0
+    assert seen_set_roots[-1] != custom_root.resolve()
+    staged_backends = json.loads((seen_set_roots[-1] / "backends.json").read_text(encoding="utf-8"))
+    assert "hub-profile-p-extra" in staged_backends
+
