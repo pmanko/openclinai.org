@@ -16,7 +16,6 @@ from reviewkit.probes import probe_commit  # noqa: E402
 parser = argparse.ArgumentParser()
 parser.add_argument("--repo", default=".")
 parser.add_argument("--baseline", action="store_true")
-parser.add_argument("--force", action="store_true", help="probe again even if the ledger has this patch")
 parser.add_argument("commits", nargs="*")
 args = parser.parse_args()
 repo = Path(args.repo).resolve()
@@ -25,7 +24,7 @@ if args.baseline:
     sys.exit(0)
 ok = True
 for commit in args.commits:
-    outcome = probe_commit(repo, commit, force=args.force)
+    outcome = probe_commit(repo, commit)
     print("\n".join(outcome.lines) or f"{outcome.sha[:7]} {outcome.status}")
     ok &= outcome.ok
 sys.exit(0 if ok else 1)

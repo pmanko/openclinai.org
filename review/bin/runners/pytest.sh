@@ -1,17 +1,41 @@
 #!/usr/bin/env bash
-# Test ids: a path or a node id (path::name; path#name is accepted). REVIEW_PYTHON
-# picks the interpreter; otherwise the project's .venv, python3, or uv with pytest.
+# Use a prepared component environment. Never install partial dependencies implicitly.
+set -u
 dir=$1 log=$2; shift 2
-ids=(); for id in "$@"; do ids+=("${id/\#/::}"); done
+ids=()
+for id in "$@"; do
+  prefix=${id%%::*}
+  if [[ $prefix == *#* ]]; then ids+=("${id/\#/::}"); else ids+=("$id"); fi
+done
 cd "$dir" || exit 2
-if [ -n "$REVIEW_PYTHON" ]; then py=("$REVIEW_PYTHON")
-elif [ -x .venv/bin/python ]; then py=(.venv/bin/python)
-elif python3 -c 'import pytest' 2>/dev/null; then py=(python3)
-else py=(uv run --no-project --with pytest python); fi
-"${py[@]}" -m pytest -q -rfE -p no:cacheprovider "${ids[@]}" > "$log" 2>&1
+dir=$PWD
+if [ -n "${REVIEW_PYTHON:-}" ]; then py=$REVIEW_PYTHON
+elif [ -x .venv/bin/python ]; then py="$PWD/.venv/bin/python"
+else py=python3; fi
+report="$log.xml"
+rm -f "$report" || { echo "RAN 0"; exit 2; }
+cache=$(mktemp -d "${log}.bytecode.XXXXXX") || exit 2
+trap 'rmdir "$cache" 2>/dev/null || true' EXIT
+"$py" -B -X "pycache_prefix=$cache" -m pytest --rootdir="$dir" -q -rfE -p no:cacheprovider --junitxml="$report" "${ids[@]}" > "$log" 2>&1
 rc=$?
-summary=$(tail -1 "$log")
-ran=$(printf '%s' "$summary" | grep -oE '[0-9]+ (passed|failed|error)' | awk '{n += $1} END {print n + 0}')
-echo "RAN $ran"
-grep -E '^(FAILED|ERROR) ' "$log" | sed -E 's/^(FAILED|ERROR) /FAILED /' | head -20
-case $rc in 0) exit 0 ;; 1) exit 1 ;; 4|5) exit 3 ;; *) exit 2 ;; esac
+"$py" - "$report" "$rc" <<'PY'
+import json, sys, xml.etree.ElementTree as ET
+try:
+    root = ET.parse(sys.argv[1]).getroot()
+except (OSError, ET.ParseError):
+    print('RAN 0'); sys.exit(2)
+ran = failed = errors = 0
+for case in root.iter('testcase'):
+    if case.find('skipped') is not None: continue
+    if case.find('error') is not None:
+        errors += 1; continue
+    ran += 1
+    print('EXECUTED ' + json.dumps([case.get('classname', ''), case.get('classname', '') + '::' + case.get('name', '')]))
+    failure = case.find('failure')
+    if failure is not None:
+        failed += 1
+        print('FAILED ' + case.get('classname', '') + '::' + case.get('name', '') + ': ' + failure.get('message', '').split('\n')[0])
+print('RAN ' + str(ran))
+rc = int(sys.argv[2])
+sys.exit(2 if errors or rc not in (0,1) else 3 if not ran else 1 if failed else 0 if rc == 0 else 2)
+PY

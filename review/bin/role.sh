@@ -25,7 +25,7 @@ case $agent in
   claude) version=$(claude --version 2>/dev/null | head -1)
           (cd "$workdir" && claude -p --model "$model" --effort "$reasoning" --allowedTools "$tools" < "$prompt") > "$out" ;;
   codex)  version=$(codex --version 2>/dev/null | head -1 | sed 's/^codex-cli //')
-          codex exec -C "$workdir" -s workspace-write -m "$model" -c "model_reasoning_effort=\"$reasoning\"" \
+          codex exec -C "$workdir" --add-dir "$(dirname "$out")" -s workspace-write -m "$model" -c "model_reasoning_effort=\"$reasoning\"" \
             -o "$out" - < "$prompt" > "$out.log" 2>&1 ;;
   gemini) version=$(gemini --version 2>/dev/null | head -1)
           if [ -n "${REVIEW_MODEL:-}" ]; then
