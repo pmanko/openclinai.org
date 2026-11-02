@@ -117,10 +117,11 @@ def _runtime_identity(openmrs_url: str) -> dict[str, Any]:
         )
     )[0]
     image_id = container["Image"]
-    image = json.loads(
-        subprocess.check_output(["docker", "image", "inspect", image_id], text=True)
-    )[0]
-    labels = (image.get("Config") or {}).get("Labels") or {}
+    # The container carries the labels of the image it was created from. Reading
+    # them there, not from the image, still works after a rebuild has moved the
+    # tag: Docker's containerd image store cannot inspect the image a running
+    # container was started from once that image is untagged.
+    labels = (container.get("Config") or {}).get("Labels") or {}
     artifact_specs = {
         "chartsearchai_omod": (
             ROOT / "targets/chartsearchai",

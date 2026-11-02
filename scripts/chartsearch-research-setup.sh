@@ -67,6 +67,8 @@ else
   make chartsearch-esm-build
   python3 scripts/hiv-baseline.py verify
 fi
+# OpenMRS now runs the modules built above; record them as deployed.
+python3 scripts/hiv-baseline.py record-deployed
 
 . ./scripts/openmrs-settings-lib.sh
 set_openmrs_property chartsearchai.llm.engine remote

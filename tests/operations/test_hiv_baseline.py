@@ -271,7 +271,48 @@ def test_setup_stops_openmrs_and_its_gateway_before_restoring_then_starts_the_st
     start = calls.index("make local-stack-up create_tables=false")
     restart = calls.index("docker restart harness-openmrs-backend")
     verify = calls.index("python3 scripts/hiv-baseline.py verify")
-    assert stop < restore < start < restart < verify
+    recorded = calls.index("python3 scripts/hiv-baseline.py record-deployed")
+    assert stop < restore < start < restart < verify < recorded
+
+
+def test_record_deployed_copies_each_module_build_record(tmp_path):
+    state = tmp_path / "state"
+    builds = state / "module-provenance"
+    builds.mkdir(parents=True)
+    for module, commit in (("chartsearchai", "c" * 40), ("querystore", "a" * 40)):
+        (builds / f"{module}-1.0.0-SNAPSHOT.omod.provenance.json").write_text(
+            json.dumps({"source_commit": commit}), encoding="utf-8")
+    log = tmp_path / "calls.log"
+
+    result = _run_tool(tmp_path, _stub_bin(tmp_path, log, None), "record-deployed")
+
+    assert result.returncode == 0, result.stderr
+    for module, commit in (("chartsearchai", "c" * 40), ("querystore", "a" * 40)):
+        assert json.loads((state / f"deployed-{module}-omod.json").read_text()) == {"source_commit": commit}
+    assert _calls(log) == []
+
+
+@pytest.mark.parametrize("second_content", [None, "{not-json", '{"source_commit": ""}'])
+def test_record_deployed_without_a_build_record_fails_and_writes_nothing(tmp_path, second_content):
+    state = tmp_path / "state"
+    builds = state / "module-provenance"
+    builds.mkdir(parents=True)
+    for module, commit in (("chartsearchai", "1" * 40), ("querystore", "2" * 40)):
+        (state / f"deployed-{module}-omod.json").write_text(
+            json.dumps({"source_commit": commit}), encoding="utf-8")
+    (builds / "chartsearchai-1.0.0-SNAPSHOT.omod.provenance.json").write_text(
+        json.dumps({"source_commit": "c" * 40}), encoding="utf-8")
+    if second_content is not None:
+        (builds / "querystore-1.0.0-SNAPSHOT.omod.provenance.json").write_text(
+            second_content, encoding="utf-8")
+    log = tmp_path / "calls.log"
+
+    result = _run_tool(tmp_path, _stub_bin(tmp_path, log, None), "record-deployed")
+
+    assert result.returncode == 1
+    assert "build the modules first" in result.stderr
+    for module, commit in (("chartsearchai", "1" * 40), ("querystore", "2" * 40)):
+        assert json.loads((state / f"deployed-{module}-omod.json").read_text()) == {"source_commit": commit}
 
 
 @pytest.mark.parametrize("image, pulled", [

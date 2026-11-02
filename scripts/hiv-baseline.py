@@ -7,11 +7,12 @@ container image on GitHub Container Registry. The default baseline is pinned by
 digest in environments/chartsearch-research/hiv-baseline.json; BASELINE=<image>
 selects any other.
 
-  check    is the selected baseline available? (pulls it)
-  restore  load the baseline into the stack with OpenMRS stopped
-  verify   after startup: modules started and the index matches the baseline
-  export   capture the running stack as the local image openclinai-hiv-baseline:local
-  publish  push the exported baseline; without --name it becomes the pinned default
+  check            is the selected baseline available? (pulls it)
+  restore          load the baseline into the stack with OpenMRS stopped
+  verify           after startup: modules started and the index matches the baseline
+  record-deployed  after restart: record rebuilt module artifacts as deployed
+  export           capture the running stack as the local image openclinai-hiv-baseline:local
+  publish          push the exported baseline; without --name it becomes the pinned default
 
 Exit status 3 means the baseline is not available; nothing was changed.
 """
@@ -301,9 +302,6 @@ def cmd_restore(args: argparse.Namespace) -> int:
 def record_restore(state: Path, manifest: dict, database: str, image: str) -> None:
     """Record which baseline the running stack holds, as seeding from the HIV dump does."""
     state.mkdir(parents=True, exist_ok=True)
-    built = state / "module-provenance" / "querystore-1.0.0-SNAPSHOT.omod.provenance.json"
-    if built.is_file():
-        (state / "deployed-querystore-omod.json").write_text(built.read_text(encoding="utf-8"), encoding="utf-8")
     dataset = manifest.get("dataset") or {}
     receipt = {
         "schema_version": "validation_corpus.v1",
@@ -315,6 +313,37 @@ def record_restore(state: Path, manifest: dict, database: str, image: str) -> No
         "restored_at": datetime.now(timezone.utc).isoformat(),
     }
     (state / "corpus-provenance.json").write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+
+
+DEPLOYED_MODULES = ("chartsearchai", "querystore")
+
+
+def cmd_record_deployed(args: argparse.Namespace) -> int:
+    """Record the module builds OpenMRS now loads, after it restarted on them.
+
+    The backend mounts the built modules, so once it has restarted, the build
+    provenance is what is deployed. Without this record the identity check reads
+    every rebuild as a stale deployment.
+    """
+    state = args.local_state
+    validated: list[tuple[str, str, str]] = []
+    for module in DEPLOYED_MODULES:
+        built = state / "module-provenance" / f"{module}-1.0.0-SNAPSHOT.omod.provenance.json"
+        if not built.is_file():
+            raise RuntimeError(f"no build provenance for {module} at {built}; build the modules first")
+        raw = built.read_text(encoding="utf-8")
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(f"malformed build provenance for {module} at {built}; build the modules first") from exc
+        commit = payload.get("source_commit") if isinstance(payload, dict) else None
+        if not isinstance(commit, str) or not commit.strip():
+            raise RuntimeError(f"invalid build provenance for {module} at {built}; build the modules first")
+        validated.append((module, raw, commit[:9]))
+    for module, raw, short_commit in validated:
+        (state / f"deployed-{module}-omod.json").write_text(raw, encoding="utf-8")
+        say(f"recorded deployed {module} {short_commit}")
+    return 0
 
 
 def cmd_verify(args: argparse.Namespace) -> int:
@@ -448,7 +477,7 @@ def cmd_publish(args: argparse.Namespace) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("command", choices=("check", "restore", "verify", "export", "publish"))
+    parser.add_argument("command", choices=("check", "restore", "verify", "record-deployed", "export", "publish"))
     parser.add_argument("--name", help="publish: push as this tag without changing the default")
     parser.add_argument("--pin", type=Path, default=PIN_FILE, help="file pinning the default baseline")
     parser.add_argument("--output", type=Path, default=EXPORT_DIR, help="exported baseline directory")
@@ -456,6 +485,7 @@ def main() -> int:
                         help="receipts describing what the running stack holds")
     args = parser.parse_args()
     command = {"check": cmd_check, "restore": cmd_restore, "verify": cmd_verify,
+               "record-deployed": cmd_record_deployed,
                "export": cmd_export, "publish": cmd_publish}[args.command]
     try:
         return command(args)
