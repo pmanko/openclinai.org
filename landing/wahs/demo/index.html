@@ -1,0 +1,4146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Washington Health Summary (WAHS+) — Interactive Patient Chart Explorer</title>
+  <meta name="description" content="Explore FHIR R4 patient charts in 3 clear steps: (1) Browse the original FHIR chart, (2) Adjust condensation levers, and (3) Run read-only patient skills & Q&A." />
+  <link rel="canonical" href="https://wahs-demo.openclinai.org/" />
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-alt: #f1f5f9;
+      --surface-subtle: #f8fafc;
+      --border: #e2e8f0;
+      --border-strong: #cbd5e1;
+      --text: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --primary: #1d4ed8;
+      --primary-light: #eff6ff;
+      --primary-border: #bfdbfe;
+      --teal: #0f766e;
+      --teal-light: #f0fdfa;
+      --teal-border: #99f6e4;
+      --amber: #b45309;
+      --amber-light: #fffbeb;
+      --amber-border: #fde68a;
+      --purple: #6d28d9;
+      --purple-light: #f5f3ff;
+      --purple-border: #ddd6fe;
+      --radius: 14px;
+      --radius-sm: 10px;
+      --shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+      --shadow-md: 0 6px 16px rgba(15, 23, 42, 0.07);
+      --shadow-lg: 0 14px 32px rgba(15, 23, 42, 0.14);
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Top Brand Bar */
+    .topbar {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 0.65rem 2rem;
+      border-bottom: 1px solid #1e293b;
+      font-size: 0.9rem;
+    }
+    .topbar-inner {
+      max-width: 1520px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .brand-badge {
+      background: #2563eb;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.74rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .topbar-links {
+      display: flex;
+      align-items: center;
+      gap: 1.4rem;
+      font-size: 0.88rem;
+    }
+    .topbar-links a { color: #cbd5e1; font-weight: 500; }
+    .topbar-links a:hover { color: #ffffff; }
+
+    /* Single Unified Sticky Navigation & Context Bar */
+    .phase-shell-bar {
+      position: sticky;
+      top: 0;
+      z-index: 35;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    }
+    .phase-shell-inner {
+      max-width: 1520px;
+      margin: 0 auto;
+      padding: 0.65rem 1.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    /* Active Context Pill on Left */
+    .active-context-group {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      font-size: 0.88rem;
+    }
+    .ctx-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      padding: 0.34rem 0.68rem;
+      border-radius: 8px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .ctx-chip code {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--primary);
+      font-weight: 700;
+    }
+    .llm-bar-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      padding: 0.28rem 0.58rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #166534;
+    }
+    .llm-bar-chip.offline {
+      background: #fef3c7;
+      border-color: #fde68a;
+      color: #92400e;
+    }
+    .llm-model-select {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #0f172a;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 0.16rem 0.38rem;
+      max-width: 165px;
+      min-width: 0;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
+    .llm-config-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 0.84rem;
+      padding: 0.1rem 0.25rem;
+      color: inherit;
+      opacity: 0.85;
+    }
+    .llm-config-btn:hover { opacity: 1; }
+    .llm-live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.26rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid #bbf7d0;
+      background: #f0fdf4;
+      color: #166534;
+    }
+    .llm-live-pill.streaming {
+      background: #eff6ff;
+      border-color: #93c5fd;
+      color: #1d4ed8;
+    }
+    .llm-live-pill.offline {
+      background: var(--surface-alt);
+      border-color: var(--border);
+      color: var(--text-muted);
+    }
+
+    /* Center 1-Line 3-Phase Stepper */
+    .phase-stepper {
+      display: inline-flex;
+      align-items: center;
+      background: var(--surface-alt);
+      padding: 0.26rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      gap: 0.3rem;
+    }
+    .phase-step-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.44rem 0.88rem;
+      border-radius: 9px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: all 0.14s ease;
+      white-space: nowrap;
+    }
+    .phase-step-tab:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.7);
+    }
+    .phase-step-tab.active {
+      background: var(--surface);
+      color: var(--text);
+      border-color: var(--border-strong);
+      box-shadow: 0 2px 5px rgba(15, 23, 42, 0.08);
+    }
+    .phase-step-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--border);
+      color: var(--text-secondary);
+    }
+    .phase-step-tab.active[data-phase="1"] .phase-step-num { background: var(--primary); color: #fff; }
+    .phase-step-tab.active[data-phase="2"] .phase-step-num { background: var(--teal); color: #fff; }
+    .phase-step-tab.active[data-phase="3"] .phase-step-num { background: var(--purple); color: #fff; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.55rem 1.05rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text);
+      transition: all 0.14s ease;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--surface-alt); }
+    .btn-sm { padding: 0.42rem 0.85rem; font-size: 0.85rem; }
+    .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .btn-primary:hover { background: #1e40af; }
+
+    /* Main Container */
+    .container {
+      max-width: 1520px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 3.5rem;
+    }
+
+    .phase-panel { display: none; }
+    .phase-panel.active { display: block; }
+
+    /* PHASE 1: Spacious 3x2 Patient Grid + 2-Pane FHIR Browser */
+    .persona-strip-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.4rem;
+      box-shadow: var(--shadow);
+    }
+    .persona-strip-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.85rem;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 980px) {
+      .persona-strip-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .persona-strip-grid { grid-template-columns: 1fr; }
+    }
+    .persona-pill-card {
+      min-width: 0;
+      background: var(--surface-subtle);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.8rem 1rem;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.14s ease;
+    }
+    .persona-pill-card:hover {
+      border-color: #93c5fd;
+      background: var(--surface);
+    }
+    .persona-pill-card.active {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
+    }
+    .persona-pill-name {
+      font-weight: 700;
+      font-size: 0.98rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+    .persona-pill-count {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.1rem 0.5rem;
+      border-radius: 999px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .persona-pill-tag {
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .active-persona-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-top: 0.9rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.94rem;
+      color: var(--text-secondary);
+    }
+
+    /* Phase 1 2-Pane Split */
+    .phase1-browser-split {
+      display: grid;
+      grid-template-columns: 1.25fr 0.95fr;
+      gap: 1.4rem;
+      align-items: start;
+    }
+    @media (max-width: 1080px) {
+      .phase1-browser-split { grid-template-columns: 1fr; }
+    }
+
+    .panel-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 1rem 1.35rem;
+      background: var(--surface-subtle);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .panel-header h2, .panel-header h3 {
+      margin: 0;
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .panel-body {
+      padding: 1.25rem 1.35rem;
+    }
+
+    .browser-cat-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-bottom: 0.9rem;
+    }
+    .cat-pill {
+      border: 1px solid var(--border);
+      background: var(--surface-alt);
+      color: var(--text-secondary);
+      border-radius: 999px;
+      padding: 0.35rem 0.8rem;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .cat-pill:hover { border-color: var(--border-strong); }
+    .cat-pill.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .browser-search-input {
+      width: 100%;
+      padding: 0.65rem 0.95rem;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      font-size: 0.94rem;
+      margin-bottom: 0.9rem;
+    }
+
+    .browser-table-wrap {
+      max-height: 580px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+    .browser-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .browser-table th {
+      position: sticky;
+      top: 0;
+      background: var(--surface-alt);
+      color: var(--text-secondary);
+      text-align: left;
+      font-weight: 700;
+      padding: 0.65rem 0.85rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      z-index: 2;
+    }
+    .browser-table td {
+      padding: 0.72rem 0.85rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .browser-row { cursor: pointer; }
+    .browser-row:hover { background: #f8fafc; }
+    .browser-row.selected { background: var(--primary-light); }
+
+    .res-badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: var(--surface-alt);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    /* Right Inspector with Readable | Raw JSON Toggle */
+    .inspector-sticky-card {
+      position: sticky;
+      top: 76px;
+    }
+    .inspector-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 1rem 1.15rem;
+      font-size: 0.92rem;
+      margin-bottom: 1rem;
+    }
+    .inspector-note-box {
+      background: #fffef7;
+      border: 1px solid var(--amber-border);
+      border-radius: 8px;
+      padding: 0.95rem 1.1rem;
+      font-family: var(--font-mono);
+      font-size: 0.86rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      max-height: 400px;
+      overflow-y: auto;
+      color: var(--text);
+    }
+    .inspector-json-box {
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 1rem 1.15rem;
+      font-family: var(--font-mono);
+      font-size: 0.84rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      max-height: 500px;
+      overflow-y: auto;
+      margin: 0;
+    }
+
+    /* PHASE 2: Spacious Condensation Studio */
+    .phase2-studio-grid {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    @media (max-width: 1080px) {
+      .phase2-studio-grid { grid-template-columns: 1fr; }
+      .phase2-studio-grid > .panel-card:first-child .panel-body {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1rem;
+        align-items: start;
+      }
+      .phase2-studio-grid > .panel-card:first-child .lever-section {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+      }
+      .browser-table-wrap { max-height: 290px; }
+      .inspector-sticky-card { position: static; }
+    }
+    @media (max-width: 860px) {
+      .phase-shell-inner { padding: 0.65rem 1rem; gap: 0.6rem; }
+      .container { padding: 1rem 1rem 2.5rem; }
+      .phase-step-tab { padding: 0.42rem 0.75rem; font-size: 0.85rem; }
+      .inspector-summary-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 680px) {
+      .topbar-inner { flex-wrap: wrap; gap: 0.5rem; padding: 0.65rem 1rem; }
+      .topbar-links { gap: 0.9rem; font-size: 0.8rem; }
+      .phase-stepper {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .phase-step-tab {
+        justify-content: center;
+        padding: 0.42rem 0.3rem;
+        font-size: 0.78rem;
+        gap: 0.28rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .composer-card { padding: 1rem; }
+      .report-card { padding: 1.1rem; }
+    }
+
+    .lever-section {
+      padding-bottom: 1.15rem;
+      margin-bottom: 1.15rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .lever-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .lever-label {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.55rem;
+    }
+    .seg-group {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .seg-btn {
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text-secondary);
+      border-radius: 8px;
+      padding: 0.45rem 0.85rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .seg-btn:hover { background: var(--surface-alt); }
+    .seg-btn.active {
+      background: var(--teal);
+      color: #fff;
+      border-color: var(--teal);
+    }
+
+    .prep-toggle-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      font-size: 0.92rem;
+      color: var(--text-secondary);
+      padding: 0.45rem 0;
+      cursor: pointer;
+    }
+    .prep-toggle-item input {
+      width: 17px;
+      height: 17px;
+      margin-top: 0.2rem;
+      flex-shrink: 0;
+    }
+
+    .condensed-sections-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.1rem;
+      align-items: start;
+    }
+    @media (max-width: 820px) {
+      .condensed-sections-grid { grid-template-columns: 1fr; }
+    }
+    .cond-sec-card {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 1rem 1.2rem;
+    }
+    .cond-sec-card h4 {
+      margin: 0 0 0.65rem;
+      font-size: 0.96rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.45rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .cond-sec-list {
+      margin: 0;
+      padding-left: 1.2rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+    .cond-sec-list li { margin-bottom: 0.4rem; }
+
+    .raw-ledger-pre {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 1.15rem 1.3rem;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: 0.86rem;
+      line-height: 1.55;
+      max-height: 600px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      margin: 0;
+    }
+
+    /* PHASE 3: Card-Based Mega-Dropdown for Clinical Tasks + Separate Custom Prompt Composer + Live Stage */
+    .phase3-single-stage {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.35rem;
+    }
+
+    .composer-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius);
+      padding: 1.35rem 1.6rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
+    }
+
+    .composer-mode-block {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      padding: 0.95rem 1.1rem;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      background: var(--surface-subtle);
+      transition: all 0.15s ease;
+    }
+    .composer-mode-block.active-mode {
+      border-color: var(--primary-border);
+      background: #f8fbff;
+      box-shadow: 0 1px 6px rgba(29, 78, 216, 0.05);
+    }
+    .composer-mode-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .composer-mode-title {
+      font-size: 0.84rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+    .composer-mode-block.active-mode .composer-mode-title {
+      color: var(--primary);
+    }
+    .mode-active-pill {
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 0.16rem 0.58rem;
+      border-radius: 999px;
+      background: var(--surface-alt);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .composer-mode-block.active-mode .mode-active-pill {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    /* Full-Width Card-Based Mega-Dropdown Trigger & Tile Grid */
+    .mega-dropdown-wrap {
+      position: relative;
+      width: 100%;
+    }
+    .mega-trigger-btn {
+      width: 100%;
+      text-align: left;
+      background: var(--surface);
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 1.1rem;
+      cursor: pointer;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.85rem;
+      transition: all 0.14s ease;
+    }
+    .composer-mode-block.active-mode .mega-trigger-btn {
+      border-color: var(--primary);
+      box-shadow: 0 2px 8px rgba(29, 78, 216, 0.08);
+    }
+    .mega-trigger-btn:hover {
+      border-color: var(--primary);
+      background: #ffffff;
+    }
+    .mega-trigger-main {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      min-width: 0;
+      flex: 1 1 280px;
+    }
+    .mega-trigger-icon {
+      font-size: 1.45rem;
+      line-height: 1.1;
+      flex-shrink: 0;
+      margin-top: 0.05rem;
+    }
+    .mega-trigger-text {
+      min-width: 0;
+      flex: 1;
+    }
+    .mega-trigger-title {
+      font-size: 1.04rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .mega-trigger-desc {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      margin-top: 0.2rem;
+      line-height: 1.42;
+    }
+    .mega-trigger-right {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+    .mega-chevron-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-light);
+      border: 1px solid var(--primary-border);
+      padding: 0.32rem 0.7rem;
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+
+    .mega-menu-panel {
+      display: none;
+      margin-top: 0.65rem;
+      background: var(--surface);
+      border: 1.5px solid var(--primary);
+      border-radius: var(--radius);
+      padding: 1.15rem 1.25rem;
+      box-shadow: var(--shadow-lg);
+    }
+    .mega-menu-panel.open {
+      display: block;
+    }
+    .mega-group-heading {
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin: 0 0 0.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .mega-group-heading + .mega-tiles-grid {
+      margin-bottom: 1.1rem;
+    }
+    .mega-tiles-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+    @media (max-width: 980px) {
+      .mega-tiles-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .mega-tiles-grid { grid-template-columns: 1fr; }
+    }
+    .mega-task-tile {
+      text-align: left;
+      background: var(--surface-subtle);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 0.55rem;
+      transition: all 0.14s ease;
+    }
+    .mega-task-tile:hover {
+      border-color: var(--primary-border);
+      background: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+    .mega-task-tile.active {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      box-shadow: 0 0 0 1px var(--primary);
+    }
+    .mega-tile-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .mega-tile-title {
+      font-size: 0.93rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.32;
+    }
+    .mega-tile-desc {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.42;
+    }
+    .mega-tile-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.4rem;
+      margin-top: 0.15rem;
+    }
+
+    .composer-or-divider {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      color: var(--text-muted);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin: -0.25rem 0;
+    }
+    .composer-or-divider::before,
+    .composer-or-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .composer-input-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      align-items: stretch;
+    }
+    .qa-input {
+      flex: 1;
+      min-width: min(100%, 260px);
+      padding: 0.72rem 1rem;
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      font-size: 0.98rem;
+      color: var(--text);
+      background: var(--surface);
+    }
+    .qa-input:focus {
+      background: #ffffff;
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+    }
+    .qa-sample-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      align-items: center;
+    }
+    .qa-chip {
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      color: var(--text-secondary);
+      border-radius: 999px;
+      padding: 0.3rem 0.8rem;
+      font-size: 0.84rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+    }
+    .qa-chip:hover,
+    .qa-chip.active {
+      background: var(--primary-light);
+      color: var(--primary);
+      border-color: var(--primary);
+      font-weight: 600;
+    }
+
+    .composer-submit-row {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.45rem;
+      padding-top: 0.15rem;
+    }
+    .composer-generate-btn {
+      width: 100%;
+      justify-content: center;
+      padding: 0.88rem 1.4rem;
+      font-size: 1.02rem;
+      font-weight: 800;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 2px 8px rgba(29, 78, 216, 0.18);
+    }
+    .composer-submit-hint {
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .skill-badge {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 0.22rem 0.65rem;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .report-items-table .skill-badge,
+    .mega-task-tile .skill-badge {
+      white-space: normal;
+      border-radius: 8px;
+      line-height: 1.35;
+      padding: 0.26rem 0.58rem;
+    }
+    .skill-badge.info { background: var(--primary-light); color: var(--primary); border: 1px solid var(--primary-border); }
+    .skill-badge.warn { background: var(--amber-light); color: var(--amber); border: 1px solid var(--amber-border); }
+    .skill-badge.ok { background: var(--teal-light); color: var(--teal); border: 1px solid var(--teal-border); }
+
+    /* Prominent Live Generation Hero Stage */
+    .report-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem 1.75rem;
+      box-shadow: var(--shadow-md);
+    }
+    @media (max-width: 680px) {
+      .composer-card, .report-card { padding: 1.1rem 1.15rem; }
+    }
+    .report-card-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 1.1rem;
+      padding-bottom: 0.9rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .report-card-title {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .live-generation-hero {
+      background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+      border: 1.5px solid #bfdbfe;
+      border-left: 5px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem 1.45rem;
+      margin-bottom: 1.15rem;
+      box-shadow: 0 2px 10px rgba(29, 78, 216, 0.05);
+    }
+    .live-hero-subbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.55rem;
+      border-bottom: 1px dashed #cbd5e1;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .report-summary-box {
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: var(--text);
+    }
+    .inline-cite-badge {
+      display: inline-flex;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-light);
+      border: 1px solid var(--primary-border);
+      border-radius: 5px;
+      padding: 0.05rem 0.42rem;
+      margin: 0 0.1rem;
+      cursor: pointer;
+      vertical-align: baseline;
+    }
+    .inline-cite-badge:hover {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .evidence-details-drawer {
+      margin-top: 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface-subtle);
+      overflow: hidden;
+    }
+    .evidence-details-drawer summary {
+      padding: 0.75rem 1.1rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .evidence-details-drawer summary:hover {
+      background: var(--surface-alt);
+      color: var(--text);
+    }
+    .evidence-details-body {
+      padding: 1rem 1.15rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .report-items-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      margin-bottom: 0.5rem;
+    }
+    .report-items-table th {
+      background: var(--surface-alt);
+      color: var(--text-secondary);
+      text-align: left;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid var(--border);
+    }
+    .report-items-table td {
+      padding: 0.75rem 0.85rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      line-height: 1.5;
+    }
+
+    .remediation-box {
+      background: var(--teal-light);
+      border: 1px solid var(--teal-border);
+      border-radius: var(--radius-sm);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.1rem;
+    }
+    .remediation-box h4 {
+      margin: 0 0 0.45rem;
+      font-size: 0.96rem;
+      color: var(--teal);
+    }
+    .remediation-box ul {
+      margin: 0;
+      padding-left: 1.25rem;
+      font-size: 0.95rem;
+      line-height: 1.62;
+      color: var(--text);
+    }
+    .remediation-box li { margin-bottom: 0.35rem; }
+
+    .clinician-tech-box {
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: var(--radius-sm);
+      padding: 0.9rem 1.15rem;
+      font-family: var(--font-mono);
+      font-size: 0.84rem;
+      line-height: 1.55;
+      margin-bottom: 1.1rem;
+    }
+
+    .citations-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      align-items: center;
+      padding-top: 0.9rem;
+      border-top: 1px solid var(--border);
+    }
+    .cite-chip {
+      background: var(--surface-alt);
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      padding: 0.28rem 0.68rem;
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+      color: var(--primary);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .cite-chip:hover {
+      background: var(--primary-light);
+      border-color: var(--primary);
+    }
+
+    /* Slide-Over Source Drawer */
+    .drawer-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      z-index: 90;
+      justify-content: flex-end;
+    }
+    .drawer-backdrop.open { display: flex; }
+    .drawer-panel {
+      background: var(--surface);
+      width: min(620px, 94vw);
+      height: 100%;
+      padding: 1.5rem 1.75rem;
+      box-shadow: var(--shadow-lg);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* Custom Bundle & LLM Config Modals */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      max-width: 640px;
+      width: 100%;
+      padding: 1.4rem 1.5rem;
+      box-shadow: var(--shadow-lg);
+      box-sizing: border-box;
+    }
+    .modal-textarea {
+      width: 100%;
+      height: 190px;
+      font-family: var(--font-mono);
+      font-size: 0.84rem;
+      padding: 0.75rem;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      margin: 0.65rem 0;
+    }
+    .modal-actions-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+    .modal-preset-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Brand Bar -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-badge">WAHS+</span>
+        <h1 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #ffffff;">Washington Health Summary — Patient Chart Explorer</h1>
+      </div>
+      <nav class="topbar-links" aria-label="WAHS Navigation">
+        <a href="/wahs/walkthrough/">📖 Walkthrough &amp; Tutorial</a>
+        <a href="/wahs/">Overview</a>
+        <a href="/wahs/design-report/">Design &amp; Evaluation Report</a>
+        <a href="/">OpenClinAI</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Single Unified Sticky Navigation & Context Bar -->
+  <div class="phase-shell-bar">
+    <div class="phase-shell-inner">
+      <div class="active-context-group" aria-label="Active Patient and Levers">
+        <span class="ctx-chip" id="ctx-patient-chip">👤 —</span>
+        <span class="ctx-chip" id="ctx-lever-chip"><code>8k • Lossless</code></span>
+        <span class="llm-bar-chip" id="llm-bar-chip" title="Live med-agent-hub Profile &amp; Model Selector (:18081 / :8077 / OpenRouter)">
+          <span id="llm-status-label">🟢 Hub Profile:</span>
+          <select id="llm-model-select" class="llm-model-select" aria-label="Select Hub Profile or Live LLM Model">
+            <option value="wahs-12b-kb">wahs-12b-kb (Gemma 4 12B + KB)</option>
+          </select>
+          <button type="button" class="llm-config-btn" id="open-llm-config-btn" aria-label="Configure Hub &amp; OpenRouter Settings" title="Configure med-agent-hub, local router, or OpenRouter API key">⚙️</button>
+        </span>
+      </div>
+
+      <div class="phase-stepper" role="tablist" aria-label="Explorer Steps">
+        <button type="button" class="phase-step-tab active" role="tab" id="phase-tab-1" aria-selected="true" aria-controls="phase-panel-1" data-phase="1">
+          <span class="phase-step-num">1</span>
+          <span>Browse FHIR Chart</span>
+        </button>
+        <button type="button" class="phase-step-tab" role="tab" id="phase-tab-2" aria-selected="false" aria-controls="phase-panel-2" data-phase="2">
+          <span class="phase-step-num">2</span>
+          <span>Condense Chart</span>
+        </button>
+        <button type="button" class="phase-step-tab" role="tab" id="phase-tab-3" aria-selected="false" aria-controls="phase-panel-3" data-phase="3">
+          <span class="phase-step-num">3</span>
+          <span>Skills &amp; Q&amp;A</span>
+        </button>
+      </div>
+
+      <div>
+        <button type="button" class="btn btn-primary" id="header-next-phase-btn">Next: Condense Chart →</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="container">
+
+    <!-- ===================================================================== -->
+    <!-- PHASE 1: SPACIOUS 3x2 PATIENT GRID + 2-PANE ORIGINAL FHIR BROWSER     -->
+    <!-- ===================================================================== -->
+    <section class="phase-panel active" id="phase-panel-1" role="tabpanel" aria-labelledby="phase-tab-1">
+
+      <!-- 3x2 Patient Selector Card -->
+      <div class="persona-strip-card" id="patient-selector-section">
+        <div class="persona-strip-grid" id="persona-grid" role="region" aria-label="Select Patient Chart"></div>
+        <div class="active-persona-bar">
+          <div id="active-persona-summary">Select a patient above to inspect their original FHIR R4 chart.</div>
+          <button type="button" class="btn btn-sm" id="open-custom-fhir-btn">📂 Upload Custom FHIR JSON</button>
+        </div>
+      </div>
+
+      <!-- 2-Pane Core-Resource FHIR Browser -->
+      <div class="phase1-browser-split" id="zone-a-section">
+        <!-- Left Pane: Core-Resource Table -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <h2 id="browser-panel-title">Original FHIR R4 Resources</h2>
+            <span class="res-badge" id="browser-total-badge">0 entries</span>
+          </div>
+          <div class="panel-body">
+            <div class="browser-cat-bar" id="browser-cat-bar" aria-label="Resource Categories"></div>
+            <input type="search" id="browser-search-input" class="browser-search-input" placeholder="Search by condition, medication, lab result, clinical note, or clinic..." aria-label="Filter FHIR resources" />
+            <div class="browser-table-wrap">
+              <table class="browser-table">
+                <thead>
+                  <tr>
+                    <th style="width: 130px;">Type</th>
+                    <th>Clinical Item</th>
+                    <th style="width: 115px;">Date</th>
+                    <th style="width: 165px;">Source Clinic</th>
+                  </tr>
+                </thead>
+                <tbody id="browser-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Pane: Tabbed Resource Inspector (Readable Details vs Raw JSON) -->
+        <div class="panel-card inspector-sticky-card" id="resource-inspector">
+          <div class="panel-header">
+            <h3 id="inspector-title">Selected Resource</h3>
+            <div class="seg-group" aria-label="Inspector View Mode">
+              <button type="button" class="seg-btn active" id="insp-tab-readable-btn">Readable Details</button>
+              <button type="button" class="seg-btn" id="insp-tab-json-btn">Raw FHIR JSON</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="inspector-readable-pane">
+              <div class="inspector-summary-grid" id="inspector-summary-grid"></div>
+              <div id="inspector-note-container" style="display: none;">
+                <div style="font-size: 0.86rem; font-weight: 700; color: var(--amber); margin-bottom: 0.4rem;">📄 Decoded Clinical Note (UTF-8):</div>
+                <div class="inspector-note-box" id="inspector-note-text"></div>
+              </div>
+            </div>
+            <pre class="inspector-json-box" id="inspector-json-box" style="display: none;">{}</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- PHASE 2: INTERACTIVE CONDENSATION LEVERS & RESULTING CHART PREVIEW    -->
+    <!-- ===================================================================== -->
+    <section class="phase-panel" id="phase-panel-2" role="tabpanel" aria-labelledby="phase-tab-2">
+      <div class="phase2-studio-grid">
+        <!-- Left Column: Interactive Levers Only -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <h2>Condensation Levers</h2>
+            <span class="res-badge">Non-Destructive</span>
+          </div>
+          <div class="panel-body">
+            <!-- Lever 1: Size Limit -->
+            <div class="lever-section">
+              <span class="lever-label">1. Size Limit (Token Budget)</span>
+              <div class="seg-group" id="budget-lever-group">
+                <button type="button" class="seg-btn" data-budget="16384">16k</button>
+                <button type="button" class="seg-btn active" data-budget="8192">8k</button>
+                <button type="button" class="seg-btn" data-budget="4096">4k</button>
+                <button type="button" class="seg-btn" data-budget="2048">2k</button>
+                <button type="button" class="seg-btn" data-budget="1024">1k</button>
+              </div>
+            </div>
+
+            <!-- Lever 2: Approach -->
+            <div class="lever-section">
+              <span class="lever-label">2. Condensation Approach</span>
+              <div class="seg-group" id="mode-lever-group">
+                <button type="button" class="seg-btn active" data-mode="lossless_structural">Lossless (Verbatim)</button>
+                <button type="button" class="seg-btn" data-mode="hierarchical">Grouped (Fold Renewals)</button>
+              </div>
+            </div>
+
+            <!-- Lever 3: Interactive Filters -->
+            <div class="lever-section">
+              <span class="lever-label">3. Optional Prep Filters</span>
+              <label class="prep-toggle-item">
+                <input type="checkbox" id="toggle-filter-equip" />
+                <span>Hide clinic room-equipment <code>Device</code> entries (<span id="count-equip-label">0</span>)</span>
+              </label>
+              <label class="prep-toggle-item">
+                <input type="checkbox" id="toggle-privacy-share" />
+                <span>Preview external-share privacy redaction (<span id="count-sdoh-label">0</span> sensitive)</span>
+              </label>
+              <div style="font-size: 0.83rem; color: var(--text-muted); margin-top: 0.55rem;">
+                Auto-cleaned: <span id="count-claims-label">0</span> billing claims &amp; <span id="count-b64-label">0</span> duplicate Base64 note wrappers excluded.
+              </div>
+            </div>
+
+            <!-- Kept vs Trimmed Status -->
+            <div class="lever-section" id="omitted-audit-content" style="font-size: 0.88rem;"></div>
+          </div>
+        </div>
+
+        <!-- Right Column: Resulting Condensed Chart -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div style="display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap;">
+              <h2 id="condensed-panel-title">Condensed Chart</h2>
+              <span class="res-badge" id="condensed-stats-pill">—</span>
+            </div>
+            <div class="seg-group">
+              <button type="button" class="seg-btn active" id="view-human-summary-btn">Readable Summary</button>
+              <button type="button" class="seg-btn" id="view-raw-ledger-btn">Raw AI Ledger</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="condensed-human-view" class="condensed-sections-grid"></div>
+            <pre id="condensed-raw-view" class="raw-ledger-pre" style="display: none;"></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- PHASE 3: CARD-BASED TASK MEGA-DROPDOWN + SEPARATE CUSTOM PROMPT STAGE -->
+    <!-- ===================================================================== -->
+    <section class="phase-panel" id="phase-panel-3" role="tabpanel" aria-labelledby="phase-tab-3">
+      <div class="phase3-single-stage" id="zone-b-section">
+        <!-- Top Card: Prompt & Task Selection (Clinical Task Mega-Dropdown vs. Custom Prompt + Single Generate Live Button) -->
+        <form id="qa-form" class="composer-card">
+          <!-- Mode 1: Full-Width Card-Based Clinical Task Mega-Dropdown -->
+          <div class="composer-mode-block active-mode" id="mode-block-task">
+            <div class="composer-mode-header">
+              <label for="skill-task-select" class="composer-mode-title">📋 1. Pick a Clinical Task</label>
+              <div style="display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap;">
+                <select id="skill-task-select" aria-label="Select Clinical Task" style="padding: 0.32rem 0.65rem; border: 1px solid var(--border-strong); border-radius: 6px; font-size: 0.84rem; font-weight: 600; background: var(--surface); color: var(--text);">
+                  <option value="skill-visit-brief">Prepare for My Next Doctor Visit</option>
+                </select>
+                <span class="mode-active-pill" id="mode-pill-task">Active Selection</span>
+              </div>
+            </div>
+            <div class="mega-dropdown-wrap" id="task-mega-dropdown">
+              <button type="button" class="mega-trigger-btn" id="task-mega-trigger" aria-expanded="true" aria-controls="task-mega-panel">
+                <div class="mega-trigger-main" id="task-mega-trigger-main"></div>
+                <div class="mega-trigger-right" id="task-mega-trigger-right"></div>
+              </button>
+              <div class="mega-menu-panel open" id="task-mega-panel" role="region" aria-label="Clinical Task Tiles"></div>
+            </div>
+          </div>
+
+          <div class="composer-or-divider" aria-hidden="true">OR</div>
+
+          <!-- Mode 2: Separate Custom / Suggested Prompt Section -->
+          <div class="composer-mode-block" id="mode-block-custom">
+            <div class="composer-mode-header">
+              <label for="qa-question-input" class="composer-mode-title" style="cursor: pointer;">💬 2. Write or Pick a Custom Prompt</label>
+              <span class="mode-active-pill" id="mode-pill-custom">Custom Prompt</span>
+            </div>
+            <div class="composer-input-row">
+              <input type="text" id="qa-question-input" class="qa-input" placeholder="Write your own question about this chart (e.g., medication interactions, lab trends, unrecorded tests)..." aria-label="Write a custom question about this chart" />
+            </div>
+            <div class="qa-sample-chips" id="qa-sample-chips"></div>
+          </div>
+
+          <!-- Single Full-Width Generate Live Action Bar -->
+          <div class="composer-submit-row">
+            <button type="submit" id="qa-submit-btn" class="btn btn-primary composer-generate-btn">⚡ Generate Live</button>
+            <div class="composer-submit-hint" id="composer-active-hint">Select a clinical task or enter a custom prompt above, then click Generate Live.</div>
+          </div>
+        </form>
+
+        <!-- Bottom Card: Prominent Live Generation Results Stage -->
+        <div class="report-card" id="active-report-card"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Slide-Over FHIR Source Drawer (Opens when clicking any Source [N] chip in Phase 3) -->
+  <div class="drawer-backdrop" id="citation-drawer-backdrop" role="dialog" aria-modal="true" aria-labelledby="drawer-resource-title">
+    <div class="drawer-panel">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.85rem; border-bottom: 1px solid var(--border); padding-bottom: 0.8rem;">
+        <div>
+          <span class="res-badge" id="drawer-resource-badge">Cited FHIR Source</span>
+          <h3 id="drawer-resource-title" style="margin: 0.35rem 0 0; font-size: 1.15rem;">Resource Details</h3>
+        </div>
+        <button type="button" class="btn btn-sm" id="close-citation-drawer-btn">✕ Close</button>
+      </div>
+      <div class="inspector-summary-grid" id="drawer-summary-grid"></div>
+      <div id="drawer-note-container" style="display: none;">
+        <div style="font-size: 0.85rem; font-weight: 700; color: var(--amber); margin-bottom: 0.35rem;">📄 Decoded Clinical Note:</div>
+        <div class="inspector-note-box" id="drawer-note-text"></div>
+      </div>
+      <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary);">Raw FHIR R4 Resource JSON:</div>
+      <pre class="inspector-json-box" id="drawer-json-box" style="max-height: 360px;">{}</pre>
+      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 0.8rem;">
+        <button type="button" class="btn btn-primary btn-sm" id="drawer-open-in-phase1-btn">🔍 View in Step 1 FHIR Browser</button>
+        <button type="button" class="btn btn-sm" id="drawer-close-bottom-btn">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Loading Custom FHIR R4 Bundle -->
+  <div class="modal-backdrop" id="custom-fhir-modal" role="dialog" aria-modal="true" aria-labelledby="custom-modal-title">
+    <div class="modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 id="custom-modal-title" style="margin: 0; font-size: 1.15rem;">Load Custom FHIR R4 Bundle (.json)</h3>
+        <button type="button" class="btn btn-sm" id="close-custom-modal-btn">✕ Close</button>
+      </div>
+      <p style="font-size: 0.92rem; color: var(--text-secondary); margin: 0.6rem 0;">
+        Upload or paste a FHIR R4 <code>Bundle</code> JSON file. Everything runs locally in your browser.
+      </p>
+      <input type="file" id="custom-fhir-file-input" accept=".json,application/json" style="margin-bottom: 0.5rem; font-size: 0.9rem;" aria-label="Upload FHIR Bundle JSON file" />
+      <textarea id="custom-fhir-textarea" class="modal-textarea" placeholder='{"resourceType": "Bundle", "type": "collection", "entry": [ ... ]}' aria-label="Custom FHIR Bundle JSON text"></textarea>
+      <div style="display: flex; justify-content: flex-end; gap: 0.65rem; flex-wrap: wrap;">
+        <button type="button" class="btn btn-sm" id="load-sample-uscore-btn">Insert Sample Bundle</button>
+        <button type="button" class="btn btn-primary btn-sm" id="apply-custom-fhir-btn">Load Chart</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Configuring Live LLM Endpoint & OpenRouter -->
+  <div class="modal-backdrop" id="llm-config-modal" role="dialog" aria-modal="true" aria-labelledby="llm-modal-title">
+    <div class="modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+        <h3 id="llm-modal-title" style="margin: 0; font-size: 1.15rem;">med-agent-hub &amp; OpenRouter Settings</h3>
+        <button type="button" class="btn btn-sm" id="close-llm-modal-btn">✕ Close</button>
+      </div>
+      <p style="font-size: 0.88rem; color: var(--text-secondary); margin: 0.65rem 0; line-height: 1.5;">
+        Connect to <code>med-agent-hub</code> (<code>http://127.0.0.1:18081</code>) to test curated WAHS+ profiles (<code>wahs-12b-kb</code>, <code>wahs-12b-raw</code>, <code>wahs-12b-xcheck</code>, <code>wahs-e4b-kb</code>), or supply an optional <strong>OpenRouter API key</strong> to unlock cloud comparison profiles (Gemma 3 27B, Qwen 2.5 72B, Llama 3.3 70B, Gemini 2.5 Flash, Claude 3.7 Sonnet).
+      </p>
+      <label for="llm-endpoint-input" style="display: block; font-size: 0.84rem; font-weight: 700; margin-bottom: 0.3rem;">med-agent-hub / OpenAI-Compatible Base URL</label>
+      <input type="text" id="llm-endpoint-input" class="qa-input" style="width: 100%; box-sizing: border-box; margin-bottom: 0.65rem; font-family: var(--font-mono);" value="http://127.0.0.1:18081" aria-label="med-agent-hub or OpenAI-compatible Base URL" />
+      <label for="openrouter-api-key-input" style="display: block; font-size: 0.84rem; font-weight: 700; margin-bottom: 0.3rem;">OpenRouter API Key (Optional — unlocks <code>wahs-openrouter-*</code> profiles)</label>
+      <input type="password" id="openrouter-api-key-input" class="qa-input" style="width: 100%; box-sizing: border-box; margin-bottom: 0.65rem; font-family: var(--font-mono);" placeholder="sk-or-v1-... (saved in browser session only)" aria-label="OpenRouter API Key" />
+      <div id="llm-modal-status-box" style="font-size: 0.85rem; color: var(--text-secondary);"></div>
+      <div class="modal-actions-row">
+        <div class="modal-preset-group">
+          <button type="button" class="btn btn-sm" id="preset-hub-llm-btn">Hub (127.0.0.1:18081)</button>
+          <button type="button" class="btn btn-sm" id="preset-local-llm-btn">Router (127.0.0.1:8077)</button>
+          <button type="button" class="btn btn-sm" id="preset-openrouter-llm-btn" title="Connect directly to OpenRouter API">OpenRouter Direct</button>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" id="save-llm-endpoint-btn">Connect &amp; Refresh Profiles</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="wahs_demo_data.js"></script>
+  <script>
+    (function () {
+      const DATA = window.WAHS_DEMO_DATA || { patients: {}, primary_persona_ids: [] };
+      const patientsMap = DATA.patients || {};
+      const personaIds = DATA.primary_persona_ids && DATA.primary_persona_ids.length
+        ? DATA.primary_persona_ids
+        : Object.keys(patientsMap);
+
+      let state = {
+        activePhase: "1",
+        activePatientId: personaIds[0] || "",
+        browserCategory: "All Core Clinical",
+        browserSearch: "",
+        selectedResourceIndex: null,
+        inspectorTab: "readable",
+        drawerResourceIndex: null,
+        budget: "8192",
+        condenseMode: "lossless_structural",
+        condensedViewType: "human",
+        filterRoomEquip: false,
+        privacyExternalShare: false,
+        audience: "patient",
+        activeSkillId: "skill-visit-brief",
+        megaMenuOpen: true,
+        customQuestionResult: null,
+        llmBaseUrl: "http://127.0.0.1:18081",
+        llmConnected: false,
+        llmModel: "wahs-12b-kb",
+        llmModels: [],
+        openRouterKey: (typeof sessionStorage !== "undefined" && sessionStorage.getItem("wahs_openrouter_key")) || "",
+        llmCache: {},
+        activeAbortController: null
+      };
+
+      const SENSITIVE_SDOH_REGEX = /abuse|violence|criminal|unemployed|housing|isolation|alcohol|drinking|dast-10|substance|limited social contact|intimate partner|audit-c|humiliation|afraid|423315002|706893006|55600006|82666-9/i;
+      const ROOM_EQUIP_REGEX = /dental x-ray|examination table|hospital bed|operating room/i;
+
+      function isSensitiveText(str) {
+        return SENSITIVE_SDOH_REGEX.test(String(str == null ? "" : str));
+      }
+
+      function isSensitiveResource(r) {
+        if (!r) return false;
+        const flags = r.flags || [];
+        if (flags.some(function (f) { return /sensitive|sdoh/i.test(String(f)); })) return true;
+        return isSensitiveText([r.display, r.summary, r.code, r.decodedNoteText].join(" "));
+      }
+
+      function isRoomEquipmentResource(r) {
+        if (!r) return false;
+        const flags = r.flags || [];
+        if (flags.some(function (f) { return /room equipment/i.test(String(f)); })) return true;
+        return r.resourceType === "Device" && ROOM_EQUIP_REGEX.test([r.display, r.summary].join(" "));
+      }
+
+      function esc(str) {
+        return String(str == null ? "" : str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      /* Clean Synthea numeric suffixes from display names (e.g. "Maurice742 Marcos263 Auer97" -> "Maurice Auer") */
+      function cleanName(rawName) {
+        const cleaned = String(rawName == null ? "" : rawName).replace(/\d+/g, "").replace(/\s+/g, " ").trim();
+        const parts = cleaned.split(" ");
+        if (parts.length >= 3) {
+          return parts[0] + " " + parts[parts.length - 1];
+        }
+        return cleaned || String(rawName || "");
+      }
+
+      /* Render inline **bold**, *italic*, `code`, bullet lists, [N] citation badges, and arrows cleanly */
+      function formatRichText(str) {
+        const cleaned = String(str == null ? "" : str)
+          .replace(/Maurice742(\s+Marcos263)?\s+Auer97/g, "Maurice Auer")
+          .replace(/Lamar193(\s+Oswaldo857)?\s+Beer512/g, "Lamar Beer")
+          .replace(/Byron202(\s+Carmen818)?\s+Emard19/g, "Byron Emard")
+          .replace(/\$\\to\$|\$to\$|\\to/g, "→")
+          .replace(/mL\/min\/\{1\.73_m2\}/g, "mL/min/1.73m²");
+        return esc(cleaned)
+          .replace(/^###\s+(.+)$/gm, '<div style="font-weight:800; color:var(--text); margin:0.85rem 0 0.35rem; font-size:0.98rem;">$1</div>')
+          .replace(/\s+-\s+\*\*([^*]+)\*\*/g, '<div style="margin-top:0.55rem;">• <strong>$1</strong></div>')
+          .replace(/^\s*[-*•]\s+\*\*([^*]+)\*\*/gm, '<div style="margin-top:0.4rem;">• <strong>$1</strong></div>')
+          .replace(/^\s*[-*•]\s+(.+)$/gm, '<div style="margin-top:0.35rem;">• $1</div>')
+          .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+          .replace(/\*([^\s*][^*\n]*[^\s*])\*/g, "<em>$1</em>")
+          .replace(/`([^`]+)`/g, "<code>$1</code>")
+          .replace(/\[(\d+(?:\s*,\s*\d+)*)\]/g, function (_m, nums) {
+            return nums.split(",").map(function (n) {
+              const cleanNum = n.trim();
+              return '<button type="button" class="inline-cite-badge" data-inline-cite="' + cleanNum + '" title="Inspect FHIR source [' + cleanNum + ']">[' + cleanNum + ']</button>';
+            }).join(" ");
+          });
+      }
+
+      /* Clean verbose ledger item strings for the Readable Summary view */
+      function formatReadableLedgerLine(rawLine) {
+        let s = String(rawLine == null ? "" : rawLine);
+        // Strip trailing code identifiers in human view
+        s = s.replace(/,\s*(SNOMED|RxNorm|CVX|LOINC):\s*[^)]+/gi, "");
+        s = s.replace(/status:\s*active,\s*/gi, "");
+        s = s.replace(/status:\s*prescribed,\s*/gi, "");
+        s = s.replace(/status:\s*completed,\s*/gi, "");
+        // Simplify verbose multi-measurement lab trend strings
+        s = s.replace(/\(initial\s+([^)]+?)\s+over\s+n=(\d+)\s+measurements,[^)]*trend:\s*([a-z]+)\)/gi, "($2 readings; initial $1, trend: $3)");
+        s = s.replace(/mL\/min\/\{1\.73_m2\}/g, "mL/min");
+        return s;
+      }
+
+      function currentPatient() {
+        return patientsMap[state.activePatientId] || Object.values(patientsMap)[0] || null;
+      }
+
+      /* Switch Active Phase (1, 2, or 3) */
+      function setPhase(phaseNum, scrollToTop) {
+        state.activePhase = String(phaseNum);
+        ["1", "2", "3"].forEach(function (num) {
+          const tab = document.getElementById("phase-tab-" + num);
+          const panel = document.getElementById("phase-panel-" + num);
+          const isAct = num === state.activePhase;
+          if (tab) {
+            tab.classList.toggle("active", isAct);
+            tab.setAttribute("aria-selected", isAct ? "true" : "false");
+          }
+          if (panel) {
+            panel.classList.toggle("active", isAct);
+          }
+        });
+
+        const nextBtn = document.getElementById("header-next-phase-btn");
+        if (nextBtn) {
+          if (state.activePhase === "1") {
+            nextBtn.textContent = "Next: Condense Chart →";
+          } else if (state.activePhase === "2") {
+            nextBtn.textContent = "Next: Skills & Q&A →";
+          } else {
+            nextBtn.textContent = "← Back to Condense";
+          }
+        }
+
+        renderContextStrip();
+        if (state.activePhase === "3") {
+          renderSkillsAndQa();
+        }
+        if (scrollToTop !== false) {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      }
+
+      /* Render Single Unified Top Context Strip */
+      function renderContextStrip() {
+        const p = currentPatient();
+        if (!p) return;
+        const modeShort = state.condenseMode === "lossless_structural" ? "Lossless" : "Grouped";
+        const budgetShort = Math.round(parseInt(state.budget, 10) / 1024) + "k";
+        const privacyTag = state.privacyExternalShare ? " • External Share" : "";
+
+        document.getElementById("ctx-patient-chip").innerHTML =
+          "👤 <strong>" + esc(cleanName(p.patient_name)) + "</strong>";
+        document.getElementById("ctx-lever-chip").innerHTML =
+          "<code>" + esc(budgetShort + " • " + modeShort + privacyTag) + "</code>";
+      }
+
+      /* PHASE 1: Render Spacious 3x2 Patient Grid */
+      function renderPersonaGrid() {
+        const grid = document.getElementById("persona-grid");
+        if (!grid) return;
+
+        grid.innerHTML = personaIds.map(function (pid) {
+          const p = patientsMap[pid];
+          if (!p) return "";
+          const isAct = pid === state.activePatientId;
+          const entriesCount = (p.fhir_browser && p.fhir_browser.total_bundle_entries) || p.total_bundle_entries || 0;
+          return (
+            '<button type="button" class="persona-pill-card ' + (isAct ? "active" : "") + '" data-pid="' + esc(pid) + '">' +
+              '<div class="persona-pill-name">' +
+                '<span>' + esc(cleanName(p.patient_name)) + '</span>' +
+                '<span class="persona-pill-count">' + entriesCount.toLocaleString() + ' items</span>' +
+              '</div>' +
+              '<div class="persona-pill-tag">' + esc(p.short_tag || p.dataset_label || "") + '</div>' +
+            '</button>'
+          );
+        }).join("");
+
+        const cur = currentPatient();
+        const summaryEl = document.getElementById("active-persona-summary");
+        if (cur && summaryEl) {
+          summaryEl.innerHTML =
+            "<strong>" + esc(cleanName(cur.patient_name)) + "</strong> (DOB <code>" + esc(cur.birth_date || "—") + "</code>) — " +
+            esc(cur.persona_bio || cur.short_tag || "");
+        }
+
+        grid.querySelectorAll(".persona-pill-card").forEach(function (card) {
+          card.addEventListener("click", function () {
+            state.activePatientId = card.getAttribute("data-pid");
+            state.browserCategory = "All Core Clinical";
+            state.browserSearch = "";
+            state.selectedResourceIndex = null;
+            state.customQuestionResult = null;
+            closeCitationDrawer();
+            const searchEl = document.getElementById("browser-search-input");
+            if (searchEl) searchEl.value = "";
+            renderAll();
+          });
+        });
+      }
+
+      /* PHASE 1: Render 2-Pane Core-Resource FHIR Browser */
+      function renderFhirBrowser() {
+        const p = currentPatient();
+        if (!p || !p.fhir_browser) return;
+        const fb = p.fhir_browser;
+        const counts = fb.category_counts || {};
+        const catOrder = [
+          "All Core Clinical",
+          "Conditions",
+          "Medications",
+          "Allergies",
+          "Labs & Vitals",
+          "Clinical Notes",
+          "Immunizations",
+          "Visits & Procedures",
+          "Devices",
+          "Claims & Billing"
+        ];
+
+        document.getElementById("browser-panel-title").textContent =
+          "Original FHIR R4 Chart — " + cleanName(p.patient_name) + (state.privacyExternalShare ? " (External-Share Filtered)" : "");
+        document.getElementById("browser-total-badge").textContent =
+          (fb.total_bundle_entries || 0).toLocaleString() + " bundle entries";
+
+        const catBar = document.getElementById("browser-cat-bar");
+        catBar.innerHTML = catOrder.map(function (cat) {
+          const c = counts[cat] || 0;
+          if (c === 0 && cat !== "All Core Clinical") return "";
+          const activeCls = state.browserCategory === cat ? "active" : "";
+          return (
+            '<button type="button" class="cat-pill ' + activeCls + '" data-cat="' + esc(cat) + '">' +
+              esc(cat) + ' (' + c.toLocaleString() + ')' +
+            '</button>'
+          );
+        }).join("");
+
+        catBar.querySelectorAll(".cat-pill").forEach(function (pill) {
+          pill.addEventListener("click", function () {
+            state.browserCategory = pill.getAttribute("data-cat");
+            renderFhirBrowser();
+          });
+        });
+
+        const q = (state.browserSearch || "").trim().toLowerCase();
+        const visibleResources = (fb.resources || []).filter(function (r) {
+          if (state.privacyExternalShare && isSensitiveResource(r)) return false;
+          if (state.filterRoomEquip && isRoomEquipmentResource(r)) return false;
+          return true;
+        });
+
+        const rows = visibleResources.filter(function (r) {
+          if (state.browserCategory === "All Core Clinical") {
+            if (!r.isCoreClinical) return false;
+          } else if (r.category !== state.browserCategory) {
+            return false;
+          }
+          if (!q) return true;
+          const hay = [
+            r.display, r.summary, r.resourceType, r.code, r.sourceOrg, r.date, r.decodedNoteText
+          ].join(" ").toLowerCase();
+          return hay.indexOf(q) !== -1;
+        });
+
+        const chosen = rows.find(function (r) {
+          return r.index === state.selectedResourceIndex;
+        }) || rows[0] || visibleResources[0] || null;
+
+        if (chosen) {
+          state.selectedResourceIndex = chosen.index;
+        } else {
+          state.selectedResourceIndex = null;
+        }
+
+        const tbody = document.getElementById("browser-table-body");
+        if (!rows.length) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">No matching FHIR resources.</td></tr>';
+        } else {
+          tbody.innerHTML = rows.map(function (r) {
+            const isSel = chosen && chosen.index === r.index;
+            return (
+              '<tr class="browser-row ' + (isSel ? "selected" : "") + '" data-rindex="' + r.index + '">' +
+                '<td><span class="res-badge">' + esc(r.resourceType) + '</span></td>' +
+                '<td>' +
+                  '<div style="font-weight: 600; color: var(--text); margin-bottom: 0.15rem;">' + esc(r.display) + '</div>' +
+                  '<div style="color: var(--text-secondary); font-size: 0.84rem;">' + esc(r.summary) + '</div>' +
+                '</td>' +
+                '<td style="font-family: var(--font-mono); font-size: 0.84rem; color: var(--text-secondary); white-space: nowrap;">' + esc((r.date || "—").slice(0, 10)) + '</td>' +
+                '<td style="font-size: 0.85rem; color: var(--text-secondary);">' + esc(r.sourceOrg || "Primary Chart") + '</td>' +
+              '</tr>'
+            );
+          }).join("");
+        }
+
+        tbody.querySelectorAll(".browser-row").forEach(function (tr) {
+          tr.addEventListener("click", function () {
+            state.selectedResourceIndex = parseInt(tr.getAttribute("data-rindex"), 10);
+            renderFhirBrowser();
+            if (window.innerWidth <= 1080) {
+              const insp = document.getElementById("resource-inspector");
+              if (insp) insp.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            }
+          });
+        });
+
+        if (chosen) {
+          document.getElementById("inspector-title").textContent =
+            chosen.resourceType + ": " + chosen.display;
+          document.getElementById("inspector-summary-grid").innerHTML =
+            '<div><strong>Category:</strong> ' + esc(chosen.category) + '</div>' +
+            '<div><strong>Date:</strong> <code>' + esc((chosen.date || "—").slice(0, 10)) + '</code></div>' +
+            '<div><strong>Source Clinic:</strong> ' + esc(chosen.sourceOrg || "Primary Chart") + '</div>' +
+            '<div><strong>Code / Status:</strong> <code>' + esc(chosen.code || chosen.status || "—") + '</code></div>' +
+            '<div style="grid-column: 1 / -1;"><strong>Summary:</strong> ' + esc(chosen.summary || chosen.display) + '</div>';
+
+          const noteCont = document.getElementById("inspector-note-container");
+          if (chosen.decodedNoteText) {
+            noteCont.style.display = "block";
+            document.getElementById("inspector-note-text").textContent = chosen.decodedNoteText;
+          } else {
+            noteCont.style.display = "none";
+          }
+          document.getElementById("inspector-json-box").textContent =
+            JSON.stringify(chosen.rawJson || {}, null, 2);
+
+          const readablePane = document.getElementById("inspector-readable-pane");
+          const jsonPane = document.getElementById("inspector-json-box");
+          if (state.inspectorTab === "json") {
+            readablePane.style.display = "none";
+            jsonPane.style.display = "block";
+          } else {
+            readablePane.style.display = "block";
+            jsonPane.style.display = "none";
+          }
+        }
+      }
+
+      /* PHASE 2: Render Spacious Condensation Studio */
+      function renderCondensationPanel() {
+        const p = currentPatient();
+        if (!p || !p.condensation_matrix) return;
+        const prep = p.prep_lever_summary || {};
+
+        document.getElementById("condensed-panel-title").textContent =
+          "Condensed Chart — " + cleanName(p.patient_name);
+        document.getElementById("count-claims-label").textContent = (prep.non_clinical_claims_count || 0).toLocaleString();
+        document.getElementById("count-b64-label").textContent = (prep.duplicate_base64_notes_count || 0).toLocaleString();
+        document.getElementById("count-equip-label").textContent = (prep.room_equipment_devices_count || 0).toLocaleString();
+        document.getElementById("count-sdoh-label").textContent = (prep.sensitive_sdoh_count || 0).toLocaleString();
+
+        const modeBucket = p.condensation_matrix[state.condenseMode] || p.condensation_matrix.lossless_structural || {};
+        const cell = modeBucket[state.budget] || modeBucket["8192"] || Object.values(modeBucket)[0];
+        if (!cell) return;
+
+        const rawTok = prep.raw_json_tokens || p.raw_est_tokens || 0;
+        document.getElementById("condensed-stats-pill").textContent =
+          rawTok.toLocaleString() + " raw tok → " + cell.actual_tokens.toLocaleString() + " tok (-" + cell.reduction_pct + "%) • " + cell.rendered_records + " lines";
+
+        const omittedMap = Object.assign({}, cell.omitted_sections || {});
+        if (!Object.keys(omittedMap).length && cell.chart_text) {
+          const ovMatch = cell.chart_text.match(/budget_overflow_omitted:\s*([^\|\n\]]+)/);
+          if (ovMatch && ovMatch[1]) {
+            ovMatch[1].split(",").forEach(function (pair) {
+              const kv = pair.trim().split("=");
+              if (kv.length === 2 && parseInt(kv[1], 10) > 0) {
+                omittedMap[kv[0].trim()] = parseInt(kv[1], 10);
+              }
+            });
+          }
+        }
+        const omittedKeys = Object.keys(omittedMap).filter(function (k) { return omittedMap[k] > 0; });
+        const omittedBox = document.getElementById("omitted-audit-content");
+        if (omittedBox) {
+          if (!omittedKeys.length && !(cell.omitted_records_count > 0)) {
+            omittedBox.innerHTML =
+              '<span style="color: var(--teal); font-weight: 600;">✓ 100% of extracted clinical items fit within this token budget.</span>';
+          } else {
+            const totalOmitted = omittedKeys.reduce(function (acc, k) { return acc + (omittedMap[k] || 0); }, 0) || cell.omitted_records_count || 0;
+            omittedBox.innerHTML =
+              '<div style="color: var(--text-secondary); margin-bottom: 0.3rem;"><strong>Retained in ' + Math.round(cell.target_tokens / 1024) + 'k budget:</strong> ' + cell.rendered_records + ' condensed lines (' + cell.actual_tokens.toLocaleString() + ' tok).</div>' +
+              '<div style="color: var(--amber);"><strong>Trimmed for ' + Math.round(cell.target_tokens / 1024) + 'k budget (' + totalOmitted.toLocaleString() + ' items):</strong> ' +
+              omittedKeys.slice(0, 8).map(function (k) { return esc(k) + " (" + omittedMap[k] + ")"; }).join(", ") +
+              (omittedKeys.length > 8 ? " + " + (omittedKeys.length - 8) + " more categories" : "") +
+              '</div>';
+          }
+        }
+
+        const humanDiv = document.getElementById("condensed-human-view");
+        const rawPre = document.getElementById("condensed-raw-view");
+        const hs = cell.human_summary || {};
+
+        if (state.condensedViewType === "raw") {
+          humanDiv.style.display = "none";
+          rawPre.style.display = "block";
+          let rawTxt = cell.chart_text || "";
+          if (state.filterRoomEquip) {
+            rawTxt = rawTxt.split("\n").filter(function (ln) {
+              return !ROOM_EQUIP_REGEX.test(ln);
+            }).join("\n");
+          }
+          if (state.privacyExternalShare) {
+            rawTxt = rawTxt.split("\n").filter(function (ln) {
+              return !isSensitiveText(ln);
+            }).join("\n");
+          }
+          rawPre.textContent = rawTxt;
+        } else {
+          humanDiv.style.display = "grid";
+          rawPre.style.display = "none";
+
+          function filterLines(arr, prioritizeMedical) {
+            const filtered = (arr || []).filter(function (item) {
+              if (state.filterRoomEquip && ROOM_EQUIP_REGEX.test(item)) return false;
+              if (state.privacyExternalShare && isSensitiveText(item)) return false;
+              return true;
+            });
+            if (!prioritizeMedical) return filtered;
+            return filtered.slice().sort(function (a, b) {
+              const aAdmin = /\(finding\)|\(situation\)|device:|dental x-ray|educated to|employ|criminal|certificate/i.test(a) ? 1 : 0;
+              const bAdmin = /\(finding\)|\(situation\)|device:|dental x-ray|educated to|employ|criminal|certificate/i.test(b) ? 1 : 0;
+              return aAdmin - bAdmin;
+            });
+          }
+
+          const sections = [
+            { title: "Active Medications", items: filterLines(hs.active_medications, false), empty: "No active medications" },
+            { title: "Active Conditions", items: filterLines(hs.active_conditions, true), empty: "No active conditions" },
+            { title: "Labs & Vital Trends", items: filterLines(hs.labs_and_vitals, false), empty: "Trimmed at this compact budget" },
+            { title: "Immunizations", items: filterLines(hs.immunizations, false), empty: "Trimmed at this compact budget" },
+            { title: "Notes, Visits & Devices", items: filterLines(hs.notes_and_visits, true), empty: "Trimmed at this compact budget" },
+            { title: "Allergies & Safety Alerts", items: filterLines(hs.allergies, false), empty: "No recorded drug allergies" }
+          ];
+
+          humanDiv.innerHTML = sections.map(function (sec) {
+            const listHtml = sec.items.length
+              ? '<ul class="cond-sec-list">' + sec.items.slice(0, 6).map(function (x) {
+                  return '<li>' + esc(formatReadableLedgerLine(x)) + '</li>';
+                }).join("") + '</ul>'
+              : '<div style="font-size: 0.88rem; color: var(--text-muted); font-style: italic;">' + esc(sec.empty) + '</div>';
+            return (
+              '<div class="cond-sec-card">' +
+                '<h4><span>' + esc(sec.title) + '</span><span class="res-badge">' + sec.items.length + '</span></h4>' +
+                listHtml +
+              '</div>'
+            );
+          }).join("");
+        }
+      }
+
+      /* Concise 1-line descriptions for the 9 Clinical Task tiles in the Card-Based Mega-Dropdown */
+      const SKILL_PROMPTS = {
+        "skill-visit-brief": "Synthesize active conditions, current medications, and key questions for your next clinician visit.",
+        "skill-hospital-stay": "Explain recent hospital stays or major procedures in plain English and summarize discharge changes.",
+        "skill-med-guide": "Explain each active medication on your chart, what it treats, and which clinic prescribed it.",
+        "skill-lab-trends": "Track lab results and biomarker trends over time, highlighting values moving out of range.",
+        "skill-vaccine-summary": "Summarize documented immunizations and preventive care status against adult/pediatric schedules.",
+        "skill-med-conflicts": "Audit active prescriptions for brand-vs-generic duplicates, drug conflicts, or clinical note hold mismatches.",
+        "skill-condition-conflicts": "Check the problem list for conflicting or outdated diagnosis stages across different clinics.",
+        "skill-chart-hygiene": "Inspect the FHIR bundle for duplicate lab panels, repeated Base64 notes, and non-clinical artifacts.",
+        "skill-privacy-preview": "Preview sensitive social history or behavioral health records before external sharing."
+      };
+
+      /* PHASE 3: Render Card-Based Clinical Task Mega-Dropdown + Separate Custom Prompt Composer & Live Stage */
+      function renderSkillsAndQa() {
+        const p = currentPatient();
+        if (!p) return;
+        const skills = p.skills || [];
+        const everydaySkills = skills.filter(function (s) { return s.group === "everyday_task"; });
+        const checkSkills = skills.filter(function (s) { return s.group === "health_check"; });
+        const activeSkill = skills.find(function (s) { return s.id === state.activeSkillId; }) || skills[0];
+        const isCustomMode = !!state.customQuestionResult;
+
+        const blockTask = document.getElementById("mode-block-task");
+        const blockCustom = document.getElementById("mode-block-custom");
+        const pillTask = document.getElementById("mode-pill-task");
+        const pillCustom = document.getElementById("mode-pill-custom");
+        if (blockTask && blockCustom) {
+          blockTask.classList.toggle("active-mode", !isCustomMode);
+          blockCustom.classList.toggle("active-mode", isCustomMode);
+        }
+        if (pillTask) {
+          pillTask.textContent = !isCustomMode ? "Active Selection" : "Click to Switch to Task";
+        }
+        if (pillCustom) {
+          pillCustom.textContent = isCustomMode ? "Active Selection" : "Write or Pick Prompt";
+        }
+
+        const triggerBtn = document.getElementById("task-mega-trigger");
+        const triggerMain = document.getElementById("task-mega-trigger-main");
+        const triggerRight = document.getElementById("task-mega-trigger-right");
+        const megaPanel = document.getElementById("task-mega-panel");
+        const taskSelectEl = document.getElementById("skill-task-select");
+
+        if (taskSelectEl) {
+          taskSelectEl.innerHTML = skills.map(function (s) {
+            const isSel = s.id === (activeSkill && activeSkill.id);
+            return '<option value="' + esc(s.id) + '"' + (isSel ? ' selected' : '') + '>' + esc(s.title) + ' (' + esc(s.status_badge) + ')</option>';
+          }).join("");
+          taskSelectEl.value = (activeSkill && activeSkill.id) || state.activeSkillId;
+        }
+
+        if (triggerMain && activeSkill) {
+          const desc = SKILL_PROMPTS[activeSkill.id] || activeSkill.subtitle || "";
+          triggerMain.innerHTML =
+            '<span class="mega-trigger-icon">' + esc(activeSkill.icon) + '</span>' +
+            '<div class="mega-trigger-text">' +
+              '<div class="mega-trigger-title">' + esc(activeSkill.title) + '</div>' +
+              '<div class="mega-trigger-desc">' + esc(desc) + '</div>' +
+            '</div>';
+        }
+        if (triggerRight && activeSkill) {
+          const openLabel = state.megaMenuOpen ? "Close Task Grid ▴" : "Browse All 9 Tasks ▾";
+          triggerRight.innerHTML =
+            '<span class="skill-badge ' + esc(activeSkill.badge_tone || "info") + '">' + esc(activeSkill.status_badge) + '</span>' +
+            '<span class="mega-chevron-pill">' + openLabel + '</span>';
+        }
+        if (triggerBtn) {
+          triggerBtn.setAttribute("aria-expanded", state.megaMenuOpen ? "true" : "false");
+        }
+
+        function renderTileHtml(s) {
+          const isSel = !isCustomMode && s.id === state.activeSkillId;
+          const desc = SKILL_PROMPTS[s.id] || s.subtitle || "";
+          return (
+            '<button type="button" class="mega-task-tile' + (isSel ? ' active' : '') + '" data-skill-id="' + esc(s.id) + '">' +
+              '<div>' +
+                '<div class="mega-tile-top">' +
+                  '<span class="mega-tile-title">' + esc(s.icon) + ' ' + esc(s.title) + '</span>' +
+                  (isSel ? '<span style="color: var(--primary); font-weight: 800; font-size: 0.85rem;">✓ Active</span>' : '') +
+                '</div>' +
+                '<div class="mega-tile-desc" style="margin-top: 0.35rem;">' + esc(desc) + '</div>' +
+              '</div>' +
+              '<div class="mega-tile-footer">' +
+                '<span class="skill-badge ' + esc(s.badge_tone || "info") + '">' + esc(s.status_badge) + '</span>' +
+              '</div>' +
+            '</button>'
+          );
+        }
+
+        if (megaPanel) {
+          megaPanel.classList.toggle("open", !!state.megaMenuOpen);
+          megaPanel.innerHTML =
+            '<div class="mega-group-heading">' +
+              '<span>Everyday Patient Tasks (5)</span>' +
+              '<span>Click any card to select task</span>' +
+            '</div>' +
+            '<div class="mega-tiles-grid">' +
+              everydaySkills.map(renderTileHtml).join("") +
+            '</div>' +
+            '<div class="mega-group-heading">' +
+              '<span>Chart Health &amp; Safety Checks (4)</span>' +
+              '<span>4-Layer Clinical KB + Live LLM Synthesis</span>' +
+            '</div>' +
+            '<div class="mega-tiles-grid">' +
+              checkSkills.map(renderTileHtml).join("") +
+            '</div>';
+
+          megaPanel.querySelectorAll(".mega-task-tile").forEach(function (tile) {
+            tile.addEventListener("click", function () {
+              const sid = tile.getAttribute("data-skill-id");
+              state.activeSkillId = sid;
+              state.customQuestionResult = null;
+              const qIn = document.getElementById("qa-question-input");
+              if (qIn) {
+                qIn.value = "";
+              }
+              renderSkillsAndQa();
+            });
+          });
+        }
+
+        /* Keep custom prompt input strictly for custom/suggested questions — never copy task text into it */
+        const qInputEl = document.getElementById("qa-question-input");
+        if (qInputEl) {
+          qInputEl.value = isCustomMode ? (state.customQuestionResult.question || "") : "";
+        }
+
+        const submitBtnEl = document.getElementById("qa-submit-btn");
+        if (submitBtnEl) {
+          if (isCustomMode) {
+            submitBtnEl.textContent = "⚡ Generate Live — 💬 Custom Prompt";
+          } else if (activeSkill) {
+            submitBtnEl.textContent = "⚡ Generate Live — " + activeSkill.icon + " " + activeSkill.title;
+          } else {
+            submitBtnEl.textContent = "⚡ Generate Live";
+          }
+        }
+
+        const hintEl = document.getElementById("composer-active-hint");
+        if (hintEl) {
+          if (isCustomMode) {
+            hintEl.innerHTML = 'Active Selection: <strong>💬 Custom Prompt</strong> — click <strong>⚡ Generate Live</strong> above to stream live LLM answer.';
+          } else if (activeSkill) {
+            hintEl.innerHTML = 'Active Selection: <strong>' + esc(activeSkill.icon + ' ' + activeSkill.title) + '</strong> — click <strong>⚡ Generate Live</strong> above to stream live LLM synthesis.';
+          }
+        }
+
+        const postureKey = state.privacyExternalShare ? "external_share" : "patient_self";
+        const qaSamples = ((p.postures || {})[postureKey] || {}).qa_samples || [];
+        const chipsContainer = document.getElementById("qa-sample-chips");
+        if (chipsContainer) {
+          const shortSamples = qaSamples.slice(0, 2);
+          const abstainSample = qaSamples[qaSamples.length - 1];
+          const displaySamples = abstainSample && shortSamples.indexOf(abstainSample) === -1
+            ? shortSamples.concat([abstainSample])
+            : shortSamples;
+
+          chipsContainer.innerHTML =
+            '<span style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">Suggested prompts:</span>' +
+            displaySamples.map(function (qa) {
+              const origIdx = qaSamples.indexOf(qa);
+              const isChipActive = isCustomMode && state.customQuestionResult && state.customQuestionResult.question === qa.question;
+              return '<button type="button" class="qa-chip' + (isChipActive ? ' active' : '') + '" data-qa-idx="' + origIdx + '">' + esc(qa.question) + '</button>';
+            }).join("");
+
+          chipsContainer.querySelectorAll(".qa-chip").forEach(function (chip) {
+            chip.addEventListener("click", function () {
+              const idx = parseInt(chip.getAttribute("data-qa-idx"), 10);
+              const chosenQa = qaSamples[idx];
+              if (chosenQa) {
+                state.megaMenuOpen = false;
+                document.getElementById("qa-question-input").value = chosenQa.question;
+                state.customQuestionResult = Object.assign({}, chosenQa);
+                renderSkillsAndQa();
+              }
+            });
+          });
+        }
+
+        renderActiveReportCard(p, skills, false);
+      }
+
+      /* Build cache key incorporating patient, skill/question, Phase 2 levers, audience, and LLM model */
+      function getLlmCacheKey(kind, idOrQuestion) {
+        return [
+          state.activePatientId,
+          kind,
+          idOrQuestion,
+          state.budget,
+          state.condenseMode,
+          state.filterRoomEquip ? "noEquip" : "withEquip",
+          state.privacyExternalShare ? "extShare" : "self",
+          state.audience,
+          state.llmModel
+        ].join("::");
+      }
+
+      /* Return active med-agent-hub profile metadata (or synthesized metadata for direct router models) */
+      function getActiveProfileMeta() {
+        const found = (state.llmModels || []).find(function (m) { return m.id === state.llmModel; });
+        const isRaw = String(state.llmModel || "").indexOf("-raw") !== -1;
+        const isXcheck = String(state.llmModel || "").indexOf("-xcheck") !== -1;
+        const isOpenRouter = String(state.llmModel || "").indexOf("openrouter") !== -1 || String(state.llmBaseUrl || "").indexOf("openrouter.ai") !== -1;
+        if (found) {
+          return found;
+        }
+        return {
+          id: state.llmModel,
+          label: state.llmModel,
+          workflow: "wahs",
+          topology: isXcheck ? "xcheck" : "single",
+          provider: isOpenRouter ? "openrouter" : "local",
+          stages: isXcheck ? ["context", "answer", "review", "gate"] : ["context", "answer", "gate"],
+          role_models: isXcheck ? { answer: "gemma-4-12b", review: "qwen3.5-9b" } : { answer: state.llmModel },
+          role_knobs: { answer: { temperature: 0.1, dry: 0.0, maxTokens: 900 } },
+          policies: {
+            provider: isOpenRouter ? "openrouter" : "local",
+            include_kb_findings: !isRaw,
+            overflow_lookup_tools: !isRaw,
+            citation_grounding: "enforce",
+            description: isRaw
+              ? "Unhinted control profile: passes ONLY the Step 2 Condensed FHIR Chart Ledger without 4-Layer Clinical KB hints."
+              : "Checked WAHS+ synthesis profile: combines the Step 2 Condensed FHIR Chart Ledger with 4-Layer Clinical KB Findings."
+          },
+          prompts: { answer: isRaw ? "wahs-raw-unhinted" : "wahs-kb-guided" },
+          system_prompts: {}
+        };
+      }
+
+      /* Extract full active Step 2 condensed ledger lines & metadata for Step 3 (no 44-line clamp) */
+      function getActiveCondensedPromptData(p) {
+        const modeBucket = (p.condensation_matrix && p.condensation_matrix[state.condenseMode])
+          || (p.condensation_matrix && p.condensation_matrix.lossless_structural)
+          || {};
+        const cell = modeBucket[state.budget] || modeBucket["8192"] || Object.values(modeBucket)[0] || {};
+        let rawLines = String(cell.chart_text || "").split("\n").filter(function (ln) { return ln.trim().length > 0; });
+        if (state.filterRoomEquip) {
+          rawLines = rawLines.filter(function (ln) {
+            return !ROOM_EQUIP_REGEX.test(ln);
+          });
+        }
+        if (state.privacyExternalShare) {
+          rawLines = rawLines.filter(function (ln) {
+            return !isSensitiveText(ln);
+          });
+        }
+
+        const ledgerExcerpt = rawLines.join("\n");
+        const promptLineCount = rawLines.length;
+        const promptTokensEst = (state.filterRoomEquip || state.privacyExternalShare)
+          ? Math.max(Math.round(ledgerExcerpt.length / 4), 40)
+          : (cell.actual_tokens || Math.max(Math.round(ledgerExcerpt.length / 4), 40));
+
+        const retainedArr = cell.retained_uuids || [];
+        let retainedMap = null;
+        if (retainedArr.length > 0) {
+          retainedMap = {};
+          retainedArr.forEach(function (u) { retainedMap[String(u)] = true; });
+        }
+
+        const omittedMap = cell.omitted_sections || {};
+        const omittedKeys = Object.keys(omittedMap).filter(function (k) { return omittedMap[k] > 0; });
+        const omittedNote = omittedKeys.length
+          ? "Note on Step 2 Budget Lever (" + Math.round(parseInt(state.budget, 10) / 1024) + "k, " + promptTokensEst.toLocaleString() + " condensed tokens, " + promptLineCount + " ledger lines): Trimmed sections at this compact budget: " +
+            omittedKeys.map(function (k) { return k + " (" + omittedMap[k] + " omitted)"; }).join(", ") + "."
+          : "All extracted clinical sections fit within the selected " + Math.round(parseInt(state.budget, 10) / 1024) + "k budget (" + promptTokensEst.toLocaleString() + " condensed tokens, " + promptLineCount + " ledger lines).";
+
+        return {
+          cell: cell,
+          ledgerExcerpt: ledgerExcerpt,
+          promptLineCount: promptLineCount,
+          promptTokensEst: promptTokensEst,
+          retainedMap: retainedMap,
+          omittedNote: omittedNote,
+          leverLabel: Math.round(parseInt(state.budget, 10) / 1024) + "k (" + promptTokensEst.toLocaleString() + " tok, " + promptLineCount + " lines) • " + (state.condenseMode === "lossless_structural" ? "Lossless" : "Grouped") + (state.privacyExternalShare ? " • External Share" : "") + (state.filterRoomEquip ? " • No Room Equip" : "")
+        };
+      }
+
+      /* Filter 4-Layer KB structured rows strictly to records retained in the active Step 2 condensed chart */
+      function filterKbRowsForCondensedChart(rows, promptData) {
+        const retainedMap = promptData && promptData.retainedMap;
+        return (rows || []).filter(function (r) {
+          const combinedText = ((r.label || "") + " " + (r.detail || "")).toLowerCase();
+          if (state.filterRoomEquip && ROOM_EQUIP_REGEX.test(combinedText)) {
+            return false;
+          }
+          if (state.privacyExternalShare && (isSensitiveText(combinedText) || /protected in external share/i.test(r.category || ""))) {
+            return false;
+          }
+          const rUuids = r.resource_uuids || [];
+          if (retainedMap && rUuids.length > 0) {
+            return rUuids.some(function (u) { return !!retainedMap[String(u)]; });
+          }
+          return true;
+        });
+      }
+
+      function filterCitationsForActivePosture(cites, p) {
+        const fbResources = (p && p.fhir_browser && p.fhir_browser.resources) || [];
+        return (cites || []).filter(function (c) {
+          const uuid = c.resource_uuid || c.resourceUuid || "";
+          const matchedRes = fbResources.find(function (r) {
+            return (uuid && r.id === uuid) || (c.index != null && r.index === c.index);
+          });
+          if (state.privacyExternalShare) {
+            if (isSensitiveText(c.text || "")) return false;
+            if (matchedRes && isSensitiveResource(matchedRes)) return false;
+          }
+          if (state.filterRoomEquip) {
+            if (ROOM_EQUIP_REGEX.test(c.text || "")) return false;
+            if (matchedRes && isRoomEquipmentResource(matchedRes)) return false;
+          }
+          return true;
+        });
+      }
+
+      /* Render collapsible Hub Profile Inspector drawer for Step 3 */
+      function renderHubProfileInspectorDrawer(activeProf, includeKb, kbCount) {
+        const policies = activeProf.policies || {};
+        const roleModels = activeProf.role_models || { answer: activeProf.id };
+        const roleKnobs = (activeProf.role_knobs && activeProf.role_knobs.answer) || { temperature: 0.1, maxTokens: 900, dry: 0.0 };
+        const sysPromptText = (activeProf.system_prompts && activeProf.system_prompts.answer) ||
+          (includeKb
+            ? "You are the Washington Health Summary (WAHS+) Clinical & Patient Synthesis Assistant operating inside med-agent-hub (server/prompts/wahs-kb-guided.txt). Combine the Condensed FHIR R4 Chart Ledger + 4-Layer Clinical KB Findings, cite [N] lines, and enforce ABSTAIN on unrecorded facts."
+            : "You are the Washington Health Summary (WAHS+) Raw-Chart Control Assistant operating inside med-agent-hub (server/prompts/wahs-raw-unhinted.txt). Answer ONLY from the raw Condensed FHIR R4 Chart Ledger without 4-Layer Clinical KB hints.");
+        const stagesStr = (activeProf.stages || ["context", "answer", "gate"]).join(" → ");
+        const modelsStr = Object.keys(roleModels).map(function (k) { return k + ": " + roleModels[k]; }).join(" • ");
+        const kbPolicyBadge = includeKb
+          ? '<span class="skill-badge info">4-Layer Clinical KB: ON (' + kbCount + ' retained findings)</span>'
+          : '<span class="skill-badge warn">4-Layer Clinical KB: OFF (Unhinted Raw-Chart Control)</span>';
+
+        return (
+          '<details class="evidence-details-drawer" id="hub-profile-inspector-drawer">' +
+            '<summary>' +
+              '<span>⚙️ Inspect Active Hub Profile (<code>' + esc(activeProf.id) + '</code>)</span>' +
+              '<span style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">' +
+                kbPolicyBadge +
+                '<span>Provider: <code>' + esc(activeProf.provider || "local") + '</code></span>' +
+              '</span>' +
+            '</summary>' +
+            '<div class="evidence-drawer-body">' +
+              '<div class="clinician-tech-box" style="margin-bottom: 0.75rem;">' +
+                '<div><strong>Profile Label:</strong> ' + esc(activeProf.label || activeProf.id) + '</div>' +
+                '<div style="margin-top: 0.25rem;"><strong>Description:</strong> ' + esc(policies.description || "Curated med-agent-hub profile for WAHS+ experimentation.") + '</div>' +
+                '<div style="margin-top: 0.25rem;"><strong>Workflow &amp; Stages:</strong> <code>' + esc(activeProf.workflow || "wahs") + '</code> (' + esc(stagesStr) + ') • <strong>Role Models:</strong> <code>' + esc(modelsStr) + '</code></div>' +
+                '<div style="margin-top: 0.25rem;"><strong>Sampling Knobs:</strong> <code>temperature=' + esc(roleKnobs.temperature) + ', maxTokens=' + esc(roleKnobs.maxTokens || 900) + ', dry=' + esc(roleKnobs.dry || 0) + '</code> • <strong>Policies:</strong> <code>include_kb_findings=' + esc(String(includeKb)) + ', citation_grounding=' + esc(policies.citation_grounding || "enforce") + '</code></div>' +
+              '</div>' +
+              '<div style="font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.35rem;">Configured System Prompt (<code>med-agent-hub:server/prompts/' + esc((activeProf.prompts && activeProf.prompts.answer) || (includeKb ? "wahs-kb-guided" : "wahs-raw-unhinted")) + '.txt</code>):</div>' +
+              '<pre class="ledger-pre" style="max-height: 210px;">' + esc(sysPromptText) + '</pre>' +
+            '</div>' +
+          '</details>'
+        );
+      }
+
+      /* Map [N] bracket references in live LLM output to clickable FHIR resource citations */
+      function resolveLiveCitations(llmText, p, fallbackCites) {
+        const fbResources = (p && p.fhir_browser && p.fhir_browser.resources) || [];
+        const byIndex = {};
+        fbResources.forEach(function (r) { byIndex[String(r.index)] = r; });
+
+        const knownByLedgerIndex = {};
+        (fallbackCites || []).forEach(function (c) {
+          if (c.index != null) knownByLedgerIndex[String(c.index)] = c;
+        });
+        ((p && p.skills) || []).forEach(function (sk) {
+          (sk.citations || []).forEach(function (c) {
+            if (c.index != null && !knownByLedgerIndex[String(c.index)]) {
+              knownByLedgerIndex[String(c.index)] = c;
+            }
+          });
+        });
+        ["patient_self", "external_share"].forEach(function (pk) {
+          const samples = (((p && p.postures) || {})[pk] || {}).qa_samples || [];
+          samples.forEach(function (qa) {
+            (qa.citations || []).forEach(function (c) {
+              if (c.index != null && !knownByLedgerIndex[String(c.index)]) {
+                knownByLedgerIndex[String(c.index)] = c;
+              }
+            });
+          });
+        });
+
+        /* Also index lines in the active condensed chart_text by [N] */
+        const modeBucket = (p && p.condensation_matrix && p.condensation_matrix[state.condenseMode])
+          || (p && p.condensation_matrix && p.condensation_matrix.lossless_structural)
+          || {};
+        const cell = modeBucket[state.budget] || modeBucket["8192"] || Object.values(modeBucket)[0] || {};
+        const ledgerLineByIdx = {};
+        String(cell.chart_text || "").split("\n").forEach(function (ln) {
+          const m = ln.match(/^\s*\[(\d+)\]\s*(.+)$/);
+          if (m) ledgerLineByIdx[m[1]] = m[2].trim();
+        });
+
+        const citedIndices = [];
+        const regex = /\[(\d+(?:\s*,\s*\d+)*)\]/g;
+        let m;
+        while ((m = regex.exec(String(llmText || ""))) !== null) {
+          m[1].split(",").forEach(function (part) {
+            const num = part.trim();
+            if (num && citedIndices.indexOf(num) === -1) {
+              citedIndices.push(num);
+            }
+          });
+        }
+
+        const resolved = [];
+        citedIndices.forEach(function (idxStr) {
+          if (knownByLedgerIndex[idxStr]) {
+            resolved.push(knownByLedgerIndex[idxStr]);
+          } else if (byIndex[idxStr]) {
+            const r = byIndex[idxStr];
+            resolved.push({
+              index: r.index,
+              resource_type: r.resourceType,
+              resource_uuid: r.id,
+              text: r.display + (r.summary ? " — " + r.summary : "")
+            });
+          } else if (ledgerLineByIdx[idxStr]) {
+            const lineText = ledgerLineByIdx[idxStr];
+            const dateMatch = lineText.match(/^\((\d{4}-\d{2}-\d{2})\)\s*/);
+            const dateStr = dateMatch ? dateMatch[1] : "";
+            const bodyAfterDate = dateMatch ? lineText.slice(dateMatch[0].length) : lineText;
+            const colonIdx = bodyAfterDate.indexOf(":");
+            const typeLabel = colonIdx !== -1 ? bodyAfterDate.slice(0, colonIdx).trim() : "FHIR";
+            const restText = colonIdx !== -1 ? bodyAfterDate.slice(colonIdx + 1).trim() : bodyAfterDate;
+            const dispPrefix = restText.split("(")[0].trim().toLowerCase();
+            const matchedFb = fbResources.find(function (r) {
+              return (dispPrefix && String(r.display || "").toLowerCase().indexOf(dispPrefix.slice(0, 18)) !== -1)
+                && (!dateStr || String(r.date || "").indexOf(dateStr) === 0);
+            }) || fbResources.find(function (r) {
+              return dispPrefix && String(r.display || "").toLowerCase().indexOf(dispPrefix.slice(0, 18)) !== -1;
+            });
+            resolved.push({
+              index: parseInt(idxStr, 10),
+              resource_type: matchedFb ? matchedFb.resourceType : typeLabel,
+              resource_uuid: matchedFb ? matchedFb.id : ("ledger-" + idxStr),
+              text: lineText
+            });
+          }
+        });
+
+        return resolved.length ? resolved : (fallbackCites || []);
+      }
+
+      /* Parse streamed LLM text into SUMMARY and QUESTIONS_FOR_DOCTOR sections */
+      function parseStreamedSections(rawText) {
+        const cleaned = String(rawText || "").trim();
+        const splitRegex = /(?:^|\n)\s*(?:\*\*|###\s*)?QUESTIONS_FOR_DOCTOR\s*:?(?:\*\*)?/i;
+        const parts = cleaned.split(splitRegex);
+        let summaryPart = (parts[0] || "")
+          .replace(/^(?:\*\*|###\s*)?SUMMARY\s*:?(?:\*\*)?\s*/i, "")
+          .trim();
+        const questionsRaw = (parts[1] || "").trim();
+        const questionsList = questionsRaw
+          ? questionsRaw.split(/\n+/)
+              .map(function (ln) { return ln.replace(/^\s*(?:[-*•]|\d+\.)\s*/, "").trim(); })
+              .filter(function (ln) { return ln.length > 3; })
+          : [];
+        const hasNumericCite = /\[\d+(?:\s*,\s*\d+)*\]/.test(summaryPart);
+        const isAbstained = /(?:^|\n)\s*(?:[-*•]\s*)?ABSTAIN\s*:/i.test(summaryPart) ||
+          (!hasNumericCite && /\b(?:no (?:documented )?record|not recorded in (?:the |your )?chart|must abstain|abstain from)\b/i.test(summaryPart));
+        summaryPart = summaryPart.replace(/(^|\n)\s*([-*•]\s*)?ABSTAIN\s*:\s*/gi, "$1$2");
+        return {
+          summary: summaryPart,
+          questions: questionsList,
+          abstained: isAbstained
+        };
+      }
+
+      /* Stream a live completion from med-agent-hub (:18081), local llama-server (:8077), or OpenRouter */
+      async function streamLiveLlm(cacheKey, messages, p, fallbackCites, fallbackSummary, fallbackQuestions, promptData) {
+        if (!state.llmConnected) return;
+        if (state.activeAbortController) {
+          try { state.activeAbortController.abort(); } catch (e) {}
+        }
+        const controller = new AbortController();
+        state.activeAbortController = controller;
+
+        const pillEl = document.getElementById("live-llm-telemetry-pill");
+        const summaryEl = document.getElementById("live-llm-summary-box");
+        const questionsUl = document.getElementById("live-llm-questions-list");
+        const citesWrapper = document.getElementById("live-llm-citations-wrapper");
+        const badgeEl = document.getElementById("live-llm-status-badge");
+
+        const t0 = performance.now();
+        let ttftMs = null;
+        let accumulated = "";
+        const inputTokStr = promptData
+          ? (promptData.promptTokensEst.toLocaleString() + " tok (" + promptData.promptLineCount + " lines)")
+          : "";
+
+        if (pillEl) {
+          pillEl.className = "llm-live-pill streaming";
+          pillEl.innerHTML = "⚡ Streaming <strong>" + esc(state.llmModel) + "</strong>" + (inputTokStr ? " • Input: " + esc(inputTokStr) : "") + "...";
+        }
+        if (summaryEl && !fallbackSummary) {
+          summaryEl.innerHTML = '<span style="color: var(--primary); font-weight: 600;">⚡ Generating live response from <code>' + esc(state.llmModel) + '</code> over Step 2 condensed chart (' + esc(inputTokStr || "active budget") + ')...</span>';
+        }
+
+        try {
+          const baseClean = state.llmBaseUrl.replace(/\/+$/, "");
+          const completionsUrl = baseClean.endsWith("/v1")
+            ? (baseClean + "/chat/completions")
+            : (baseClean + "/v1/chat/completions");
+          const reqHeaders = { "Content-Type": "application/json" };
+          if (state.openRouterKey) {
+            reqHeaders["X-OpenRouter-Key"] = state.openRouterKey;
+            if (baseClean.indexOf("openrouter.ai") !== -1) {
+              reqHeaders["Authorization"] = "Bearer " + state.openRouterKey;
+              reqHeaders["HTTP-Referer"] = "https://wahs-demo.openclinai.org";
+              reqHeaders["X-Title"] = "OpenClinAI WAHS+ Explorer";
+            }
+          }
+
+          const resp = await fetch(completionsUrl, {
+            method: "POST",
+            headers: reqHeaders,
+            body: JSON.stringify({
+              model: state.llmModel,
+              stream: true,
+              temperature: 0.1,
+              max_tokens: 900,
+              messages: messages
+            }),
+            signal: controller.signal
+          });
+
+          if (!resp.ok || !resp.body) {
+            throw new Error("HTTP " + resp.status);
+          }
+
+          const reader = resp.body.getReader();
+          const decoder = new TextDecoder("utf-8");
+          let buffer = "";
+
+          while (true) {
+            const step = await reader.read();
+            if (step.done) break;
+            buffer += decoder.decode(step.value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (let i = 0; i < lines.length; i++) {
+              const ln = lines[i].trim();
+              if (!ln.startsWith("data:")) continue;
+              const dataStr = ln.slice(5).trim();
+              if (dataStr === "[DONE]") break;
+              try {
+                const pkt = JSON.parse(dataStr);
+                const delta = (((pkt.choices || [])[0] || {}).delta || {}).content || "";
+                if (delta) {
+                  if (ttftMs === null) {
+                    ttftMs = Math.round(performance.now() - t0);
+                  }
+                  accumulated += delta;
+                  const parsed = parseStreamedSections(accumulated);
+                  if (summaryEl && parsed.summary) {
+                    summaryEl.innerHTML = formatRichText(parsed.summary);
+                  }
+                  if (questionsUl && parsed.questions.length) {
+                    questionsUl.innerHTML = parsed.questions.map(function (qItem) {
+                      return "<li>" + formatRichText(qItem) + "</li>";
+                    }).join("");
+                  }
+                  if (pillEl) {
+                    const elapsedSec = ((performance.now() - t0) / 1000).toFixed(1);
+                    pillEl.innerHTML =
+                      "⚡ Streaming <strong>" + esc(state.llmModel) + "</strong>" +
+                      (inputTokStr ? " • Input: " + esc(inputTokStr) : "") +
+                      " • TTFT " + (ttftMs / 1000).toFixed(2) + "s • " + elapsedSec + "s";
+                  }
+                }
+              } catch (parseErr) {}
+            }
+          }
+
+          const totalMs = Math.round(performance.now() - t0);
+          if (ttftMs === null) ttftMs = totalMs;
+          const finalParsed = parseStreamedSections(accumulated);
+          const finalSummaryHtml = formatRichText(finalParsed.summary || fallbackSummary || "");
+          const finalQuestions = finalParsed.questions.length ? finalParsed.questions : (fallbackQuestions || []);
+          const finalCites = resolveLiveCitations(accumulated, p, fallbackCites);
+
+          state.llmCache[cacheKey] = {
+            summaryHtml: finalSummaryHtml,
+            questionsList: finalQuestions,
+            abstained: finalParsed.abstained,
+            ttftMs: ttftMs,
+            totalMs: totalMs,
+            inputTokStr: inputTokStr,
+            model: state.llmModel,
+            cites: finalCites
+          };
+
+          if (summaryEl) summaryEl.innerHTML = finalSummaryHtml;
+          if (questionsUl && finalQuestions.length) {
+            questionsUl.innerHTML = finalQuestions.map(function (qItem) {
+              return "<li>" + formatRichText(qItem) + "</li>";
+            }).join("");
+          }
+          if (badgeEl && finalParsed.abstained) {
+            badgeEl.className = "skill-badge warn";
+            badgeEl.textContent = "Safety Abstention (Live LLM Verified)";
+          }
+          if (pillEl) {
+            pillEl.className = "llm-live-pill done";
+            pillEl.innerHTML =
+              "🟢 Profile: <strong>" + esc(state.llmModel) + "</strong>" +
+              (inputTokStr ? " • Input: " + esc(inputTokStr) : "") +
+              " • TTFT " + (ttftMs / 1000).toFixed(2) + "s • Total " + (totalMs / 1000).toFixed(2) + "s";
+          }
+          if (citesWrapper) {
+            citesWrapper.innerHTML = renderCitationsBar(finalCites);
+          }
+          const reportCardEl = document.getElementById("active-report-card");
+          if (reportCardEl) {
+            bindCitationClicks(reportCardEl, p);
+          }
+        } catch (err) {
+          if (err && err.name === "AbortError") return;
+          if (pillEl) {
+            pillEl.className = "llm-live-pill offline";
+            pillEl.innerHTML = "⚠️ Live LLM call failed (" + esc(err.message || "offline") + ") — showing baseline";
+          }
+          if (summaryEl && fallbackSummary) {
+            summaryEl.innerHTML = formatRichText(fallbackSummary);
+          }
+        }
+      }
+
+      function renderActiveReportCard(p, skills, forceLiveRefresh) {
+        const container = document.getElementById("active-report-card");
+        if (!container) return;
+        const promptData = getActiveCondensedPromptData(
+          p,
+          state.customQuestionResult ? state.customQuestionResult.question : state.activeSkillId
+        );
+        const activeProf = getActiveProfileMeta();
+        const includeKb = !(activeProf && activeProf.policies && activeProf.policies.include_kb_findings === false);
+        const inputTokSummary = promptData.promptTokensEst.toLocaleString() + " tok (" + promptData.promptLineCount + " lines)";
+
+        if (state.customQuestionResult) {
+          const qa = state.customQuestionResult;
+          const cites = qa.citations || [];
+          const pName = cleanName(p && p.patient_name);
+          const totalCount = ((p && p.fhir_browser && p.fhir_browser.total_bundle_entries) || (p && p.total_bundle_entries) || 0).toLocaleString();
+          const fallbackSummary = qa.abstained
+            ? "Checked all " + totalCount + " records in " + pName + "'s chart: there is no documented record matching `" + qa.question + "`. For patient safety, this assistant abstains rather than guessing or fabricating unrecorded clinical history."
+            : (qa.patient_plain_summary || qa.answer || "");
+          const fallbackAskList = qa.abstained
+            ? ["Ask your doctor whether this test, allergy, or procedure was recorded at an outside clinic and should be added to your chart."]
+            : (qa.what_to_ask_doctor || ["Ask your doctor to review these chart entries with you at your next visit."]);
+
+          const shouldRunLive = !!(forceLiveRefresh || qa.forceLiveLlm);
+          const cacheKey = getLlmCacheKey("qa", qa.question);
+          if (shouldRunLive) {
+            delete state.llmCache[cacheKey];
+            delete qa.forceLiveLlm;
+          }
+          const cached = state.llmCache[cacheKey];
+
+          const allFilteredKbLines = [];
+          (skills || []).forEach(function (sk) {
+            const retainedRows = filterKbRowsForCondensedChart(sk.structured_rows || [], promptData);
+            retainedRows.forEach(function (r) {
+              allFilteredKbLines.push("- [" + sk.title + " | " + r.category + "] " + r.label + ": " + r.detail);
+            });
+          });
+          const kbAlertsText = includeKb
+            ? (allFilteredKbLines.slice(0, 14).join("\n") || "None flagged in active condensed chart")
+            : "";
+
+          const initialSummaryHtml = cached
+            ? cached.summaryHtml
+            : formatRichText(fallbackSummary);
+          const initialQuestions = cached
+            ? cached.questionsList
+            : fallbackAskList;
+          const initialCites = filterCitationsForActivePosture(cached ? cached.cites : cites, p);
+          const initialPillHtml = cached
+            ? "🟢 Profile: <strong>" + esc(cached.model) + "</strong> • Input: " + esc(cached.inputTokStr || inputTokSummary) + " • TTFT " + (cached.ttftMs / 1000).toFixed(2) + "s • Total " + (cached.totalMs / 1000).toFixed(2) + "s"
+            : (state.llmConnected
+                ? (shouldRunLive ? "⚡ Preparing live LLM generation..." : "⚪ Ready (" + esc(inputTokSummary) + ") — Click ⚡ Generate Live")
+                : "⚪ Precomputed Baseline (LLM Offline)");
+          const initialPillClass = cached ? "done" : (state.llmConnected && shouldRunLive ? "streaming" : "offline");
+
+          const promptPreviewText =
+            "Patient: " + pName + " (DOB " + ((p && p.birth_date) || "unknown") + ")\n" +
+            "Active Step 2 Condensation Levers: " + promptData.leverLabel + "\n" +
+            "Active Hub Profile: " + state.llmModel + " (include_kb_findings=" + String(includeKb) + ")\n" +
+            promptData.omittedNote + "\n\n" +
+            "Condensed FHIR Chart Ledger (" + promptData.promptLineCount + " lines):\n" + promptData.ledgerExcerpt +
+            (includeKb ? ("\n\n4-Layer Clinical KB Findings (Filtered to Retained Step 2 Chart):\n" + kbAlertsText) : "\n\n[4-Layer Clinical KB Findings OMITTED by profile policy: Unhinted Raw-Chart Control]");
+
+          container.innerHTML =
+            '<div class="report-card-header">' +
+              '<h3 class="report-card-title">💬 Q: ' + esc(qa.question) + '</h3>' +
+              '<div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">' +
+                '<span class="llm-live-pill ' + initialPillClass + '" id="live-llm-telemetry-pill">' + initialPillHtml + '</span>' +
+                '<span class="skill-badge ' + ((cached ? cached.abstained : qa.abstained) ? "warn" : "info") + '" id="live-llm-status-badge">' +
+                  esc((cached ? cached.abstained : qa.abstained) ? "Safety Abstention (Unrecorded Fact)" : "Grounded in Condensed Chart") +
+                '</span>' +
+              '</div>' +
+            '</div>' +
+            '<div class="live-generation-hero">' +
+              '<div class="live-hero-subbar">' +
+                '<span>✨ Live Hub Profile Synthesis (<code>' + esc(state.llmModel) + '</code>)</span>' +
+                '<span style="color: var(--text-muted); font-weight: 600;">Step 2 Input: ' + esc(promptData.leverLabel) + '</span>' +
+              '</div>' +
+              '<div class="report-summary-box" id="live-llm-summary-box">' + initialSummaryHtml + '</div>' +
+            '</div>' +
+            '<div class="remediation-box">' +
+              '<h4>💬 Questions to Ask Your Doctor</h4>' +
+              '<ul id="live-llm-questions-list">' +
+                initialQuestions.map(function (item) { return '<li>' + formatRichText(item) + '</li>'; }).join("") +
+              '</ul>' +
+            '</div>' +
+            '<div id="live-llm-citations-wrapper">' + renderCitationsBar(initialCites) + '</div>' +
+            renderHubProfileInspectorDrawer(activeProf, includeKb, allFilteredKbLines.length) +
+            '<details class="evidence-details-drawer">' +
+              '<summary><span>🔍 Inspect Full Condensed Prompt Context Sent to LLM (' + promptData.promptLineCount + ' ledger lines)</span><span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">' + esc(promptData.leverLabel) + '</span></summary>' +
+              '<div class="evidence-drawer-body">' +
+                (qa.clinician_technical_note
+                  ? '<div class="clinician-tech-box" style="margin-bottom: 0.75rem;"><strong>Clinical Provenance:</strong> ' + esc(qa.clinician_technical_note) + '</div>'
+                  : '') +
+                '<pre class="ledger-pre" style="max-height: 280px;">' + esc(promptPreviewText) + '</pre>' +
+              '</div>' +
+            '</details>';
+
+          bindCitationClicks(container, p);
+
+          if (state.llmConnected && shouldRunLive) {
+            const sysMsg = (activeProf.system_prompts && activeProf.system_prompts.answer) ||
+              (includeKb
+                ? "You are the WAHS+ Clinical Chart Assistant helping a patient and their care team understand their condensed health record. Answer the task or question in clear, empathetic plain English using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, colonoscopy, MRI, or fact NOT recorded in the chart, begin your SUMMARY with 'ABSTAIN:' and clearly explain that you checked their chart and there is no record of it, so you abstain for safety rather than guessing. Format your output in two parts:\nSUMMARY:\n2-3 clear plain-English bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 specific questions to review with the clinician."
+                : "You are the WAHS+ Raw-Chart Control Assistant. Answer the task or question using ONLY the provided Condensed FHIR Chart Ledger without 4-Layer KB hints. Cite specific chart entries using [N] brackets. If a requested record is absent from the active condensed chart, begin your SUMMARY with 'ABSTAIN:'. Format your output in two parts:\nSUMMARY:\n<Concise synthesis with [N] citations>\nQUESTIONS_FOR_DOCTOR:\n- <2-3 specific questions>");
+
+            const userMsg = promptPreviewText + "\n\nTask / Question: " + qa.question;
+
+            streamLiveLlm(cacheKey, [
+              { role: "system", content: sysMsg },
+              { role: "user", content: userMsg }
+            ], p, cites, fallbackSummary, fallbackAskList, promptData);
+          }
+          return;
+        }
+
+        const skill = skills.find(function (s) { return s.id === state.activeSkillId; }) || skills[0];
+        if (!skill) return;
+
+        const shouldRunLive = !!forceLiveRefresh;
+        const cacheKey = getLlmCacheKey("skill", skill.id);
+        if (shouldRunLive) {
+          delete state.llmCache[cacheKey];
+        }
+        const cached = state.llmCache[cacheKey];
+
+        const allStructRows = skill.structured_rows || [];
+        const structRows = filterKbRowsForCondensedChart(allStructRows, promptData);
+        const isPrivacyRedactedView = state.privacyExternalShare && skill.id === "skill-privacy-preview";
+        const effectiveStructRows = isPrivacyRedactedView
+          ? [{
+              category: "External-Share Redaction Active",
+              label: allStructRows.length + " Sensitive SDOH / Behavioral / Personal-Safety Record(s) Withheld",
+              detail: "Sensitive social history, behavioral health, and personal-safety findings are stripped from the external-share view, condensed ledger, and LLM prompt under 42 CFR Part 2 / WA My Health My Data Act while retaining 100% of core clinical safety records.",
+              source_org: "WAHS+ Privacy Gate",
+              code: "REDACTED (" + allStructRows.length + ")",
+              tone: "ok"
+            }]
+          : structRows;
+        const rowsHtml = effectiveStructRows.map(function (r) {
+          return (
+            '<tr>' +
+              '<td><span class="skill-badge ' + esc(r.tone || "info") + '">' + esc(r.category) + '</span></td>' +
+              '<td style="font-weight: 700; color: var(--text);">' + esc(r.label) + '</td>' +
+              '<td style="color: var(--text-secondary);">' + formatRichText(r.detail) + '</td>' +
+              '<td>' +
+                '<div style="font-weight: 600; font-size: 0.86rem;">' + esc(r.source_org) + '</div>' +
+                (r.code
+                  ? '<div style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted);">' + esc(r.code) + '</div>'
+                  : '') +
+              '</td>' +
+            '</tr>'
+          );
+        }).join("");
+
+        const effectivePlainSummary = isPrivacyRedactedView
+          ? ("External-Share Privacy Redaction Active: **" + allStructRows.length + " sensitive social, behavioral, or personal-safety entry(ies)** have been **redacted and withheld** from this external-share view and prompt context under 42 CFR Part 2 and the WA My Health My Data Act. Your complete medical safety core (allergies, active medical conditions, medications, and implants) remains intact.")
+          : (state.privacyExternalShare && isSensitiveText(skill.plain_english_summary)
+              ? skill.plain_english_summary.split(/(?<=\.)\s+/).filter(function (sent) { return !isSensitiveText(sent); }).join(" ")
+              : skill.plain_english_summary);
+
+        const initialSummaryHtml = cached
+          ? cached.summaryHtml
+          : formatRichText(effectivePlainSummary);
+        const initialQuestions = cached
+          ? cached.questionsList
+          : (skill.suggested_remediation || []);
+        const initialCites = filterCitationsForActivePosture(cached ? cached.cites : (skill.citations || []), p);
+        const initialPillHtml = cached
+          ? "🟢 Profile: <strong>" + esc(cached.model) + "</strong> • Input: " + esc(cached.inputTokStr || inputTokSummary) + " • TTFT " + (cached.ttftMs / 1000).toFixed(2) + "s • Total " + (cached.totalMs / 1000).toFixed(2) + "s"
+          : (state.llmConnected
+              ? (shouldRunLive ? "⚡ Preparing live LLM synthesis..." : "⚪ Ready (" + esc(inputTokSummary) + ") — Click ⚡ Generate Live")
+              : "⚪ Precomputed Baseline (LLM Offline)");
+        const initialPillClass = cached ? "done" : (state.llmConnected && shouldRunLive ? "streaming" : "offline");
+        const effectiveBadgeText = isPrivacyRedactedView
+          ? ("External-Share Redaction Active (" + allStructRows.length + " Withheld)")
+          : skill.status_badge;
+        const effectiveBadgeTone = isPrivacyRedactedView ? "ok" : (skill.badge_tone || "info");
+
+        const pName = cleanName(p && p.patient_name);
+        const skillFindingsText = structRows.map(function (r) {
+          return "- [" + r.category + "] " + r.label + ": " + r.detail + " (Source: " + r.source_org + ")";
+        }).join("\n");
+        const promptPreviewText =
+          "Patient: " + pName + " (DOB " + ((p && p.birth_date) || "unknown") + ")\n" +
+          "Active Step 2 Condensation Levers: " + promptData.leverLabel + "\n" +
+          "Active Hub Profile: " + state.llmModel + " (include_kb_findings=" + String(includeKb) + ")\n" +
+          promptData.omittedNote + "\n\n" +
+          "Condensed FHIR Chart Ledger (" + promptData.promptLineCount + " lines):\n" + promptData.ledgerExcerpt +
+          (includeKb
+            ? ("\n\n4-Layer Clinical KB Findings for '" + skill.title + "' (Filtered to Retained Step 2 Chart):\n" + (skillFindingsText || "None retained in this budget"))
+            : "\n\n[4-Layer Clinical KB Findings OMITTED by profile policy: Unhinted Raw-Chart Control]");
+
+        container.innerHTML =
+          '<div class="report-card-header">' +
+            '<h3 class="report-card-title">' + esc(skill.icon) + ' ' + esc(skill.title) + '</h3>' +
+            '<div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">' +
+              '<span class="llm-live-pill ' + initialPillClass + '" id="live-llm-telemetry-pill">' + initialPillHtml + '</span>' +
+              '<span class="skill-badge ' + esc(effectiveBadgeTone) + '" id="live-llm-status-badge">' + esc(effectiveBadgeText) + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="live-generation-hero">' +
+            '<div class="live-hero-subbar">' +
+              '<span>✨ Live Hub Profile Synthesis (<code>' + esc(state.llmModel) + '</code>)</span>' +
+              '<span style="color: var(--text-muted); font-weight: 600;">Step 2 Input: ' + esc(promptData.leverLabel) + '</span>' +
+            '</div>' +
+            '<div class="report-summary-box" id="live-llm-summary-box">' + initialSummaryHtml + '</div>' +
+          '</div>' +
+          '<div class="remediation-box">' +
+            '<h4>💡 Suggested Next Steps &amp; Questions for Your Doctor (Read-Only)</h4>' +
+            '<ul id="live-llm-questions-list">' +
+              initialQuestions.map(function (item) { return '<li>' + formatRichText(item) + '</li>'; }).join("") +
+            '</ul>' +
+          '</div>' +
+          '<div id="live-llm-citations-wrapper">' + renderCitationsBar(initialCites) + '</div>' +
+          renderHubProfileInspectorDrawer(activeProf, includeKb, structRows.length) +
+          '<details class="evidence-details-drawer">' +
+            '<summary>' +
+              '<span>📋 Supporting 4-Layer KB Structured Findings (' + (includeKb ? (structRows.length + " of " + allStructRows.length + " retained at " + Math.round(parseInt(state.budget, 10) / 1024) + "k") : "Bypassed in Raw Control Mode") + ')</span>' +
+              '<span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">Click to expand deterministic table</span>' +
+            '</summary>' +
+            '<div class="evidence-drawer-body" style="overflow-x: auto;">' +
+              '<table class="report-items-table">' +
+                '<thead><tr><th style="width: 155px;">Status</th><th style="width: 205px;">Item</th><th>Details</th><th style="width: 160px;">Source Clinic</th></tr></thead>' +
+                '<tbody>' + rowsHtml + '</tbody>' +
+              '</table>' +
+              '<div class="clinician-tech-box" style="margin-top: 0.75rem;">' +
+                '<div><strong>KB Rule Provenance:</strong> ' + esc(skill.clinician_technical_note || "Standard clinical rule") + '</div>' +
+                (skill.lever_sensitivity_note
+                  ? '<div style="margin-top: 0.35rem;"><strong>Condensation Lever Sensitivity:</strong> ' + esc(skill.lever_sensitivity_note) + '</div>'
+                  : '') +
+              '</div>' +
+            '</div>' +
+          '</details>' +
+          '<details class="evidence-details-drawer">' +
+            '<summary>' +
+              '<span>🔍 Inspect Full Condensed Prompt Sent to LLM (' + promptData.promptLineCount + ' ledger lines)</span>' +
+              '<span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">' + esc(promptData.leverLabel) + '</span>' +
+            '</summary>' +
+            '<div class="evidence-drawer-body">' +
+              '<pre class="ledger-pre" style="max-height: 280px;">' + esc(promptPreviewText) + '</pre>' +
+            '</div>' +
+          '</details>';
+
+        bindCitationClicks(container, p);
+
+        if (state.llmConnected && shouldRunLive) {
+          const sysMsg = (activeProf.system_prompts && activeProf.system_prompts.answer) ||
+            (includeKb
+              ? "You are the WAHS+ Clinical Chart Assistant helping a patient and their care team understand their condensed health record. Answer the task or question in clear, empathetic plain English using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, colonoscopy, MRI, or fact NOT recorded in the chart, begin your SUMMARY with 'ABSTAIN:' and clearly explain that you checked their chart and there is no record of it, so you abstain for safety rather than guessing. Format your output in two parts:\nSUMMARY:\n2-3 clear plain-English bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 specific questions to review with the clinician."
+              : "You are the WAHS+ Raw-Chart Control Assistant. Answer the task or question using ONLY the provided Condensed FHIR Chart Ledger without 4-Layer KB hints. Cite specific chart entries using [N] brackets. If a requested record is absent from the active condensed chart, begin your SUMMARY with 'ABSTAIN:'. Format your output in two parts:\nSUMMARY:\n<Concise synthesis with [N] citations>\nQUESTIONS_FOR_DOCTOR:\n- <2-3 specific questions>");
+
+          const userMsg =
+            promptPreviewText + "\n\n" +
+            "Task / Question: " + (SKILL_PROMPTS[skill.id] || ("Synthesize the SUMMARY and QUESTIONS_FOR_DOCTOR for the skill '" + skill.title + "'."));
+
+          streamLiveLlm(cacheKey, [
+            { role: "system", content: sysMsg },
+            { role: "user", content: userMsg }
+          ], p, skill.citations || [], skill.plain_english_summary, skill.suggested_remediation || [], promptData);
+        }
+      }
+
+      function renderCitationsBar(cites) {
+        if (!cites || !cites.length) {
+          return '<div class="citations-bar"><span style="font-size: 0.84rem; color: var(--text-muted);">No specific FHIR citations required.</span></div>';
+        }
+        const seen = {};
+        const uniqueCites = cites.filter(function (c) {
+          const key = (c.resource_uuid || c.resourceUuid || "") + "|" + (c.index || "");
+          if (seen[key]) return false;
+          seen[key] = true;
+          return true;
+        });
+        return (
+          '<div class="citations-bar">' +
+            '<span style="font-size: 0.84rem; font-weight: 700; color: var(--text-secondary);">Grounded FHIR Sources (click to inspect):</span>' +
+            uniqueCites.map(function (c) {
+              const uuid = c.resource_uuid || c.resourceUuid || "";
+              const rtype = c.resource_type || c.resourceType || "FHIR";
+              return (
+                '<button type="button" class="cite-chip" data-cite-uuid="' + esc(uuid) + '" data-cite-rtype="' + esc(rtype) + '" data-cite-text="' + esc(c.text || "") + '">' +
+                  '[' + esc(c.index) + '] ' + esc(rtype) +
+                '</button>'
+              );
+            }).join("") +
+          '</div>'
+        );
+      }
+
+      /* Slide-Over Source Drawer */
+      function openCitationDrawer(uuid, fallbackType, fallbackText, p) {
+        const fb = (p && p.fhir_browser) || {};
+        const match = (fb.resources || []).find(function (r) {
+          return r.id === uuid || String(r.id).indexOf(uuid) !== -1;
+        });
+        const drawer = document.getElementById("citation-drawer-backdrop");
+        if (match) {
+          state.drawerResourceIndex = match.index;
+          document.getElementById("drawer-resource-badge").textContent =
+            "FHIR " + match.resourceType + " • #" + match.index;
+          document.getElementById("drawer-resource-title").textContent = match.display;
+          document.getElementById("drawer-summary-grid").innerHTML =
+            '<div><strong>Category:</strong> ' + esc(match.category) + '</div>' +
+            '<div><strong>Date:</strong> <code>' + esc((match.date || "—").slice(0, 10)) + '</code></div>' +
+            '<div><strong>Source Clinic:</strong> ' + esc(match.sourceOrg || "Primary Chart") + '</div>' +
+            '<div><strong>UUID:</strong> <code>' + esc(match.id) + '</code></div>';
+          const noteCont = document.getElementById("drawer-note-container");
+          if (match.decodedNoteText) {
+            noteCont.style.display = "block";
+            document.getElementById("drawer-note-text").textContent = match.decodedNoteText;
+          } else {
+            noteCont.style.display = "none";
+          }
+          document.getElementById("drawer-json-box").textContent =
+            JSON.stringify(match.rawJson || {}, null, 2);
+        } else {
+          state.drawerResourceIndex = null;
+          document.getElementById("drawer-resource-badge").textContent = "FHIR " + (fallbackType || "Resource");
+          document.getElementById("drawer-resource-title").textContent = fallbackType + " (" + uuid + ")";
+          document.getElementById("drawer-summary-grid").innerHTML =
+            '<div style="grid-column: 1 / -1;"><strong>Ledger Entry:</strong> ' + esc(fallbackText || uuid) + '</div>';
+          document.getElementById("drawer-note-container").style.display = "none";
+          document.getElementById("drawer-json-box").textContent =
+            JSON.stringify({ resourceType: fallbackType, id: uuid, summary: fallbackText }, null, 2);
+        }
+        drawer.classList.add("open");
+      }
+
+      function bindCitationClicks(container, p) {
+        if (!container) return;
+        container.querySelectorAll(".cite-chip").forEach(function (chip) {
+          chip.addEventListener("click", function () {
+            openCitationDrawer(
+              chip.getAttribute("data-cite-uuid") || "",
+              chip.getAttribute("data-cite-rtype") || "Resource",
+              chip.getAttribute("data-cite-text") || "",
+              p
+            );
+          });
+        });
+        container.querySelectorAll(".inline-cite-badge").forEach(function (badge) {
+          badge.addEventListener("click", function () {
+            const num = badge.getAttribute("data-inline-cite");
+            const resolved = resolveLiveCitations("[" + num + "]", p, []);
+            if (resolved && resolved.length) {
+              const c = resolved[0];
+              openCitationDrawer(
+                c.resource_uuid || c.resourceUuid || "",
+                c.resource_type || c.resourceType || "FHIR",
+                c.text || "",
+                p
+              );
+            }
+          });
+        });
+      }
+
+      function renderAll() {
+        renderContextStrip();
+        renderPersonaGrid();
+        renderFhirBrowser();
+        renderCondensationPanel();
+        renderSkillsAndQa();
+      }
+
+      /* Wire Single Unified Stepper & Next CTA */
+      document.querySelectorAll(".phase-step-tab").forEach(function (tab) {
+        tab.addEventListener("click", function () {
+          setPhase(tab.getAttribute("data-phase"), true);
+        });
+      });
+
+      document.getElementById("header-next-phase-btn").addEventListener("click", function () {
+        if (state.activePhase === "1") {
+          setPhase("2", true);
+        } else if (state.activePhase === "2") {
+          setPhase("3", true);
+        } else {
+          setPhase("2", true);
+        }
+      });
+
+      /* Phase 1 Inspector Readable vs Raw JSON Toggle */
+      document.getElementById("insp-tab-readable-btn").addEventListener("click", function () {
+        state.inspectorTab = "readable";
+        document.getElementById("insp-tab-readable-btn").classList.add("active");
+        document.getElementById("insp-tab-json-btn").classList.remove("active");
+        renderFhirBrowser();
+      });
+      document.getElementById("insp-tab-json-btn").addEventListener("click", function () {
+        state.inspectorTab = "json";
+        document.getElementById("insp-tab-json-btn").classList.add("active");
+        document.getElementById("insp-tab-readable-btn").classList.remove("active");
+        renderFhirBrowser();
+      });
+
+      /* Slide-Over Citation Drawer Controls */
+      const citationDrawer = document.getElementById("citation-drawer-backdrop");
+      function closeCitationDrawer() { citationDrawer.classList.remove("open"); }
+      document.getElementById("close-citation-drawer-btn").addEventListener("click", closeCitationDrawer);
+      document.getElementById("drawer-close-bottom-btn").addEventListener("click", closeCitationDrawer);
+      citationDrawer.addEventListener("click", function (ev) {
+        if (ev.target === citationDrawer) closeCitationDrawer();
+      });
+      document.getElementById("drawer-open-in-phase1-btn").addEventListener("click", function () {
+        if (state.drawerResourceIndex != null) {
+          const p = currentPatient();
+          const fb = (p && p.fhir_browser) || {};
+          const targetRes = (fb.resources || []).find(function (r) {
+            return r.index === state.drawerResourceIndex;
+          });
+          state.browserCategory = (targetRes && targetRes.category) || "All Core Clinical";
+          state.browserSearch = "";
+          state.selectedResourceIndex = state.drawerResourceIndex;
+        }
+        closeCitationDrawer();
+        setPhase("1", true);
+        renderFhirBrowser();
+      });
+
+      /* Interactive Controls Wiring */
+      document.getElementById("browser-search-input").addEventListener("input", function (e) {
+        state.browserSearch = e.target.value || "";
+        renderFhirBrowser();
+      });
+
+      document.querySelectorAll("#budget-lever-group .seg-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          document.querySelectorAll("#budget-lever-group .seg-btn").forEach(function (b) { b.classList.remove("active"); });
+          btn.classList.add("active");
+          state.budget = btn.getAttribute("data-budget");
+          renderContextStrip();
+          renderCondensationPanel();
+          renderSkillsAndQa();
+        });
+      });
+
+      document.querySelectorAll("#mode-lever-group .seg-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          document.querySelectorAll("#mode-lever-group .seg-btn").forEach(function (b) { b.classList.remove("active"); });
+          btn.classList.add("active");
+          state.condenseMode = btn.getAttribute("data-mode");
+          renderContextStrip();
+          renderCondensationPanel();
+          renderSkillsAndQa();
+        });
+      });
+
+      document.getElementById("view-human-summary-btn").addEventListener("click", function () {
+        state.condensedViewType = "human";
+        document.getElementById("view-human-summary-btn").classList.add("active");
+        document.getElementById("view-raw-ledger-btn").classList.remove("active");
+        renderCondensationPanel();
+      });
+
+      document.getElementById("view-raw-ledger-btn").addEventListener("click", function () {
+        state.condensedViewType = "raw";
+        document.getElementById("view-raw-ledger-btn").classList.add("active");
+        document.getElementById("view-human-summary-btn").classList.remove("active");
+        renderCondensationPanel();
+      });
+
+      document.getElementById("toggle-filter-equip").addEventListener("change", function (e) {
+        state.filterRoomEquip = !!e.target.checked;
+        state.selectedResourceIndex = null;
+        closeCitationDrawer();
+        renderFhirBrowser();
+        renderCondensationPanel();
+        renderSkillsAndQa();
+      });
+
+      document.getElementById("toggle-privacy-share").addEventListener("change", function (e) {
+        state.privacyExternalShare = !!e.target.checked;
+        state.selectedResourceIndex = null;
+        closeCitationDrawer();
+        renderContextStrip();
+        renderFhirBrowser();
+        renderCondensationPanel();
+        renderSkillsAndQa();
+      });
+
+      const taskSelectDropdownEl = document.getElementById("skill-task-select");
+      if (taskSelectDropdownEl) {
+        taskSelectDropdownEl.addEventListener("change", function (e) {
+          state.activeSkillId = e.target.value;
+          state.customQuestionResult = null;
+          const qIn = document.getElementById("qa-question-input");
+          if (qIn) qIn.value = "";
+          renderSkillsAndQa();
+        });
+      }
+
+      /* Mega-Dropdown Trigger & Custom Prompt Mode Switching */
+      const megaTriggerEl = document.getElementById("task-mega-trigger");
+      if (megaTriggerEl) {
+        megaTriggerEl.addEventListener("click", function () {
+          state.megaMenuOpen = !state.megaMenuOpen;
+          const megaPanel = document.getElementById("task-mega-panel");
+          if (megaPanel) megaPanel.classList.toggle("open", state.megaMenuOpen);
+          megaTriggerEl.setAttribute("aria-expanded", state.megaMenuOpen ? "true" : "false");
+          const chev = megaTriggerEl.querySelector(".mega-chevron-pill");
+          if (chev) chev.textContent = state.megaMenuOpen ? "Close Task Grid ▴" : "Browse All 9 Tasks ▾";
+        });
+      }
+
+      const qaInputBox = document.getElementById("qa-question-input");
+      if (qaInputBox) {
+        qaInputBox.addEventListener("input", function () {
+          const val = (qaInputBox.value || "").trim();
+          const blockTask = document.getElementById("mode-block-task");
+          const blockCustom = document.getElementById("mode-block-custom");
+          const pillTask = document.getElementById("mode-pill-task");
+          const pillCustom = document.getElementById("mode-pill-custom");
+          const submitBtnEl = document.getElementById("qa-submit-btn");
+          const hintEl = document.getElementById("composer-active-hint");
+          if (val.length > 0) {
+            if (blockTask && blockCustom) {
+              blockTask.classList.remove("active-mode");
+              blockCustom.classList.add("active-mode");
+            }
+            if (pillTask) pillTask.textContent = "Click to Switch to Task";
+            if (pillCustom) pillCustom.textContent = "Active Selection";
+            if (submitBtnEl) submitBtnEl.textContent = "⚡ Generate Live — 💬 Custom Prompt";
+            if (hintEl) hintEl.innerHTML = 'Active Selection: <strong>💬 Custom Prompt</strong> — click <strong>⚡ Generate Live</strong> above to stream live LLM answer.';
+          } else {
+            state.customQuestionResult = null;
+            if (blockTask && blockCustom) {
+              blockTask.classList.add("active-mode");
+              blockCustom.classList.remove("active-mode");
+            }
+            if (pillTask) pillTask.textContent = "Active Selection";
+            if (pillCustom) pillCustom.textContent = "Write or Pick Prompt";
+            const p = currentPatient();
+            const skills = (p && p.skills) || [];
+            const activeSkill = skills.find(function (s) { return s.id === state.activeSkillId; }) || skills[0];
+            if (submitBtnEl && activeSkill) {
+              submitBtnEl.textContent = "⚡ Generate Live — " + activeSkill.icon + " " + activeSkill.title;
+            }
+            if (hintEl && activeSkill) {
+              hintEl.innerHTML = 'Active Selection: <strong>' + esc(activeSkill.icon + ' ' + activeSkill.title) + '</strong> — click <strong>⚡ Generate Live</strong> above to stream live LLM synthesis.';
+            }
+          }
+        });
+      }
+
+      /* Search active patient's visible chart resources for a grounded answer before falling back or abstaining */
+      function searchPatientResourcesForQuestion(p, qText) {
+        const fbResources = ((p && p.fhir_browser && p.fhir_browser.resources) || []).filter(function (r) {
+          if (!r.isCoreClinical || r.resourceType === "Patient") return false;
+          if (state.privacyExternalShare && isSensitiveResource(r)) return false;
+          if (state.filterRoomEquip && isRoomEquipmentResource(r)) return false;
+          return true;
+        });
+        const qLow = String(qText || "").toLowerCase();
+        const stopWords = {
+          does: 1, this: 1, patient: 1, patients: 1, have: 1, has: 1, had: 1, what: 1, when: 1, where: 1,
+          which: 1, were: 1, was: 1, are: 1, there: 1, any: 1, the: 1, for: 1, with: 1, from: 1, into: 1,
+          chart: 1, record: 1, recorded: 1, documented: 1, show: 1, tell: 1, about: 1, history: 1, test: 1,
+          allergy: 1, condition: 1, observation: 1, value: 1, level: 1, result: 1, results: 1
+        };
+        const rawTokens = qLow.replace(/[^a-z0-9-]+/g, " ").split(/\s+/).filter(function (t) {
+          return t.length >= 3 && !stopWords[t];
+        });
+        const synonymGroups = [];
+        rawTokens.forEach(function (tok) {
+          if (tok === "lvef") {
+            synonymGroups.push(["lvef", "ejection fraction", "left ventricular"]);
+          } else if (tok === "penicillin") {
+            synonymGroups.push(["penicillin", "amoxicillin", "ampicillin"]);
+          } else if (tok === "mri") {
+            synonymGroups.push(["mri", "magnetic resonance"]);
+          } else {
+            synonymGroups.push([tok]);
+          }
+        });
+        if (!synonymGroups.length) return [];
+
+        return fbResources.filter(function (r) {
+          const hay = [r.display, r.summary, r.code, r.resourceType, r.decodedNoteText].join(" ").toLowerCase();
+          return synonymGroups.some(function (grp) {
+            return grp.some(function (term) { return hay.indexOf(term) !== -1; });
+          });
+        });
+      }
+
+      /* Single Unified Generate Live Form Submission */
+      document.getElementById("qa-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const p = currentPatient();
+        if (!p) return;
+        const q = (document.getElementById("qa-question-input").value || "").trim();
+
+        /* If custom prompt box is empty, re-run the active Clinical Task live */
+        if (!q) {
+          state.customQuestionResult = null;
+          renderActiveReportCard(p, p.skills || [], true);
+          return;
+        }
+
+        const postureKey = state.privacyExternalShare ? "external_share" : "patient_self";
+        const qaSamples = ((p.postures || {})[postureKey] || {}).qa_samples || [];
+        const qLow = q.toLowerCase();
+
+        const matchedQa = qaSamples.find(function (item) {
+          return item.question.toLowerCase() === qLow || item.question.toLowerCase().indexOf(qLow) !== -1;
+        });
+
+        /* First check whether the active patient's chart has direct matching resources for specific queries */
+        const directMatches = searchPatientResourcesForQuestion(p, q);
+        const isSpecificFactQuery = /penicillin|colonoscopy|mri|apoe4|lvef|ejection fraction|peanut|sulfa|allergy|allergies/i.test(qLow) || p.id === "Custom_Uploaded_Bundle";
+        let groundedQaResult = null;
+        if (!matchedQa && directMatches.length > 0 && isSpecificFactQuery) {
+          const topMatches = directMatches.slice(0, 5);
+          const matchLines = topMatches.map(function (r) {
+            return "**" + r.resourceType + ": " + r.display + "**" + (r.summary ? " (" + r.summary + ")" : "") + (r.date ? " on `" + r.date.slice(0, 10) + "`" : "") + " [" + r.index + "]";
+          });
+          groundedQaResult = {
+            question: q,
+            abstained: false,
+            patient_category: "Grounded Chart Lookup",
+            source_mode_label: "Grounded FHIR Resource Match",
+            patient_plain_summary: "Documented in " + cleanName(p.patient_name) + "'s chart: " + matchLines.join("; ") + ".",
+            answer: "Found " + directMatches.length + " matching FHIR resource(s) in " + cleanName(p.patient_name) + "'s chart: " + matchLines.join("; ") + ".",
+            what_to_ask_doctor: ["Review these documented chart entries (" + topMatches.map(function (r) { return "[" + r.index + "] " + r.display; }).join(", ") + ") with your clinician at your next visit."],
+            citations: topMatches.map(function (r) {
+              return {
+                index: r.index,
+                resource_type: r.resourceType,
+                resource_uuid: r.id,
+                text: r.display + (r.summary ? " — " + r.summary : "")
+              };
+            })
+          };
+        } else if (!matchedQa && isSpecificFactQuery && directMatches.length === 0) {
+          groundedQaResult = {
+            question: q,
+            abstained: true,
+            patient_category: "Safety Abstention",
+            source_mode_label: "Verified Chart-Wide Abstention",
+            patient_plain_summary: "Not Recorded in Chart: Checked all clinical resources in " + cleanName(p.patient_name) + "'s FHIR record and found no documented entry for '" + q + "'. Rather than guessing, this assistant abstains when a requested test or allergy is absent from the chart.",
+            answer: "Checked all AllergyIntolerance, Condition, Procedure, DiagnosticReport, and Observation resources in " + cleanName(p.patient_name) + "'s bundle. No matching record exists.",
+            what_to_ask_doctor: ["If you had this test or allergy documented at an outside facility, ask your clinic to import the external record into your chart."],
+            citations: []
+          };
+        }
+
+        const resolvedQa = matchedQa || groundedQaResult;
+        if (resolvedQa) {
+          state.customQuestionResult = Object.assign({}, resolvedQa, { question: q, forceLiveLlm: !!state.llmConnected });
+          renderSkillsAndQa();
+          return;
+        }
+
+        /* When Live LLM is connected, stream a fresh live LLM answer for the submitted question */
+        if (state.llmConnected) {
+          state.customQuestionResult = {
+            question: q,
+            forceLiveLlm: true,
+            patient_category: "Live LLM Chart Q&A",
+            source_mode_label: "Live Streaming (" + state.llmModel + ")",
+            patient_plain_summary: "Streaming live clinical answer from " + state.llmModel + "...",
+            answer: "",
+            what_to_ask_doctor: [],
+            citations: []
+          };
+          renderSkillsAndQa();
+          return;
+        }
+
+        if (/conflict|duplicate pill|hold|stop|interaction|statin|plavix|warfarin|eliquis|spironolactone/i.test(qLow)) {
+          state.activeSkillId = "skill-med-conflicts";
+          state.customQuestionResult = null;
+        } else if (/stage|ckd|kidney|prediabetes|diabetes|sinusitis|problem list/i.test(qLow)) {
+          state.activeSkillId = "skill-condition-conflicts";
+          state.customQuestionResult = null;
+        } else if (/hospital|stay|admission|cabg|surgery|procedure|discharge/i.test(qLow)) {
+          state.activeSkillId = "skill-hospital-stay";
+          state.customQuestionResult = null;
+        } else if (/lab|trend|egfr|creatinine|a1c|potassium|inr|hemoglobin/i.test(qLow)) {
+          state.activeSkillId = "skill-lab-trends";
+          state.customQuestionResult = null;
+        } else if (/vaccin|immuniz|shot|flu|zoster|hpv|pneumo/i.test(qLow)) {
+          state.activeSkillId = "skill-vaccine-summary";
+          state.customQuestionResult = null;
+        } else if (/privacy|sensitive|share|sdoh/i.test(qLow)) {
+          state.activeSkillId = "skill-privacy-preview";
+          state.customQuestionResult = null;
+        } else if (/bloat|redundan|artifact|equipment|claim|base64/i.test(qLow)) {
+          state.activeSkillId = "skill-chart-hygiene";
+          state.customQuestionResult = null;
+        } else if (/med|pill|prescription|treat/i.test(qLow)) {
+          state.activeSkillId = "skill-med-guide";
+          state.customQuestionResult = null;
+        } else {
+          state.activeSkillId = "skill-visit-brief";
+          state.customQuestionResult = null;
+        }
+        renderSkillsAndQa();
+      });
+
+      /* Downloaded GGUFs ready on disk for llama-router (:8077) and used by med-agent-hub product profiles */
+      const READY_ROUTER_MODELS = {
+        "gemma-4-12b": true,
+        "gemma-4-12b-q4": true,
+        "gemma-31b": true,
+        "gemma-26b": true,
+        "gemma-e4b": true,
+        "gemma-e4b-q8": true,
+        "gemma-e2b": true,
+        "medgemma-1.5-4b-q8": true,
+        "qwen2.5-14b": true,
+        "qwen3.5-9b": true,
+        "qwen3.6-35b": true
+      };
+
+      /* Live med-agent-hub Profile & LLM Router Discovery */
+      async function probeLiveLlmEndpoint(overrideUrl) {
+        const chip = document.getElementById("llm-bar-chip");
+        const label = document.getElementById("llm-status-label");
+        const select = document.getElementById("llm-model-select");
+        const modalStatus = document.getElementById("llm-modal-status-box");
+        const keyInput = document.getElementById("openrouter-api-key-input");
+        if (keyInput && state.openRouterKey && !keyInput.value) {
+          keyInput.value = state.openRouterKey;
+        }
+
+        const savedEp = (localStorage.getItem("wahs_llm_endpoint") || "").replace(/\/+$/, "");
+        const candidates = overrideUrl
+          ? [overrideUrl.replace(/\/+$/, "")]
+          : [
+              "http://127.0.0.1:18081",
+              "http://localhost:18081",
+              savedEp,
+              "http://127.0.0.1:8077",
+              "http://localhost:8077"
+            ].filter(function (v, idx, arr) { return !!v && arr.indexOf(v) === idx; });
+
+        const CURATED_OPENROUTER_DIRECT = {
+          "google/gemma-3-27b-it": "OpenRouter — Gemma 3 27B IT",
+          "qwen/qwen-2.5-72b-instruct": "OpenRouter — Qwen 2.5 72B Instruct",
+          "meta-llama/llama-3.3-70b-instruct": "OpenRouter — Llama 3.3 70B Instruct",
+          "google/gemini-2.5-flash": "OpenRouter — Gemini 2.5 Flash",
+          "anthropic/claude-3.7-sonnet": "OpenRouter — Claude 3.7 Sonnet"
+        };
+
+        for (let i = 0; i < candidates.length; i++) {
+          const base = candidates[i];
+          try {
+            const ctrl = new AbortController();
+            const timer = setTimeout(function () { ctrl.abort(); }, 2500);
+            const isDirectOr = base.indexOf("openrouter.ai") !== -1;
+            const probeUrl = isDirectOr
+              ? (base.endsWith("/v1") ? (base + "/models") : (base + "/v1/models"))
+              : (base + "/v1/models?workflow=wahs");
+            const reqHeaders = {};
+            if (state.openRouterKey) {
+              reqHeaders["X-OpenRouter-Key"] = state.openRouterKey;
+              if (isDirectOr) {
+                reqHeaders["Authorization"] = "Bearer " + state.openRouterKey;
+              }
+            }
+            const res = await fetch(probeUrl, { headers: reqHeaders, signal: ctrl.signal });
+            clearTimeout(timer);
+            if (!res.ok) continue;
+            const data = await res.json();
+            const rawModels = (data.data || data.models || []).map(function (m) {
+              const id = m.id || m.model;
+              const isLoaded = (m.status && m.status.value === "loaded") || false;
+              const isHubProfile = m.owned_by === "med-agent-hub" || m.workflow === "wahs";
+              const isReady = isHubProfile
+                ? (m.available !== false && m.visibility === "product")
+                : (isDirectOr ? !!CURATED_OPENROUTER_DIRECT[id] : (isLoaded || !!READY_ROUTER_MODELS[id]));
+              return {
+                id: id,
+                label: m.label || CURATED_OPENROUTER_DIRECT[id] || id,
+                workflow: m.workflow || (isHubProfile ? "wahs" : "router"),
+                topology: m.topology || "single",
+                provider: m.provider || (isDirectOr ? "openrouter" : "local"),
+                stages: m.stages || ["context", "answer", "gate"],
+                role_models: m.role_models || { answer: id },
+                role_knobs: m.role_knobs || { answer: { temperature: 0.1, maxTokens: 900, dry: 0.0 } },
+                policies: m.policies || {
+                  provider: isDirectOr ? "openrouter" : "local",
+                  include_kb_findings: String(id).indexOf("-raw") === -1,
+                  overflow_lookup_tools: String(id).indexOf("-raw") === -1,
+                  citation_grounding: "enforce"
+                },
+                prompts: m.prompts || { answer: String(id).indexOf("-raw") !== -1 ? "wahs-raw-unhinted" : "wahs-kb-guided" },
+                system_prompts: m.system_prompts || {},
+                selection_priority: m.selection_priority != null ? m.selection_priority : 500,
+                loaded: isLoaded,
+                ready: isReady
+              };
+            }).filter(function (m) { return !!m.id && m.ready; });
+
+            const models = rawModels.sort(function (a, b) {
+              if (a.selection_priority !== b.selection_priority) {
+                return a.selection_priority - b.selection_priority;
+              }
+              if (a.loaded !== b.loaded) return a.loaded ? -1 : 1;
+              if (a.id === "wahs-12b-kb" || a.id === "gemma-4-12b") return -1;
+              if (b.id === "wahs-12b-kb" || b.id === "gemma-4-12b") return 1;
+              return a.id.localeCompare(b.id);
+            });
+            if (!models.length) continue;
+
+            state.llmBaseUrl = base;
+            state.llmConnected = true;
+            state.llmModels = models;
+            localStorage.setItem("wahs_llm_endpoint", base);
+            const epInput = document.getElementById("llm-endpoint-input");
+            if (epInput) epInput.value = base;
+
+            const preferred = models.find(function (m) { return m.id === state.llmModel; }) ||
+                              models.find(function (m) { return m.id === "wahs-12b-kb"; }) ||
+                              models.find(function (m) { return m.id === "gemma-4-12b"; }) ||
+                              models.find(function (m) { return m.loaded; }) ||
+                              models[0];
+            state.llmModel = preferred.id;
+
+            if (select) {
+              select.innerHTML = models.map(function (m) {
+                let displayOpt = m.id;
+                if (m.workflow === "wahs" && m.label && m.label !== m.id) {
+                  const shortDesc = m.label.replace(/^WAHS\+\s*/i, "").replace(/^OpenRouter\s*—\s*/i, "☁️ ");
+                  displayOpt = m.id + " (" + shortDesc + ")";
+                } else if (m.loaded) {
+                  displayOpt = m.id + " (Loaded)";
+                }
+                return '<option value="' + esc(m.id) + '"' + (m.id === state.llmModel ? " selected" : "") + '>' + esc(displayOpt) + '</option>';
+              }).join("");
+            }
+            const isHub = models.some(function (m) { return m.workflow === "wahs"; });
+            if (chip) chip.classList.remove("offline");
+            if (label) label.textContent = isHub ? "🟢 Hub Profile:" : "🟢 Live LLM:";
+            if (modalStatus) {
+              modalStatus.innerHTML = '<strong style="color:var(--ok);">🟢 Connected to ' + esc(base) + '</strong> — ' + models.length + ' ready profile(s)/model(s) available (<code>' + esc(state.llmModel) + '</code> active).';
+            }
+            if (String(state.activePhase) === "3") {
+              renderSkillsAndQa();
+            }
+            return true;
+          } catch (e) {
+            /* try next candidate */
+          }
+        }
+
+        state.llmConnected = false;
+        if (chip) chip.classList.add("offline");
+        if (label) label.textContent = "⚪ Offline Snapshot:";
+        if (modalStatus) {
+          modalStatus.innerHTML = '<strong style="color:var(--warn);">⚪ med-agent-hub / Local LLM unreachable</strong> — Start <code>med-agent-hub</code> on port <code>18081</code> or <code>llama-server</code> on port <code>8077</code>. Using verified pre-computed outputs as fallback.';
+        }
+        return false;
+      }
+
+      const llmSelectEl = document.getElementById("llm-model-select");
+      if (llmSelectEl) {
+        llmSelectEl.addEventListener("change", function (e) {
+          state.llmModel = e.target.value;
+          renderSkillsAndQa();
+        });
+      }
+
+      const llmModal = document.getElementById("llm-config-modal");
+      const openLlmBtn = document.getElementById("open-llm-config-btn");
+      if (openLlmBtn && llmModal) {
+        openLlmBtn.addEventListener("click", function () {
+          document.getElementById("llm-endpoint-input").value = state.llmBaseUrl;
+          const keyEl = document.getElementById("openrouter-api-key-input");
+          if (keyEl) keyEl.value = state.openRouterKey || "";
+          llmModal.classList.add("open");
+        });
+      }
+      const closeLlmBtn = document.getElementById("close-llm-modal-btn");
+      if (closeLlmBtn && llmModal) {
+        closeLlmBtn.addEventListener("click", function () {
+          llmModal.classList.remove("open");
+        });
+      }
+      const presetHubBtn = document.getElementById("preset-hub-llm-btn");
+      if (presetHubBtn) {
+        presetHubBtn.addEventListener("click", function () {
+          document.getElementById("llm-endpoint-input").value = "http://127.0.0.1:18081";
+        });
+      }
+      const presetLocalBtn = document.getElementById("preset-local-llm-btn");
+      if (presetLocalBtn) {
+        presetLocalBtn.addEventListener("click", function () {
+          document.getElementById("llm-endpoint-input").value = "http://127.0.0.1:8077";
+        });
+      }
+      const presetOpenRouterBtn = document.getElementById("preset-openrouter-llm-btn");
+      if (presetOpenRouterBtn) {
+        presetOpenRouterBtn.addEventListener("click", function () {
+          document.getElementById("llm-endpoint-input").value = "https://openrouter.ai/api/v1";
+        });
+      }
+      const saveLlmBtn = document.getElementById("save-llm-endpoint-btn");
+      if (saveLlmBtn) {
+        saveLlmBtn.addEventListener("click", async function () {
+          const val = (document.getElementById("llm-endpoint-input").value || "").trim().replace(/\/+$/, "");
+          const keyEl = document.getElementById("openrouter-api-key-input");
+          if (keyEl) {
+            state.openRouterKey = (keyEl.value || "").trim();
+            if (typeof sessionStorage !== "undefined") {
+              if (state.openRouterKey) {
+                sessionStorage.setItem("wahs_openrouter_key", state.openRouterKey);
+              } else {
+                sessionStorage.removeItem("wahs_openrouter_key");
+              }
+            }
+          }
+          if (!val) return;
+          const ok = await probeLiveLlmEndpoint(val);
+          if (ok && llmModal) {
+            llmModal.classList.remove("open");
+          }
+        });
+      }
+
+      /* Custom FHIR Bundle Modal Wiring */
+      const modal = document.getElementById("custom-fhir-modal");
+      document.getElementById("open-custom-fhir-btn").addEventListener("click", function () {
+        modal.classList.add("open");
+      });
+      document.getElementById("close-custom-modal-btn").addEventListener("click", function () {
+        modal.classList.remove("open");
+      });
+      document.addEventListener("keydown", function (ev) {
+        if (ev.key === "Escape") {
+          modal.classList.remove("open");
+          if (llmModal) llmModal.classList.remove("open");
+          closeCitationDrawer();
+        }
+      });
+      document.getElementById("custom-fhir-file-input").addEventListener("change", function (e) {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          document.getElementById("custom-fhir-textarea").value = String(ev.target.result || "");
+        };
+        reader.readAsText(file);
+      });
+      document.getElementById("load-sample-uscore-btn").addEventListener("click", function () {
+        const sample = {
+          resourceType: "Bundle",
+          type: "collection",
+          entry: [
+            { resource: { resourceType: "Patient", id: "pat-custom-1", name: [{ given: ["Jordan"], family: "Rivera" }], birthDate: "1962-08-19", gender: "female" } },
+            { resource: { resourceType: "AllergyIntolerance", id: "allergy-sulfa", clinicalStatus: { coding: [{ code: "active" }] }, code: { coding: [{ code: "387406002", display: "Sulfonamide antibacterial" }] }, criticality: "high" } },
+            { resource: { resourceType: "Condition", id: "cond-htn", clinicalStatus: { coding: [{ code: "active" }] }, code: { coding: [{ code: "59621000", display: "Essential hypertension" }] }, onsetDateTime: "2021-03-10" } },
+            { resource: { resourceType: "MedicationRequest", id: "med-lisinopril", status: "active", authoredOn: "2025-09-15", medicationCodeableConcept: { coding: [{ code: "314076", display: "Lisinopril 10 MG Oral Tablet" }] }, dosageInstruction: [{ text: "Take 1 tablet daily" }] } },
+            { resource: { resourceType: "MedicationRequest", id: "med-prinivil", status: "active", authoredOn: "2025-10-02", medicationCodeableConcept: { coding: [{ code: "206765", display: "Prinivil 10 MG Oral Tablet [lisinopril]" }] }, dosageInstruction: [{ text: "Take 1 tablet daily" }] } },
+            { resource: { resourceType: "Observation", id: "obs-egfr-1", status: "final", effectiveDateTime: "2025-10-10", code: { coding: [{ code: "33914-3", display: "Estimated Glomerular Filtration Rate" }] }, valueQuantity: { value: 58, unit: "mL/min/1.73m2" } } }
+          ]
+        };
+        document.getElementById("custom-fhir-textarea").value = JSON.stringify(sample, null, 2);
+      });
+
+      document.getElementById("apply-custom-fhir-btn").addEventListener("click", function () {
+        const rawText = document.getElementById("custom-fhir-textarea").value || "";
+        try {
+          const parsed = JSON.parse(rawText);
+          const entries = parsed.entry || [];
+          const customId = "Custom_Uploaded_Bundle";
+          const resources = [];
+          const catCounts = {
+            "All Core Clinical": 0, "Conditions": 0, "Medications": 0, "Allergies": 0,
+            "Labs & Vitals": 0, "Clinical Notes": 0, "Immunizations": 0,
+            "Visits & Procedures": 0, "Devices": 0, "Patient & Care Team": 0, "Claims & Billing": 0
+          };
+          let patName = "Custom FHIR Patient";
+          let patDob = "unknown";
+          const activeConds = [];
+          const activeMeds = [];
+          const allergies = [];
+          const labs = [];
+
+          entries.forEach(function (ent, idx) {
+            const res = (ent && ent.resource) || {};
+            const rtype = res.resourceType || "Unknown";
+            let cat = "Visits & Procedures";
+            let disp = rtype;
+            let sum = "";
+            let rDate = res.effectiveDateTime || res.authoredOn || res.onsetDateTime || res.birthDate || "";
+            const coding = ((res.code || res.medicationCodeableConcept || res.vaccineCode || {}).coding || [])[0] || {};
+            disp = coding.display || (res.code && res.code.text) || disp;
+
+            if (rtype === "Patient") {
+              cat = "Patient & Care Team";
+              const nm = (res.name && res.name[0]) || {};
+              patName = ((nm.given || []).join(" ") + " " + (nm.family || "")).trim() || patName;
+              patDob = res.birthDate || patDob;
+              disp = patName;
+              sum = "DOB: " + patDob + " | Gender: " + (res.gender || "unknown");
+            } else if (rtype === "Condition") {
+              cat = "Conditions";
+              sum = "Condition (" + (((res.clinicalStatus || {}).coding || [{}])[0].code || "active") + ")";
+              activeConds.push(disp);
+            } else if (rtype.indexOf("Medication") === 0) {
+              cat = "Medications";
+              sum = ((res.dosageInstruction || [{}])[0].text) || "Active prescription";
+              activeMeds.push(disp);
+            } else if (rtype === "AllergyIntolerance") {
+              cat = "Allergies";
+              sum = res.criticality ? ("Criticality: " + res.criticality) : "Documented allergy / intolerance";
+              allergies.push(disp + (res.criticality ? " (criticality: " + res.criticality + ")" : ""));
+            } else if (rtype === "Observation" || rtype === "DiagnosticReport") {
+              cat = "Labs & Vitals";
+              const vq = res.valueQuantity || {};
+              sum = vq.value != null ? ("Value: " + vq.value + " " + (vq.unit || "")) : "Observation";
+              labs.push(disp + (sum ? " — " + sum : ""));
+            } else if (rtype === "Immunization") {
+              cat = "Immunizations";
+            } else if (rtype === "DocumentReference") {
+              cat = "Clinical Notes";
+            } else if (rtype === "Device") {
+              cat = "Devices";
+            } else if (rtype === "Claim" || rtype === "ExplanationOfBenefit") {
+              cat = "Claims & Billing";
+            }
+
+            catCounts[cat] = (catCounts[cat] || 0) + 1;
+            if (cat !== "Claims & Billing") catCounts["All Core Clinical"] += 1;
+
+            const itemFlags = [];
+            if (isSensitiveText(disp + " " + sum + " " + (coding.code || ""))) {
+              itemFlags.push("Sensitive / SDOH Record");
+            }
+            if (rtype === "Device" && ROOM_EQUIP_REGEX.test(disp + " " + sum)) {
+              itemFlags.push("Non-Implantable Clinic Room Equipment Artifact");
+            }
+
+            resources.push({
+              index: idx + 1,
+              id: res.id || ("custom-" + (idx + 1)),
+              resourceType: rtype,
+              category: cat,
+              isCoreClinical: cat !== "Claims & Billing",
+              date: rDate,
+              display: disp,
+              summary: sum,
+              status: res.status || "active",
+              sourceOrg: "Uploaded FHIR Bundle",
+              code: coding.code || "",
+              flags: itemFlags,
+              decodedNoteText: "",
+              rawJson: res
+            });
+          });
+
+          const rawEstTok = Math.max(Math.round(rawText.length / 4), 50);
+          const coreResources = resources.filter(function (r) { return r.isCoreClinical; });
+
+          /* Build distinct 5-budget x 2-mode condensation cells with longitudinal observation folding in hierarchical mode */
+          function buildCustomBudgetCell(modeKey, budgetNum) {
+            const maxChars = budgetNum * 4;
+            const maxObsPerDisplay = budgetNum >= 16384 ? 999 : (budgetNum >= 8192 ? 15 : (budgetNum >= 4096 ? 8 : (budgetNum >= 2048 ? 4 : 2)));
+            const candidateItems = [];
+            const omittedCounts = {};
+
+            if (modeKey === "hierarchical") {
+              const obsGroups = {};
+              coreResources.forEach(function (r) {
+                if (r.category === "Labs & Vitals") {
+                  const key = r.display.toLowerCase();
+                  if (!obsGroups[key]) obsGroups[key] = [];
+                  obsGroups[key].push(r);
+                } else {
+                  candidateItems.push({
+                    res: r,
+                    uuids: [r.id],
+                    representedCount: 1,
+                    line: "[" + r.index + "] " + r.category + " | " + r.display + (r.summary ? " (" + r.summary.slice(0, 72) + ")" : "")
+                  });
+                }
+              });
+              Object.keys(obsGroups).forEach(function (k) {
+                const grp = obsGroups[k];
+                const first = grp[0];
+                const last = grp[grp.length - 1];
+                if (grp.length === 1) {
+                  candidateItems.push({
+                    res: first,
+                    uuids: [first.id],
+                    representedCount: 1,
+                    line: "[" + first.index + "] " + first.category + " | " + first.display + (first.summary ? " (" + first.summary + ")" : "")
+                  });
+                } else {
+                  const sampleLimit = budgetNum >= 16384 ? Math.min(grp.length, 6) : (budgetNum >= 8192 ? Math.min(grp.length, 4) : (budgetNum >= 4096 ? 2 : (budgetNum >= 2048 ? 1 : 0)));
+                  const recentSlice = sampleLimit > 0 ? grp.slice(-sampleLimit).map(function (x) {
+                    return (x.date ? x.date.slice(0, 10) + ": " : "") + (x.summary || x.display);
+                  }).join("; ") : "";
+                  const foldLine = "[" + last.index + "] " + last.category + " | " + last.display +
+                    " (folded n=" + grp.length + " readings from " + (first.date || "start").slice(0, 10) + " to " + (last.date || "latest").slice(0, 10) +
+                    "; initial " + (first.summary || first.display) + " → latest " + (last.summary || last.display) +
+                    (sampleLimit > 0 ? " | recent window: " + recentSlice : "") + ")";
+                  candidateItems.push({
+                    res: last,
+                    uuids: grp.map(function (x) { return x.id; }),
+                    representedCount: grp.length,
+                    line: foldLine
+                  });
+                }
+              });
+            } else {
+              const obsSeenByDisplay = {};
+              const obsTotalByDisplay = {};
+              coreResources.forEach(function (r) {
+                if (r.category === "Labs & Vitals") {
+                  const k = r.display.toLowerCase();
+                  obsTotalByDisplay[k] = (obsTotalByDisplay[k] || 0) + 1;
+                }
+              });
+              coreResources.forEach(function (r) {
+                if (r.category === "Labs & Vitals") {
+                  const k = r.display.toLowerCase();
+                  obsSeenByDisplay[k] = (obsSeenByDisplay[k] || 0) + 1;
+                  const totalForK = obsTotalByDisplay[k] || 1;
+                  if (totalForK - obsSeenByDisplay[k] >= maxObsPerDisplay) {
+                    omittedCounts[r.category] = (omittedCounts[r.category] || 0) + 1;
+                    return;
+                  }
+                }
+                candidateItems.push({
+                  res: r,
+                  uuids: [r.id],
+                  representedCount: 1,
+                  line: "[" + r.index + "] " + r.resourceType + (r.date ? " (" + r.date + ")" : "") + ": " + r.display + (r.summary ? " — " + r.summary : "")
+                });
+              });
+            }
+
+            const selected = [];
+            let usedChars = 0;
+            candidateItems.forEach(function (item) {
+              if (usedChars + item.line.length + 1 <= maxChars || selected.length < Math.min(2, candidateItems.length)) {
+                selected.push(item);
+                usedChars += item.line.length + 1;
+              } else {
+                omittedCounts[item.res.category] = (omittedCounts[item.res.category] || 0) + (item.representedCount || 1);
+              }
+            });
+
+            const chartText = selected.map(function (s) { return s.line; }).join("\n");
+            const actualTok = Math.min(budgetNum, Math.max(Math.round(chartText.length / 4), 1));
+            const omittedTotal = Object.keys(omittedCounts).reduce(function (acc, k) { return acc + (omittedCounts[k] || 0); }, 0);
+            const retainedUuids = [];
+            selected.forEach(function (s) {
+              (s.uuids || [s.res.id]).forEach(function (u) { retainedUuids.push(u); });
+            });
+            return {
+              tier: budgetNum >= 16384 ? 1 : (budgetNum >= 8192 ? 2 : (budgetNum >= 4096 ? 3 : (budgetNum >= 2048 ? 4 : 5))),
+              tier_name: budgetNum >= 16384
+                ? "Tier 1 — Full Clinical History (Client-Side Preview)"
+                : (budgetNum >= 8192 ? "Tier 2 — Recent Window Condensed (Client-Side Preview)" : "Tier 3/4/5 — Compact Budget Core (Client-Side Preview)"),
+              condense_mode: modeKey,
+              target_tokens: budgetNum,
+              actual_tokens: actualTok,
+              reduction_pct: Number((Math.max(0, (1 - actualTok / Math.max(rawEstTok, 1))) * 100).toFixed(1)),
+              rendered_records: selected.length,
+              total_extracted_records: coreResources.length,
+              omitted_records_count: omittedTotal,
+              omitted_sections: omittedCounts,
+              retained_uuids: retainedUuids,
+              chart_text: chartText,
+              human_summary: {
+                allergies: allergies,
+                active_conditions: activeConds,
+                active_medications: activeMeds,
+                labs_and_vitals: modeKey === "hierarchical"
+                  ? selected.filter(function (s) { return s.res.category === "Labs & Vitals"; }).map(function (s) { return s.line; })
+                  : labs.slice(-maxObsPerDisplay),
+                immunizations: resources.filter(function (r) { return r.category === "Immunizations"; }).map(function (r) { return r.display; }),
+                notes_and_visits: resources.filter(function (r) { return r.category === "Clinical Notes" || r.category === "Visits & Procedures"; }).map(function (r) { return r.display; }),
+                what_changed_at_this_lever: "Client-Side Structural Preview: uploaded FHIR R4 Bundle condensed to " + budgetNum + "-token budget (" + modeKey + ")."
+              }
+            };
+          }
+
+          /* Build all 9 patient skills dynamically from the uploaded FHIR bundle's own resources */
+          function buildCustomPatientSkills() {
+            const medRes = resources.filter(function (r) { return r.category === "Medications"; });
+            const condRes = resources.filter(function (r) { return r.category === "Conditions"; });
+            const allergyRes = resources.filter(function (r) { return r.category === "Allergies"; });
+            const labRes = resources.filter(function (r) { return r.category === "Labs & Vitals"; });
+            const immRes = resources.filter(function (r) { return r.category === "Immunizations"; });
+            const noteRes = resources.filter(function (r) { return r.category === "Clinical Notes" || r.category === "Visits & Procedures"; });
+            const sensRes = resources.filter(function (r) { return isSensitiveResource(r); });
+            const claimRes = resources.filter(function (r) { return r.category === "Claims & Billing"; });
+
+            function toCite(r) {
+              return {
+                index: r.index,
+                label: "[" + r.index + "]",
+                resource_type: r.resourceType,
+                resource_uuid: r.id,
+                text: r.resourceType + ": " + r.display + (r.summary ? " (" + r.summary + ")" : "")
+              };
+            }
+            function toRow(r, catLabel, tone) {
+              return {
+                category: catLabel || r.category,
+                label: r.display,
+                detail: r.resourceType + ": " + r.display + (r.summary ? " — " + r.summary : "") + (r.date ? " • Recorded " + r.date.slice(0, 10) : ""),
+                source_org: r.sourceOrg || "Uploaded FHIR Bundle",
+                code: r.resourceType + (r.code ? " (" + r.code + ")" : ""),
+                tone: tone || "info",
+                resource_uuids: [r.id]
+              };
+            }
+
+            const coreSample = [].concat(allergyRes, condRes, medRes, labRes.slice(0, 4));
+            return [
+              {
+                id: "skill-visit-brief",
+                group: "everyday_task",
+                icon: "🩺",
+                title: "Prepare for My Next Doctor Visit",
+                subtitle: "Summary of uploaded conditions, medications, allergies, and labs",
+                status_badge: condRes.length + " Conditions • " + medRes.length + " Meds • " + allergyRes.length + " Allergies",
+                badge_tone: "info",
+                plain_english_summary: "Uploaded Chart Overview for **" + patName + "**: **" + allergyRes.length + " documented allergy(ies)**" +
+                  (allergyRes.length ? " (" + allergyRes.map(function (r) { return r.display + " [" + r.index + "]"; }).join(", ") + ")" : "") +
+                  ", **" + condRes.length + " active condition(s)**" +
+                  (condRes.length ? " (" + condRes.map(function (r) { return r.display + " [" + r.index + "]"; }).join(", ") + ")" : "") +
+                  ", **" + medRes.length + " active medication(s)**, and **" + labRes.length + " lab/vital observation(s)**.",
+                suggested_remediation: ["Review these uploaded FHIR entries with your clinician at your next appointment."],
+                structured_rows: coreSample.map(function (r) { return toRow(r, r.category, "info"); }),
+                citations: coreSample.map(toCite),
+                clinician_technical_note: "Client-side summary computed strictly from the " + resources.length + " resource(s) in the uploaded FHIR R4 Bundle."
+              },
+              {
+                id: "skill-hospital-stay",
+                group: "everyday_task",
+                icon: "🏥",
+                title: "Understand My Recent Hospital Stay",
+                subtitle: "Inpatient encounters, procedures, and discharge notes in uploaded bundle",
+                status_badge: noteRes.length ? (noteRes.length + " Visit/Procedure Record(s)") : "0 Inpatient Stays Recorded",
+                badge_tone: "info",
+                plain_english_summary: noteRes.length
+                  ? ("Uploaded bundle for **" + patName + "** includes **" + noteRes.length + " visit, procedure, or clinical note record(s)**: " + noteRes.slice(0, 4).map(function (r) { return r.display + " [" + r.index + "]"; }).join(", ") + ".")
+                  : ("No Inpatient Encounters or Discharge Notes in Uploaded Bundle: **" + patName + "**'s uploaded FHIR chart contains **0 Encounter, Procedure, or DocumentReference** discharge records."),
+                suggested_remediation: ["If you had a recent hospital admission, upload a bundle that includes your Encounter and DocumentReference discharge summary."],
+                structured_rows: noteRes.map(function (r) { return toRow(r, "Visit / Procedure", "info"); }),
+                citations: noteRes.map(toCite),
+                clinician_technical_note: "Audited uploaded bundle for Encounter, Procedure, and DocumentReference entries."
+              },
+              {
+                id: "skill-med-guide",
+                group: "everyday_task",
+                icon: "💊",
+                title: "Understand My Current Medications",
+                subtitle: "Active prescriptions in uploaded FHIR bundle",
+                status_badge: medRes.length + " Active Medication(s)",
+                badge_tone: "info",
+                plain_english_summary: medRes.length
+                  ? ("**" + patName + "** has **" + medRes.length + " active medication order(s)** in the uploaded bundle: " + medRes.map(function (r) { return "**" + r.display + "** (" + r.summary + ") [" + r.index + "]"; }).join("; ") + ".")
+                  : ("No Active Medications in Uploaded Bundle: **" + patName + "**'s uploaded FHIR chart contains **0 MedicationRequest or MedicationStatement** resources."),
+                suggested_remediation: medRes.length
+                  ? ["Confirm dosing instructions for your " + medRes.length + " listed prescription(s) with your prescriber."]
+                  : ["No medication orders are present in this uploaded bundle."],
+                structured_rows: medRes.map(function (r) { return toRow(r, "Active Medication", "info"); }),
+                citations: medRes.map(toCite),
+                clinician_technical_note: "Extracted strictly from MedicationRequest / MedicationStatement resources in the uploaded bundle."
+              },
+              {
+                id: "skill-lab-trends",
+                group: "everyday_task",
+                icon: "📈",
+                title: "Track My Lab & Vital Trends",
+                subtitle: "Longitudinal observations and biomarkers in uploaded bundle",
+                status_badge: labRes.length + " Observation(s)",
+                badge_tone: "info",
+                plain_english_summary: labRes.length
+                  ? ("**" + patName + "**'s uploaded chart contains **" + labRes.length + " lab/vital observation(s)**, starting with **" + labRes[0].display + "** (" + labRes[0].summary + ") [" + labRes[0].index + "]" +
+                    (labRes.length > 1 ? " through **" + labRes[labRes.length - 1].display + "** (" + labRes[labRes.length - 1].summary + ") [" + labRes[labRes.length - 1].index + "]." : "."))
+                  : ("No Lab or Vital Observations in Uploaded Bundle: **" + patName + "**'s uploaded chart contains **0 Observation or DiagnosticReport** resources."),
+                suggested_remediation: ["Review longitudinal observation trends with your care team."],
+                structured_rows: labRes.slice(0, 10).map(function (r) { return toRow(r, "Observation", "info"); }),
+                citations: labRes.slice(0, 6).map(toCite),
+                clinician_technical_note: "Extracted strictly from Observation and DiagnosticReport entries in the uploaded bundle."
+              },
+              {
+                id: "skill-vaccine-summary",
+                group: "everyday_task",
+                icon: "💉",
+                title: "Check My Vaccine & Preventive History",
+                subtitle: "Documented immunizations in uploaded bundle",
+                status_badge: immRes.length + " Immunization(s)",
+                badge_tone: "info",
+                plain_english_summary: immRes.length
+                  ? ("**" + patName + "**'s uploaded chart lists **" + immRes.length + " immunization record(s)**: " + immRes.map(function (r) { return r.display + " [" + r.index + "]"; }).join(", ") + ".")
+                  : ("No Immunizations in Uploaded Bundle: **" + patName + "**'s uploaded FHIR chart contains **0 Immunization** resources."),
+                suggested_remediation: ["Bring any external vaccine cards to your next primary-care visit."],
+                structured_rows: immRes.map(function (r) { return toRow(r, "Immunization", "info"); }),
+                citations: immRes.map(toCite),
+                clinician_technical_note: "Extracted strictly from Immunization resources in the uploaded bundle."
+              },
+              {
+                id: "skill-med-conflicts",
+                group: "health_check",
+                icon: "⚠️",
+                title: "Medication Conflict & Duplicate Check",
+                subtitle: "Audits uploaded prescriptions for duplicate ingredients or conflicts",
+                status_badge: medRes.length === 0 ? "0 Active Medications" : (medRes.length + " Medication(s) Audited"),
+                badge_tone: medRes.length >= 2 ? "warn" : "ok",
+                plain_english_summary: medRes.length === 0
+                  ? ("No Active Medications or Conflicts in Uploaded Bundle: **" + patName + "**'s uploaded FHIR chart contains **0 MedicationRequest / MedicationStatement resources**. No duplicate prescriptions, brand-vs-generic overlaps, or drug-drug conflicts are present in this uploaded bundle.")
+                  : ("Audited **" + medRes.length + " active medication(s)** in **" + patName + "**'s uploaded bundle: " + medRes.map(function (r) { return "**" + r.display + "** [" + r.index + "]"; }).join(", ") + "."),
+                suggested_remediation: medRes.length === 0
+                  ? ["No medication conflicts detected because 0 medications are present in the uploaded bundle."]
+                  : ["Review all active prescriptions with your pharmacist or prescribing clinician."],
+                structured_rows: medRes.length === 0
+                  ? [{
+                      category: "0 Active Medications",
+                      label: "No Medication Resources in Uploaded Bundle",
+                      detail: "Audited all " + resources.length + " FHIR entry(ies) uploaded for " + patName + "; 0 MedicationRequest or MedicationStatement resources were found.",
+                      source_org: "Uploaded FHIR Bundle",
+                      code: "0 MEDS",
+                      tone: "ok",
+                      resource_uuids: []
+                    }]
+                  : medRes.map(function (r) { return toRow(r, "Medication Audit", medRes.length >= 2 ? "warn" : "ok"); }),
+                citations: medRes.map(toCite),
+                clinician_technical_note: "Client-side medication audit computed strictly over the uploaded bundle's MedicationRequest/MedicationStatement entries."
+              },
+              {
+                id: "skill-condition-conflicts",
+                group: "health_check",
+                icon: "🔍",
+                title: "Condition & Staging Consistency Check",
+                subtitle: "Audits uploaded Condition resources for staging consistency",
+                status_badge: condRes.length ? (condRes.length + " Condition(s) Audited") : "0 Conditions in Bundle",
+                badge_tone: "ok",
+                plain_english_summary: condRes.length
+                  ? ("Audited **" + condRes.length + " Condition resource(s)** in **" + patName + "**'s uploaded chart: " + condRes.map(function (r) { return "**" + r.display + "** [" + r.index + "]"; }).join(", ") + ".")
+                  : ("No Condition Resources in Uploaded Bundle: **" + patName + "**'s uploaded FHIR chart contains **0 Condition** resources."),
+                suggested_remediation: ["Review active problem list items with your clinician."],
+                structured_rows: condRes.map(function (r) { return toRow(r, "Condition Audit", "info"); }),
+                citations: condRes.map(toCite),
+                clinician_technical_note: "Audited Condition resources in the uploaded bundle."
+              },
+              {
+                id: "skill-chart-hygiene",
+                group: "health_check",
+                icon: "🧹",
+                title: "Chart Bloat & Redundancy Audit",
+                subtitle: "Audits uploaded bundle for repeated observations and billing claims",
+                status_badge: resources.length + " Total Entries Audited",
+                badge_tone: "info",
+                plain_english_summary: "Audited **" + resources.length + " total entry(ies)** in **" + patName + "**'s uploaded FHIR bundle (**" + catCounts["All Core Clinical"] + " core clinical**, **" + claimRes.length + " billing/claims**, **" + labRes.length + " observations**).",
+                suggested_remediation: ["Use Step 2 Grouped (Fold Renewals) mode to fold repeated longitudinal observations into a compact trend line."],
+                structured_rows: [
+                  {
+                    category: "Bundle Inventory",
+                    label: resources.length + " Total FHIR Entries Uploaded",
+                    detail: catCounts["All Core Clinical"] + " core clinical resources (" + labRes.length + " observations, " + medRes.length + " medications, " + condRes.length + " conditions, " + allergyRes.length + " allergies) and " + claimRes.length + " billing claims.",
+                    source_org: "Uploaded FHIR Bundle",
+                    code: "BUNDLE-AUDIT",
+                    tone: "info",
+                    resource_uuids: []
+                  }
+                ],
+                citations: resources.slice(0, 3).map(toCite),
+                clinician_technical_note: "Client-side structural hygiene summary for the uploaded FHIR R4 Bundle."
+              },
+              {
+                id: "skill-privacy-preview",
+                group: "health_check",
+                icon: "🔒",
+                title: "Sensitive Record Privacy Preview",
+                subtitle: "Scans uploaded bundle for sensitive SDOH, behavioral, or personal-safety records",
+                status_badge: sensRes.length ? (sensRes.length + " Sensitive Entry(ies) Flagged") : "0 Sensitive Entries Flagged",
+                badge_tone: sensRes.length ? "warn" : "ok",
+                plain_english_summary: sensRes.length
+                  ? ("By default, your full personal health view keeps 100% of your records visible. This read-only preview identified **" + sensRes.length + " sensitive social, behavioral, or personal-safety entry(ies)** in **" + patName + "**'s uploaded chart (" + sensRes.map(function (r) { return "**" + r.display + "** [" + r.index + "]"; }).join(", ") + ") so you can withhold them when enabling External Share.")
+                  : ("Scanned all " + resources.length + " entry(ies) in **" + patName + "**'s uploaded chart for sensitive social history, substance use, or personal-safety records and found **0 sensitive entries flagged**."),
+                suggested_remediation: ["Check 'Preview external-share privacy redaction' in Step 2 to strip flagged sensitive entries from external-share summaries."],
+                structured_rows: sensRes.length
+                  ? sensRes.map(function (r) { return toRow(r, "Protected in External Share", "warn"); })
+                  : [{
+                      category: "No Sensitive SDOH/Behavioral Flags",
+                      label: "0 Sensitive Entries Flagged in Uploaded Bundle",
+                      detail: "Scanned all uploaded resources against 42 CFR Part 2 / WA My Health My Data Act sensitivity categories.",
+                      source_org: "Uploaded FHIR Bundle",
+                      code: "PASS",
+                      tone: "ok",
+                      resource_uuids: []
+                    }],
+                citations: sensRes.map(toCite),
+                clinician_technical_note: "Client-side sensitivity scan over uploaded Condition, Observation, Procedure, and DocumentReference entries."
+              }
+            ];
+          }
+
+          const budgetsList = [16384, 8192, 4096, 2048, 1024];
+          const customMatrix = { lossless_structural: {}, hierarchical: {} };
+          budgetsList.forEach(function (b) {
+            customMatrix.lossless_structural[String(b)] = buildCustomBudgetCell("lossless_structural", b);
+            customMatrix.hierarchical[String(b)] = buildCustomBudgetCell("hierarchical", b);
+          });
+          const sensitiveCount = resources.filter(function (r) { return isSensitiveResource(r); }).length;
+          const equipCount = resources.filter(function (r) { return isRoomEquipmentResource(r); }).length;
+
+          patientsMap[customId] = {
+            id: customId,
+            patient_id: customId,
+            patient_name: patName,
+            birth_date: patDob,
+            short_tag: "Custom Uploaded FHIR Bundle (Client-Side Preview)",
+            persona_bio: "User-uploaded FHIR R4 Bundle parsed and condensed locally across 5 token budgets in the browser (Client-Side Structural Preview).",
+            key_highlights: entries.length + " FHIR Entries • Client-Side 5-Tier Browser Preview",
+            raw_est_tokens: rawEstTok,
+            total_bundle_entries: entries.length,
+            fhir_browser: {
+              total_bundle_entries: entries.length,
+              core_clinical_entries: catCounts["All Core Clinical"],
+              category_counts: catCounts,
+              resources: resources
+            },
+            prep_lever_summary: {
+              total_bundle_entries: entries.length,
+              raw_json_tokens: rawEstTok,
+              non_clinical_claims_count: catCounts["Claims & Billing"] || 0,
+              duplicate_base64_notes_count: 0,
+              room_equipment_devices_count: equipCount,
+              sensitive_sdoh_count: sensitiveCount
+            },
+            condensation_matrix: customMatrix,
+            skills: buildCustomPatientSkills(),
+            postures: { patient_self: { qa_samples: [] }, external_share: { qa_samples: [] } }
+          };
+
+          if (personaIds.indexOf(customId) === -1) {
+            personaIds.unshift(customId);
+          }
+          state.activePatientId = customId;
+          state.selectedResourceIndex = null;
+          state.customQuestionResult = null;
+          closeCitationDrawer();
+          modal.classList.remove("open");
+          renderAll();
+        } catch (err) {
+          alert("Invalid FHIR JSON: " + err.message);
+        }
+      });
+
+      /* Initial Render & Live LLM Discovery */
+      renderAll();
+      probeLiveLlmEndpoint();
+    })();
+  </script>
+</body>
+</html>

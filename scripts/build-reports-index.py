@@ -144,6 +144,7 @@ def gather(slug: str) -> dict:
     family = str(meta.get("report_family") or "chartsearchai")
     out: dict = {
         "family": family,
+        "evaluation_modality": str(meta.get("evaluation_modality") or ""),
         "reader_led": False,
         # Facts frozen beside a report whose packet no longer carries its results.
         "cells": meta.get("cells"),
@@ -238,7 +239,7 @@ def gather(slug: str) -> dict:
     arms = sorted({r.get("backend_id") for r in rows if r.get("backend_id")})
     pts = {(r.get("request") or {}).get("patient") for r in rows if (r.get("request") or {}).get("patient")}
     out["cells"] = len(rows)
-    out["patients"] = _patient_names(rdir, pts)
+    out["patients"] = _patient_names(rdir, pts) or out["patients"]
     out["date"] = out["date"] or datetime.fromtimestamp(
         (rdir / "results.jsonl").stat().st_mtime, timezone.utc).strftime(DATE_FORMAT)
     return out
@@ -339,7 +340,17 @@ def _scout_table(scout: list[dict], labels: dict | None = None) -> str:
     return table
 
 
-FAMILY_LABELS = {"chartsearchai": "ChartSearchAI", "catalyst": "Catalyst SQL"}
+FAMILY_LABELS = {
+    "chartsearchai": "ChartSearchAI",
+    "catalyst": "Catalyst SQL",
+    "wahs": "WA Health Summary",
+}
+
+MODALITY_LABELS = {
+    "deterministic_pipeline": "Deterministic Pipeline Gate",
+    "condensation_retrieval_ablation": "Condensation & Retrieval Ablation",
+    "live_model_and_team_eval": "Live Model & KB Team Evaluation",
+}
 
 
 def _family(entry: dict, gathered: dict) -> str:
@@ -379,12 +390,20 @@ def _card(entry: dict) -> str:
     if g["patients"]:
         facts.append(esc(g["patients"]))
     if g["cells"] is not None:
-        unit = "conversations" if g.get("family") == "catalyst" else "graded answers"
+        modality = str(entry.get("evaluation_modality") or g.get("evaluation_modality") or "")
+        if g.get("family") == "catalyst":
+            unit = "conversations"
+        elif modality == "deterministic_pipeline":
+            unit = "rubric cases"
+        else:
+            unit = "graded answers"
         facts.append(f'{g["cells"]} {unit}')
     if g["date"]:
         facts.append(esc(g["date"]))
     subtitle = " · ".join(facts)
     family = _family(entry, g)
+    modality = str(entry.get("evaluation_modality") or g.get("evaluation_modality") or "")
+    modality_label = MODALITY_LABELS.get(modality, modality)
     if family == "catalyst":
         # Labels name the question each page answers, not the artifact kind.
         links = [f'<a class="btn" href="{esc(slug)}/index.html">Read the report</a>']
@@ -426,6 +445,8 @@ def _card(entry: dict) -> str:
                         f'{" " + esc(e["note"]) if e.get("note") else ""}</li>' for e in earlier)
                     + '</ul></div>')
     family_label = FAMILY_LABELS.get(family, family)
+    if modality_label:
+        family_label = f"{family_label} · {modality_label}"
     return f"""  <article class="card" data-family="{esc(family)}">
   <header class="card-head">
     <div class="titles"><span class="family {esc(family)}">{esc(family_label)}</span><h2>{esc(entry["title"])}</h2><div class="slug">{subtitle}</div></div>
@@ -466,13 +487,14 @@ _STYLE_CORE = """
     border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;}
   .filter button[aria-pressed="true"]{background:var(--accent);color:var(--btn-fg);border-color:var(--accent);}
   body[data-filter="chartsearchai"] .card:not([data-family="chartsearchai"]),
-  body[data-filter="catalyst"] .card:not([data-family="catalyst"]){display:none;}
+  body[data-filter="catalyst"] .card:not([data-family="catalyst"]),
+  body[data-filter="wahs"] .card:not([data-family="wahs"]){display:none;}
   .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px 24px;margin-bottom:22px;}
   .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:6px;}
   .titles h2{margin:0;font-size:20px;color:var(--ink);font-weight:600;line-height:1.3;}
   .family{display:inline-block;margin:0 0 6px;padding:2px 7px;border:1px solid var(--border);
     border-radius:999px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;}
-  .family.catalyst{color:var(--accent);border-color:var(--accent);}
+  .family.catalyst,.family.wahs{color:var(--accent);border-color:var(--accent);}
   .titles .slug{color:var(--muted);font-size:13px;margin-top:4px;}
   .links{display:flex;gap:8px;flex-wrap:wrap;}
   .btn{display:inline-block;text-decoration:none;background:var(--accent);color:var(--btn-fg);
