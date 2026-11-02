@@ -276,6 +276,8 @@ def test_full_evaluation_publishes_only_when_explicitly_requested(tmp_path, monk
     for name, value in dict(work_dir=lambda: tmp_path,
             run_environment=lambda *args: nullcontext({}), run_set=lambda *args: tmp_path,
             run_role=lambda *args: '```json\n[]\n```', arm_table=lambda *args: [],
+            judge_passes=lambda *args: ['fixture-actor'],
+            judging=lambda *args: {'sentence': 'fixture judging'},
             harness=lambda *args: SimpleNamespace(stdout='fixture report'),
             subprocess=SimpleNamespace(run=lambda *args, **kwargs: SimpleNamespace(returncode=0)),
             publish_full=lambda *args: published.append(args) or 'fixture-url').items():
