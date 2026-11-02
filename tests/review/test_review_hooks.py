@@ -82,7 +82,71 @@ def test_a_fix_whose_test_fails_without_it_is_pushed_with_red_and_green(project)
     ledger = (Path(os.environ["REVIEW_WORK"]) / "ledger" / "fork.jsonl").read_text()
     records = [json.loads(l) for l in ledger.splitlines()]
     assert [r["status"] for r in records] == ["skip", "probed"]
-    assert len(records[1]["lines"]) == 3
+    assert len(records[1]["lines"]) == 4
+
+
+def test_a_failed_restoration_run_blocks_the_probe(project, monkeypatch):
+    sys.path.insert(0, str(ROOT / 'review/lib'))
+    from reviewkit import probes
+    commit(project, {"tests/test_calc.py": FIXED_TEST},
+           'Test the lower bound\n\nMutation: calc.py "max(low, min(value, high))" -> "min(value, high)"')
+    original = probes._run
+    observed = []
+    def runner(kind, wt, tests, log):
+        observed.append((wt / 'calc.py').read_text())
+        if len(observed) == 3:
+            return probes.Run(2, 0, [], log)
+        return original(kind, wt, tests, log)
+    monkeypatch.setattr(probes, '_run', runner)
+    result = probes.probe_commit(project, 'HEAD')
+    assert observed == [CALC, BROKEN, CALC]
+    assert not result.ok
+
+
+def test_skipping_the_failing_case_cannot_turn_a_broken_head_green(project):
+    sys.path.insert(0, str(ROOT / 'review/lib'))
+    from reviewkit import probes
+    commit(project, {'calc.py': 'enabled = True\n' + BROKEN}, 'Setup\n\nProbe: skip (fixture setup)')
+    tests = TEST + ('\nimport pytest\nimport calc\n'
+        '@getattr(pytest.mark, "skipif")(not calc.enabled, reason="backend disabled")\n'
+        'def test_boundary():\n    assert clamp(-5, 0, 10) == 0\n')
+    commit(project, {'calc.py': 'enabled = False\n' + BROKEN, 'tests/test_calc.py': tests},
+           'Disable backend\n\nTests: tests/test_calc.py::test_boundary, tests/test_calc.py::test_inside')
+    result = probes.probe_commit(project, 'HEAD')
+    assert not result.ok
+    assert any('did not execute' in line for line in result.lines)
+
+
+def test_a_mutation_must_not_execute_modified_tests(project, monkeypatch):
+    sys.path.insert(0, str(ROOT / 'review/lib'))
+    from reviewkit import probes
+    source = TEST + '\n'
+    commit(project, {'tests/test_calc.py': source},
+           'Test fixture\n\nMutation: tests/test_calc.py "assert clamp(5, 0, 10) == 5" -> "assert True"')
+    original = probes._run
+    observed = []
+    def runner(kind, wt, tests, log):
+        observed.append((wt / 'tests/test_calc.py').read_text())
+        return original(kind, wt, tests, log)
+    monkeypatch.setattr(probes, '_run', runner)
+    result = probes.probe_commit(project, 'HEAD')
+    assert not result.ok
+    assert observed == [source]
+
+
+def test_comment_like_prompt_content_is_probed_as_executable_input(project):
+    sys.path.insert(0, str(ROOT / 'review/lib'))
+    from reviewkit import probes
+    (project / 'server/prompts').mkdir(parents=True)
+    production = 'from pathlib import Path\ndef prompt(): return (Path(__file__).parent / "server/prompts/example.txt").read_text()\n'
+    before = 'from calc import prompt\ndef test_prompt(): assert prompt() == "// old\\n"\n'
+    commit(project, {'calc.py': production, 'server/prompts/example.txt': '// old\n',
+                     'tests/test_calc.py': before}, 'Setup\n\nProbe: skip (fixture setup)')
+    commit(project, {'server/prompts/example.txt': '// new\n',
+                     'tests/test_calc.py': before.replace('// old', '// new')}, 'Change prompt behavior')
+    result = probes.probe_commit(project, 'HEAD')
+    assert result.ok and result.status == 'probed'
+    assert len(result.lines) == 2
 
 
 def test_a_fix_whose_test_passes_without_it_is_refused(project):
@@ -151,7 +215,7 @@ def test_main_code_without_a_test_is_refused_unless_skipped_on_the_record(projec
     assert push(project).returncode == 0
 
 
-def test_a_patch_already_probed_is_not_probed_again_after_a_rebase(project):
+def test_a_rebased_patch_is_probed_again(project):
     commit(project, {"calc.py": BROKEN}, "Simplify\n\nProbe: skip (setup)")
     commit(project, {"calc.py": CALC, "tests/test_calc.py": FIXED_TEST}, "Clamp")
     assert push(project).returncode == 0
@@ -162,7 +226,7 @@ def test_a_patch_already_probed_is_not_probed_again_after_a_rebase(project):
     git(project, "rebase", "-q", "main")
     result = push(project, "--force-with-lease")
     assert result.returncode == 0, result.stderr
-    assert "same patch as" in result.stderr
+    assert "red   " in result.stderr and "green " in result.stderr
 
 
 def test_pushes_to_a_default_branch_or_over_unseen_work_are_refused(project, tmp_path):
@@ -186,14 +250,14 @@ def test_pushes_to_a_default_branch_or_over_unseen_work_are_refused(project, tmp
     assert refused.returncode != 0 and "fetch and look" in refused.stderr
 
 
-def test_commits_already_pushed_are_recorded_as_baseline_and_skipped(project):
+def test_baseline_records_cannot_certify_unverified_code(project):
     commit(project, {"calc.py": CALC + "\nLIMIT = 3\n"}, "Old work")
     git(project, "push", "-q", "--no-verify", "origin", "HEAD:refs/heads/fix")
     assert "2 commits recorded" in run(project, sys.executable, str(PROBE), "--baseline").stdout
     git(project, "commit", "-q", "--amend", "-m", "Old work, reworded")
     result = git(project, "push", "--force-with-lease", "origin", "HEAD:fix", check=False)
-    assert result.returncode == 0, result.stderr
-    assert "before the probes were installed" in result.stderr
+    assert result.returncode != 0
+    assert "with no test" in result.stderr
 
 
 @pytest.mark.parametrize("files, message, refusal", [
@@ -223,9 +287,9 @@ def test_the_red_line_quotes_a_failure_of_a_named_test_first():
     sys.path.insert(0, str(ROOT / "review" / "lib"))
     from reviewkit.probes import Run, _first
 
-    run = Run(1, 5, ["OtherTest.old:12 expected 1", "PagingTest.slices:30 expected [R]"], Path("log"))
-    assert _first(run, ["PagingTest#slices"]).startswith("PagingTest.slices")
-    assert _first(run, ["tests/test_x.py::missing"]).startswith("OtherTest.old")
+    run = Run(1, 5, ["OtherTest#old: expected 1", "PagingTest#slices: expected [R]"], Path("log"))
+    assert _first(run, ["PagingTest#slices"]).startswith("PagingTest#slices")
+    assert _first(run, ["tests/test_x.py::missing"]).startswith("OtherTest#old")
 
 
 def test_a_rewrite_over_a_head_this_branch_pushed_is_allowed_when_fetch_skips_the_branch(project):

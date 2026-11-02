@@ -406,7 +406,7 @@ test:
 	$(UV) run --project $(HARNESS) --extra dev python -m pytest tests/operations tests/review
 
 # --- review process (specs/review-process.md) ---
-REVIEW_REPOS ?= . targets/chartsearchai targets/chartsearchai-esm targets/querystore
+REVIEW_REPOS ?= . targets/chartsearchai targets/chartsearchai-esm targets/querystore targets/med-agent-hub targets/validation-harness
 
 review-hooks-install:
 	@for d in $(REVIEW_REPOS); do \
@@ -414,7 +414,7 @@ review-hooks-install:
 	  [ "$$d" = . ] || review/bin/probe --repo $$d --baseline; \
 	done
 
-REVIEW_ARGS = $(if $(PR),--pr $(PR)) $(if $(REPO),--repo $(REPO)) $(if $(AGENT),--agent $(AGENT)) \
+REVIEW_ARGS = $(if $(REPOSITORY),--repository $(REPOSITORY)) $(if $(FIX),--fix) $(if $(PUBLISH_EVALUATION),--publish-evaluation) $(if $(PR),--pr $(PR)) $(if $(REPO),--repo $(REPO)) $(if $(AGENT),--agent $(AGENT)) \
 	$(if $(EFFORT),--effort $(EFFORT)) $(if $(ROUNDS),--rounds $(ROUNDS)) $(if $(STACK),--stack) \
 	$(if $(SCENARIOS),--scenarios $(SCENARIOS)) $(if $(NO_REVIEW),--no-review) \
 	$(if $(GATE),--gate $(GATE)) $(if $(GATE_BASE),--gate-base $(GATE_BASE)) \
@@ -423,6 +423,8 @@ REVIEW_ARGS = $(if $(PR),--pr $(PR)) $(if $(REPO),--repo $(REPO)) $(if $(AGENT),
 	$(if $(NO_PUBLISH),--no-publish) $(if $(PUBLISH),--publish $(PUBLISH)) $(if $(L5_RESUME),--resume $(L5_RESUME)) \
 	$(if $(MEASURE),--measure $(MEASURE) --gold $(GOLD)) \
 	$(if $(THREADS_UNTIL),--threads-until $(THREADS_UNTIL)) $(if $(NO_CONSUMER),--no-consumer) \
+	$(if $(CONSUMER_HEAD),--consumer-head $(CONSUMER_HEAD)) \
+	$(if $(CONSUMER_REPO),--consumer-repo $(CONSUMER_REPO)) \
 	$(if $(HEAD),--head $(HEAD)) $(if $(BASE),--base $(BASE))
 
 review: export REVIEW_MODEL ?= $(MODEL)

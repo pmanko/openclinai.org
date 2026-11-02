@@ -3,7 +3,8 @@
 Paths are classified by content conventions, never by branch or repository name:
 test code (Maven `src/test`, `tests/`, `__tests__`, `*.test.ts`, `test_*.py`), main
 code (source files outside those), and other files (documentation, build files,
-configuration) that the probes ignore.
+configuration) that the probes ignore, except executable profiles, prompts and
+dataset inputs explicitly classified below.
 """
 
 from __future__ import annotations
@@ -33,6 +34,10 @@ _SCISSORS = "# ------------------------ >8 ------------------------"
 def classify(path: str) -> str:
     if TEST_PATH.search(path):
         return "test"
+    if (path == "server/levels.yaml" or path.startswith("server/prompts/")
+            or (path.startswith(("datasets/validation/scenarios/", "datasets/validation/comparison_sets/",
+                                 "datasets/wahs/")) and path.endswith((".json", ".jsonl", ".yaml", ".yml")))):
+        return "main"
     if path.endswith(CODE_EXT) and not BUILD_CONFIG.search(path):
         return "main"
     return "other"
@@ -93,6 +98,8 @@ def code_changed(repo: Path, sha: str, change: Change) -> bool:
     suffix = Path(change.path).suffix
     before = git(repo, "show", f"{sha}^:{change.path}")
     after = git(repo, "show", f"{sha}:{change.path}")
+    if suffix not in CODE_EXT:
+        return before != after
     return strip_comments(before, suffix) != strip_comments(after, suffix)
 
 
