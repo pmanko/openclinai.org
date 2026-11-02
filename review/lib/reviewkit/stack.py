@@ -79,7 +79,9 @@ def consolidate(repository: str, repo: Path, layers: list[dict], occurrences: li
         owner = decision.get('owner_pr')
         intro = decision.get('introduced_commit')
         origin_file = decision.get('origin_file')
-        if status in ('open', 'baseline'):
+        resolved_commit = decision.get('resolved_commit')
+        resolution_evidence = decision.get('resolution_evidence', '').strip()
+        if status in ('open', 'baseline', 'resolved'):
             if not intro or not origin_file:
                 raise ValueError('Missing introducing commit or source path')
             intro, changed = introduction(intro)
@@ -98,11 +100,26 @@ def consolidate(repository: str, repo: Path, layers: list[dict], occurrences: li
                 earliest = min(candidates, key=lambda p: (p.get('created_at', ''), p['number']))
                 if owner != earliest['number']:
                     raise ValueError(f'Issue belongs to earlier PR #{earliest["number"]}')
-            elif owner is not None or eligible:
-                raise ValueError('Baseline attribution conflicts with an open introducing PR')
+            elif status == 'baseline':
+                if owner is not None or eligible:
+                    raise ValueError('Baseline attribution conflicts with an open introducing PR')
+            else:
+                if owner is not None:
+                    raise ValueError('Unattributed/resolved issues cannot acquire a new owner')
+                if not resolved_commit or not resolution_evidence:
+                    raise ValueError('Resolved status requires a repairing commit and resolution evidence')
+                resolved_commit, resolved_changed = introduction(resolved_commit)
+                if resolved_commit == intro or not contains(intro, resolved_commit) or origin_file not in resolved_changed:
+                    raise ValueError('Repairing commit must follow the introduction and change the origin file')
+                if not any(contains(resolved_commit, p['head']) for p in layers):
+                    raise ValueError('Repairing commit is not present in any observed stack layer')
+                if not any(contains(resolved_commit, m['head']) and not m['finding'].get('blocking') for m in members):
+                    raise ValueError('Resolved status requires a non-blocking verification observation on a repaired revision')
             for member in members:
                 if not contains(intro, member['head']):
                     raise ValueError('Affected revision does not contain the introduction; inspect copies separately')
+                if status == 'resolved' and member['finding'].get('blocking') and contains(resolved_commit, member['head']):
+                    raise ValueError('Blocking observation still fails on a revision containing the claimed repair')
         elif owner is not None:
             raise ValueError('Unattributed/resolved issues cannot acquire a new owner')
         tracking = decision.get('tracking_pr')
@@ -117,7 +134,8 @@ def consolidate(repository: str, repo: Path, layers: list[dict], occurrences: li
                 raise ValueError('Blocking observation lacks reproduction evidence')
         issues.append(dict(id=uid, issue_key=key, title=decision['title'], status=status,
                            owner_pr=owner, tracking_pr=tracking, canonical_reference=reference, introduced_commit=intro, origin_file=origin_file,
-                           origin_evidence=rationale, blocking=blocking, occurrences=members,
+                           origin_evidence=rationale, resolved_commit=resolved_commit, resolution_evidence=resolution_evidence,
+                           blocking=blocking, occurrences=members,
                            affected_prs=sorted({m['pr'] for m in members}),
                            regression_of=decision.get('regression_of')))
     if consumed != set(by_id):
@@ -185,7 +203,10 @@ def render(plan: dict, review_urls: dict[int, str], canonical_urls: dict[str, st
                     if tracking not in review_urls: raise ValueError('Missing tracking review URL')
                     lines += [f"- [{issue['title']}]({review_urls[tracking]}): {issue['status']}; tracking location only, introduction is not assigned to this PR."]
                     continue
-                lines += [f'- **{issue["status"]} — {issue["issue_key"]}:** {issue["title"]} '+issue['origin_evidence']]
+                summary = issue['origin_evidence']
+                if issue['status'] == 'resolved' and issue.get('resolution_evidence'):
+                    summary += f" (Resolved in `{issue['resolved_commit'][:8]}`: {issue['resolution_evidence']})"
+                lines += [f'- **{issue["status"]} — {issue["issue_key"]}:** {issue["title"]} '+summary]
                 if tracking == pr:
                     f = issue['occurrences'][0]['finding']
                     lines += ['  '+f['finding']]

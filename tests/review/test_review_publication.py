@@ -51,3 +51,11 @@ def test_entire_batch_is_checked_before_writes(publication):
     second={**entry,'head':'wrong'}
     with pytest.raises(ValueError):apply_updates([entry,second],api,authorized=True)
     assert writes==[]
+
+
+def test_duplicate_targets_in_batch_are_rejected_before_writes(publication):
+    entry,state,writes,api=publication
+    second={**entry,'body':'different body','body_sha256':digest('different body')}
+    with pytest.raises(ValueError,match='Duplicate review target'):
+        apply_updates([entry,second],api,authorized=True)
+    assert writes==[]
