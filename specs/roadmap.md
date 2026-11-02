@@ -15,7 +15,7 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 | --- | --- | --- | --- |
 | Local HIV research environment | [local-hiv-environment.md](local-hiv-environment.md) | Setup and reset restore the published default baseline in about 5 minutes; Ross's fresh install passed; account context reaches the model; the 18 October module heads need a rebuilt baseline | New default baseline for the 18 October heads; Docker-only prerequisites |
 | Provider parity and local inference efficiency | [provider-parity.md](provider-parity.md) | Hub reads its context once per answer: checked answers take 16–56 s here when the router reuses the chart's temporal facts, 83–204 s when it does not, against 7–51 s built-in | Cross-question reuse; OpenRouter comparison; Ross re-measures |
-| OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | Three gh-stack stacks on the OpenMRS repositories since 21 October, one PR per layer targeting the layer below; the frontend stack (#72–#76) merged 27 October; QueryStore #94–#98 and backend #617–#623 are restacked with the maintainer's rounds 10 and 11 answered ([record](reviews/2026-10-26-upstream-sync.md)) | The maintainer's merge order for QueryStore and the backend; the ESM fork main and umbrella pin moved to the merged upstream |
+| OpenMRS contribution (Track A) | [openmrs-contribution.md](openmrs-contribution.md) | All three stacks are merged upstream (QueryStore #94–#98 and backend #617–#623 on 29–30 October, #628 on 31 October, the frontend re-landed in #84); the fork mains mirror upstream and the umbrella pins the upstream heads ([record](reviews/2026-11-02-upstream-sync.md)) | The frontend `provider_not_permitted` PR; close out the contribution spec's remediation items against the merged state |
 | Review process and gates | [review-process.md](review-process.md) | Hooks, probes and source review implemented; evidence safeguards and Hub/harness support under verification | Review own-repository PRs in stack order; validate evidence and cross-component behavior |
 | Judging | [judging.md](judging.md) | C1 to C5 built on harness #200 and umbrella #28 (judge cards, repeated passes, a judge panel, blinded per-scenario sessions, per-pass drill-down) and used for every run since A2; one gpt-6-astra pass and one Opus pass per round (owner, 28 October); PRs open | Merge harness #200 to #202 and umbrella #28, then tick C1 to C5 |
 | Checked answers | [checked-answers.md](checked-answers.md) | A1 to A4 and A7 (`single-12b-bare` default, owner 28 October) built on Hub #41 to #50; runs A, A2, C, D3 and D4 judged; the arms narrowed to bare, verify and the built-in reference ([D4 record](reviews/2026-10-28-confidence-labels-run-d4.md)) | Run B with the 31B writer, then merge the Hub stack |
@@ -72,10 +72,12 @@ authorized by any item here; each thread spec names its signoffs.
 
 ## Outstanding decisions
 
-- **Fork-main pushes:** fork mains are the integration branches the umbrella pins
-  ([AGENTS.md](../AGENTS.md)), but the pre-push hook refuses every push to a
-  default branch, so moving one needs `--no-verify` today. Decide how pushes to
-  the pmanko fork mains get through.
+- **Fork-main pushes:** fork mains are mirrors of the upstream mains that the
+  umbrella pins ([AGENTS.md](../AGENTS.md)). Since 2 November each fork's `main`
+  is guarded by a ruleset (required checks, no force pushes) with the repository
+  admin role on its bypass list, so `gh repo sync --force` from upstream goes
+  through without a settings change; the pre-push hook still refuses local pushes
+  to a default branch ([record](reviews/2026-11-02-upstream-sync.md#fork-mains)).
 - **Data tooling:** assign a maintained owner for reusable migration and
   terminology utilities outside the validation runner.
 - **Public hosting:** decide repository organization, visibility or hosting changes
@@ -109,3 +111,4 @@ authorized by any item here; each thread spec names its signoffs.
 - [21 October maintainer round on the new stacks: inventory and harness gaps](reviews/2026-10-21-maintainer-round-on-the-stacks.md)
 - [30 October WAHS Phase 2 evaluation report](reviews/2026-10-30-wahs-evaluation-report.md)
 - [31 October WAHS Phase 3 local validation and de-saturated ablation closeout](reviews/2026-10-31-wahs-phase3-local-validation.md)
+- [2 November Track A upstream sync: merged stacks, fork mains and pins](reviews/2026-11-02-upstream-sync.md)

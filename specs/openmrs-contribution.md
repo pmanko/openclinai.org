@@ -1,8 +1,9 @@
 # OpenMRS contribution delivery
 
-**Stream:** Track A · **Status:** three stacks on the OpenMRS repositories since
-21 October, one PR per layer targeting the layer below; the maintainer's third
-round is answered; a fresh-reviewer round (Codex) is being fixed layer by layer ·
+**Stream:** Track A · **Status:** all three stacks merged upstream by 31 October
+(QueryStore #94–#98, backend #617–#623 and #628, frontend #72–#76 re-landed in #84);
+the umbrella pins the upstream mains ([record](reviews/2026-11-02-upstream-sync.md));
+the frontend `provider_not_permitted` PR is still to open ·
 **Owner:** umbrella for cross-project acceptance; each OpenMRS PR owns its behavior
 
 Deliver the extracted ChartSearchAI backend and frontend contributions and the
@@ -150,11 +151,13 @@ dated records and no longer listed here.
       with `make chartsearch-smoke` ([environments/README.md](../environments/README.md#setup-acceptance)).
 - [ ] Maintainer review of the new PRs; replies per the reply brief, posted on the
       owner's approval.
-- [ ] Merge order once approved: QueryStore #92 to #97 first (a published snapshot
+- [x] Merge order once approved: QueryStore #92 to #97 first (a published snapshot
       makes the backend's required build pass), then backend #615 to #623, frontend
       #72 to #76; after each merge, `gh stack rebase` reduces the next PR to its own
       layer. The umbrella then pins the merged `main` heads; the baseline is rebuilt
-      only if the schema changed.
+      only if the schema changed ([record](reviews/2026-11-02-upstream-sync.md):
+      every stack merged by 31 October, the fork mains mirror upstream, the pins
+      moved and the smoke passed on the existing index).
 
 ### Standing items
 
