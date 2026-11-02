@@ -37,7 +37,7 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, dict[str, str]]:
     (root / "compose" / "openmrs-2.8-refapp.yml").write_text(
         "services: {}\n", encoding="utf-8"
     )
-    for name in (*SCRIPT_NAMES, "llama-router-up.sh", "llama-router.ini"):
+    for name in (*SCRIPT_NAMES, "llama-router-up.sh", "llama-router.ini", "llama-router.models.tsv"):
         shutil.copy2(ROOT / "scripts" / name, scripts / name)
 
     docker_log = tmp_path / "docker.log"

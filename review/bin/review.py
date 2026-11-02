@@ -182,8 +182,8 @@ def run_role(args, role: str, workdir: Path, prompt: str, out: Path,
     if role != "fixer":
         prompt += ("\nYour final message is saved as your answer: do not write it to a file, and "
                    "leave the repository as you found it.\n")
-    if args.agent == "human" and out.exists():
-        previous_prompt = prompt_file.read_text() if prompt_file.exists() else ""
+    if (agent or getattr(args, "agent", None)) == "human" and out.exists() and prompt_file.exists():
+        previous_prompt = prompt_file.read_text()
         if previous_prompt != prompt:
             archive = out.parent / "history" / hashlib.sha256(previous_prompt.encode() + out.read_bytes()).hexdigest()[:16]
             archive.mkdir(parents=True, exist_ok=True)
@@ -442,7 +442,7 @@ def run_full(args) -> int:
                           data_root if (explicit_data_root is not None or data_root != DATA) else None,
                           args.resume)
     subprocess.run(["make", "-C", str(HARNESS), "validate-judge-prep", f"RUN={run_dir}"]
-                   + (["BLIND=1"] if args.blind else []), check=True, capture_output=True)
+                   + (["BLIND=1"] if getattr(args, "blind", False) else []), check=True, capture_output=True)
     judge_passes(args, run_dir, out_dir)
     report = harness("validate", "report", "--run-dir", str(run_dir))
     lines = [f"# Full evaluation {args.set} ({stamp})", "", f"Run: {run_dir}",
@@ -451,7 +451,7 @@ def run_full(args) -> int:
         base = HARNESS / "artifacts/validate" / args.baseline
         lines += ["", f"Compared with run {args.baseline}: {base / 'report.html'}",
                   baseline_note(run_dir, base)]
-    if args.publish_evaluation and not args.no_publish:
+    if getattr(args, "publish_evaluation", False) and not getattr(args, "no_publish", False):
         lines += ["", f"Published: {publish_full(run_dir, args.set)}"]
     (out_dir / "summary.md").write_text("\n".join(lines) + "\n")
     print("\n".join(lines))
