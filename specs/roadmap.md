@@ -27,7 +27,7 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 | WA Health Summary (WAHS) | [wahs.md](wahs.md) | Phase 2 (`W1`–`W3`) and Phase 3 active local validation, UX revamp, modularization & Hub profile experimentation slices (`W4`–`W8` & `W12`–`W19`) complete and published 1 November ([openclinai.org#31](https://github.com/pmanko/openclinai.org/pull/31), [med-agent-hub#57](https://github.com/pmanko/med-agent-hub/pull/57), [record](reviews/2026-10-31-wahs-phase3-local-validation.md)): non-destructive `lossless_structural` condensation decoupled from skill-based chart-hygiene/reconciliation findings (`W12`), generalized KB-driven FHIR R4 engine across 6 patients / 14 bundles / 39 cases (`W14`), decluttered 3-Phase Stepper patient-facing demo (`W15`, `W16`, `W18` & `W19`: untruncated Step 1→2→3 condensed chart propagation for `8k` vs `1k` testing, curated `med-agent-hub` `workflow: wahs` profiles + OpenRouter comparison support, and published walkthrough at `openclinai.org/wahs/walkthrough/`), modularized FHIR & script architecture (`W17`), optional `W9` privacy decoupling, hybrid full-chart overflow lookup tools, and 3 de-saturated modality-separated reports | Deferred tracks `W9` (optional sensitive-record redaction & `sd-fhir` cryptographic selective disclosure), `W10` (CIRG 4-VM shared H200 GPU run), and `W11` (partner-supplied real WAHS summaries) |
 | Decision-layer experiment (Jev, Laya) | [decision-layer-experiment.md](decision-layer-experiment.md) | Proposed; aligned 27 October with the label-only pipeline in [checked-answers.md](checked-answers.md) | Decisions D1–D5 |
 | Clinical knowledge bases | No umbrella spec yet. The Hub ships one static knowledge-base source; the harness holds the [research notes](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/artifacts/planning/clinical-kb-research.md) | Exploration | Owner decides whether to scope a thread |
-| Validation methodology | The [harness](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/README.md) and its [evaluation methodology brief](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/artifacts/planning/eval-methodology-brief.md) | Runs experiments against the local stack; the 7 and 10 October reviews are its latest outputs | Serves the other threads' evaluations |
+| Validation methodology and ChartSearchAI audit | [chartsearch-validation.md](chartsearch-validation.md) and the [harness](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/README.md) ([evaluation methodology brief](https://github.com/pmanko/clinical-ai-validation-harness/blob/main/specs/artifacts/planning/eval-methodology-brief.md)) | Goals 1 & 2 scoped: incremental SSE telemetry, token/cache accounting, live Hub main-answer streaming, and out-of-the-box vs. parity `bundled` attribution | V1–V6 implementation and verification, then Goal 3 multi-session and hardware benchmarking |
 | Workspace and validation refactor (Track B) | [closeout record](reviews/2026-10-02-refactor-closeout.md) | Complete, 2 October | None |
 
 ## Current priorities
@@ -55,6 +55,9 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 9. [Website and publication](website-publication.md): close audit item W04.
 10. [Decision-layer experiment](decision-layer-experiment.md): owner review of the
    proposal.
+11. [ChartSearchAI validation audit](chartsearch-validation.md): incremental SSE
+   stream telemetry, token/cache metrics, live Hub main-answer streaming, and
+   out-of-the-box vs. parity `bundled` attribution (V1–V6).
 
 Upstream merging, deployment changes and release or clinical signoffs are not
 authorized by any item here; each thread spec names its signoffs.
@@ -109,3 +112,4 @@ authorized by any item here; each thread spec names its signoffs.
 - [21 October maintainer round on the new stacks: inventory and harness gaps](reviews/2026-10-21-maintainer-round-on-the-stacks.md)
 - [30 October WAHS Phase 2 evaluation report](reviews/2026-10-30-wahs-evaluation-report.md)
 - [31 October WAHS Phase 3 local validation and de-saturated ablation closeout](reviews/2026-10-31-wahs-phase3-local-validation.md)
+- [3 November ChartSearchAI validation audit and attribution](reviews/2026-11-03-chartsearch-validation-audit.md)
