@@ -98,3 +98,65 @@ Across the published L5 runs (`l5-full-default-2026-10-22-d0e4e2d8`, `l5-full-de
     and `targets/chartsearchai` (`HubClinicalAnswerProviderTest` and conformance tests) pass; a dated
     review in `specs/reviews/` records the verification results and the 4-factor attribution of the
     October L5 `bundled` vs. `med-agent-hub` gap.
+
+## Target path (Goal 3: Hardware, multi-session concurrency, and deployment sizing)
+
+- [x] V7 Stage 1 — Hardware profile metadata and streaming/stage latency breakdown in validation reports
+  ([3 November verification](reviews/2026-11-03-chartsearch-validation-audit.md)).
+  - **Acceptance criteria:** `write_run_meta()` in `harness/validate/runner.py` records optional serving
+    hardware metadata (`VALIDATE_HARDWARE_TIER`, `VALIDATE_HARDWARE_GPU`, `VALIDATE_HARDWARE_VRAM_GB`,
+    `VALIDATE_SERVING_ENGINE`, `VALIDATE_PARALLEL_SLOTS`, `VALIDATE_INFERENCE_ENDPOINT`) into `run_meta.json`,
+    and `build_report()` in `harness/validate/report.py` surfaces `hardware` metadata, per-arm
+    `streaming_latency` aggregates (`avg_ttft_ms`, `p95_ttft_ms`, `avg_answer_done_ms`, `p95_answer_done_ms`,
+    `avg_turn_done_ms`, `avg_tpot_ms`, `avg_cached_tokens`), and per-cell `TTFT`, `answer`, and `TPOT`
+    chips without altering existing golden report renders when optional fields are absent.
+- [x] V8 Stage 2 — Configurable multi-slot router concurrency and multi-clinician session runner
+  ([3 November verification](reviews/2026-11-03-chartsearch-validation-audit.md)).
+  - **Acceptance criteria:** `med-agent-hub/server/team.py` supports `MED_AGENT_ROUTER_CONCURRENCY`
+    (default `1` -> `asyncio.Lock()`, `> 1` -> `asyncio.BoundedSemaphore(N)` via `configure_router_concurrency()`)
+    so multi-slot GPU serving (`llama-server --parallel N`, vLLM, or LiteLLM) executes `N` concurrent
+    turns in parallel while single-slot local routers stay serialized. In `targets/validation-harness`,
+    `harness/validate/concurrency.py` and `harness-cli validate concurrency` drive `N` simultaneous
+    clinician workers across distinct provisioned OpenMRS accounts (`eval-doctor`, `eval-nurse`,
+    `eval-pharmacy`, `eval-clerk`, `eval-lab`, `eval-researcher`, `admin`) and patient sessions using
+    `ThreadPoolExecutor`, emitting `concurrency_results.jsonl` and `concurrency_summary.json`
+    (`n_users`, `throughput_turns_per_min`, `ttft_p50_ms`, `ttft_p95_ms`, `answer_done_p50_ms`,
+    `answer_done_p95_ms`, `turn_done_p50_ms`, `turn_done_p95_ms`, `tpot_p50_ms`, `error_rate`).
+- [x] V9 Stage 3 — OpenMRS decision-maker hardware and deployment sizing matrix
+  ([3 November verification](reviews/2026-11-03-chartsearch-validation-audit.md)).
+  - **Acceptance criteria:** Publish the OpenMRS implementer hardware and deployment sizing matrix below,
+    grounding VRAM and KV-cache calculations in observed longitudinal HIV `fullChart` prompt sizes
+    (~12.2k input tokens per turn) and comparing `bundled` vs. `med-agent-hub` across hardware tiers and
+    concurrent clinician counts (`N=1, 2, 4+`).
+
+## OpenMRS decision-maker hardware and deployment sizing matrix
+
+For longitudinal HIV patient charts (`fullChart` serialization in `#603`), each turn sends **~12,200 input
+tokens** of structured clinical history plus system instructions. Hardware sizing is therefore governed by
+**prefill compute (`ttft_ms`)** and **per-slot KV-cache memory** across concurrent clinician sessions (`N`):
+
+| Tier | Representative Hardware | Serving Engine & Model | VRAM / Memory Budget (~12.2k ctx/slot) | Target Clinic Concurrency (`N` active clinicians) | Expected Interactive Latency (`N=1` -> `N=4`) | Recommended ChartSearchAI Path |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Tier 0: CPU-only Clinic Server** | 8–16 vCPU Xeon/EPYC, 32 GB RAM (no GPU) | `LocalLlmEngine` (`llama-server` CPU, `Gemma 4 E4B Q4_K_M`, `-np 1`) | ~3.3 GB weights + ~2.5 GB KV (`16k` ctx, 1 slot) | `N=1` light/occasional use only | `ttft_ms`: **25–60 s** on 12.2k-token chart; `N>=2` queues serially (`>60–120 s`) | Not recommended for longitudinal `fullChart` HIV clinics without an external GPU inference host |
+| **Tier 1: Entry Single GPU / Edge Box** | NVIDIA L4 / RTX 4090 (24 GB VRAM) or Apple Silicon M-series (32–64 GB unified) | `llama-server` (`--parallel 2 -cb --cache-ram 8192`) or vLLM (`Gemma 4 E4B` or `Gemma 4 12B Q4_K_M`) | 12B Q4 weights (~7.6 GB) + 2 slots x 16k KV (~5–6 GB FP16 / ~2.5 GB Q8_0) = **~13–15 GB** | `N=1..2` concurrent clinicians (supports 10–25 total clinic staff) | `N=1`: `ttft_ms` **0.8–2.5 s** (warm prefix cache) / **3–7 s** (cold), `answer_done_ms` **4–10 s**; `N=4` queues behind 2 slots | `med-agent-hub` (`single-12b-bare` for fast interactive turns; `single-12b-checked` when background grounding + In-Depth are desired) |
+| **Tier 2: Clinic / District Hospital GPU Server** | NVIDIA L40S (48 GB), A100 (80 GB), or shared **NVIDIA H200 (141 GB)** | vLLM or `llama-server --parallel 4` + `MED_AGENT_ROUTER_CONCURRENCY=4` (`Gemma 4 12B` / `27B`) | 12B weights (~7.6–24 GB) + 4–8 slots x 16k KV with prefix caching = **~20–48 GB** | `N=4..8` simultaneous chart queries (supports 50–150+ clinic staff) | `N=1..4`: parallel prefill & decode with automatic prefix caching; `ttft_ms` **0.3–1.2 s**, `answer_done_ms` **2–5 s**, `tpot_ms` **12–25 ms/tok** | `med-agent-hub` (`single-12b-checked` or `team-12b-checked`) pointed at GPU server via `MED_AGENT_LLM_BASE_URL` |
+| **Tier 3: Regional / Cloud Hub** | Managed OpenAI-compatible / Vertex / vLLM cluster behind LiteLLM | `med-agent-hub` with `MED_AGENT_ROUTER_CONCURRENCY=8+` | Elastic / managed | Multi-site / regional deployment (`N=8+` concurrent turns) | Sub-second `ttft_ms`, horizontal slot scaling | `med-agent-hub` with site-level governance and audit logging |
+
+### Running comparative hardware and concurrency benchmarks
+
+1. **Single-user accuracy + stage/streaming latency (`V1`–`V7`):**
+   ```bash
+   VALIDATE_HARDWARE_TIER=gpu_server \
+   VALIDATE_HARDWARE_GPU="NVIDIA H200" \
+   VALIDATE_HARDWARE_VRAM_GB=141 \
+   VALIDATE_SERVING_ENGINE=vllm \
+   VALIDATE_PARALLEL_SLOTS=4 \
+   uv --directory targets/validation-harness run harness-cli validate run \
+     engine-parity-l5 --reference-date 2026-06-20
+   ```
+2. **Multi-clinician session concurrency (`N=1, 2, 4`, `V8`):**
+   ```bash
+   # On med-agent-hub pointed at a multi-slot GPU server: set MED_AGENT_ROUTER_CONCURRENCY=4
+   uv --directory targets/validation-harness run harness-cli validate concurrency \
+     engine-parity-l5 --backend-id hub-profile-single-12b-bare --users 4 --turns-per-user 2
+   ```

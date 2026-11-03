@@ -56,8 +56,9 @@ that created this layout (`PR-DECOMPOSITION-2026-09`) is complete and closed in 
 10. [Decision-layer experiment](decision-layer-experiment.md): owner review of the
    proposal.
 11. [ChartSearchAI validation audit](chartsearch-validation.md): incremental SSE
-   stream telemetry, token/cache metrics, live Hub main-answer streaming, and
-   out-of-the-box vs. parity `bundled` attribution (V1–V6).
+   stream telemetry, token/cache metrics, live Hub main-answer streaming,
+   out-of-the-box vs. parity `bundled` attribution, multi-session clinical
+   concurrency, and hardware sizing matrix (V1–V9).
 
 Upstream merging, deployment changes and release or clinical signoffs are not
 authorized by any item here; each thread spec names its signoffs.

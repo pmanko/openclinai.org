@@ -1,8 +1,8 @@
 # ChartSearchAI validation fidelity, streaming parity, and bundled attribution (3 November 2026)
 
 Verification and root-cause record for `CHARTSEARCH-VALIDATION-2026-11` ([specs/chartsearch-validation.md](../chartsearch-validation.md)), pinning:
-- Validation harness `f651679` ([clinical-ai-validation-harness#207](https://github.com/pmanko/clinical-ai-validation-harness/pull/207))
-- Med Agent Hub `c3af64a` ([med-agent-hub#58](https://github.com/pmanko/med-agent-hub/pull/58))
+- Validation harness `ba0d163` ([clinical-ai-validation-harness#207](https://github.com/pmanko/clinical-ai-validation-harness/pull/207))
+- Med Agent Hub `9231f84` ([med-agent-hub#58](https://github.com/pmanko/med-agent-hub/pull/58))
 - ChartSearchAI `a8eade4` ([openmrs-module-chartsearchai#629](https://github.com/openmrs/openmrs-module-chartsearchai/pull/629))
 
 ## 1. Component verification
@@ -12,10 +12,13 @@ Verification and root-cause record for `CHARTSEARCH-VALIDATION-2026-11` ([specs/
   - Restored `tokens_in`, `tokens_out`, and `cached_tokens` extraction in `harness/validate/metrics.py` (`compute_metrics()`), removing the `_DEFERRED` override that forced token counts to `None`.
   - Added configurable clinical session credentials (`CHARTSEARCH_USER`, `CHARTSEARCH_PASSWORD`) and session location (`CHARTSEARCH_LOCATION_UUID`) in `ChartSearchAiClient`.
   - Updated `scripts/engine-tap.py` with `--simulate-local-engine-dry` (`apply_local_engine_dry_policy()`, `has_reference_records()`, `extract_upstream_telemetry()`) to reproduce `LocalLlmEngine`'s out-of-the-box conditional DRY rule (`dry_multiplier: 0.8` when no drug-reference block is present in the user prompt; temperature-only when drug-reference records are present).
-  - Test run: `uv --directory targets/validation-harness run --extra dev pytest tests/test_chartsearchai_stream_telemetry.py evals/validate/test_models.py evals/validate/test_metrics.py tests/test_temporal_core_dev_config.py -q` — **39 passed in 10.14s** (and 1,212 passed across the non-e2e unit suite).
+  - Added optional hardware target metadata (`VALIDATE_HARDWARE_TIER`, `VALIDATE_HARDWARE_GPU`, `VALIDATE_HARDWARE_VRAM_GB`, `VALIDATE_SERVING_ENGINE`, `VALIDATE_PARALLEL_SLOTS`, `VALIDATE_INFERENCE_ENDPOINT`) in `harness/validate/runner.py` (`write_run_meta()`, `resolve_hardware_metadata()`) and surfaced `hardware`, `streaming_latency` aggregates (`avg_ttft_ms`, `p95_ttft_ms`, `avg_answer_done_ms`, `p95_answer_done_ms`, `avg_turn_done_ms`, `avg_tpot_ms`, `avg_cached_tokens`), and per-cell `TTFT`, `answer`, and `TPOT` chips in `harness/validate/report.py` while keeping golden report parity (`evals/validate/test_report_golden.py`).
+  - Added multi-clinician session concurrency runner `harness/validate/concurrency.py` (`run_concurrency_benchmark()`, `summarize_concurrency_rows()`) and CLI subcommand `harness-cli validate concurrency` in `harness/cli.py`, driving `N` concurrent sessions across distinct provisioned OpenMRS clinical accounts (`eval-doctor`, `eval-nurse`, `eval-pharmacy`, `eval-clerk`, `eval-lab`, `eval-researcher`, `admin`).
+  - Test run: `uv --directory targets/validation-harness run --extra dev pytest tests/test_chartsearchai_stream_telemetry.py evals/validate/test_report.py evals/validate/test_report_golden.py evals/validate/test_models.py evals/validate/test_metrics.py tests/test_temporal_core_dev_config.py -q` — **46 passed in 0.14s**.
 - **Med Agent Hub (`targets/med-agent-hub`):**
   - Added `_AnswerJsonDeltaExtractor`, `_stream_chat_chunks()`, and `_synthesize_answer_stream()` in `server/team.py`, and wired live `answer_delta` SSE emission into `server/engine.py` (`stage == "answer"`) before `_ensure_substantive_answer`, `gate`, `resolve_refs`, and `answer_done`.
-  - Test run: `uv run --no-project --with fastapi --with uvicorn --with httpx --with psutil --with python-dotenv --with pyyaml --with rfc8785 --with python-multipart --with pytest pytest -q` — **803 passed in 10.2s** (`tests/test_staged_stream.py`: **88 passed in 0.47s**).
+  - Added `_make_router_lock()` and `configure_router_concurrency()` in `server/team.py` reading `MED_AGENT_ROUTER_CONCURRENCY` (default `1` -> `asyncio.Lock()`, `> 1` -> `asyncio.BoundedSemaphore(N)`).
+  - Test run: `uv run --no-project --with fastapi --with uvicorn --with httpx --with psutil --with python-dotenv --with pyyaml --with rfc8785 --with python-multipart --with pytest pytest -q` — **869 passed in 15.52s** (`tests/test_staged_stream.py` and `tests/test_query_role_transport.py`: **92 passed in 2.65s**).
 - **ChartSearchAI (`targets/chartsearchai`, Hub relay only; `bundled` untouched):**
   - Updated `HubClinicalAnswerProvider` to advertise `ProviderCapability.TOKEN_STREAMING` and map `reasoning_delta` and `answer_delta` wire frames before `answer_done` onto `TurnEvent.delta(...)`.
   - Test run: `mvn -B -pl api -Dtest=HubClinicalAnswerProviderTest,TurnLifecycleConformanceTest,ProviderRegistryConformanceTest,HttpHubStreamTransportTest test` — **62 tests run, 0 failures, 0 errors**.
