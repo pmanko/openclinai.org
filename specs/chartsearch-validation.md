@@ -120,14 +120,24 @@ Across the published L5 runs (`l5-full-default-2026-10-22-d0e4e2d8`, `l5-full-de
     clinician workers across distinct provisioned OpenMRS accounts (`eval-doctor`, `eval-nurse`,
     `eval-pharmacy`, `eval-clerk`, `eval-lab`, `eval-researcher`, `admin`) and patient sessions using
     `ThreadPoolExecutor`, emitting `concurrency_results.jsonl` and `concurrency_summary.json`
-    (`n_users`, `throughput_turns_per_min`, `ttft_p50_ms`, `ttft_p95_ms`, `answer_done_p50_ms`,
-    `answer_done_p95_ms`, `turn_done_p50_ms`, `turn_done_p95_ms`, `tpot_p50_ms`, `error_rate`).
+    (`n_users`, `throughput_turns_per_min`, `slo_thresholds_ms`, `goodput_turns`, `goodput_rate`,
+    `goodput_turns_per_min`, `ttft_p50_ms`, `ttft_p95_ms`, `turn_1_ttft_p50_ms`,
+    `turn_2plus_ttft_p50_ms`, `answer_done_p50_ms`, `answer_done_p95_ms`, `turn_done_p50_ms`,
+    `turn_done_p95_ms`, `tpot_p50_ms`, `cache_hit_ratio_avg`, `error_rate`).
 - [x] V9 Stage 3 — OpenMRS decision-maker hardware and deployment sizing matrix
   ([3 November verification](reviews/2026-11-03-chartsearch-validation-audit.md)).
   - **Acceptance criteria:** Publish the OpenMRS implementer hardware and deployment sizing matrix below,
     grounding VRAM and KV-cache calculations in observed longitudinal HIV `fullChart` prompt sizes
     (~12.2k input tokens per turn) and comparing `bundled` vs. `med-agent-hub` across hardware tiers and
     concurrent clinician counts (`N=1, 2, 4+`).
+- [x] V10 Ecosystem benchmark integration and `openclinai.org` project overview pages
+  ([3 November verification](reviews/2026-11-03-chartsearch-validation-audit.md)).
+  - **Acceptance criteria:** Incorporate external clinical QA and serving benchmark best practices
+    (`ArchEHR-QA` / `EHRNoteQA` evidence-vs-alignment split, `HealthBench` / `MedHELM` multi-axis rubric
+    with PPI human calibration, and `NVIDIA AIPerf` / `GuideLLM` / `vllm bench serve` SLO goodput and
+    turn-position prefix-cache tracking) into `targets/validation-harness` and publish updated
+    project overview pages at `landing/validation-harness/index.html` and
+    `landing/chartsearchai/comparing-answer-paths/index.html`.
 
 ## OpenMRS decision-maker hardware and deployment sizing matrix
 

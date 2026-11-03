@@ -128,10 +128,10 @@
 </section>
 <section class="section page-width">
 <h2>Evaluation configuration</h2>
-<p>ChartSearchAI runs with its default settings, as an OpenMRS site receives it, including sending the whole patient chart with every question. The only setting we change is the location of its language model.</p>
-<p>Both paths use the same language model on the same model server, which runs on a computer with a graphics chip, so neither path benefits from a stronger model or faster hardware.</p>
-<p>Every request that either path sends to the model is recorded, so that we can verify exactly what information each path gave the model.</p>
-<p class="scope-note">Because the model runs on a shared server, these evaluations do not test how ChartSearchAI starts, sizes, warms and stops its own model inside OpenMRS. Testing that requires a separate run of the installation as shipped.</p>
+<p>ChartSearchAI runs with its default settings, as an OpenMRS site receives it, including sending the whole patient chart (about 12,200 input tokens on our longitudinal HIV records) with every question. The only setting we change in engine-parity runs is the location of its language model.</p>
+<p>Both paths use the same language model on the same model server, which runs on a computer with a graphics chip, so neither path benefits from a stronger model or faster hardware. Every Server-Sent Event frame is timestamped as it streams from OpenMRS, separating Time to First Token (<code>TTFT</code>) and initial answer completion (<code>answer_done</code>) from post-answer validation and <code>In-Depth</code> completion (<code>turn_done</code>).</p>
+<p>Every request that either path sends to the model is recorded through an HTTP wire tap (<code>engine-tap</code>), so that we can verify exactly what prompt, sampler settings and cached tokens each path used. Because ChartSearchAI&rsquo;s built-in <code>LocalLlmEngine</code> enables a repetition penalty (<code>dry_multiplier = 0.8</code>) whenever no drug-reference block is present in the prompt, the harness also supports an explicit out-of-the-box simulation mode (<code>--simulate-local-engine-dry</code>) to measure how that sampler setting interacts with long <code>fullChart</code> prompts separately from shared-engine parity.</p>
+<p class="scope-note">Because the model runs on a shared server in parity runs, those runs isolate pipeline behavior from local CPU process startup; see the <a href="/validation-harness/#hardware-sizing">hardware and concurrency sizing guide</a> for CPU vs. single-GPU vs. hospital GPU server benchmarks.</p>
 </section>
 <section class="section page-width">
 <h2>Capability differences</h2>
@@ -142,8 +142,11 @@
 <tr><th scope="col">Capability</th><th scope="col">Built-in ChartSearchAI pipeline</th><th scope="col">Med Agent Hub</th></tr>
 </thead>
 <tbody>
-<tr><th scope="row">Awareness of the current date</th><td>The prompt does not state the current date, so questions about upcoming visits or the past year depend on the model inferring it.</td><td>The model receives the current date and each chart date&rsquo;s distance from it.</td></tr>
-<tr><th scope="row">Checking dates in the answer</th><td>Dates in the answer are not checked against the chart.</td><td>Dates in the answer are checked against the chart&rsquo;s dated records; an incorrect date is corrected or marked.</td></tr>
+<tr><th scope="row">Multi-turn conversation memory</th><td><code>BundledClinicalAnswerProvider</code> sends only the current question to <code>searchStreaming</code> and drops prior turns, so follow-up questions in a conversation lose prior context.</td><td>Retains prior clinical turns across the conversation session so follow-up questions resolve pronouns and prior findings accurately.</td></tr>
+<tr><th scope="row">Awareness of the current date</th><td>The prompt does not state the current or reference date, so questions about upcoming visits or the past 6 months can treat historical chart dates as current.</td><td>The model receives the reference date and precomputed relative date distances for chart records.</td></tr>
+<tr><th scope="row">Checking dates and time windows in the answer</th><td>Dates in the answer are not checked against the chart.</td><td>Deterministic temporal and answer rules check date windows and lab/medication tables against the chart&rsquo;s dated records; discrepancies are corrected or marked.</td></tr>
+<tr><th scope="row">Out-of-the-box sampler behavior on long charts</th><td>When running through <code>LocalLlmEngine</code> without drug-reference records, <code>dry_multiplier = 0.8</code> is injected over the ~12.2k-token chart prompt, which can penalize repeating legitimate chart dates and medication names.</td><td>Uses clean temperature-0 structured generation without a chart-wide DRY repetition penalty.</td></tr>
+<tr><th scope="row">Live main-answer token streaming</th><td>Streams answer tokens live (<code>answer_delta</code>) during single-call generation.</td><td>Streams main-answer tokens live (<code>answer_delta</code>) during synthesis before deterministic checks, evidence resolution and <code>In-Depth</code> complete.</td></tr>
 <tr><th scope="row">Checking that citations support the answer</th><td>This check is available but turned off by default.</td><td>Each cited record is checked, and an unsupported citation is labelled.</td></tr>
 <tr><th scope="row">Clinical guideline sources</th><td>No guideline sources are available to the model.</td><td>The Hub can cite records of WHO guidance from its knowledge base.</td></tr>
 <tr><th scope="row">Drug-safety checks</th><td>Drug-safety checks are applied.</td><td>Drug-safety checks are applied.</td></tr>
@@ -162,6 +165,8 @@
 <a class="text-link" href="https://reports.openclinai.org/">Browse published evaluations <span aria-hidden="true">→</span>
 </a>
 <a class="text-link" href="/validation-harness/">Read how evaluations are run <span aria-hidden="true">→</span>
+</a>
+<a class="text-link" href="/validation-harness/#hardware-sizing">Hardware sizing and concurrency guide <span aria-hidden="true">→</span>
 </a>
 <a class="text-link" href="https://github.com/openmrs/openmrs-module-chartsearchai#readme">Read the ChartSearchAI installation guide <span aria-hidden="true">→</span>
 </a>

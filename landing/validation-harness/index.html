@@ -4,17 +4,17 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Validation Harness · Open Clinical AI</title>
-<meta name="description" content="Configured clinical AI experiments, captured evidence and evaluation reports for review." />
+<meta name="description" content="End-to-end OpenMRS clinical AI evaluation, streaming and concurrency telemetry, hardware sizing and shared benchmark standards." />
 <link rel="canonical" href="https://openclinai.org/validation-harness/" />
 <meta property="og:url" content="https://openclinai.org/validation-harness/" />
 <meta property="og:title" content="Validation Harness" />
-<meta property="og:description" content="Configured clinical AI experiments, captured evidence and evaluation reports for review." />
+<meta property="og:description" content="End-to-end OpenMRS clinical AI evaluation, streaming and concurrency telemetry, hardware sizing and shared benchmark standards." />
 <meta property="og:image" content="https://openclinai.org/media/validation-reports-index.webp" />
 <meta name="theme-color" content="#4b2e83" />
 <meta name="twitter:card" content="summary_large_image" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="stylesheet" href="/styles.css?v=20260915-projects" />
-<link rel="stylesheet" href="/projects.css?v=20260915-resources" />
+<link rel="stylesheet" href="/projects.css?v=20261022-diagram" />
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to content</a>
@@ -49,7 +49,7 @@
 <div>
 <p class="section-kicker">Validation Harness</p>
 <h1>Repeatable clinical AI experiments.</h1>
-<p class="overview-lead">Run configured experiments against clinical AI applications, capture inputs and outputs, and produce evaluation reports. Record the target information supplied or observed during each run alongside its results.</p>
+<p class="overview-lead">Run configured experiments against clinical AI applications as clinicians use them inside OpenMRS and OpenELIS, capture stage-by-stage streaming telemetry and source evidence, evaluate clinical accuracy and citation grounding, and size deployment hardware under realistic multi-user clinic concurrency.</p>
 <div class="project-actions">
 <a class="button button-primary" href="https://reports.openclinai.org/">Inspect published evidence <span aria-hidden="true">→</span>
 </a>
@@ -59,31 +59,82 @@
 </div>
 </div>
 </section>
-<section class="page-width project-workflow">
-<h2>What the Harness provides</h2>
+<section class="page-width project-workflow" id="methodology">
+<h2>How the updated validation approach works</h2>
 <div class="workflow-grid">
 <article>
 <span>01</span>
-<h3>Configure an experiment</h3>
-<p>Choose a target interface, connection settings, scenarios and evaluation methods.</p>
+<h3>Measure the real OpenMRS stream</h3>
+<p>Drive <code>/ws/rest/v1/chartsearchai/chat/stream</code> under provisioned clinical roles and locations. Timestamp every Server-Sent Event frame as it arrives so Time to First Token (<code>TTFT</code>), initial answer completion (<code>answer_done</code>), and background review or <code>In-Depth</code> completion (<code>turn_done</code>) are measured separately rather than collapsed into one wall-clock number.</p>
 </article>
 <article>
 <span>02</span>
-<h3>Capture responses</h3>
-<p>Run scenarios through the selected application interface and collect responses, traces and available source evidence.</p>
+<h3>Separate capability from sampler artifacts</h3>
+<p>Use an HTTP wire tap (<code>engine-tap</code>) between OpenMRS and the model server to record exact prompt payloads, token counts and prompt-cache hits, and to test both shared-engine parity and out-of-the-box <code>LocalLlmEngine</code> sampler rules (such as conditional DRY repetition penalties on long charts).</p>
 </article>
 <article>
 <span>03</span>
-<h3>Review the evidence</h3>
-<p>Retain inputs, outputs, source records and review methods. Counts alone do not establish correctness.</p>
+<h3>Stress-test multi-clinician concurrency</h3>
+<p>Run <code>N=1, 2, 4+</code> simultaneous clinical sessions across distinct OpenMRS accounts (<code>eval-doctor</code>, <code>eval-nurse</code>, <code>eval-pharmacy</code>, <code>eval-clerk</code>) so concurrent turns do not preempt one another’s conversation or share a single user’s rate-limit bucket. Report Service-Level Objective (SLO) <strong>goodput</strong> alongside p50/p95 latency.</p>
 </article>
+</div>
+</section>
+<section class="section page-width" id="streaming-and-quality">
+<h2>What each run records: quality, grounding and streaming telemetry</h2>
+<p>Evaluating a clinical chart assistant requires both <strong>clinical correctness</strong> (whether the answer is faithful to the patient’s longitudinal record and safe for clinical review) and <strong>interactive responsiveness</strong> (how quickly a clinician sees the first token and the completed main answer). The harness records both layers in each run bundle.</p>
+<div class="table-scroll">
+<table class="comparison-table">
+<thead>
+<tr><th scope="col">Dimension</th><th scope="col">Recorded metrics</th><th scope="col">Why it matters in OpenMRS</th></tr>
+</thead>
+<tbody>
+<tr><th scope="row">Interactive streaming milestones</th><td><code>ttft_ms</code> (first <code>reasoning_delta</code> or <code>answer_delta</code>), <code>answer_done_ms</code>, <code>turn_done_ms</code>, inter-token latency (<code>itl_p50_ms</code>, <code>itl_p95_ms</code>) and Time Per Output Token (<code>tpot_ms</code>).</td><td>Both the built-in pipeline and <a href="/med-agent-hub/">Med Agent Hub</a> stream live answer tokens before post-answer checks and <code>In-Depth</code> finish. Terminal <code>turn_done_ms</code> alone overstates how long a clinician waits to read the answer.</td></tr>
+<tr><th scope="row">Prompt-cache efficiency</th><td><code>tokens_in</code>, <code>tokens_out</code>, <code>cached_tokens</code>, <code>cache_hit_ratio</code> and turn-1 vs. turn-2+ <code>TTFT</code>.</td><td>Longitudinal HIV charts in OpenMRS serialize to ~12,200 input tokens per turn (<code>fullChart</code>). Prefix caching avoids re-prefilling the 12.2k-token chart on follow-up turns and multi-stage checks.</td></tr>
+<tr><th scope="row">Multi-clinician SLO goodput</th><td><code>goodput_turns</code>, <code>goodput_rate</code> and <code>goodput_turns_per_min</code> under configurable interactive SLOs (default <code>TTFT &le; 3 s</code>, <code>answer_done &le; 10 s</code>, <code>TPOT &le; 50 ms/tok</code>).</td><td>Raw throughput can look acceptable even when queued requests take 30+ seconds. Goodput counts only turns that complete fast enough for interactive clinical chart review.</td></tr>
+<tr><th scope="row">Evidence &amp; citation grounding</th><td>Deterministic turn expectations (<code>must_contain</code>, <code>must_not_contain</code>, <code>must_cite</code>), gold chart-record precision/recall (<code>score-citations</code>) and Hub claim-to-record support status (<code>sources.v1</code>).</td><td>A citation count is not a grounding signal. The harness verifies whether cited record indices resolve to on-topic patient observations, medications and encounters.</td></tr>
+<tr><th scope="row">Clinical rubric &amp; human calibration</th><td>Multi-judge Scout rubric scores (<code>accuracy</code>, <code>completeness</code>, <code>relevance</code>, <code>harm</code>, <code>temporal</code>) calibrated with human clinician adjudication via Prediction-Powered Inference (PPI 95% CI and Cohen’s &kappa;).</td><td>Combines scalable automated grading across comparison sets with clinician-anchored confidence intervals and explicit safety/harm flags.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<section class="section page-width" id="hardware-sizing">
+<h2>Hardware and deployment sizing for OpenMRS decision makers</h2>
+<p>When ChartSearchAI runs with <code>fullChart</code> enabled on a longitudinal HIV patient record, each question sends roughly <strong>12,200 input tokens</strong> of clinical history. Deployment sizing is therefore governed by <strong>prompt prefill compute (<code>TTFT</code>)</strong> and <strong>KV-cache memory per concurrent clinician slot</strong>. The matrix below summarizes what OpenMRS implementers can expect across four deployment tiers:</p>
+<div class="table-scroll">
+<table class="comparison-table">
+<thead>
+<tr><th scope="col">Deployment tier</th><th scope="col">Representative hardware</th><th scope="col">Serving engine &amp; model</th><th scope="col">Memory budget (~12.2k ctx/slot)</th><th scope="col">Concurrent active clinicians (<code>N</code>)</th><th scope="col">Expected interactive latency &amp; recommendation</th></tr>
+</thead>
+<tbody>
+<tr><th scope="row">Tier 0: CPU-only clinic server</th><td>8–16 vCPU Xeon/EPYC, 32 GB RAM (no GPU)</td><td><code>LocalLlmEngine</code> (<code>llama-server</code> CPU, <code>Gemma 4 E4B Q4_K_M</code>, 1 slot)</td><td>~3.3 GB weights + ~2.5 GB KV (16k ctx, 1 slot)</td><td><code>N=1</code> light/occasional use only</td><td><code>TTFT</code> is <strong>25–60 s</strong> on a 12.2k-token chart, and <code>N&ge;2</code> queues serially (<code>&gt;60–120 s</code>). Not recommended for longitudinal <code>fullChart</code> HIV clinics without an external GPU host.</td></tr>
+<tr><th scope="row">Tier 1: Entry single GPU / edge workstation</th><td>NVIDIA L4 / RTX 4090 (24 GB VRAM) or Apple Silicon M-series (32–64 GB unified)</td><td><code>llama-server --parallel 2 -cb</code> or vLLM (<code>Gemma 4 E4B</code> or <code>Gemma 4 12B Q4_K_M</code>)</td><td>12B Q4 weights (~7.6 GB) + 2 slots &times; 16k KV (~2.5–6 GB) = <strong>~11–15 GB</strong></td><td><code>N=1..2</code> concurrent queries (supports ~10–25 clinic staff)</td><td>At <code>N=1..2</code>, warm prefix-cached <code>TTFT</code> is <strong>0.8–2.5 s</strong> (cold <strong>3–7 s</strong>) and <code>answer_done</code> is <strong>4–10 s</strong>. Recommended with <a href="/med-agent-hub/">Med Agent Hub</a> (<code>single-12b-bare</code> or <code>single-12b-checked</code>).</td></tr>
+<tr><th scope="row">Tier 2: Clinic / hospital GPU server</th><td>NVIDIA L40S (48 GB), A100 (80 GB) or shared <strong>NVIDIA H200 (141 GB)</strong></td><td>vLLM (<code>--enable-prefix-caching</code>) or <code>llama-server --parallel 4</code> + <code>MED_AGENT_ROUTER_CONCURRENCY=4</code> (<code>Gemma 4 12B / 27B</code>)</td><td>12B weights (~7.6–24 GB) + 4–8 slots &times; 16k KV with shared prefix blocks = <strong>~20–48 GB</strong></td><td><code>N=4..8</code> simultaneous chart queries (supports 50–150+ clinic staff)</td><td>Parallel prefill and decode across <code>N=4</code> concurrent clinicians with <code>TTFT</code> of <strong>0.3–1.2 s</strong>, <code>answer_done</code> of <strong>2–5 s</strong>, and <code>TPOT</code> of <strong>12–25 ms/tok</strong>. Recommended for full checked and team profiles.</td></tr>
+<tr><th scope="row">Tier 3: Regional / cloud inference hub</th><td>Managed OpenAI-compatible / vLLM cluster behind LiteLLM</td><td><a href="/med-agent-hub/">Med Agent Hub</a> with <code>MED_AGENT_ROUTER_CONCURRENCY=8+</code></td><td>Elastic / managed</td><td>Multi-site deployment (<code>N=8+</code> concurrent turns)</td><td>Sub-second <code>TTFT</code> and horizontal slot scaling with site-level governance, audit logging and de-identification policies.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<section class="section page-width" id="ecosystem-benchmarks">
+<h2>Shared benchmarks and open-source tooling we build on</h2>
+<p>Rather than reinventing evaluation metrics or load-testing primitives from scratch, the Validation Harness adopts conventions from active clinical NLP benchmarks and open-source LLM serving tools:</p>
+<div class="table-scroll">
+<table class="comparison-table">
+<thead>
+<tr><th scope="col">Benchmark / tool</th><th scope="col">Focus area</th><th scope="col">How OpenClinAI uses or adapts its ideas</th></tr>
+</thead>
+<tbody>
+<tr><th scope="row">ArchEHR-QA &amp; EHRNoteQA (PhysioNet / BioNLP)</th><td>Patient-specific multi-note EHR question answering and sentence-level evidence grounding</td><td>Separates <em>evidence identification</em> (whether the assistant retrieved and cited the right OpenMRS chart records in <code>score-citations</code>) from <em>answer-evidence alignment</em> (whether each clinical claim is supported by its cited record in <code>sources.v1</code>).</td></tr>
+<tr><th scope="row">HealthBench (OpenAI) &amp; MedHELM (Stanford CRFM)</th><td>Multi-turn clinical conversations, physician-authored rubrics and LLM-jury evaluation</td><td>Combines scenario-specific deterministic turn checks (<code>expectations.py</code>) with multi-axis rubric grading and explicit clinical harm flags, anchored to human clinician reviews via Prediction-Powered Inference (PPI).</td></tr>
+<tr><th scope="row">NVIDIA AIPerf, GuideLLM &amp; <code>vllm bench serve</code></th><td>Streaming LLM serving telemetry (<code>TTFT</code>, <code>ITL</code>, <code>TPOT</code>), multi-turn prefix caching and SLO goodput</td><td>Adopts streaming milestone decomposition, turn-position prefix-cache tracking (<code>turn_1_ttft_p50_ms</code> vs. <code>turn_2plus_ttft_p50_ms</code>, <code>cache_hit_ratio</code>) and <strong>SLO goodput</strong> in <code>harness-cli validate concurrency</code>, while keeping OpenMRS authentication, session isolation and QueryStore retrieval in the loop.</td></tr>
+</tbody>
+</table>
 </div>
 </section>
 <section class="page-width project-callout">
 <div>
 <p class="section-kicker">A worked example</p>
 <h2>Example validation records</h2>
-<p>Published ChartSearchAI reports show questions, answers and their review context. Dated Catalyst reports preserve query results, findings and the methods used to evaluate them.</p>
+<p>Published ChartSearchAI reports show questions, answers, streaming and stage timings, and their review context. Dated Catalyst reports preserve query results, findings and the methods used to evaluate them.</p>
 <p class="scope-note">Research findings are not product certifications. Model evaluation is separate from proving that a person can complete an application workflow.</p>
 </div>
 <div class="resource-panel">
