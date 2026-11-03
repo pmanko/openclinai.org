@@ -133,9 +133,11 @@ Across the published L5 runs (`l5-full-default-2026-10-22-d0e4e2d8`, `l5-full-de
 - [x] V10 Ecosystem benchmark integration and `openclinai.org` project overview pages
   ([3 November verification](reviews/2026-11-03-chartsearch-validation-audit.md)).
   - **Acceptance criteria:** Incorporate external clinical QA and serving benchmark best practices
-    (`ArchEHR-QA` / `EHRNoteQA` evidence-vs-alignment split, `HealthBench` / `MedHELM` multi-axis rubric
-    with PPI human calibration, and `NVIDIA AIPerf` / `GuideLLM` / `vllm bench serve` SLO goodput and
-    turn-position prefix-cache tracking) into `targets/validation-harness` and publish updated
+    (`ArchEHR-QA` / `EHRNoteQA` evidence-vs-alignment split, `EHRSQL` / `Spider 2.0` execution-grounded SQL
+    verification, `HealthBench` / `MedHELM` multi-axis rubric with PPI human calibration, and
+    `NVIDIA AIPerf` / `GuideLLM` / `vllm bench serve` SLO goodput and turn-position prefix-cache tracking)
+    into `targets/validation-harness`, expose the unified target adapter registry (`harness.adapters`) and
+    general-purpose `OpenAICompatibleClient` (`transport="openai-compatible"`), and publish updated
     project overview pages at `landing/validation-harness/index.html` and
     `landing/chartsearchai/comparing-answer-paths/index.html`.
 
