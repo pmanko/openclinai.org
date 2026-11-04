@@ -23,12 +23,24 @@ MODE="run"
 TARGET_ALIAS=""
 
 sha256_file() {
-  local path="$1"
-  if command -v sha256sum >/dev/null 2>&1; then
-    sha256sum "${path}" | awk '{print $1}'
-  else
-    shasum -a 256 "${path}" | awk '{print $1}'
+  local path="$1" real_path meta_file cur_meta cached_meta cached_sha computed_sha
+  real_path="$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "${path}")"
+  cur_meta="$(python3 -c 'import os,sys; st=os.stat(sys.argv[1]); print(f"{st.st_size}:{st.st_mtime_ns}")' "${real_path}")"
+  meta_file="${real_path}.sha256meta"
+  if [ -f "${meta_file}" ]; then
+    IFS='|' read -r cached_meta cached_sha <"${meta_file}" || true
+    if [ "${cached_meta}" = "${cur_meta}" ] && [ "${#cached_sha}" -eq 64 ]; then
+      printf '%s\n' "${cached_sha}"
+      return 0
+    fi
   fi
+  if command -v sha256sum >/dev/null 2>&1; then
+    computed_sha="$(sha256sum "${real_path}" | awk '{print $1}')"
+  else
+    computed_sha="$(shasum -a 256 "${real_path}" | awk '{print $1}')"
+  fi
+  printf '%s|%s\n' "${cur_meta}" "${computed_sha}" >"${meta_file}" 2>/dev/null || true
+  printf '%s\n' "${computed_sha}"
 }
 
 model_record() {
@@ -109,21 +121,153 @@ fetch_model() {
   echo "installed ${alias}: ${path} (${actual})"
 }
 
+fetch_all_models() {
+  local alias
+  while IFS=$'\t' read -r alias _; do
+    case "${alias}" in
+      ''|'#'*) continue ;;
+    esac
+    fetch_model "${alias}"
+  done <"${MODELS_FILE}"
+}
+
+ensure_profile_models() {
+  local levels_file="${1:-${ROOT}/targets/med-agent-hub/server/levels.yaml}"
+  if [ ! -f "${levels_file}" ]; then
+    echo "ERROR: levels.yaml not found at ${levels_file}" >&2
+    return 1
+  fi
+  local aliases alias
+  aliases="$(python3 - "${levels_file}" "${MODELS_FILE}" <<'PY'
+import sys, yaml
+from pathlib import Path
+
+levels_path = Path(sys.argv[1])
+manifest_path = Path(sys.argv[2])
+pinned = set()
+for line in manifest_path.read_text(encoding="utf-8").splitlines():
+    if not line or line.startswith("#"):
+        continue
+    parts = line.split("\t")
+    if parts:
+        pinned.add(parts[0].strip())
+
+doc = yaml.safe_load(levels_path.read_text(encoding="utf-8")) or {}
+wanted = []
+seen = set()
+for _, spec in (doc.get("profiles") or {}).items():
+    for _, model_id in ((spec or {}).get("models") or {}).items():
+        m = str(model_id or "").strip()
+        if m in pinned and m not in seen:
+            seen.add(m)
+            wanted.append(m)
+for m in wanted:
+    print(m)
+PY
+)"
+  for alias in ${aliases}; do
+    fetch_model "${alias}"
+  done
+}
+
+add_model() {
+  local alias="$1" hf_repo="$2" hf_file="${3:-}"
+  if model_record "${alias}" >/dev/null 2>&1; then
+    echo "Model alias ${alias} is already pinned in ${MODELS_FILE}; fetching..."
+    fetch_model "${alias}"
+    return 0
+  fi
+  local resolved
+  resolved="$(python3 - "${alias}" "${hf_repo}" "${hf_file}" "${ROOT}/scripts/llama-router.ini" "${MODELS_FILE}" <<'PY'
+import configparser, json, sys, urllib.request
+from pathlib import Path
+
+alias, repo, requested_file, ini_path, tsv_path = sys.argv[1:6]
+info = json.loads(urllib.request.urlopen(f"https://huggingface.co/api/models/{repo}", timeout=15).read())
+commit_sha = info["sha"]
+tree = json.loads(urllib.request.urlopen(f"https://huggingface.co/api/models/{repo}/tree/main", timeout=15).read())
+ggufs = [x for x in tree if x.get("path", "").endswith(".gguf")]
+if not ggufs:
+    raise SystemExit(f"ERROR: no .gguf files found in {repo}")
+match = None
+if requested_file:
+    for item in ggufs:
+        if item["path"] == requested_file:
+            match = item
+            break
+else:
+    for item in ggufs:
+        if "q4_k_m" in item["path"].lower():
+            match = item
+            break
+    if match is None:
+        match = ggufs[0]
+if match is None:
+    raise SystemExit(f"ERROR: file {requested_file!r} not found in {repo}")
+
+fname = match["path"]
+sha256 = (match.get("lfs") or {}).get("oid")
+if not sha256 or len(sha256) != 64:
+    raise SystemExit(f"ERROR: LFS sha256 missing for {repo}/{fname}")
+source_url = f"https://huggingface.co/{repo}/resolve/{commit_sha}/{fname}"
+
+with open(tsv_path, "a", encoding="utf-8") as fh:
+    fh.write(f"{alias}\t{fname}\t{sha256}\t{source_url}\n")
+
+ini_file = Path(ini_path)
+presets = configparser.ConfigParser(interpolation=None, inline_comment_prefixes=(";",))
+presets.read(ini_file)
+if not presets.has_section(alias):
+    with open(ini_file, "a", encoding="utf-8") as fh:
+        fh.write(f"\n[{alias}]\nmodel = artifacts/llama-router/models/{alias}.gguf\n")
+print(f"pinned {alias} -> {source_url} ({sha256})")
+PY
+)"
+  echo "${resolved}"
+  fetch_model "${alias}"
+}
+
 if [ "${1:-}" = "--daemon" ] && [ "$#" -eq 1 ]; then
   DAEMON=1
 elif [ "${1:-}" = "--verify" ] && [ "$#" -le 2 ]; then
   MODE="verify"
   TARGET_ALIAS="${2:-}"
-elif [ "${1:-}" = "--fetch" ] && [ "$#" -eq 2 ]; then
+elif [ "${1:-}" = "--fetch" ] && [ "$#" -le 2 ]; then
   MODE="fetch"
-  TARGET_ALIAS="$2"
+  TARGET_ALIAS="${2:-all}"
+elif [ "${1:-}" = "--ensure-profiles" ] && [ "$#" -le 2 ]; then
+  MODE="ensure-profiles"
+  TARGET_ALIAS="${2:-}"
+elif [ "${1:-}" = "--add" ] && [ "$#" -ge 3 ] && [ "$#" -le 4 ]; then
+  MODE="add"
+  ADD_ALIAS="$2"
+  ADD_REPO="$3"
+  ADD_FILE="${4:-}"
 elif [ "$#" -gt 0 ]; then
-  echo "usage: $0 [--daemon | --verify [ALIAS] | --fetch ALIAS]" >&2
+  echo "usage: $0 [--daemon | --verify [ALIAS] | --fetch [ALIAS|all] | --ensure-profiles [LEVELS_YAML] | --add ALIAS HF_REPO [HF_FILE]]" >&2
   exit 2
 fi
 
 if [ "${MODE}" = "fetch" ]; then
-  fetch_model "${TARGET_ALIAS}"
+  if [ "${TARGET_ALIAS}" = "all" ] || [ -z "${TARGET_ALIAS}" ]; then
+    fetch_all_models
+  else
+    fetch_model "${TARGET_ALIAS}"
+  fi
+  exit 0
+fi
+
+if [ "${MODE}" = "ensure-profiles" ]; then
+  if [ -n "${TARGET_ALIAS}" ]; then
+    ensure_profile_models "${TARGET_ALIAS}"
+  else
+    ensure_profile_models
+  fi
+  exit 0
+fi
+
+if [ "${MODE}" = "add" ]; then
+  add_model "${ADD_ALIAS}" "${ADD_REPO}" "${ADD_FILE}"
   exit 0
 fi
 

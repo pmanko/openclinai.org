@@ -81,14 +81,20 @@ def test_wahs_demo_executable_data_integrity():
     payload = json.loads(raw_js[idx + len(prefix) :].rstrip().rstrip(";"))
     persona_ids = payload.get("primary_persona_ids") or []
     patients = payload.get("patients") or {}
-    assert len(persona_ids) >= 6
+    assert len(persona_ids) >= 10
+    assert "MIMIC_10014354_ICU_Heme_Cardiorenal_set_b" in persona_ids
+    assert "MIMIC_10019003_ICU_Hepatopulmonary_set_b" in persona_ids
+    high_volume_count = 0
     for pid in persona_ids:
         assert pid in patients
         p = patients[pid]
         assert p["fhir_browser"]["total_bundle_entries"] > 0
         assert len(p["fhir_browser"]["resources"]) > 0
         for mode in ("lossless_structural", "hierarchical"):
-            for budget in ("16384", "8192", "4096", "2048", "1024"):
+            for budget in ("262144", "131072", "65536", "32768", "16384", "8192", "4096", "2048", "1024"):
                 cell = p["condensation_matrix"][mode][budget]
                 assert cell["actual_tokens"] <= int(budget)
+        if p["condensation_matrix"]["lossless_structural"]["262144"]["actual_tokens"] > 65536:
+            high_volume_count += 1
         assert len(p["skills"]) >= 9
+    assert high_volume_count >= 4

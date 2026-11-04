@@ -31,7 +31,7 @@
   <div class="sidebar-bottom"><p>A proposal for collaboration<br><time datetime="2026-10-31">31 October 2026</time></p><span class="tag observed">Phase 3 local validation live</span><p class="small">Updated 31 October 2026 with W4–W8 &amp; W12–W13 non-destructive condensation, skill-based findings, and 3 modality-separated evaluation reports.</p></div>
 </aside>
 <div class="workspace">
-<header class="topbar"><span><a href="https://openclinai.org/">OpenClinAI home</a> <span class="separator">/</span> <a href="../index.html">WA Health Summary</a> <span class="separator">/</span> Design &amp; Architecture Dashboard</span><div><a class="download" href="../walkthrough/index.html">Walkthrough &amp; Guide <span aria-hidden="true">→</span></a><a class="download" href="https://wahs-demo.openclinai.org/">Interactive UX <span aria-hidden="true">→</span></a><button id="print" type="button">Print report</button><a class="download" href="../WAHS-OpenClinAI-Design-Report.docx" download>Word report <span aria-hidden="true">↓</span></a></div></header>
+<header class="topbar"><span><a href="https://openclinai.org/">OpenClinAI home</a> <span class="separator">/</span> <a href="../index.html">WA Health Summary</a> <span class="separator">/</span> Design &amp; Architecture Dashboard</span><div><a class="download" href="/med-agent-hub/wahs-architecture/">Hub &amp; Clinical Graph Architecture <span aria-hidden="true">→</span></a><a class="download" href="../walkthrough/index.html">Walkthrough &amp; Guide <span aria-hidden="true">→</span></a><a class="download" href="https://wahs-demo.openclinai.org/">Interactive UX <span aria-hidden="true">→</span></a><button id="print" type="button">Print report</button><a class="download" href="../WAHS-OpenClinAI-Design-Report.docx" download>Word report <span aria-hidden="true">↓</span></a></div></header>
 <main id="main" tabindex="-1">
 <section id="overview" class="report-section" aria-labelledby="overview-title">
   <div class="eyebrow">01 / OVERVIEW</div><h1 id="overview-title">WAHS and OpenClinAI</h1><p class="lead">How our experience can help people review their health records—and what a small pilot could teach us.</p>
@@ -377,29 +377,69 @@
   </div>
 
   <div id="condensation-and-retrieval" class="subsection">
-    <h2>9.5 Evaluating Condensation Tiers &amp; Keeping the Full Chart Queryable</h2>
-    <p>Condensing an 18.4 MB chart down to <code>2k–8k</code> tokens guarantees that the <strong>IPS Safety Core</strong> (active allergies, active meds, active problems, recent labs) is always in context, but aggressive condensation (Tier 3/4) intentionally drops older encounters, historical stopped medications, and full free-text clinical notes. To evaluate information loss across tiers and keep <strong>100% of the full chart queryable</strong> even for small-context models, Phase 3 introduces a <strong>Two-Tier Hybrid Memory Architecture</strong>:</p>
+    <h2>9.5 Research Brief: How Should an AI Read a Health Record? Condensed Summaries, Targeted Lookup, and Meaning-Based Search (Embeddings)</h2>
+    <p id="context-injection-brief">AI language models do not keep a built-in memory of a patient between questions—everything the AI needs to answer safely must be included in the message sent with the question (often called <em>context injection</em>; see the UW CIRG GPU server discussion in <a href="https://github.com/uwcirg/llm-configs/pull/2" target="_blank" rel="noopener noreferrer"><code>uwcirg/llm-configs#2</code> ↗</a> and <a href="https://github.com/uwcirg/llm-configs/pull/3" target="_blank" rel="noopener noreferrer"><code>#3</code> ↗</a>). Because a raw health record export from multiple clinics can run to tens of thousands of lines of computer formatting and years of visit notes, teams face a practical design choice: <strong>Should we chop the record into small snippets and search for a few matches using “embeddings,” or should we condense the record into a structured clinical summary so the AI can read the whole picture at once?</strong></p>
+    <p>Both approaches solve real problems, but they serve different parts of the clinical workflow. Research literature and our OpenClinAI evaluations show that <strong>a complete, condensed summary is much safer for a patient’s core health overview</strong>, while <strong>meaning-based search (embeddings) is valuable as a secondary tool</strong> for searching deep archives of older visit notes, bridging everyday patient language with medical terms, and pulling in trusted educational guides.</p>
     <div class="two-column">
       <article class="panel">
-        <span class="kicker">HYBRID FULL-CHART QUERYABILITY</span>
-        <h3>Always-On IPS Core + On-Demand Tier 0/1 Retrieval Tools</h3>
-        <ol class="steps reading-steps">
-          <li><span>01</span><h3>Always-In-Context Safety Core (<code>1k–4k</code> tokens)</h3><p>Every prompt includes the Tier 3/4 condensed IPS summary so the model never misses an active allergy, active drug conflict, or chronic condition.</p></li>
-          <li><span>02</span><h3>Scoped MCP / Function-Calling Chart Tools</h3><p>When a question asks about historical details omitted from the condensed view (e.g., <em>“Why was Furosemide stopped in 2022?”</em> or <em>“What did my 2019 cardiology note say?”</em>), the model calls read-only FHIR retrieval tools: <code>search_chart_entries(query, resource_types, date_range)</code>, <code>get_lab_history(loinc_code)</code>, and <code>read_clinical_note(document_uuid)</code>.</p></li>
-          <li><span>03</span><h3>Ephemeral Client/Server Embeddings</h3><p>Indexes Tier 0/1 overflow entries in an ephemeral in-memory vector index using <code>nomic-embed-text</code> (on the CIRG LiteLLM endpoint) or browser-side <code>Transformers.js</code>, returning top-<em>k</em> historical FHIR entries with exact <code>[N] → resourceUuid</code> provenance.</p></li>
-        </ol>
-      </article>
-      <article class="panel">
-        <span class="kicker">5×4 CONDENSATION ABLATION EXPERIMENT</span>
-        <h3>How condensation interacts with model selection</h3>
-        <p>We will evaluate a <strong>5 (Condensation Configurations: Tier 1 16k, Tier 2 8k, Tier 3 4k, Tier 4 2k static, and Tier 4 2k + On-Demand Retrieval) × 4 (Model Classes: 4B, 9B–12B, 27B–31B, 35B-A3B MoE)</strong> factorial matrix across four question horizons:</p>
+        <span class="kicker">WHY WHOLE-SUMMARY CONDENSATION COMES FIRST</span>
+        <h3>Seeing the full clinical picture prevents missed contradictions</h3>
         <ul class="checklist">
-          <li><strong>Current Active State Queries:</strong> Expected flat performance from Tier 1 to Tier 4 (100% answered from the IPS Safety Core).</li>
-          <li><strong>24-Month Trend &amp; Conflict Queries:</strong> High accuracy at Tiers 1–3; slight dip at static Tier 4 recovered by Hybrid Retrieval.</li>
-          <li><strong>Deep Historical Queries (&gt;2 Years Ago):</strong> Sharp drop at static Tiers 3–4 (by design), testing whether <strong>Tier 4 (2k) + On-Demand Tool Retrieval</strong> recovers &gt;95% of full-chart recall at one-fifth the token cost.</li>
-          <li><strong>Model Selection Implication:</strong> Static Tier 3/4 summaries only require strong reading comprehension (enabling <code>4B–8B</code> models), whereas Hybrid Full-Chart Queryability requires reliable tool-calling (favoring <code>Qwen 3 8B/27B</code>, <code>Gemma 4 12B/31B</code>, or <code>Granite 4.2 8B</code>).</li>
+          <li><strong>1. Catching contradictions across different clinics:</strong> Snippet search (often called <em>Retrieval-Augmented Generation</em> or <em>RAG</em>) works by pulling only the 5 or 10 short passages that look most similar to the user’s question. In medicine, that creates a blind spot: if a patient asks, <em>“What should I know about my blood pressure pills?”</em>, snippet search retrieves the prescription list from Clinic A but can easily miss a kidney specialist’s note from Clinic B that says <em>“Hold lisinopril until potassium is rechecked.”</em> Clinical AI studies show that when models only see partial slices of a chart, missing context and record order lead to clinically significant errors (<a href="https://www.nature.com/articles/s41591-024-03097-1" target="_blank" rel="noopener noreferrer">Hager et al., <em>Nature Medicine</em> 2024 ↗</a>). Keeping the entire condensed summary in view at once guarantees the AI sees both the active pill list and the specialist’s warning together—mirroring the <a href="https://build.fhir.org/ig/HL7/fhir-ips/" target="_blank" rel="noopener noreferrer">HL7 International Patient Summary (IPS) standard ↗</a>.</li>
+          <li><strong>2. Avoiding the “Lost in the Middle” problem of raw exports:</strong> Simply pasting a massive, unedited health record into an AI prompt causes models to overlook important details buried in the middle of thousands of repetitive lines (<a href="https://aclanthology.org/2024.tacl-1.9/" target="_blank" rel="noopener noreferrer">Liu et al., <em>TACL</em> 2024 ↗</a>). Instead of deleting medical facts, non-destructive condensation strips repetitive computer code and groups repeated lab readings into clear timelines (for example, <code>Kidney function [eGFR]: 58 → 49 → 41</code>). In our evaluations, giving the model this condensed overview achieved a <strong><code>94.0 / 100</code></strong> quality score (<a href="https://reports.openclinai.org/2026-10-31-wahs-condensation-ablation/index.html">Condensation Ablation Report ↗</a>), and pairing it with automated safety checks (such as matching brand and generic drug names) improved answers by <strong><code>+2</code> to <code>+14</code> points</strong> across seven AI model families (<a href="https://reports.openclinai.org/2026-11-02-wahs-simple-profiles-multi-family-eval/index.html">Multi-Family Benchmark Report ↗</a>).</li>
+          <li><strong>3. Predictable, traceable answers:</strong> With snippet search, phrasing a question slightly differently can pull back different text fragments and change the AI’s answer. A condensed summary gives the AI the exact same core chart on every question, with numbered links (<code>[1]</code>, <code>[2]</code>) pointing back to the original clinic records.</li>
         </ul>
       </article>
+      <article class="panel">
+        <span class="kicker">WHERE MEANING-BASED SEARCH (EMBEDDINGS) SHINES</span>
+        <h3>Four ways embeddings complement a condensed summary</h3>
+        <ul class="checklist">
+          <li><strong>1. Translating everyday patient words into medical terms:</strong> Patients rarely ask questions using billing codes or Latin medical terms. A patient might ask, <em>“When did I have that dizzy spell last year?”</em> or <em>“What did the ER say about my stomach pain?”</em> while the clinician’s note says <em>“orthostatic syncope”</em> or <em>“epigastric tenderness.”</em> Simple keyword search misses these when the words don’t match; embeddings match by <em>meaning</em>, connecting a patient’s everyday phrasing to the right historical note.</li>
+          <li><strong>2. Searching deep archives of hundreds of old visit notes:</strong> In long-term primary care or specialty HIV clinics (such as OpenMRS <strong>ChartSearchAI</strong>), a patient’s chart may hold hundreds of lengthy narrative notes spanning a decade—far more than any single summary should carry. Combining exact medical-term matching with meaning-based embedding search (<em>hybrid search</em>) reliably surfaces relevant historical notes, outperforming either keyword or embedding search alone in medical benchmarks (<a href="https://aclanthology.org/2024.findings-acl.372/" target="_blank" rel="noopener noreferrer">Xiong et al., <em>MedRAG / ACL</em> 2024 ↗</a>).</li>
+          <li><strong>3. Connecting patient questions to trusted health-education libraries:</strong> Embeddings are ideal for matching a patient’s question or new diagnosis to vetted reference materials outside the chart—such as state public health vaccine schedules, clinic-approved discharge instructions, or patient education handouts—so the AI grounds its explanation in approved guidance (<a href="https://ai.nejm.org/doi/full/10.1056/AIoa2300068" target="_blank" rel="noopener noreferrer">Zakka et al., <em>Almanac / NEJM AI</em> 2024 ↗</a>).</li>
+          <li><strong>4. Spotting recurring themes across years of care:</strong> Embeddings can group scattered mentions of ongoing concerns—such as fatigue, sleep trouble, or medication side effects—across dozens of past primary-care and specialist notes to help a patient prepare a timeline before an appointment.</li>
+        </ul>
+      </article>
+    </div>
+    <div class="note" style="margin-top:1rem;"><strong>How they work best together (“Safety Summary First, Search for History Second”):</strong> You do not have to choose only one. In our <a href="https://reports.openclinai.org/2026-10-31-wahs-condensation-ablation/index.html">overflow lookup experiments ↗</a>, keeping a compact condensed summary always in view while letting the AI look up older notes on demand recovered <strong><code>92.6 / 100</code></strong> accuracy at a fraction of the prompt size. When teams use the shared GPU server’s embedding model (<code>nomic-embed-text</code> in <a href="https://github.com/uwcirg/llm-configs/pull/3" target="_blank" rel="noopener noreferrer"><code>uwcirg/llm-configs#3</code> ↗</a>), note that the model’s authors require labeling stored passages with <code>search_document:</code> and user questions with <code>search_query:</code> so meaning-based matching works as trained (<a href="https://arxiv.org/abs/2402.01613" target="_blank" rel="noopener noreferrer">Nussbaum et al., <em>Nomic Embed</em> 2024 ↗</a>).</div>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="Plain-language comparison of ways to give an AI context from a health record" style="margin-top:1.25rem;">
+      <table class="capability-table">
+        <caption class="sr-only">Plain-language comparison of four ways to supply health record context to an AI assistant</caption>
+        <thead>
+          <tr>
+            <th scope="col">Approach</th>
+            <th scope="col">How It Works (in Plain Language)</th>
+            <th scope="col">Best Used For</th>
+            <th scope="col">Privacy, Accuracy &amp; Practical Trade-Offs</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Condensed Whole-Chart Summary + Safety Checks</strong><br/><span class="muted small">Default in WAHS+</span></td>
+            <td>Strips out computer formatting, organizes active medications, conditions, allergies, and lab timelines into a clean summary, and gives the AI the whole summary at once.</td>
+            <td>Patient health summaries, spotting duplicate prescriptions or conflicting instructions across clinics, and preparing questions for a doctor visit.</td>
+            <td><strong>Highest accuracy for patient summaries (<code>94.0/100</code>).</strong> Never misses a conflict between two active records; requires no separate search database; nothing is stored on the AI server.</td>
+          </tr>
+          <tr>
+            <td><strong>2. Condensed Summary + On-Demand Record Lookup</strong><br/><span class="muted small">For smaller models or tight budgets</span></td>
+            <td>Gives the AI the compact safety summary first, plus a “magnifying glass” tool to pull specific older notes or lab histories by date or topic when asked.</td>
+            <td>Questions about older events (e.g., <em>“Why did I stop taking that water pill in 2022?”</em>) that aren’t part of today’s active summary.</td>
+            <td><strong>Recovers <code>92.6/100</code> accuracy with a much smaller prompt.</strong> Keeps core safety info always visible while still reaching deep into the historical chart when needed.</td>
+          </tr>
+          <tr>
+            <td><strong>3. App-Managed Meaning Search (Embeddings)</strong><br/><span class="muted small">Matches <strong>Option 1</strong> in <code>uwcirg/llm-configs#3</code></span></td>
+            <td>The clinical app converts hundreds of long notes or educational articles into “meaning fingerprints” (embeddings) and keeps them in its own secure database, sending only the best matches to the AI.</td>
+            <td>Searching large archives of free-text visit notes (like <strong>OpenMRS ChartSearchAI</strong>), matching everyday patient phrasing to medical terms, or searching patient-education libraries.</td>
+            <td><strong>Best way to use embeddings for clinical data.</strong> Sensitive patient records stay inside the clinical app’s own access-controlled database rather than being stored on the shared AI server.</td>
+          </tr>
+          <tr>
+            <td><strong>4. Shared Memory Stored on the AI Server</strong><br/><span class="muted small"><strong>Options 2 &amp; 3</strong> in <code>uwcirg/llm-configs#3</code></span></td>
+            <td>The shared AI server saves past conversations or uploaded documents inside its own central database and automatically inserts them into future prompts.</td>
+            <td>General-purpose, non-sensitive chatbots where the app doesn’t have its own database. <strong>Not recommended for patient health records.</strong></td>
+            <td><strong>Avoid for sensitive health data:</strong> Stores patient text on a shared server where multiple projects may share an API key, and makes it harder to audit exactly which record the AI used.</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 

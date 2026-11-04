@@ -11,9 +11,9 @@
   <meta property="og:description" content="Visual tour and hands-on manual testing guide for Step 1 → Step 2 → Step 3 FHIR chart condensation, Med Agent Hub profiles, local llama-router vs. OpenRouter models, and verifiable [N] source citations." />
   <meta name="theme-color" content="#4b2e83" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="/styles.css?v=20260915-projects" />
-  <link rel="stylesheet" href="/projects.css?v=20260915-resources" />
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="../styles.css?v=20260915-projects" />
+  <link rel="stylesheet" href="../projects.css?v=20260915-resources" />
   <style>
     .walkthrough-intro { padding: 48px 0 28px; }
     .walkthrough-intro h1 { margin: 10px 0 18px; font-size: clamp(30px, 4.5vw, 46px); font-weight: 750; line-height: 1.14; letter-spacing: -0.03em; }
@@ -74,126 +74,128 @@
   <main id="main-content" tabindex="-1">
     <section class="walkthrough-intro page-width">
       <nav class="breadcrumbs" aria-label="Breadcrumb">
-        <a href="https://openclinai.org/#initiatives">All initiatives</a> · <a href="/wahs/">WA Health Summary (WAHS)</a> · Walkthrough &amp; Experimentation Guide
+        <a href="https://openclinai.org/#initiatives">All initiatives</a> · <a href="../index.html">WA Health Summary (WAHS)</a> · Walkthrough &amp; Experimentation Guide
       </nav>
       <p class="section-kicker">WA Health Summary (WAHS) · Interactive Tour &amp; Manual Testing Guide</p>
       <h1>WAHS Patient Chart Explorer — Walkthrough &amp; Experimentation Guide.</h1>
-      <p class="overview-lead">The <a href="https://wahs-demo.openclinai.org/">WAHS Patient Chart Explorer</a> is both an interactive demonstration of patient-mediated FHIR R4 / IPS chart condensation and a live experimentation workbench. Every choice you make in <strong>Step 1 (Patient &amp; Raw FHIR Chart)</strong> feeds into <strong>Step 2 (Condense &amp; Prepare Chart)</strong>, and the exact condensed chart you configure in Step 2 flows directly into <strong>Step 3 (Clinical Tasks &amp; Grounded Q&amp;A)</strong> for live testing against local open-weight models, curated <a href="/med-agent-hub/">Med Agent Hub</a> profiles, or cloud models via OpenRouter.</p>
-      <p class="walkthrough-meta">Updated 1 November 2026 · 6 Patient Personas (14 FHIR R4 Bundles) · 5 Token Budgets (16k–1k) · 12 Curated Med Agent Hub Profiles</p>
+      <p class="overview-lead">The <a href="https://wahs-demo.openclinai.org/">WAHS Patient Chart Explorer</a> is both an interactive demonstration of patient-mediated FHIR R4 / IPS chart condensation and a live experimentation workbench on <code>wahs-demo.openclinai.org</code>. Every choice you make in <strong>Step 1 (Patient &amp; Raw FHIR Chart)</strong> feeds into <strong>Step 2 (Condense &amp; Prepare Chart)</strong> across 7 token budgets (<code>64k</code> down to <code>1k</code>), and the exact condensed chart you configure in Step 2 flows directly into <strong>Step 3 (Skills &amp; Q&amp;A)</strong> for live testing against our <strong>Cloud Med Agent Hub</strong> (backed by the shared UW CIRG GPU server), direct <strong>UW GPU Server</strong> models, local open-weight models, or OpenRouter.</p>
+      <p class="walkthrough-meta">Updated 3 November 2026 · 8 Longitudinal Patient Personas (up to 7,099 entries / 18.8 MB) · 7 Token Budgets (64k–1k) · Cloud Med Agent Hub &amp; UW GPU Server + Local Backends</p>
       <div class="project-actions">
-        <a class="button button-primary" href="https://wahs-demo.openclinai.org/">Launch the live WAHS Explorer <span aria-hidden="true">→</span></a>
-        <a class="button button-secondary" href="/wahs/">Back to WAHS project overview <span aria-hidden="true">→</span></a>
+        <a class="button button-primary" href="https://wahs-demo.openclinai.org/">Launch the live WAHS Explorer (wahs-demo.openclinai.org) <span aria-hidden="true">→</span></a>
+        <a class="button button-secondary" href="/med-agent-hub/wahs-architecture/">Med Agent Hub &amp; clinical graph architecture <span aria-hidden="true">→</span></a>
+        <a class="button button-secondary" href="../index.html">Back to WAHS project overview <span aria-hidden="true">→</span></a>
       </div>
       <nav class="walkthrough-nav" aria-label="Walkthrough sections">
-        <a href="#visual-tour">1. Visual 3-Step Tour</a>
+        <a href="#visual-tour">1. Stage-by-Stage Visual Tour</a>
         <a href="#experimentation-recipes">2. Hands-On Experimentation Recipes</a>
-        <a href="#hub-profiles-reference">3. Med Agent Hub WAHS Profiles</a>
-        <a href="#related-reports">4. Evaluation Reports &amp; Design Docs</a>
+        <a href="#local-setup-and-connections">3. Cloud GPU Sign-In &amp; Local Model Setup</a>
+        <a href="#hub-profiles-reference">4. 7-Family Hub Profile Catalog</a>
+        <a href="#related-reports">5. Evaluation Reports &amp; Design Docs</a>
       </nav>
     </section>
 
     <section class="walkthrough-section page-width" id="visual-tour" aria-labelledby="visual-tour-title">
-      <p class="section-kicker">Part 1 · End-to-End Architecture</p>
-      <h2 id="visual-tour-title">How Step 1 feeds into Step 2, and Step 2 feeds into Step 3</h2>
-      <p>Follow a clinical case from raw multi-clinic FHIR R4 JSON inspection through token-budget condensation (`16k` down to `1k`) to live model synthesis and `[N]` source citation inspection.</p>
+      <p class="section-kicker">Part 1 · Stage-by-Stage Visual Tour</p>
+      <h2 id="visual-tour-title">How to use the app stage by stage: Step 1 → Step 2 → Step 3</h2>
+      <p>Follow a clinical case from raw multi-clinic FHIR R4 JSON inspection in Step 1, through 7-budget condensation (`64k` down to `1k`) and out-of-budget overflow recovery in Step 2, to live model synthesis and `[N]` source citation verification in Step 3.</p>
 
       <div class="scene-list">
         <figure class="scene-card" id="scene-step1">
           <figcaption>
             <span class="scene-step-badge">Step 1 · Select &amp; Inspect Original FHIR Chart</span>
-            <h3>Browse 6 multi-clinic patient personas—or upload your own FHIR R4 Bundle</h3>
-            <p>Step 1 presents six longitudinal clinical personas spanning 3 US Core / IPS care-transition archetypes (<strong>Elena Rostova</strong>: Cardiorenal HFrEF &amp; Hyperkalemia; <strong>Marcus Vance</strong>: AFib + Mechanical Mitral Valve Dual Anticoagulation &amp; Upper GI Bleed; <strong>Dorothy Chen</strong>: Geriatric Polypharmacy, Falls &amp; Beers Criteria Sedatives) and 3 longitudinal Synthea exports up to 18.4 MB and 7,280 entries (<strong>Maurice</strong>, <strong>Byron</strong>, and <strong>Lamar</strong>). Selecting any resource in the left table decodes embedded Base64 clinical notes and shows the unmutated FHIR R4 JSON on the right.</p>
+            <h3>Browse 8 multi-year longitudinal patient personas—or upload your own FHIR R4 Bundle</h3>
+            <p>Step 1 presents eight multi-year longitudinal clinical personas spanning 5 US Core / IPS care-transition archetypes with 5-year clinical histories (~436–454 FHIR entries each: <strong>Elena Rostova</strong> — Cardiorenal HFrEF, CKD G3b→G4 &amp; Hyperkalemia; <strong>Arthur Pendelton</strong> — Mechanical Mitral Valve, GI Bleed &amp; Dual Anticoagulation; <strong>Margaret Chen</strong> — Geriatric Polypharmacy, Falls &amp; Beers Criteria Sedatives; <strong>Sofia Alvarez</strong> — Maternal-Fetal Severe Preeclampsia &amp; Gestational Diabetes; <strong>Marcus Vance</strong> — Metastatic Melanoma Immunotherapy &amp; Myocarditis) plus 3 longitudinal Synthea exports up to 18.8 MB and 7,099 entries (<strong>Maurice Auer</strong>, <strong>Lamar Beer</strong>, and <strong>Byron Emard</strong>). Selecting any resource in the left table decodes embedded Base64 clinical notes and shows the unmutated FHIR R4 JSON on the right.</p>
           </figcaption>
           <a class="scene-image-link" href="media/step1-patient-browser.webp" aria-label="Open full-size screenshot of Step 1 Patient and Raw FHIR R4 Browser">
-            <img src="media/step1-patient-browser.webp" alt="Step 1 of the WAHS Patient Chart Explorer showing the 6 patient persona cards, category filter pills, and two-pane FHIR R4 resource inspector with decoded clinical note text and raw JSON." width="1440" height="940" loading="lazy" />
+            <img src="media/step1-patient-browser.webp" alt="Step 1 of the WAHS Patient Chart Explorer showing the 8 longitudinal patient persona cards, category filter pills, and two-pane FHIR R4 resource inspector with decoded clinical note text and raw JSON." width="1440" height="940" loading="lazy" />
           </a>
           <div class="scene-callouts">
             <div class="scene-callout">
-              <strong>6 Curated Personas + Custom Upload</strong>
-              Click any persona card or click <em>Upload / Paste Custom FHIR Bundle</em> to parse and condense your own FHIR R4 JSON across all five token budgets directly in the browser.
+              <strong>8 Longitudinal Personas + Custom Upload</strong>
+              Click any of the 8 persona cards or click <em>+ Upload Custom FHIR JSON</em> to parse and condense your own FHIR R4 JSON across all seven token budgets (<code>64k</code>–<code>1k</code>) directly in the browser.
             </div>
             <div class="scene-callout">
               <strong>Decoded Clinical Notes &amp; Provenance</strong>
               Base64-encoded <code>DocumentReference</code> discharge summaries and clinic progress notes are automatically decoded above the raw FHIR R4 JSON payload.
             </div>
             <div class="scene-callout">
-              <strong>Direct Feed into Step 2</strong>
-              The active patient selected in Step 1 becomes the input chart for Step 2 condensation and Step 3 live clinical Q&amp;A.
+              <strong>Direct Feed into Step 2 &amp; Top Context Bar</strong>
+              The active patient selected in Step 1 is pinned in the persistent top context strip and becomes the input chart for Step 2 condensation and Step 3 live clinical Q&amp;A.
             </div>
           </div>
         </figure>
 
         <figure class="scene-card" id="scene-step2">
           <figcaption>
-            <span class="scene-step-badge">Step 2 · Condense &amp; Prepare Chart (16k → 1k Token Budgets)</span>
-            <h3>Test non-destructive structural condensation across 5 token budgets (`16k`, `8k`, `4k`, `2k`, `1k`)</h3>
-            <p>Step 2 lets you configure the exact condensed chart that will be sent to the language model in Step 3. Toggle between <strong>Lossless Structural (`W12`)</strong> (which strips FHIR transport boilerplate and collapses byte-identical duplicate notes without altering clinical wording) and <strong>Grouped &amp; Deduplicated (`Tiered`)</strong>, adjust the target token budget (`16,384` down to `1,024` tokens), and inspect the explicit <em>Omitted / Truncated Under Current Budget</em> audit panel.</p>
+            <span class="scene-step-badge">Step 2 · Condense Chart (Context Window Gauge, KB vs. Raw Toggle, 64k → 1k Budgets &amp; 3-Stage Recovery)</span>
+            <h3>Visualize your chosen model’s context window &amp; best-performance limit while tuning KB vs. Raw mode and 7 token budgets (`64k`–`1k`)</h3>
+            <p>Step 2 opens with a graphical <strong>Active Model Context Budget &amp; Utilization Gauge</strong> (`#model-context-gauge-card`) that displays your selected model’s <strong>Max Context Window</strong> (e.g., <code>256k</code>, <code>128k</code>, <code>32k</code>, <code>8k</code>), its <strong><code>🎯 Suggested Best-Perf Limit</code></strong> (e.g., <code>32k</code> for <code>26B+</code>, <code>24k</code> for <code>12B–14B</code>, <code>16k</code> for <code>7B–9B</code>, <code>12k</code> for <code>4B</code>), and a stacked horizontal bar showing how much is filled by the <strong>Condensed FHIR Chart</strong> + <strong>4-Layer Clinical KB</strong> + <strong>Reserved Output Headroom (`4,096 tok`)</strong>. You can toggle <strong><code>🧠 + 4-Layer KB</code></strong> vs. <strong><code>📄 Raw Chart Only</code></strong> directly in the top bar or Step 2 levers (decoupled from model selection), click any <strong><code>ⓘ</code> info button</strong> for plain-language guidance, and expand <strong>🔍 How Full-Chart Condensation &amp; Out-of-Budget Recovery Works (3-Stage Pipeline)</strong> below.</p>
           </figcaption>
           <a class="scene-image-link" href="media/step2-condensation-8k-vs-1k.webp" aria-label="Open full-size screenshot of Step 2 Interactive Condensation Studio">
-            <img src="media/step2-condensation-8k-vs-1k.webp" alt="Step 2 Interactive Condensation Studio showing the 5 preparation levers, token budget selector set to 1,024 tokens on Maurice's 7,280-entry chart, omitted-section audit counts, and exact condensed text payload." width="1440" height="940" loading="lazy" />
+            <img src="media/step2-condensation-8k-vs-1k.webp" alt="Step 2 Interactive Condensation Studio showing the graphical Model Context Window gauge, decoupled KB vs Raw mode toggle, 7 token budgets (64k down to 1k), lever info tooltips, expanded 3-stage out-of-budget recovery explainer, and condensed chart output." width="1440" height="940" loading="lazy" />
           </a>
           <div class="scene-callouts">
             <div class="scene-callout">
-              <strong>IPS Safety Core Invariant</strong>
-              Even at the tightest <code>1k</code> (<code>1,024</code>-token) budget on Maurice’s 7,280-entry oncology chart, active allergies, active conditions, and active medications remain preserved first.
+              <strong>Graphical Context Window &amp; <code>🎯 Best-Perf</code> Gauge</strong>
+              See at a glance whether your chosen token budget + 4-Layer KB stays inside the model’s <code>🟢 Optimal Zone</code> or crosses into <code>🟡 Extended Context</code> / <code>🔴 Exceeds Window</code>.
             </div>
             <div class="scene-callout">
-              <strong>Explicit Omission Audit</strong>
-              When older lab flowsheets or historical encounters exceed the chosen token budget, Step 2 lists the exact omitted resource counts by clinical category rather than dropping data silently.
+              <strong>Decoupled <code>🧠 + 4-Layer KB</code> vs. <code>📄 Raw Chart Only</code> Toggle</strong>
+              Each model appears once in the model dropdown; use the main-app toggle to turn the deterministic 4-Layer Clinical KB on or off for any model at any budget.
             </div>
             <div class="scene-callout">
-              <strong>Full Untruncated Prompt Handoff</strong>
-              The exact condensed chart shown in the Step 2 right-hand pane is passed untruncated to the LLM in Step 3—enabling direct <code>8k</code> vs. <code>1k</code> performance experiments.
+              <strong>3-Stage Out-of-Budget Recovery</strong>
+              Combines mandatory IPS Safety Core prioritization, line <code>[2] Completeness Manifest</code> omitted counts, pre-condensation full-chart KB audits, and on-demand overflow lookup tools.
             </div>
           </div>
         </figure>
 
         <figure class="scene-card" id="scene-step3-dropdown">
           <figcaption>
-            <span class="scene-step-badge">Step 3A · Mode A (9 Clinical Task Tiles) vs. Mode B (Custom Prompt)</span>
-            <h3>Choose from 9 clinical reconciliation &amp; hygiene tasks in a full-width card grid—or write your own prompt</h3>
-            <p>Step 3 cleanly separates <strong>Mode A (Clinical Task Selection)</strong> from <strong>Mode B (Custom Question &amp; Sample Chips)</strong>. Opening the full-width task selector reveals 9 clinical task tiles spanning complete chart overview, cross-clinic medication safety &amp; holds, lab &amp; vital trajectories, hospital discharge follow-up, disease staging reconciliation, duplicate note hygiene, immunization schedules, allergy safety, and optional privacy segmentation (`W9`).</p>
+            <span class="scene-step-badge">Step 3A · Clean 3-Line Stacked Composer, Instant Suggestions &amp; `🕓 Run History` Dropdown</span>
+            <h3>Line 1: Full-width Clinical Task Dropdown · Line 2: Custom Question Box with instant suggestions · Line 3: `⚡ Generate Live` + `🕓 Run History`</h3>
+            <p>Step 3 features an uncluttered <strong>3-line vertical composer</strong> preceded by a compact <strong>Context Window Fill Summary Bar</strong> (`#step3-context-mini-gauge`). <strong>Line 1</strong> gives the 9-tile <strong>Clinical Task Dropdown</strong> (`#task-mega-dropdown`) its own full-width row. <strong>Line 2</strong> is a full-width custom question box (`#qa-question-input`) whose suggestions popover opens on focus before typing and filters live as you type. <strong>Line 3</strong> is the full-width <strong><code>⚡ Generate Live</code></strong> button, paired with a minimalist <strong><code>🕓 Run History</code> dropdown</strong> (`#gen-history-select`) that logs every generated result in your session so you can jump back to any previous run and restore its exact patient, model, KB mode, and Step 2 condensation levers in one click.</p>
           </figcaption>
-          <a class="scene-image-link" href="media/step3-task-mega-dropdown.webp" aria-label="Open full-size screenshot of Step 3 Full-Width 9-Tile Clinical Task Selector">
-            <img src="media/step3-task-mega-dropdown.webp" alt="Step 3 showing the inherited Step 1 and Step 2 context banner at the top and the expanded 9-tile Clinical Task mega-dropdown grid." width="1440" height="940" loading="lazy" />
+          <a class="scene-image-link" href="media/step3-task-mega-dropdown.webp" aria-label="Open full-size screenshot of Step 3 3-Line Composer and 9-Tile Clinical Task Selector">
+            <img src="media/step3-task-mega-dropdown.webp" alt="Step 3 showing the 3-line stacked composer with the expanded 9-tile Clinical Task dropdown grid." width="1440" height="940" loading="lazy" />
           </a>
           <div class="scene-callouts">
             <div class="scene-callout">
-              <strong>Inherited Step 1 + Step 2 Context Banner</strong>
-              The purple banner at the top of Step 3 displays the active patient, condensation mode, token budget, retained record count, and quick-switch <code>8k</code> / <code>1k</code> buttons.
+              <strong>Spacious 3-Line Vertical Stack</strong>
+              The task dropdown, custom question input box, and <code>⚡ Generate Live</code> button each sit on their own full-width row so task titles and long clinical questions never feel cramped.
             </div>
             <div class="scene-callout">
-              <strong>Clean Mode A / Mode B Separation</strong>
-              Selecting a clinical task tile updates the deterministic 4-Layer KB findings and sets the active task without overwriting your custom question box.
+              <strong><code>🕓 Run History</code> &amp; One-Click Context Restore</strong>
+              Every generated result is logged with its patient, task/question, model, KB mode, token budget, and latency—select any past run in <code>#gen-history-select</code> to view its output and restore its full lever state.
             </div>
             <div class="scene-callout">
-              <strong>Explicit Full-Width Generate Button</strong>
-              Live LLM inference never starts automatically on tab switch—click the full-width <em>Generate Live Response</em> button whenever you are ready to test.
+              <strong>Blank Until You Click <code>⚡ Generate Live</code></strong>
+              Navigating to Step 3 or switching tasks/levers never pre-populates stale text or auto-fires LLM calls—generation happens strictly on demand when you click <code>⚡ Generate Live</code>.
             </div>
           </div>
         </figure>
 
         <figure class="scene-card" id="scene-step3-live">
           <figcaption>
-            <span class="scene-step-badge">Step 3B · Live Med Agent Hub Profile Synthesis &amp; Prompt Telemetry</span>
-            <h3>Run live generation through curated Med Agent Hub profiles (`wahs-12b-kb`, `wahs-12b-raw`, `wahs-12b-xcheck`)</h3>
-            <p>Selecting a profile in the top-bar model selector routes your Step 2 condensed chart and question through <a href="/med-agent-hub/">Med Agent Hub</a> (`POST /v1/chat/completions`). Expanding <strong>Inspect Active Hub Profile</strong> reveals the profile’s workflow role, temperature, token budget (`max_tokens`), whether 4-Layer Clinical KB findings are injected (`include_kb_findings`), and the exact system prompt template from `server/prompts/`.</p>
+            <span class="scene-step-badge">Step 3B · Live Synthesis Stream &amp; Collapsible `🔧 Advanced View`</span>
+            <h3>Stream live responses from Cloud Med Agent Hub or UW GPU—and expand `🔧 Advanced View` when you want under-the-hood telemetry</h3>
+            <p>Clicking <strong><code>⚡ Generate Live</code></strong> streams a grounded clinical synthesis (<code>SUMMARY:</code> + <code>QUESTIONS_FOR_DOCTOR:</code>) with live input token/line counts, time-to-first-token (<code>TTFT</code>), and total latency. To keep the patient and clinician reading experience clean, technical inspection panels—<strong>Inspect Active Hub Profile</strong>, <strong>Supporting 4-Layer KB Structured Findings</strong>, and <strong>Inspect Full Condensed Prompt Sent to LLM</strong>—are tucked inside the collapsible <strong><code>🔧 Advanced View</code></strong> toggle at the bottom of the report card.</p>
           </figcaption>
-          <a class="scene-image-link" href="media/step3-live-synthesis-and-profile.webp" aria-label="Open full-size screenshot of Step 3 Live Med Agent Hub Synthesis and Profile Inspector">
-            <img src="media/step3-live-synthesis-and-profile.webp" alt="Step 3 showing the expanded Med Agent Hub profile inspector drawer for wahs-12b-kb and a completed live LLM response with input token/line telemetry, TTFT, total latency, and clickable [N] citations." width="1440" height="940" loading="lazy" />
+          <a class="scene-image-link" href="media/step3-live-synthesis-and-profile.webp" aria-label="Open full-size screenshot of Step 3 Live Synthesis and Expanded Advanced View">
+            <img src="media/step3-live-synthesis-and-profile.webp" alt="Step 3 showing a completed live LLM synthesis with input token/line telemetry, TTFT, clickable [N] citations, and the expanded Advanced View toggle revealing the Hub Profile Inspector and 4-Layer KB audit table." width="1440" height="940" loading="lazy" />
           </a>
           <div class="scene-callouts">
             <div class="scene-callout">
-              <strong>Live Input Token &amp; Line Telemetry</strong>
-              Every live run reports <code>Input: &lt;tokens&gt; tok (&lt;lines&gt; lines) · TTFT &lt;ms&gt; · Total &lt;s&gt;</code> so you can verify the exact Step 2 payload size received by the model.
+              <strong>Live Input Token &amp; Latency Telemetry</strong>
+              Every live run reports <code>Input: &lt;tokens&gt; tok (&lt;lines&gt; lines) · TTFT &lt;s&gt; · Total &lt;s&gt;</code> in the card header so you can verify the exact Step 2 payload size received by the model.
             </div>
             <div class="scene-callout">
-              <strong>KB-Guided vs. Raw Unhinted Control</strong>
-              Switch between <code>wahs-12b-kb</code> (attaches 4-Layer KB findings for surviving chart records) and <code>wahs-12b-raw</code> (unhinted condensed chart only) to measure the impact of clinical rules.
+              <strong>Decoupled KB-Guided vs. Raw Control Toggle</strong>
+              Click <code>🧠 + 4-Layer KB</code> vs. <code>📄 Raw Chart Only</code> in the top bar (or Step 2) to compare KB-augmented synthesis against unhinted raw condensed chart synthesis on the exact same model.
             </div>
             <div class="scene-callout">
-              <strong>Cross-Family Reviewer Team (<code>wahs-12b-xcheck</code>)</strong>
-              Runs Gemma 4 12B as the primary clinical writer followed by Qwen 3.5 9B as a cross-family citation and safety verifier.
+              <strong>Collapsible <code>🔧 Advanced View</code></strong>
+              Expand <em>🔧 Advanced View — Inspect Prompt Context, 4-Layer KB Audit &amp; Hub Profile</em> at the bottom of any generated response to audit the exact prompt ledger, deterministic KB rows, and Hub profile policy.
             </div>
           </div>
         </figure>
@@ -202,7 +204,7 @@
           <figcaption>
             <span class="scene-step-badge">Step 3C · Verifiable [N] Source Citations &amp; Slide-Over FHIR Drawer</span>
             <h3>Click any `[N]` citation badge to inspect the underlying FHIR R4 resource without leaving your place</h3>
-            <p>Every `[N]` reference in both the deterministic 4-Layer KB table and the live LLM stream is an interactive button linked to the corresponding entry in the patient’s FHIR R4 bundle. Clicking a badge opens the slide-over FHIR inspector showing resource metadata, decoded clinical note narrative, and the raw FHIR R4 JSON.</p>
+            <p>Every `[N]` reference in both the live LLM summary and the Grounded FHIR Sources bar is an interactive button linked to the corresponding entry in the patient’s FHIR R4 bundle. Clicking a badge opens the slide-over FHIR inspector showing resource metadata, decoded clinical note narrative, and the raw FHIR R4 JSON.</p>
           </figcaption>
           <a class="scene-image-link" href="media/step3-citation-drawer.webp" aria-label="Open full-size screenshot of Step 3 Slide-Over FHIR Citation Inspector Drawer">
             <img src="media/step3-citation-drawer.webp" alt="Step 3 with the slide-over FHIR R4 source drawer open on citation [17], displaying the hospital discharge summary note and raw FHIR DocumentReference JSON." width="1440" height="940" loading="lazy" />
@@ -214,7 +216,7 @@
             </div>
             <div class="scene-callout">
               <strong>One-Click Jump Back to Step 1</strong>
-              Click <em>Highlight in Step 1 Full Browser</em> inside the drawer to jump straight to that resource in the full multi-clinic table.
+              Click <em>View in Step 1 Full Browser</em> inside the drawer to jump straight to that resource in the full multi-clinic table.
             </div>
           </div>
         </figure>
@@ -224,126 +226,197 @@
     <section class="walkthrough-section page-width" id="experimentation-recipes" aria-labelledby="recipes-title">
       <p class="section-kicker">Part 2 · Hands-On Experimentation Tutorial</p>
       <h2 id="recipes-title">Four reproducible recipes for manual testing &amp; model comparison</h2>
-      <p>Use these four step-by-step recipes in the <a href="https://wahs-demo.openclinai.org/">interactive WAHS Explorer</a> (or locally against `med-agent-hub` on `:18081` and `llama-router` on `:8077`) to test token-budget sensitivity, knowledge-base augmentation, cloud vs. local models, and safety abstention.</p>
+      <p>Use these four step-by-step recipes on <a href="https://wahs-demo.openclinai.org/">wahs-demo.openclinai.org</a> (using either the default <strong>🏥 Cloud Med Agent Hub</strong> / <strong>🎓 UW GPU Server</strong> with Google Sign-In, or a local backend) to test token-budget sensitivity (`64k` down to `1k`), knowledge-base augmentation (`-kb` vs. `-raw`), and safety abstention.</p>
 
       <div class="recipe-grid">
         <article class="recipe-card" id="recipe-budget-ablation">
           <span class="scene-step-badge">Recipe 1 · Step 1 → Step 2 → Step 3</span>
-          <h3>Compare an `8k` vs. `1k` condensed chart on a 7,280-entry oncology record</h3>
-          <p>Test how aggressive token-budget condensation affects prompt size, latency, and historical recall on a massive multi-year chart.</p>
+          <h3>Compare `64k` / `8k` vs. `1k` condensation on a multi-year longitudinal chart</h3>
+          <p>Test how token-budget condensation affects prompt size, latency, and historical recall across our 5-year longitudinal US Core archetypes and 7,099-entry Synthea charts.</p>
           <ol class="recipe-steps">
-            <li>In <strong>Step 1</strong>, click <strong>Maurice Auer (7,280 FHIR entries · ~4.57M raw tokens)</strong>.</li>
-            <li>Go to <strong>Step 2</strong>, keep <strong>Lossless (Verbatim)</strong> active, and select the <strong>`8k` (`8,192` tok)</strong> budget (`159 lines`, `8,152 actual tokens`).</li>
-            <li>Go to <strong>Step 3</strong>, select a clinical task or sample question, and click <strong>⚡ Generate Live</strong>. Note the telemetry pill: <span class="code-pill">Input: 8,152 tok (159 lines)</span>.</li>
-            <li>Now return to <strong>Step 2</strong>, toggle the budget to <strong>`1k` (`1,024` tok)</strong>, return to <strong>Step 3</strong>, and click <strong>⚡ Generate Live</strong> again.</li>
+            <li>In <strong>Step 1</strong>, click <strong>Maurice Auer (`7,099 items` · 18.8 MB)</strong> or <strong>Elena Rostova (`454 items` · 5-year Cardiorenal HFrEF)</strong>.</li>
+            <li>Go to <strong>Step 2</strong>, inspect the <strong>`ⓘ`</strong> tooltips on the levers, and compare <strong>`64k` / `16k`</strong> (Tier 1 full 5-year history retained) against <strong>`8k`</strong> and <strong>`1k`</strong>.</li>
+            <li>Go to <strong>Step 3</strong>, keep <strong>Prepare for My Next Doctor Visit</strong> selected in the Line 1 dropdown, and click <strong>⚡ Generate Live</strong>. Note the telemetry pill (`Input: <tok> (<lines> lines)`).</li>
+            <li>Return to <strong>Step 2</strong>, switch the budget to <strong>`1k` (`1,024` tok)</strong>, return to <strong>Step 3</strong> (notice the generation area resets cleanly to blank for the new lever tuple), and click <strong>⚡ Generate Live</strong> again.</li>
           </ol>
           <div class="recipe-expected">
-            <strong>What to observe:</strong> At <code>1k</code>, the input payload drops by 88% to <span class="code-pill">Input: 944 tok (19 lines)</span>, cutting prefill latency (`TTFT`) dramatically while preserving Maurice’s active diagnoses, active medications, and allergies—whereas older longitudinal lab panels are listed in Step 2’s <em>Omitted / Trimmed</em> audit card.
+            <strong>What to observe:</strong> At <code>1k</code>, prefill latency (`TTFT`) drops sharply while preserving active diagnoses, active medications, and allergies—and expanding <em>🔧 Advanced View → Inspect Full Condensed Prompt</em> shows line <code>[2] Completeness Manifest</code> listing the exact omitted historical resource counts by category.
           </div>
         </article>
 
         <article class="recipe-card" id="recipe-hub-profiles">
-          <span class="scene-step-badge">Recipe 2 · Med Agent Hub Profiles</span>
-          <h3>Test `wahs-12b-kb` (KB-Guided) vs. `wahs-12b-raw` (Unhinted Control)</h3>
-          <p>Evaluate how much the deterministic 4-Layer Clinical Knowledge Base helps the language model catch cross-clinic conflicts and note-vs-order discrepancies.</p>
+          <span class="scene-step-badge">Recipe 2 · Decoupled KB vs. Raw Toggle &amp; `🕓 Run History`</span>
+          <h3>Compare `🧠 + 4-Layer KB` vs. `📄 Raw Chart Only` on any model—and flip between runs</h3>
+          <p>Evaluate how much the deterministic 4-Layer Clinical Knowledge Base helps the language model catch cross-clinic conflicts and discharge-note hold contradictions.</p>
           <ol class="recipe-steps">
-            <li>Select <strong>Elena Rostova (Age 81 · Cardiorenal HFrEF)</strong> in Step 1 and <strong>`8k`</strong> in Step 2.</li>
-            <li>In Step 3, click the sample question chip: <em>“Why did the hospital discharge note say to hold spironolactone and potassium chloride, and what were Elena’s potassium and eGFR levels?”</em></li>
-            <li>In the top bar, choose <strong>`WAHS · Gemma 4 12B + 4-Layer Clinical KB (wahs-12b-kb)`</strong>, expand <strong>Inspect Active Hub Profile</strong>, and click <strong>Generate Live Response</strong>.</li>
-            <li>Switch the dropdown to <strong>`WAHS · Gemma 4 12B Raw Condensed Chart Only (wahs-12b-raw)`</strong> (`include_kb_findings: false`) and click <strong>Generate Live Response</strong> again.</li>
+            <li>Select <strong>Elena Rostova (`454 items` · Cardiorenal HFrEF)</strong> in Step 1 and <strong>`8k`</strong> in Step 2 (inspect the <strong>Context Window Gauge</strong> at the top of Step 2 to see the `24k` Best-Perf limit for 12B models).</li>
+            <li>In Step 3, open the Line 1 <strong>Clinical Task Dropdown</strong> and choose <strong>⚠️ Medication Conflict &amp; Duplicate Check</strong>.</li>
+            <li>Keep <strong>`🧠 + 4-Layer KB`</strong> active in the top bar (or Step 2 lever) and click <strong>⚡ Generate Live</strong>. Expand <strong>🔧 Advanced View</strong> at the bottom to inspect the Hub Profile and 4-Layer KB findings.</li>
+            <li>Click <strong>`📄 Raw Chart Only`</strong> in the top bar (`include_kb_findings: false`) and click <strong>⚡ Generate Live</strong> again—then use the <strong>`🕓 Run History` dropdown</strong> (`#gen-history-select`) to switch back and forth between Run #1 and Run #2 with full context restoration.</li>
           </ol>
           <div class="recipe-expected">
-            <strong>What to observe:</strong> Under <code>wahs-12b-raw</code>, the model must discover the contradiction between the active outpatient <code>MedicationRequest [8, 9]</code> and the free-text hospital discharge summary <code>[17]</code> purely from the raw condensed lines. Under <code>wahs-12b-kb</code>, Layer 2’s structured conflict finding is injected alongside the chart, ensuring consistent citation of both source records and a clear next-visit checklist.
+            <strong>What to observe:</strong> Under <code>📄 Raw Chart Only</code>, the model must discover the contradiction between the active outpatient <code>MedicationRequest [8, 9]</code> and the free-text hospital discharge summary <code>[17]</code> purely from the raw condensed lines. Under <code>🧠 + 4-Layer KB</code>, Layer 2’s structured conflict finding is injected alongside the chart, ensuring consistent citation of both source records.
           </div>
         </article>
 
         <article class="recipe-card" id="recipe-openrouter">
-          <span class="scene-step-badge">Recipe 3 · OpenRouter Cloud Comparison</span>
-          <h3>Compare local `llama-router` models against OpenRouter cloud models</h3>
-          <p>Benchmark local open-weight models running on your workstation or CIRG GPU server against hosted cloud models (`Claude Sonnet 4`, `GPT-4.1`, or hosted `Gemma` / `Qwen`) on synthetic data.</p>
+          <span class="scene-step-badge">Recipe 3 · Cloud Hub vs. Direct UW GPU (`>12B` Models) vs. OpenRouter</span>
+          <h3>Switch between Cloud Med Agent Hub, Direct UW GPU Server (13 Models up to `26B`), and OpenRouter in `⚙️`</h3>
+          <p>Compare curated Med Agent Hub profiles running on Cloud Run against direct UW GPU models (including `Gemma 4 26B MoE`, `Qwen 3 14B`, and `Qwen 2.5 14B`) or hosted frontier models via OpenRouter.</p>
           <ol class="recipe-steps">
-            <li>Click the <strong>⚙ Configure Endpoint &amp; OpenRouter Key</strong> button in the top navigation bar.</li>
-            <li><strong>Path A (Recommended via Med Agent Hub):</strong> Keep the endpoint set to <code>http://127.0.0.1:18081/v1</code>, paste your <code>sk-or-v1-...</code> key into the <strong>OpenRouter API Key</strong> field, and click <strong>Save &amp; Probe</strong>. Hub automatically unlocks its `wahs-openrouter-*` profiles while applying the same WAHS system prompts (`wahs-kb-guided.txt` or `wahs-raw-unhinted.txt`).</li>
-            <li><strong>Path B (Direct Browser-to-OpenRouter):</strong> Click the <strong>OpenRouter Direct (`openrouter.ai`)</strong> preset button, enter your key, and click <strong>Save &amp; Probe</strong> to query `https://openrouter.ai/api/v1/chat/completions` directly from your browser.</li>
+            <li>Click the <strong>⚙️</strong> button in the top navigation bar to open the <strong>Connection Settings — Choose Model Backend</strong> modal.</li>
+            <li><strong>Option 1 — 🏥 Cloud Med Agent Hub (Default on `wahs-demo.openclinai.org`):</strong> Click <strong>Sign in with Google</strong> with your whitelisted account to access curated WAHS profiles (`wahs-26b-a4b-kb`, `wahs-qwen3-14b-kb`, `wahs-qwen25-14b-kb`, `wahs-12b-kb`, `wahs-mistral-nemo-12b-kb`, `wahs-qwen35-9b-kb`, `wahs-llama31-8b-kb`, `wahs-granite33-8b-kb`, `wahs-e4b-kb`, `wahs-qwen3-4b-kb`, `wahs-e2b-kb`) backed by the shared UW CIRG GPU server.</li>
+            <li><strong>Option 2 — 🎓 UW GPU Server (Direct):</strong> Click the <strong>🎓 UW GPU Server</strong> card to query all 13 Ollama models on the UW GPU server (`ollama/gemma4:26b`, `ollama/qwen3:14b`, `ollama/qwen2.5:14b`, `ollama/mistral-nemo:12b`, `ollama/gemma4:12b/e4b/e2b`, `ollama/qwen3:8b/4b`, `ollama/llama3.1:8b`, `ollama/granite3.3:8b`, `ollama/mistral:7b`, `ollama/smollm2:latest`).</li>
+            <li><strong>Option 3 — ☁️ OpenRouter:</strong> Click <strong>☁️ OpenRouter</strong>, paste your <code>sk-or-v1-...</code> key, and click <strong>🔌 Test Connection</strong> or <strong>Apply</strong>.</li>
           </ol>
           <div class="recipe-expected">
-            <strong>What to observe:</strong> Compare `TTFT`, total generation speed, citation density (`[N]`), and plain-language clarity between local `wahs-12b-kb` and cloud `wahs-openrouter-sonnet-kb` on the exact same condensed patient chart.
+            <strong>What to observe:</strong> Your Google Sign-In token is shared seamlessly across both <strong>🏥 Cloud Med Agent Hub</strong> and <strong>🎓 UW GPU Server</strong> during your browser session—switch between them in one click without signing in twice.
           </div>
         </article>
 
         <article class="recipe-card" id="recipe-citations-and-abstention">
           <span class="scene-step-badge">Recipe 4 · Provenance &amp; Abstention Gate</span>
           <h3>Audit `[N]` source citations and test unanswerable clinical questions</h3>
-          <p>Verify that the assistant never fabricates clinical history when asked about tests, procedures, or genetic markers absent from the FHIR bundle.</p>
+          <p>Verify that the assistant never fabricates clinical history when asked about tests, procedures, or allergies absent from the FHIR bundle.</p>
           <ol class="recipe-steps">
-            <li>On any patient persona in Step 3, click the red-bordered <strong>Safety Abstention Probe</strong> chip (for example on Elena: <em>“What did Elena’s 2026 PET-CT scan and BRCA1 genetic test show?”</em>), or type your own question about an undocumented test.</li>
-            <li>Click <strong>Generate Live Response</strong>.</li>
-            <li>Next, run a grounded clinical question and click each blue <strong>`[N]`</strong> badge in the generated response to open the slide-over FHIR inspector drawer.</li>
+            <li>In Step 3, click into the Line 2 <strong>Custom Question Box</strong> (`#qa-question-input`) to open the suggestions popover before typing, then type <code>colonoscopy</code> (or select the abstention probe question) and click <strong>⚡ Generate Live</strong>.</li>
+            <li>Next, run a grounded clinical task and click any blue <strong>`[N]`</strong> badge in the generated summary or Grounded FHIR Sources bar to open the slide-over FHIR inspector drawer.</li>
           </ol>
           <div class="recipe-expected">
-            <strong>What to observe:</strong> On the unanswerable probe, the model explicitly states that no PET-CT scan or BRCA1 test is documented in the patient’s chart rather than guessing, while citing the existing diagnostic records it checked.
+            <strong>What to observe:</strong> On the unanswerable probe, the model begins with an explicit safety abstention (`ABSTAIN:`) confirming it checked the patient’s chart and found no record of the requested procedure rather than guessing.
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="walkthrough-section page-width" id="local-setup-and-connections" aria-labelledby="local-setup-title">
+      <p class="section-kicker">Part 3 · Cloud GPU Sign-In &amp; Running Local Backends</p>
+      <h2 id="local-setup-title">How to connect via Cloud Med Agent Hub / UW GPU (zero local setup) or boot your own local stack</h2>
+      <p>The spacious <strong>⚙️ Connection Settings</strong> modal supports seven one-click backend presets: two cloud presets backed by the shared UW CIRG GPU server (<strong>🏥 Cloud Med Agent Hub</strong> and <strong>🎓 UW GPU Server</strong>, enabled by default on <a href="https://wahs-demo.openclinai.org/">wahs-demo.openclinai.org</a>), four local workstation presets (<strong>🏠 Local Med Agent Hub</strong>, <strong>🖥️ LM Studio</strong>, <strong>⚡ llama-router</strong>, and <strong>🦙 Ollama</strong>), and <strong>☁️ OpenRouter</strong>.</p>
+
+      <div class="recipe-grid">
+        <article class="recipe-card" id="setup-path-cloud-gpu">
+          <span class="scene-step-badge">Path 0 · Default Cloud Stack (Zero Local Setup)</span>
+          <h3>Sign in to 🏥 Cloud Med Agent Hub or 🎓 UW GPU Server on `wahs-demo.openclinai.org`</h3>
+          <p>Run live WAHS profiles and open-weight GPU models directly in your browser without installing Docker, LM Studio, or local GGUF weights.</p>
+          <ol class="recipe-steps">
+            <li>Open <a href="https://wahs-demo.openclinai.org/"><code>https://wahs-demo.openclinai.org/</code></a>. By default, <strong>🏥 Cloud Med Agent Hub</strong> is selected (`🔒 Cloud Hub (Sign In ⚙️)`).</li>
+            <li>Click <strong>⚙️</strong> in the top bar and click <strong>Sign in with Google</strong> using your whitelisted `@uw.edu` or researcher Google account.</li>
+            <li>Once signed in, the status banner turns green (<code>🟢 Cloud Hub (UW GPU • your-email@uw.edu)</code>) and populates the top-bar dropdown with curated `-kb` and `-raw` WAHS profiles routed through our Cloud Run `med-agent-hub` service to the UW CIRG GPU server.</li>
+            <li>To test raw GPU models without the Hub layer, open <strong>⚙️</strong> and click <strong>🎓 UW GPU Server</strong>—your active Google session connects immediately.</li>
+          </ol>
+          <div class="recipe-expected">
+            <strong>Architecture note:</strong> Browser requests authenticate through <code>wahs-gpu-auth-relay</code> on Google Cloud Run, which verifies your whitelisted Google identity before forwarding to <code>wahs-cloud-med-agent-hub</code> and <code>https://llm.co.dev.cirg.uw.edu</code>.
+          </div>
+        </article>
+
+        <article class="recipe-card" id="setup-path-hub">
+          <span class="scene-step-badge">Path A · Local Full Stack (`:18081` + `:8077`)</span>
+          <h3>Boot Local Med Agent Hub + `llama-router` (36 Simple Profiles across 7 Families)</h3>
+          <p>Runs the full OpenClinAI local stack on your workstation with curated `-kb` and `-raw` single-model profiles and automatic on-demand GGUF provisioning.</p>
+          <ol class="recipe-steps">
+            <li>From the <code>openclinai.org</code> repository root, start the local GGUF model router (auto-verifies and downloads pinned models into <code>~/.cache/llama-router-models</code>):<br />
+              <span class="code-pill">./scripts/llama-router-up.sh</span>
+            </li>
+            <li>Start <code>med-agent-hub</code> on port <code>18081</code>:<br />
+              <span class="code-pill">docker compose -f compose/openmrs-2.8-refapp.yml up -d med-agent-hub</span>
+            </li>
+            <li>Verify that all 36 local WAHS profiles are advertised:<br />
+              <span class="code-pill">curl -sS "http://localhost:18081/v1/models?workflow=wahs" | jq '.data | length'</span>
+            </li>
+            <li>Open <a href="http://localhost:18081/wahs/demo"><code>http://localhost:18081/wahs/demo</code></a> (same-origin) or click <strong>⚙️ → 🏠 Local Med Agent Hub (:18081)</strong> on <a href="https://wahs-demo.openclinai.org/"><code>https://wahs-demo.openclinai.org/</code></a>.</li>
+          </ol>
+          <div class="recipe-expected">
+            <strong>Zero-friction model provisioning:</strong> Even if a pinned model in <code>levels.yaml</code> is not yet in <code>~/.cache/llama-router-models</code>, <code>med-agent-hub</code> automatically streams and SHA-256 verifies its GGUF on first request.
+          </div>
+        </article>
+
+        <article class="recipe-card" id="setup-path-lmstudio">
+          <span class="scene-step-badge">Path B · LM Studio Bionic (`:1235`) &amp; Classic (`:1234`)</span>
+          <h3>Connect LM Studio Bionic or Classic (GGUF / Apple Silicon MLX) to the WAHS Explorer</h3>
+          <p>Use LM Studio Bionic (<code>:1235</code>) or LM Studio Classic (<code>:1234</code>) as a standalone local OpenAI-compatible server on macOS, Windows, or Linux.</p>
+          <ol class="recipe-steps">
+            <li><strong>Zero-copy import of existing OpenClinAI GGUFs (optional):</strong> If you already have GGUF models in <code>~/.cache/llama-router-models</code>, hard-link them into LM Studio with zero extra disk usage (note <code>-L</code> hard link, as LM Studio’s scanner skips <code>-l</code> symlinks):<br />
+              <span class="code-pill">~/.lmstudio/bin/lms import -y -L --user-repo unsloth/gemma-4-12B-it-GGUF ~/.cache/llama-router-models/gemma-4-12b.gguf</span>
+            </li>
+            <li>Start the LM Studio local server with <strong>CORS</strong> enabled (port <code>1235</code> on Bionic, or <code>1234</code> on Classic):<br />
+              <span class="code-pill">~/.lmstudio/bin/lms server start --port 1235 --cors</span>
+            </li>
+            <li>Set default <strong>Context Length</strong> to at least <strong><code>16384</code></strong> in LM Studio settings so `8k` and `16k` condensed patient charts fit without truncation.</li>
+            <li>In the WAHS Explorer top bar, click <strong>⚙️ → 🖥️ LM Studio (:1235 / :1234)</strong>. All local models appear grouped by family in the dropdown with paired `+ 4-Layer Clinical KB` and `Raw Condensed Chart Only` modes.</li>
+          </ol>
+          <div class="recipe-expected">
+            <strong>Automatic reasoning-budget handling:</strong> The WAHS Explorer automatically passes <code>reasoning_effort: "none"</code> and <code>chat_template_kwargs: {"enable_thinking": false}</code> so clinical responses stream immediately into the summary pane.
+          </div>
+        </article>
+
+        <article class="recipe-card" id="setup-path-raw-router">
+          <span class="scene-step-badge">Path C · Direct Raw Model Server (`:8077` / `:8076` / `:11434`) &amp; Browser Blockers</span>
+          <h3>Connect directly to `llama-router` or Ollama—and resolve HTTPS → localhost browser prompts</h3>
+          <p>Point the browser directly at a local OpenAI-compatible server without Docker, or troubleshoot browser Local Network Access permissions when calling <code>localhost</code> from <code>https://wahs-demo.openclinai.org</code>.</p>
+          <ol class="recipe-steps">
+            <li><strong>For `llama.cpp` (`llama-router`):</strong> Run <span class="code-pill">./scripts/llama-router-up.sh</span> (listens on <code>:8077</code> or <code>:8076</code>) and click <strong>⚙️ → ⚡ llama-router (:8077 / :8076)</strong>.</li>
+            <li><strong>For Ollama (`:11434`):</strong> Run <span class="code-pill">OLLAMA_ORIGINS="*" OLLAMA_CONTEXT_LENGTH=16384 ollama serve</span> and click <strong>⚙️ → 🦙 Ollama (:11434)</strong>.</li>
+            <li><strong>Chrome Local Network Access &amp; Brave/Safari tips:</strong> When connecting from <code>https://wahs-demo.openclinai.org</code> to a <code>localhost</code> port, allow <strong>Local network access</strong> in Chrome’s address-bar site settings (or open <a href="http://localhost:18081/wahs/demo"><code>http://localhost:18081/wahs/demo</code></a> directly for same-origin access).</li>
+          </ol>
+          <div class="recipe-expected">
+            <strong>Need zero localhost configuration?</strong> Use <strong>Path 0 (🏥 Cloud Med Agent Hub / 🎓 UW GPU Server)</strong> above—it runs entirely over HTTPS on Google Cloud Run and requires zero local ports or browser permissions.
           </div>
         </article>
       </div>
     </section>
 
     <section class="walkthrough-section page-width" id="hub-profiles-reference" aria-labelledby="profiles-title">
-      <p class="section-kicker">Part 3 · Med Agent Hub Profile Catalog (`workflow: wahs`)</p>
-      <h2 id="profiles-title">How Med Agent Hub profiles configure WAHS model capabilities</h2>
-      <p>Rather than hardcoding model names or system prompts in the browser, the WAHS Explorer queries <a href="/med-agent-hub/">Med Agent Hub</a> (`GET /v1/models?workflow=wahs`), which reads curated `workflow: wahs` profiles from <code>targets/med-agent-hub/server/levels.yaml</code> and externalized prompt templates from <code>targets/med-agent-hub/server/prompts/</code>. Only profiles whose backing model is currently loaded on your local `llama-router` (or OpenRouter profiles when an API key is configured) are advertised as ready in the dropdown.</p>
+      <p class="section-kicker">Part 4 · Med Agent Hub Profile Catalog (`workflow: wahs`)</p>
+      <h2 id="profiles-title">How Med Agent Hub single-model profiles configure WAHS across 7 model families</h2>
+      <p>Rather than hardcoding model names or system prompts in the browser, the WAHS Explorer queries <a href="https://openclinai.org/med-agent-hub/">Med Agent Hub</a> (`GET /v1/models?workflow=wahs`), which reads curated single-model (`topology: single`) `workflow: wahs` profiles from <code>targets/med-agent-hub/server/levels.yaml</code> and externalized prompt templates from <code>targets/med-agent-hub/server/prompts/</code>. Every model family provides paired <strong>`-kb` (KB-Guided)</strong> and <strong>`-raw` (Raw Unhinted Control)</strong> profiles.</p>
 
       <div class="profile-table-wrap" tabindex="0" role="region" aria-label="Curated Med Agent Hub WAHS profiles">
         <table class="profile-table">
           <thead>
             <tr>
-              <th scope="col">Profile ID</th>
-              <th scope="col">Provider &amp; Model</th>
-              <th scope="col">KB Policy (`include_kb_findings`)</th>
-              <th scope="col">Prompt Template &amp; Execution Pattern</th>
+              <th scope="col">Model Family</th>
+              <th scope="col">Paired Profile IDs (`-kb` &amp; `-raw`)</th>
+              <th scope="col">Backing GGUF / Cloud Models</th>
+              <th scope="col">Prompt Templates &amp; Role in Evaluation</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><span class="code-pill">wahs-12b-kb</span></td>
-              <td>Local `llama-router` · <code>gemma-4-12b</code></td>
-              <td><strong>Enabled (`true`)</strong> — attaches 4-Layer KB findings filtered to surviving Step 2 records</td>
-              <td><code>prompts/wahs-kb-guided.txt</code> · Single-pass default WAHS clinical synthesis (`temp: 0.2`, `max_tokens: 900`)</td>
+              <td><strong>Google Gemma 4</strong></td>
+              <td><span class="code-pill">wahs-12b-kb</span> / <span class="code-pill">wahs-12b-raw</span><br /><span class="code-pill">wahs-31b-kb</span> / <span class="code-pill">wahs-26b-a4b-kb</span><br /><span class="code-pill">wahs-e4b-kb</span> / <span class="code-pill">wahs-e2b-kb</span></td>
+              <td>Local `llama-router` · <code>gemma-4-12b</code> (`Q8_0` &amp; `Q4_K_M`), <code>gemma-31b</code>, <code>gemma-26b</code>, <code>gemma-e4b</code>, <code>gemma-e2b</code></td>
+              <td><code>prompts/wahs-kb-guided.txt</code> vs. <code>prompts/wahs-raw-unhinted.txt</code> · Primary local baseline (`wahs-12b-kb` default) and parameter/quantization scaling ladder</td>
             </tr>
             <tr>
-              <td><span class="code-pill">wahs-12b-raw</span></td>
-              <td>Local `llama-router` · <code>gemma-4-12b</code></td>
-              <td><strong>Disabled (`false`)</strong> — raw unhinted Step 2 condensed chart only</td>
-              <td><code>prompts/wahs-raw-unhinted.txt</code> · Ablation control for measuring raw LLM conflict discovery without KB hints</td>
+              <td><strong>Google MedGemma</strong></td>
+              <td><span class="code-pill">wahs-medgemma-27b-kb</span> / <span class="code-pill">wahs-medgemma-27b-raw</span><br /><span class="code-pill">wahs-medgemma-4b-kb</span> / <span class="code-pill">wahs-medgemma-4b-raw</span></td>
+              <td>Local `llama-router` · <code>medgemma-27b</code> (`Q4_K_M`), <code>medgemma-1.5-4b-q8</code> (`Q8_0`)</td>
+              <td>Medical domain-tuned Gemma 3 family comparison at 4B (`Q8_0`) and 27B (`Q4_K_M`) scales</td>
             </tr>
             <tr>
-              <td><span class="code-pill">wahs-12b-xcheck</span></td>
-              <td>Local `llama-router` · <code>gemma-4-12b</code> (Writer) + <code>qwen3.5-9b</code> (Verifier)</td>
-              <td><strong>Enabled (`true`)</strong> — writer + cross-family verifier receive chart &amp; KB findings</td>
-              <td><code>prompts/wahs-kb-guided.txt</code> → <code>prompts/wahs-xcheck-review.txt</code> · 2-stage cross-family verification team</td>
+              <td><strong>Alibaba Qwen</strong></td>
+              <td><span class="code-pill">wahs-qwen35-9b-kb</span> / <span class="code-pill">wahs-qwen35-9b-raw</span><br /><span class="code-pill">wahs-qwen25-14b-kb</span> / <span class="code-pill">wahs-qwen3-14b-kb</span><br /><span class="code-pill">wahs-qwen36-35b-a3b-kb</span> / <span class="code-pill">wahs-qwen3-4b-kb</span></td>
+              <td>Local `llama-router` · <code>qwen3.5-9b</code>, <code>qwen2.5-14b</code>, <code>qwen3-14b</code>, <code>qwen3.6-35b</code> (MoE), <code>qwen3-4b</code></td>
+              <td>Dense (4B/9B/14B) and Mixture-of-Experts (`35B-A3B`) single-pass clinical synthesis comparison</td>
             </tr>
             <tr>
-              <td><span class="code-pill">wahs-e4b-kb</span></td>
-              <td>Local `llama-router` · <code>gemma-4-e4b</code></td>
-              <td><strong>Enabled (`true`)</strong></td>
-              <td><code>prompts/wahs-kb-guided.txt</code> · Compact 4.5B edge-tier speed comparison profile</td>
+              <td><strong>Meta Llama</strong></td>
+              <td><span class="code-pill">wahs-llama31-8b-kb</span> / <span class="code-pill">wahs-llama31-8b-raw</span></td>
+              <td>Local `llama-router` · <code>llama-3.1-8b</code> (`Q4_K_M`)</td>
+              <td>8B local workhorse comparison (`+15.6` composite gain from 4-Layer KB augmentation)</td>
             </tr>
             <tr>
-              <td><span class="code-pill">wahs-31b-kb</span></td>
-              <td>Local `llama-router` · <code>gemma-4-31b</code></td>
-              <td><strong>Enabled (`true`)</strong></td>
-              <td><code>prompts/wahs-kb-guided.txt</code> · High-capacity 31B local reference model profile</td>
+              <td><strong>Mistral AI</strong></td>
+              <td><span class="code-pill">wahs-mistral-nemo-12b-kb</span> / <span class="code-pill">wahs-mistral-nemo-12b-raw</span></td>
+              <td>Local `llama-router` · <code>mistral-nemo-12b</code> (`Q4_K_M`)</td>
+              <td>12B local comparison matched against `gemma-4-12b` and `qwen2.5-14b`</td>
             </tr>
             <tr>
-              <td><span class="code-pill">wahs-qwen35-9b-kb</span></td>
-              <td>Local `llama-router` · <code>qwen3.5-9b</code></td>
-              <td><strong>Enabled (`true`)</strong></td>
-              <td><code>prompts/wahs-kb-guided.txt</code> · Cross-family Qwen 3.5 9B single-pass comparison</td>
-            </tr>
-            <tr>
-              <td><span class="code-pill">wahs-openrouter-gemma4-31b-kb</span><br /><span class="code-pill">wahs-openrouter-qwen3-32b-kb</span><br /><span class="code-pill">wahs-openrouter-sonnet-kb</span><br /><span class="code-pill">wahs-openrouter-gpt41-kb</span></td>
-              <td>OpenRouter Cloud (`openrouter.ai`)</td>
-              <td><strong>Enabled (`true`)</strong> (plus `-raw` unhinted counterparts for Sonnet &amp; GPT-4.1)</td>
-              <td><code>prompts/wahs-kb-guided.txt</code> / <code>wahs-raw-unhinted.txt</code> · Cloud benchmark profiles unlocked when <code>OPENROUTER_API_KEY</code> or <code>X-OpenRouter-Key</code> is provided</td>
+              <td><strong>IBM Granite &amp; Liquid AI LFM2</strong></td>
+              <td><span class="code-pill">wahs-granite33-8b-kb</span> / <span class="code-pill">wahs-granite33-8b-raw</span><br /><span class="code-pill">wahs-lfm2-8b-a1b-kb</span> / <span class="code-pill">wahs-lfm2-8b-a1b-raw</span></td>
+              <td>Local `llama-router` · <code>granite-3.3-8b</code> (`Q4_K_M`), <code>lfm2-8b-a1b</code> (`Q4_K_M`, 1B active MoE)</td>
+              <td>Enterprise 8B (`Granite 3.3`) and ultra-low-latency 1B-active hybrid MoE (`LFM2-8B-A1B`, `1.8s` mean latency)</td>
             </tr>
           </tbody>
         </table>
@@ -351,7 +424,7 @@
     </section>
 
     <section class="walkthrough-section page-width" id="related-reports" aria-labelledby="related-reports-title">
-      <p class="section-kicker">Part 4 · Deeper Reading &amp; Published Evidence</p>
+      <p class="section-kicker">Part 5 · Deeper Reading &amp; Published Evidence</p>
       <h2 id="related-reports-title">Explore the WAHS evaluation reports and technical architecture</h2>
       <div class="resource-groups">
         <section class="resource-group">
@@ -364,13 +437,19 @@
               </a>
             </li>
             <li>
-              <a href="/wahs/">
+              <a href="../index.html">
                 <span class="resource-link-title">WA Health Summary project overview <span aria-hidden="true">→</span></span>
                 <span class="resource-link-description">Standards foundation (HL7 IPS, US Core, KDIGO, RxNorm, 42 CFR Part 2, WA MHMDA) and workstream summary.</span>
               </a>
             </li>
             <li>
-              <a href="/wahs/design-report/">
+              <a href="/med-agent-hub/wahs-architecture/">
+                <span class="resource-link-title">Med Agent Hub &amp; WAHS+ clinical graph architecture <span aria-hidden="true">→</span></span>
+                <span class="resource-link-description">Technical specification of the patient clinical entity graph, conditional Tier-0 overflow recovery, and bounded pre-generation KB orchestration.</span>
+              </a>
+            </li>
+            <li>
+              <a href="../design-report/index.html">
                 <span class="resource-link-title">Detailed design &amp; architecture dashboard <span aria-hidden="true">→</span></span>
                 <span class="resource-link-description">In-depth technical synthesis covering transfer opportunities, FHIR AI-Provenance, and Phase 3 roadmap.</span>
               </a>
@@ -380,6 +459,12 @@
         <section class="resource-group">
           <h3>Published evaluation reports</h3>
           <ul class="resource-links">
+            <li>
+              <a href="https://reports.openclinai.org/2026-11-02-wahs-simple-profiles-multi-family-eval/index.html">
+                <span class="resource-link-title">7-Family simple profile benchmark &amp; blinded dual-judge evaluation (W20) <span aria-hidden="true">→</span></span>
+                <span class="resource-link-description">112-cell factorial evaluation (`8 cases × 14 simple profiles`) across Gemma 4, MedGemma, Qwen, Llama, Mistral, Granite, and LFM2 (`-kb` vs. `-raw`), scored by blinded Claude Opus 5.5 + Gemini 4 Argon (`α = 0.90–0.96`).</span>
+              </a>
+            </li>
             <li>
               <a href="https://reports.openclinai.org/2026-10-31-wahs-live-model-team-eval/index.html">
                 <span class="resource-link-title">Live local model screening &amp; KB agent team evaluation (W8 &amp; W13) <span aria-hidden="true">→</span></span>
