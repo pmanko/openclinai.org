@@ -186,7 +186,7 @@ GPU_MODEL_LABELS: Dict[str, Dict[str, Any]] = {
         "label": "Qwen 3 14B (UW GPU)",
         "family": "qwen",
         "parameter_size": "14.8B",
-        "context_length": 131072,
+        "context_length": 262144,
         "sweet_spot_tokens": 24576,
     },
     "ollama/qwen2.5:14b": {
@@ -538,6 +538,7 @@ def build_models_payload(verdict: Dict[str, Any]) -> Dict[str, Any]:
     data: List[Dict[str, Any]] = []
     for mid in discovered_ids:
         meta = GPU_MODEL_LABELS.get(mid, {})
+        rec_limit = meta.get("sweet_spot_tokens") or 16384
         data.append(
             {
                 "id": mid,
@@ -548,7 +549,9 @@ def build_models_payload(verdict: Dict[str, Any]) -> Dict[str, Any]:
                 "model_family": meta.get("family") or "ollama",
                 "parameter_size": meta.get("parameter_size") or "",
                 "context_length": meta.get("context_length") or 131072,
-                "sweet_spot_tokens": meta.get("sweet_spot_tokens") or 16384,
+                "recommended_limit_tokens": rec_limit,
+                "recommended_limit_url": "/reports/2026-11-02-wahs-simple-profiles-multi-family-eval/index.html",
+                "sweet_spot_tokens": rec_limit,
             }
         )
 
@@ -627,6 +630,10 @@ def build_fallback_cloud_hub_models_payload(verdict: Dict[str, Any]) -> Dict[str
     data: List[Dict[str, Any]] = []
     for pid, label, role_model, fam, prio in FALLBACK_CLOUD_HUB_PROFILES:
         include_kb = not pid.endswith("-raw")
+        upstream_id = GPU_MODEL_ALIASES.get(role_model, "")
+        gpu_meta = GPU_MODEL_LABELS.get(upstream_id, {})
+        ctx_len = gpu_meta.get("context_length") or 131072
+        rec_limit = gpu_meta.get("sweet_spot_tokens") or 24576
         data.append(
             {
                 "id": pid,
@@ -642,6 +649,10 @@ def build_fallback_cloud_hub_models_payload(verdict: Dict[str, Any]) -> Dict[str
                 "provider": "local",
                 "model_family": fam,
                 "selection_priority": prio,
+                "context_window": rec_limit,
+                "context_length": ctx_len,
+                "recommended_limit_tokens": rec_limit,
+                "recommended_limit_url": "/reports/2026-11-02-wahs-simple-profiles-multi-family-eval/index.html",
                 "stages": ["context", "answer", "gate"],
                 "role_models": {"answer": role_model},
                 "required_models": [role_model],

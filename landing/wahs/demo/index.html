@@ -556,28 +556,10 @@
       .inspector-sticky-card { position: static; }
     }
     @media (max-width: 860px) {
-      .phase-shell-inner { padding: 0.65rem 1rem; gap: 0.6rem; }
       .container { padding: 1rem 1rem 2.5rem; }
-      .phase-step-tab { padding: 0.42rem 0.75rem; font-size: 0.85rem; }
       .inspector-summary-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 680px) {
-      .topbar-inner { flex-wrap: wrap; gap: 0.5rem; padding: 0.65rem 1rem; }
-      .topbar-links { gap: 0.9rem; font-size: 0.8rem; }
-      .phase-stepper {
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-      .phase-step-tab {
-        justify-content: center;
-        padding: 0.42rem 0.3rem;
-        font-size: 0.78rem;
-        gap: 0.28rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
       .composer-card { padding: 1rem; }
       .report-card { padding: 1.1rem; }
     }
@@ -1603,12 +1585,12 @@
     }
     .context-gauge-track-wrap {
       position: relative;
-      padding-top: 1.35rem;
-      padding-bottom: 0.35rem;
+      padding-top: 0.25rem;
+      padding-bottom: 0.15rem;
     }
     .context-gauge-track {
       position: relative;
-      height: 22px;
+      height: 20px;
       background: #e2e8f0;
       border-radius: 999px;
       overflow: hidden;
@@ -1643,32 +1625,111 @@
       position: absolute;
       top: 0;
       bottom: 0;
-      width: 2px;
+      width: 2.5px;
       background: #0f766e;
       z-index: 4;
       pointer-events: none;
     }
+    .context-gauge-axis-below {
+      position: relative;
+      height: 1.45rem;
+      margin-top: 0.28rem;
+    }
     .context-sweet-label {
       position: absolute;
-      top: -1.25rem;
+      top: 0;
       transform: translateX(-50%);
       font-size: 0.72rem;
       font-weight: 800;
       color: #0f766e;
       background: #ccfbf1;
       border: 1px solid #5eead4;
-      padding: 0.06rem 0.42rem;
+      padding: 0.06rem 0.44rem;
       border-radius: 4px;
       white-space: nowrap;
+      line-height: 1.3;
     }
-    .context-max-cap-label {
-      position: absolute;
-      top: -1.25rem;
-      right: 0;
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      white-space: nowrap;
+    .signin-to-run-card {
+      background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+      border: 1.5px solid #bfdbfe;
+      border-left: 5px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 1.15rem 1.35rem;
+      margin-bottom: 0.85rem;
+    }
+    @media (max-width: 1500px) {
+      #header-next-phase-btn { display: none; }
+      .phase-shell-inner { padding: 0.42rem 1.15rem; gap: 0.4rem; flex-wrap: nowrap; }
+      .active-context-group { gap: 0.35rem; font-size: 0.8rem; flex-wrap: nowrap; }
+      .ctx-chip { padding: 0.24rem 0.5rem; font-size: 0.8rem; white-space: nowrap; }
+      .llm-bar-chip { padding: 0.22rem 0.46rem; font-size: 0.78rem; white-space: nowrap; }
+      .llm-model-select { max-width: 170px; font-size: 0.75rem; }
+      .kb-mode-btn { font-size: 0.74rem; padding: 0.2rem 0.5rem; white-space: nowrap; }
+      .phase-stepper { padding: 0.2rem; gap: 0.2rem; flex-shrink: 0; }
+      .phase-step-tab { padding: 0.34rem 0.68rem; font-size: 0.82rem; gap: 0.35rem; }
+    }
+    @media (max-width: 1180px) {
+      .topbar { padding: 0.34rem 0.85rem; font-size: 0.78rem; }
+      .topbar-inner { padding: 0; gap: 0.5rem; flex-wrap: nowrap; }
+      .brand h1 { font-size: 0.84rem !important; white-space: nowrap; }
+      .topbar-links { gap: 0.65rem; font-size: 0.75rem; white-space: nowrap; }
+      .phase-shell-inner { padding: 0.32rem 0.85rem; gap: 0.32rem; flex-wrap: nowrap; }
+      .active-context-group { gap: 0.28rem; font-size: 0.75rem; flex-wrap: nowrap; min-width: 0; }
+      .ctx-chip { padding: 0.18rem 0.42rem; font-size: 0.74rem; white-space: nowrap; }
+      #ctx-lever-chip { display: none; }
+      #header-next-phase-btn { display: none; }
+      .llm-bar-chip { padding: 0.16rem 0.38rem; font-size: 0.73rem; white-space: nowrap; }
+      #llm-status-label { display: none; }
+      .llm-model-select { max-width: 140px; font-size: 0.72rem; padding: 0.1rem 0.24rem; }
+      .kb-mode-btn { font-size: 0.7rem; padding: 0.15rem 0.4rem; white-space: nowrap; }
+      .phase-stepper { padding: 0.15rem; gap: 0.15rem; flex-shrink: 0; }
+      .phase-step-tab { padding: 0.24rem 0.48rem; font-size: 0.75rem; gap: 0.24rem; }
+      .phase-step-num { width: 18px; height: 18px; font-size: 0.68rem; }
+      .tab-mobile-hide { display: none; }
+    }
+    @media (max-width: 680px) {
+      .topbar { padding: 0.24rem 0.55rem; }
+      .topbar-inner { padding: 0; gap: 0.35rem; flex-wrap: nowrap; }
+      .topbar-links { display: none; }
+      .brand { gap: 0.35rem; min-width: 0; }
+      .brand h1 { font-size: 0.76rem !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .phase-shell-inner {
+        padding: 0.24rem 0.45rem;
+        gap: 0.22rem;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .active-context-group {
+        gap: 0.2rem;
+        font-size: 0.68rem;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        overflow-x: auto;
+      }
+      #ctx-patient-chip { padding: 0.12rem 0.3rem; font-size: 0.68rem; flex-shrink: 0; }
+      .llm-bar-chip { padding: 0.1rem 0.24rem; font-size: 0.68rem; flex: 1; min-width: 0; }
+      .llm-model-select { max-width: 98px; font-size: 0.66rem; padding: 0.05rem 0.15rem; }
+      .kb-mode-toggle-wrap { flex-shrink: 0; padding: 0.06rem; }
+      .kb-mode-btn { font-size: 0.62rem; padding: 0.1rem 0.26rem; }
+      .phase-stepper {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        gap: 0.14rem;
+        padding: 0.12rem;
+      }
+      .phase-step-tab {
+        flex: 1 1 auto;
+        justify-content: center;
+        padding: 0.2rem 0.24rem;
+        font-size: 0.68rem;
+        gap: 0.18rem;
+        min-width: 0;
+        overflow: visible;
+      }
+      .phase-step-num { width: 15px; height: 15px; font-size: 0.62rem; flex-shrink: 0; }
+      .tab-mobile-hide { display: none; }
+      .container { padding: 0.85rem 0.75rem 2.5rem; }
     }
     .context-gauge-legend {
       display: flex;
@@ -1804,11 +1865,11 @@
       <div class="phase-stepper" role="tablist" aria-label="Explorer Steps">
         <button type="button" class="phase-step-tab active" role="tab" id="phase-tab-1" aria-selected="true" aria-controls="phase-panel-1" data-phase="1">
           <span class="phase-step-num">1</span>
-          <span>Browse FHIR Chart</span>
+          <span><span class="tab-mobile-hide">Browse </span>FHIR Chart</span>
         </button>
         <button type="button" class="phase-step-tab" role="tab" id="phase-tab-2" aria-selected="false" aria-controls="phase-panel-2" data-phase="2">
           <span class="phase-step-num">2</span>
-          <span>Condense Chart</span>
+          <span>Condense<span class="tab-mobile-hide"> Chart</span></span>
         </button>
         <button type="button" class="phase-step-tab" role="tab" id="phase-tab-3" aria-selected="false" aria-controls="phase-panel-3" data-phase="3">
           <span class="phase-step-num">3</span>
@@ -1892,7 +1953,7 @@
     <!-- PHASE 2: INTERACTIVE CONDENSATION LEVERS & RESULTING CHART PREVIEW    -->
     <!-- ===================================================================== -->
     <section class="phase-panel" id="phase-panel-2" role="tabpanel" aria-labelledby="phase-tab-2">
-      <!-- W23.2: Graphical Model Context Window, Best-Performance Limit & Utilization Gauge -->
+      <!-- Graphical Model Context Window, Recommended Limit & Utilization Gauge -->
       <div class="context-gauge-card" id="model-context-gauge-card" role="region" aria-label="Model Context Window and Utilization Gauge"></div>
 
       <div class="phase2-studio-grid">
@@ -1930,7 +1991,7 @@
                 <strong>Progressive Context Allocation (<code>256k → 1k</code>):</strong><br/>
                 • <strong><code>256k</code> / <code>128k</code> (Max-Window Stress Test &amp; Decadal ICU/HIE History):</strong> Expands up to the full <code>128k–256k</code> ceiling of <code>Gemma 4 12B/26B</code> and <code>Qwen 3</code> (e.g., Maurice expands to <code>128.3k</code> tok at <code>128k</code> and <code>252.0k</code> tok at <code>256k</code>) so you can directly test huge-context attention dilution and latency vs. compact budgets.<br/>
                 • <strong><code>64k</code> / <code>32k</code> (Full Longitudinal Ledger):</strong> Fits 100% of normalized clinical records for multi-year charts (including US Core &amp; MIMIC-IV/Synthea cohorts) with zero or minimal clinical records trimmed.<br/>
-                • <strong><code>16k</code> / <code>8k</code> (Best-Performance Sweet-Spot Window):</strong> Retains 100% of active conditions, meds, allergies, implants, clinical notes, and multi-year lab trajectories inside the <code>16k–24k</code> model sweet spot.<br/>
+                • <strong><code>16k</code> / <code>8k</code> (Recommended Limit Window):</strong> Retains 100% of active conditions, meds, allergies, implants, clinical notes, and multi-year lab trajectories inside the <code>16k–24k</code> model Recommended Limit.<br/>
                 • <strong><code>4k</code> / <code>2k</code> / <code>1k</code> (Compact Visit / Emergency IPS Capsule):</strong> Prioritizes the mandatory <strong>IPS Safety Core</strong> first; when connected to <strong>Med Agent Hub</strong>, any trimmed items needed for your question are dynamically recovered from <code>Tier 0</code> via conditional overflow lookup.
               </div>
               <div class="seg-group" id="budget-lever-group">
@@ -2033,7 +2094,7 @@
         </summary>
         <div class="condense-arch-body">
           <div>
-            Raw FHIR R4 exports (such as <strong>Maurice Auer's 18.8 MB / 7,099-entry bundle</strong>, ~6.1M raw tokens) exceed single-shot LLM windows because of JSON syntax verbosity, billing claims, duplicate Base64 clinical notes, and years of repeated lab/medication entries. WAHS+ condenses any chart to fit your chosen budget (<code>64k</code> down to <code>1k</code>) while keeping <strong>100% of the chart accessible</strong> through three coordinated stages:
+            Raw FHIR R4 exports (such as <strong>Maurice Auer's 18.8 MB / 7,099-entry bundle</strong>, ~6.1M raw JSON tokens / ~252k extracted clinical tokens) exceed standard single-shot LLM windows because of JSON syntax verbosity, billing claims, duplicate Base64 clinical notes, and years of repeated lab/medication entries. WAHS+ condenses any chart to fit your chosen budget (<code>256k</code> down to <code>1k</code>) while keeping <strong>100% of the chart accessible</strong> through three coordinated stages:
           </div>
           <div class="condense-arch-grid">
             <div class="condense-stage-box">
@@ -2041,14 +2102,14 @@
               <ul>
                 <li><strong>Strips non-clinical bloat:</strong> Removes <code>Claim</code>, <code>ExplanationOfBenefit</code>, and transport lookup wrappers.</li>
                 <li><strong>Deduplicates Base64 notes:</strong> Hashes decoded UTF-8 clinical notes (SHA-256) across <code>DocumentReference</code> and <code>DiagnosticReport</code> to collapse syndication copies while keeping every <code>memberUuid</code>.</li>
-                <li><strong>Result:</strong> <code>~97%</code> token reduction before any clinical record is touched (e.g., Maurice <code>6.1M</code> raw tokens → <code>65.5k</code> Tier 0 ledger tokens).</li>
+                <li><strong>Result:</strong> Removes ~96% of raw JSON wrapper overhead before any clinical record is touched (e.g., Maurice <code>6.1M</code> raw JSON tokens → <code>252.0k</code> full extracted clinical tokens).</li>
               </ul>
             </div>
             <div class="condense-stage-box">
-              <h4>2️⃣ Stage 2: Mandatory IPS Core + 5-Tier Folding</h4>
+              <h4>2️⃣ Stage 2: Priority IPS Safety Core + 5-Tier Folding</h4>
               <ul>
-                <li><strong>Mandatory IPS Safety Core:</strong> Allergies, Active Conditions, Active Medications, Implants, and Conflict-Flagged Notes are marked <code>mandatory=True</code> and preserved at every budget (<code>64k → 1k</code>).</li>
-                <li><strong>Progressive Folding (<code>Grouped</code> mode):</strong> Escalates from <code>Tier 0 (Full Ledger, 64k)</code> → <code>Tier 1 (Renewal-Folded, 32k)</code> → <code>Tier 2 (24m Horizon, 16k)</code> → <code>Tier 3 (Lab Trajectories, 8k)</code> → <code>Tier 4 (IPS Micro-Capsule, 1k–4k)</code>.</li>
+                <li><strong>Priority IPS Safety Core:</strong> Allergies, Active Conditions, Active Medications, Implants, and Conflict-Flagged Notes are prioritized ahead of historical labs and visits. In <code>Grouped</code> mode they are compactly folded; at an ultra-tight <code>1k</code> micro-budget, any active items that exceed the <code>1,024</code>-token ceiling are explicitly indexed in <code>[2] Completeness Manifest</code> for <code>Tier 0</code> recovery.</li>
+                <li><strong>Progressive Folding (<code>Grouped</code> mode):</strong> Escalates from <code>Tier 0 (Full Ledger, 64k–256k)</code> → <code>Tier 1 (Renewal-Folded, 32k)</code> → <code>Tier 2 (24m Horizon, 16k)</code> → <code>Tier 3 (Lab Trajectories, 8k)</code> → <code>Tier 4 (IPS Micro-Capsule, 1k–4k)</code>.</li>
               </ul>
             </div>
             <div class="condense-stage-box">
@@ -2344,7 +2405,10 @@
         llmCache: {},
         generationHistory: (function () {
           try {
-            return JSON.parse((typeof sessionStorage !== "undefined" && sessionStorage.getItem("wahs_generation_history")) || "[]") || [];
+            const rawHist = JSON.parse((typeof sessionStorage !== "undefined" && sessionStorage.getItem("wahs_generation_history")) || "[]") || [];
+            return rawHist.filter(function (item) {
+              return item && item.effectiveModelId !== "Offline Snapshot";
+            });
           } catch (e) {
             return [];
           }
@@ -2353,6 +2417,107 @@
         activeOverflowCitations: [],
         activeAbortController: null
       };
+
+      const BUDGET_SHORTHAND_MAP = {
+        "256k": "262144", "262144": "262144",
+        "128k": "131072", "131072": "131072",
+        "64k": "65536",   "65536": "65536",
+        "32k": "32768",   "32768": "32768",
+        "16k": "16384",   "16384": "16384",
+        "8k": "8192",     "8192": "8192",
+        "4k": "4096",     "4096": "4096",
+        "2k": "2048",     "2048": "2048",
+        "1k": "1024",     "1024": "1024"
+      };
+
+      function hydrateStateFromUrl() {
+        try {
+          if (typeof window === "undefined" || !window.location) return;
+          const params = new URLSearchParams(window.location.search || "");
+          const patParam = (params.get("patient") || "").trim();
+          if (patParam) {
+            if (patientsMap[patParam]) {
+              state.activePatientId = patParam;
+            } else {
+              const patLower = patParam.toLowerCase();
+              const matchedPid = personaIds.find(function (pid) {
+                const pObj = patientsMap[pid];
+                return pid.toLowerCase().indexOf(patLower) !== -1 ||
+                  (pObj && String(pObj.patient_name || "").toLowerCase().indexOf(patLower) !== -1);
+              });
+              if (matchedPid) state.activePatientId = matchedPid;
+            }
+          }
+          const stepParam = (params.get("step") || params.get("phase") || "").trim();
+          if (stepParam === "1" || stepParam === "2" || stepParam === "3") {
+            state.activePhase = stepParam;
+          }
+          const budParam = (params.get("budget") || "").trim().toLowerCase();
+          if (budParam && BUDGET_SHORTHAND_MAP[budParam]) {
+            state.budget = BUDGET_SHORTHAND_MAP[budParam];
+          }
+          const modeParam = (params.get("mode") || "").trim().toLowerCase();
+          if (modeParam === "hierarchical" || modeParam === "grouped") {
+            state.condenseMode = "hierarchical";
+          } else if (modeParam === "lossless_structural" || modeParam === "lossless") {
+            state.condenseMode = "lossless_structural";
+          }
+          const kbParam = (params.get("kb") || "").trim().toLowerCase();
+          if (kbParam === "0" || kbParam === "false" || kbParam === "raw") {
+            state.includeKbFindings = false;
+          } else if (kbParam === "1" || kbParam === "true" || kbParam === "kb") {
+            state.includeKbFindings = true;
+          }
+          const equipParam = (params.get("equip") || "").trim().toLowerCase();
+          if (equipParam === "1" || equipParam === "true") {
+            state.filterRoomEquip = true;
+          } else if (equipParam === "0" || equipParam === "false") {
+            state.filterRoomEquip = false;
+          }
+          const privParam = (params.get("privacy") || "").trim().toLowerCase();
+          if (privParam === "1" || privParam === "true" || privParam === "external") {
+            state.privacyExternalShare = true;
+          } else if (privParam === "0" || privParam === "false" || privParam === "self") {
+            state.privacyExternalShare = false;
+          }
+          const skillParam = (params.get("skill") || "").trim();
+          if (skillParam) {
+            state.activeSkillId = skillParam;
+          }
+        } catch (e) {}
+      }
+
+      function syncUrlState() {
+        try {
+          if (typeof window === "undefined" || !window.history || !window.history.replaceState || !window.location) return;
+          const params = new URLSearchParams(window.location.search || "");
+          params.set("patient", state.activePatientId);
+          params.set("step", String(state.activePhase || "1"));
+          params.set("budget", String(state.budget || "8192"));
+          params.set("mode", state.condenseMode === "hierarchical" ? "hierarchical" : "lossless_structural");
+          params.set("kb", state.includeKbFindings ? "1" : "0");
+          if (state.filterRoomEquip) {
+            params.set("equip", "1");
+          } else {
+            params.delete("equip");
+          }
+          if (state.privacyExternalShare) {
+            params.set("privacy", "1");
+          } else {
+            params.delete("privacy");
+          }
+          if (state.activeSkillId && state.activeSkillId !== "skill-visit-brief") {
+            params.set("skill", state.activeSkillId);
+          } else {
+            params.delete("skill");
+          }
+          const qs = params.toString();
+          const nextUrl = window.location.pathname + (qs ? ("?" + qs) : "") + (window.location.hash || "");
+          window.history.replaceState(null, "", nextUrl);
+        } catch (e) {}
+      }
+
+      hydrateStateFromUrl();
 
       const SENSITIVE_SDOH_REGEX = /abuse|violence|criminal|unemployed|housing|isolation|alcohol|drinking|dast-10|substance|limited social contact|intimate partner|audit-c|humiliation|afraid|423315002|706893006|55600006|82666-9/i;
       const ROOM_EQUIP_REGEX = /dental x-ray|examination table|hospital bed|operating room/i;
@@ -2502,6 +2667,17 @@
         document.getElementById("ctx-lever-chip").innerHTML =
           "<code>" + esc(budgetShort + " • " + modeShort + " • " + kbShort + privacyTag) + "</code>";
         syncKbModeButtons();
+        document.querySelectorAll("#budget-lever-group .seg-btn").forEach(function (b) {
+          b.classList.toggle("active", b.getAttribute("data-budget") === String(state.budget));
+        });
+        document.querySelectorAll("#mode-lever-group .seg-btn").forEach(function (b) {
+          b.classList.toggle("active", b.getAttribute("data-mode") === state.condenseMode);
+        });
+        const eqBox = document.getElementById("toggle-filter-equip");
+        if (eqBox) eqBox.checked = !!state.filterRoomEquip;
+        const privBox = document.getElementById("toggle-privacy-share");
+        if (privBox) privBox.checked = !!state.privacyExternalShare;
+        syncUrlState();
       }
 
       /* PHASE 1: Render Spacious 3x2 Patient Grid */
@@ -2716,9 +2892,14 @@
         const cell = resolveBudgetCell(modeBucket, state.budget);
         if (!cell) return;
 
-        const rawTok = prep.raw_json_tokens || p.raw_est_tokens || 0;
+        const clinicalTok = cell.clinical_chart_tokens || prep.clinical_chart_tokens || cell.actual_tokens || 0;
+        const rawPct = clinicalTok > cell.actual_tokens
+          ? Number(((1 - cell.actual_tokens / Math.max(clinicalTok, 1)) * 100).toFixed(1))
+          : 0;
+        const dispPct = Math.min(99.9, Math.max(0, Number(cell.reduction_pct != null ? cell.reduction_pct : rawPct)));
+        const pctTag = dispPct > 0 ? ("-" + dispPct + "%") : "0% trimmed";
         document.getElementById("condensed-stats-pill").textContent =
-          rawTok.toLocaleString() + " raw tok → " + cell.actual_tokens.toLocaleString() + " tok (-" + cell.reduction_pct + "%) • " + cell.rendered_records + " lines";
+          clinicalTok.toLocaleString() + " clinical tok → " + cell.actual_tokens.toLocaleString() + " tok (" + pctTag + ") • " + cell.rendered_records + " lines";
 
         const omittedMap = Object.assign({}, cell.omitted_sections || {});
         if (!Object.keys(omittedMap).length && cell.chart_text) {
@@ -2989,12 +3170,17 @@
           rawVariantId: String(state.llmModel || "").endsWith("-kb")
             ? String(state.llmModel).replace(/-kb$/, "-raw")
             : (String(state.llmModel || "").indexOf("wahs-raw:") === 0 ? state.llmModel : ("wahs-raw:" + state.llmModel)),
-          label: state.llmModel,
+          label: state.llmModel === "wahs-12b-kb" ? "Gemma 4 12B" : state.llmModel,
           workflow: "wahs",
           topology: isXcheck ? "xcheck" : "single",
           provider: isOpenRouter ? "openrouter" : "local",
+          context_length: 262144,
+          recommended_limit_tokens: 24576,
+          recommended_limit_url: "https://reports.openclinai.org/2026-11-02-wahs-simple-profiles-multi-family-eval/index.html",
           stages: isXcheck ? ["context", "answer", "review", "gate"] : ["context", "answer", "gate"],
-          role_models: isXcheck ? { answer: "gemma-4-12b", review: "qwen3.5-9b" } : { answer: state.llmModel },
+          role_models: isXcheck
+            ? { answer: "gemma-4-12b", review: "qwen3.5-9b" }
+            : { answer: state.llmModel === "wahs-12b-kb" ? "gemma-4-12b" : state.llmModel },
           role_knobs: { answer: { temperature: 0.1, dry: 0.0, maxTokens: 4096 } },
           policies: {
             provider: isOpenRouter ? "openrouter" : "local",
@@ -3028,7 +3214,9 @@
           : String(state.llmModel || "").replace(/^wahs-(kb|raw):/, "");
       }
 
-      /* W23.2: Model Context Window & Best-Performance Sweet-Spot Lookup */
+      /* W25.4: Model Context Window (from profile context_length) & Sourced Team Recommended Limit */
+      const DEFAULT_RECOMMENDED_LIMIT_URL = "https://reports.openclinai.org/2026-11-02-wahs-simple-profiles-multi-family-eval/index.html";
+
       function getModelContextSpec(modelId, activeProf) {
         const rawId = String(
           (activeProf && activeProf.role_models && activeProf.role_models.answer) ||
@@ -3044,103 +3232,70 @@
           .replace(/\s*Raw Condensed Chart.*$/i, "")
           .trim() || rawId;
 
-        if (/26b/.test(rawId)) {
-          return {
-            displayName: cleanTitle,
-            paramBadge: "26B MoE (4B active)",
-            maxContextTokens: (activeProf && activeProf.context_length) || 262144,
-            sweetSpotTokens: (activeProf && activeProf.sweet_spot_tokens) || 32768,
-            reservedOutputTokens: 4096,
-            sweetSpotReason: "26B MoE multi-expert attention maintains high cross-clinic recall and citation fidelity up to ~32k tokens."
-          };
-        }
-        if (/31b|35b|70b|72b/.test(rawId)) {
-          return {
-            displayName: cleanTitle,
-            paramBadge: /70b|72b/.test(rawId) ? "70B+" : "31B–35B",
-            maxContextTokens: (activeProf && activeProf.context_length) || 131072,
-            sweetSpotTokens: (activeProf && activeProf.sweet_spot_tokens) || 32768,
-            reservedOutputTokens: 4096,
-            sweetSpotReason: "Large 31B+ models sustain strong multi-document clinical grounding up to ~32k tokens."
-          };
-        }
+        const profMax = Number((activeProf && activeProf.context_length) || 0);
+        const profRec = Number(
+          (activeProf && (activeProf.recommended_limit_tokens || activeProf.sweet_spot_tokens)) || 0
+        );
+        const recUrl = (activeProf && activeProf.recommended_limit_url) || DEFAULT_RECOMMENDED_LIMIT_URL;
+
+        let defaultMax = 131072;
+        let defaultRec = 24576;
+        let defaultParam = (activeProf && activeProf.parameter_size) || "12B";
+        let reservedOut = 4096;
+
         if (/gemini-2\.5-flash/.test(rawId)) {
-          return {
-            displayName: cleanTitle,
-            paramBadge: "Cloud Frontier",
-            maxContextTokens: 1048576,
-            sweetSpotTokens: 65536,
-            reservedOutputTokens: 4096,
-            sweetSpotReason: "Frontier cloud model supports 1M tokens with best clinical synthesis focus and latency ≤64k tokens."
-          };
+          defaultMax = 1048576;
+          defaultRec = 65536;
+          defaultParam = "Cloud Frontier";
+        } else if (/26b/.test(rawId)) {
+          defaultMax = 262144;
+          defaultRec = 32768;
+          defaultParam = "26B MoE (4B active)";
+        } else if (/31b|35b|70b|72b/.test(rawId)) {
+          defaultMax = /31b/.test(rawId) ? 262144 : 131072;
+          defaultRec = 32768;
+          defaultParam = /70b|72b/.test(rawId) ? "70B+" : "31B–35B";
+        } else if (/medgemma-27b|gemma-3-27b/.test(rawId)) {
+          defaultMax = /medgemma/.test(rawId) ? 32768 : 131072;
+          defaultRec = 24576;
+          defaultParam = "27B";
+        } else if (/14b/.test(rawId)) {
+          defaultMax = 131072;
+          defaultRec = 24576;
+          defaultParam = "14.8B";
+        } else if (/12b|nemo/.test(rawId)) {
+          defaultMax = /nemo|mistral/.test(rawId) ? 131072 : 262144;
+          defaultRec = 24576;
+          defaultParam = "12B";
+        } else if (/smollm2|1\.7b/.test(rawId)) {
+          defaultMax = 8192;
+          defaultRec = 4096;
+          defaultParam = "1.7B";
+          reservedOut = 2048;
+        } else if (/e2b|4b/.test(rawId)) {
+          defaultMax = /medgemma/.test(rawId) ? 32768 : 131072;
+          defaultRec = 12288;
+          defaultParam = /e2b/.test(rawId) ? "4.6B (2B eff.)" : "4B";
+        } else if (/mistral:7b|mistral-7b|lfm2/.test(rawId)) {
+          defaultMax = 32768;
+          defaultRec = 12288;
+          defaultParam = "7B–8B";
+        } else if (/8b|9b|granite|llama/.test(rawId)) {
+          defaultMax = 131072;
+          defaultRec = 16384;
+          defaultParam = "8B–9B";
         }
-        if (/medgemma-27b|gemma-3-27b/.test(rawId)) {
-          return {
-            displayName: cleanTitle,
-            paramBadge: "27B",
-            maxContextTokens: /medgemma/.test(rawId) ? 32768 : 131072,
-            sweetSpotTokens: 24576,
-            reservedOutputTokens: 4096,
-            sweetSpotReason: "27B clinical model achieves peak contradiction detection and citation accuracy under ~24k tokens."
-          };
-        }
-        if (/14b/.test(rawId)) {
-          return {
-            displayName: cleanTitle,
-            paramBadge: "14.8B",
-            maxContextTokens: (activeProf && activeProf.context_length) || 131072,
-            sweetSpotTokens: (activeProf && activeProf.sweet_spot_tokens) || 24576,
-            reservedOutputTokens: 4096,
-            sweetSpotReason: "14B dense attention achieves strongest needle-in-a-haystack clinical grounding and fast TTFT under ~24k tokens."
-          };
-        }
-        if (/12b|nemo/.test(rawId)) {
-          return {
-            displayName: cleanTitle,
-            paramBadge: "12B",
-            maxContextTokens: /gemma/.test(rawId) ? 262144 : 131072,
-            sweetSpotTokens: (activeProf && activeProf.sweet_spot_tokens) || 24576,
-            reservedOutputTokens: 4096,
-            sweetSpotReason: "12B dense models hit their accuracy & latency sweet spot under ~24k tokens (8k–16k chart budget + 4-Layer KB)."
-          };
-        }
-        if (/smollm2|1\.7b/.test(rawId)) {
-          return {
-            displayName: cleanTitle,
-            paramBadge: "1.7B",
-            maxContextTokens: 8192,
-            sweetSpotTokens: 4096,
-            reservedOutputTokens: 2048,
-            sweetSpotReason: "Ultra-compact 1.7B model has an 8k max window; choose a 1k–2k chart budget so chart + KB + output fit cleanly."
-          };
-        }
-        if (/e2b|4b/.test(rawId)) {
-          return {
-            displayName: cleanTitle,
-            paramBadge: /e2b/.test(rawId) ? "4.6B (2B eff.)" : "4B",
-            maxContextTokens: /medgemma/.test(rawId) ? 32768 : 131072,
-            sweetSpotTokens: 12288,
-            reservedOutputTokens: 4096,
-            sweetSpotReason: "Compact 2B–4B models avoid mid-context attention dilution when total context stays ≤12k tokens (2k–4k budget + KB)."
-          };
-        }
-        if (/mistral:7b|mistral-7b|lfm2/.test(rawId)) {
-          return {
-            displayName: cleanTitle,
-            paramBadge: "7B–8B",
-            maxContextTokens: 32768,
-            sweetSpotTokens: 12288,
-            reservedOutputTokens: 4096,
-            sweetSpotReason: "32k-window 7B–8B models perform best when total prompt + output stays ≤12k tokens (4k–8k budget)."
-          };
-        }
+
+        const maxContextTokens = profMax > 0 ? profMax : defaultMax;
+        const recommendedLimitTokens = profRec > 0 ? profRec : defaultRec;
         return {
-          displayName: cleanTitle,
-          paramBadge: (activeProf && activeProf.parameter_size) || "7.5B–9B",
-          maxContextTokens: (activeProf && activeProf.context_length) || 131072,
-          sweetSpotTokens: (activeProf && activeProf.sweet_spot_tokens) || 16384,
-          reservedOutputTokens: 4096,
-          sweetSpotReason: "7B–9B models maintain sharpest citation grounding and low TTFT when total context stays ≤16k tokens (4k–8k budget + KB)."
+          displayName: cleanTitle === "wahs-12b-kb" ? "Gemma 4 12B" : cleanTitle,
+          paramBadge: (activeProf && activeProf.parameter_size) || defaultParam,
+          maxContextTokens: maxContextTokens,
+          recommendedLimitTokens: recommendedLimitTokens,
+          sweetSpotTokens: recommendedLimitTokens,
+          recommendedLimitUrl: recUrl,
+          reservedOutputTokens: reservedOut
         };
       }
 
@@ -3313,40 +3468,117 @@
         };
       }
 
-      function computeContextUtilization(p) {
+      /* W25.2: Unified Prompt Builder used by BOTH the Context Gauge and the Live LLM Request */
+      function buildActivePromptPayload(p) {
         const promptData = getActiveCondensedPromptData(p);
         const activeProf = getActiveProfileMeta();
-        const spec = getModelContextSpec(state.llmModel, activeProf);
+        const includeKb = !!state.includeKbFindings;
         const skills = (p && p.skills) || [];
-        let retainedKbChars = 0;
-        let retainedKbFindingsCount = 0;
-        skills.forEach(function (sk) {
-          const rows = filterKbRowsForCondensedChart(sk.structured_rows || [], promptData);
-          rows.forEach(function (r) {
-            retainedKbFindingsCount += 1;
-            retainedKbChars += ((sk.title || "") + (r.category || "") + (r.label || "") + (r.detail || "") + (r.source_org || "")).length + 18;
+        const isCustomQa = !!(state.customQuestionResult && state.customQuestionResult.question);
+        const activeSkill = skills.find(function (s) { return s.id === state.activeSkillId; }) || skills[0] || null;
+        const activeQuestionText = isCustomQa
+          ? state.customQuestionResult.question
+          : ((activeSkill && SKILL_PROMPTS[activeSkill.id]) || ("Synthesize the SUMMARY and QUESTIONS_FOR_DOCTOR for the skill '" + ((activeSkill && activeSkill.title) || "Clinical Task") + "'."));
+
+        const hubEnrichment = buildClientHubEnrichment(p, promptData, activeQuestionText);
+        const pName = cleanName(p && p.patient_name);
+
+        let activeKbRows = [];
+        let activeKbLines = [];
+        if (isCustomQa) {
+          skills.forEach(function (sk) {
+            const retainedRows = filterKbRowsForCondensedChart(sk.structured_rows || [], promptData);
+            retainedRows.forEach(function (r) {
+              if (activeKbLines.length < 14) {
+                activeKbRows.push(r);
+                activeKbLines.push("- [" + sk.title + " | " + r.category + "] " + r.label + ": " + r.detail);
+              }
+            });
           });
-        });
-        const fullKbEstTokens = Math.max(Math.round(retainedKbChars / 4), 260);
-        const wrapperTokens = 180;
-        const activeQuestion = state.customQuestionResult ? state.customQuestionResult.question : (SKILL_PROMPTS[state.activeSkillId] || "");
-        const hubEnrichment = buildClientHubEnrichment(p, promptData, activeQuestion);
-        const kbActiveTokens = state.includeKbFindings
-          ? (fullKbEstTokens + wrapperTokens + (hubEnrichment.active ? hubEnrichment.totalTokens : 0))
-          : wrapperTokens;
+        } else if (activeSkill) {
+          activeKbRows = filterKbRowsForCondensedChart(activeSkill.structured_rows || [], promptData);
+          activeKbLines = activeKbRows.map(function (r) {
+            return "- [" + r.category + "] " + r.label + ": " + r.detail + " (Source: " + r.source_org + ")";
+          });
+        }
+
+        const headerText =
+          "Patient: " + pName + " (DOB " + ((p && p.birth_date) || "unknown") + ")\n" +
+          "Active Step 2 Condensation Levers: " + promptData.leverLabel + "\n" +
+          "Active Hub Profile: " + state.llmModel + " (include_kb_findings=" + String(includeKb) + ")\n" +
+          promptData.omittedNote + "\n\n";
+
+        const kbSectionText = isCustomQa
+          ? ("\n\n4-Layer Clinical KB Findings (Filtered to Retained Step 2 Chart):\n" + (activeKbLines.join("\n") || "None flagged in active condensed chart"))
+          : ("\n\n4-Layer Clinical KB Findings for '" + ((activeSkill && activeSkill.title) || "Task") + "' (Filtered to Retained Step 2 Chart):\n" + (activeKbLines.join("\n") || "None retained in this budget"));
+
+        const kbAndHubBlock = includeKb
+          ? (kbSectionText + (hubEnrichment.active ? ("\n\n" + hubEnrichment.blockText) : ""))
+          : "\n\n[4-Layer Clinical KB Findings OMITTED by profile policy: Unhinted Raw-Chart Control]";
+
+        const promptPreviewText =
+          headerText +
+          "Condensed FHIR Chart Ledger (" + promptData.promptLineCount + " lines):\n" + promptData.ledgerExcerpt +
+          kbAndHubBlock;
+
+        const sysMsg = (activeProf.system_prompts && activeProf.system_prompts.answer) ||
+          (includeKb
+            ? "You are the WAHS+ Clinical Chart Assistant helping a patient and their care team understand their condensed health record. Answer the task or question in clear, empathetic plain English using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, colonoscopy, MRI, or fact NOT recorded in the chart, begin your SUMMARY with 'ABSTAIN:' and clearly explain that you checked their chart and there is no record of it, so you abstain for safety rather than guessing. Format your output in two parts:\nSUMMARY:\n2-3 clear plain-English bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 specific questions to review with the clinician."
+            : "You are the WAHS+ Raw-Chart Control Assistant. Answer the task or question using ONLY the provided Condensed FHIR Chart Ledger without 4-Layer KB hints. Cite specific chart entries using [N] brackets. If a requested record is absent from the active condensed chart, begin your SUMMARY with 'ABSTAIN:'. Format your output in two parts:\nSUMMARY:\n<Concise synthesis with [N] citations>\nQUESTIONS_FOR_DOCTOR:\n- <2-3 specific questions>");
+
+        const taskSuffix = "\n\nTask / Question: " + activeQuestionText;
+        const userMsg = promptPreviewText + taskSuffix;
+
         const chartTokens = promptData.promptTokensEst || 0;
+        const nonChartChars = sysMsg.length + headerText.length + kbAndHubBlock.length + taskSuffix.length;
+        const kbActiveTokens = Math.max(1, Math.round(nonChartChars / 4));
+        const rawControlWrapperChars =
+          ((activeProf.system_prompts && activeProf.system_prompts.answer) ||
+            "You are the WAHS+ Raw-Chart Control Assistant. Answer the task or question using ONLY the provided Condensed FHIR Chart Ledger without 4-Layer KB hints. Cite specific chart entries using [N] brackets. If a requested record is absent from the active condensed chart, begin your SUMMARY with 'ABSTAIN:'. Format your output in two parts:\nSUMMARY:\n<Concise synthesis with [N] citations>\nQUESTIONS_FOR_DOCTOR:\n- <2-3 specific questions>").length +
+          headerText.length +
+          "\n\n[4-Layer Clinical KB Findings OMITTED by profile policy: Unhinted Raw-Chart Control]".length +
+          taskSuffix.length;
+        const bypassedKbTokens = Math.max(
+          0,
+          Math.round((kbSectionText.length + (hubEnrichment.active ? ("\n\n" + hubEnrichment.blockText).length : 0)) / 4)
+        );
+
+        return {
+          promptData: promptData,
+          activeProf: activeProf,
+          includeKb: includeKb,
+          isCustomQa: isCustomQa,
+          activeSkill: activeSkill,
+          activeQuestionText: activeQuestionText,
+          activeKbRows: activeKbRows,
+          activeKbLinesCount: activeKbLines.length,
+          hubEnrichment: hubEnrichment,
+          promptPreviewText: promptPreviewText,
+          sysMsg: sysMsg,
+          userMsg: userMsg,
+          chartTokens: chartTokens,
+          kbActiveTokens: kbActiveTokens,
+          bypassedKbTokens: bypassedKbTokens,
+          rawWrapperTokens: Math.max(1, Math.round(rawControlWrapperChars / 4))
+        };
+      }
+
+      function computeContextUtilization(p) {
+        const built = buildActivePromptPayload(p);
+        const spec = getModelContextSpec(state.llmModel, built.activeProf);
         const reservedOutputTokens = spec.reservedOutputTokens || 4096;
-        const totalInputTokens = chartTokens + kbActiveTokens;
+        const totalInputTokens = built.chartTokens + built.kbActiveTokens;
         const totalCommittedTokens = totalInputTokens + reservedOutputTokens;
 
         return {
           spec: spec,
-          promptData: promptData,
-          chartTokens: chartTokens,
-          kbActiveTokens: kbActiveTokens,
-          fullKbEstTokens: fullKbEstTokens,
-          retainedKbFindingsCount: retainedKbFindingsCount,
-          hubEnrichment: hubEnrichment,
+          built: built,
+          promptData: built.promptData,
+          chartTokens: built.chartTokens,
+          kbActiveTokens: built.kbActiveTokens,
+          fullKbEstTokens: built.bypassedKbTokens,
+          retainedKbFindingsCount: built.activeKbLinesCount,
+          hubEnrichment: built.hubEnrichment,
           reservedOutputTokens: reservedOutputTokens,
           totalInputTokens: totalInputTokens,
           totalCommittedTokens: totalCommittedTokens
@@ -3358,38 +3590,44 @@
         const u = computeContextUtilization(p);
         const spec = u.spec;
         const maxWin = spec.maxContextTokens;
-        const sweet = spec.sweetSpotTokens;
+        const recLimit = spec.recommendedLimitTokens;
         const total = u.totalCommittedTokens;
-        const sweetPct = Math.round((total / Math.max(sweet, 1)) * 100);
+        const recPct = Math.round((total / Math.max(recLimit, 1)) * 100);
         const maxPct = ((total / Math.max(maxWin, 1)) * 100);
         const maxPctStr = maxPct < 1 ? maxPct.toFixed(1) + "%" : Math.round(maxPct) + "%";
 
+        /* W25.1: Short fixed-length status text so the gauge card never changes height */
         let statusClass = "status-optimal";
-        let statusLabel = "🟢 Optimal Zone (" + sweetPct + "% of " + formatTokenCountK(sweet) + " Best-Perf Limit)";
+        let statusLabel = "🟢 Within Limit (" + recPct + "%)";
         if (total > maxWin) {
           statusClass = "status-over";
-          statusLabel = "🔴 Exceeds " + formatTokenCountK(maxWin) + " Model Window — Lower Token Budget Lever!";
-        } else if (total > sweet) {
+          statusLabel = "🔴 Over Max (" + maxPctStr + ")";
+        } else if (total > recLimit) {
           statusClass = "status-extended";
-          statusLabel = "🟡 Extended Context (" + sweetPct + "% of " + formatTokenCountK(sweet) + " Sweet Spot — Higher Latency / Attention Dilution)";
+          statusLabel = "🟡 Above Limit (" + recPct + "%)";
         }
 
-        /* Scale bar so both the Sweet Spot marker and active fill are clearly visible */
-        const gaugeScaleMax = Math.min(
-          maxWin,
-          Math.max(sweet * 1.6, total * 1.18, 16384)
-        );
+        /* W25.1: Fixed scale per model (0 to 2x Recommended Limit, or patient's 64k total if larger).
+           Completely independent of state.budget and state.condenseMode across 64k..1k so the Recommended Limit marker never moves! */
+        const losslessBucket = (p.condensation_matrix && p.condensation_matrix.lossless_structural) || {};
+        const cell64k = resolveBudgetCell(losslessBucket, "65536") || {};
+        const chart64kTok = Math.max(cell64k.actual_tokens || 0, Math.round(((cell64k.chart_text || "").length) / 4));
+        const fixed64kTotal = chart64kTok > 0 ? (chart64kTok + u.reservedOutputTokens + 2400) : 0;
+        const baseModelScale = Math.min(maxWin, Math.max(recLimit * 2, fixed64kTotal, 16384));
+        const gaugeScaleMax = total > baseModelScale ? Math.min(maxWin, total) : baseModelScale;
+
         const chartWidthPct = Math.min(100, (u.chartTokens / gaugeScaleMax) * 100);
         const kbWidthPct = Math.min(Math.max(0, 100 - chartWidthPct), (u.kbActiveTokens / gaugeScaleMax) * 100);
         const outWidthPct = Math.min(Math.max(0, 100 - chartWidthPct - kbWidthPct), (u.reservedOutputTokens / gaugeScaleMax) * 100);
-        const sweetMarkerPct = Math.min(96, Math.max(8, (sweet / gaugeScaleMax) * 100));
+        const recMarkerPct = Math.min(96, Math.max(6, (recLimit / gaugeScaleMax) * 100));
+        const clampedLabelPct = Math.min(86, Math.max(14, recMarkerPct));
 
         const hubTag = (u.hubEnrichment && u.hubEnrichment.active)
-          ? (" + " + u.hubEnrichment.totalTokens + " tok Hub Graph/KB" + (u.hubEnrichment.overflowTriggered ? "/Tier-0 Overflow" : " [Tier-0 skipped: 0 omitted]"))
+          ? (" + " + u.hubEnrichment.totalTokens + " tok Hub Graph/KB")
           : "";
         const kbModeDesc = state.includeKbFindings
-          ? ("+" + u.kbActiveTokens.toLocaleString() + " tok (" + u.retainedKbFindingsCount + " 4-Layer KB findings" + hubTag + " + prompt)")
-          : ("+" + u.kbActiveTokens.toLocaleString() + " tok (Raw prompt wrapper only; " + u.fullKbEstTokens.toLocaleString() + " tok KB bypassed)");
+          ? ("+" + u.kbActiveTokens.toLocaleString() + " tok (" + u.retainedKbFindingsCount + " task KB lines" + hubTag + " + prompt)")
+          : ("+" + u.kbActiveTokens.toLocaleString() + " tok (Raw prompt wrapper only)");
 
         const step2GaugeEl = document.getElementById("model-context-gauge-card");
         if (step2GaugeEl) {
@@ -3402,48 +3640,63 @@
               '</div>' +
               '<div class="context-gauge-badges">' +
                 '<span class="ctx-spec-pill" id="gauge-max-window-pill">Max Window: <strong>' + formatTokenCountK(maxWin) + '</strong> (' + maxWin.toLocaleString() + ' tok)</span>' +
-                '<span class="ctx-spec-pill sweet" id="gauge-sweet-spot-pill">🎯 Suggested Best-Perf Limit: <strong>' + formatTokenCountK(sweet) + '</strong> (' + sweet.toLocaleString() + ' tok)</span>' +
+                '<span class="ctx-spec-pill sweet" id="gauge-sweet-spot-pill">🎯 Recommended Limit: <strong>' + formatTokenCountK(recLimit) + '</strong> (' + recLimit.toLocaleString() + ' tok)</span>' +
+                '<span class="ctx-spec-pill" id="gauge-scale-cap-pill">Scale: <strong>0 – ' + formatTokenCountK(Math.round(gaugeScaleMax)) + '</strong></span>' +
                 '<span class="ctx-spec-pill ' + statusClass + '" id="gauge-posture-pill">' + esc(statusLabel) + '</span>' +
               '</div>' +
             '</div>' +
             '<div class="context-gauge-track-wrap">' +
-              '<div class="context-sweet-label" style="left: ' + sweetMarkerPct.toFixed(1) + '%;">🎯 Best-Perf Limit (' + formatTokenCountK(sweet) + ')</div>' +
-              '<div class="context-max-cap-label">Scale: ' + formatTokenCountK(Math.round(gaugeScaleMax)) + ' shown • Model Max: <strong>' + formatTokenCountK(maxWin) + '</strong> (' + maxPctStr + ' used)</div>' +
               '<div class="context-gauge-track" id="context-gauge-track">' +
                 '<div class="context-seg-chart" style="width: ' + chartWidthPct.toFixed(2) + '%;" title="Step 2 Condensed FHIR Chart: ' + u.chartTokens.toLocaleString() + ' tokens"></div>' +
                 '<div class="context-seg-kb" style="width: ' + kbWidthPct.toFixed(2) + '%;" title="' + esc(kbModeDesc) + '"></div>' +
                 '<div class="context-seg-output" style="width: ' + outWidthPct.toFixed(2) + '%;" title="Reserved Output Generation Headroom: ' + u.reservedOutputTokens.toLocaleString() + ' tokens"></div>' +
-                '<div class="context-sweet-marker" style="left: ' + sweetMarkerPct.toFixed(1) + '%;"></div>' +
+                '<div class="context-sweet-marker" style="left: ' + recMarkerPct.toFixed(1) + '%;"></div>' +
+              '</div>' +
+              '<div class="context-gauge-axis-below">' +
+                '<div class="context-sweet-label" style="left: ' + clampedLabelPct.toFixed(1) + '%;">▲ Recommended Limit (' + formatTokenCountK(recLimit) + ')</div>' +
               '</div>' +
             '</div>' +
             '<div class="context-gauge-legend">' +
               '<div class="context-legend-items">' +
                 '<span class="context-legend-item"><span class="context-legend-swatch" style="background: #2563eb;"></span><strong>Condensed Chart (' + Math.round(parseInt(state.budget, 10) / 1024) + 'k lever):</strong> <code id="gauge-chart-tokens-val">' + u.chartTokens.toLocaleString() + ' tok</code> (' + u.promptData.promptLineCount + ' lines)</span>' +
-                '<span class="context-legend-item"><span class="context-legend-swatch" style="background: #7c3aed;"></span><strong>' + (state.includeKbFindings ? ((u.hubEnrichment && u.hubEnrichment.active) ? "4-Layer KB + Hub Pre-Gen:" : "4-Layer Clinical KB + Prompt:") : "Raw Prompt Wrapper (KB Off):") + '</strong> <code id="gauge-kb-tokens-val">' + kbModeDesc + '</code></span>' +
+                '<span class="context-legend-item"><span class="context-legend-swatch" style="background: #7c3aed;"></span><strong>' + (state.includeKbFindings ? ((u.hubEnrichment && u.hubEnrichment.active) ? "Active Task KB + Hub + Prompt:" : "Active Task KB + Prompt:") : "Raw Prompt Wrapper (KB Off):") + '</strong> <code id="gauge-kb-tokens-val">' + kbModeDesc + '</code></span>' +
                 '<span class="context-legend-item"><span class="context-legend-swatch" style="background: #f59e0b;"></span><strong>Reserved Output:</strong> <code>+' + u.reservedOutputTokens.toLocaleString() + ' tok</code></span>' +
               '</div>' +
-              '<div><strong>Total Committed:</strong> <code id="gauge-total-tokens-val">' + total.toLocaleString() + ' tok</code> (' + sweetPct + '% of ' + formatTokenCountK(sweet) + ' sweet spot • ' + maxPctStr + ' of ' + formatTokenCountK(maxWin) + ' max)</div>' +
+              '<div><strong>Total Committed:</strong> <code id="gauge-total-tokens-val">' + total.toLocaleString() + ' tok</code> (' + recPct + '% of ' + formatTokenCountK(recLimit) + ' Recommended Limit • ' + maxPctStr + ' of ' + formatTokenCountK(maxWin) + ' max)</div>' +
             '</div>' +
             '<div class="context-gauge-note">' +
-              '💡 <strong>Why this matters for your levers:</strong> ' + esc(spec.sweetSpotReason) +
+              '📊 <strong>Recommended Limit (' + formatTokenCountK(recLimit) + ' team setting):</strong> Configured from multi-budget recall and latency measurements in the ' +
+              '<a href="' + esc(spec.recommendedLimitUrl) + '" target="_blank" rel="noopener" style="font-weight: 700; text-decoration: underline;">7-Family WAHS Evaluation Report →</a>' +
             '</div>';
         }
 
+        /* W25.7b: Step 3 reuses the Step 2 visual stacked bar + fixed Recommended Limit marker in a compact size */
         const step3MiniEl = document.getElementById("step3-context-mini-gauge");
         if (step3MiniEl) {
           step3MiniEl.innerHTML =
-            '<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.55rem; font-size: 0.81rem;">' +
-              '<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.45rem;">' +
-                '<strong>📐 Context Window Fill (<code>' + esc(spec.displayName) + '</code>):</strong>' +
+            '<div class="context-gauge-top" style="margin-bottom: 0.35rem;">' +
+              '<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.45rem; font-size: 0.81rem;">' +
+                '<strong>📐 Context Budget (<code>' + esc(spec.displayName) + '</code>):</strong>' +
                 '<span>Chart <code>' + u.chartTokens.toLocaleString() + ' tok</code></span>' +
-                '<span>+ ' + (state.includeKbFindings ? (((u.hubEnrichment && u.hubEnrichment.active) ? 'KB &amp; Hub ' : '4-Layer KB ') + '<code>' + u.kbActiveTokens.toLocaleString() + ' tok</code>') : ('Raw Wrapper <code>' + u.kbActiveTokens.toLocaleString() + ' tok</code>')) + '</span>' +
+                '<span>+ ' + (state.includeKbFindings ? 'KB/Prompt ' : 'Prompt ') + '<code>' + u.kbActiveTokens.toLocaleString() + ' tok</code></span>' +
                 '<span>+ Output <code>' + u.reservedOutputTokens.toLocaleString() + ' tok</code></span>' +
                 '<span>= <strong><code>' + total.toLocaleString() + ' tok</code></strong></span>' +
               '</div>' +
-              '<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem;">' +
-                '<span class="ctx-spec-pill sweet">🎯 Best-Perf: ' + formatTokenCountK(sweet) + '</span>' +
-                '<span class="ctx-spec-pill">Max Window: ' + formatTokenCountK(maxWin) + '</span>' +
+              '<div class="context-gauge-badges">' +
+                '<span class="ctx-spec-pill">Max Window: <strong>' + formatTokenCountK(maxWin) + '</strong></span>' +
+                '<span class="ctx-spec-pill sweet">🎯 Recommended Limit: <strong>' + formatTokenCountK(recLimit) + '</strong></span>' +
                 '<span class="ctx-spec-pill ' + statusClass + '">' + esc(statusLabel) + '</span>' +
+              '</div>' +
+            '</div>' +
+            '<div class="context-gauge-track-wrap" style="padding-top: 0.1rem; padding-bottom: 0.05rem;">' +
+              '<div class="context-gauge-track" id="step3-context-gauge-track" style="height: 14px;">' +
+                '<div class="context-seg-chart" style="width: ' + chartWidthPct.toFixed(2) + '%;"></div>' +
+                '<div class="context-seg-kb" style="width: ' + kbWidthPct.toFixed(2) + '%;"></div>' +
+                '<div class="context-seg-output" style="width: ' + outWidthPct.toFixed(2) + '%;"></div>' +
+                '<div class="context-sweet-marker" style="left: ' + recMarkerPct.toFixed(1) + '%;"></div>' +
+              '</div>' +
+              '<div class="context-gauge-axis-below" style="height: 1.25rem; margin-top: 0.22rem;">' +
+                '<div class="context-sweet-label" style="left: ' + clampedLabelPct.toFixed(1) + '%;">▲ Recommended Limit (' + formatTokenCountK(recLimit) + ')</div>' +
               '</div>' +
             '</div>';
         }
@@ -4108,13 +4361,12 @@
             if (submitBtn) submitBtn.click();
           });
         }
-        const offlineConnBtn = container.querySelector("#offline-connect-llm-btn");
-        if (offlineConnBtn) {
-          offlineConnBtn.addEventListener("click", function () {
+        container.querySelectorAll("#step3-signin-connect-btn, #offline-connect-llm-btn").forEach(function (connBtn) {
+          connBtn.addEventListener("click", function () {
             const openModalBtn = document.getElementById("open-llm-config-btn");
             if (openModalBtn) openModalBtn.click();
           });
-        }
+        });
       }
 
       function renderHistoryProvenanceBanner(historyRun) {
@@ -4140,44 +4392,87 @@
         );
       }
 
+      function renderSignInToRunCardHtml(p, targetTitle, promptData, kbModeShort, advancedDrawerHtml) {
+        const pName = cleanName(p && p.patient_name);
+        return (
+          '<div class="report-card-header">' +
+            '<h3 class="report-card-title">' + esc(targetTitle) + '</h3>' +
+            '<div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">' +
+              '<span class="llm-live-pill offline" id="live-llm-telemetry-pill">🔒 Sign in to run</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="signin-to-run-card" id="step3-signin-gate-card">' +
+            '<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.85rem;">' +
+              '<div style="flex: 1; min-width: 240px;">' +
+                '<div style="font-size: 1.02rem; font-weight: 800; color: var(--text); margin-bottom: 0.28rem;">' +
+                  '🔒 Sign in to run live synthesis' +
+                '</div>' +
+                '<div style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5;">' +
+                  'Steps 1 and 2 work without sign-in. To run Step 3 clinical tasks or custom questions over <strong>' + esc(pName) + '</strong>\'s condensed chart (<code>' + esc(promptData.leverLabel) + '</code> • <strong>' + esc(kbModeShort) + '</strong>), sign in to the <strong>Cloud Med Agent Hub (UW GPU)</strong> or connect a local / OpenRouter backend.' +
+                '</div>' +
+              '</div>' +
+              '<button type="button" class="btn btn-primary" id="step3-signin-connect-btn">🔒 Sign in to run</button>' +
+            '</div>' +
+          '</div>' +
+          advancedDrawerHtml
+        );
+      }
+
       function renderActiveReportCard(p, skills, forceLiveRefresh) {
         const container = document.getElementById("active-report-card");
         if (!container) return;
-        const activeQuestionText = state.customQuestionResult
-          ? state.customQuestionResult.question
-          : (SKILL_PROMPTS[state.activeSkillId] || state.activeSkillId);
-        const promptData = getActiveCondensedPromptData(
-          p,
-          activeQuestionText
-        );
-        const activeProf = getActiveProfileMeta();
-        const includeKb = !!state.includeKbFindings;
-        const hubEnrichment = buildClientHubEnrichment(p, promptData, activeQuestionText);
+
+        /* W25.2: Use the exact same unified prompt builder as the Context Gauge */
+        const built = buildActivePromptPayload(p);
+        const promptData = built.promptData;
+        const activeProf = built.activeProf;
+        const includeKb = built.includeKb;
+        const hubEnrichment = built.hubEnrichment;
+        const promptPreviewText = built.promptPreviewText;
         state.activeOverflowCitations = hubEnrichment.overflowCitations || [];
         const kbModeShort = includeKb
           ? (hubEnrichment.active ? "+4-Layer KB & Hub Graph" : "+4-Layer KB")
           : "Raw Chart";
-        const inputTokSummary = (promptData.promptTokensEst + (hubEnrichment.active ? hubEnrichment.totalTokens : 0)).toLocaleString() + " tok (" + promptData.promptLineCount + " lines)";
+        const inputTokSummary = (built.chartTokens + built.kbActiveTokens).toLocaleString() + " tok (" + promptData.promptLineCount + " chart lines)";
 
         if (state.customQuestionResult) {
           const qa = state.customQuestionResult;
-          const cites = qa.citations || [];
-          const pName = cleanName(p && p.patient_name);
-          const totalCount = ((p && p.fhir_browser && p.fhir_browser.total_bundle_entries) || (p && p.total_bundle_entries) || 0).toLocaleString();
-          const offlineFallbackSummary = qa.abstained
-            ? "Checked all " + totalCount + " records in " + pName + "'s chart: there is no documented record matching `" + qa.question + "`. For patient safety, this assistant abstains rather than guessing or fabricating unrecorded clinical history."
-            : (qa.patient_plain_summary || qa.answer || "Offline mode: Connect a live model backend to synthesize an answer for this custom question.");
-          const offlineAskList = qa.abstained
-            ? ["Ask your doctor whether this test, allergy, or procedure was recorded at an outside clinic and should be added to your chart."]
-            : (qa.what_to_ask_doctor || ["Ask your doctor to review these chart entries with you at your next visit."]);
-
           const shouldRunLive = !!(forceLiveRefresh || qa.forceLiveLlm);
           const cacheKey = getLlmCacheKey("qa", qa.question);
           if (shouldRunLive) {
             delete state.llmCache[cacheKey];
             delete qa.forceLiveLlm;
           }
-          let cached = state.llmCache[cacheKey];
+          const cached = state.llmCache[cacheKey];
+
+          const qaAdvancedHtml =
+            '<details class="advanced-view-toggle" id="advanced-inspection-toggle">' +
+              '<summary class="advanced-view-summary">🔧 Advanced View — Inspect Prompt Context &amp; Hub Profile</summary>' +
+              '<div class="advanced-view-body">' +
+                renderHubProfileInspectorDrawer(activeProf, includeKb, built.activeKbLinesCount, hubEnrichment) +
+                '<details class="evidence-details-drawer">' +
+                  '<summary><span>🔍 Inspect Full Condensed Prompt Context Sent to LLM (' + promptData.promptLineCount + ' ledger lines)</span><span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">' + esc(promptData.leverLabel) + '</span></summary>' +
+                  '<div class="evidence-drawer-body">' +
+                    '<pre class="ledger-pre" style="max-height: 280px;">' + esc(promptPreviewText) + '</pre>' +
+                  '</div>' +
+                '</details>' +
+              '</div>' +
+            '</details>';
+
+          /* W25.5: When not signed in / connected and no live run is cached, show "Sign in to run" in place of output */
+          if (!state.llmConnected && !cached) {
+            container.style.display = "block";
+            container.innerHTML = renderSignInToRunCardHtml(
+              p,
+              "💬 Q: " + qa.question,
+              promptData,
+              kbModeShort,
+              qaAdvancedHtml
+            );
+            bindLiveCardActionButtons(container);
+            return;
+          }
+
           if (!cached && !shouldRunLive) {
             container.innerHTML = "";
             container.style.display = "none";
@@ -4185,97 +4480,15 @@
           }
           container.style.display = "block";
 
-          const allFilteredKbLines = [];
-          (skills || []).forEach(function (sk) {
-            const retainedRows = filterKbRowsForCondensedChart(sk.structured_rows || [], promptData);
-            retainedRows.forEach(function (r) {
-              allFilteredKbLines.push("- [" + sk.title + " | " + r.category + "] " + r.label + ": " + r.detail);
-            });
-          });
-          const kbAlertsText = includeKb
-            ? (allFilteredKbLines.slice(0, 14).join("\n") || "None flagged in active condensed chart")
-            : "";
-
           const initialSummaryHtml = cached
             ? cached.summaryHtml
-            : (state.llmConnected
-                ? '<span style="color: var(--primary); font-weight: 600;">⚡ Generating live response from <code>' + esc(state.llmModel) + '</code> (' + esc(kbModeShort) + ')...</span>'
-                : formatRichText(offlineFallbackSummary));
-
-          const initialQuestions = cached
-            ? cached.questionsList
-            : (state.llmConnected ? [] : offlineAskList);
-          const initialCites = filterCitationsForActivePosture(
-            cached ? cached.cites : (state.llmConnected ? [] : cites),
-            p
-          );
-          if (!state.llmConnected && shouldRunLive && !cached) {
-            const nowDate = new Date();
-            const runEntry = {
-              id: "run-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6),
-              cacheKey: cacheKey,
-              timestampIso: nowDate.toISOString(),
-              timeLabel: nowDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-              patientId: state.activePatientId,
-              patientName: pName,
-              taskKind: "qa",
-              skillId: state.activeSkillId,
-              questionText: qa.question,
-              taskTitle: "Q: " + qa.question,
-              modelId: state.llmModel,
-              effectiveModelId: "Offline Snapshot",
-              includeKbFindings: includeKb,
-              budget: state.budget,
-              condenseMode: state.condenseMode,
-              filterRoomEquip: !!state.filterRoomEquip,
-              privacyExternalShare: !!state.privacyExternalShare,
-              inputTokStr: inputTokSummary,
-              ttftMs: 0,
-              totalMs: 0,
-              summaryHtml: initialSummaryHtml,
-              questionsList: initialQuestions,
-              abstained: !!qa.abstained,
-              cites: initialCites
-            };
-            state.llmCache[cacheKey] = {
-              summaryHtml: initialSummaryHtml,
-              questionsList: initialQuestions,
-              abstained: !!qa.abstained,
-              ttftMs: 0,
-              totalMs: 0,
-              inputTokStr: inputTokSummary,
-              model: state.llmModel,
-              includeKbFindings: includeKb,
-              cites: initialCites,
-              historyRun: runEntry
-            };
-            cached = state.llmCache[cacheKey];
-            recordGenerationRun(runEntry);
-          }
+            : '<span style="color: var(--primary); font-weight: 600;">⚡ Generating live response from <code>' + esc(state.llmModel) + '</code> (' + esc(kbModeShort) + ')...</span>';
+          const initialQuestions = cached ? cached.questionsList : [];
+          const initialCites = filterCitationsForActivePosture(cached ? cached.cites : [], p);
           const initialPillHtml = cached
-            ? (state.llmConnected
-                ? ("🟢 Profile: <strong>" + esc(cached.model) + "</strong> (" + esc(kbModeShort) + ") • Input: " + esc(cached.inputTokStr || inputTokSummary) + " • TTFT " + (cached.ttftMs / 1000).toFixed(2) + "s • Total " + (cached.totalMs / 1000).toFixed(2) + "s")
-                : "🔌 Offline Mode (Precomputed Snapshot)")
-            : (state.llmConnected
-                ? "⚡ Preparing live LLM generation..."
-                : "🔌 Offline Mode (Precomputed Snapshot)");
-          const initialPillClass = cached ? (state.llmConnected ? "done" : "offline") : (state.llmConnected ? "streaming" : "offline");
-
-          const promptPreviewText =
-            "Patient: " + pName + " (DOB " + ((p && p.birth_date) || "unknown") + ")\n" +
-            "Active Step 2 Condensation Levers: " + promptData.leverLabel + "\n" +
-            "Active Hub Profile: " + state.llmModel + " (include_kb_findings=" + String(includeKb) + ")\n" +
-            promptData.omittedNote + "\n\n" +
-            "Condensed FHIR Chart Ledger (" + promptData.promptLineCount + " lines):\n" + promptData.ledgerExcerpt +
-            (includeKb ? ("\n\n4-Layer Clinical KB Findings (Filtered to Retained Step 2 Chart):\n" + kbAlertsText) : "\n\n[4-Layer Clinical KB Findings OMITTED by profile policy: Unhinted Raw-Chart Control]") +
-            ((includeKb && hubEnrichment.active) ? ("\n\n" + hubEnrichment.blockText) : "");
-
-          const offlineBannerHtml = !state.llmConnected
-            ? '<div class="offline-snapshot-banner">' +
-                '<span>🔌 <strong>Offline Mode — Precomputed Reference Snapshot</strong> (No live model connected)</span>' +
-                '<button type="button" class="btn btn-sm" id="offline-connect-llm-btn">⚙️ Connect Live Backend</button>' +
-              '</div>'
-            : '';
+            ? ("🟢 Profile: <strong>" + esc(cached.model) + "</strong> (" + esc(kbModeShort) + ") • Input: " + esc(cached.inputTokStr || inputTokSummary) + " • TTFT " + (cached.ttftMs / 1000).toFixed(2) + "s • Total " + (cached.totalMs / 1000).toFixed(2) + "s")
+            : "⚡ Preparing live LLM generation...";
+          const initialPillClass = cached ? "done" : "streaming";
 
           container.innerHTML =
             renderHistoryProvenanceBanner(cached && cached.historyRun) +
@@ -4283,16 +4496,15 @@
               '<h3 class="report-card-title">💬 Q: ' + esc(qa.question) + '</h3>' +
               '<div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">' +
                 '<span class="llm-live-pill ' + initialPillClass + '" id="live-llm-telemetry-pill">' + initialPillHtml + '</span>' +
-                '<span class="skill-badge ' + ((cached ? cached.abstained : (!state.llmConnected && qa.abstained)) ? "warn" : "info") + '" id="live-llm-status-badge">' +
-                  esc((cached ? cached.abstained : (!state.llmConnected && qa.abstained)) ? "Safety Abstention (Unrecorded Fact)" : "Grounded in Condensed Chart") +
+                '<span class="skill-badge ' + ((cached && cached.abstained) ? "warn" : "info") + '" id="live-llm-status-badge">' +
+                  esc((cached && cached.abstained) ? "Safety Abstention (Unrecorded Fact)" : "Grounded in Condensed Chart") +
                 '</span>' +
                 (cached ? '<button type="button" class="btn btn-sm" id="card-regenerate-live-btn">↻ Regenerate Live</button>' : '') +
               '</div>' +
             '</div>' +
             '<div class="live-generation-hero">' +
-              offlineBannerHtml +
               '<div class="live-hero-subbar">' +
-                '<span>✨ ' + (state.llmConnected ? 'Live Synthesis Target (<code>' + esc(state.llmModel) + '</code> • <strong>' + esc(kbModeShort) + '</strong>)' : 'Reference Synthesis Preview (<strong>' + esc(kbModeShort) + '</strong>)') + '</span>' +
+                '<span>✨ Live Synthesis Target (<code>' + esc(state.llmModel) + '</code> • <strong>' + esc(kbModeShort) + '</strong>)</span>' +
                 '<span style="color: var(--text-muted); font-weight: 600;">Step 2 Input: ' + esc(promptData.leverLabel) + '</span>' +
               '</div>' +
               '<div class="report-summary-box" id="live-llm-summary-box">' + initialSummaryHtml + '</div>' +
@@ -4304,36 +4516,15 @@
               '</ul>' +
             '</div>' +
             '<div id="live-llm-citations-wrapper">' + renderCitationsBar(initialCites) + '</div>' +
-            '<details class="advanced-view-toggle" id="advanced-inspection-toggle">' +
-              '<summary class="advanced-view-summary">🔧 Advanced View — Inspect Prompt Context &amp; Hub Profile</summary>' +
-              '<div class="advanced-view-body">' +
-                renderHubProfileInspectorDrawer(activeProf, includeKb, allFilteredKbLines.length, hubEnrichment) +
-                '<details class="evidence-details-drawer">' +
-                  '<summary><span>🔍 Inspect Full Condensed Prompt Context Sent to LLM (' + promptData.promptLineCount + ' ledger lines)</span><span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">' + esc(promptData.leverLabel) + '</span></summary>' +
-                  '<div class="evidence-drawer-body">' +
-                    (qa.clinician_technical_note
-                      ? '<div class="clinician-tech-box" style="margin-bottom: 0.75rem;"><strong>Clinical Provenance:</strong> ' + esc(qa.clinician_technical_note) + '</div>'
-                      : '') +
-                    '<pre class="ledger-pre" style="max-height: 280px;">' + esc(promptPreviewText) + '</pre>' +
-                  '</div>' +
-                '</details>' +
-              '</div>' +
-            '</details>';
+            qaAdvancedHtml;
 
           bindCitationClicks(container, p);
           bindLiveCardActionButtons(container);
 
           if (state.llmConnected && shouldRunLive) {
-            const sysMsg = (activeProf.system_prompts && activeProf.system_prompts.answer) ||
-              (includeKb
-                ? "You are the WAHS+ Clinical Chart Assistant helping a patient and their care team understand their condensed health record. Answer the task or question in clear, empathetic plain English using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, colonoscopy, MRI, or fact NOT recorded in the chart, begin your SUMMARY with 'ABSTAIN:' and clearly explain that you checked their chart and there is no record of it, so you abstain for safety rather than guessing. Format your output in two parts:\nSUMMARY:\n2-3 clear plain-English bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 specific questions to review with the clinician."
-                : "You are the WAHS+ Raw-Chart Control Assistant. Answer the task or question using ONLY the provided Condensed FHIR Chart Ledger without 4-Layer KB hints. Cite specific chart entries using [N] brackets. If a requested record is absent from the active condensed chart, begin your SUMMARY with 'ABSTAIN:'. Format your output in two parts:\nSUMMARY:\n<Concise synthesis with [N] citations>\nQUESTIONS_FOR_DOCTOR:\n- <2-3 specific questions>");
-
-            const userMsg = promptPreviewText + "\n\nTask / Question: " + qa.question;
-
             streamLiveLlm(cacheKey, [
-              { role: "system", content: sysMsg },
-              { role: "user", content: userMsg }
+              { role: "system", content: built.sysMsg },
+              { role: "user", content: built.userMsg }
             ], p, [], "", [], promptData, {
               taskKind: "qa",
               skillId: state.activeSkillId,
@@ -4344,7 +4535,7 @@
           return;
         }
 
-        const skill = skills.find(function (s) { return s.id === state.activeSkillId; }) || skills[0];
+        const skill = built.activeSkill;
         if (!skill) return;
 
         const shouldRunLive = !!forceLiveRefresh;
@@ -4352,16 +4543,10 @@
         if (shouldRunLive) {
           delete state.llmCache[cacheKey];
         }
-        let cached = state.llmCache[cacheKey];
-        if (!cached && !shouldRunLive) {
-          container.innerHTML = "";
-          container.style.display = "none";
-          return;
-        }
-        container.style.display = "block";
+        const cached = state.llmCache[cacheKey];
 
         const allStructRows = skill.structured_rows || [];
-        const structRows = filterKbRowsForCondensedChart(allStructRows, promptData);
+        const structRows = built.activeKbRows || [];
         const isPrivacyRedactedView = state.privacyExternalShare && skill.id === "skill-privacy-preview";
         const effectiveStructRows = isPrivacyRedactedView
           ? [{
@@ -4389,128 +4574,7 @@
           );
         }).join("");
 
-        const effectivePlainSummary = isPrivacyRedactedView
-          ? ("External-Share Privacy Redaction Active: **" + allStructRows.length + " sensitive social, behavioral, or personal-safety entry(ies)** have been **redacted and withheld** from this external-share view and prompt context under 42 CFR Part 2 and the WA My Health My Data Act. Your complete medical safety core (allergies, active medical conditions, medications, and implants) remains intact.")
-          : (state.privacyExternalShare && isSensitiveText(skill.plain_english_summary)
-              ? skill.plain_english_summary.split(/(?<=\.)\s+/).filter(function (sent) { return !isSensitiveText(sent); }).join(" ")
-              : skill.plain_english_summary);
-
-        const initialSummaryHtml = cached
-          ? cached.summaryHtml
-          : (state.llmConnected
-              ? '<span style="color: var(--primary); font-weight: 600;">⚡ Generating live response from <code>' + esc(state.llmModel) + '</code> (' + esc(kbModeShort) + ')...</span>'
-              : formatRichText(effectivePlainSummary));
-
-        const initialQuestions = cached
-          ? cached.questionsList
-          : (state.llmConnected ? [] : (skill.suggested_remediation || []));
-        const initialCites = filterCitationsForActivePosture(
-          cached ? cached.cites : (state.llmConnected ? [] : (skill.citations || [])),
-          p
-        );
-        const pName = cleanName(p && p.patient_name);
-        if (!state.llmConnected && shouldRunLive && !cached) {
-          const nowDate = new Date();
-          const runEntry = {
-            id: "run-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6),
-            cacheKey: cacheKey,
-            timestampIso: nowDate.toISOString(),
-            timeLabel: nowDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-            patientId: state.activePatientId,
-            patientName: pName,
-            taskKind: "skill",
-            skillId: skill.id,
-            questionText: "",
-            taskTitle: skill.title,
-            modelId: state.llmModel,
-            effectiveModelId: "Offline Snapshot",
-            includeKbFindings: includeKb,
-            budget: state.budget,
-            condenseMode: state.condenseMode,
-            filterRoomEquip: !!state.filterRoomEquip,
-            privacyExternalShare: !!state.privacyExternalShare,
-            inputTokStr: inputTokSummary,
-            ttftMs: 0,
-            totalMs: 0,
-            summaryHtml: initialSummaryHtml,
-            questionsList: initialQuestions,
-            abstained: false,
-            cites: initialCites
-          };
-          state.llmCache[cacheKey] = {
-            summaryHtml: initialSummaryHtml,
-            questionsList: initialQuestions,
-            abstained: false,
-            ttftMs: 0,
-            totalMs: 0,
-            inputTokStr: inputTokSummary,
-            model: state.llmModel,
-            includeKbFindings: includeKb,
-            cites: initialCites,
-            historyRun: runEntry
-          };
-          cached = state.llmCache[cacheKey];
-          recordGenerationRun(runEntry);
-        }
-        const initialPillHtml = cached
-          ? (state.llmConnected
-              ? ("🟢 Profile: <strong>" + esc(cached.model) + "</strong> (" + esc(kbModeShort) + ") • Input: " + esc(cached.inputTokStr || inputTokSummary) + " • TTFT " + (cached.ttftMs / 1000).toFixed(2) + "s • Total " + (cached.totalMs / 1000).toFixed(2) + "s")
-              : "🔌 Offline Mode (Precomputed Snapshot)")
-          : (state.llmConnected
-              ? "⚡ Preparing live LLM synthesis..."
-              : "🔌 Offline Mode (Precomputed Snapshot)");
-        const initialPillClass = cached ? (state.llmConnected ? "done" : "offline") : (state.llmConnected ? "streaming" : "offline");
-        const effectiveBadgeText = isPrivacyRedactedView
-          ? ("External-Share Redaction Active (" + allStructRows.length + " Withheld)")
-          : skill.status_badge;
-        const effectiveBadgeTone = isPrivacyRedactedView ? "ok" : (skill.badge_tone || "info");
-
-        const skillFindingsText = structRows.map(function (r) {
-          return "- [" + r.category + "] " + r.label + ": " + r.detail + " (Source: " + r.source_org + ")";
-        }).join("\n");
-        const promptPreviewText =
-          "Patient: " + pName + " (DOB " + ((p && p.birth_date) || "unknown") + ")\n" +
-          "Active Step 2 Condensation Levers: " + promptData.leverLabel + "\n" +
-          "Active Hub Profile: " + state.llmModel + " (include_kb_findings=" + String(includeKb) + ")\n" +
-          promptData.omittedNote + "\n\n" +
-          "Condensed FHIR Chart Ledger (" + promptData.promptLineCount + " lines):\n" + promptData.ledgerExcerpt +
-          (includeKb
-            ? ("\n\n4-Layer Clinical KB Findings for '" + skill.title + "' (Filtered to Retained Step 2 Chart):\n" + (skillFindingsText || "None retained in this budget"))
-            : "\n\n[4-Layer Clinical KB Findings OMITTED by profile policy: Unhinted Raw-Chart Control]") +
-          ((includeKb && hubEnrichment.active) ? ("\n\n" + hubEnrichment.blockText) : "");
-
-        const offlineBannerHtml = !state.llmConnected
-          ? '<div class="offline-snapshot-banner">' +
-              '<span>🔌 <strong>Offline Mode — Precomputed Reference Snapshot</strong> (No live model connected)</span>' +
-              '<button type="button" class="btn btn-sm" id="offline-connect-llm-btn">⚙️ Connect Live Backend</button>' +
-            '</div>'
-          : '';
-
-        container.innerHTML =
-          renderHistoryProvenanceBanner(cached && cached.historyRun) +
-          '<div class="report-card-header">' +
-            '<h3 class="report-card-title">' + esc(skill.icon) + ' ' + esc(skill.title) + '</h3>' +
-            '<div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">' +
-              '<span class="llm-live-pill ' + initialPillClass + '" id="live-llm-telemetry-pill">' + initialPillHtml + '</span>' +
-              '<span class="skill-badge ' + esc(effectiveBadgeTone) + '" id="live-llm-status-badge">' + esc(effectiveBadgeText) + '</span>' +
-              (cached ? '<button type="button" class="btn btn-sm" id="card-regenerate-live-btn">↻ Regenerate Live</button>' : '') +
-            '</div>' +
-          '</div>' +
-          '<div class="live-generation-hero">' +
-            offlineBannerHtml +
-            '<div class="live-hero-subbar">' +
-              '<span>✨ ' + (state.llmConnected ? 'Live Synthesis Target (<code>' + esc(state.llmModel) + '</code> • <strong>' + esc(kbModeShort) + '</strong>)' : 'Reference Synthesis Preview (<strong>' + esc(kbModeShort) + '</strong>)') + '</span>' +
-              '<span style="color: var(--text-muted); font-weight: 600;">Step 2 Input: ' + esc(promptData.leverLabel) + '</span>' +
-            '</div>' +
-            '<div class="report-summary-box" id="live-llm-summary-box">' + initialSummaryHtml + '</div>' +
-          '</div>' +
-          '<div class="remediation-box">' +
-            '<h4>💡 Suggested Next Steps &amp; Questions for Your Doctor (Read-Only)</h4>' +
-            '<ul id="live-llm-questions-list">' +
-              initialQuestions.map(function (item) { return '<li>' + formatRichText(item) + '</li>'; }).join("") +
-            '</ul>' +
-          '</div>' +
-          '<div id="live-llm-citations-wrapper">' + renderCitationsBar(initialCites) + '</div>' +
+        const skillAdvancedHtml =
           '<details class="advanced-view-toggle" id="advanced-inspection-toggle">' +
             '<summary class="advanced-view-summary">🔧 Advanced View — Inspect Prompt Context, 4-Layer KB Audit &amp; Hub Profile</summary>' +
             '<div class="advanced-view-body">' +
@@ -4545,22 +4609,74 @@
             '</div>' +
           '</details>';
 
+        /* W25.5: When not signed in / connected and no live run is cached, show "Sign in to run" in place of output */
+        if (!state.llmConnected && !cached) {
+          container.style.display = "block";
+          container.innerHTML = renderSignInToRunCardHtml(
+            p,
+            skill.icon + " " + skill.title,
+            promptData,
+            kbModeShort,
+            skillAdvancedHtml
+          );
+          bindLiveCardActionButtons(container);
+          return;
+        }
+
+        if (!cached && !shouldRunLive) {
+          container.innerHTML = "";
+          container.style.display = "none";
+          return;
+        }
+        container.style.display = "block";
+
+        const initialSummaryHtml = cached
+          ? cached.summaryHtml
+          : '<span style="color: var(--primary); font-weight: 600;">⚡ Generating live response from <code>' + esc(state.llmModel) + '</code> (' + esc(kbModeShort) + ')...</span>';
+        const initialQuestions = cached ? cached.questionsList : [];
+        const initialCites = filterCitationsForActivePosture(cached ? cached.cites : [], p);
+        const initialPillHtml = cached
+          ? ("🟢 Profile: <strong>" + esc(cached.model) + "</strong> (" + esc(kbModeShort) + ") • Input: " + esc(cached.inputTokStr || inputTokSummary) + " • TTFT " + (cached.ttftMs / 1000).toFixed(2) + "s • Total " + (cached.totalMs / 1000).toFixed(2) + "s")
+          : "⚡ Preparing live LLM synthesis...";
+        const initialPillClass = cached ? "done" : "streaming";
+        const effectiveBadgeText = isPrivacyRedactedView
+          ? ("External-Share Redaction Active (" + allStructRows.length + " Withheld)")
+          : skill.status_badge;
+        const effectiveBadgeTone = isPrivacyRedactedView ? "ok" : (skill.badge_tone || "info");
+
+        container.innerHTML =
+          renderHistoryProvenanceBanner(cached && cached.historyRun) +
+          '<div class="report-card-header">' +
+            '<h3 class="report-card-title">' + esc(skill.icon) + ' ' + esc(skill.title) + '</h3>' +
+            '<div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">' +
+              '<span class="llm-live-pill ' + initialPillClass + '" id="live-llm-telemetry-pill">' + initialPillHtml + '</span>' +
+              '<span class="skill-badge ' + esc(effectiveBadgeTone) + '" id="live-llm-status-badge">' + esc(effectiveBadgeText) + '</span>' +
+              (cached ? '<button type="button" class="btn btn-sm" id="card-regenerate-live-btn">↻ Regenerate Live</button>' : '') +
+            '</div>' +
+          '</div>' +
+          '<div class="live-generation-hero">' +
+            '<div class="live-hero-subbar">' +
+              '<span>✨ Live Synthesis Target (<code>' + esc(state.llmModel) + '</code> • <strong>' + esc(kbModeShort) + '</strong>)</span>' +
+              '<span style="color: var(--text-muted); font-weight: 600;">Step 2 Input: ' + esc(promptData.leverLabel) + '</span>' +
+            '</div>' +
+            '<div class="report-summary-box" id="live-llm-summary-box">' + initialSummaryHtml + '</div>' +
+          '</div>' +
+          '<div class="remediation-box">' +
+            '<h4>💡 Suggested Next Steps &amp; Questions for Your Doctor (Read-Only)</h4>' +
+            '<ul id="live-llm-questions-list">' +
+              initialQuestions.map(function (item) { return '<li>' + formatRichText(item) + '</li>'; }).join("") +
+            '</ul>' +
+          '</div>' +
+          '<div id="live-llm-citations-wrapper">' + renderCitationsBar(initialCites) + '</div>' +
+          skillAdvancedHtml;
+
         bindCitationClicks(container, p);
         bindLiveCardActionButtons(container);
 
         if (state.llmConnected && shouldRunLive) {
-          const sysMsg = (activeProf.system_prompts && activeProf.system_prompts.answer) ||
-            (includeKb
-              ? "You are the WAHS+ Clinical Chart Assistant helping a patient and their care team understand their condensed health record. Answer the task or question in clear, empathetic plain English using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, colonoscopy, MRI, or fact NOT recorded in the chart, begin your SUMMARY with 'ABSTAIN:' and clearly explain that you checked their chart and there is no record of it, so you abstain for safety rather than guessing. Format your output in two parts:\nSUMMARY:\n2-3 clear plain-English bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 specific questions to review with the clinician."
-              : "You are the WAHS+ Raw-Chart Control Assistant. Answer the task or question using ONLY the provided Condensed FHIR Chart Ledger without 4-Layer KB hints. Cite specific chart entries using [N] brackets. If a requested record is absent from the active condensed chart, begin your SUMMARY with 'ABSTAIN:'. Format your output in two parts:\nSUMMARY:\n<Concise synthesis with [N] citations>\nQUESTIONS_FOR_DOCTOR:\n- <2-3 specific questions>");
-
-          const userMsg =
-            promptPreviewText + "\n\n" +
-            "Task / Question: " + (SKILL_PROMPTS[skill.id] || ("Synthesize the SUMMARY and QUESTIONS_FOR_DOCTOR for the skill '" + skill.title + "'."));
-
           streamLiveLlm(cacheKey, [
-            { role: "system", content: sysMsg },
-            { role: "user", content: userMsg }
+            { role: "system", content: built.sysMsg },
+            { role: "user", content: built.userMsg }
           ], p, [], "", [], promptData, {
             taskKind: "skill",
             skillId: skill.id,
@@ -4666,6 +4782,7 @@
       }
 
       function renderAll() {
+        setPhase(state.activePhase || "1", false);
         renderContextStrip();
         renderPersonaGrid();
         renderFhirBrowser();
@@ -4980,46 +5097,6 @@
         });
       }
 
-      /* Search active patient's visible chart resources for a grounded answer before falling back or abstaining */
-      function searchPatientResourcesForQuestion(p, qText) {
-        const fbResources = ((p && p.fhir_browser && p.fhir_browser.resources) || []).filter(function (r) {
-          if (!r.isCoreClinical || r.resourceType === "Patient") return false;
-          if (state.privacyExternalShare && isSensitiveResource(r)) return false;
-          if (state.filterRoomEquip && isRoomEquipmentResource(r)) return false;
-          return true;
-        });
-        const qLow = String(qText || "").toLowerCase();
-        const stopWords = {
-          does: 1, this: 1, patient: 1, patients: 1, have: 1, has: 1, had: 1, what: 1, when: 1, where: 1,
-          which: 1, were: 1, was: 1, are: 1, there: 1, any: 1, the: 1, for: 1, with: 1, from: 1, into: 1,
-          chart: 1, record: 1, recorded: 1, documented: 1, show: 1, tell: 1, about: 1, history: 1, test: 1,
-          allergy: 1, condition: 1, observation: 1, value: 1, level: 1, result: 1, results: 1
-        };
-        const rawTokens = qLow.replace(/[^a-z0-9-]+/g, " ").split(/\s+/).filter(function (t) {
-          return t.length >= 3 && !stopWords[t];
-        });
-        const synonymGroups = [];
-        rawTokens.forEach(function (tok) {
-          if (tok === "lvef") {
-            synonymGroups.push(["lvef", "ejection fraction", "left ventricular"]);
-          } else if (tok === "penicillin") {
-            synonymGroups.push(["penicillin", "amoxicillin", "ampicillin"]);
-          } else if (tok === "mri") {
-            synonymGroups.push(["mri", "magnetic resonance"]);
-          } else {
-            synonymGroups.push([tok]);
-          }
-        });
-        if (!synonymGroups.length) return [];
-
-        return fbResources.filter(function (r) {
-          const hay = [r.display, r.summary, r.code, r.resourceType, r.decodedNoteText].join(" ").toLowerCase();
-          return synonymGroups.some(function (grp) {
-            return grp.some(function (term) { return hay.indexOf(term) !== -1; });
-          });
-        });
-      }
-
       /* Single Unified Generate Live Form Submission */
       document.getElementById("qa-form").addEventListener("submit", function (e) {
         e.preventDefault();
@@ -5035,110 +5112,17 @@
         /* If custom prompt box is empty, run the active Clinical Task live */
         if (!q) {
           state.customQuestionResult = null;
-          renderActiveReportCard(p, p.skills || [], true);
+          renderActiveReportCard(p, p.skills || [], !!state.llmConnected);
           return;
         }
 
-        const postureKey = state.privacyExternalShare ? "external_share" : "patient_self";
-        const qaSamples = ((p.postures || {})[postureKey] || {}).qa_samples || [];
-        const qLow = q.toLowerCase();
-
-        const matchedQa = qaSamples.find(function (item) {
-          return item.question.toLowerCase() === qLow || item.question.toLowerCase().indexOf(qLow) !== -1;
-        });
-
-        /* When Live LLM is connected, always stream a fresh live LLM answer for the submitted question */
-        if (state.llmConnected) {
-          state.customQuestionResult = Object.assign(
-            {},
-            matchedQa || {},
-            {
-              question: q,
-              forceLiveLlm: true,
-              patient_category: "Live LLM Chart Q&A",
-              source_mode_label: "Live Streaming (" + state.llmModel + ")"
-            }
-          );
-          renderSkillsAndQa();
-          return;
-        }
-
-        /* Offline Mode Only: check whether the active patient's chart has direct matching resources for specific queries */
-        const directMatches = searchPatientResourcesForQuestion(p, q);
-        const isSpecificFactQuery = /penicillin|colonoscopy|mri|apoe4|lvef|ejection fraction|peanut|sulfa|allergy|allergies/i.test(qLow) || p.id === "Custom_Uploaded_Bundle";
-        let groundedQaResult = null;
-        if (!matchedQa && directMatches.length > 0 && isSpecificFactQuery) {
-          const topMatches = directMatches.slice(0, 5);
-          const matchLines = topMatches.map(function (r) {
-            return "**" + r.resourceType + ": " + r.display + "**" + (r.summary ? " (" + r.summary + ")" : "") + (r.date ? " on `" + r.date.slice(0, 10) + "`" : "") + " [" + r.index + "]";
-          });
-          groundedQaResult = {
-            question: q,
-            abstained: false,
-            patient_category: "Grounded Chart Lookup",
-            source_mode_label: "Grounded FHIR Resource Match",
-            patient_plain_summary: "Documented in " + cleanName(p.patient_name) + "'s chart: " + matchLines.join("; ") + ".",
-            answer: "Found " + directMatches.length + " matching FHIR resource(s) in " + cleanName(p.patient_name) + "'s chart: " + matchLines.join("; ") + ".",
-            what_to_ask_doctor: ["Review these documented chart entries (" + topMatches.map(function (r) { return "[" + r.index + "] " + r.display; }).join(", ") + ") with your clinician at your next visit."],
-            citations: topMatches.map(function (r) {
-              return {
-                index: r.index,
-                resource_type: r.resourceType,
-                resource_uuid: r.id,
-                text: r.display + (r.summary ? " — " + r.summary : "")
-              };
-            })
-          };
-        } else if (!matchedQa && isSpecificFactQuery && directMatches.length === 0) {
-          groundedQaResult = {
-            question: q,
-            abstained: true,
-            patient_category: "Safety Abstention",
-            source_mode_label: "Verified Chart-Wide Abstention",
-            patient_plain_summary: "Not Recorded in Chart: Checked all clinical resources in " + cleanName(p.patient_name) + "'s FHIR record and found no documented entry for '" + q + "'. Rather than guessing, this assistant abstains when a requested test or allergy is absent from the chart.",
-            answer: "Checked all AllergyIntolerance, Condition, Procedure, DiagnosticReport, and Observation resources in " + cleanName(p.patient_name) + "'s bundle. No matching record exists.",
-            what_to_ask_doctor: ["If you had this test or allergy documented at an outside facility, ask your clinic to import the external record into your chart."],
-            citations: []
-          };
-        }
-
-        const resolvedQa = matchedQa || groundedQaResult;
-        if (resolvedQa) {
-          state.customQuestionResult = Object.assign({}, resolvedQa, { question: q, forceLiveLlm: true });
-          renderSkillsAndQa();
-          return;
-        }
-
-        if (/conflict|duplicate pill|hold|stop|interaction|statin|plavix|warfarin|eliquis|spironolactone/i.test(qLow)) {
-          state.activeSkillId = "skill-med-conflicts";
-          state.customQuestionResult = null;
-        } else if (/stage|ckd|kidney|prediabetes|diabetes|sinusitis|problem list/i.test(qLow)) {
-          state.activeSkillId = "skill-condition-conflicts";
-          state.customQuestionResult = null;
-        } else if (/hospital|stay|admission|cabg|surgery|procedure|discharge/i.test(qLow)) {
-          state.activeSkillId = "skill-hospital-stay";
-          state.customQuestionResult = null;
-        } else if (/lab|trend|egfr|creatinine|a1c|potassium|inr|hemoglobin/i.test(qLow)) {
-          state.activeSkillId = "skill-lab-trends";
-          state.customQuestionResult = null;
-        } else if (/vaccin|immuniz|shot|flu|zoster|hpv|pneumo/i.test(qLow)) {
-          state.activeSkillId = "skill-vaccine-summary";
-          state.customQuestionResult = null;
-        } else if (/privacy|sensitive|share|sdoh/i.test(qLow)) {
-          state.activeSkillId = "skill-privacy-preview";
-          state.customQuestionResult = null;
-        } else if (/bloat|redundan|artifact|equipment|claim|base64/i.test(qLow)) {
-          state.activeSkillId = "skill-chart-hygiene";
-          state.customQuestionResult = null;
-        } else if (/med|pill|prescription|treat/i.test(qLow)) {
-          state.activeSkillId = "skill-med-guide";
-          state.customQuestionResult = null;
-        } else {
-          state.activeSkillId = "skill-visit-brief";
-          state.customQuestionResult = null;
-        }
+        state.customQuestionResult = {
+          question: q,
+          forceLiveLlm: !!state.llmConnected,
+          patient_category: "Live LLM Chart Q&A",
+          source_mode_label: "Live Streaming (" + state.llmModel + ")"
+        };
         renderSkillsAndQa();
-        renderActiveReportCard(p, p.skills || [], true);
       });
 
       /* Downloaded GGUFs ready on disk for llama-router (:8077) and used by med-agent-hub product profiles */
@@ -5811,7 +5795,9 @@
                   model_family: inferredFam,
                   parameter_size: m.parameter_size || "",
                   context_length: m.context_length || 0,
-                  sweet_spot_tokens: m.sweet_spot_tokens || 0,
+                  recommended_limit_tokens: m.recommended_limit_tokens || m.sweet_spot_tokens || 0,
+                  recommended_limit_url: m.recommended_limit_url || DEFAULT_RECOMMENDED_LIMIT_URL,
+                  sweet_spot_tokens: m.sweet_spot_tokens || m.recommended_limit_tokens || 0,
                   stages: m.stages || ["context", "answer", "gate"],
                   role_models: m.role_models || { answer: id },
                   role_knobs: m.role_knobs || { answer: { temperature: 0.1, maxTokens: 4096, dry: 0.0 } },
@@ -5847,7 +5833,9 @@
                   model_family: inferredFam,
                   parameter_size: m.parameter_size || "",
                   context_length: m.context_length || 0,
-                  sweet_spot_tokens: m.sweet_spot_tokens || 0,
+                  recommended_limit_tokens: m.recommended_limit_tokens || m.sweet_spot_tokens || 0,
+                  recommended_limit_url: m.recommended_limit_url || DEFAULT_RECOMMENDED_LIMIT_URL,
+                  sweet_spot_tokens: m.sweet_spot_tokens || m.recommended_limit_tokens || 0,
                   stages: ["context", "answer", "gate"],
                   role_models: { answer: id },
                   role_knobs: { answer: { temperature: 0.1, maxTokens: 4096, dry: 0.0 } },
@@ -6543,7 +6531,7 @@
               condense_mode: modeKey,
               target_tokens: budgetNum,
               actual_tokens: actualTok,
-              reduction_pct: Number((Math.max(0, (1 - actualTok / Math.max(rawEstTok, 1))) * 100).toFixed(1)),
+              reduction_pct: Number(Math.min(99.9, Math.max(0, (1 - actualTok / Math.max(rawEstTok, 1))) * 100).toFixed(1)),
               rendered_records: selected.length,
               total_extracted_records: coreResources.length,
               omitted_records_count: omittedTotal,
@@ -6780,7 +6768,7 @@
             ];
           }
 
-          const budgetsList = [65536, 32768, 16384, 8192, 4096, 2048, 1024];
+          const budgetsList = [262144, 131072, 65536, 32768, 16384, 8192, 4096, 2048, 1024];
           const customMatrix = { lossless_structural: {}, hierarchical: {} };
           budgetsList.forEach(function (b) {
             customMatrix.lossless_structural[String(b)] = buildCustomBudgetCell("lossless_structural", b);

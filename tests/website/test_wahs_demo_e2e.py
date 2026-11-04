@@ -53,6 +53,9 @@ class _StubMedAgentHubHandler(BaseHTTPRequestHandler):
                         "provider": "openrouter" if or_key else "local",
                         "openrouter_model": "google/gemma-3-12b-it",
                         "model_family": "gemma-4",
+                        "context_length": 262144,
+                        "recommended_limit_tokens": 24576,
+                        "recommended_limit_url": "https://reports.openclinai.org/2026-11-02-wahs-simple-profiles-multi-family-eval/index.html",
                         "available": True,
                         "visibility": "product",
                         "selection_priority": 10,
@@ -77,6 +80,9 @@ class _StubMedAgentHubHandler(BaseHTTPRequestHandler):
                         "provider": "openrouter" if or_key else "local",
                         "openrouter_model": "google/gemma-3-12b-it",
                         "model_family": "gemma-4",
+                        "context_length": 262144,
+                        "recommended_limit_tokens": 24576,
+                        "recommended_limit_url": "https://reports.openclinai.org/2026-11-02-wahs-simple-profiles-multi-family-eval/index.html",
                         "available": True,
                         "visibility": "product",
                         "selection_priority": 11,
@@ -162,6 +168,15 @@ class _StubMedAgentHubHandler(BaseHTTPRequestHandler):
 class TestWahsDemoEndToEnd(unittest.TestCase):
     """Behavior: WAHS Patient Chart Explorer end-to-end happy path with med-agent-hub."""
 
+    def _launch_chromium(self, p):
+        try:
+            return p.chromium.launch(headless=True)
+        except Exception:
+            try:
+                return p.chromium.launch(headless=True, channel="chrome")
+            except Exception as exc:
+                self.skipTest(f"Chromium browser binary unavailable: {exc}")
+
     def test_wahs_demo_happy_path_step1_to_step3_with_med_agent_hub(self) -> None:
         try:
             from playwright.sync_api import sync_playwright
@@ -177,10 +192,7 @@ class TestWahsDemoEndToEnd(unittest.TestCase):
 
         try:
             with sync_playwright() as p:
-                try:
-                    browser = p.chromium.launch(headless=True)
-                except Exception as exc:
-                    self.skipTest(f"Chromium browser binary unavailable: {exc}")
+                browser = self._launch_chromium(p)
 
                 page = browser.new_page()
                 # Pre-seed localStorage endpoint so the demo connects directly to our ephemeral Hub stub port
@@ -323,20 +335,30 @@ class TestWahsDemoEndToEnd(unittest.TestCase):
                 raw_prompt_blob = "\n".join(m.get("content", "") for m in raw_req["messages"])
                 self.assertIn("4-Layer Clinical KB Findings OMITTED", raw_prompt_blob)
 
-                # 4b. Verify Step 2 & Step 3 Graphical Model Context Window Gauge + Generation Run History Dropdown
+                # 4b. Verify Step 2 & Step 3 Graphical Model Context Window Gauge + Generation Run History Dropdown + URL State
                 self.assertTrue(page.locator("#step3-context-mini-gauge").is_visible())
-                self.assertIn("Best-Perf: 24k", page.locator("#step3-context-mini-gauge").inner_text())
-                self.assertIn("Max Window: 256k", page.locator("#step3-context-mini-gauge").inner_text())
+                self.assertTrue(page.locator("#step3-context-mini-gauge .context-gauge-track").is_visible())
+                mini_gauge_text = page.locator("#step3-context-mini-gauge").text_content() or ""
+                self.assertIn("Recommended Limit: 24k", mini_gauge_text)
+                self.assertIn("Max Window: 256k", mini_gauge_text)
 
                 page.click("#phase-tab-2")
                 self.assertTrue(page.locator("#model-context-gauge-card").is_visible())
                 gauge_text = page.locator("#model-context-gauge-card").text_content() or ""
-                self.assertIn("Suggested Best-Perf Limit: 24k", gauge_text)
+                self.assertIn("Recommended Limit: 24k", gauge_text)
                 self.assertIn("Max Window: 256k", gauge_text)
+                marker_2k = page.locator("#model-context-gauge-card .context-sweet-marker").evaluate(
+                    "el => Math.round(el.getBoundingClientRect().left)"
+                )
 
-                # Switch budget to 32k so total committed exceeds the 24k sweet spot -> Extended Context status
+                # Switch budget to 32k so total committed exceeds the 24k Recommended Limit -> Above Limit status; marker stays fixed
                 page.click('#budget-lever-group .seg-btn[data-budget="32768"]')
-                self.assertIn("Extended Context", page.locator("#gauge-posture-pill").inner_text())
+                self.assertIn("Above Limit", page.locator("#gauge-posture-pill").inner_text())
+                marker_32k = page.locator("#model-context-gauge-card .context-sweet-marker").evaluate(
+                    "el => Math.round(el.getBoundingClientRect().left)"
+                )
+                self.assertEqual(marker_2k, marker_32k)
+                self.assertIn("budget=32768", page.url)
 
                 # Switch back to Step 3 and verify Run History dropdown recorded both runs and restores Run #1 context (2k budget + 🧠 +4-Layer KB)
                 page.click("#phase-tab-3")
@@ -389,10 +411,7 @@ class TestWahsDemoEndToEnd(unittest.TestCase):
         probed_urls: list[str] = []
 
         with sync_playwright() as p:
-            try:
-                browser = p.chromium.launch(headless=True)
-            except Exception as exc:
-                self.skipTest(f"Chromium browser binary unavailable: {exc}")
+            browser = self._launch_chromium(p)
 
             context = browser.new_context(
                 user_agent=(
@@ -472,10 +491,7 @@ class TestWahsDemoEndToEnd(unittest.TestCase):
         captured_completions: list[dict] = []
 
         with sync_playwright() as p:
-            try:
-                browser = p.chromium.launch(headless=True)
-            except Exception as exc:
-                self.skipTest(f"Chromium browser binary unavailable: {exc}")
+            browser = self._launch_chromium(p)
 
             page = browser.new_page()
 
@@ -651,20 +667,13 @@ class TestWahsDemoEndToEnd(unittest.TestCase):
         demo_data_js = (DEMO_DIR / "wahs_demo_data.js").read_text(encoding="utf-8")
 
         with sync_playwright() as p:
-            try:
-                browser = p.chromium.launch(headless=True)
-            except Exception as exc:
-                self.skipTest(f"Chromium browser binary unavailable: {exc}")
+            browser = self._launch_chromium(p)
 
             page = browser.new_page(viewport={"width": 1440, "height": 900})
 
             def handle_route(route) -> None:
                 url = route.request.url
-                if url in (
-                    "https://wahs-demo.openclinai.org/",
-                    "https://wahs-demo.openclinai.org/?gpu=1",
-                    "https://wahs-demo.openclinai.org/?gpu=0",
-                ):
+                if url.startswith("https://wahs-demo.openclinai.org/") and "/wahs_demo_data.js" not in url:
                     route.fulfill(status=200, content_type="text/html; charset=utf-8", body=index_html)
                 elif "/wahs_demo_data.js" in url:
                     route.fulfill(status=200, content_type="application/javascript; charset=utf-8", body=demo_data_js)
@@ -814,13 +823,19 @@ class TestWahsDemoEndToEnd(unittest.TestCase):
             self.assertTrue(page.locator("#preset-gpu-llm-btn").is_visible())
             self.assertTrue(page.locator("#preset-cloud-hub-llm-btn").is_visible())
 
-            # 3. Clicking GPU preset without Google auth returns 401 and renders 1-click Google Sign-In button (no token box)
+            # 3. Clicking GPU preset without Google auth returns 401 and renders 1-click Google Sign-In button (no token box) + Step 3 sign-in gate
             page.click("#preset-gpu-llm-btn")
             page.wait_for_function(
                 "() => document.getElementById('llm-status-label').textContent.includes('Sign In')"
             )
             self.assertTrue(page.locator("#google-signin-popup-btn").is_visible())
             self.assertEqual(page.locator("#google-auth-token-input").count(), 0)
+            page.click("#close-llm-modal-btn")
+            page.click("#phase-tab-3")
+            self.assertTrue(page.locator("#step3-signin-gate-card").is_visible())
+            self.assertIn("Sign in to run live synthesis", page.locator("#step3-signin-gate-card").inner_text())
+            self.assertEqual(page.locator("#live-llm-summary-box").count(), 0)
+            page.click("#open-llm-config-btn")
 
             # 4. Signing in with a non-whitelisted Google account returns 403 and renders Not Whitelisted state
             page.evaluate(
