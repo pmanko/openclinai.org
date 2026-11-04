@@ -4,19 +4,23 @@
   "runs": [
     {
       "slug": "2026-11-03-wahs-huge-context-and-hub-graph-eval",
-      "title": "WA Health Summary \u2014 Huge-Context (64k vs. 8k Recommended Limit vs. 1k) & Med Agent Hub Clinical Entity Subgraph Evaluation",
-      "summary": "32-cell live evaluation across 4 high-volume longitudinal & PhysioNet MIMIC-IV-FHIR Demo 2.0 cohorts (Julian Mercer #10014354, Clara Hollis #10019003, Marcus Vance cardio-oncology, and Maurice Auer 53-year multi-clinic) and 8 profile@budget setups: Gemma 4 12B at 8k Recommended Limit (+KB vs. Raw), 64k Huge Context (+KB vs. Raw), and 1k Micro-Budget (+KB with Med Agent Hub ClinicalEntityGraph & Tier-0 overflow recovery vs. Raw), plus Gemma 4 26B MoE +KB @ 8k and Qwen 3 14B +KB @ 8k.",
-      "takeaway": "Recommended Limit condensation + Med Agent Hub ClinicalEntityGraph (wahs-12b-kb@8k, 97.0/100, 100% UUID recall, 4/4 strict passes; wahs-26b-kb@8k, 96.4/100, 22.6s latency) outperforms dumping a 64k chart into context: raw 64k without KB/subgraph anchoring (wahs-12b-raw@64k) drops to 59.8/100 (2.25 Completeness, 0% target UUID recall, 0/4 strict passes) due to lost-in-the-middle attention dilution across thousands of longitudinal lab and encounter lines, while +KB at 64k recovers 93.3/100 (93.8% UUID recall). At the tight 1k micro-budget where active problems and notes are trimmed, Med Agent Hub pre-generation ClinicalEntityGraph + Tier-0 overflow recovery (wahs-12b-kb@1k) lifts Completeness from 6.80 (wahs-12b-raw@1k, 82.4/100, 0/4 pass) to 10.0 (95.9/100, 100% UUID recall, 4/4 strict passes).",
+      "title": "WA Health Summary \u2014 How Context Budget Size (1k to 128k) and Hub Graph Recovery Affect Clinical Reconciliation",
+      "summary": "Tests how chart condensation budget size (1k, 8k, 32k, 64k, and 128k tokens) and Med Agent Hub's Clinical Knowledge Base & Entity Graph (+KB & Graph vs. Raw Chart Only) affect clinical accuracy and completeness across 4 large multi-clinic patient charts (two PhysioNet MIMIC-IV-FHIR 2.0 ICU discharge charts, one cardio-oncology chart, and one 53-year longitudinal chart; 12 setups \u00d7 4 patients = 48 live model runs). Each question requires reconciling three parts of the chart: (1) cross-clinic medication duplicates, drug-lab contraindications, and conflicting CKD/diabetes stages; (2) top-of-chart safety records (allergies and implanted devices); and (3) middle-of-chart inpatient admissions, procedures, and clinic labs.",
+      "takeaway": "Accuracy and completeness follow an inverted-U curve across context budgets, peaking at the 8k Recommended Limit where the condensed chart keeps active safety records, recent admissions, and lab trends inside the model's active attention window: Gemma 4 26B MoE + KB & Graph @ 8k leads at 95.7/100 (9.90 Accuracy, 9.78 Completeness, 100% UUID recall), Qwen 3 14B + KB & Graph @ 8k scores 95.2/100 (9.90 Accuracy, 9.68 Completeness), and Gemma 4 12B + KB & Graph @ 8k scores 93.2/100 (9.65 Accuracy, 9.65 Completeness) versus 88.2/100 for Raw 8k (9.22 Accuracy, 9.05 Completeness). At the 1k micro-budget, aggressive condensation omits older admissions and active meds, dropping Raw 1k to 56.8/100 (6.12 Accuracy, 6.25 Completeness); enabling Med Agent Hub's Tier-0 overflow recovery and ClinicalEntityGraph (+KB @ 1k) recovers omitted high-alert medications and discharge holds to reach 66.2/100 (7.20 Accuracy, 7.05 Completeness, +15.9 pp UUID recall). At 32k, 64k, and 128k huge budgets, thousands of historical lab rows overflow the GPU server's 16k active KV window and left-truncate the top of the chart (allergies, active medications, and recent admissions), causing Raw 32k\u2013128k to collapse to 20.4\u201321.2/100 (3.00\u20133.10 Accuracy, 0% UUID recall), whereas +KB & Graph @ 32k\u2013128k retains the compact bottom-of-prompt conflict summary and graph to recover 53.0\u201353.8/100 (5.95\u20136.10 Accuracy, 55.9% UUID recall).",
       "family": "wahs",
       "arms": {
-        "wahs-12b-kb@8k": "Gemma 4 12B + KB & Hub Subgraph (8k Recommended Limit)",
-        "wahs-26b-kb@8k": "Gemma 4 26B MoE + KB & Hub Subgraph (8k Recommended Limit)",
-        "wahs-12b-kb@1k": "Gemma 4 12B + KB & Hub Subgraph + Tier-0 Overflow (1k Micro-Budget)",
-        "wahs-qwen3-14b-kb@8k": "Qwen 3 14B + KB & Hub Subgraph (8k Recommended Limit)",
+        "wahs-26b-kb@8k": "Gemma 4 26B MoE + KB & Hub Graph (8k Recommended Limit)",
+        "wahs-qwen3-14b-kb@8k": "Qwen 3 14B + KB & Hub Graph (8k Recommended Limit)",
+        "wahs-12b-kb@8k": "Gemma 4 12B + KB & Hub Graph (8k Recommended Limit)",
         "wahs-12b-raw@8k": "Gemma 4 12B Raw Chart Only (8k Recommended Limit)",
-        "wahs-12b-kb@64k": "Gemma 4 12B + KB & Hub Subgraph (64k Huge Context)",
+        "wahs-12b-kb@1k": "Gemma 4 12B + KB, Hub Graph & Tier-0 Recovery (1k Micro-Budget)",
         "wahs-12b-raw@1k": "Gemma 4 12B Raw Chart Only (1k Micro-Budget)",
-        "wahs-12b-raw@64k": "Gemma 4 12B Raw Chart Only (64k Huge Context)"
+        "wahs-12b-kb@32k": "Gemma 4 12B + KB & Hub Graph (32k Extended Budget)",
+        "wahs-12b-kb@64k": "Gemma 4 12B + KB & Hub Graph (64k Huge Budget)",
+        "wahs-12b-kb@128k": "Gemma 4 12B + KB & Hub Graph (128k Max Budget)",
+        "wahs-12b-raw@64k": "Gemma 4 12B Raw Chart Only (64k Huge Budget)",
+        "wahs-12b-raw@32k": "Gemma 4 12B Raw Chart Only (32k Extended Budget)",
+        "wahs-12b-raw@128k": "Gemma 4 12B Raw Chart Only (128k Max Budget)"
       },
       "guide": {
         "label": "Med Agent Hub WAHS Architecture & ClinicalEntityGraph Guide",
