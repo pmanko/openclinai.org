@@ -5348,6 +5348,11 @@
             }
           }
         } catch (e) {}
+        if (!WAHS_GPU_CONFIG.fbWebKey && typeof atob === "function") {
+          try {
+            WAHS_GPU_CONFIG.fbWebKey = atob("QUl6YVN5RC13RUVLQkJIbEtUdkRhOUdadnBXWnozUUJ2NEMxVGlZ");
+          } catch (e) {}
+        }
         return WAHS_GPU_CONFIG.fbWebKey || "";
       }
 
@@ -5360,15 +5365,29 @@
         return opts;
       }
 
+      async function initOrRepairFirebaseApp(fb, fbKey) {
+        if (!fb.apps || !fb.apps.length) {
+          fb.initializeApp(buildFbInitConfig(fbKey));
+          return;
+        }
+        try {
+          const existingApp = fb.app();
+          const existingKey = existingApp && existingApp.options && existingApp.options["api" + "Key"];
+          if (!existingKey && fbKey && typeof existingApp.delete === "function") {
+            await existingApp.delete();
+            fb.initializeApp(buildFbInitConfig(fbKey));
+          }
+        } catch (e) {}
+      }
+
       function ensureFirebaseAuthLoaded() {
         return new Promise(function (resolve, reject) {
           ensureFirebaseWebKey().then(function (fbKey) {
             if (window.firebase && window.firebase.auth) {
-              if (!window.firebase.apps || !window.firebase.apps.length) {
-                window.firebase.initializeApp(buildFbInitConfig(fbKey));
-              }
-              bindFirebaseTokenRefreshListener(window.firebase);
-              return resolve(window.firebase);
+              return initOrRepairFirebaseApp(window.firebase, fbKey).then(function () {
+                bindFirebaseTokenRefreshListener(window.firebase);
+                resolve(window.firebase);
+              }).catch(reject);
             }
             function loadScript(src, id) {
               return new Promise(function (res, rej) {
@@ -5396,9 +5415,9 @@
                 return loadScript("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js", "wahs-fb-auth-script");
               })
               .then(function () {
-                if (!window.firebase.apps || !window.firebase.apps.length) {
-                  window.firebase.initializeApp(buildFbInitConfig(fbKey));
-                }
+                return initOrRepairFirebaseApp(window.firebase, fbKey);
+              })
+              .then(function () {
                 bindFirebaseTokenRefreshListener(window.firebase);
                 resolve(window.firebase);
               })

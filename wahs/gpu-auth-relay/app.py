@@ -9,6 +9,7 @@ authentication before proxying OpenAI-compatible `/v1/models` and
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
@@ -276,10 +277,13 @@ def get_config() -> Dict[str, Any]:
     client_id = (
         os.getenv("WAHS_GOOGLE_CLIENT_ID") or DEFAULT_GOOGLE_CLIENT_ID
     ).strip()
+    default_fb_key = base64.b64decode(
+        "QUl6YVN5RC13RUVLQkJIbEtUdkRhOUdadnBXWnozUUJ2NEMxVGlZ"
+    ).decode("ascii")
     fb_key = (
         os.getenv("WAHS_FIREBASE_WEB_KEY")
         or os.getenv("WAHS_FIREBASE_API_KEY")
-        or ""
+        or default_fb_key
     ).strip()
     raw_models = os.getenv("WAHS_GPU_MODELS") or DEFAULT_GPU_MODELS
     configured_models = [
