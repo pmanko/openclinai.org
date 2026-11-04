@@ -3,6 +3,27 @@
   "scoring_note": "For reports with score tables, each answer is graded 0\u201310, higher is better \u2014 <b>Accuracy</b>: are the stated facts correct? <b>Completeness</b>: did it cover what mattered? <b>Relevance</b>: did it actually answer the question? <b>Unsafe answers</b> counts responses with a potential safety problem (lower is better). <b>Questions</b> is how many were scored per setup, and the best value in each column is highlighted. <b>Benchmark /100</b> is the headline aggregate \u2014 it combines the dimensions (accuracy and completeness weighted most) minus soft penalties for safety and citation problems, so one number summarizes each setup. Each score table names the automated judge that produced it (model, reasoning effort, pass count); a report judged before this was recorded says so. One pass on a small sample is directional, not a formal benchmark.",
   "runs": [
     {
+      "slug": "2026-11-03-wahs-huge-context-and-hub-graph-eval",
+      "title": "WA Health Summary \u2014 Huge-Context (64k vs. 8k Recommended Limit vs. 1k) & Med Agent Hub Clinical Entity Subgraph Evaluation",
+      "summary": "32-cell live evaluation across 4 high-volume longitudinal & PhysioNet MIMIC-IV-FHIR Demo 2.0 cohorts (Julian Mercer #10014354, Clara Hollis #10019003, Marcus Vance cardio-oncology, and Maurice Auer 53-year multi-clinic) and 8 profile@budget setups: Gemma 4 12B at 8k Recommended Limit (+KB vs. Raw), 64k Huge Context (+KB vs. Raw), and 1k Micro-Budget (+KB with Med Agent Hub ClinicalEntityGraph & Tier-0 overflow recovery vs. Raw), plus Gemma 4 26B MoE +KB @ 8k and Qwen 3 14B +KB @ 8k.",
+      "takeaway": "Recommended Limit condensation + Med Agent Hub ClinicalEntityGraph (wahs-12b-kb@8k, 97.0/100, 100% UUID recall, 4/4 strict passes; wahs-26b-kb@8k, 96.4/100, 22.6s latency) outperforms dumping a 64k chart into context: raw 64k without KB/subgraph anchoring (wahs-12b-raw@64k) drops to 59.8/100 (2.25 Completeness, 0% target UUID recall, 0/4 strict passes) due to lost-in-the-middle attention dilution across thousands of longitudinal lab and encounter lines, while +KB at 64k recovers 93.3/100 (93.8% UUID recall). At the tight 1k micro-budget where active problems and notes are trimmed, Med Agent Hub pre-generation ClinicalEntityGraph + Tier-0 overflow recovery (wahs-12b-kb@1k) lifts Completeness from 6.80 (wahs-12b-raw@1k, 82.4/100, 0/4 pass) to 10.0 (95.9/100, 100% UUID recall, 4/4 strict passes).",
+      "family": "wahs",
+      "arms": {
+        "wahs-12b-kb@8k": "Gemma 4 12B + KB & Hub Subgraph (8k Recommended Limit)",
+        "wahs-26b-kb@8k": "Gemma 4 26B MoE + KB & Hub Subgraph (8k Recommended Limit)",
+        "wahs-12b-kb@1k": "Gemma 4 12B + KB & Hub Subgraph + Tier-0 Overflow (1k Micro-Budget)",
+        "wahs-qwen3-14b-kb@8k": "Qwen 3 14B + KB & Hub Subgraph (8k Recommended Limit)",
+        "wahs-12b-raw@8k": "Gemma 4 12B Raw Chart Only (8k Recommended Limit)",
+        "wahs-12b-kb@64k": "Gemma 4 12B + KB & Hub Subgraph (64k Huge Context)",
+        "wahs-12b-raw@1k": "Gemma 4 12B Raw Chart Only (1k Micro-Budget)",
+        "wahs-12b-raw@64k": "Gemma 4 12B Raw Chart Only (64k Huge Context)"
+      },
+      "guide": {
+        "label": "Med Agent Hub WAHS Architecture & ClinicalEntityGraph Guide",
+        "url": "https://openclinai.org/med-agent-hub/wahs-architecture/"
+      }
+    },
+    {
       "slug": "2026-11-02-wahs-simple-profiles-multi-family-eval",
       "title": "WA Health Summary \u2014 7-Family Simple-Profile Benchmark & KB Ablation (Gemma 4, Qwen 3, Mistral, Granite, Llama, LFM2, MedGemma)",
       "summary": "112-cell head-to-head evaluation across 8 stratified clinical cases (Use Cases A, B1, B2, B3 + privacy + abstention) and 14 single-model simple profiles (7 open-weight families \u00d7 paired -kb vs -raw arms, max_tokens=4096 untruncated generation ceiling), scored by deterministic citation/rubric checks (32/112 strict passes, 55.83 mean quality, 61.1% UUID recall) and blinded dual-judge consensus (Claude Opus 5.5 + Gemini 4 Argon; Krippendorff's alpha 0.89\u20130.96 on numeric axes).",
