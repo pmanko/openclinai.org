@@ -279,8 +279,40 @@
     "wahs-qwen3-14b-kb@8k"
   ],
   "context": {
-    "text": "How this run is scored & why 32k\u2013128k drop on a 16k KV server: Each answer is graded deterministically against ground-truth clinical criteria (rubric_weighted_score), target FHIR resourceUuid citation recall (required_uuid_recall), and sentence-level [N] claim-to-UUID entailment (atomic_entailment_rate). On the shared UW CIRG L4 GPU (24 GB VRAM), Ollama defaults to a fixed num_ctx = 16,384 KV window (usage.prompt_tokens = 16,387): when a 32k, 64k, or 128k chart exceeds 16,384 tokens without a dynamic num_ctx override, Ollama silently left-truncates the beginning of the prompt\u2014clipping top-of-chart active allergies, active conditions, active medications, and 2025\u20132026 admissions ([1]\u2013[349]) and leaving only older 2022\u20132023 records ([350]+). Med Agent Hub (+KB & Graph) retains 53.0\u201353.8/100 at 32k\u2013128k (vs. 20.4\u201321.2 Raw) because Stage 2 KB findings and the ClinicalEntityGraph are appended at the bottom of the prompt inside the surviving 16,384-token KV tail.",
+    "text": "What this study tests & why scores drop above 16k on a standard cloud server: We tested condensed chart budgets from 1k up to 128k tokens on a shared 24 GB cloud GPU. Because the standard Ollama server defaults to a 16k-token active working memory window, sending a 32k, 64k, or 128k chart causes the server to silently drop the beginning of the prompt\u2014cutting off the patient's active allergies, active medications, and recent 2025\u20132026 hospital admissions at the top of the chart. Plain chart summaries fall from 85.2 to 20.4/100 once that cutoff happens, while Med Agent Hub (+ clinical rules & graph) still rescues over half the clinical findings (53.8/100) because its safety summary is placed at the end of the prompt inside the active window.",
     "url": "https://openclinai.org/med-agent-hub/wahs-architecture/",
-    "label": "Med Agent Hub WAHS Architecture & KV Window Analysis \u2192"
+    "label": "How Med Agent Hub works \u2192"
+  },
+  "patients": {
+    "MIMIC_10014354_ICU_Heme_Cardiorenal_set_b": {
+      "badge": "MIMIC-IV ICU & Hematology Chart",
+      "display": "Complex ICU, Hematology & Cardiorenal Admission (~128k tokens; 1,100+ records across 2022\u20132026)",
+      "medications": [
+        "Vancomycin (held for trough 28.4 ug/mL & acute kidney injury)",
+        "Apixaban 5 mg BID (active) vs. Warfarin (discontinued)",
+        "Norepinephrine & Furosemide ICU infusions"
+      ],
+      "chart_url": "https://wahs-demo.openclinai.org/"
+    },
+    "MIMIC_10019003_ICU_Hepatopulmonary_set_b": {
+      "badge": "Clinical Chart",
+      "display": "MIMIC 10019003 ICU Hepatopulmonary set b",
+      "chart_url": "https://wahs-demo.openclinai.org/"
+    },
+    "Marcus_Vance_Oncology_Immunotherapy_set_b": {
+      "badge": "Clinical Chart",
+      "display": "Marcus Vance Oncology Immunotherapy set b",
+      "chart_url": "https://wahs-demo.openclinai.org/"
+    },
+    "Maurice742_Auer97_set_b": {
+      "badge": "Synthea Longitudinal Chart",
+      "display": "Maurice Auer \u2014 Multi-year outpatient & inpatient history (~94k tokens)",
+      "medications": [
+        "Tacrolimus (immunosuppression)",
+        "Furosemide / Warfarin longitudinal history",
+        "Multi-specialty renal, cardiac & hematology care"
+      ],
+      "chart_url": "https://wahs-demo.openclinai.org/"
+    }
   }
 }

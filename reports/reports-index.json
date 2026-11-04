@@ -1,118 +1,139 @@
 {
-  "intro": "Recorded evaluations across Open Clinical AI workstreams: ChartSearchAI clinical answer verification, Catalyst governed SQL query workflows, and WA Health Summary (WAHS) patient-mediated FHIR R4 chart condensation and multi-clinic reconciliation. Each report identifies its data, methods and limits. Historical findings do not establish current product or deployment acceptance.",
-  "scoring_note": "For reports with score tables, each answer is graded 0\u201310, higher is better \u2014 <b>Accuracy</b>: are the stated facts correct? <b>Completeness</b>: did it cover what mattered? <b>Relevance</b>: did it actually answer the question? <b>Unsafe answers</b> counts responses with a potential safety problem (lower is better). <b>Questions</b> is how many were scored per setup, and the best value in each column is highlighted. <b>Benchmark /100</b> is the headline aggregate \u2014 it combines the dimensions (accuracy and completeness weighted most) minus soft penalties for safety and citation problems, so one number summarizes each setup. Each score table names the automated judge that produced it (model, reasoning effort, pass count); a report judged before this was recorded says so. One pass on a small sample is directional, not a formal benchmark.",
+  "intro": "How well do open-weight AI models read complex medical charts, catch medication conflicts across clinics, and answer clinical questions safely? Each report below tests different AI setups on realistic patient records \u2014 showing where they succeed, where they miss important facts, and why.",
+  "scoring_note": "For reports with score tables, each answer is graded 0\u201310 (higher is better) \u2014 <b>Accuracy</b>: are the stated facts true to the chart? <b>Completeness</b>: did it cover the clinically important details? <b>Relevance</b>: did it directly answer the question in clear language? <b>Unsafe answers</b> counts responses with a potential safety or privacy problem (lower is better). <b>Benchmark /100</b> is the overall headline score combining accuracy, completeness, and relevance minus penalties for safety or citation errors.",
   "runs": [
     {
       "slug": "2026-11-04-wahs-macbook-direct-vs-hub-multi-scenario-eval",
-      "title": "WA Health Summary \u2014 MacBook 96k KV Window vs. Cloud 16k KV: Direct LLM (No Hub) vs. Med Agent Hub Multi-Scenario Ablation (1k\u201332k)",
-      "summary": "Tests whether expanding the active LLM KV cache window from 16,384 tokens (default Ollama Cloud GPU) to 98,304 tokens (96k on a 64 GB Apple M5 Pro MacBook via llama-router with Flash Attention and --swa-full) eliminates the 32k context cliff, while comparing three architectural paths across 3 distinct clinical task types (Multi-Clinic Medication & Staging Reconciliation, Top-of-Chart Allergy/Device & Middle-of-Chart Historical Lookup, and Grounded Unrecorded-Fact Abstention) on Julian Mercer (68.5k raw chart tokens) and Maurice Auer (139.0k raw chart tokens; 6 unspoiled scenarios \u00d7 9 setups = 54 live runs): (1) Direct LLM \u2014 No Med Agent Hub (direct-12b@1k/8k/32k, calling llama-router /v1/chat/completions directly on the raw condensed chart without Hub orchestration, KB rules, ClinicalEntityGraph, or patient readability scaffolding); (2) Med Agent Hub Raw Chart Only (wahs-12b-raw@1k/8k/32k); and (3) Med Agent Hub + 4-Layer KB & ClinicalEntityGraph (wahs-12b-kb@1k/8k/32k).",
-      "takeaway": "Raising the active KV cache to 98,304 tokens on the 64 GB MacBook completely eliminates left-truncation at 32k (full 38,262\u201341,631 token prompts fit in Metal KV cache with zero clipped records), lifting Gemma 4 12B + KB & Graph @ 32k from 53.0/100 on the 16k-KV Cloud GPU to the highest score in the study at 98.2/100 Benchmark (95.50 quality, 10.00 Accuracy, 10.00 Completeness, 6/6 scenarios passed, 100% UUID recall, 100% atomic entailment, 10.13 Flesch-Kincaid grade). Comparing the three architectures across budgets shows two distinct regimes where Med Agent Hub + KB & Graph beats Direct LLM (No Hub): (1) Under severe 1k budget overflow, Direct LLM @ 1k (59.6/100 Benchmark, 63.63 quality, 59.3% rubric recall, 62.5% UUID recall) and Hub Raw @ 1k (60.5/100 Benchmark, 65.92 quality) miss overflowed active medications on Maurice Auer's 53-year chart, whereas Hub + KB & Graph @ 1k recovers omitted Tier-0 safety records and cross-clinic conflicts to reach 76.8/100 Benchmark (76.51 quality, +21.4 pp rubric recall, +13.5 pp UUID recall, +16.7 pp atomic entailment); and (2) At the 32k extended budget without KV truncation, Direct LLM @ 32k drops to 92.9/100 Benchmark (91.35 quality, 5/6 passed, 94.3% rubric recall, 91.7% entailment, 13.99 FK college-jargon grade) because it misses a multi-clinic reconciliation conflict inside Maurice Auer's 38,262-token haystack, whereas both Med Agent Hub @ 32k arms achieve 100% pass rate (6/6), 100% rubric recall, 100% UUID recall, and 100% atomic entailment while writing ~3.9 grade levels clearer patient prose (10.13 FK grade).",
+      "title": "What happens when we give the AI enough memory for the whole chart \u2014 and does Med Agent Hub still beat calling the model directly?",
+      "summary": "In our earlier cloud GPU test, large patient charts failed because the shared server silently cut off anything past 16,000 tokens of memory. Here we ran the same Google Gemma 4 12B model on a 64 GB MacBook with a 96,000-token memory window \u2014 large enough to hold the entire chart at once \u2014 across two complex multi-clinic patients and six clinical questions (medication conflicts, hospital history, and knowing when to say 'not in chart'). At each chart size (compact 1k, standard 8k, and large 32k), we compared three setups: calling the AI model directly on the chart, routing through Med Agent Hub with the chart alone, and routing through Med Agent Hub with its automated clinical rule checks.",
+      "takeaway": "Giving the AI enough memory completely eliminated the large-chart drop-off: Med Agent Hub with clinical rules jumped from 53/100 on the memory-limited cloud server to 98.2/100 on the MacBook, answering all six questions with perfect 10/10 accuracy and completeness. Even with plenty of memory, Med Agent Hub still beat calling the AI model directly in two key situations: (1) on a tiny 1k-token summary where older prescriptions were squeezed out, the Hub automatically recovered the missing safety records and raised the score from 59.6 to 76.8; and (2) on a massive 32k-token chart, the raw AI model missed a cross-clinic medication conflict buried in the noise (92.9 vs. 98.2) and wrote at a dense college reading level (grade 14 vs. grade 10 with the Hub).",
       "family": "wahs",
       "arms": {
-        "wahs-12b-kb@32k": "Med Agent Hub + KB & Graph \u00b7 Gemma 4 12B (32k Extended Budget, 96k KV)",
-        "wahs-12b-kb@8k": "Med Agent Hub + KB & Graph \u00b7 Gemma 4 12B (8k Recommended Limit, 96k KV)",
-        "wahs-12b-raw@32k": "Med Agent Hub Raw Chart Only \u00b7 Gemma 4 12B (32k Extended Budget, 96k KV)",
-        "wahs-12b-raw@8k": "Med Agent Hub Raw Chart Only \u00b7 Gemma 4 12B (8k Recommended Limit, 96k KV)",
-        "direct-12b@8k": "Direct LLM (No Med Agent Hub) \u00b7 Gemma 4 12B (8k Recommended Limit, 96k KV)",
-        "direct-12b@32k": "Direct LLM (No Med Agent Hub) \u00b7 Gemma 4 12B (32k Extended Budget, 96k KV)",
-        "wahs-12b-kb@1k": "Med Agent Hub + KB, Graph & Tier-0 Recovery \u00b7 Gemma 4 12B (1k Micro-Budget)",
-        "wahs-12b-raw@1k": "Med Agent Hub Raw Chart Only \u00b7 Gemma 4 12B (1k Micro-Budget)",
-        "direct-12b@1k": "Direct LLM (No Med Agent Hub) \u00b7 Gemma 4 12B (1k Micro-Budget)"
+        "wahs-12b-kb@32k": "Med Agent Hub + clinical rules (large 32k chart)",
+        "wahs-12b-kb@8k": "Med Agent Hub + clinical rules (standard 8k chart)",
+        "wahs-12b-raw@32k": "Med Agent Hub, chart only (large 32k chart)",
+        "wahs-12b-raw@8k": "Med Agent Hub, chart only (standard 8k chart)",
+        "direct-12b@8k": "Direct AI model, no Hub (standard 8k chart)",
+        "direct-12b@32k": "Direct AI model, no Hub (large 32k chart)",
+        "wahs-12b-kb@1k": "Med Agent Hub + clinical rules (compact 1k summary)",
+        "wahs-12b-raw@1k": "Med Agent Hub, chart only (compact 1k summary)",
+        "direct-12b@1k": "Direct AI model, no Hub (compact 1k summary)"
       },
       "guide": {
-        "label": "Interactive Per-Question & 3-Way Architecture Dashboard",
-        "url": "https://reports.openclinai.org/2026-11-04-wahs-macbook-direct-vs-hub-multi-scenario-eval/dashboard.html"
+        "label": "How Med Agent Hub works",
+        "url": "https://openclinai.org/med-agent-hub/wahs-architecture/"
       }
     },
     {
       "slug": "2026-11-03-wahs-huge-context-and-hub-graph-eval",
-      "title": "WA Health Summary \u2014 How Context Budget Size (1k to 128k), Fixed 16k Server KV Windows, and Hub Graph Recovery Affect Clinical Reconciliation",
-      "summary": "Tests how chart condensation budget size (1k, 8k, 32k, 64k, and 128k tokens) and Med Agent Hub's Clinical Knowledge Base & Entity Graph (+KB & Graph vs. Raw Chart Only) behave on a standard shared Cloud GPU (UW CIRG 24 GB L4 running Ollama with default num_ctx = 16,384 KV cache) across 4 large multi-clinic patient charts (two PhysioNet MIMIC-IV-FHIR 2.0 ICU discharge charts, one cardio-oncology chart, and one 53-year longitudinal chart; 12 setups \u00d7 4 patients = 48 live model runs). Scored by the deterministic clinical verifier (wahs-deterministic-rubric-p1) against ground-truth clinical criteria (rubric_weighted_score), target FHIR resourceUuid citation recall (required_uuid_recall), and sentence-level [N] claim-to-UUID entailment (atomic_entailment_rate) across three chart regions: (1) cross-clinic medication duplicates, drug-lab contraindications, and conflicting CKD/diabetes stages; (2) top-of-chart safety records (allergies and implanted devices in [1]\u2013[19]); and (3) middle-of-chart inpatient admissions, procedures, and clinic labs ([20]\u2013[55]).",
-      "takeaway": "Accuracy and completeness follow an inverted-U curve across context budgets, peaking at the 8k Recommended Limit where the condensed chart fits comfortably inside the server's 16,384-token active KV cache: Gemma 4 26B MoE + KB & Graph @ 8k leads at 95.7/100 (9.90 Accuracy, 9.78 Completeness, 100% UUID recall), Qwen 3 14B + KB & Graph @ 8k scores 95.2/100 (9.90 Accuracy, 9.68 Completeness), and Gemma 4 12B + KB & Graph @ 8k scores 93.2/100 (9.65 Accuracy, 9.65 Completeness) versus 88.2/100 for Raw 8k (9.22 Accuracy, 9.05 Completeness). At the 1k micro-budget, aggressive condensation omits older admissions and active meds, dropping Raw 1k to 56.8/100 (6.12 Accuracy, 6.25 Completeness); enabling Med Agent Hub's Tier-0 overflow recovery and ClinicalEntityGraph (+KB @ 1k) recovers omitted high-alert medications and discharge holds to reach 66.2/100 (7.20 Accuracy, 7.05 Completeness, +15.9 pp UUID recall). At 32k, 64k, and 128k budgets, Ollama's default 16,384-token KV window (usage.prompt_tokens capped at 16,387) silently left-truncates the beginning of the prompt\u2014clipping off lines [1]\u2013[349] (active allergies, active conditions, active medications, and 2025\u20132026 admissions) and leaving only older 2022\u20132023 records ([350]+; e.g., on Julian Mercer @ 32k, Raw cited a 2023 potassium lab [391] because 2026 labs [1]\u2013[55] were clipped out of the KV window), causing Raw 32k\u2013128k to drop to 20.4\u201321.2/100 (3.00\u20133.10 Accuracy, 0% UUID recall). Because Med Agent Hub appends the Stage 2 KB findings and ClinicalEntityGraph at the bottom of the prompt right above the question, they survive inside the last 16,384 tokens, allowing +KB & Graph @ 32k\u2013128k to rescue Part 1 conflicts and reach 53.0\u201353.8/100 (5.95\u20136.10 Accuracy, 55.9% UUID recall).",
+      "title": "Why did bigger chart summaries score worse on a shared cloud GPU \u2014 and how much can clinical rule checks recover?",
+      "summary": "How much of a patient's medical record should we feed an AI at once? We tested five chart summary sizes \u2014 from a tiny 1k-token emergency snapshot up to a massive 128k-token multi-decade history \u2014 across four patients with records from multiple hospitals and clinics (48 runs total). All models ran on a standard shared 24 GB cloud GPU with a fixed 16,000-token active memory limit, comparing answers with and without Med Agent Hub's clinical rule checks.",
+      "takeaway": "Feeding a bigger chart to an AI backfires if the server's active memory window is smaller than the prompt. Scores peaked at the standard 8k summary, which fit comfortably inside the server's 16k memory limit: Gemma 4 26B led at 95.7/100, Qwen 3 14B scored 95.2, and Gemma 4 12B scored 93.2 with clinical rules (vs. 88.2 with the chart alone). When we sent 32k to 128k of chart text to that same 16k server, the server silently cut off the beginning of the prompt \u2014 erasing active allergies, current medications, and recent hospital stays \u2014 so chart-only scores collapsed to ~21/100. Because Med Agent Hub attaches its pre-computed clinical conflict alerts at the very end of the prompt, those alerts survived the cutoff and rescued the core medication safety checks (~53/100).",
       "family": "wahs",
       "arms": {
-        "wahs-26b-kb@8k": "Gemma 4 26B MoE + KB & Hub Graph (8k Recommended Limit)",
-        "wahs-qwen3-14b-kb@8k": "Qwen 3 14B + KB & Hub Graph (8k Recommended Limit)",
-        "wahs-12b-kb@8k": "Gemma 4 12B + KB & Hub Graph (8k Recommended Limit)",
-        "wahs-12b-raw@8k": "Gemma 4 12B Raw Chart Only (8k Recommended Limit)",
-        "wahs-12b-kb@1k": "Gemma 4 12B + KB, Hub Graph & Tier-0 Recovery (1k Micro-Budget)",
-        "wahs-12b-raw@1k": "Gemma 4 12B Raw Chart Only (1k Micro-Budget)",
-        "wahs-12b-kb@32k": "Gemma 4 12B + KB & Hub Graph (32k Extended Budget)",
-        "wahs-12b-kb@64k": "Gemma 4 12B + KB & Hub Graph (64k Huge Budget)",
-        "wahs-12b-kb@128k": "Gemma 4 12B + KB & Hub Graph (128k Max Budget)",
-        "wahs-12b-raw@64k": "Gemma 4 12B Raw Chart Only (64k Huge Budget)",
-        "wahs-12b-raw@32k": "Gemma 4 12B Raw Chart Only (32k Extended Budget)",
-        "wahs-12b-raw@128k": "Gemma 4 12B Raw Chart Only (128k Max Budget)"
+        "wahs-26b-kb@8k": "Gemma 4 26B + clinical rules (standard 8k chart)",
+        "wahs-qwen3-14b-kb@8k": "Qwen 3 14B + clinical rules (standard 8k chart)",
+        "wahs-12b-kb@8k": "Gemma 4 12B + clinical rules (standard 8k chart)",
+        "wahs-12b-raw@8k": "Gemma 4 12B, chart only (standard 8k chart)",
+        "wahs-12b-kb@1k": "Gemma 4 12B + clinical rules (compact 1k summary)",
+        "wahs-12b-raw@1k": "Gemma 4 12B, chart only (compact 1k summary)",
+        "wahs-12b-kb@32k": "Gemma 4 12B + clinical rules (32k chart \u2014 exceeds 16k server memory)",
+        "wahs-12b-kb@64k": "Gemma 4 12B + clinical rules (64k chart \u2014 exceeds 16k server memory)",
+        "wahs-12b-kb@128k": "Gemma 4 12B + clinical rules (128k chart \u2014 exceeds 16k server memory)",
+        "wahs-12b-raw@64k": "Gemma 4 12B, chart only (64k chart \u2014 exceeds 16k server memory)",
+        "wahs-12b-raw@32k": "Gemma 4 12B, chart only (32k chart \u2014 exceeds 16k server memory)",
+        "wahs-12b-raw@128k": "Gemma 4 12B, chart only (128k chart \u2014 exceeds 16k server memory)"
       },
       "guide": {
-        "label": "Med Agent Hub WAHS Architecture & ClinicalEntityGraph Guide",
+        "label": "How Med Agent Hub works",
         "url": "https://openclinai.org/med-agent-hub/wahs-architecture/"
       }
     },
     {
       "slug": "2026-11-02-wahs-simple-profiles-multi-family-eval",
-      "title": "WA Health Summary \u2014 7-Family Simple-Profile Benchmark & KB Ablation (Gemma 4, Qwen 3, Mistral, Granite, Llama, LFM2, MedGemma)",
-      "summary": "112-cell head-to-head evaluation across 8 stratified clinical cases (Use Cases A, B1, B2, B3 + privacy + abstention) and 14 single-model simple profiles (7 open-weight families \u00d7 paired -kb vs -raw arms, max_tokens=4096 untruncated generation ceiling), scored by deterministic citation/rubric checks (32/112 strict passes, 55.83 mean quality, 61.1% UUID recall) and blinded dual-judge consensus (Claude Opus 5.5 + Gemini 4 Argon; Krippendorff's alpha 0.89\u20130.96 on numeric axes).",
-      "takeaway": "Gemma 4 12B + KB (wahs-12b-kb, 91.0/100, 9.25 Accuracy / 9.06 Completeness / 9.25 Relevance, 0 harm, 100% UUID recall, 6/8 strict passes) and Qwen 3 14B + KB (wahs-qwen3-14b-kb, 83.1/100, 0 harm, 95.8% UUID recall, 6/8 strict passes) lead all open-weight families; across every 8B\u201314B general family, injecting deterministic Stage 2 4-Layer KB findings (-kb) improves Benchmark score by +5.5 to +21.2 points over raw condensed chart prompts (-raw).",
-      "family": "wahs"
+      "title": "Across seven open-weight AI model families, does adding automated clinical rules help every model?",
+      "summary": "Seven open-weight AI models (Google Gemma 4 12B, Alibaba Qwen 3 14B, Mistral NeMo 12B, Meta Llama 3.1 8B, IBM Granite 3.3 8B, Liquid LFM2 8B, and medical-tuned MedGemma 4B) answered eight clinical questions across five patients. Each model was tested twice \u2014 once reading the condensed patient chart on its own, and once with our automated clinical rule checks attached \u2014 and graded by two independent AI judges.",
+      "takeaway": "Attaching automated clinical rule checks improved every general AI model by 6 to 21 points. Google's Gemma 4 12B with clinical rules led overall (91.0/100, zero unsafe answers), followed by Alibaba's Qwen 3 14B (83.1/100, zero unsafe answers). Reading the chart alone, even strong models frequently missed duplicate brand-name vs. generic prescriptions (such as taking Plavix and clopidogrel together) or multi-step vaccine timing rules.",
+      "family": "wahs",
+      "arms": {
+        "wahs-12b-kb": "Google Gemma 4 12B + clinical rules",
+        "wahs-12b-raw": "Google Gemma 4 12B, chart only",
+        "wahs-qwen3-14b-kb": "Alibaba Qwen 3 14B + clinical rules",
+        "wahs-qwen3-14b-raw": "Alibaba Qwen 3 14B, chart only",
+        "wahs-mistral-nemo-12b-kb": "Mistral NeMo 12B + clinical rules",
+        "wahs-mistral-nemo-12b-raw": "Mistral NeMo 12B, chart only",
+        "wahs-llama31-8b-kb": "Meta Llama 3.1 8B + clinical rules",
+        "wahs-llama31-8b-raw": "Meta Llama 3.1 8B, chart only",
+        "wahs-granite33-8b-kb": "IBM Granite 3.3 8B + clinical rules",
+        "wahs-granite33-8b-raw": "IBM Granite 3.3 8B, chart only",
+        "wahs-lfm2-8b-kb": "Liquid LFM2 8B + clinical rules",
+        "wahs-lfm2-8b-raw": "Liquid LFM2 8B, chart only",
+        "wahs-medgemma-4b-kb": "Google MedGemma 4B + clinical rules",
+        "wahs-medgemma-4b-raw": "Google MedGemma 4B, chart only"
+      }
     },
     {
       "slug": "2026-10-31-wahs-live-model-team-eval",
-      "title": "WA Health Summary (WAHS) Slice 5: Local Model Selection (1.5B\u201335B), Prompt Engineering & Orchestrated KB Agent Teams",
-      "summary": "Evaluates seven open-weight local GGUF models (1.5B to 35B on 64 GB Apple Silicon via llama-router) across a 3-stage clinical screening funnel and compares four prompt-engineering and multi-agent architectures over condensed FHIR R4 charts (32 clinical cases \u00d7 4 architectures = 128 cells): (1) Single-Pass Raw Condensed (no pre-attached KB rules); (2) Single-Pass + 4-Layer KB Alerts & Temporal Anchors (dry_multiplier = 0); (3) Cross-Family Checked Single Pass (Gemma 4 12B writer + Qwen 3.5 9B reviewer + narrow citation grounder); and (4) 4-Agent Orchestrated WAHS+ KB Team (Router + Medication/RxNorm, Lab/KDIGO, and ACIP Immunization specialists + Plain-Language Patient Synthesizer).",
-      "takeaway": "A single LLM pass over the condensed chart alone (single-raw-condensed, 80.0/100, 17/32 pass) misses cross-clinic brand-vs-generic duplicates (Plavix vs. Clopidogrel, Prinivil vs. Lisinopril) and subtle CDC ACIP age-at-initiation rules unless RxNorm ingredient and ACIP rule annotations are pre-attached. Injecting the 4-Layer KB alerts + temporal anchors with dry_multiplier=0 (single-kb-augmented) raises the score to 80.7/100 (24/32 pass), while single-xcheck-labeled (83.1/100, 29/32 pass) and team-wahs-kb (88.6/100, 32/32 pass) add cross-family claim verification, zero external_share privacy leaks, and lower Flesch-Kincaid reading grade (13.6 vs 17.0\u201317.3).",
+      "title": "Can a single AI model catch cross-clinic medication conflicts on its own, or does it need clinical rules and a specialist team?",
+      "summary": "When a patient sees doctors at several different clinics, their combined record often contains duplicate prescriptions under different brand names, conflicting kidney-disease stages, or outdated medications. We tested four AI setups on 32 clinical questions: a single model reading the condensed chart alone, a single model with automated clinical rules attached, a two-model writer-and-reviewer pair, and a four-agent specialist team.",
+      "takeaway": "A single AI model reading the chart on its own passed only 17 of 32 questions (80.0/100) because it overlooked brand-vs-generic drug duplicates and age-specific vaccine rules. Attaching automated clinical rule alerts raised the pass rate to 24/32 (80.7/100), adding a second reviewer model reached 29/32 (83.1/100), and the four-agent specialist team passed all 32 questions (88.6/100) while writing in clearer, more patient-friendly language.",
       "family": "wahs",
       "arms": {
-        "team-wahs-kb": "4-Agent Orchestrated WAHS+ KB Team (Router + Med/Lab/ACIP Specialists + Patient Synthesizer)",
-        "single-xcheck-labeled": "Cross-Family Checked Single Pass (Gemma 4 12B Writer + Qwen 3.5 9B Reviewer)",
-        "single-kb-augmented": "Single Pass + 4-Layer KB Alerts & Temporal Anchors (Gemma 4 12B, dry_multiplier=0)",
-        "single-raw-condensed": "Single Pass over Raw Condensed FHIR Ledger Only (Gemma 4 12B, No Pre-Attached KB Rules)"
+        "team-wahs-kb": "4-agent specialist team + clinical rules",
+        "single-xcheck-labeled": "Gemma 4 12B writer + Qwen 9B reviewer",
+        "single-kb-augmented": "Single Gemma 4 12B + clinical rules",
+        "single-raw-condensed": "Single Gemma 4 12B, chart only"
       },
       "guide": {
-        "label": "Interactive Per-Question Model & Citation Dashboard",
+        "label": "Interactive Per-Question Dashboard",
         "url": "https://reports.openclinai.org/2026-10-31-wahs-live-model-team-eval/dashboard.html"
       }
     },
     {
       "slug": "2026-10-31-wahs-condensation-ablation",
-      "title": "WA Health Summary (WAHS) Slices 3 & 4: Condensation-Tier Information-Loss Ablation, Hybrid Full-Chart Lookup & Messy Multi-EHR Cohort",
-      "summary": "Measures the information-loss curve across five FHIR R4 condensation and retrieval setups (16k Tier 1, 8k Tier 2, 4k Tier 3, 2k Static Tier 4, and 2k + On-Demand Full-Chart Lookup Tools; 32 cases \u00d7 5 arms = 160 cells) stratified across four question horizons (Current Active State, 24-Month Trend, Full-Text Note / Perioperative Detail, and Deep Historical / Abstention). Also evaluates Pathway A Set C (messy multi-source bundles with 25% stripped clinical codes and free-text note vs. active medication contradictions) and Pathway B (de-identified real clinical summary fixtures modeled on MIMIC-IV cardiorenal discharge and SMART IPS transition records with 40%\u201360% uncoded entries).",
-      "takeaway": "Static Tier 4 (2,048 tokens) retains 100% recall on Current Active State IPS core facts and 24-Month Trends, but drops historical inpatient perioperative details (scoring 70.4/100 overall and 18/32 cases passed when restricted to the static 2k capsule). Enabling the read-only overflow lookup tools (search_chart_entries, get_lab_history, read_clinical_note) recovers 100.0% of deep historical and perioperative facts (88.6/100, 32/32 cases passed, matching or exceeding static 16k/8k at 88.5/100) while keeping the base prompt inside 2,048 tokens and enforcing 0 privacy leaks in external_share mode. Across messy and real clinical summary bundles where pre-coded lookup drops to 40%\u201384.5%, Layer 2/3 text and ingredient normalization recovers 97.3%\u2013100.0% of clinical concepts.",
+      "title": "How tightly can we shrink a multi-decade medical chart before the AI loses important history \u2014 and can on-demand search win it back?",
+      "summary": "Patient health exports can span thousands of pages, far too large for an AI to read reliably all at once. We compressed charts down to four summary sizes (16k, 8k, 4k, and a tiny 2k-token wallet summary) and tested 32 questions ranging from current medications to hospital surgeries years ago. We then tested whether giving the tiny 2k summary an on-demand search tool to look up older notes could match the full 16k summary.",
+      "takeaway": "A static 2k-token summary keeps 100% of current allergies, active medications, and two-year lab trends, but drops older surgical and hospital details \u2014 passing only 18 of 32 questions (70.4/100). Giving that same 2k summary an on-demand search tool to pull older notes when asked recovered every missing historical detail (32/32 passed, 88.6/100), matching the 16k summary at a fraction of the size.",
       "family": "wahs",
       "arms": {
-        "wahs-tier1-16k-static": "Tier 1 (16,384 tokens \u00b7 Static In-Context)",
-        "wahs-tier2-8k-static": "Tier 2 (8,192 tokens \u00b7 Static In-Context)",
-        "wahs-tier3-4k-static": "Tier 3 (4,096 tokens \u00b7 Static In-Context)",
-        "wahs-tier4-2k-static": "Tier 4 (2,048 tokens \u00b7 Static IPS Micro-Capsule, No Lookup Tools)",
-        "wahs-tier4-2k-hybrid-tools": "Tier 4 (2,048 tokens \u00b7 IPS Core + On-Demand Full-Chart Lookup Tools)"
+        "wahs-tier1-16k-static": "16k-token summary (static)",
+        "wahs-tier2-8k-static": "8k-token summary (static)",
+        "wahs-tier3-4k-static": "4k-token summary (static)",
+        "wahs-tier4-2k-static": "2k-token compact summary (no search tool)",
+        "wahs-tier4-2k-hybrid-tools": "2k-token compact summary + on-demand chart search"
       },
       "guide": {
-        "label": "Interactive Patient & Clinician Demo (wahs-demo.openclinai.org)",
+        "label": "Try the WA Health Summary Demo",
         "url": "https://wahs-demo.openclinai.org/"
       }
     },
     {
       "slug": "2026-10-30-wahs-phase2-eval",
-      "title": "WA Health Summary (WAHS) Phase 2: Multi-Clinic FHIR R4 Chart Condensation, Conflict Reconciliation & Privacy-Segmented Sharing",
-      "summary": "Evaluates whether our deterministic 5-Tier FHIR R4 chart condenser and 4-Layer clinical rule engine can shrink multi-clinic health exports (up to 18.4 MB / 3.52M tokens per patient) into compact, source-linked summaries while catching cross-provider conflicts and redacting sensitive records on external share. Tested across six synthetic patient bundles (Maurice Auer, Lamar Beer, and Byron Emard in clean single-clinic Set A and multi-clinic perturbed Set B cohorts) and 32 clinical test cases covering: (1) cross-clinic medication, condition, allergy, and vaccine conflict detection; (2) hospital/ICU and longitudinal summarization; (3) sensitive SDOH/privacy redaction under 42 CFR Part 2 and WA My Health My Data Act; and (4) source-linked Q&A with explicit 'not in chart' abstention.",
-      "takeaway": "At this Phase 2 deterministic verification stage, the condensed chart + clinical rule pipeline passed 32/32 cases across all three token budgets (scoring 88.6/100 across the 8,000-token, 4,000-token, and 2,000-token budgets; 96/96 total cells passed). Condensing Maurice Auer's 53-year, 18.36 MB chart reduces token volume by 99.64%\u201399.94% while keeping 100% of active allergies, medications, and conditions, catching all 15/15 injected cross-clinic conflicts with clickable [N] -> resourceUuid record links, preventing 100% of sensitive SDOH leaks in external_share mode, and abstaining on 6/6 unrecorded facts. Section 09 of the report documents a candid methodological audit and the Phase 3 plan for live open-weight LLM evaluation.",
+      "title": "Can deterministic chart condensation shrink an 18 MB medical record by 99% without losing active problems, drug conflicts, or privacy protections?",
+      "summary": "Before putting an AI model in the loop, we tested our chart condenser and clinical rule engine on 32 test cases across 53 years of multi-clinic records. The test checked whether shrinking an 18 MB health export into 2k\u20138k token summaries preserves all active conditions and allergies, catches 15 planted cross-clinic prescription and staging conflicts, and blocks sensitive mental-health or substance-use records when sharing externally.",
+      "takeaway": "The condenser and rule engine passed all 32 test cases at every summary size (8k, 4k, and 2k tokens), shrinking a 53-year chart by over 99.6% while keeping 100% of active medications and allergies, catching all 15 cross-clinic conflicts with clickable source links, and blocking 100% of sensitive records in external-share mode.",
       "family": "wahs",
       "arms": {
-        "wahs-5tier-4layer-kb-8k": "Condensed Chart + Clinical Rules (8,000-token budget)",
-        "wahs-5tier-4layer-kb-4k": "Condensed Chart + Clinical Rules (4,000-token budget)",
-        "wahs-5tier-4layer-kb-2k": "Emergency Summary Core + Clinical Rules (2,000-token budget)"
+        "wahs-5tier-4layer-kb-8k": "8k-token condensed chart + clinical rules",
+        "wahs-5tier-4layer-kb-4k": "4k-token condensed chart + clinical rules",
+        "wahs-5tier-4layer-kb-2k": "2k-token emergency summary + clinical rules"
       },
       "guide": {
-        "label": "Interactive UX (wahs-demo.openclinai.org)",
+        "label": "Try the WA Health Summary Demo",
         "url": "https://wahs-demo.openclinai.org/"
       }
     },
     {
       "slug": "l5-full-default-2026-10-26-dffe15e9",
-      "title": "Full evaluation full-default, 2026-10-26 (dffe15e9)",
-      "summary": "Full evaluation (L5) of the full-default comparison on the assembled local stack: 3 setups across 17 scenarios (105 results, 51 arm\u00d7scenario judged cells).",
-      "takeaway": "",
-      "family": "chartsearchai"
+      "title": "Follow-up run: Bundled ChartSearchAI vs. Med Agent Hub on one shared 12B engine",
+      "summary": "A repeat of the 17-question HIV chart comparison across three patients, running all three setups through the same Gemma 4 12B model: ChartSearchAI's built-in answer path on its default settings, Med Agent Hub's plain answer path, and Med Agent Hub's checked profile (which reviews each answer and flags unsupported claims).",
+      "takeaway": "Both Med Agent Hub setups (82.0 checked, 81.6 answer-only) outscored built-in ChartSearchAI (55.2) by more than 26 points on the exact same model. Built-in ChartSearchAI struggled with date calculations (8 date errors vs. 0 on the Hub) because it does not pass today's reference date or run deterministic date and guideline checks.",
+      "family": "chartsearchai",
+      "arms": {
+        "engine-parity-bundled-12b": "Bundled ChartSearchAI",
+        "engine-parity-hub-answer-12b": "Hub, answer only",
+        "hub-profile-single-12b-checked": "Hub, checked"
+      }
     },
     {
       "slug": "l5-full-default-2026-10-22-d0e4e2d8",
@@ -170,33 +191,33 @@
     },
     {
       "slug": "small-model-answer-paths-2026-07-15",
-      "title": "Small-model answer paths: E4B and 12B",
-      "summary": "Twelve temporal and chart-grounding scenarios compare answer-only, deterministic temporal checking, and full checked profiles on E4B and 12B.",
-      "takeaway": "Deterministic checking fixed E4B's past-appointment error, but did not fix strict six-month windows and degraded one 12B child-growth answer. The full checked E4B profile scored highest while adding reviewed, resolved evidence."
+      "title": "Do automated date and citation checks improve 4B and 12B single-model answers?",
+      "summary": "Twelve questions focused on timing and chart grounding, comparing three answer paths on Google's Gemma 4B and 12B models: a plain single-pass answer, an answer with deterministic date checking, and a fully checked profile with model review.",
+      "takeaway": "Automated date checking fixed the 4B model's past-appointment mistake, and the fully checked 4B profile scored highest overall while attaching verified source records. However, two strict six-month date-window questions still slipped through, showing where date filtering needed to be tightened."
     },
     {
       "slug": "hub-profile-12b-checked-candidate-2026-07-13",
-      "title": "Checked 12B profile: temporal and date candidate",
-      "summary": "A 12-scenario product-path evaluation of the checked 12B profile. All cells completed, the implemented deterministic audit reported no blockers, and an independent Scout judge scored the answers 88.4/100 with no harm and 66/66 references resolved. The judge nevertheless found two strict six-month-window errors that the deterministic gate did not detect.",
-      "takeaway": "The checked 12B path is strong on exact dates, visit ordering, appointments, and weight trends, but it is not release-clean: one answer included an X-ray six days before the requested cutoff, while another included 10 out-of-window orders and omitted a qualifying order. This report demonstrates why deterministic checks and independent judging must remain separate, visible layers; the next correction is a generic dated-row window gate, not prompt tuning to these cells."
+      "title": "How well does the checked 12B profile handle strict clinical date windows?",
+      "summary": "Twelve date-sensitive clinical questions answered by the checked Gemma 4 12B profile. All answers passed the built-in automated checks and scored 88.4/100 from an independent AI judge with zero unsafe answers and 66/66 source citations verified.",
+      "takeaway": "The checked 12B profile is strong on exact dates, visit ordering, appointments, and weight trends, but the independent judge caught two six-month cutoff mistakes that the built-in date check missed (including an X-ray six days outside the requested window). That shows why built-in runtime checks and independent judging both matter."
     },
     {
       "slug": "hub-profile-team-focus-diagnostic-2026-07-13",
-      "title": "Hub profile and team-path diagnostic",
-      "summary": "An 18-cell product-path diagnostic across the E4B single, 12B single, and medical-team profiles. All cells completed and stage timing was captured, but deterministic QA found answer-contract and grounding issues. This run is unjudged and is not a model-quality comparison.",
-      "takeaway": "The consolidated hub path, readable team metadata, and stage observability worked end to end. The run exposed table-shape, exact-fact grounding, citation-set, temporal-fallback reporting, and team context-budget issues that are being remediated before the judged candidate run."
+      "title": "Engineering diagnostic: testing the 4B, 12B, and multi-agent team pipelines end to end",
+      "summary": "An 18-question engineering test of the 4B single model, 12B single model, and multi-agent team profiles to verify stage timing and formatting before running a full scored benchmark.",
+      "takeaway": "Every setup ran end to end and recorded stage timings, while surfacing formatting and table-citation bugs that were fixed before the scored runs above."
     },
     {
       "slug": "method-levers-dev-2026-06-26",
-      "title": "Lever sweep (dev): coverage prompt + rewrite-validator across a dense 12B and a cheap MoE (A4B)",
-      "summary": "A fast 12-scenario dev sweep, holding two writers (Gemma-12B dense, Gemma-26B-A4B MoE ~4B active) against {bare, +coverage prompt, +rewrite-validator, +both}. Judged AFTER fixing a scoring bug where the judge couldn't see table answers (which had been deflating completeness). N=12/arm \u2014 directional, not definitive.",
-      "takeaway": "Two findings. (1) A SCORING bug was capping the benchmark: the judge scored only the prose answer and never saw the structured table answers the prompts ask for, deflating completeness ~8pts; fixed. (2) The optimal config is WRITER-DEPENDENT: the dense 12B is best with coverage+rewrite-validator (83.5, 0 harm) vs bare 80.6, but the cheap A4B MoE is best BARE (83.7, 0 harm, highest completeness) and EVERY lever hurts it. Bare A4B edges the best scaffolded 12B \u2014 the cheap MoE alone is competitive, the on-device headline. The orchestrator hurts both (12B +rewrite: 72 w/ orch vs 78 w/o). Caveat: N=12, single judge, hard-weighted dev subset; needs full-run confirmation."
+      "title": "Do extra prompt checklists and a rewrite-validator help every model equally?",
+      "summary": "A 12-question test comparing two writer models \u2014 a dense Gemma 12B and a fast Mixture-of-Experts Gemma 26B-A4B \u2014 across four setups: bare model alone, adding a completeness checklist prompt, adding a second rewrite-validator pass, and adding both.",
+      "takeaway": "The best setup depends on the writer model: the dense 12B model improved from 80.6 to 83.5 when given both the checklist prompt and the rewrite-validator, whereas the fast 26B-A4B Mixture-of-Experts model actually scored best on its own (83.7, zero unsafe answers) and every extra step slowed it down or hurt its score."
     },
     {
       "slug": "method-scaffolding-2026-06-25",
-      "title": "Method scaffolding: validator-team vs the single writer (12B, A4B)",
-      "summary": "Does a small-orchestrator + Qwen-2.5-14B-validator team beat the bare single writer on the two strong writers (Gemma-12B, Gemma-26B-A4B)? Plus a cite-or-abstain prompt lever. 297 cells, judged.",
-      "takeaway": "The validator's value scales inversely with writer strength: it rescues the weaker A4B (2 harm to 0, +~3pts) but doesn't help the already-safe 12B, best as a bare single (~81, 0 harm). cite-or-abstain lowers the 12B via over-caution."
+      "title": "When does adding a validator model beat a single model on its own?",
+      "summary": "Across 297 graded answers, we tested whether pairing a writer model (Gemma 12B or Gemma 26B-A4B) with a separate Qwen 14B validator model and stricter 'cite or abstain' instructions beats running the writer model alone.",
+      "takeaway": "A separate validator model helps weaker or more error-prone writers (cutting unsafe answers from 2 to 0 on the 26B-A4B setup and adding ~3 points), but does not improve an already-safe 12B model (~81/100 with zero unsafe answers on its own). Overly strict 'cite or abstain' rules made the 12B model too cautious."
     },
     {
       "slug": "gemma-quant-curve-2026-06-25",

@@ -303,8 +303,30 @@
     "wahs-12b-kb@32k"
   ],
   "context": {
-    "text": "What this experiment measures (MacBook 96k KV Window \u00b7 Direct LLM vs. Med Agent Hub across 3 Scenario Types): Evaluates Gemma-4-12B (Q8_0) locally on an Apple M5 Pro MacBook (64 GB Unified Memory, llama-router ctx-size = 98,304 tokens\u2014zero KV left-truncation) across 12 clinical scenarios (4 huge-context patients \u00d7 3 scenario types: Medication & Staging Conflict Reconciliation, Historical Inpatient/Procedure Lookup, and Grounded Clinical Abstention) and 3 architectures at 1k, 8k, and 32k token budgets: (1) Direct LLM (No Med Agent Hub) calling llama-router directly with the chart and question; (2) Med Agent Hub (Raw Condensed) adding the CHART_SUMMARY_CITED clinical grounding/abstention contract without KB or Graph; and (3) Med Agent Hub (+KB & ClinicalEntityGraph) adding Stage 2 deterministic 4-Layer Clinical KB conflict findings, <clinical_entity_graph>, and Tier 0 overflow citation recovery.",
+    "text": "What this study tests: We ran a 12B medical AI model locally on a MacBook Pro (with a full 96k-word working memory, so nothing is cut off) across three types of clinical questions: reconciling conflicting medications and disease stages, looking up past hospital stays and procedures, and knowing when to say 'not in the chart' when asked about records that don't exist. We compared three setups at tight (1k), standard (8k), and full-chart (32k) summary budgets: (1) Direct AI (calling the model directly with the chart and question, without Med Agent Hub), (2) Med Agent Hub with chart-only prompts (citation and abstention rules, but no automated clinical checks), and (3) Med Agent Hub with full clinical rules and the patient relationship graph.",
     "url": "https://openclinai.org/med-agent-hub/wahs-architecture/",
-    "label": "Med Agent Hub WAHS Architecture & Multi-Scenario Ablation \u2192"
+    "label": "How Med Agent Hub works \u2192"
+  },
+  "patients": {
+    "MIMIC_10014354_ICU_Heme_Cardiorenal_set_b": {
+      "badge": "MIMIC-IV ICU & Hematology Chart",
+      "display": "Complex ICU, Hematology & Cardiorenal Admission (~128k tokens; 1,100+ records across 2022\u20132026)",
+      "medications": [
+        "Vancomycin (held for trough 28.4 ug/mL & acute kidney injury)",
+        "Apixaban 5 mg BID (active) vs. Warfarin (discontinued)",
+        "Norepinephrine & Furosemide ICU infusions"
+      ],
+      "chart_url": "https://wahs-demo.openclinai.org/"
+    },
+    "Maurice742_Auer97_set_b": {
+      "badge": "Synthea Longitudinal Chart",
+      "display": "Maurice Auer \u2014 Multi-year outpatient & inpatient history (~94k tokens)",
+      "medications": [
+        "Tacrolimus (immunosuppression)",
+        "Furosemide / Warfarin longitudinal history",
+        "Multi-specialty renal, cardiac & hematology care"
+      ],
+      "chart_url": "https://wahs-demo.openclinai.org/"
+    }
   }
 }
