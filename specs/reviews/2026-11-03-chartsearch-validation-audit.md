@@ -1,7 +1,7 @@
 # ChartSearchAI validation fidelity, streaming parity, and bundled attribution (3 November 2026)
 
 Verification and root-cause record for `CHARTSEARCH-VALIDATION-2026-11` ([specs/chartsearch-validation.md](../chartsearch-validation.md)), pinning:
-- Validation harness `79422ca` ([clinical-ai-validation-harness#207](https://github.com/pmanko/clinical-ai-validation-harness/pull/207))
+- Validation harness `e06c0f0` ([clinical-ai-validation-harness#207](https://github.com/pmanko/clinical-ai-validation-harness/pull/207))
 - Med Agent Hub `d5bd294` ([med-agent-hub#58](https://github.com/pmanko/med-agent-hub/pull/58))
 - ChartSearchAI `a8eade4` ([openmrs-module-chartsearchai#629](https://github.com/openmrs/openmrs-module-chartsearchai/pull/629))
 
