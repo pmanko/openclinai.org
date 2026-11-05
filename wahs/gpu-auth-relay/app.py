@@ -429,7 +429,8 @@ def verify_google_auth_token(token: str) -> Dict[str, Any]:
         q = urllib.parse.urlencode({"id_token": clean})
         data1 = _http_get_json(f"https://oauth2.googleapis.com/tokeninfo?{q}")
         if data1 and data1.get("email"):
-            info = data1
+            info = dict(data1)
+            info["_auth_source"] = "google_id_token"
 
         if info is None:
             data2 = _http_get_json(
@@ -437,7 +438,12 @@ def verify_google_auth_token(token: str) -> Dict[str, Any]:
                 headers={"Authorization": f"Bearer {clean}"},
             )
             if data2 and data2.get("email"):
-                info = data2
+                info = dict(data2)
+                info["_auth_source"] = "google_userinfo"
+                if client_id and not info.get("aud"):
+                    q_acc = urllib.parse.urlencode({"access_token": clean})
+                    acc_info = _http_get_json(f"https://oauth2.googleapis.com/tokeninfo?{q_acc}") or {}
+                    info["aud"] = acc_info.get("aud") or acc_info.get("azp") or ""
 
         if info is None and fb_key:
             data3 = _http_post_json(
@@ -452,6 +458,7 @@ def verify_google_auth_token(token: str) -> Dict[str, Any]:
                     "email_verified": u.get("emailVerified", True),
                     "name": u.get("displayName") or "",
                     "picture": u.get("photoUrl") or "",
+                    "_auth_source": "firebase_lookup",
                 }
 
         if info is None:
@@ -486,7 +493,8 @@ def verify_google_auth_token(token: str) -> Dict[str, Any]:
         }
 
     aud = str(info.get("aud") or "").strip()
-    if client_id and aud and aud != client_id and not info.get("sub"):
+    auth_source = str(info.get("_auth_source") or "google_id_token")
+    if client_id and auth_source != "firebase_lookup" and aud != client_id:
         return {
             "authenticated": False,
             "authorized": False,
@@ -588,7 +596,7 @@ def verify_internal_router_access(headers: Mapping[str, str]) -> bool:
         verdict = verify_google_auth_token(token)
         if verdict.get("authorized"):
             return True
-    return not expected_key
+    return False
 
 
 def build_internal_router_models_payload() -> Dict[str, Any]:

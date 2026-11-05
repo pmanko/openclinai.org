@@ -304,6 +304,80 @@ class WahsGpuAuthRelayTests(unittest.TestCase):
                 hub_body["backend"]["gpu_auth"]["email"], "mcjustin@uw.edu"
             )
 
+    def test_internal_router_fails_closed_when_key_unset(self) -> None:
+        """Behavior: /internal-router fails closed (HTTP 401) when WAHS_INTERNAL_ROUTER_KEY is unset unless an authorized Google token is supplied."""
+        with patch.dict(
+            os.environ,
+            {
+                "WAHS_ALLOW_TEST_GOOGLE_TOKEN": "1",
+                "WAHS_GPU_BASE_URL": f"http://127.0.0.1:{self.upstream_port}",
+                "WAHS_GPU_API_KEY": "sk-test-upstream",
+                "WAHS_INTERNAL_ROUTER_KEY": "",
+            },
+        ):
+            unauth_models_status, _, _ = _http_request(
+                f"{self.relay_url}/internal-router/v1/models"
+            )
+            self.assertEqual(unauth_models_status, 401)
+
+            unauth_chat_status, _, _ = _http_request(
+                f"{self.relay_url}/internal-router/v1/chat/completions",
+                method="POST",
+                payload={
+                    "model": "gemma-4-12b",
+                    "messages": [{"role": "user", "content": "Unauthenticated attempt"}],
+                },
+            )
+            self.assertEqual(unauth_chat_status, 401)
+
+            # Whitelisted Google token is still permitted
+            auth_models_status, _, _ = _http_request(
+                f"{self.relay_url}/internal-router/v1/models",
+                headers={"X-Google-Auth-Token": "test-google-token:pmanko@uw.edu"},
+            )
+            self.assertEqual(auth_models_status, 200)
+
+    def test_verify_google_auth_token_enforces_audience_even_with_sub_claim(self) -> None:
+        """Behavior: verify_google_auth_token rejects Google ID tokens whose aud mismatches WAHS_GOOGLE_CLIENT_ID even when sub is present."""
+        self.relay._TOKEN_CACHE.clear()
+        with patch.dict(
+            os.environ,
+            {
+                "WAHS_ALLOW_TEST_GOOGLE_TOKEN": "0",
+                "WAHS_GOOGLE_CLIENT_ID": "expected-client-id.apps.googleusercontent.com",
+            },
+        ):
+            with patch.object(
+                self.relay,
+                "_http_get_json",
+                return_value={
+                    "email": "pmanko@uw.edu",
+                    "email_verified": "true",
+                    "sub": "112233445566778899",
+                    "aud": "foreign-client-id.apps.googleusercontent.com",
+                },
+            ):
+                verdict_bad = self.relay.verify_google_auth_token("tok-foreign-aud")
+                self.assertFalse(verdict_bad["authenticated"])
+                self.assertFalse(verdict_bad["authorized"])
+                self.assertEqual(verdict_bad["code"], "audience_mismatch")
+
+            self.relay._TOKEN_CACHE.clear()
+            with patch.object(
+                self.relay,
+                "_http_get_json",
+                return_value={
+                    "email": "pmanko@uw.edu",
+                    "email_verified": "true",
+                    "sub": "112233445566778899",
+                    "aud": "expected-client-id.apps.googleusercontent.com",
+                },
+            ):
+                verdict_ok = self.relay.verify_google_auth_token("tok-matching-aud")
+                self.assertTrue(verdict_ok["authenticated"])
+                self.assertTrue(verdict_ok["authorized"])
+                self.assertEqual(verdict_ok["code"], "ok")
+
 
 if __name__ == "__main__":
     unittest.main()

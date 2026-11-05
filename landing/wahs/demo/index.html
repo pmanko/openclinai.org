@@ -3365,9 +3365,20 @@
             return String(b.r.date || "").localeCompare(String(a.r.date || ""));
           });
 
+          let maxLedgerIdx = 100;
+          (promptData.citations || []).forEach(function (c) {
+            const n = Number(c && c.index);
+            if (Number.isFinite(n) && n > maxLedgerIdx) maxLedgerIdx = n;
+          });
+          const ledgerMatches = String(promptData.chart_text || "").match(/\[(\d+)\]/g) || [];
+          ledgerMatches.forEach(function (tok) {
+            const n = parseInt(tok.slice(1, -1), 10);
+            if (Number.isFinite(n) && n > maxLedgerIdx) maxLedgerIdx = n;
+          });
+
           candidates.slice(0, 4).forEach(function (entry, idx) {
             const r = entry.r;
-            const citeNum = 101 + idx;
+            const citeNum = maxLedgerIdx + 1 + idx;
             const snippet = r.decodedNoteText
               ? String(r.decodedNoteText).replace(/\s+/g, " ").trim().slice(0, 155)
               : String(r.summary || r.display || "").replace(/\s+/g, " ").trim().slice(0, 145);
