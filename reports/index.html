@@ -127,13 +127,25 @@
     <details class="legend-more"><summary><b>How to read these reports</b> — full scoring methodology &amp; judge provenance</summary><p>For reports with score tables, each answer is graded 0–10 (higher is better) — <b>Accuracy</b>: are the stated facts true to the chart? <b>Completeness</b>: did it cover the clinically important details? <b>Relevance</b>: did it directly answer the question in clear language? <b>Unsafe answers</b> counts responses with a potential safety or privacy problem (lower is better). <b>Benchmark /100</b> is the overall headline score combining accuracy, completeness, and relevance minus penalties for safety or citation errors.</p></details>
   </div>
   <div class="catalog-toolbar">
-  <div class="filter" id="family-filter" role="group" aria-label="Show reports for"><button type="button" data-family="all" aria-pressed="true">All reports (27)</button><button type="button" data-family="wahs" aria-pressed="false">WA Health Summary (6)</button><button type="button" data-family="chartsearchai" aria-pressed="false">ChartSearchAI (18)</button><button type="button" data-family="catalyst" aria-pressed="false">Catalyst SQL (3)</button></div>
+  <div class="filter" id="family-filter" role="group" aria-label="Show reports for"><button type="button" data-family="all" aria-pressed="true">All reports (28)</button><button type="button" data-family="chartsearchai" aria-pressed="false">ChartSearchAI (19)</button><button type="button" data-family="wahs" aria-pressed="false">WA Health Summary (6)</button><button type="button" data-family="catalyst" aria-pressed="false">Catalyst SQL (3)</button></div>
     <div class="toolbar-right">
       <input id="report-search" class="search-input" type="search" placeholder="Search reports, models, findings…" aria-label="Search reports">
       <button id="density-toggle" class="density-btn" type="button" aria-pressed="false" title="Toggle between compact takeaway cards and full tables">Compact cards</button>
-      <span id="visible-count" class="visible-count" aria-live="polite">27 of 27 reports shown</span>
+      <span id="visible-count" class="visible-count" aria-live="polite">28 of 28 reports shown</span>
     </div>
   </div>
+  <article class="card" data-family="chartsearchai">
+  <header class="card-head">
+    <div class="titles"><span class="family chartsearchai">ChartSearchAI</span><h2>MacBook Apple Silicon (parallel=1): Bundled ChartSearchAI vs. Med Agent Hub with live SSE streaming &amp; KV-slot telemetry</h2><div class="slug">Aloice Beiywa Mukangu + Zabella Talai Halambe + Ellcky Ikatwa Minayo · 70 graded answers · 5 Nov 2026</div></div>
+    <div class="links"><a class="btn" href="2026-11-05-macbook-full-default-12b-parallel1-a35a95fd/index.html">Full report</a><a class="btn ghost" href="2026-11-05-macbook-full-default-12b-parallel1-a35a95fd/dashboard.html">Interactive dashboard</a></div>
+  </header>
+  
+  
+  <p class="takeaway"><span class="tk">Takeaway</span>Both arms completed all 35 turns with 0 errors and live token streaming (20–30 SSE delta frames/turn). On a single KV slot (--parallel 1), Bundled ChartSearchAI achieved 1.3s median TTFT (99.9% KV prefix reuse across questions), whereas Med Agent Hub&#x27;s post-answer citation attribution call (424 tokens) evicted the 17.4k chart prefix from slot 0 between cited turns (34.0s median TTFT vs. 3.0s–4.9s after un-cited turns).</p>
+  <p class="summary">17-scenario full-default HIV chart comparison (35 turns per arm, 70 total) on a 64 GB Apple Silicon MacBook running Gemma 4 12B via llama-server (--parallel 1) through the engine-parity wire taps, with end-to-end SSE answer_delta token streaming and stage latency telemetry.</p>
+  <div class="unscored">34/34 scenario×arm cells conformant (70 turns, 0 errors) · Bundled TTFT 1.3s median (9.4s Answer-Done) vs. Hub TTFT 34.0s median (35.9s Answer-Done) on single-slot parallel=1 · 20–30 streamed SSE answer_delta frames/turn</div>
+  
+  </article>
   <article class="card" data-family="wahs">
   <header class="card-head">
     <div class="titles"><span class="family wahs">WA Health Summary · Live Model &amp; KB Team Evaluation</span><h2>What happens when we give the AI enough memory for the whole chart — and does Med Agent Hub still beat calling the model directly?</h2><div class="slug">2 complex ICU &amp; longitudinal patients · 6 clinical questions × 9 setups · 54 graded answers · 5 Nov 2026</div></div>
