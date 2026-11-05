@@ -333,6 +333,8 @@ def _scout_table(scout: list[dict], labels: dict | None = None) -> str:
         rows = []
         for s in bg:
             name, _ = human_arm(s["backend"])
+            if (labels or {}).get(s["backend"]):
+                name = labels[s["backend"]]
             b = s["background"]
             ben = "—" if b.get("benchmark_score") is None else f'{b["benchmark_score"]:.1f}'
             sup = "—" if b.get("support_mean") is None else f'{b["support_mean"]:.1f}'
@@ -340,11 +342,11 @@ def _scout_table(scout: list[dict], labels: dict | None = None) -> str:
             rows.append(f'<tr><td class="arm">{esc(name)}</td><td class="bench">{ben}</td>'
                         f'<td>{b["n_background"]}</td><td>{sup}</td><td>{val}</td>'
                         f'<td>{b.get("new_harm_count", 0)}</td><td>{b.get("padded_count", 0)}</td></tr>')
-        table += ('<h3 style="margin:20px 0 6px;font-size:15px;font-weight:600">In-Depth — scored separately on '
-                  'its own axes (its own parity Benchmark)</h3>'
+        table += ('<details class="indepth-details"><summary>In-Depth — scored separately on '
+                  f'its own axes (its own parity Benchmark · {len(bg)} setups)</summary>'
                   '<table class="scout"><thead><tr><th class="arm">AI setup</th><th>In-Depth Benchmark</th>'
                   '<th>In-depth answers</th><th>Support</th><th>Added value</th><th>Unsafe</th><th>Padded</th>'
-                  '</tr></thead><tbody>' + "".join(rows) + '</tbody></table>')
+                  '</tr></thead><tbody>' + "".join(rows) + '</tbody></table></details>')
     return table
 
 
@@ -378,17 +380,79 @@ def _filter_bar(families: list[str]) -> str:
 
 
 FILTER_JS = (
-    "(function(){var g=document.getElementById('family-filter');if(!g)return;"
-    "var bs=g.querySelectorAll('button');"
-    "function apply(f){document.body.dataset.filter=f;"
-    "bs.forEach(function(b){b.setAttribute('aria-pressed',b.dataset.family===f?'true':'false');});}"
+    "(function(){var g=document.getElementById('family-filter');"
+    "var s=document.getElementById('report-search');"
+    "var d=document.getElementById('density-toggle');"
+    "var countEl=document.getElementById('visible-count');"
+    "var cards=Array.prototype.slice.call(document.querySelectorAll('article.card'));"
+    "var activeFamily='all';"
+    "function updateVisibility(){"
+    "var q=(s&&s.value?s.value.trim().toLowerCase():'');"
+    "var shown=0;"
+    "cards.forEach(function(c){"
+    "var famOk=(activeFamily==='all'||c.dataset.family===activeFamily);"
+    "var qOk=(!q||c.textContent.toLowerCase().indexOf(q)!==-1);"
+    "var vis=(famOk&&qOk);"
+    "c.hidden=!vis;"
+    "if(vis)shown++;"
+    "});"
+    "if(countEl)countEl.textContent=shown+' of '+cards.length+' reports shown';"
+    "}"
+    "if(g){var bs=g.querySelectorAll('button');"
+    "function apply(f){activeFamily=f;document.body.dataset.filter=f;"
+    "bs.forEach(function(b){b.setAttribute('aria-pressed',b.dataset.family===f?'true':'false');});"
+    "updateVisibility();}"
     "g.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;"
     "apply(b.dataset.family);"
     "history.replaceState(null,'',b.dataset.family==='all'?location.pathname:'#'+b.dataset.family);});"
     "var h=location.hash.slice(1),known=false;"
     "bs.forEach(function(b){if(b.dataset.family===h)known=true;});"
-    "apply(known?h:'all');})();"
+    "apply(known?h:'all');}"
+    "if(s){s.addEventListener('input',updateVisibility);"
+    "s.addEventListener('keydown',function(e){if(e.key==='Escape'){s.value='';updateVisibility();}});}"
+    "if(d){d.addEventListener('click',function(){"
+    "var compact=document.body.classList.toggle('compact-catalog');"
+    "d.setAttribute('aria-pressed',compact?'true':'false');"
+    "d.textContent=compact?'Show score tables':'Compact cards';"
+    "});}"
+    "})();"
 )
+
+
+def _card_highlights(scout: list[dict], labels: dict | None = None) -> str:
+    if not scout:
+        return ""
+    labels = labels or {}
+    bench_rows = [s for s in scout if isinstance(s.get("benchmark_score"), (int, float))]
+    pills = []
+    if bench_rows:
+        top = max(bench_rows, key=lambda s: float(s["benchmark_score"]))
+        win_name = labels.get(top["backend"]) or human_arm(top["backend"])[0]
+        pills.append(
+            f'<span class="hl-pill hl-win">★ Best setup: <b>{esc(win_name)}</b> '
+            f'({top["benchmark_score"]:.1f}/100)</span>'
+        )
+    else:
+        acc_rows = [s for s in scout if isinstance(s.get("accuracy_mean"), (int, float))]
+        if acc_rows:
+            top = max(acc_rows, key=lambda s: float(s["accuracy_mean"]))
+            win_name = labels.get(top["backend"]) or human_arm(top["backend"])[0]
+            pills.append(
+                f'<span class="hl-pill hl-win">★ Top accuracy: <b>{esc(win_name)}</b> '
+                f'({top["accuracy_mean"]:.1f}/10)</span>'
+            )
+    total_harm = sum(int(s.get("harm_count") or 0) for s in scout)
+    zero_harm = sum(1 for s in scout if not s.get("harm_count"))
+    if total_harm == 0:
+        pills.append(
+            f'<span class="hl-pill hl-safe">✓ 0 unsafe answers across all {len(scout)} setups</span>'
+        )
+    else:
+        pills.append(
+            f'<span class="hl-pill hl-warn">{zero_harm} of {len(scout)} setups with 0 unsafe answers '
+            f'({total_harm} flagged total)</span>'
+        )
+    return '<div class="card-highlights">' + "".join(pills) + "</div>"
 
 
 def _card(entry: dict) -> str:
@@ -442,82 +506,115 @@ def _card(entry: dict) -> str:
     if g["scout"] and not unavailable:
         statistics = '<div class="report-table-scroll" role="region" aria-label="Recorded score tables" tabindex="0">' + statistics + '</div>'
         statistics += ('<p class="judged-by">' + esc(g["judging"] or "Judge not recorded for this run.") + '</p>')
+    highlights = "" if unavailable else _card_highlights(g["scout"], entry.get("arms"))
     takeaway = (f'<p class="takeaway"><span class="tk">Takeaway</span>{esc(entry["takeaway"])}</p>'
                 if entry.get("takeaway") else "")
     # Earlier runs of the same comparison stay published but are listed under the
     # current one, each with what was different, instead of as identical cards.
     earlier = [e for e in entry.get("earlier") or [] if isinstance(e, dict) and e.get("slug")]
     earlier_html = ("" if not earlier else
-                    '<div class="earlier"><b>Earlier runs of this comparison</b><ul>' + "".join(
+                    f'<details class="earlier"><summary><b>Earlier runs of this comparison</b> ({len(earlier)})</summary><ul>' + "".join(
                         f'<li><a href="{esc(e["slug"])}/index.html">{esc(e.get("label") or e["slug"])}</a>'
                         f'{" " + esc(e["note"]) if e.get("note") else ""}</li>' for e in earlier)
-                    + '</ul></div>')
+                    + '</ul></details>')
     family_label = FAMILY_LABELS.get(family, family)
     if modality_label:
         family_label = f"{family_label} · {modality_label}"
+    summary_html = f'<p class="summary">{esc(entry.get("summary", ""))}</p>' if entry.get("summary") else ""
     return f"""  <article class="card" data-family="{esc(family)}">
   <header class="card-head">
     <div class="titles"><span class="family {esc(family)}">{esc(family_label)}</span><h2>{esc(entry["title"])}</h2><div class="slug">{subtitle}</div></div>
     <div class="links">{"".join(links)}</div>
   </header>
   {f'<p class="report-context">{esc(entry["context"])}</p>' if entry.get("context") else ""}
-  <p class="summary">{esc(entry.get("summary", ""))}</p>
-  {statistics}
+  {highlights}
   {takeaway}
+  {summary_html}
+  {statistics}
   {earlier_html}
   </article>"""
 
 
 _STYLE_CORE = """
-  html[data-theme="light"]{color-scheme:light;--bg:#f6f8fa;--panel:#ffffff;--panel2:#ffffff;--text:#1f2328;--muted:#656d76;
+  html[data-theme="light"]{color-scheme:light;--bg:#f6f8fa;--panel:#ffffff;--panel2:#f8fafc;--text:#1f2328;--muted:#59636e;
     --accent:#0969da;--border:#d0d7de;--harm:#cf222e;--best:#1a7f37;
-    --ink:#1f2328;--btn-fg:#ffffff;--th-bg:#f6f8fa;--bench-bg:rgba(9,105,218,.08);--takeaway-bg:rgba(9,105,218,.06);}
+    --ink:#1f2328;--btn-fg:#ffffff;--th-bg:#f6f8fa;--bench-bg:rgba(9,105,218,.07);--takeaway-bg:rgba(9,105,218,.06);
+    --win-bg:#dafbe1;--win-fg:#116329;--warn-bg:#fff8c5;--warn-fg:#7d4e00;}
   html[data-theme="dark"]{color-scheme:dark;--bg:#0d1117;--panel:#161b22;--panel2:#1c2230;--text:#c9d1d9;--muted:#8b949e;
     --accent:#79c0ff;--border:#30363d;--harm:#f85149;--best:#3fb950;
-    --ink:#ffffff;--btn-fg:#0d1117;--th-bg:rgba(255,255,255,.02);--bench-bg:rgba(121,192,255,.10);--takeaway-bg:rgba(121,192,255,.06);}
+    --ink:#ffffff;--btn-fg:#0d1117;--th-bg:rgba(255,255,255,.03);--bench-bg:rgba(121,192,255,.10);--takeaway-bg:rgba(121,192,255,.07);
+    --win-bg:rgba(46,160,67,.18);--win-fg:#56d364;--warn-bg:rgba(187,128,9,.18);--warn-fg:#e3b341;}
   *{box-sizing:border-box;} body{margin:0;background:var(--bg);color:var(--text);
     font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:36px 24px 72px;}
-  .wrap{max-width:960px;margin:0 auto;}
+  .wrap{max-width:1020px;margin:0 auto;}
   .site-parent{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;padding-right:40px;font-size:14px;}
   .site-parent a{color:var(--accent);text-decoration:underline;text-underline-offset:3px;}
   .report-table-scroll{max-width:100%;overflow-x:auto;}
   .report-table-scroll:focus-visible{outline:3px solid var(--accent);outline-offset:3px;}
-  a:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:3px;}
-  .report-context{font-size:14px;color:var(--muted);border-left:3px solid var(--border);padding-left:12px;}
-  header.page h1{font-size:27px;margin:0 0 10px;color:var(--ink);font-weight:600;}
-  .intro{color:var(--text);font-size:15px;margin:0 0 20px;max-width:760px;}
+  a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px;}
+  .report-context{font-size:13.5px;color:var(--muted);border-left:3px solid var(--border);padding-left:12px;margin:8px 0;}
+  header.page h1{font-size:28px;margin:0 0 8px;color:var(--ink);font-weight:700;letter-spacing:-.01em;}
+  .intro{color:var(--text);font-size:15px;margin:0 0 18px;max-width:820px;}
   .intro b{color:var(--ink);}
-  .legend{background:var(--panel2);border:1px solid var(--border);border-radius:10px;
-    padding:14px 18px;font-size:13.5px;color:var(--muted);margin-bottom:30px;max-width:760px;}
+  .legend{background:var(--panel);border:1px solid var(--border);border-radius:12px;
+    padding:16px 20px;font-size:13.5px;color:var(--muted);margin-bottom:24px;}
   .legend b{color:var(--text);}
-  .filter{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 22px;}
+  .legend-pillars{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:10px;}
+  .legend-pillar{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;}
+  .legend-pillar .lp-k{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:3px;}
+  .legend-pillar .lp-v{font-size:13px;color:var(--text);line-height:1.45;}
+  .legend-more{margin-top:8px;border-top:1px solid var(--border);padding-top:8px;}
+  .legend-more > summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:13px;}
+  .legend-more > p{margin:8px 0 0;line-height:1.55;}
+  .catalog-toolbar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin:0 0 22px;}
+  .filter{display:flex;gap:8px;flex-wrap:wrap;margin:0;}
   .filter button{font:inherit;font-size:13px;font-weight:600;padding:6px 14px;border-radius:999px;
     border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;}
   .filter button[aria-pressed="true"]{background:var(--accent);color:var(--btn-fg);border-color:var(--accent);}
+  .toolbar-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .search-input{font:inherit;font-size:13px;padding:6px 12px;border-radius:999px;border:1px solid var(--border);
+    background:var(--panel);color:var(--text);min-width:220px;}
+  .density-btn{font:inherit;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;
+    border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;}
+  .density-btn[aria-pressed="true"]{background:var(--accent);color:var(--btn-fg);border-color:var(--accent);}
+  .visible-count{font-size:12px;color:var(--muted);}
   body[data-filter="chartsearchai"] .card:not([data-family="chartsearchai"]),
   body[data-filter="catalyst"] .card:not([data-family="catalyst"]),
   body[data-filter="wahs"] .card:not([data-family="wahs"]){display:none;}
-  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px 24px;margin-bottom:22px;}
-  .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:6px;}
-  .titles h2{margin:0;font-size:20px;color:var(--ink);font-weight:600;line-height:1.3;}
-  .family{display:inline-block;margin:0 0 6px;padding:2px 7px;border:1px solid var(--border);
-    border-radius:999px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;}
+  body.compact-catalog .report-table-scroll,
+  body.compact-catalog p.judged-by,
+  body.compact-catalog .summary{display:none;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px 24px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.03);}
+  .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:10px;}
+  .titles{flex:1;min-width:260px;}
+  .titles h2{margin:0;font-size:19.5px;color:var(--ink);font-weight:650;line-height:1.32;}
+  .family{display:inline-block;margin:0 0 6px;padding:2px 8px;border:1px solid var(--border);
+    border-radius:999px;color:var(--muted);font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;}
   .family.catalyst,.family.wahs{color:var(--accent);border-color:var(--accent);}
   .titles .slug{color:var(--muted);font-size:13px;margin-top:4px;}
-  .links{display:flex;gap:8px;flex-wrap:wrap;}
+  .links{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
   .btn{display:inline-block;text-decoration:none;background:var(--accent);color:var(--btn-fg);
     font-weight:600;font-size:13px;padding:7px 14px;border-radius:6px;border:1px solid var(--accent);white-space:nowrap;}
   .btn.ghost{background:transparent;color:var(--accent);}
-  .btn:hover{filter:brightness(1.1);}
-  .summary{color:var(--text);font-size:14.5px;margin:10px 0 16px;max-width:760px;}
-  p.judged-by{margin:8px 0 0;font-size:12.5px;color:var(--muted);}
+  .btn:hover{filter:brightness(1.08);}
+  .card-highlights{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px;}
+  .hl-pill{font-size:12.5px;padding:3px 10px;border-radius:999px;border:1px solid var(--border);background:var(--panel2);color:var(--text);}
+  .hl-pill.hl-win{background:var(--bench-bg);border-color:var(--accent);color:var(--ink);}
+  .hl-pill.hl-safe{background:var(--win-bg);color:var(--win-fg);border-color:transparent;font-weight:600;}
+  .hl-pill.hl-warn{background:var(--warn-bg);color:var(--warn-fg);border-color:transparent;}
+  .takeaway{font-size:14px;color:var(--text);margin:10px 0 12px;background:var(--takeaway-bg);
+    border-left:3px solid var(--accent);padding:10px 14px;border-radius:0 8px 8px 0;line-height:1.55;}
+  .takeaway .tk{display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--accent);font-weight:700;margin-right:8px;}
+  .summary{color:var(--muted);font-size:14px;margin:0 0 14px;max-width:860px;line-height:1.55;}
+  p.judged-by{margin:8px 0 0;font-size:12px;color:var(--muted);}
   table.scout{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--panel2);
-    border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+    border:1px solid var(--border);border-radius:8px;overflow:hidden;font-variant-numeric:tabular-nums;}
   table.scout th,table.scout td{padding:8px 12px;text-align:right;border-bottom:1px solid var(--border);}
   table.scout th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;
     letter-spacing:.04em;background:var(--th-bg);vertical-align:bottom;}
   table.scout th.arm,table.scout td.arm{text-align:left;}
-  table.scout td.arm{color:var(--ink);cursor:help;}
+  table.scout td.arm{color:var(--ink);cursor:help;font-weight:500;}
   table.scout tr:last-child td{border-bottom:none;}
   table.scout td.best{color:var(--best);font-weight:700;}
   table.scout td.harm{color:var(--harm);font-weight:700;}
@@ -525,18 +622,18 @@ _STYLE_CORE = """
   table.scout th.bench,table.scout td.bench{background:var(--bench-bg);
     border-left:2px solid var(--accent);border-right:2px solid var(--accent);}
   table.scout th.bench{color:var(--accent);font-size:11.5px;}
-  table.scout td.bench{color:var(--ink);font-weight:800;font-size:16px;}
+  table.scout td.bench{color:var(--ink);font-weight:800;font-size:15.5px;}
   table.scout td.bench.best{color:var(--best);}
   table.scout tbody tr:last-child td.bench{border-bottom:2px solid var(--accent);}
+  details.indepth-details{margin-top:12px;border:1px solid var(--border);border-radius:8px;padding:8px 12px;background:var(--panel2);}
+  details.indepth-details > summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
+  details.indepth-details > table.scout{margin-top:10px;}
   .unscored{color:var(--muted);font-size:13.5px;font-style:italic;}
-  .takeaway{font-size:14px;color:var(--text);margin:14px 0 0;background:var(--takeaway-bg);
-    border-left:3px solid var(--accent);padding:10px 14px;border-radius:0 6px 6px 0;}
-  .takeaway .tk{display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;
-    color:var(--accent);font-weight:700;margin-right:8px;}
-  .earlier{font-size:13.5px;color:var(--muted);margin:16px 0 0;}
-  .earlier b{color:var(--text);font-weight:600;}
-  .earlier ul{margin:4px 0 0;padding-left:20px;}
-  .earlier a{color:var(--accent);}
+  details.earlier{font-size:13px;color:var(--muted);margin:12px 0 0;border-top:1px solid var(--border);padding-top:10px;}
+  details.earlier > summary{cursor:pointer;color:var(--text);}
+  details.earlier b{color:var(--text);font-weight:600;}
+  details.earlier ul{margin:6px 0 0;padding-left:20px;}
+  details.earlier a{color:var(--accent);}
   footer.page{color:var(--muted);font-size:12px;margin-top:36px;text-align:center;}
 """
 
@@ -600,6 +697,26 @@ def main(
             "complete conversation evidence, and the attached prose review "
             "for the reader to assess."
         )
+    if has_other_reports:
+        legend_html = f"""  <div class="legend">
+    <div class="legend-pillars">
+      <div class="legend-pillar"><div class="lp-k">1 · Headline Benchmark (/100)</div><div class="lp-v">Composite clinical quality score weighting <b>Accuracy</b> &amp; <b>Completeness</b> minus bounded penalties for safety, abstention, and citation errors.</div></div>
+      <div class="legend-pillar"><div class="lp-k">2 · Clinical Axes (0–10)</div><div class="lp-v"><b>Accuracy</b> (facts match chart), <b>Completeness</b> (covers needed context), and <b>Relevance</b> (on-question without padding).</div></div>
+      <div class="legend-pillar"><div class="lp-k">3 · Safety &amp; Grounding Guardrail</div><div class="lp-v"><b>Unsafe answers</b> counts responses with a potential clinical harm flag (lower is better; <b>0</b> is target). Hover a cell for citation details.</div></div>
+    </div>
+    <details class="legend-more"><summary><b>How to read these reports</b> — full scoring methodology &amp; judge provenance</summary><p>{scoring_note}</p></details>
+  </div>"""
+        toolbar_html = f"""  <div class="catalog-toolbar">
+{filter_bar}
+    <div class="toolbar-right">
+      <input id="report-search" class="search-input" type="search" placeholder="Search reports, models, findings…" aria-label="Search reports">
+      <button id="density-toggle" class="density-btn" type="button" aria-pressed="false" title="Toggle between compact takeaway cards and full tables">Compact cards</button>
+      <span id="visible-count" class="visible-count" aria-live="polite">{len(runs)} of {len(runs)} reports shown</span>
+    </div>
+  </div>"""
+    else:
+        legend_html = f'  <div class="legend"><b>How to read these reports.</b> {scoring_note}</div>'
+        toolbar_html = filter_bar
     html = f"""<!doctype html>
 <html lang="en" data-theme="light">
 <head>
@@ -620,8 +737,8 @@ def main(
     <h1>Clinical AI validation runs</h1>
     <p class="intro">{manifest.get("intro", "")}</p>
   </header>
-  <div class="legend"><b>How to read these reports.</b> {scoring_note}</div>
-{filter_bar}
+{legend_html}
+{toolbar_html}
 {cards}
   <footer class="page">These reports describe dated runs, not current deployment or release acceptance. Hover an AI setup name for its model lineup.</footer>
 </div>

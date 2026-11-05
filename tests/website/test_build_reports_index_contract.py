@@ -536,3 +536,36 @@ def test_gather_names_the_judge_under_the_score_table(tmp_path, monkeypatch):
     (unjudged / "meta.json").write_text(json.dumps({"scout": scout}), encoding="utf-8")
     assert bri.gather("older-run")["judging"] == ""
     assert "Judge not recorded for this run." in bri._card({"slug": "older-run", "title": "Older"})
+
+
+def test_card_renders_highlight_pills_takeaway_first_and_collapsible_disclosures(tmp_path, monkeypatch):
+    """Cards lead with winner/safety highlight pills and takeaway before the score table,
+    and fold In-Depth metrics and earlier runs into collapsible details."""
+    bri = _load()
+    reports = tmp_path / "reports"
+    packet = _packet(reports, "lead-run")
+    _packet(reports, "prev-run")
+    (packet / "meta.json").write_text(json.dumps({
+        "scout": [
+            {"backend": "arm-a", "n": 10, "benchmark_score": 65.0, "accuracy_mean": 7.0, "harm_count": 2},
+            {"backend": "arm-b", "n": 10, "benchmark_score": 88.4, "accuracy_mean": 9.2, "harm_count": 0,
+             "background": {"n_background": 10, "benchmark_score": 84.0, "support_mean": 9.1, "added_value_mean": 7.8}},
+        ],
+    }), encoding="utf-8")
+    monkeypatch.setattr(bri, "REPORTS", reports)
+    html = bri._card({
+        "slug": "lead-run",
+        "title": "Lead Run",
+        "arms": {"arm-a": "Baseline", "arm-b": "Leader"},
+        "takeaway": "Leader wins by +23.4 points with zero harm.",
+        "earlier": [{"slug": "prev-run", "label": "Previous run", "note": "Superseded."}],
+    })
+    assert 'class="card-highlights"' in html
+    assert "★ Best setup: <b>Leader</b> (88.4/100)" in html
+    assert "1 of 2 setups with 0 unsafe answers (2 flagged total)" in html
+    # Takeaway appears before the score table
+    assert html.index('class="takeaway"') < html.index('class="scout"')
+    # In-Depth and earlier runs are rendered inside collapsible <details>
+    assert '<details class="indepth-details">' in html
+    assert '<details class="earlier">' in html
+

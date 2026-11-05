@@ -4,27 +4,45 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>WAHS+ Slice 5 Report — Local Model Selection (1.5B–35B), Prompt Engineering &amp; Orchestrated KB Agent Teams</title>
+  <script>(function(){try{var t=localStorage.getItem('oc-theme-wahs-eval');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}})();</script>
   <style>
-    :root {
-      --bg: #f8fafc; --surface: #ffffff; --text: #0f172a; --muted: #475569;
+    html[data-theme="light"] {
+      color-scheme: light;
+      --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9; --text: #0f172a; --muted: #475569;
       --border: #e2e8f0; --accent: #7c3aed; --emerald: #059669;
+      --badge-bg: #f3e8ff; --badge-fg: #6d28d9; --badge-border: #d8b4fe;
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0d1117; --surface: #161b22; --surface2: #21262d; --text: #e6edf3; --muted: #8b949e;
+      --border: #30363d; --accent: #a78bfa; --emerald: #3fb950;
+      --badge-bg: rgba(167,139,250,0.15); --badge-fg: #c4b5fd; --badge-border: rgba(167,139,250,0.4);
     }
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 2rem 1.25rem 4rem; line-height: 1.6; }
+    .theme-toggle { position: fixed; top: 14px; right: 16px; z-index: 50; width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; }
     .container { max-width: 1120px; margin: 0 auto; }
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04); }
-    .badge { display: inline-block; padding: 0.22rem 0.65rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; background: #f3e8ff; color: #6d28d9; border: 1px solid #d8b4fe; }
+    .badge { display: inline-block; padding: 0.22rem 0.65rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; background: var(--badge-bg); color: var(--badge-fg); border: 1px solid var(--badge-border); }
     h1 { font-size: 1.85rem; margin: 0.5rem 0 0.5rem; letter-spacing: -0.02em; }
     h2 { font-size: 1.28rem; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
     table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-top: 0.75rem; }
     th, td { border-bottom: 1px solid var(--border); padding: 0.65rem 0.6rem; text-align: left; vertical-align: top; }
-    th { background: #f1f5f9; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
-    code { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; background: #f1f5f9; padding: 0.1rem 0.35rem; border-radius: 4px; }
+    th { background: var(--surface2); font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    code { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; background: var(--surface2); padding: 0.1rem 0.35rem; border-radius: 4px; }
     .nav-bar { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; font-size: 0.88rem; }
     .nav-bar a { color: var(--accent); text-decoration: none; font-weight: 600; }
     .btn-dash { display: inline-block; background: var(--accent); color: #fff; padding: 0.55rem 1rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.88rem; margin-top: 0.5rem; }
+    html[data-theme="dark"] .btn-dash { color: #0d1117; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+    .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+    .kpi .lbl { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+    .kpi .val { font-size: 1.45rem; font-weight: 800; color: var(--text); margin: 4px 0 2px; }
+    .kpi .val.good { color: var(--emerald); }
+    .kpi .sub { font-size: 0.8rem; color: var(--muted); line-height: 1.35; }
   </style>
 </head>
 <body>
+  <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle light or dark mode" title="Toggle light / dark">&#9790;</button>
   <main class="container">
     <nav class="nav-bar" aria-label="Report navigation">
       <a href="/">&larr; All OpenClinAI Reports</a>
@@ -44,6 +62,29 @@
         <strong>(4) 4-Agent Orchestrated WAHS+ KB Team (<code>team-wahs-kb</code>)</strong>.
       </p>
       <a class="btn-dash" href="dashboard.html">Open Interactive Per-Question Model &amp; Citation Inspector (dashboard.html) &rarr;</a>
+    </div>
+
+    <div class="kpi-grid" aria-label="Executive summary highlights">
+      <div class="kpi">
+        <div class="lbl">Leading Architecture</div>
+        <div class="val good">88.6 / 100</div>
+        <div class="sub"><strong>4-Agent Orchestrated KB Team</strong> (+8.6 pts over raw single-pass, 10.0/10 entailment &amp; completeness).</div>
+      </div>
+      <div class="kpi">
+        <div class="lbl">Cross-Family Verification</div>
+        <div class="val">83.1 / 100</div>
+        <div class="sub"><code>Gemma 4 12B</code> Writer + <code>Qwen 3.5 9B</code> Reviewer resolves multi-source stage/note conflicts in a 4k window.</div>
+      </div>
+      <div class="kpi">
+        <div class="lbl">Privacy &amp; Safety Guardrail</div>
+        <div class="val good">0 leaks</div>
+        <div class="sub">Zero privacy leaks and 100% grounded abstention across all 4 architectures and 128 evaluation cells.</div>
+      </div>
+      <div class="kpi">
+        <div class="lbl">Mean Local Latency</div>
+        <div class="val">2.1s&ndash;3.3s</div>
+        <div class="sub">Runs 100% locally on 64 GB Apple Silicon (<code>2,112 ms</code> single pass to <code>3,319 ms</code> 4-agent team).</div>
+      </div>
     </div>
 
     <div class="card">
@@ -98,5 +139,23 @@
       </table>
     </div>
   </main>
+  <script>
+    (function(){
+      var btn = document.getElementById('theme-toggle');
+      if (!btn) return;
+      function sync() {
+        var cur = document.documentElement.dataset.theme || 'light';
+        btn.textContent = cur === 'dark' ? '\u2600' : '\u263E';
+      }
+      sync();
+      btn.addEventListener('click', function() {
+        var cur = document.documentElement.dataset.theme || 'light';
+        var next = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = next;
+        try { localStorage.setItem('oc-theme-wahs-eval', next); } catch(e) {}
+        sync();
+      });
+    })();
+  </script>
 </body>
 </html>
