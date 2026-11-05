@@ -292,7 +292,15 @@ def _scout_table(scout: list[dict], labels: dict | None = None) -> str:
             '<th>Accuracy</th><th>Completeness</th><th>Relevance</th>'
             '<th>Unsafe<br>answers</th></tr></thead><tbody>')
     body = []
-    for s in scout:
+    ordered_scout = sorted(
+        scout,
+        key=lambda s: (
+            s.get("benchmark_score") if isinstance(s.get("benchmark_score"), (int, float)) else -1.0,
+            s.get("accuracy_mean") if isinstance(s.get("accuracy_mean"), (int, float)) else -1.0,
+        ),
+        reverse=True,
+    )
+    for s in ordered_scout:
         name, detail = human_arm(s["backend"])
         if (labels or {}).get(s["backend"]):
             name, detail = labels[s["backend"]], s["backend"]

@@ -11,6 +11,8 @@
 # Static OpenClinAI hosts. Product routing uses separate deployment configuration.
 {$CADDY_SITE::80} {
     root * /srv/landing
+    redir /wahs/demo https://wahs-demo.openclinai.org/ 302
+    redir /wahs/demo/ https://wahs-demo.openclinai.org/ 302
     file_server
 }
 
@@ -22,10 +24,14 @@
 
 {$CADDY_SITE_WAHS::8092} {
     root * /srv/landing/wahs
+    redir /demo https://wahs-demo.openclinai.org/ 302
+    redir /demo/ https://wahs-demo.openclinai.org/ 302
+    redir /wahs/* https://openclinai.org{uri} 302
     file_server
 }
 
 {$CADDY_SITE_WAHS_DEMO::8093} {
     root * /srv/landing/wahs/demo
+    redir /wahs/* https://openclinai.org{uri} 302
     file_server
 }
