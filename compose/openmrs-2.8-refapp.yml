@@ -203,6 +203,8 @@ services:
       # points configured model roles at the llama.cpp router on the host.
       LLM_BASE_URL: ${MED_AGENT_LLM_BASE_URL:-http://host.docker.internal:8077}
       LLM_TEMPERATURE: ${MED_AGENT_TEMPERATURE:-0.0}
+      LLAMA_MODEL_DIR: /app/models
+      LLAMA_MODELS_MANIFEST: /app/server/llama-router.models.tsv
       HUB_SSE_HEARTBEAT_SECONDS: ${HUB_SSE_HEARTBEAT_SECONDS:-0.5}
       # Run-wide reference-date anchor for the hub's temporal grounding (the "now" for
       # "most recent"/recency/series). Since the demo data is date-transplanted to land
@@ -225,6 +227,9 @@ services:
     volumes:
       - ../targets/med-agent-hub/server/prompts:/app/server/prompts:ro
       - ../targets/med-agent-hub/server/levels.yaml:/app/server/levels.yaml:ro
+      - ../scripts/llama-router.models.tsv:/app/server/llama-router.models.tsv:ro
+      - ../landing/wahs/demo:/app/server/static/wahs_demo:ro
+      - ${LLAMA_MODEL_DIR:-${HOME}/.cache/llama-router-models}:/app/models:rw
       # Writable: per-turn reasoning-trace JSONL the live dashboard renders (team._write_trace).
       - ../artifacts/hub-trace:/app/trace:rw
   db:
