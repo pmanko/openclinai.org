@@ -5,8 +5,8 @@
     {
       "slug": "2026-10-31-wahs-live-model-team-eval",
       "title": "WA Health Summary (WAHS) Slice 5: Local Model Selection (1.5B\u201335B), Prompt Engineering & Orchestrated KB Agent Teams",
-      "summary": "Evaluates seven open-weight local GGUF models (1.5B to 35B on 64 GB Apple Silicon via llama-router) across a 3-stage clinical screening funnel and compares four prompt-engineering and multi-agent architectures over condensed FHIR R4 charts (32 clinical cases \u00d7 4 architectures = 128 cells): (1) Single-Pass Raw Condensed (no pre-attached KB rules); (2) Single-Pass + 4-Layer KB Alerts & Temporal Anchors (dry_multiplier = 0); (3) Cross-Family Checked Single Pass (Gemma 4 12B writer + Qwen 3.5 9B reviewer + narrow citation grounder); and (4) 4-Agent Orchestrated WAHS+ KB Team (Router + Medication/RxNorm, Lab/KDIGO, and ACIP Immunization specialists + Plain-Language Patient Synthesizer).",
-      "takeaway": "A single LLM pass over the condensed chart alone (single-raw-condensed, 80.0/100, 17/32 pass) misses cross-clinic brand-vs-generic duplicates (Plavix vs. Clopidogrel, Prinivil vs. Lisinopril) and subtle CDC ACIP age-at-initiation rules unless RxNorm ingredient and ACIP rule annotations are pre-attached. Injecting the 4-Layer KB alerts + temporal anchors with dry_multiplier=0 (single-kb-augmented) raises the score to 80.7/100 (24/32 pass), while single-xcheck-labeled (83.1/100, 29/32 pass) and team-wahs-kb (88.6/100, 32/32 pass) add cross-family claim verification, zero external_share privacy leaks, and lower Flesch-Kincaid reading grade (13.6 vs 17.0\u201317.3).",
+      "summary": "Screens seven local open-weight GGUF models (1.5B\u201335B on 64 GB Apple Silicon) and compares four architectures across 32 condensed FHIR R4 clinical cases (128 cells): raw condensed single pass, 4-Layer KB-augmented single pass, cross-family checked single pass (Gemma 4 12B + Qwen 3.5 9B), and a 4-agent orchestrated WAHS+ KB specialist team.",
+      "takeaway": "The 4-agent WAHS+ KB team led at 88.6/100 (32/32 pass, 0 privacy leaks) and improved patient readability (FK grade 13.6 vs 17.0+). A raw single pass over the condensed chart (80.0/100, 17/32 pass) missed cross-clinic brand-vs-generic duplicates and ACIP vaccine timing rules; injecting 4-Layer KB alerts raised pass rate to 24/32 (80.7/100), and cross-family review reached 29/32 (83.1/100).",
       "family": "wahs",
       "arms": {
         "team-wahs-kb": "4-Agent Orchestrated WAHS+ KB Team (Router + Med/Lab/ACIP Specialists + Patient Synthesizer)",
@@ -15,15 +15,15 @@
         "single-raw-condensed": "Single Pass over Raw Condensed FHIR Ledger Only (Gemma 4 12B, No Pre-Attached KB Rules)"
       },
       "guide": {
-        "label": "Interactive Per-Question Model & Citation Dashboard",
-        "url": "https://reports.openclinai.org/2026-10-31-wahs-live-model-team-eval/dashboard.html"
+        "label": "Interactive Patient & Clinician Demo",
+        "url": "https://wahs-demo.openclinai.org/"
       }
     },
     {
       "slug": "2026-10-31-wahs-condensation-ablation",
-      "title": "WA Health Summary (WAHS) Slices 3 & 4: Condensation-Tier Information-Loss Ablation, Hybrid Full-Chart Lookup & Messy Multi-EHR Cohort",
-      "summary": "Measures the information-loss curve across five FHIR R4 condensation and retrieval setups (16k Tier 1, 8k Tier 2, 4k Tier 3, 2k Static Tier 4, and 2k + On-Demand Full-Chart Lookup Tools; 32 cases \u00d7 5 arms = 160 cells) stratified across four question horizons (Current Active State, 24-Month Trend, Full-Text Note / Perioperative Detail, and Deep Historical / Abstention). Also evaluates Pathway A Set C (messy multi-source bundles with 25% stripped clinical codes and free-text note vs. active medication contradictions) and Pathway B (de-identified real clinical summary fixtures modeled on MIMIC-IV cardiorenal discharge and SMART IPS transition records with 40%\u201360% uncoded entries).",
-      "takeaway": "Static Tier 4 (2,048 tokens) retains 100% recall on Current Active State IPS core facts and 24-Month Trends, but drops historical inpatient perioperative details (scoring 70.4/100 overall and 18/32 cases passed when restricted to the static 2k capsule). Enabling the read-only overflow lookup tools (search_chart_entries, get_lab_history, read_clinical_note) recovers 100.0% of deep historical and perioperative facts (88.6/100, 32/32 cases passed, matching or exceeding static 16k/8k at 88.5/100) while keeping the base prompt inside 2,048 tokens and enforcing 0 privacy leaks in external_share mode. Across messy and real clinical summary bundles where pre-coded lookup drops to 40%\u201384.5%, Layer 2/3 text and ingredient normalization recovers 97.3%\u2013100.0% of clinical concepts.",
+      "title": "WA Health Summary (WAHS) Slices 3 & 4: Condensation-Tier Information-Loss Ablation & Hybrid Full-Chart Lookup",
+      "summary": "Measures the information-loss curve across five FHIR R4 condensation and retrieval setups (16k Tier 1 down to 2k Static Tier 4, plus 2k + On-Demand Full-Chart Lookup Tools; 160 cells) across four clinical time horizons, alongside messy multi-EHR and de-identified MIMIC-IV/IPS hospital transition cohorts.",
+      "takeaway": "Static Tier 4 (2,048 tokens) retains 100% of active IPS facts and 24-month trends (70.4/100, 18/32 pass) but drops deep inpatient perioperative notes. Adding read-only overflow lookup tools recovers 100% of deep historical facts (88.6/100, 32/32 pass, matching 16k static at 88.5/100) while keeping the base prompt inside 2,048 tokens with zero external-share privacy leaks.",
       "family": "wahs",
       "arms": {
         "wahs-tier1-16k-static": "Tier 1 (16,384 tokens \u00b7 Static In-Context)",
@@ -33,15 +33,15 @@
         "wahs-tier4-2k-hybrid-tools": "Tier 4 (2,048 tokens \u00b7 IPS Core + On-Demand Full-Chart Lookup Tools)"
       },
       "guide": {
-        "label": "Interactive Patient & Clinician Demo (wahs-demo.openclinai.org)",
+        "label": "Interactive Patient & Clinician Demo",
         "url": "https://wahs-demo.openclinai.org/"
       }
     },
     {
       "slug": "2026-10-30-wahs-phase2-eval",
       "title": "WA Health Summary (WAHS) Phase 2: Multi-Clinic FHIR R4 Chart Condensation, Conflict Reconciliation & Privacy-Segmented Sharing",
-      "summary": "Evaluates whether our deterministic 5-Tier FHIR R4 chart condenser and 4-Layer clinical rule engine can shrink multi-clinic health exports (up to 18.4 MB / 3.52M tokens per patient) into compact, source-linked summaries while catching cross-provider conflicts and redacting sensitive records on external share. Tested across six synthetic patient bundles (Maurice Auer, Lamar Beer, and Byron Emard in clean single-clinic Set A and multi-clinic perturbed Set B cohorts) and 32 clinical test cases covering: (1) cross-clinic medication, condition, allergy, and vaccine conflict detection; (2) hospital/ICU and longitudinal summarization; (3) sensitive SDOH/privacy redaction under 42 CFR Part 2 and WA My Health My Data Act; and (4) source-linked Q&A with explicit 'not in chart' abstention.",
-      "takeaway": "At this Phase 2 deterministic verification stage, the condensed chart + clinical rule pipeline passed 32/32 cases across all three token budgets (scoring 88.6/100 across the 8,000-token, 4,000-token, and 2,000-token budgets; 96/96 total cells passed). Condensing Maurice Auer's 53-year, 18.36 MB chart reduces token volume by 99.64%\u201399.94% while keeping 100% of active allergies, medications, and conditions, catching all 15/15 injected cross-clinic conflicts with clickable [N] -> resourceUuid record links, preventing 100% of sensitive SDOH leaks in external_share mode, and abstaining on 6/6 unrecorded facts. Section 09 of the report documents a candid methodological audit and the Phase 3 plan for live open-weight LLM evaluation.",
+      "summary": "Evaluates deterministic 5-Tier FHIR R4 chart condensation and 4-Layer clinical rule verification on multi-clinic exports (up to 18.4 MB / 3.52M tokens) across six synthetic patient bundles and 32 clinical scenarios covering cross-clinic conflict detection, longitudinal summarization, 42 CFR Part 2 / WA MHMDA privacy redaction, and source-linked Q&A.",
+      "takeaway": "Deterministic verification passed 32/32 cases across all three token budgets (88.6/100 at 8k, 4k, and 2k tokens), shrinking a 53-year, 18.36 MB chart by 99.64%\u201399.94% while retaining 100% of active allergies, medications, and conditions, catching 15/15 cross-clinic conflicts, and preventing 100% of sensitive SDOH leaks on external share.",
       "family": "wahs",
       "arms": {
         "wahs-5tier-4layer-kb-8k": "Condensed Chart + Clinical Rules (8,000-token budget)",
@@ -49,16 +49,25 @@
         "wahs-5tier-4layer-kb-2k": "Emergency Summary Core + Clinical Rules (2,000-token budget)"
       },
       "guide": {
-        "label": "Interactive UX (wahs-demo.openclinai.org)",
+        "label": "Interactive Patient & Clinician Demo",
         "url": "https://wahs-demo.openclinai.org/"
       }
     },
     {
       "slug": "l5-full-default-2026-10-26-dffe15e9",
-      "title": "Full evaluation full-default, 2026-10-26 (dffe15e9)",
-      "summary": "Full evaluation (L5) of the full-default comparison on the assembled local stack: 3 setups across 17 scenarios (105 results, 51 arm\u00d7scenario judged cells).",
-      "takeaway": "",
-      "family": "chartsearchai"
+      "title": "Bundled ChartSearchAI vs. the Hub on one shared 12B engine (dual-judge evaluation)",
+      "summary": "Seventeen multi-turn scenarios across three HIV patients (35 turns per setup) comparing ChartSearchAI's bundled answer path against the Hub's answer-only and checked 12B profiles on the same Gemma 4 12B engine, scored by two independent LLM judges (Claude Opus 5.5 and GPT-6 Astra).",
+      "takeaway": "Both Hub profiles outperformed bundled ChartSearchAI by ~26 points on the same 12B engine: Hub checked led at 82.0/100 (accuracy 8.9) and Hub answer-only scored 81.6/100, versus 55.2/100 for bundled ChartSearchAI (which made 8 date errors and 2 confabulations without temporal anchors or guideline checks).",
+      "family": "chartsearchai",
+      "arms": {
+        "engine-parity-bundled-12b": "Bundled ChartSearchAI",
+        "engine-parity-hub-answer-12b": "Hub, answer only",
+        "hub-profile-single-12b-checked": "Hub, checked"
+      },
+      "guide": {
+        "label": "How the answer paths differ",
+        "url": "https://openclinai.org/chartsearchai/comparing-answer-paths/"
+      }
     },
     {
       "slug": "l5-full-default-2026-10-22-d0e4e2d8",

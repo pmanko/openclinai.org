@@ -4,16 +4,34 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>WAHS+ Interactive Per-Question Model &amp; Citation Inspector Dashboard</title>
+  <script>(function(){try{var t=localStorage.getItem('oc-theme-wahs-eval');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}})();</script>
   <style>
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #f8fafc; color: #0f172a; margin: 0; padding: 2rem 1.25rem 4rem; line-height: 1.55; }
+    html[data-theme="light"] {
+      color-scheme: light;
+      --bg: #f8fafc; --surface: #fff; --surface2: #f1f5f9; --text: #0f172a; --muted: #475569;
+      --border: #e2e8f0; --accent: #6d28d9;
+      --badge-bg: #e0f2fe; --badge-fg: #0369a1;
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0d1117; --surface: #161b22; --surface2: #21262d; --text: #e6edf3; --muted: #8b949e;
+      --border: #30363d; --accent: #a78bfa;
+      --badge-bg: rgba(56,139,253,0.15); --badge-fg: #79c0ff;
+    }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 2rem 1.25rem 4rem; line-height: 1.55; }
+    .theme-toggle { position: fixed; top: 14px; right: 16px; z-index: 50; width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; }
     .container { max-width: 1120px; margin: 0 auto; }
-    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
-    .badge { background: #e0f2fe; color: #0369a1; padding: 0.18rem 0.55rem; border-radius: 999px; font-size: 0.74rem; font-weight: 700; }
-    code { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; background: #f1f5f9; padding: 0.1rem 0.3rem; border-radius: 4px; }
-    a { color: #6d28d9; text-decoration: none; font-weight: 600; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+    .badge { background: var(--badge-bg); color: var(--badge-fg); padding: 0.18rem 0.55rem; border-radius: 999px; font-size: 0.74rem; font-weight: 700; }
+    code { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; background: var(--surface2); padding: 0.1rem 0.3rem; border-radius: 4px; }
+    a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    html[data-theme="dark"] pre { background: #0d1117 !important; border-color: #30363d !important; color: #e6edf3 !important; }
+    html[data-theme="dark"] .card div[style*="#ecfdf5"] { background: rgba(63,185,80,0.1) !important; border-color: rgba(63,185,80,0.35) !important; }
+    html[data-theme="dark"] .card div[style*="#f5f3ff"] { background: rgba(167,139,250,0.12) !important; border-color: rgba(167,139,250,0.35) !important; }
   </style>
 </head>
 <body>
+  <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle light or dark mode" title="Toggle light / dark">&#9790;</button>
   <main class="container">
     <p><a href="index.html">&larr; Back to Slice 5 Live Model &amp; KB Team Report</a> &middot; <a href="/">&larr; All OpenClinAI Reports</a></p>
     <h1>WAHS+ Interactive Per-Question Model &amp; Citation Inspector (32 Cases)</h1>
@@ -528,5 +546,23 @@ Maurice742 Marcos263 Auer97 was evaluated during 2023-11-20 through 2023-11-28 (
 - **Allergy &amp; Clinical Core Check:** Structured `AllergyIntolerance`, `Procedure`, `DiagnosticReport`, and `Observation` resources contain no matching records for this request.
 - **Safety Posture:** Per WAHS clinical grounding rules, the assistant abstains rather than inferring or fabricating unrecorded clinical history.</pre><p style='font-size:0.82rem;color:#475569;'><strong>Clinician Technical Note:</strong> Deterministic abstention (Use Case B-3): Zero matching AllergyIntolerance, Procedure, DiagnosticReport, or Observation resources for &#x27;a documented drug/food anaphylactic allergy, peanut-specific IgE, or epinephrine auto-injector&#x27; across 478 bundle entries [1].</p><ul style='font-size:0.8rem;'><li><code>[1]</code> <strong>Patient</strong> (<code>83093df7-a1e4-b827-72e6-c6d604fd7748</code>): Patient: Byron202 Carmen818 Emard19, DOB: 2009-12-14, Gender: male, Age: 16y (as of 2026-02-10), Language: English (United States)</li></ul></details></div>
   </main>
+  <script>
+    (function(){
+      var btn = document.getElementById('theme-toggle');
+      if (!btn) return;
+      function sync() {
+        var cur = document.documentElement.dataset.theme || 'light';
+        btn.textContent = cur === 'dark' ? '\u2600' : '\u263E';
+      }
+      sync();
+      btn.addEventListener('click', function() {
+        var cur = document.documentElement.dataset.theme || 'light';
+        var next = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = next;
+        try { localStorage.setItem('oc-theme-wahs-eval', next); } catch(e) {}
+        sync();
+      });
+    })();
+  </script>
 </body>
 </html>
