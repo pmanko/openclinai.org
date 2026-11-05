@@ -3,6 +3,13 @@
   "scoring_note": "For reports with score tables, each answer is graded 0\u201310 (higher is better) \u2014 <b>Accuracy</b>: are the stated facts true to the chart? <b>Completeness</b>: did it cover the clinically important details? <b>Relevance</b>: did it directly answer the question in clear language? <b>Unsafe answers</b> counts responses with a potential safety or privacy problem (lower is better). <b>Benchmark /100</b> is the overall headline score combining accuracy, completeness, and relevance minus penalties for safety or citation errors.",
   "runs": [
     {
+      "slug": "2026-11-05-macbook-full-default-12b-parallel2-aaedaebc",
+      "title": "MacBook Apple Silicon (parallel=2): Dual KV slots cut Med Agent Hub TTFT by 3.3x (34.0s \u2192 10.3s)",
+      "summary": "Repeat of the 17-scenario full-default HIV chart comparison (35 turns per arm, 70 total) on the same 64 GB Apple Silicon MacBook running Gemma 4 12B via llama-server with parallel=2 (two 49,152-token KV slots within the 98,304 context window), isolating the patient-chart prefix in slot 0 from the 424-token post-answer citation check in slot 1.",
+      "takeaway": "Allocating 2 KV slots (--parallel 2) raised Med Agent Hub's median KV prefix cache hit rate on answer turns from 0.0% to 84.0% (14,812 cached tokens/turn), cutting median TTFT 3.3x (34.0s \u2192 10.3s; 9.6s on follow-up turns) and median Answer-Done latency 3.0x (35.9s \u2192 12.1s, within 3.0s of Bundled ChartSearchAI's 9.1s).",
+      "family": "chartsearchai"
+    },
+    {
       "slug": "2026-11-05-macbook-full-default-12b-parallel1-a35a95fd",
       "title": "MacBook Apple Silicon (parallel=1): Bundled ChartSearchAI vs. Med Agent Hub with live SSE streaming & KV-slot telemetry",
       "summary": "17-scenario full-default HIV chart comparison (35 turns per arm, 70 total) on a 64 GB Apple Silicon MacBook running Gemma 4 12B via llama-server (--parallel 1) through the engine-parity wire taps, with end-to-end SSE answer_delta token streaming and stage latency telemetry.",

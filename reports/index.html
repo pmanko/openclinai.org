@@ -127,13 +127,25 @@
     <details class="legend-more"><summary><b>How to read these reports</b> — full scoring methodology &amp; judge provenance</summary><p>For reports with score tables, each answer is graded 0–10 (higher is better) — <b>Accuracy</b>: are the stated facts true to the chart? <b>Completeness</b>: did it cover the clinically important details? <b>Relevance</b>: did it directly answer the question in clear language? <b>Unsafe answers</b> counts responses with a potential safety or privacy problem (lower is better). <b>Benchmark /100</b> is the overall headline score combining accuracy, completeness, and relevance minus penalties for safety or citation errors.</p></details>
   </div>
   <div class="catalog-toolbar">
-  <div class="filter" id="family-filter" role="group" aria-label="Show reports for"><button type="button" data-family="all" aria-pressed="true">All reports (28)</button><button type="button" data-family="chartsearchai" aria-pressed="false">ChartSearchAI (19)</button><button type="button" data-family="wahs" aria-pressed="false">WA Health Summary (6)</button><button type="button" data-family="catalyst" aria-pressed="false">Catalyst SQL (3)</button></div>
+  <div class="filter" id="family-filter" role="group" aria-label="Show reports for"><button type="button" data-family="all" aria-pressed="true">All reports (29)</button><button type="button" data-family="chartsearchai" aria-pressed="false">ChartSearchAI (20)</button><button type="button" data-family="wahs" aria-pressed="false">WA Health Summary (6)</button><button type="button" data-family="catalyst" aria-pressed="false">Catalyst SQL (3)</button></div>
     <div class="toolbar-right">
       <input id="report-search" class="search-input" type="search" placeholder="Search reports, models, findings…" aria-label="Search reports">
       <button id="density-toggle" class="density-btn" type="button" aria-pressed="false" title="Toggle between compact takeaway cards and full tables">Compact cards</button>
-      <span id="visible-count" class="visible-count" aria-live="polite">28 of 28 reports shown</span>
+      <span id="visible-count" class="visible-count" aria-live="polite">29 of 29 reports shown</span>
     </div>
   </div>
+  <article class="card" data-family="chartsearchai">
+  <header class="card-head">
+    <div class="titles"><span class="family chartsearchai">ChartSearchAI</span><h2>MacBook Apple Silicon (parallel=2): Dual KV slots cut Med Agent Hub TTFT by 3.3x (34.0s → 10.3s)</h2><div class="slug">Aloice Beiywa Mukangu + Zabella Talai Halambe + Ellcky Ikatwa Minayo · 70 graded answers · 5 Nov 2026</div></div>
+    <div class="links"><a class="btn" href="2026-11-05-macbook-full-default-12b-parallel2-aaedaebc/index.html">Full report</a><a class="btn ghost" href="2026-11-05-macbook-full-default-12b-parallel2-aaedaebc/dashboard.html">Interactive dashboard</a></div>
+  </header>
+  
+  
+  <p class="takeaway"><span class="tk">Takeaway</span>Allocating 2 KV slots (--parallel 2) raised Med Agent Hub&#x27;s median KV prefix cache hit rate on answer turns from 0.0% to 84.0% (14,812 cached tokens/turn), cutting median TTFT 3.3x (34.0s → 10.3s; 9.6s on follow-up turns) and median Answer-Done latency 3.0x (35.9s → 12.1s, within 3.0s of Bundled ChartSearchAI&#x27;s 9.1s).</p>
+  <p class="summary">Repeat of the 17-scenario full-default HIV chart comparison (35 turns per arm, 70 total) on the same 64 GB Apple Silicon MacBook running Gemma 4 12B via llama-server with parallel=2 (two 49,152-token KV slots within the 98,304 context window), isolating the patient-chart prefix in slot 0 from the 424-token post-answer citation check in slot 1.</p>
+  <div class="unscored">34/34 scenario×arm cells conformant (70 turns, 0 errors) · With parallel=2 (2 KV slots), Hub median KV cache hit jumped from 0.0% to 84.0% (14,812 cached tokens), cutting Hub median TTFT from 34.0s to 10.3s (3.3x faster) and median Answer-Done from 35.9s to 12.1s (vs. 9.1s Bundled)</div>
+  
+  </article>
   <article class="card" data-family="chartsearchai">
   <header class="card-head">
     <div class="titles"><span class="family chartsearchai">ChartSearchAI</span><h2>MacBook Apple Silicon (parallel=1): Bundled ChartSearchAI vs. Med Agent Hub with live SSE streaming &amp; KV-slot telemetry</h2><div class="slug">Aloice Beiywa Mukangu + Zabella Talai Halambe + Ellcky Ikatwa Minayo · 70 graded answers · 5 Nov 2026</div></div>
