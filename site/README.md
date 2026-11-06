@@ -55,8 +55,9 @@ Copy `.env.website.example` to the ignored `.env.website` and set the hostnames,
 TLS contact and published ports. `scripts/publish-landing.sh` updates only
 `landing/` and `compose/website/`, using Compose project `openclinai-website`.
 `--landing-only` changes content without changing configuration or restarting a
-service. Media referenced on the Catalyst demo host is checked before and after
-publication; HTML/CSS/sitemap bytes are compared with the live output.
+service. HTML/CSS/sitemap bytes are compared with the live output. Recordings
+and large screenshots are uploaded separately to the `openclinai-media` bucket
+(see [landing/README.md](../landing/README.md)); publication does not copy them.
 
 Report publication consumes an already rendered, reviewed/redacted evidence
 packet containing `report.html`, its relative assets/evidence and recorded run

@@ -29,8 +29,6 @@ if [ "${PUBLISH_MODE}" = "full" ] && [ ! -f "${ROOT}/.env.website" ]; then
   exit 1
 fi
 
-# Recordings and screenshots are linked on the Catalyst demo host, which is
-# often stopped; its availability is not a condition for publishing these pages.
 IP="$(gcp_vm_ip)"
 gcp_ssh_keygen_once
 if [ "${PUBLISH_MODE}" = "--landing-only" ]; then
@@ -41,9 +39,8 @@ fi
 
 SSH_TRANSPORT="ssh -i ${GCP_SSH_KEY} -o StrictHostKeyChecking=accept-new"
 echo "==> syncing tested landing files only"
-# No -L: the recordings are no longer symlinked into this tree at all. They are
-# served by the Catalyst demo host, and landing/index.html links to them there,
-# so landing/ carries only text and the small hand-made poster images.
+# Recordings live in the openclinai-media bucket, so landing/ carries only text
+# and small hand-made images; nothing here is a symlink to follow.
 rsync -avz --delete -e "${SSH_TRANSPORT}" \
   "${ROOT}/landing/" \
   "${GCP_SSH_USER}@${IP}:${GCP_REMOTE_REPO}/landing/"
