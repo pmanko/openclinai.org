@@ -369,6 +369,7 @@ validate-dashboard:
 
 validate-run: validate-dashboard
 	HUB_ANCHOR=$(REFERENCE_DATE) $(MAKE) med-agent-hub-up
+	CHARTSEARCHAI_REFERENCE_DATE=$(REFERENCE_DATE) CHARTSEARCH_HUB_ENDPOINT_URL=$${CHARTSEARCH_HUB_ENDPOINT_URL:-http://med-agent-hub:8080/v1/chat/completions} $(MAKE) chartsearch-configure
 	$(UV) --directory $(HARNESS) run harness-cli validate run $(SET) --reference-date $(REFERENCE_DATE) \
 		--trace-file "$(TRACE_FILE)" $(if $(VALIDATE_DATA_ROOT),--data-root "$(VALIDATE_DATA_ROOT)") \
 		$(if $(CORPUS_PROVENANCE),--corpus-provenance "$(CORPUS_PROVENANCE)",) \
