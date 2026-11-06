@@ -42,7 +42,9 @@ DEFAULT_GPU_MODELS = (
     "ollama/qwen2.5:14b,"
     "ollama/qwen3:8b,"
     "ollama/qwen3:4b,"
+    "ollama/llama3.2:3b,"
     "ollama/llama3.1:8b,"
+    "ollama/hermes3:8b,"
     "ollama/mistral-nemo:12b,"
     "ollama/mistral:7b,"
     "ollama/granite3.3:8b,"
@@ -70,8 +72,12 @@ GPU_MODEL_ALIASES: Dict[str, str] = {
     "wahs-qwen35-9b-raw": "ollama/qwen3:8b",
     "wahs-qwen3-4b-kb": "ollama/qwen3:4b",
     "wahs-qwen3-4b-raw": "ollama/qwen3:4b",
+    "wahs-llama32-3b-kb": "ollama/llama3.2:3b",
+    "wahs-llama32-3b-raw": "ollama/llama3.2:3b",
     "wahs-llama31-8b-kb": "ollama/llama3.1:8b",
     "wahs-llama31-8b-raw": "ollama/llama3.1:8b",
+    "wahs-hermes3-8b-kb": "ollama/hermes3:8b",
+    "wahs-hermes3-8b-raw": "ollama/hermes3:8b",
     "wahs-mistral-nemo-12b-kb": "ollama/mistral-nemo:12b",
     "wahs-mistral-nemo-12b-raw": "ollama/mistral-nemo:12b",
     "wahs-granite33-8b-kb": "ollama/granite3.3:8b",
@@ -95,8 +101,12 @@ GPU_MODEL_ALIASES: Dict[str, str] = {
     "qwen3:8b": "ollama/qwen3:8b",
     "qwen3-4b": "ollama/qwen3:4b",
     "qwen3:4b": "ollama/qwen3:4b",
+    "llama-3.2-3b": "ollama/llama3.2:3b",
+    "llama3.2:3b": "ollama/llama3.2:3b",
     "llama-3.1-8b": "ollama/llama3.1:8b",
     "llama3.1:8b": "ollama/llama3.1:8b",
+    "hermes3-8b": "ollama/hermes3:8b",
+    "hermes3:8b": "ollama/hermes3:8b",
     "mistral-nemo-12b": "ollama/mistral-nemo:12b",
     "mistral-nemo:12b": "ollama/mistral-nemo:12b",
     "mistral:7b": "ollama/mistral:7b",
@@ -118,7 +128,9 @@ INTERNAL_ROUTER_ADVERTISED_ALIASES: Tuple[str, ...] = (
     "qwen2.5-14b",
     "qwen3.5-9b",
     "qwen3-4b",
+    "llama-3.2-3b",
     "llama-3.1-8b",
+    "hermes3-8b",
     "mistral-nemo-12b",
     "granite-3.3-8b",
 )
@@ -144,8 +156,12 @@ FALLBACK_CLOUD_HUB_PROFILES: Tuple[Tuple[str, str, str, str, int], ...] = (
     ("wahs-qwen35-9b-raw", "WAHS+ Qwen 3 8B (UW GPU) Raw Condensed Chart", "qwen3.5-9b", "qwen", 71),
     ("wahs-qwen3-4b-kb", "WAHS+ Qwen 3 4B (UW GPU) + 4-Layer Clinical KB", "qwen3-4b", "qwen", 75),
     ("wahs-qwen3-4b-raw", "WAHS+ Qwen 3 4B (UW GPU) Raw Condensed Chart", "qwen3-4b", "qwen", 76),
+    ("wahs-llama32-3b-kb", "WAHS+ Llama 3.2 3B (UW GPU) + 4-Layer Clinical KB", "llama-3.2-3b", "llama", 78),
+    ("wahs-llama32-3b-raw", "WAHS+ Llama 3.2 3B (UW GPU) Raw Condensed Chart", "llama-3.2-3b", "llama", 79),
     ("wahs-llama31-8b-kb", "WAHS+ Llama 3.1 8B (UW GPU) + 4-Layer Clinical KB", "llama-3.1-8b", "llama", 80),
     ("wahs-llama31-8b-raw", "WAHS+ Llama 3.1 8B (UW GPU) Raw Condensed Chart", "llama-3.1-8b", "llama", 81),
+    ("wahs-hermes3-8b-kb", "WAHS+ Hermes 3 Llama-3.1 8B (UW GPU) + 4-Layer Clinical KB", "hermes3-8b", "llama", 82),
+    ("wahs-hermes3-8b-raw", "WAHS+ Hermes 3 Llama-3.1 8B (UW GPU) Raw Condensed Chart", "hermes3-8b", "llama", 83),
     ("wahs-mistral-nemo-12b-kb", "WAHS+ Mistral Nemo 12B (UW GPU) + 4-Layer Clinical KB", "mistral-nemo-12b", "mistral", 85),
     ("wahs-mistral-nemo-12b-raw", "WAHS+ Mistral Nemo 12B (UW GPU) Raw Condensed Chart", "mistral-nemo-12b", "mistral", 86),
     ("wahs-granite33-8b-kb", "WAHS+ Granite 3.3 8B (UW GPU) + 4-Layer Clinical KB", "granite-3.3-8b", "granite", 90),
@@ -211,8 +227,22 @@ GPU_MODEL_LABELS: Dict[str, Dict[str, Any]] = {
         "context_length": 131072,
         "sweet_spot_tokens": 12288,
     },
+    "ollama/llama3.2:3b": {
+        "label": "Llama 3.2 3B Instruct (UW GPU)",
+        "family": "llama",
+        "parameter_size": "3.2B",
+        "context_length": 131072,
+        "sweet_spot_tokens": 12288,
+    },
     "ollama/llama3.1:8b": {
         "label": "Llama 3.1 8B Instruct (UW GPU)",
+        "family": "llama",
+        "parameter_size": "8.0B",
+        "context_length": 131072,
+        "sweet_spot_tokens": 16384,
+    },
+    "ollama/hermes3:8b": {
+        "label": "Hermes 3 Llama-3.1 8B (UW GPU)",
         "family": "llama",
         "parameter_size": "8.0B",
         "context_length": 131072,
@@ -330,14 +360,47 @@ def extract_auth_token(headers: Mapping[str, str]) -> str:
 
 def resolve_gpu_model_id(raw_model: str) -> str:
     clean = str(raw_model or "").strip()
-    if clean.startswith(("wahs-kb:", "wahs-raw:")):
+    if clean.startswith(("wahs-kb:", "wahs-raw:", "wahs-direct-kb:")):
         _, _, clean = clean.partition(":")
         clean = clean.strip()
+    elif clean.endswith("-direct-kb"):
+        clean = clean[:-10] + "-kb"
     if clean in GPU_MODEL_ALIASES:
         return GPU_MODEL_ALIASES[clean]
     if clean.startswith("ollama/"):
         return clean
     return f"ollama/{clean}" if ":" in clean and "/" not in clean else clean
+
+
+def _inject_dynamic_ollama_num_ctx(payload: Dict[str, Any], upstream_model: str) -> None:
+    """Automatically expand Ollama's `num_ctx` when total estimated tokens exceed default window."""
+    if not upstream_model.startswith("ollama/"):
+        return
+    if "num_ctx" in payload:
+        return
+    msgs = payload.get("messages") or []
+    total_chars = sum(
+        len(str(m.get("content") or ""))
+        for m in msgs
+        if isinstance(m, dict)
+    )
+    est_prompt_tokens = int(total_chars / 3.2) + 256
+    max_out = int(payload.get("max_tokens") or 4096)
+    needed = est_prompt_tokens + max_out
+    if needed <= 28672:
+        return
+    model_max = int((GPU_MODEL_LABELS.get(upstream_model) or {}).get("context_length") or 131072)
+    if needed <= 65536:
+        target_ctx = 65536
+    elif needed <= 131072:
+        target_ctx = 131072
+    else:
+        target_ctx = 262144
+    target_ctx = min(target_ctx, model_max)
+    payload["num_ctx"] = target_ctx
+    opts = dict(payload.get("options") or {})
+    opts.setdefault("num_ctx", target_ctx)
+    payload["options"] = opts
 
 
 def _http_get_json(
@@ -965,6 +1028,7 @@ class RelayRequestHandler(BaseHTTPRequestHandler):
                     if fb_msgs and isinstance(fb_msgs[-1].get("content"), str) and "/no_think" not in fb_msgs[-1]["content"]:
                         fb_msgs[-1]["content"] = fb_msgs[-1]["content"].rstrip() + " /no_think"
                         fb_payload["messages"] = fb_msgs
+                _inject_dynamic_ollama_num_ctx(fb_payload, fb_model)
                 fallback_req = urllib.request.Request(
                     f"{cfg['base_url']}/v1/chat/completions",
                     data=json.dumps(fb_payload).encode("utf-8"),
@@ -999,6 +1063,7 @@ class RelayRequestHandler(BaseHTTPRequestHandler):
                 if up_msgs and isinstance(up_msgs[-1].get("content"), str) and "/no_think" not in up_msgs[-1]["content"]:
                     up_msgs[-1]["content"] = up_msgs[-1]["content"].rstrip() + " /no_think"
                     upstream_payload["messages"] = up_msgs
+            _inject_dynamic_ollama_num_ctx(upstream_payload, upstream_model)
 
             upstream_url = f"{cfg['base_url']}/v1/chat/completions"
             upstream_headers = {
