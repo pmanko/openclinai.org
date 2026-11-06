@@ -225,7 +225,7 @@
       </nav>
       <p class="section-kicker">Washington Health Summary (WAHS) · Architecture &amp; Empirical Strategy</p>
       <h1>How WAHS connects open-weight AI to patient health records safely and fast.</h1>
-      <p class="overview-lead">When a patient asks a question about their health history in Washington Health Summary (Woz/WAHS), how should the system give the AI the right medical context without exposing other patients' records, running out of memory on large charts, or making the user wait? This page summarizes the three approaches evaluated by the UW CIRG &amp; WAHS team, shows what our live benchmarks across 9 open-weight models already prove, and outlines the pilot architecture.</p>
+      <p class="overview-lead">When a patient asks a question about their health history in Washington Health Summary (WAHS), how should the system give the AI the right medical context without exposing other patients' records, running out of memory on large charts, or making the user wait? This page summarizes the three approaches evaluated by the UW CIRG &amp; WAHS team, shows what our live benchmarks across 9 open-weight models already prove, and outlines the pilot architecture.</p>
       <p class="strategy-meta">Updated November 2026 · UW CIRG &amp; WAHS Architecture Synthesis · Backed by <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">972-run Multi-Family Benchmark</a> &amp; <a href="../../med-agent-hub/wahs-architecture/index.html">Med Agent Hub Engine</a></p>
       <div class="project-actions">
         <a class="button button-primary" href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">Read the 9-model benchmark report <span aria-hidden="true">→</span></a>
@@ -243,47 +243,47 @@
     </section>
 
     <section class="strategy-section page-width" id="three-approaches" aria-labelledby="approaches-title">
-      <p class="section-kicker">Section 1 · Three Strategies Under Consideration</p>
-      <h2 id="approaches-title">Condense first, retrieve what doesn’t fit, and keep the AI inside one patient’s boundary</h2>
-      <p>Raw FHIR health records are notoriously verbose: a single multi-year synthetic patient chart reaches <strong>18–19 MB</strong> (~1.35 million tokens of raw JSON), and real longitudinal patient exports can reach <strong>100–200 MB</strong> with hundreds of free-text clinical notes. Rather than treating chart condensation, retrieval (RAG), and semantic search as mutually exclusive, they form a staged pipeline.</p>
+      <p class="section-kicker">Section 1 · Three Architectural Approaches Under Comparison</p>
+      <h2 id="approaches-title">Condense into context, retrieve long notes via semantic search, or dynamically query FHIR</h2>
+      <p>Raw FHIR health records are notoriously verbose: a single multi-year synthetic patient chart reaches <strong>18–19 MB</strong> (~1.35 million tokens of raw JSON), and real longitudinal patient exports can reach <strong>100–200 MB</strong> with hundreds of free-text clinical notes. The WAHS team is comparing three architectural options—selecting <strong>Full-Chart Condensation</strong> as the first pilot iteration while running head-to-head evaluations against dynamic FHIR querying and semantic search over long notes.</p>
 
       <div class="strategy-grid-3">
         <article class="strategy-card recommended">
-          <span class="strategy-badge">Approach 1 · Pilot Target (Implemented)</span>
-          <h3>Condense into Context + Targeted Overflow Recovery</h3>
-          <p>The WAHS engine fetches the logged-in patient’s authorized FHIR bundle once, shrinks it by <strong>90%–99%</strong> into a clean clinical ledger with <span class="code-inline">[N]</span> source links, attaches automated clinical conflict checks, and pulls in any older notes or labs matching the user’s question.</p>
+          <span class="strategy-badge">Option 1 · First Pilot Iteration</span>
+          <h3>Condense FHIR Record into Context</h3>
+          <p>The WAHS engine grabs the logged-in patient’s authorized FHIR bundle once, shrinks it by <strong>90%–99%</strong> into a clean clinical ledger with <span class="code-inline">[N]</span> source links, attaches automated clinical conflict checks, and sends it with the prompt in a single AI call.</p>
           <ul>
-            <li><strong>Immediate streaming:</strong> Everything happens in ~100 ms before a single AI call, so answers stream right away.</li>
-            <li><strong>No missed codes:</strong> Deterministic clinical rules map terms like <em>“diabetes tests”</em> to HbA1c, glucose, and kidney labs without relying on a small AI model to guess LOINC codes.</li>
-            <li><strong>Strict patient boundary:</strong> The AI never queries a shared database directly; it only sees the single patient’s pre-scoped bundle.</li>
+            <li><strong>Immediate streaming:</strong> Everything happens in ~100 ms inside the engine before a single AI call, so answers stream right away.</li>
+            <li><strong>No missed LOINC codes:</strong> Deterministic clinical rules map terms like <em>“diabetes tests”</em> to HbA1c, glucose, and kidney labs without requiring a small AI model to write raw FHIR queries.</li>
+            <li><strong>Strict patient boundary:</strong> The AI only ever sees the single patient’s pre-scoped bundle.</li>
           </ul>
         </article>
 
         <article class="strategy-card">
-          <span class="strategy-badge secondary">Approach 2 · Hybrid Extension (For 100–200 MB Charts)</span>
-          <h3>Semantic Search Over Long Clinical Notes</h3>
-          <p>Free-text clinical notes (such as 4,000- to 14,000-word palliative care, oncology, or hospital discharge notes) carry the richest context in a chart but cannot all fit verbatim in an 8k summary.</p>
+          <span class="strategy-badge secondary">Option 2 · Unstructured Data &amp; 100–200 MB Charts</span>
+          <h3>Embeddings &amp; RAG for Long Clinical Notes</h3>
+          <p>Free-text clinical notes (such as 4,000- to 14,000-token palliative care, oncology, or hospital discharge notes) carry the most valuable context in a chart, and real patient exports can reach 100–200 MB.</p>
           <ul>
-            <li><strong>Combines with Approach 1:</strong> Keep the structured 8k condensed summary (allergies, active meds, problems, recent labs) in context, and index the patient’s long free-text notes in memory.</li>
-            <li><strong>Question-targeted excerpts:</strong> When a question asks about a past hospitalization or specialist note, retrieve the top matching note paragraphs with their <span class="code-inline">[N]</span> source citations.</li>
-            <li><strong>Single-patient scope:</strong> Embeddings are computed or cached strictly within the authenticated patient’s record.</li>
+            <li><strong>Combines with Option 1:</strong> Condense the structured core chart (allergies, active meds, problems, recent labs) into context, and use embeddings / RAG for the long unstructured notes that do not fit.</li>
+            <li><strong>Question-targeted excerpts:</strong> When a question asks about a past hospitalization or specialist note, retrieve the top matching note sections with their <span class="code-inline">[N]</span> source citations.</li>
+            <li><strong>Single-patient scope:</strong> Embeddings and retrieval remain strictly scoped to the authenticated patient’s record.</li>
           </ul>
         </article>
 
         <article class="strategy-card">
-          <span class="strategy-badge future">Approach 3 · Future Multi-Agent Stage</span>
-          <h3>Live Agentic FHIR Querying (MCP / Tool Calls)</h3>
-          <p>An AI agent translates the user’s question into clinical terminology (LOINC, SNOMED CT, RxNorm), queries a live FHIR server for matching resources, condenses the returned FHIR JSON, and answers.</p>
+          <span class="strategy-badge future">Option 3 · Under Active Evaluation</span>
+          <h3>Dynamic Agentic FHIR Querying (MCP / API)</h3>
+          <p>For a question like <em>“Have I had any labs for my diabetes?”</em>, the model identifies relevant clinical concepts, translates them into LOINC / SNOMED codes, queries the FHIR endpoint for those observations, and condenses the returned FHIR response.</p>
           <ul>
-            <li><strong>Why defer past the pilot:</strong> Smaller open-weight models frequently miss relevant LOINC codes when writing raw FHIR queries, and raw FHIR responses still have to be condensed before the model can read them.</li>
-            <li><strong>Security &amp; audit bar:</strong> Pooled records often link multiple clinic IDs under one master patient ID; letting an AI generate live FHIR queries requires strict query-scoping guardrails first.</li>
-            <li><strong>Multi-step latency:</strong> Requires an orchestrator + retrieval team with visible UI progress steps.</li>
+            <li><strong>Terminology challenge for smaller models:</strong> Larger frontier models know LOINC/FHIR syntax natively, whereas smaller open-weight models often need an injected knowledge base or a specialist retrieval agent to translate clinical questions into codes accurately.</li>
+            <li><strong>Retrieved FHIR still needs condensation:</strong> Raw FHIR query responses remain token-heavy and benefit from engine-side condensation before synthesis.</li>
+            <li><strong>Security &amp; multi-agent UX:</strong> Requires strict query guardrails across pooled multi-clinic patient IDs, plus UI progress steps for multi-agent orchestration + retrieval.</li>
           </ul>
         </article>
       </div>
 
       <div class="strategy-callout">
-        <strong>Why combining Approach 1 + Approach 2 gives the best pilot foundation:</strong> Even when an AI retrieves records via RAG, raw FHIR JSON is too bulky to hand directly to the model. Having the WAHS engine condense what fits into the core summary and pull question-relevant clinical notes from the same patient’s pre-scoped bundle delivers RAG’s scalability without exposing the FHIR server to model-generated queries.
+        <strong>How the approaches fit together:</strong> These three options are complementary rather than mutually exclusive. Even when records are retrieved dynamically via FHIR queries or semantic search, raw FHIR JSON is costly in tokens and needs condensation. Starting the pilot with <strong>Option 1 (Condense what fits into context)</strong> while benchmarking <strong>Option 2 (Note embeddings)</strong> and <strong>Option 3 (Dynamic FHIR querying)</strong> on smaller models gives WAHS a fast, secure pilot today and a clear path for 100–200 MB records.
       </div>
     </section>
 
@@ -307,15 +307,15 @@
               <td><strong>Yes — 90% to 99.4% token reduction with 100% safety-core retention.</strong> Our deterministic condenser strips FHIR syntax boilerplate, deduplicates repeated lab panels into compact timelines, and prioritizes the HL7 International Patient Summary (IPS) safety core (allergies, active medications, active problems, implants). On an 18.8 MB chart, lossless structural condensation cuts tokens by &gt;90%, and grouped clinical condensation fits the core chart into <strong>8,000 tokens (99.4% reduction)</strong> while recording every omitted item in a completeness manifest.</td>
               <td>
                 <a href="https://reports.openclinai.org/2026-10-30-wahs-phase2-eval/index.html">Phase 2 Condensation Report →</a><br />
-                <a href="https://github.com/pmanko/med-agent-hub/blob/s6/wahs-w29-kb-fixes/server/fhir/condenser.py"><code>condenser.py</code> on GitHub →</a>
+                <a href="https://github.com/pmanko/med-agent-hub/blob/main/server/fhir/condenser.py"><code>condenser.py</code> on GitHub →</a>
               </td>
             </tr>
             <tr>
               <td><strong>2. What happens if a patient asks about a diabetes lab or hospital note that was squeezed out of the condensed summary?</strong></td>
-              <td><strong>Pre-call overflow recovery wins back +19 to +21 benchmark points.</strong> When older labs or long clinical notes are omitted at tighter budgets, the engine’s <em>Tier-0 Overflow Recovery</em> searches the patient’s full uncondensed record for the concepts in the user’s question and attaches the matching records with <span class="code-inline">[N]</span> citations before calling the AI. On compact 1k summaries, this raised Gemma 4 12B scores from <strong>47.0/100 (Direct AI) to 68.2/100 (Med Agent Hub, 0 unsafe answers)</strong>.</td>
+              <td><strong>Pre-call overflow lookup wins back +19 to +21 benchmark points.</strong> When older labs or long clinical notes are omitted at tighter budgets, the engine’s <em>Full-Chart Overflow Lookup</em> searches the patient’s full uncondensed record for the concepts in the user’s question and attaches the matching records with <span class="code-inline">[N]</span> citations before calling the AI. On compact 1k summaries, this raised Gemma 4 12B scores from <strong>47.0/100 (Direct AI) to 68.2/100 (Med Agent Hub, 0 unsafe answers)</strong>.</td>
               <td>
                 <a href="https://reports.openclinai.org/2026-11-04-wahs-macbook-direct-vs-hub-multi-scenario-eval/index.html">MacBook 96k vs. Hub Report →</a><br />
-                <a href="https://github.com/pmanko/med-agent-hub/blob/s6/wahs-w29-kb-fixes/server/fhir/wahs_tools.py"><code>wahs_tools.py</code> on GitHub →</a>
+                <a href="https://github.com/pmanko/med-agent-hub/blob/main/server/fhir/wahs_tools.py"><code>wahs_tools.py</code> on GitHub →</a>
               </td>
             </tr>
             <tr>
@@ -323,7 +323,7 @@
               <td><strong>Injecting clinical rules helps every model ≥ 4B, and pairing rules with a patient relationship graph helps even more.</strong> Across 972 runs on 36 clinical accuracy &amp; privacy scenarios, adding static clinical rules (<em>Direct + KB</em>) improved accuracy and reduced unsafe answers across all three model families. Routing through the full <em>Med Agent Hub</em> (which links each patient’s problems, medications, lab trends, and conflicting clinic notes into a compact graph before generation) delivered an even larger jump — cutting unsafe answers by <strong>43% to 71%</strong>.</td>
               <td>
                 <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">9-Model × 3-Pathway Report →</a><br />
-                <a href="https://github.com/pmanko/med-agent-hub/blob/s6/wahs-w29-kb-fixes/server/fhir/clinical_graph.py"><code>clinical_graph.py</code> on GitHub →</a>
+                <a href="https://github.com/pmanko/med-agent-hub/blob/main/server/fhir/clinical_graph.py"><code>clinical_graph.py</code> on GitHub →</a>
               </td>
             </tr>
             <tr>
@@ -443,12 +443,12 @@
 
     <section class="strategy-section page-width" id="pilot-architecture" aria-labelledby="arch-title">
       <p class="section-kicker">Section 4 · Pilot System Architecture</p>
-      <h2 id="arch-title">How Woz, the WAHS Engine, and the UW GPU server fit together</h2>
-      <p>Following the team’s architecture review, the WAHS pilot separates responsibilities across three clean layers so the FHIR store stays standard, the Woz frontend stays simple, and the GPU server only runs model inference.</p>
+      <h2 id="arch-title">How the WAHS Frontend, the WAHS Engine, and the UW GPU server fit together</h2>
+      <p>Following the team’s architecture review, the WAHS pilot separates responsibilities across three clean layers so the FHIR store stays standard, the WAHS frontend stays simple, and the GPU server only runs model inference.</p>
 
       <div class="flow-diagram" role="region" aria-label="WAHS Pilot Architecture Flow">
-[1. Woz Frontend &amp; Auth Proxy]
-   • Patient logs in; Woz auth proxy enforces patient-scoped FHIR access (master patient ID)
+[1. WAHS Frontend &amp; Auth Proxy]
+   • Patient logs in; WAHS auth proxy enforces patient-scoped FHIR access (master patient ID)
    • Simple Chat Tab sends OpenAI-format request (conversation history + patient context)
           │
           ▼  (OpenAI REST /v1/chat/completions, stream=true)
@@ -469,7 +469,7 @@
           <span class="strategy-badge">Security &amp; Access Control</span>
           <h3>Enforcing the single-patient boundary before any AI call</h3>
           <ul>
-            <li><strong>Scoped at login:</strong> Existing authentication proxies in Woz enforce OAuth scopes and resolve a patient’s pooled records (across clinics that may use different local medical record numbers under one master patient ID) <em>before</em> the WAHS Engine processes the bundle.</li>
+            <li><strong>Scoped at login:</strong> Existing authentication proxies in WAHS enforce OAuth scopes and resolve a patient’s pooled records (across clinics that may use different local medical record numbers under one master patient ID) <em>before</em> the WAHS Engine processes the bundle.</li>
             <li><strong>No cross-patient query surface:</strong> In the pilot, the AI model never writes database queries against a multi-patient FHIR server; all condensation, clinical rule checks, and note lookups run strictly inside the logged-in patient’s isolated bundle.</li>
             <li><strong>Screen-sharing &amp; sensitive history controls:</strong> Patients can toggle 42 CFR Part 2 / WA My Health My Data Act segmentation, and the engine automatically withholds sensitive social/survey entries when a caregiver or bystander is viewing the screen.</li>
           </ul>
@@ -479,7 +479,7 @@
           <span class="strategy-badge secondary">Multi-Turn Memory &amp; Fast Streaming UX</span>
           <h3>Instant follow-up answers via GPU prefix caching</h3>
           <ul>
-            <li><strong>Multi-turn from day one:</strong> The Woz chat interface passes the conversation history with each turn so patients can ask natural follow-up questions.</li>
+            <li><strong>Multi-turn from day one:</strong> The WAHS chat interface passes the conversation history with each turn so patients can ask natural follow-up questions.</li>
             <li><strong>Prefix-cached chart memory:</strong> By placing the static <span class="code-inline">[1]...[N]</span> condensed patient chart at the very top of the prompt and appending turn-specific rule alerts and chat turns below it, the GPU server reuses its cached memory (KV cache) across follow-up questions for the same patient.</li>
             <li><strong>Transparent progress cues:</strong> Single-call streaming starts almost immediately for the pilot; as multi-step retrieval or specialist checks are added later, lightweight status steps (<em>“Checking medication conflicts…”</em>, <em>“Reading discharge note…”</em>) keep the user informed.</li>
           </ul>
@@ -490,14 +490,14 @@
     <section class="strategy-section page-width" id="action-plan" aria-labelledby="plan-title">
       <p class="section-kicker">Section 5 · Next Steps &amp; Staged Development Plan</p>
       <h2 id="plan-title">Immediate action items and horizon roadmap</h2>
-      <p>With the condensation pipeline, 4-Layer Clinical KB, patient relationship graph, and 9-model benchmark complete, our next development cycle focuses on five concrete deliverables to bring the live chat experience into Woz.</p>
+      <p>With the condensation pipeline, 4-Layer Clinical KB, patient relationship graph, and 9-model benchmark complete, our next development cycle focuses on six concrete deliverables to launch the pilot chat experience in WAHS and evaluate retrieval strategies for larger records.</p>
 
       <div class="strategy-table-wrap">
         <table class="strategy-table">
           <thead>
             <tr>
               <th style="width: 8%;">Step</th>
-              <th style="width: 28%;">Workstream &amp; Owner</th>
+              <th style="width: 28%;">Workstream</th>
               <th style="width: 44%;">Concrete Deliverable</th>
               <th style="width: 20%;">Status / Reference</th>
             </tr>
@@ -505,33 +505,39 @@
           <tbody>
             <tr>
               <td><strong>1</strong></td>
-              <td><strong>Share Condensation &amp; Graph Code for Team Review</strong><br /><span style="color: var(--muted); font-size: 12.5px;">Piotr → Justin &amp; WAHS Team</span></td>
+              <td><strong>Share Condensation &amp; Graph Code for Team Review</strong></td>
               <td>Share the non-destructive FHIR condenser (<span class="code-inline">condenser.py</span>), clinical entity extractor (<span class="code-inline">extractors.py</span>), and pre-generation clinical graph (<span class="code-inline">clinical_graph.py</span>) alongside the 972-run benchmark report.</td>
-              <td><span class="safe-pill">Ready Today</span><br /><a href="https://github.com/pmanko/med-agent-hub/tree/s6/wahs-w29-kb-fixes/server/fhir"><code>server/fhir/</code> repo →</a></td>
+              <td><span class="safe-pill">Ready Today</span><br /><a href="https://github.com/pmanko/med-agent-hub/tree/main/server/fhir"><code>server/fhir/</code> repo →</a></td>
             </tr>
             <tr>
               <td><strong>2</strong></td>
-              <td><strong>Extract Simplified WAHS Engine from Med Agent Hub</strong><br /><span style="color: var(--muted); font-size: 12.5px;">Piotr</span></td>
-              <td>Package a clean, standalone WAHS Engine service (free of legacy OpenMRS/Catalyst routes) exposing an OpenAI-compatible <span class="code-inline">POST /v1/chat/completions</span> streaming endpoint and <span class="code-inline">[N]</span> FHIR citation metadata for Woz.</td>
-              <td><span class="score-pill">Next Up (Stage W31)</span></td>
+              <td><strong>Extract Simplified WAHS Engine from Med Agent Hub</strong></td>
+              <td>Package a clean, standalone WAHS Engine service (free of legacy OpenMRS/Catalyst routes) that accepts OpenAI-format requests from the WAHS frontend, condenses the patient’s authorized FHIR bundle in the engine, and streams responses from the UW GPU server.</td>
+              <td><span class="score-pill">Pilot Iteration 1</span></td>
             </tr>
             <tr>
               <td><strong>3</strong></td>
-              <td><strong>Build Streaming Chat Tab in Woz &amp; Align API</strong><br /><span style="color: var(--muted); font-size: 12.5px;">Daniel &amp; Piotr</span></td>
-              <td>Build a dedicated open-ended Chat tab in Woz with streamed text output, clickable <span class="code-inline">[N]</span> source record drawers, progress indicators, and evaluated patterns for session history/export.</td>
-              <td><span class="score-pill">Next Up (Stage W31)</span></td>
+              <td><strong>Build Open-Ended Streaming Chat Tab in WAHS</strong></td>
+              <td>Build a dedicated, open-ended Chat tab in the WAHS web application (text input + immediate streamed output via OpenAI REST spec) and evaluate pre-built frontend patterns for conversation history persistence and export.</td>
+              <td><span class="score-pill">Pilot Iteration 1</span></td>
             </tr>
             <tr>
               <td><strong>4</strong></td>
-              <td><strong>Lock Session Memory &amp; GPU KV Prefix Caching</strong><br /><span style="color: var(--muted); font-size: 12.5px;">Ivan &amp; Piotr</span></td>
-              <td>Align on multi-turn session handling between the WAHS Engine and UW GPU server (fixed chart prefix layout + Ollama session keep-alive / prefix cache reuse) so follow-up questions on the same patient stream with near-zero prefill delay.</td>
-              <td><span class="score-pill">Next Up (Stage W31)</span></td>
+              <td><strong>Align on Session Memory &amp; GPU Prefix Caching</strong></td>
+              <td>Compare Ollama session IDs, LiteLLM session/caching capabilities, and repeated context with fixed chart prefixes so follow-up questions on the same patient leverage GPU-side caching without duplicating proxy logic.</td>
+              <td><span class="score-pill">Pilot Iteration 1</span></td>
             </tr>
             <tr>
               <td><strong>5</strong></td>
-              <td><strong>Real-Patient Long-Note &amp; 100 MB+ Record Stress Testing</strong><br /><span style="color: var(--muted); font-size: 12.5px;">WAHS Team + Dave DeBronckart</span></td>
-              <td>Expand test coverage with fuller real-world patient exports and long (4,000–14,000 token) palliative/specialty notes, adding single-patient semantic note chunk retrieval alongside the 8k condensed summary.</td>
-              <td><span class="strategy-badge future">Stage W32</span></td>
+              <td><strong>Benchmark Condensation vs. Dynamic FHIR Querying &amp; Note RAG</strong></td>
+              <td>Run head-to-head evaluations on smaller open-weight models comparing full-chart condensation against dynamic FHIR querying (translating clinical questions like <em>“Have I had any labs for my diabetes?”</em> into LOINC queries and condensing returned observations) and specialist multi-agent retrieval.</td>
+              <td><span class="strategy-badge secondary">Next Evaluation</span></td>
+            </tr>
+            <tr>
+              <td><strong>6</strong></td>
+              <td><strong>Real-Patient Long-Note (4k–14k Tokens) &amp; 100 MB+ Record Testing</strong></td>
+              <td>Expand test coverage with fuller real-world patient exports and long (4,000–14,000 token) palliative/specialty notes, combining core chart condensation with single-patient semantic note chunk retrieval.</td>
+              <td><span class="strategy-badge future">Phase 2 Expansion</span></td>
             </tr>
           </tbody>
         </table>
