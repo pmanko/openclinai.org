@@ -4,17 +4,25 @@
   "runs": [
     {
       "slug": "2026-11-05-macbook-full-default-12b-parallel2-aaedaebc",
-      "title": "MacBook Apple Silicon (parallel=2): Dual KV slots cut Med Agent Hub TTFT by 3.3x (34.0s \u2192 10.3s)",
-      "summary": "Repeat of the 17-scenario full-default HIV chart comparison (35 turns per arm, 70 total) on the same 64 GB Apple Silicon MacBook running Gemma 4 12B via llama-server with parallel=2 (two 49,152-token KV slots within the 98,304 context window), isolating the patient-chart prefix in slot 0 from the 424-token post-answer citation check in slot 1.",
-      "takeaway": "Allocating 2 KV slots (--parallel 2) raised Med Agent Hub's median KV prefix cache hit rate on answer turns from 0.0% to 84.0% (14,812 cached tokens/turn), cutting median TTFT 3.3x (34.0s \u2192 10.3s; 9.6s on follow-up turns) and median Answer-Done latency 3.0x (35.9s \u2192 12.1s, within 3.0s of Bundled ChartSearchAI's 9.1s).",
-      "family": "chartsearchai"
+      "title": "MacBook Apple Silicon (parallel=2): Dual KV slots cut Med Agent Hub TTFT by 3.3x (34.0s \u2192 10.3s) while maintaining zero-harm lead",
+      "summary": "17-scenario full-default HIV chart comparison (35 turns per arm, 70 total) on a 64 GB Apple Silicon MacBook running Gemma 4 12B via llama-server with parallel=2 (two 49,152-token KV slots within the 98,304 context window), scored by a blinded dual-judge panel (claude-opus-5-5 + gpt-6-astra).",
+      "takeaway": "Med Agent Hub (79.8/100, 0 harm, 0 confabulations) beat Bundled ChartSearchAI (75.9/100, 1 harm, 1 confabulation) on both clinical judges (77.5 vs. 73.3 on Claude; 82.8 vs. 80.2 on Codex), while parallel=2 raised Hub's median KV cache hit rate from 0.0% to 84.0% and cut median TTFT 3.3x (34.0s \u2192 10.3s) and Answer-Done 3.0x (35.9s \u2192 12.1s).",
+      "family": "chartsearchai",
+      "arms": {
+        "engine-parity-bundled-12b": "Bundled ChartSearchAI",
+        "engine-parity-hub-answer-12b": "Hub, answer only"
+      }
     },
     {
       "slug": "2026-11-05-macbook-full-default-12b-parallel1-a35a95fd",
       "title": "MacBook Apple Silicon (parallel=1): Bundled ChartSearchAI vs. Med Agent Hub with live SSE streaming & KV-slot telemetry",
       "summary": "17-scenario full-default HIV chart comparison (35 turns per arm, 70 total) on a 64 GB Apple Silicon MacBook running Gemma 4 12B via llama-server (--parallel 1) through the engine-parity wire taps, with end-to-end SSE answer_delta token streaming and stage latency telemetry.",
       "takeaway": "Both arms completed all 35 turns with 0 errors and live token streaming (20\u201330 SSE delta frames/turn). On a single KV slot (--parallel 1), Bundled ChartSearchAI achieved 1.3s median TTFT (99.9% KV prefix reuse across questions), whereas Med Agent Hub's post-answer citation attribution call (424 tokens) evicted the 17.4k chart prefix from slot 0 between cited turns (34.0s median TTFT vs. 3.0s\u20134.9s after un-cited turns).",
-      "family": "chartsearchai"
+      "family": "chartsearchai",
+      "arms": {
+        "engine-parity-bundled-12b": "Bundled ChartSearchAI",
+        "engine-parity-hub-answer-12b": "Hub, answer only"
+      }
     },
     {
       "slug": "2026-11-04-wahs-macbook-direct-vs-hub-multi-scenario-eval",
