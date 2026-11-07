@@ -2,7 +2,7 @@
 
 Verification and root-cause record for `CHARTSEARCH-VALIDATION-2026-11` ([specs/chartsearch-validation.md](../chartsearch-validation.md)), pinning:
 - Validation harness `e06c0f0` ([clinical-ai-validation-harness#207](https://github.com/pmanko/clinical-ai-validation-harness/pull/207))
-- Med Agent Hub `d5bd294` ([med-agent-hub#58](https://github.com/pmanko/med-agent-hub/pull/58))
+- Med Agent Hub `83c700f` ([med-agent-hub#58](https://github.com/pmanko/med-agent-hub/pull/58))
 - ChartSearchAI `a8eade4` ([openmrs-module-chartsearchai#629](https://github.com/openmrs/openmrs-module-chartsearchai/pull/629))
 
 ## 1. Component verification
@@ -38,3 +38,31 @@ Across `l5-full-default-2026-10-22-d0e4e2d8`, `l5-full-default-2026-10-26-dffe15
 | Multi-turn Conversations (`convo-*`, Turn 2) | Stateful context lost on Turn 2 (`5.5–7.0`) | Turn 1 Q/A retained (`8.0–9.0`) | Turn 1 Q/A retained (`7.5–9.0`) | **G2.1**: `BundledClinicalAnswerProvider.execute()` drops `request.getPriorClinicalTurns()` when calling `chartSearchService.searchStreaming(...)` |
 | 6-Month Rolling Window (`am-orders-6mo` in R10) | `5.8` | `9.0` | `8.9` | **G2.2 + G2.4**: Missing reference date in `bundled` plus deterministic temporal precomputation (`server/temporal.py`) and post-generation answer rules (`server/answer_rules.py`) in `med-agent-hub` |
 | Date / Token Corruption (`d0e4e2d8`, `dffe15e9` vs. `2a053c09`) | Garbled dates (`20226-01`, `20225-07`) when `dry-multiplier = 0.8` | Affected prior to `2a053c09`; resolved when router set `dry-multiplier = 0` | Affected prior to `2a053c09`; resolved when router set `dry-multiplier = 0` | **G2.3**: Out-of-the-box `LocalLlmEngine` injects `dry_multiplier = 0.8` when no drug-reference block is present, which corrupts repeated date strings across 12.2k-token `fullChart` prompts |
+
+## 3. UW CIRG GPU server 1-call parity benchmark (`30e1b771`) and `N=1, 2, 4` concurrency scaling (7 November 2026)
+
+- **Deterministic completeness & longitudinal series remediations (`med-agent-hub` `83c700f`):**
+  - Added `_extract_categorical_series(events)` in `server/temporal.py` and trimmed duplicate `"summary"` strings from `_extract_medication_order_summary` to keep `temporal_render: full` within the `16,384`-token budget across 5-turn conversations (`convo-medications-adherence` Turns 1–5).
+  - Updated `_series_in_answer`, `_series_edits`, `_adherence_edits`, `_last_visit_purpose_edits`, and `_missed_return_visit_edits` in `server/answer_rules.py` so partial drafts that cite only one date or one anthropometric series deterministically receive the full longitudinal adherence history (`Overall drug adherence in last month: No` `[344]..[46]` and `Antiretroviral adherence in past week: All` `[343]..[45]`), all anthropometric series (`Weight`, `Height`, `Head circumference`) + active growth diagnoses (`Failure to thrive [131]`, `Delayed milestones [132]`), all uncited same-day clinical highlights on the most recent visit (`2026-01-07`), and explicit missed-return-visit framing (`2026-02-23 [22]` recorded on `2026-01-26` with no subsequent encounter).
+  - Unit tests: `pytest tests/test_temporal.py tests/test_answer_rules.py tests/test_prompts.py tests/test_staged_stream.py -q` — **263 passed in 0.70s**.
+- **34-cell / 70-turn `full-default` GPU server parity benchmark (`30e1b771-f083-4c6d-ad7c-66517fcdaf2a`, published at `l5-full-default-2026-11-07-30e1b771`):**
+  - Executed against `https://llm.co.dev.cirg.uw.edu` (`ollama/gemma4:12b`, `parallel_slots=4`, `REFERENCE_DATE=2026-06-20`), scored by the blinded dual-judge panel (`claude-opus-5-5:high:1` + `gpt-6-astra:high:1`):
+    - **`engine-parity-hub-answer-12b`**: **87.2/100** (`Accuracy: 9.12`, `Completeness: 8.59`, `Relevance: 9.03`, `Harm: 0/17`, `Confabulations: 0`, `date_wrong: 0`, `Citations resolved: 82/82` = `100.0%`).
+    - **`engine-parity-bundled-12b`**: **78.5/100** (`Accuracy: 8.76`, `Completeness: 7.21`, `Relevance: 8.35`, `Harm: 0/17`, `date_wrong: 1`, `Over-abstentions: 4/17`, `Citations resolved: 50/50` = `100.0%`).
+  - All 4 remediated cells improved on `engine-parity-hub-answer-12b` relative to `e774b280`:
+    - `single-upcoming-appointments`: `77.0 -> 100.0` (`+23.0`, `10/10/10` on both judges)
+    - `convo-medications-adherence`: `71.2 -> 86.0` (`+14.8`)
+    - `am-last-visit`: `74.0 -> 82.2` (`+8.2`)
+    - `ek-growth`: `80.8 -> 86.0` (`+5.3`)
+- **Multi-clinician concurrency (`N=1, 2, 4`, `--turns-per-user 2`) on UW CIRG GPU server (`MED_AGENT_ROUTER_CONCURRENCY=4`):**
+  - `engine-parity-bundled-12b`:
+    - `N=1` (`d5f30fd1`): `10.64 turns/min`, `goodput_rate = 100%` (`10.64 goodput turns/min`), `ttft_p50_ms = 1,662.5 ms` (`turn_1 = 2,390.0 ms`, `turn_2plus = 935.0 ms`), `tpot_p50_ms = 11.3 ms/token`.
+    - `N=2` (`e46c9f8a`): `10.73 turns/min`, `goodput_rate = 50%` (`5.36 goodput turns/min`), `ttft_p50_ms = 6,372.5 ms` (`turn_1 = 11,457.5 ms`, `turn_2plus = 1,301.5 ms`), `tpot_p50_ms = 16.0 ms/token`.
+    - `N=4` (`96d7276b`): `9.20 turns/min`, `ttft_p50_ms = 17,800.5 ms`, `tpot_p50_ms = 15.6 ms/token`.
+  - `engine-parity-hub-answer-12b` (warm-slot sweep):
+    - `N=1` (`759e32de`): `3.74 turns/min`, `ttft_p50_ms = 3,253.5 ms` (`turn_1 = 3,217.0 ms`, `turn_2plus = 3,290.0 ms`), `tpot_p50_ms = 0.3 ms/token`.
+    - `N=2` (`7f0c04af`): `6.30 turns/min` (`1.68x`), `ttft_p50_ms = 5,119.5 ms` (`turn_1 = 6,479.5 ms`, `turn_2plus = 3,396.0 ms`), `tpot_p50_ms = 6.2 ms/token`.
+    - `N=4` (`c51f78b2`): `12.96 turns/min` (`3.47x`), `goodput_rate = 50%` (`6.48 goodput turns/min`), `ttft_p50_ms = 4,259.0 ms` (`turn_1 = 5,268.0 ms`, `turn_2plus = 3,170.5 ms`), `tpot_p50_ms = 7.5 ms/token`.
+- **KV prefix cache boundary finding on Ollama (`gemma4:12b`):**
+  - When `msg[0]` (`Structured temporal facts` + `Patient records (most recent first):`) is held constant across turns for the same patient, warm TTFT on an `18.1k`-token prompt drops from `15.6s` (cold prefill) to `2.19s–2.36s` (`7.1x` speedup). Question-dependent compaction inside `msg[0]` mutates the tail of `msg[0]` on each turn and invalidates Ollama's message-level prefix cache unless the static chart/temporal prefix is kept invariant across turns.
+

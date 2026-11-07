@@ -224,6 +224,7 @@ med-agent-hub-up:
 	  override_timezone_set=$${HUB_TIMEZONE+x}; override_timezone=$${HUB_TIMEZONE-}; \
 	  override_anchor_set=$${HUB_ANCHOR+x}; override_anchor=$${HUB_ANCHOR-}; \
 	  override_llm_set=$${MED_AGENT_LLM_BASE_URL+x}; override_llm=$${MED_AGENT_LLM_BASE_URL-}; \
+	  override_conc_set=$${MED_AGENT_ROUTER_CONCURRENCY+x}; override_conc=$${MED_AGENT_ROUTER_CONCURRENCY-}; \
 	  set -a; . ./.env.chartsearch.example; \
 	  [ ! -f .env.chartsearch ] || . ./.env.chartsearch; \
 	  [ -z "$$override_source_set" ] || QUERYSTORE_BASE_URL="$$override_source"; \
@@ -232,6 +233,7 @@ med-agent-hub-up:
 	  [ -z "$$override_timezone_set" ] || HUB_TIMEZONE="$$override_timezone"; \
 	  [ -z "$$override_anchor_set" ] || HUB_ANCHOR="$$override_anchor"; \
 	  [ -z "$$override_llm_set" ] || MED_AGENT_LLM_BASE_URL="$$override_llm"; \
+	  [ -z "$$override_conc_set" ] || MED_AGENT_ROUTER_CONCURRENCY="$$override_conc"; \
 	  [ -n "$$override_source_set" ] || QUERYSTORE_BASE_URL=$${QUERYSTORE_BASE_URL:-http://backend:8080/openmrs}; \
 	  [ -n "$$override_user_set" ] || QUERYSTORE_USERNAME=$${QUERYSTORE_USERNAME:-$${CHARTSEARCH_ADMIN_USER:-admin}}; \
 	  [ -n "$$override_password_set" ] || QUERYSTORE_PASSWORD=$${QUERYSTORE_PASSWORD:-$${CHARTSEARCH_ADMIN_PASSWORD:-Admin123}}; \
