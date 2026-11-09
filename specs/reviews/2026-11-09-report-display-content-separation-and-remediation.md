@@ -15,10 +15,48 @@ On 9 November 2026, an end-to-end audit of `https://reports.openclinai.org/` and
 | **F2. 18.5 MB Payload Bloat on Multi-Arm WAHS Reports** | `2026-11-05-wahs-multi-family-3-pathway-eval/index.html` (`27 setups × 36 turns = 972 cells`) was **18,537.7 KB (18.5 MB)**; `2026-11-03` was **4.45 MB**; `2026-11-02` was **3.24 MB**. | Inside `run.scenarios` (**15.1 MB**), every cell stored **both** `cell.sources` (**6.5 MB** of raw structured JSON repeating full patient chart snippets across all 27 setups) **and** `cell.sources_html` (**6.0 MB** of pre-rendered HTML cards for the exact same citations), even though the client JS only reads `cell.sources.diagnostics` (3 integer ref counts) and `cell.sources_html`. |
 | **F3. Multi-Second Main-Thread Freeze on Boot** | Opening `2026-11-05-wahs-multi-family-3-pathway-eval` blocked the browser main thread while constructing **50,000+ DOM nodes** before first paint. | `renderRun()` synchronously iterated over all 972 cells and injected 6.0 MB of `cell.sources_html` + `cell.refs_html` into live DOM nodes on page load—even when the user starts on **Tab 1 (`Overview`)** (`#sec-answers` hidden) and `.compact-tiles` hides `.sources` (`display: none`). |
 | **F4. Parallel Worktree `rsync --delete` Collisions** | Running `scripts/deploy-reports.sh` from a feature worktree lacking sibling branches' `reports/<slug>/` directories wiped WAHS reports from `reports.openclinai.org`. | Multiple active git worktrees had direct SSH access to run `rsync -az --delete` against `34.59.0.158:openclinai.org/artifacts/reports/` without checking remote or sibling-worktree report manifests. |
+| **F5. CSS Table Collision & Domain-Hardcoded Overview Copy** | On `2026-11-05-wahs-multi-family-3-pathway-eval/index.html`, the `Head-to-Head Comparison` table rows (`<tr class="exec-row">`) were squished into CSS grids inside the first column, the 9-model × 3-pathway study takeaway (`run.context.text`) was hidden, `Layer 1` showed `0/0 refs resolved`, and `3 · Response Speed` showed `— avg total wait`. | `.exec-row { display: grid }` overrode `<tr class="exec-row">` table rows; `renderExecutiveSummary()` hardcoded ChartSearchAI HIV copy (`"10 synthetic HIV patient charts"`, `"OpenMRS chart UUIDs"`) and assumed non-zero latency instead of adapting declaratively to the run's data capabilities (`judge[b].citation_resolution`, `run.context`, `safety_adjusted_benchmark_score`). |
 
 ---
 
-## 2. Guiding Principles & Target Architecture
+## 2. Why We Had 4 Separate Report Formats (and How We Eliminate Per-Type Migration Forever)
+
+### 2.1 Inventory of the 33 Staged Report Directories in `reports/`
+
+| Format / Generator | Count | Example Slugs | Data Representation | Current Status |
+| :--- | :---: | :--- | :--- | :--- |
+| **1. Unified `validate` Schema (`harness/validate/report.py`)** | **28** | All 21 ChartSearchAI runs (`2026-07-*` to `2026-11-07-*`) + 7 WAHS / MacBook runs (`2026-11-02` to `2026-11-06`, including `2026-11-05-wahs-multi-family-3-pathway-eval` & `2026-11-04-wahs-macbook-direct-vs-hub-multi-scenario-eval`) | `<script id="report-data">` containing `runs[0].{meta, context, summary, scenarios, judge, judge_rows, adjudication_rows, calibrated}` | **Unified & Live Now** (all 28 share the exact same shell via `scripts/reshell-reports.py`) |
+| **2. Early Bespoke WAHS Static HTML (`Oct 30–31`)** | **3** | `2026-10-30-wahs-phase2-eval`, `2026-10-31-wahs-condensation-ablation`, `2026-10-31-wahs-live-model-team-eval` | Hand-crafted HTML tables with **no** `<script id="report-data">` JSON island (`0 KB` data island) | **Phase 2.1:** One-time extraction of their static HTML tables into canonical `#report-data` JSON so they join the 28 unified reports permanently |
+| **3. Catalyst Suite Schema (`harness/catalyst/report.py`)** | **2** | `catalyst-phase1-comparison`, `catalyst-notebook-t094-2026-07-22` | `<script id="report-data">` with `{report_family: "catalyst", manifest, suite, results, judges, judge_rankings}` | **Phase 2.3:** Normalize into the shared `runs[0]` envelope (with optional `sql_queries` / `pathway` fields) so `catalyst/report.py` is retired as a separate UI shell |
+| **4. Catalog-Only Unavailable Entry** | **1** | `catalyst-t094-release` | No `index.html` (`availability: "unavailable"`) | Handled by catalog index |
+
+### 2.2 The Architectural Rule: Capability-Driven Rendering Over One Canonical Data Contract
+
+To guarantee we **never** maintain separate report templates or manually migrate report types (`ChartSearchAI`, `WAHS`, `MacBook Direct vs. Hub`, `Catalyst`, `WHO SMART`) again, the report architecture enforces two strict boundaries:
+
+1. **One Canonical Data Envelope (`report-data.json` / `#report-data`) Across Every Eval Family:**
+   - Every evaluation family emits the same top-level `runs[]` structure:
+     - `meta`: `{run_id, timestamp, git_sha, suite, domain_label, models, pathways, ...}`
+     - `context`: `{text, url, label}` (study description, methodology takeaway, external sheet/spec link)
+     - `summary[backend]`: `{total_turns, valid_turns, resolved_chart_refs, unresolved_chart_refs, temporal_gate_pass, avg_latency_ms, p50_latency_ms, p95_latency_ms, ...}`
+     - `judge[backend]`: `{benchmark_score, safety_adjusted_benchmark_score, citation_resolution, criteria, safety_flags: {critical_omission, severe_harm, unsupported_claim, ...}}`
+     - `calibrated[backend]`: `{theta_hat, ci_low, ci_high, n_human, n_total, method}`
+     - `scenarios[]`: `[{id, title, category, patient, question, cells: {backend: {answer_md, status, latency_ms, source_refs, judge_verdict, human_verdict, domain_artifacts}}}]`
+2. **One Capability-Driven Presentation Shell (`/assets/report-shell.{css,js}`):**
+   - The UI shell never branches on `if (family === 'wahs')` or hardcodes domain prose (`"synthetic HIV patient charts"`). Instead, it inspects **data capabilities** present in `run` and renders components declaratively:
+
+| Data Capability Detected in `run` | What the Shared UI Shell Renders Automatically |
+| :--- | :--- |
+| `run.context && run.context.text` | Renders the **Study Takeaway & Experimental Context** callout banner at the top of `Overview` with optional deep-link pill (`run.context.url`). |
+| `hasLatency` (`any summary[b].avg_latency_ms > 0`) | Shows `Avg Wait (P50 / P95)` column in `Head-to-Head Comparison`, `3 · Response Speed` KPI card, and enables Tab 3 (`Speed & Multi-User Scaling`). When `false` (e.g. offline-judged WAHS sweeps), automatically replaces the blank speed card with `3 · Safety-Adjusted Score & Spread` + `Resolved Refs` (`5,112 / 5,112`). |
+| `hasSafetyAdj` (`safety_adjusted_benchmark_score != null`) | Shows `Safety-Adj` column alongside raw `Quality Score` in `Head-to-Head Comparison` and `Safety-Adjusted Benchmark` delta cards in Layer 2. |
+| `hasCitationResolution` (`summary.total_chart_refs > 0` or `judge[b].citation_resolution`) | Populates `Layer 1 · Deterministic Gate` (`972/972 valid · 5,112/5,112 refs resolved`) and `Citation Resolution` column in the leaderboard. |
+| `hasHumanAdjudication` (`adjudication_rows.length > 0` or `calibrated[b].n_human > 0`) | Activates `Layer 3 · Human Adjudication & PPI` calibrated intervals and human override badges; otherwise displays `0 human ratings · Awaiting clinician sign-off`. |
+| `classifyScenario(sc)` (`A01–A20`, `B01–B16`, `convo-*`, `date-*`, `single-*`, `sql-*`) | Groups scenarios into domain-appropriate clinical task categories (`Outpatient Longitudinal Scenarios (A01–A20)`, `Inpatient & Specialty Care (B01–B16)`, `Medication & Reconciliation`, `Privacy & Boundary Guardrails`, `Multi-Turn Clinical Reasoning`, etc.) without per-report configuration. |
+
+---
+
+## 3. Guiding Principles & Target Architecture
 
 ```mermaid
 flowchart LR
@@ -66,9 +104,9 @@ flowchart LR
 
 ---
 
-## 3. Phased Remediation Plan & Execution Status
+## 4. Phased Remediation Plan & Execution Status
 
-### Phase 1 — Immediate Unification, Re-Shelling, Payload Slimming, & PR Consolidation (COMPLETED 2026-11-09)
+### Phase 1 — Immediate Unification, Re-Shelling, Payload Slimming, Domain-Agnostic UX, & PR Consolidation (COMPLETED 2026-11-09)
 - [x] **1.1 Unify 5-Tab Casual-First UI + 3-Layer Verification Revamp in `harness/validate/report.py`:**
   - Combined the 5-Tab progressive disclosure navigation (`Overview`, `Browse All Questions` + Slide-Over Answer Reader, `Speed & Multi-User Scaling`, `Methodology & Raw Data`, `All Sections`) with the 3-Layer Verification Banner (`Layer 1 · Deterministic Guardrails`, `Layer 2 · Advisory LLM Judge`, `Layer 3 · Human Adjudication & PPI`), `renderDeterministic`, `Safety-Adjusted Benchmark`, `renderAdjudication`, read-only `.tile-eval-footer`, and `#verdict-filter`.
 - [x] **1.2 Add Two-Level Lazy DOM Construction in `harness/validate/report.py`:**
@@ -81,20 +119,25 @@ flowchart LR
   - Verified with 189 passing tests in `clinical-ai-validation-harness` and 132 passing tests in `openclinai.org/tests/website/`.
 - [x] **1.5 Deploy All 32 Curated Runs (Including All 10 WAHS/MacBook Runs) Live to `https://reports.openclinai.org/`:**
   - Verified live via headless Chromium (`HTTP 200`, `tab=overview`, `vtiers=3`, `0` console/page errors).
-- [ ] **1.6 Merge Outstanding PRs into `main` Across All 3 Repositories (Executing Now):**
-  - Merge `report-ux-revamp` $\to$ `main` in `pmanko/clinical-ai-validation-harness`.
-  - Merge PR `#58` (`answer-delta-streaming` $\to$ `main`) in `pmanko/med-agent-hub`.
-  - Merge PR `#34` (`audit_validation_harness_chartsearchai` $\to$ `main`) and `wahs/simple-profiles-and-eval` in `pmanko/openclinai.org`.
+- [x] **1.6 Merge Outstanding PRs into `main` Across All 3 Repositories:**
+  - Merged `report-ux-revamp` $\to$ `main` in `pmanko/clinical-ai-validation-harness` (`16a36b3` / `ccf96bf`).
+  - Merged PR `#58` (`answer-delta-streaming` $\to$ `main`) in `pmanko/med-agent-hub` (`4de6cf5`).
+  - Merged PR `#34` (`audit_validation_harness_chartsearchai` $\to$ `main`) and `wahs/simple-profiles-and-eval` in `pmanko/openclinai.org` (`106216d` / `c53215e`).
+- [x] **1.7 Fix `tr.exec-row` CSS Table Collision & Make `renderExecutiveSummary` / `renderVerificationTiers` Capability-Driven:**
+  - Scoped `div.exec-row { display: grid }` so `<tr class="exec-row">` inside `<table class="ov-comp-table">` renders as proper table rows.
+  - Surfaced `run.context.text` + `run.context.url` in `Overview`, fell back to `judge[b].citation_resolution` for Layer 1 (`5,112/5,112 refs resolved`), replaced blank `Response Speed` KPI card with `3 · Safety-Adjusted Score & Spread` + `Resolved Refs` when `avg_latency_ms == 0`, and generalized `classifyScenario()` for WAHS (`A01–A20`, `B01–B16`) and ChartSearchAI.
 
-### Phase 2 — Backfill Early Static WAHS Reports & Client-Side Evidence Rendering (Next Slice)
+### Phase 2 — Unify the Remaining 5 Non-`validate` Reports & Client-Side Evidence Rendering (Next Slice)
 - [ ] **2.1 Convert the 3 Early Static WAHS Reports (`2026-10-30-wahs-phase2-eval`, `2026-10-31-wahs-condensation-ablation`, `2026-10-31-wahs-live-model-team-eval`) to Canonical `#report-data` Blobs:**
   - Extract their run metrics and scenario tables into canonical `#report-data` JSON blobs so `scripts/reshell-reports.py` manages all 30 non-Catalyst reports uniformly.
 - [ ] **2.2 Render `sources_html` & `refs_html` Purely Client-Side from Deduplicated Patient Records:**
   - In `harness/validate/report.py`, store cited chart records once per patient in `run.patient_records[patient_uuid][record_index]` and store compact per-cell citation refs (`cell.source_refs`) instead of repeating pre-rendered `cell.sources_html` (6.0 MB) across every cell.
   - Expected impact on `2026-11-05-wahs-multi-family-3-pathway-eval`: shrinks file size from **12.6 MB $\to$ ~2.8 MB** (an additional **~78% reduction**).
+- [ ] **2.3 Normalize the 2 Catalyst Reports (`catalyst-phase1-comparison`, `catalyst-notebook-t094-2026-07-22`) into the Shared `runs[0]` Envelope:**
+  - Map `{manifest, suite, results, judges, judge_rankings}` into `runs[0].{meta, summary, judge, scenarios}` with optional `sql_queries` capability so a single UI shell renders `validate`, `wahs`, and `catalyst` without maintaining `harness/catalyst/report.py`.
 
 ### Phase 3 — Externalized Shared Shell Assets & Split Overview/Detail Payloads (`reports.openclinai.org`)
 - [ ] **3.1 Externalize Shared Versioned Report Shell (`/assets/report-shell.css`, `/assets/report-shell.js`):**
-  - `build_report()` supports `--external-shell` for published reports on `reports.openclinai.org` (while keeping `--standalone` single-file HTML for local/offline attachments). Updating `/assets/report-shell.{css,js}` instantly updates every published report without touching `reports/<slug>/index.html`.
+  - `build_report()` emits a lightweight HTML loader referencing `/assets/report-shell.css` and `/assets/report-shell.js` for published reports on `reports.openclinai.org` (while keeping `--standalone` single-file HTML for offline email/file attachments). Updating `/assets/report-shell.{css,js}` instantly updates every published report without touching `reports/<slug>/index.html`.
 - [ ] **3.2 Split `report-data.json` into `overview.json` (Tab 1) + Lazy-Fetched `cells.json` (Tabs 2–4):**
-  - `reports/<slug>/index.html` loads `overview.json` (~40–80 KB: `meta`, `summary`, `judge`, `calibrated`, `arm_cards`, scenario titles/scores) for an instant **<100 ms** network + render load on `Overview (At a Glance)`, and fetches `cells.json` asynchronously in the background when the user opens a question drawer or switches to `Browse All Questions`.
+  - `reports/<slug>/index.html` loads `overview.json` (~40–80 KB: `meta`, `context`, `summary`, `judge`, `calibrated`, `arm_cards`, scenario titles/scores) for an instant **<100 ms** network + render load on `Overview (At a Glance)`, and fetches `cells.json` asynchronously in the background when the user opens a question drawer or switches to `Browse All Questions`.

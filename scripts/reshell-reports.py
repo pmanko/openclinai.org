@@ -94,19 +94,25 @@ def enrich_run(run: dict) -> tuple[int, int]:
                     srcs.pop("sources", None)
                     stripped_sources += 1
 
+    j_by_b = {j.get("backend"): j for j in (run.get("judge") or []) if isinstance(j, dict)}
     for s in run.get("summary") or []:
         b = s.get("backend_id", "")
         st = det_by_b.get(b, {})
+        cr = ((j_by_b.get(b) or {}).get("citation_resolution")) or {}
         turns = s.get("turns") or 0
         errors = s.get("errors") or 0
         if s.get("valid_turns") is None:
             s["valid_turns"] = st.get("valid_turns") or max(0, turns - errors)
-        tot_refs = s.get("total_chart_refs") or 0
-        if s.get("resolved_chart_refs") is None:
-            unres = st.get("unresolved_chart_refs", 0)
-            s["resolved_chart_refs"] = max(0, tot_refs - unres)
-        if s.get("unresolved_chart_refs") is None:
-            s["unresolved_chart_refs"] = st.get("unresolved_chart_refs", 0)
+        tot_refs = (s.get("total_chart_refs") or 0) or (cr.get("n_refs") or 0)
+        s["total_chart_refs"] = tot_refs
+        if not s.get("resolved_chart_refs"):
+            if cr.get("n_resolved") is not None:
+                s["resolved_chart_refs"] = cr["n_resolved"]
+            else:
+                unres = st.get("unresolved_chart_refs", 0)
+                s["resolved_chart_refs"] = max(0, tot_refs - unres)
+        if not s.get("unresolved_chart_refs"):
+            s["unresolved_chart_refs"] = cr.get("n_unresolved") or st.get("unresolved_chart_refs", 0)
         if s.get("temporal_gate_pass") is None:
             g_warn = s.get("temporal_gate_warn") or 0
             g_fail = s.get("temporal_gate_fail") or 0
