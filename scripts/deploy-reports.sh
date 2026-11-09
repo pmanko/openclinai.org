@@ -38,6 +38,74 @@ fi
 IP="$(gcp_vm_ip)"
 gcp_ssh_keygen_once
 gcp_ssh "mkdir -p ${GCP_REMOTE_REPO}/artifacts/reports"
+
+# Prevent a diverged worktree from wiping reports that are already live on the host
+# or committed in a sibling worktree when running rsync --delete.
+if [[ "${ALLOW_REPORT_REMOVAL:-0}" != "1" ]]; then
+  REMOTE_MANIFEST="$(gcp_ssh "cat ${GCP_REMOTE_REPO}/artifacts/reports/reports-index.json 2>/dev/null || true")"
+  python3 - "${MANIFEST}" "${ROOT}" "${REMOTE_MANIFEST}" <<'PY'
+import json, pathlib, subprocess, sys
+
+manifest_path = pathlib.Path(sys.argv[1]).resolve()
+root_path = pathlib.Path(sys.argv[2]).resolve()
+remote_raw = sys.argv[3].strip()
+
+def extract_slugs(data: dict) -> list[str]:
+    out = []
+    for r in data.get("runs", []) if isinstance(data, dict) else []:
+        if isinstance(r, dict) and r.get("slug"):
+            out.append(str(r["slug"]))
+        for e in (r.get("earlier") or []) if isinstance(r, dict) else []:
+            if isinstance(e, dict) and e.get("slug"):
+                out.append(str(e["slug"]))
+    return out
+
+local_slugs = set(extract_slugs(json.loads(manifest_path.read_text(encoding="utf-8"))))
+
+if remote_raw:
+    try:
+        remote_slugs = extract_slugs(json.loads(remote_raw))
+    except Exception:
+        remote_slugs = []
+    missing_remote = [s for s in remote_slugs if s not in local_slugs]
+    if missing_remote:
+        sys.stderr.write(
+            f"error: refusing to deploy because local {manifest_path} is missing report(s) currently live on the host: "
+            + ", ".join(missing_remote)
+            + "\nSync those report packets into this worktree first (or set ALLOW_REPORT_REMOVAL=1 to intentionally remove them).\n"
+        )
+        sys.exit(1)
+
+# Only inspect sibling worktrees when deploying the repository's own reports/ folder
+if manifest_path == (root_path / "reports" / "reports-index.json").resolve():
+    try:
+        wt_out = subprocess.check_output(
+            ["git", "-C", str(root_path), "worktree", "list", "--porcelain"],
+            text=True, stderr=subprocess.DEVNULL
+        )
+        for line in wt_out.splitlines():
+            if not line.startswith("worktree "):
+                continue
+            wt_dir = pathlib.Path(line.split(" ", 1)[1].strip())
+            sib_manifest = wt_dir / "reports" / "reports-index.json"
+            if sib_manifest.is_file() and sib_manifest.resolve() != manifest_path:
+                try:
+                    sib_slugs = extract_slugs(json.loads(sib_manifest.read_text(encoding="utf-8")))
+                except Exception:
+                    continue
+                missing_sib = [s for s in sib_slugs if s not in local_slugs and (wt_dir / "reports" / s / "index.html").is_file()]
+                if missing_sib:
+                    sys.stderr.write(
+                        f"error: refusing to deploy because sibling worktree {wt_dir} has staged report(s) missing here: "
+                        + ", ".join(missing_sib)
+                        + "\nSync reports/ across worktrees before deploying (or set ALLOW_REPORT_REMOVAL=1).\n"
+                    )
+                    sys.exit(1)
+    except Exception:
+        pass
+PY
+fi
+
 rsync -az --delete --exclude='*.mp4' --exclude='*.webm' --exclude='.DS_Store' \
   -e "ssh -i ${GCP_SSH_KEY} -o StrictHostKeyChecking=accept-new" \
   "${REPORTS_ROOT}/" \
