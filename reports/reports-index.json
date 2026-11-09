@@ -21,6 +21,46 @@
       "family": "chartsearchai"
     },
     {
+      "slug": "2026-11-05-wahs-multi-family-3-pathway-eval",
+      "title": "Which open-weight AI family is best for single-model clinical chart synthesis \u2014 and how much does Med Agent Hub improve accuracy and safety across 9 models?",
+      "summary": "To separate the impact of model size, clinical rule checks, and full Med Agent Hub orchestration, we evaluated nine open-weight models across three model families \u2014 Google Gemma 4 (E4B, 12B, 26B), Alibaba Qwen 3 (4B, 9B, 14B), and Meta Llama 3.x / Hermes 3 (3.2B, 8B, Hermes 3 8B) \u2014 under three pathways at a standard 8k chart budget: (1) Direct AI on the condensed chart alone, (2) Direct AI + Stage-2 4-Layer Clinical KB alerts, and (3) the full Med Agent Hub pipeline (condensed chart + clinical conflict rules + patient entity-relationship subgraph + Tier-0 safety net recovery). Every setup was tested across 36 clinical scenarios spanning 10 complex multi-clinic and ICU patients (20 clinical accuracy & conflict reconciliation questions and 16 conversational privacy, caregiver-boundary, and coercion stress tests \u2014 972 total answers) and graded in a blinded review by two independent AI judges (Claude Opus 4.6 and GPT-5.4) anchored to a clinician-verified ground-truth rubric.",
+      "takeaway": "Google Gemma 4 is the clear winner for a single-model clinical pathway, sweeping the top 7 spots out of all 27 setups (67.2\u201382.1/100) ahead of the best Qwen 3 (65.4/100) and Llama 3.1 (55.3/100) setups \u2014 and across every model 4B and above in all three families, routing through Med Agent Hub monotonically raised scores and cut unsafe answers by 33%\u201371%. Why Gemma 4 dominates: across all 216 answers from Gemma 4 12B and 26B (all 6 setups), neither model ever produced a fabricated or unsupported [N] citation (0/216 vs. 2\u20133/36 per setup on Qwen 3 14B, while Llama 3.1 8B frequently dropped inline [N] citations with only 2\u20135/36 answers fully supported). Gemma 4 26B + Med Agent Hub led overall at 82.1/100 (8.62 accuracy, 8.39 completeness, 8.76 relevance, 3/36 unsafe vs. 72.9/100 for Direct + KB and 71.3/100 with 6/36 unsafe for Direct AI \u2014 a 50% reduction in unsafe answers). Gemma 4 12B + Med Agent Hub (80.5/100, 8.53 accuracy, 8.68 relevance) emerged as the practical single-model sweet spot: it came within 1.6 points of 26B while recording the lowest unsafe-answer rate (2/36 vs. 7/36 on Direct 12B \u2014 a 71% reduction) and lowest confabulation count (1/36) in the entire sweep, beating raw Gemma 4 26B (71.3/100) by +9.2 points. For edge or laptop deployments, compact Gemma 4 E4B (4B effective parameters) + Med Agent Hub scored 70.4/100 (8.01 accuracy, 4/36 unsafe vs. 8/36 on Direct E4B), outperforming both raw Gemma 4 12B (67.2/100) and Qwen 3 14B + Med Agent Hub (65.4/100) at roughly one-third the active parameter footprint. The same pathway gains held across non-Gemma families: Qwen 3 14B climbed from 53.4/100 (13/36 unsafe) on Direct AI to 61.8/100 (6/36 unsafe) with Direct + KB and 65.4/100 (5/36 unsafe, \u221262% unsafe) with Med Agent Hub; Qwen 3.5 9B climbed from 49.4 to 57.1/100; Qwen 3 4B climbed from 34.7 (12/36 unsafe) to 43.5/100 (8/36 unsafe); and Llama 3.1 8B climbed from 50.6 (14/36 unsafe) to 55.3/100 (8/36 unsafe, \u221243% unsafe). Only the ultra-small 3.2B tier (Llama 3.2 3B, 33.8\u201344.2/100) struggled to synthesize dense multi-clinic FHIR + rule context simultaneously, establishing ~4B effective parameters as the capability floor.",
+      "family": "wahs",
+      "arms": {
+        "wahs:gemma-26b@8k": "Gemma 4 26B \u2014 Med Agent Hub + clinical graph & KB (8k chart)",
+        "wahs:gemma-4-12b@8k": "Gemma 4 12B \u2014 Med Agent Hub + clinical graph & KB (8k chart)",
+        "wahs-direct-kb:gemma-26b@8k": "Gemma 4 26B \u2014 Direct AI + clinical KB rules only (8k chart)",
+        "direct:gemma-26b@8k": "Gemma 4 26B \u2014 Direct AI model, no Hub (8k chart)",
+        "wahs-direct-kb:gemma-4-12b@8k": "Gemma 4 12B \u2014 Direct AI + clinical KB rules only (8k chart)",
+        "wahs:gemma-e4b@8k": "Gemma 4 E4B (4B eff.) \u2014 Med Agent Hub + clinical graph & KB (8k chart)",
+        "direct:gemma-4-12b@8k": "Gemma 4 12B \u2014 Direct AI model, no Hub (8k chart)",
+        "wahs:qwen3-14b@8k": "Qwen 3 14B \u2014 Med Agent Hub + clinical graph & KB (8k chart)",
+        "wahs-direct-kb:gemma-e4b@8k": "Gemma 4 E4B (4B eff.) \u2014 Direct AI + clinical KB rules only (8k chart)",
+        "direct:gemma-e4b@8k": "Gemma 4 E4B (4B eff.) \u2014 Direct AI model, no Hub (8k chart)",
+        "wahs-direct-kb:qwen3-14b@8k": "Qwen 3 14B \u2014 Direct AI + clinical KB rules only (8k chart)",
+        "wahs:qwen3.5-9b@8k": "Qwen 3.5 9B \u2014 Med Agent Hub + clinical graph & KB (8k chart)",
+        "wahs:llama-3.1-8b@8k": "Llama 3.1 8B \u2014 Med Agent Hub + clinical graph & KB (8k chart)",
+        "wahs-direct-kb:qwen3.5-9b@8k": "Qwen 3.5 9B \u2014 Direct AI + clinical KB rules only (8k chart)",
+        "direct:qwen3-14b@8k": "Qwen 3 14B \u2014 Direct AI model, no Hub (8k chart)",
+        "wahs-direct-kb:llama-3.1-8b@8k": "Llama 3.1 8B \u2014 Direct AI + clinical KB rules only (8k chart)",
+        "direct:llama-3.1-8b@8k": "Llama 3.1 8B \u2014 Direct AI model, no Hub (8k chart)",
+        "direct:qwen3.5-9b@8k": "Qwen 3.5 9B \u2014 Direct AI model, no Hub (8k chart)",
+        "wahs-direct-kb:hermes3-8b@8k": "Hermes 3 Llama 3.1 8B \u2014 Direct AI + clinical KB rules only (8k chart)",
+        "direct:llama-3.2-3b@8k": "Llama 3.2 3B \u2014 Direct AI model, no Hub (8k chart)",
+        "wahs-direct-kb:llama-3.2-3b@8k": "Llama 3.2 3B \u2014 Direct AI + clinical KB rules only (8k chart)",
+        "wahs:qwen3-4b@8k": "Qwen 3 4B \u2014 Med Agent Hub + clinical graph & KB (8k chart)",
+        "direct:hermes3-8b@8k": "Hermes 3 Llama 3.1 8B \u2014 Direct AI model, no Hub (8k chart)",
+        "wahs:hermes3-8b@8k": "Hermes 3 Llama 3.1 8B \u2014 Med Agent Hub + clinical graph & KB (8k chart)",
+        "wahs-direct-kb:qwen3-4b@8k": "Qwen 3 4B \u2014 Direct AI + clinical KB rules only (8k chart)",
+        "direct:qwen3-4b@8k": "Qwen 3 4B \u2014 Direct AI model, no Hub (8k chart)",
+        "wahs:llama-3.2-3b@8k": "Llama 3.2 3B \u2014 Med Agent Hub + clinical graph & KB (8k chart)"
+      },
+      "guide": {
+        "label": "How Med Agent Hub works",
+        "url": "https://openclinai.org/med-agent-hub/wahs-architecture/"
+      }
+    },
+    {
       "slug": "2026-11-05-macbook-full-default-12b-parallel2-aaedaebc",
       "title": "MacBook Apple Silicon (parallel=2): Dual KV slots cut Med Agent Hub TTFT by 3.3x (34.0s \u2192 10.3s) while maintaining zero-harm lead",
       "summary": "17-scenario full-default HIV chart comparison (35 turns per arm, 70 total) on a 64 GB Apple Silicon MacBook running Gemma 4 12B via llama-server with parallel=2 (two 49,152-token KV slots within the 98,304 context window), scored by a blinded dual-judge panel (claude-opus-5-5 + gpt-6-astra).",
@@ -125,8 +165,8 @@
         "single-raw-condensed": "Single Gemma 4 12B, chart only"
       },
       "guide": {
-        "label": "Try the WA Health Summary Demo",
-        "url": "https://wahs-demo.openclinai.org/"
+        "label": "Interactive Per-Question Dashboard",
+        "url": "https://reports.openclinai.org/2026-10-31-wahs-live-model-team-eval/dashboard.html"
       }
     },
     {

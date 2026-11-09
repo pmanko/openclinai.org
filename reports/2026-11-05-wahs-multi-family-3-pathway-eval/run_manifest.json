@@ -1,0 +1,96 @@
+{
+  "run_id": "harness_full_sweep_8k",
+  "dataset_id": "wahs-plus-10patient-25scenario-sheet",
+  "dataset_version": "2026.11",
+  "evaluation_modality": "live_model_and_team_eval",
+  "budgets": [
+    8192
+  ],
+  "profiles": [
+    "direct:gemma-e4b@8k",
+    "wahs:gemma-e4b@8k",
+    "wahs-direct-kb:gemma-e4b@8k",
+    "direct:gemma-4-12b@8k",
+    "wahs-direct-kb:gemma-4-12b@8k",
+    "wahs:gemma-4-12b@8k",
+    "direct:gemma-26b@8k",
+    "wahs-direct-kb:gemma-26b@8k",
+    "wahs:gemma-26b@8k",
+    "direct:llama-3.2-3b@8k",
+    "wahs-direct-kb:llama-3.2-3b@8k",
+    "wahs:llama-3.2-3b@8k",
+    "direct:llama-3.1-8b@8k",
+    "wahs-direct-kb:llama-3.1-8b@8k",
+    "wahs:llama-3.1-8b@8k",
+    "direct:hermes3-8b@8k",
+    "wahs-direct-kb:hermes3-8b@8k",
+    "wahs:hermes3-8b@8k",
+    "direct:qwen3-4b@8k",
+    "wahs-direct-kb:qwen3-4b@8k",
+    "wahs:qwen3-4b@8k",
+    "direct:qwen3.5-9b@8k",
+    "wahs-direct-kb:qwen3.5-9b@8k",
+    "wahs:qwen3.5-9b@8k",
+    "direct:qwen3-14b@8k",
+    "wahs-direct-kb:qwen3-14b@8k",
+    "wahs:qwen3-14b@8k"
+  ],
+  "cases_count": 36,
+  "context": {
+    "text": "What this study tests & key takeaways: We evaluated 9 open-weight models across 3 model families \u2014 Google Gemma 4 (E4B, 12B, 26B), Alibaba Qwen 3 (4B, 9B, 14B), and Meta Llama 3.x / Hermes 3 (3.2B, 8B, Hermes 3 8B) \u2014 across 3 pathways at an 8k chart budget: (1) Direct AI (condensed chart only), (2) Direct + Clinical KB (chart + Stage-2 4-Layer KB rules), and (3) Med Agent Hub (chart + clinical rules + patient entity-relationship subgraph + Tier-0 overflow recovery), spanning 36 clinical accuracy & conversational privacy scenarios on 10 complex patients (972 total cells, graded by blinded Claude Opus 4.6 and GPT-5.4 judges). Key Finding 1 \u2014 Gemma 4 is the clear leader for single-model clinical synthesis, sweeping the top 7 of all 27 setups (67.2\u201382.1/100 vs. 65.4/100 for the best Qwen 3 14B setup and 55.3/100 for the best Llama 3.1 8B setup), with zero fabricated or unsupported citations across all 216 Gemma 4 12B and 26B answers. Gemma 4 12B + Med Agent Hub (80.5/100) is the practical single-model sweet spot \u2014 within 1.6 points of Gemma 4 26B + Hub (82.1/100) while achieving the lowest unsafe-answer rate (2/36, \u221271% vs. Direct 12B) and lowest confabulation count (1/36) in the sweep \u2014 while compact Gemma 4 E4B (4B eff.) + Hub (70.4/100) beats both raw Gemma 4 12B (67.2/100) and Qwen 3 14B + Hub (65.4/100). Key Finding 2 \u2014 Across every model \u2265 4B across all three families, Med Agent Hub monotonically boosts benchmark scores and cuts unsafe answers by 33%\u201371% over Direct AI, while 3.2B (Llama 3.2 3B) marks the capability floor below which dense multi-clinic + rule context overwhelms the model.",
+    "url": "https://openclinai.org/med-agent-hub/wahs-architecture/",
+    "label": "How Med Agent Hub works \u2192"
+  },
+  "patients": {
+    "Elena_Rostova_Cardiorenal": {
+      "badge": "Clinical Chart",
+      "display": "Elena Rostova Cardiorenal",
+      "chart_url": "https://wahs-demo.openclinai.org/"
+    },
+    "Arthur_Pendelton_Anticoag": {
+      "badge": "Clinical Chart",
+      "display": "Arthur Pendelton Anticoag",
+      "chart_url": "https://wahs-demo.openclinai.org/"
+    },
+    "Margaret_Chen_Polypharmacy": {
+      "badge": "Clinical Chart",
+      "display": "Margaret Chen Polypharmacy",
+      "chart_url": "https://wahs-demo.openclinai.org/"
+    },
+    "Lamar193_Beer512": {
+      "badge": "Clinical Chart",
+      "display": "Lamar193 Beer512",
+      "chart_url": "https://wahs-demo.openclinai.org/"
+    },
+    "Maurice742_Auer97": {
+      "badge": "Clinical Chart",
+      "display": "Maurice742 Auer97",
+      "chart_url": "https://wahs-demo.openclinai.org/"
+    },
+    "Sofia_Alvarez_Maternal_Endocrine": {
+      "badge": "Clinical Chart",
+      "display": "Sofia Alvarez Maternal Endocrine",
+      "chart_url": "https://wahs-demo.openclinai.org/"
+    },
+    "Marcus_Vance_Oncology_Immunotherapy": {
+      "badge": "Clinical Chart",
+      "display": "Marcus Vance Oncology Immunotherapy",
+      "chart_url": "https://wahs-demo.openclinai.org/"
+    },
+    "MIMIC_10014354_ICU_Heme_Cardiorenal": {
+      "badge": "Clinical Chart",
+      "display": "MIMIC 10014354 ICU Heme Cardiorenal",
+      "chart_url": "https://wahs-demo.openclinai.org/"
+    },
+    "Byron202_Emard19": {
+      "badge": "Clinical Chart",
+      "display": "Byron202 Emard19",
+      "chart_url": "https://wahs-demo.openclinai.org/"
+    },
+    "MIMIC_10019003_ICU_Hepatopulmonary": {
+      "badge": "Clinical Chart",
+      "display": "MIMIC 10019003 ICU Hepatopulmonary",
+      "chart_url": "https://wahs-demo.openclinai.org/"
+    }
+  }
+}
