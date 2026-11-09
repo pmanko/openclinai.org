@@ -74,12 +74,14 @@ DATE_FORMAT = "%-d %b %Y"
 
 
 def validate_archive(runs: list[dict], reports_root: Path, *, pending_slug: str | None = None) -> None:
-    """Require every available curated report locally before replacing the catalog."""
+    """Require every available curated report locally (and non-empty report-data) before replacing the catalog."""
     safe_slug = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
+    report_data_re = re.compile(r"<script[^>]*id=['\"]report-data['\"][^>]*>(.*?)</script>", re.S)
     if pending_slug is not None and not safe_slug.fullmatch(pending_slug):
         raise ValueError("invalid pending report slug")
     root = reports_root.resolve()
     missing = []
+    broken_pages = []
     for entry in runs:
         slug = entry.get("slug")
         if not isinstance(slug, str) or not safe_slug.fullmatch(slug):
@@ -89,6 +91,19 @@ def validate_archive(runs: list[dict], reports_root: Path, *, pending_slug: str 
         page = (root / slug / "index.html").resolve()
         if not page.is_relative_to(root) or not page.is_file():
             missing.append(slug)
+            continue
+        # Guard against unpopulated report shells (e.g. built while results.jsonl was absent)
+        if entry.get("family") != "catalyst" and ((root / slug / "results.jsonl").is_file() or entry.get("family") == "wahs"):
+            try:
+                html_text = page.read_text(encoding="utf-8", errors="replace")
+                m = report_data_re.search(html_text)
+                if m:
+                    payload = json.loads(m.group(1))
+                    r0 = (payload.get("runs") or [{}])[0] if isinstance(payload, dict) else {}
+                    if not (r0.get("scenarios") or {}) or not (r0.get("backends") or []):
+                        broken_pages.append(slug)
+            except Exception:
+                broken_pages.append(slug)
     if missing:
         raise ValueError(
             "incomplete staged report archive; missing index.html for: "
@@ -96,6 +111,12 @@ def validate_archive(runs: list[dict], reports_root: Path, *, pending_slug: str 
             + ". Restore the complete curated archive under "
             + str(root)
             + " before building or publishing the catalog."
+        )
+    if broken_pages:
+        raise ValueError(
+            "broken staged report page(s) with empty scenarios/backends in #report-data: "
+            + ", ".join(broken_pages)
+            + ". Ensure results.jsonl is present and re-render report.html before publishing."
         )
 
 

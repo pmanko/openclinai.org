@@ -150,6 +150,8 @@ the SSE `event:` name onto the canonical lifecycle (`HubClinicalAnswerProvider.m
 
 | Hub SSE event | Module `TurnEventType` |
 |---|---|
+| `reasoning_delta` | `reasoning_delta` |
+| `answer_delta` | `answer_delta` |
 | `answer_done` | `answer_done` |
 | `answer_validation` | `answer_validation` |
 | `evidence_updated`, `grounded` | `evidence_updated` |
@@ -163,9 +165,10 @@ the SSE `event:` name onto the canonical lifecycle (`HubClinicalAnswerProvider.m
 | `stream_cancelled` (hub-emitted on cancel) | not mapped; `mapEvent` returns null and the frame is ignored |
 
 Anything after the first terminal event is dropped (`handleWire` returns once `doneSeen` is set). The
-hub provider declares `answer`, `answer_check`, `answer_review`, `indepth`, `grounding`, `drug_safety`,
-`structured_blocks`, `multi_turn_context`; it does not declare `token_streaming`, and it emits no
-`answer_delta`: the answer arrives whole on `answer_done`, then is checked and deepened.
+hub provider declares `answer`, `token_streaming`, `answer_check`, `answer_review`, `indepth`, `grounding`,
+`drug_safety`, `structured_blocks`, `multi_turn_context`: during the primary synthesis stage it streams
+`answer_delta` frames (`{"delta": "..."}`) extracted from the writer's JSON `"answer"` field, and then
+replaces the draft text with the authoritative post-gate envelope on `answer_done`.
 
 ### 3.3 Safety status on this hop
 

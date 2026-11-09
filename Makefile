@@ -224,6 +224,7 @@ med-agent-hub-up:
 	  override_timezone_set=$${HUB_TIMEZONE+x}; override_timezone=$${HUB_TIMEZONE-}; \
 	  override_anchor_set=$${HUB_ANCHOR+x}; override_anchor=$${HUB_ANCHOR-}; \
 	  override_llm_set=$${MED_AGENT_LLM_BASE_URL+x}; override_llm=$${MED_AGENT_LLM_BASE_URL-}; \
+	  override_conc_set=$${MED_AGENT_ROUTER_CONCURRENCY+x}; override_conc=$${MED_AGENT_ROUTER_CONCURRENCY-}; \
 	  set -a; . ./.env.chartsearch.example; \
 	  [ ! -f .env.chartsearch ] || . ./.env.chartsearch; \
 	  [ -z "$$override_source_set" ] || QUERYSTORE_BASE_URL="$$override_source"; \
@@ -232,6 +233,7 @@ med-agent-hub-up:
 	  [ -z "$$override_timezone_set" ] || HUB_TIMEZONE="$$override_timezone"; \
 	  [ -z "$$override_anchor_set" ] || HUB_ANCHOR="$$override_anchor"; \
 	  [ -z "$$override_llm_set" ] || MED_AGENT_LLM_BASE_URL="$$override_llm"; \
+	  [ -z "$$override_conc_set" ] || MED_AGENT_ROUTER_CONCURRENCY="$$override_conc"; \
 	  [ -n "$$override_source_set" ] || QUERYSTORE_BASE_URL=$${QUERYSTORE_BASE_URL:-http://backend:8080/openmrs}; \
 	  [ -n "$$override_user_set" ] || QUERYSTORE_USERNAME=$${QUERYSTORE_USERNAME:-$${CHARTSEARCH_ADMIN_USER:-admin}}; \
 	  [ -n "$$override_password_set" ] || QUERYSTORE_PASSWORD=$${QUERYSTORE_PASSWORD:-$${CHARTSEARCH_ADMIN_PASSWORD:-Admin123}}; \
@@ -369,6 +371,7 @@ validate-dashboard:
 
 validate-run: validate-dashboard
 	HUB_ANCHOR=$(REFERENCE_DATE) $(MAKE) med-agent-hub-up
+	CHARTSEARCHAI_REFERENCE_DATE=$(REFERENCE_DATE) CHARTSEARCH_HUB_ENDPOINT_URL=$${CHARTSEARCH_HUB_ENDPOINT_URL:-http://med-agent-hub:8080/v1/chat/completions} $(MAKE) chartsearch-configure
 	$(UV) --directory $(HARNESS) run harness-cli validate run $(SET) --reference-date $(REFERENCE_DATE) \
 		--trace-file "$(TRACE_FILE)" $(if $(VALIDATE_DATA_ROOT),--data-root "$(VALIDATE_DATA_ROOT)") \
 		$(if $(CORPUS_PROVENANCE),--corpus-provenance "$(CORPUS_PROVENANCE)",) \

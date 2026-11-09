@@ -17,11 +17,15 @@ set -euo pipefail
 HUB_ENDPOINT="${CHARTSEARCH_HUB_ENDPOINT_URL:?set CHARTSEARCH_HUB_ENDPOINT_URL}"
 PROVIDERS_ENABLED="${CHARTSEARCH_PROVIDERS_ENABLED:-bundled,hub}"
 PROVIDERS_DEFAULT="${CHARTSEARCH_PROVIDERS_DEFAULT:-bundled}"
+REFERENCE_DATE="${CHARTSEARCHAI_REFERENCE_DATE:-${HUB_ANCHOR:-}}"
 
 echo "Configuring ChartSearchAI at ${OPENMRS_SETTINGS_BASE_URL}:"
 set_openmrs_property "chartsearchai.hub.endpointUrl" "${HUB_ENDPOINT}"
 set_openmrs_property "chartsearchai.providers.enabled" "${PROVIDERS_ENABLED}"
 set_openmrs_property "chartsearchai.providers.default" "${PROVIDERS_DEFAULT}"
+if [[ "${REFERENCE_DATE}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+  set_openmrs_property "chartsearchai.referenceDate" "${REFERENCE_DATE}"
+fi
 
 echo ""
 echo "Module status:"

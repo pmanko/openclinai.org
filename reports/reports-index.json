@@ -3,10 +3,90 @@
   "scoring_note": "For reports with score tables, each answer is graded 0\u201310 (higher is better) \u2014 <b>Accuracy</b>: are the stated facts true to the chart? <b>Completeness</b>: did it cover the clinically important details? <b>Relevance</b>: did it directly answer the question in clear language? <b>Unsafe answers</b> counts responses with a potential safety or privacy problem (lower is better). <b>Benchmark /100</b> is the overall headline score combining accuracy, completeness, and relevance minus penalties for safety or citation errors.",
   "runs": [
     {
+      "slug": "l5-full-default-2026-11-07-30e1b771",
+      "title": "Shared 24 GB Cloud GPU Server (1-call parity & N=1, 2, 4 concurrency, gemma4:12b): Med Agent Hub vs. Bundled ChartSearchAI",
+      "summary": "17-scenario full-default HIV chart comparison (35 turns per arm, 70 total) plus multi-clinician session concurrency scaling (N=1, 2, 4) on a shared 24 GB cloud GPU server (24 GB VRAM, Ollama gemma4:12b Q4_K_M, parallel=4) with both arms anchored to 2026-06-20 and single-12b-answer running 1-call deterministic verification, scored by a blinded dual-judge panel (claude-opus-5-5 + gpt-6-astra).",
+      "takeaway": "Med Agent Hub (87.2/100, 9.12/10 accuracy, 8.59/10 completeness, 9.03/10 relevance, 0 harm, 0 confabulations, 0 date_wrong, 82/82 citations resolved) beat Bundled ChartSearchAI (78.5/100, 8.76/10 accuracy, 7.21/10 completeness, 8.35/10 relevance, 0 harm, 1 date_wrong, 4 over-abstentions) by +8.7 points. Deterministic longitudinal series and visit-completeness rules lifted single-upcoming-appointments to 100.0 (+23.0), convo-medications-adherence to 86.0 (+14.8), am-last-visit to 82.2 (+8.2), and ek-growth to 86.0 (+5.3). Across multi-clinician concurrency (N=1, 2, 4), Hub scaled throughput 3.47x (3.74 \u2192 6.30 \u2192 12.96 turns/min, 50% SLO goodput at N=4, 3.17s Turn 2+ TTFT p50, 7.5 ms/tok TPOT, 0% errors) while Bundled saturated at 9.20 turns/min (0% goodput at N=4, 17.8s TTFT p50).",
+      "family": "chartsearchai",
+      "arms": {
+        "engine-parity-bundled-12b": "Bundled ChartSearchAI",
+        "engine-parity-hub-answer-12b": "Hub, answer only"
+      }
+    },
+    {
+      "slug": "2026-11-06-macbook-full-default-12b-1call-parity-7c759041",
+      "title": "MacBook Apple Silicon (1-call parity, anchored reference date): Med Agent Hub vs. Bundled ChartSearchAI on Gemma 4 12B",
+      "summary": "17-scenario full-default HIV chart comparison (35 turns per arm, 70 total) with both arms anchored to 2026-06-20 and single-12b-answer running true 1-call parity (deterministic checks only, no second LLM call), scored by a blinded dual-judge panel (claude-opus-5-5 + gpt-6-astra).",
+      "takeaway": "Med Agent Hub (85.6/100, 9.15/10 accuracy, 8.09/10 completeness, 9.09/10 relevance, 0 harm, 0 date_wrong) beat Bundled ChartSearchAI (69.5/100, 7.76/10 accuracy, 6.71/10 completeness, 8.03/10 relevance, 3 harm, 2 date_wrong) by +16.1 points while cutting Hub total wall time by 45.8% (19.2 min \u2192 10.4 min), median turn-done by 2.0x (21.7s \u2192 10.8s), and post-answer validation overhead by 10.5x (4,925 ms \u2192 469 ms median).",
+      "family": "chartsearchai"
+    },
+    {
+      "slug": "2026-11-05-wahs-multi-family-3-pathway-eval",
+      "title": "Which open-weight AI family is best for single-model clinical chart synthesis \u2014 and how much does Med Agent Hub improve accuracy and safety across 9 models?",
+      "summary": "To separate the impact of model size, clinical rule checks, and full Med Agent Hub orchestration, we evaluated nine open-weight models across three model families \u2014 Google Gemma 4 (E4B, 12B, 26B), Alibaba Qwen 3 (4B, 9B, 14B), and Meta Llama 3.x / Hermes 3 (3.2B, 8B, Hermes 3 8B) \u2014 under three pathways at a standard 8k chart budget: (1) Direct AI on the condensed chart alone, (2) Direct AI + Stage-2 4-Layer Clinical KB alerts, and (3) the full Med Agent Hub pipeline (condensed chart + clinical conflict rules + patient entity-relationship subgraph + Tier-0 safety net recovery). Every setup was tested across 36 clinical scenarios spanning 10 complex multi-clinic and ICU patients (20 clinical accuracy & conflict reconciliation questions and 16 conversational privacy, caregiver-boundary, and coercion stress tests \u2014 972 total answers) and graded in a blinded review by two independent AI judges (Claude Opus 4.6 and GPT-5.4) anchored to a clinician-verified ground-truth rubric.",
+      "takeaway": "Google Gemma 4 is the clear winner for a single-model clinical pathway, sweeping the top 7 spots out of all 27 setups (67.2\u201382.1/100) ahead of the best Qwen 3 (65.4/100) and Llama 3.1 (55.3/100) setups \u2014 and across every model 4B and above in all three families, routing through Med Agent Hub monotonically raised scores and cut unsafe answers by 33%\u201371%. Why Gemma 4 dominates: across all 216 answers from Gemma 4 12B and 26B (all 6 setups), neither model ever produced a fabricated or unsupported [N] citation (0/216 vs. 2\u20133/36 per setup on Qwen 3 14B, while Llama 3.1 8B frequently dropped inline [N] citations with only 2\u20135/36 answers fully supported). Gemma 4 26B + Med Agent Hub led overall at 82.1/100 (8.62 accuracy, 8.39 completeness, 8.76 relevance, 3/36 unsafe vs. 72.9/100 for Direct + KB and 71.3/100 with 6/36 unsafe for Direct AI \u2014 a 50% reduction in unsafe answers). Gemma 4 12B + Med Agent Hub (80.5/100, 8.53 accuracy, 8.68 relevance) emerged as the practical single-model sweet spot: it came within 1.6 points of 26B while recording the lowest unsafe-answer rate (2/36 vs. 7/36 on Direct 12B \u2014 a 71% reduction) and lowest confabulation count (1/36) in the entire sweep, beating raw Gemma 4 26B (71.3/100) by +9.2 points. For edge or laptop deployments, compact Gemma 4 E4B (4B effective parameters) + Med Agent Hub scored 70.4/100 (8.01 accuracy, 4/36 unsafe vs. 8/36 on Direct E4B), outperforming both raw Gemma 4 12B (67.2/100) and Qwen 3 14B + Med Agent Hub (65.4/100) at roughly one-third the active parameter footprint. The same pathway gains held across non-Gemma families: Qwen 3 14B climbed from 53.4/100 (13/36 unsafe) on Direct AI to 61.8/100 (6/36 unsafe) with Direct + KB and 65.4/100 (5/36 unsafe, \u221262% unsafe) with Med Agent Hub; Qwen 3.5 9B climbed from 49.4 to 57.1/100; Qwen 3 4B climbed from 34.7 (12/36 unsafe) to 43.5/100 (8/36 unsafe); and Llama 3.1 8B climbed from 50.6 (14/36 unsafe) to 55.3/100 (8/36 unsafe, \u221243% unsafe). Only the ultra-small 3.2B tier (Llama 3.2 3B, 33.8\u201344.2/100) struggled to synthesize dense multi-clinic FHIR + rule context simultaneously, establishing ~4B effective parameters as the capability floor.",
+      "family": "wahs",
+      "arms": {
+        "wahs:gemma-26b@8k": "Gemma 4 26B \u2014 Med Agent Hub + clinical graph & KB (8k chart)",
+        "wahs:gemma-4-12b@8k": "Gemma 4 12B \u2014 Med Agent Hub + clinical graph & KB (8k chart)",
+        "wahs-direct-kb:gemma-26b@8k": "Gemma 4 26B \u2014 Direct AI + clinical KB rules only (8k chart)",
+        "direct:gemma-26b@8k": "Gemma 4 26B \u2014 Direct AI model, no Hub (8k chart)",
+        "wahs-direct-kb:gemma-4-12b@8k": "Gemma 4 12B \u2014 Direct AI + clinical KB rules only (8k chart)",
+        "wahs:gemma-e4b@8k": "Gemma 4 E4B (4B eff.) \u2014 Med Agent Hub + clinical graph & KB (8k chart)",
+        "direct:gemma-4-12b@8k": "Gemma 4 12B \u2014 Direct AI model, no Hub (8k chart)",
+        "wahs:qwen3-14b@8k": "Qwen 3 14B \u2014 Med Agent Hub + clinical graph & KB (8k chart)",
+        "wahs-direct-kb:gemma-e4b@8k": "Gemma 4 E4B (4B eff.) \u2014 Direct AI + clinical KB rules only (8k chart)",
+        "direct:gemma-e4b@8k": "Gemma 4 E4B (4B eff.) \u2014 Direct AI model, no Hub (8k chart)",
+        "wahs-direct-kb:qwen3-14b@8k": "Qwen 3 14B \u2014 Direct AI + clinical KB rules only (8k chart)",
+        "wahs:qwen3.5-9b@8k": "Qwen 3.5 9B \u2014 Med Agent Hub + clinical graph & KB (8k chart)",
+        "wahs:llama-3.1-8b@8k": "Llama 3.1 8B \u2014 Med Agent Hub + clinical graph & KB (8k chart)",
+        "wahs-direct-kb:qwen3.5-9b@8k": "Qwen 3.5 9B \u2014 Direct AI + clinical KB rules only (8k chart)",
+        "direct:qwen3-14b@8k": "Qwen 3 14B \u2014 Direct AI model, no Hub (8k chart)",
+        "wahs-direct-kb:llama-3.1-8b@8k": "Llama 3.1 8B \u2014 Direct AI + clinical KB rules only (8k chart)",
+        "direct:llama-3.1-8b@8k": "Llama 3.1 8B \u2014 Direct AI model, no Hub (8k chart)",
+        "direct:qwen3.5-9b@8k": "Qwen 3.5 9B \u2014 Direct AI model, no Hub (8k chart)",
+        "wahs-direct-kb:hermes3-8b@8k": "Hermes 3 Llama 3.1 8B \u2014 Direct AI + clinical KB rules only (8k chart)",
+        "direct:llama-3.2-3b@8k": "Llama 3.2 3B \u2014 Direct AI model, no Hub (8k chart)",
+        "wahs-direct-kb:llama-3.2-3b@8k": "Llama 3.2 3B \u2014 Direct AI + clinical KB rules only (8k chart)",
+        "wahs:qwen3-4b@8k": "Qwen 3 4B \u2014 Med Agent Hub + clinical graph & KB (8k chart)",
+        "direct:hermes3-8b@8k": "Hermes 3 Llama 3.1 8B \u2014 Direct AI model, no Hub (8k chart)",
+        "wahs:hermes3-8b@8k": "Hermes 3 Llama 3.1 8B \u2014 Med Agent Hub + clinical graph & KB (8k chart)",
+        "wahs-direct-kb:qwen3-4b@8k": "Qwen 3 4B \u2014 Direct AI + clinical KB rules only (8k chart)",
+        "direct:qwen3-4b@8k": "Qwen 3 4B \u2014 Direct AI model, no Hub (8k chart)",
+        "wahs:llama-3.2-3b@8k": "Llama 3.2 3B \u2014 Med Agent Hub + clinical graph & KB (8k chart)"
+      },
+      "guide": {
+        "label": "How Med Agent Hub works",
+        "url": "https://openclinai.org/med-agent-hub/wahs-architecture/"
+      }
+    },
+    {
+      "slug": "2026-11-05-macbook-full-default-12b-parallel2-aaedaebc",
+      "title": "MacBook Apple Silicon (parallel=2): Dual KV slots cut Med Agent Hub TTFT by 3.3x (34.0s \u2192 10.3s) while maintaining zero-harm lead",
+      "summary": "17-scenario full-default HIV chart comparison (35 turns per arm, 70 total) on a 64 GB Apple Silicon MacBook running Gemma 4 12B via llama-server with parallel=2 (two 49,152-token KV slots within the 98,304 context window), scored by a blinded dual-judge panel (claude-opus-5-5 + gpt-6-astra).",
+      "takeaway": "Med Agent Hub (79.8/100, 0 harm, 0 confabulations) beat Bundled ChartSearchAI (75.9/100, 1 harm, 1 confabulation) on both clinical judges (77.5 vs. 73.3 on Claude; 82.8 vs. 80.2 on Codex), while parallel=2 raised Hub's median KV cache hit rate from 0.0% to 84.0% and cut median TTFT 3.3x (34.0s \u2192 10.3s) and Answer-Done 3.0x (35.9s \u2192 12.1s).",
+      "family": "chartsearchai",
+      "arms": {
+        "engine-parity-bundled-12b": "Bundled ChartSearchAI",
+        "engine-parity-hub-answer-12b": "Hub, answer only"
+      }
+    },
+    {
+      "slug": "2026-11-05-macbook-full-default-12b-parallel1-a35a95fd",
+      "title": "MacBook Apple Silicon (parallel=1): Bundled ChartSearchAI vs. Med Agent Hub with live SSE streaming & KV-slot telemetry",
+      "summary": "17-scenario full-default HIV chart comparison (35 turns per arm, 70 total) on a 64 GB Apple Silicon MacBook running Gemma 4 12B via llama-server (--parallel 1) through the engine-parity wire taps, with end-to-end SSE answer_delta token streaming and stage latency telemetry.",
+      "takeaway": "Both arms completed all 35 turns with 0 errors and live token streaming (20\u201330 SSE delta frames/turn). On a single KV slot (--parallel 1), Bundled ChartSearchAI achieved 1.3s median TTFT (99.9% KV prefix reuse across questions), whereas Med Agent Hub's post-answer citation attribution call (424 tokens) evicted the 17.4k chart prefix from slot 0 between cited turns (34.0s median TTFT vs. 3.0s\u20134.9s after un-cited turns).",
+      "family": "chartsearchai",
+      "arms": {
+        "engine-parity-bundled-12b": "Bundled ChartSearchAI",
+        "engine-parity-hub-answer-12b": "Hub, answer only"
+      }
+    },
+    {
       "slug": "2026-11-04-wahs-macbook-direct-vs-hub-multi-scenario-eval",
       "title": "What happens when we give the AI enough memory for the whole chart \u2014 and does Med Agent Hub still beat calling the model directly?",
       "summary": "In our earlier cloud GPU test, large patient charts failed because the shared server silently cut off anything past 16,000 tokens of memory. Here we ran the same Google Gemma 4 12B model on a 64 GB MacBook with a 96,000-token memory window \u2014 large enough to hold the entire chart at once \u2014 across two complex multi-clinic patients and six clinical questions (medication conflicts, hospital history, and knowing when to say 'not in chart'). At each chart size (compact 1k, standard 8k, and large 32k), we compared three setups \u2014 calling the AI model directly on the chart, routing through Med Agent Hub with the chart alone, and routing through Med Agent Hub with its automated clinical rule checks \u2014 and graded all 54 answers with two independent blinded AI judges (Claude Opus 4.6 and GPT-5.4).",
-      "takeaway": "Giving the AI enough memory completely eliminated the 32k chart collapse, and scoping Med Agent Hub's clinical rules to the question being asked put the KB-enriched setup on top at every chart size with zero unsafe answers. At the standard 8k chart, Med Agent Hub + clinical rules led overall at 92.5/100 (9.42 accuracy, 9.33 completeness, 9.08 relevance, 0 unsafe answers), ahead of Hub chart-only (89.2/100, 0 unsafe) and calling the AI model directly (86.5/100, 1 unsafe). At the large 32k chart, Med Agent Hub + clinical rules also led at 91.3/100 (0 unsafe), ahead of Hub chart-only (89.8/100, 0 unsafe) and Direct AI (85.5/100, 1 unsafe). On the compact 1k summary — where older prescriptions and labs were squeezed out of the static chart — Med Agent Hub's clinical rules and Tier-0 overflow recovery rescued the missing safety records and scored 68.2/100 (0 unsafe), beating Hub chart-only (49.2/100, 1 unsafe) by +19.0 points and Direct AI (47.0/100, 2 unsafe) by +21.2 points.",
+      "takeaway": "Giving the AI enough memory completely eliminated the 32k chart collapse, and scoping Med Agent Hub's clinical rules to the question being asked put the KB-enriched setup on top at every chart size with zero unsafe answers. At the standard 8k chart, Med Agent Hub + clinical rules led overall at 92.5/100 (9.42 accuracy, 9.33 completeness, 9.08 relevance, 0 unsafe answers), ahead of Hub chart-only (89.2/100, 0 unsafe) and calling the AI model directly (86.5/100, 1 unsafe). At the large 32k chart, Med Agent Hub + clinical rules also led at 91.3/100 (0 unsafe), ahead of Hub chart-only (89.8/100, 0 unsafe) and Direct AI (85.5/100, 1 unsafe). On the compact 1k summary \u2014 where older prescriptions and labs were squeezed out of the static chart \u2014 Med Agent Hub's clinical rules and Tier-0 overflow recovery rescued the missing safety records and scored 68.2/100 (0 unsafe), beating Hub chart-only (49.2/100, 1 unsafe) by +19.0 points and Direct AI (47.0/100, 2 unsafe) by +21.2 points.",
       "family": "wahs",
       "arms": {
         "wahs-12b-kb@8k": "Med Agent Hub + clinical rules (standard 8k chart)",

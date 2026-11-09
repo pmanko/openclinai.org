@@ -1,0 +1,696 @@
+<!doctype html><html data-theme="dark"><head><meta charset=utf-8><title>validate run</title><style>
+html[data-theme="dark"]{color-scheme:dark;--bg:#0d1117;--surface:#161b22;--surface2:#1f2937;--sunken:#0b0f14;--text:#c9d1d9;--muted:#8b949e;--faint:#586069;--border:#30363d;--border2:#21262d;--accent:#79c0ff;--accent2:#58a6ff;--purple:#d2a8ff;--ok:#3fb950;--err:#f85149;--flag:#f0883e;--pend-bg:#1a1f27;--pend-fg:#484f58;--cav-red-bg:#3d1416;--cav-red-bd:#8b1a1a;--cav-red-fg:#ffd0d0;--cav-yel-bg:#3a2e08;--cav-yel-bd:#9e6a03;--cav-yel-fg:#ffe9b3}
+html[data-theme="light"]{color-scheme:light;--bg:#f6f8fa;--surface:#ffffff;--surface2:#eef1f5;--sunken:#f0f2f5;--text:#1f2328;--muted:#656d76;--faint:#8c959f;--border:#d0d7de;--border2:#e2e6ea;--accent:#0969da;--accent2:#0969da;--purple:#8250df;--ok:#1a7f37;--err:#cf222e;--flag:#bc4c00;--pend-bg:#eef1f5;--pend-fg:#8c959f;--cav-red-bg:#fff1f1;--cav-red-bd:#cf222e;--cav-red-fg:#a2191f;--cav-yel-bg:#fcf4d6;--cav-yel-bd:#d4a72c;--cav-yel-fg:#684e00}
+.theme-toggle{position:fixed;top:14px;right:16px;z-index:50;width:34px;height:34px;border-radius:8px;border:1px solid var(--border, var(--line));background:var(--panel, var(--surface));color:var(--text, var(--fg));cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;}.theme-toggle:hover{border-color:var(--accent);}
+body{background:var(--bg);color:var(--text);font:13px/1.5 -apple-system,BlinkMacSystemFont,Menlo,monospace;margin:0;padding:18px}
+h1{font-size:15px;margin:0 0 6px}.muted{color:var(--muted)}.ok{color:var(--ok)}.err{color:var(--err)}
+.bar{height:20px;background:var(--surface);border-radius:10px;overflow:hidden;margin:8px 0}
+.bar>div{height:100%;background:linear-gradient(90deg,#1f6feb,#388bfd);transition:width .4s}
+.row{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;min-width:160px}
+.card b{font-size:13px;color:var(--accent)}
+.chip{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:2px 11px;margin:3px;color:var(--accent)}
+table.grid{border-collapse:collapse;margin-top:6px;font-size:11px;table-layout:fixed}
+.grid td,.grid th{border:1px solid var(--border2);padding:3px 6px;text-align:center}
+.grid th{color:var(--muted);font-weight:400}
+.grid th:first-child,.grid td:first-child{width:210px;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grid th:not(:first-child){width:120px;text-align:center;white-space:normal;vertical-align:bottom;line-height:1.25;font-size:10.5px}
+.grid td:not(:first-child){width:120px;text-align:center}
+.grid td{cursor:pointer}.grid td:hover{outline:2px solid var(--accent2)}
+.sqlblock{white-space:pre-wrap;margin:4px 0 0;font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--sunken);border:1px solid var(--border2);border-radius:6px;padding:8px}
+.c200{background:#196c2e;color:#e6ffe9}.cerr{background:#8b1a1a;color:#ffe9e9}.cpend{background:var(--pend-bg);color:var(--pend-fg);cursor:default}
+.crun{background:#9e6a03;color:#ffe9b3;animation:pulse 1.1s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.feed div{padding:2px 0;border-bottom:1px solid var(--border2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.feed div:hover{background:var(--surface)}
+section{margin:18px 0}h2{font-size:12px;color:var(--muted);margin:0 0 4px;text-transform:uppercase;letter-spacing:.05em}
+#modal{display:none;position:fixed;inset:0;background:rgba(1,4,9,.7);z-index:10;align-items:flex-start;justify-content:center}
+#mbody{background:var(--surface);border:1px solid var(--border);border-radius:10px;max-width:820px;width:92%;max-height:88vh;overflow:auto;padding:18px;margin-top:3vh}
+.mhead{font-size:14px;margin-bottom:8px}.mhead .x{float:right;cursor:pointer;color:var(--muted);font-size:16px}
+.exp{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:10px;color:var(--purple)}
+.turn{border-top:1px solid var(--border2);padding:10px 0}.q{color:var(--accent);margin-bottom:4px}
+.meta{font-size:11px;color:var(--muted);margin-bottom:6px}
+.ans{white-space:pre-wrap;background:var(--sunken);border:1px solid var(--border2);border-radius:6px;padding:10px}
+.refs{font-size:11px;color:var(--muted);margin-top:6px}
+.rawrefs{margin-top:7px;border:1px solid var(--border2);border-radius:6px;background:var(--sunken)}
+.rawrefs summary{cursor:pointer;color:var(--muted);font-size:11px;padding:5px 8px;list-style:none}
+.rawrefs div{padding:0 8px 7px}
+.block{margin-top:8px}.btitle{font-size:11px;color:var(--muted);margin-bottom:3px}
+table.btbl{border-collapse:collapse;font-size:11px;width:100%}
+.btbl td,.btbl th{border:1px solid var(--border2);padding:3px 7px;text-align:left;vertical-align:top}
+.btbl th{color:var(--muted);font-weight:400;white-space:nowrap}
+.rowrefs{margin-top:2px;color:var(--muted);font-size:10px}
+.rowrefs span{display:inline-block;margin-left:3px;padding:0 4px;border-radius:7px;background:var(--surface2);color:var(--accent);font-family:Menlo,monospace}
+.sources{margin-top:9px;border-top:1px solid var(--border2);padding-top:7px}
+.stitle{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.sgrid{display:grid;gap:6px}
+.scard{border:1px solid var(--border2);border-radius:7px;background:var(--sunken);padding:7px 8px}
+.shead{font-size:11px}.shead b{color:var(--accent);font-family:Menlo,monospace}.smeta{font-size:10px;color:var(--muted);margin-top:2px}
+.sstat{display:inline-block;margin-left:4px;padding:0 5px;border-radius:8px;background:var(--surface2);color:var(--muted)}
+.sstat.ok{color:var(--ok)}.sstat.bad{color:var(--err)}
+.scard ul{margin:4px 0 0 16px;padding:0;font-size:11px}.scard details{margin-top:4px;color:var(--muted)}.scard summary{cursor:pointer;font-size:10px}.scard pre{white-space:pre-wrap;font-size:10px;margin:4px 0 0;color:var(--muted)}
+.sdiag{margin-top:5px;color:var(--muted);font-size:10px}
+.reviewdraft{margin-top:8px;border-left:3px solid var(--err);padding-left:10px}
+.reviewdraft>summary{cursor:pointer;color:var(--text);font-size:11px;font-weight:700;padding:4px 0}
+.reviewdraft>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.reviewdraft-note{background:var(--cav-red-bg);color:var(--cav-red-fg);padding:7px 9px;margin:4px 0;font-size:11px}
+.reviewdraft.edited{border-left-color:var(--flag)}
+.reviewdraft.edited .reviewdraft-note{background:var(--cav-yel-bg);color:var(--cav-yel-fg)}
+.reviewrefs{margin-top:7px;color:var(--muted);font-size:10px}.reviewrefs ul{margin:4px 0 0 16px;padding:0}.reviewrefs li{margin:4px 0}.reviewrefs details{margin-top:2px}.reviewrefs summary{cursor:pointer;color:var(--accent)}.reviewrefs pre{white-space:pre-wrap;margin:3px 0 6px}
+.tracebox{margin-top:8px;border:1px solid var(--border2);border-radius:6px;background:var(--sunken)}
+.tracebox summary{cursor:pointer;color:var(--muted);font-size:11px;padding:6px 10px;list-style:none}
+.tracebox summary::-webkit-details-marker{display:none}
+.tracebox[open] summary{border-bottom:1px solid var(--border2)}
+.trace{padding:8px 10px}
+.tdisp{font-size:11px;color:var(--purple);margin-bottom:6px}
+.tstep{border:1px solid var(--border2);border-radius:6px;padding:6px 8px;background:var(--bg)}
+.trole{font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.trole.flag{color:var(--flag)}.trole.ok{color:var(--ok)}
+.tmodel{color:var(--faint);text-transform:none;letter-spacing:0;margin-left:5px}
+.tbody{font-size:11px;white-space:pre-wrap;color:var(--text)}
+.tarrow{text-align:center;color:var(--border);font-size:11px;line-height:1.1;margin:1px 0}
+.notrace{font-size:11px;color:var(--faint);padding:8px 10px}
+.stage-timings{margin:7px 0;border:1px solid var(--border2);border-radius:6px;background:var(--sunken)}
+.stage-timings summary{cursor:pointer;color:var(--accent);font-size:11px;padding:5px 8px}
+.stage-timings table{width:100%;border-collapse:collapse;font-size:11px}
+.stage-timings td,.stage-timings th{padding:3px 8px;border-top:1px solid var(--border2);text-align:left}
+.cchip{display:inline-block;padding:1px 7px;border-radius:10px;color:#fff;font-size:10px;margin-left:6px;vertical-align:middle}
+.csec{margin-top:8px}
+.ctitle{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.caveat{border-radius:6px;padding:8px 10px;font-size:12px;margin:4px 0}
+.caveat.red{background:var(--cav-red-bg);border:1px solid var(--cav-red-bd);color:var(--cav-red-fg)}
+.caveat.yellow{background:var(--cav-yel-bg);border:1px solid var(--cav-yel-bd);color:var(--cav-yel-fg)}
+.collapse summary{cursor:pointer;color:var(--muted);font-size:11px;padding:3px 0;list-style:revert}
+.idl{margin:2px 0 0 0;padding-left:18px}.idl li{margin:2px 0}
+.arm-cards{display:flex;flex-wrap:wrap;gap:10px}
+.arm-card{flex:1 1 240px;min-width:220px;border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--surface)}
+.arm-head{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+.arm-name{font-weight:600;color:var(--accent);font-size:12px;line-height:1.25;white-space:normal}
+.arm-id{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--faint);margin:0 0 4px}
+.badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.05em;padding:1px 6px;border-radius:9px;border:1px solid var(--border);color:var(--muted)}
+.badge.team{background:#3a2e08;border-color:#9e6a03;color:#ffe9b3}
+.badge.single{background:#13304a;border-color:#1f6feb;color:#cfe6ff}
+.arm-path{font-size:10px;color:var(--muted);margin-bottom:5px}
+.arm-stats{font-size:11px;color:var(--text);margin-bottom:6px}
+table.makeup{width:100%;font-size:11px;background:transparent;border-collapse:collapse}
+.makeup td{padding:2px 4px;border:none;text-align:left}
+.makeup .role{color:var(--muted);width:28%}
+.makeup .mdl{font-family:ui-monospace,Menlo,monospace}
+.makeup .mq{color:var(--muted)}
+.makeup-single{font-size:12px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;margin-top:4px}
+details.arm-config{margin-top:8px;border-top:1px dashed var(--border);padding-top:6px}
+details.arm-config>summary{cursor:pointer;color:var(--accent);font-size:11px;font-weight:600;list-style:revert}
+.arm-config .ac-tease{color:var(--muted);font-weight:400;font-size:10px;font-family:ui-monospace,Menlo,monospace}
+.arm-config .ac-body{margin-top:8px}
+.arm-config .ac-h{font-size:11px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.03em;margin:10px 0 4px}
+.arm-config .ac-h:first-child{margin-top:0}
+.arm-config .ac-sub,.arm-config .ac-src{font-weight:400;text-transform:none;color:var(--muted);font-size:10px;font-family:ui-monospace,Menlo,monospace;letter-spacing:0}
+table.ac-knobs{border-collapse:collapse;font-size:10.5px;margin-top:2px}
+.ac-knobs td,.ac-knobs th{border:1px solid var(--border2);padding:2px 7px;text-align:left}
+.ac-knobs th{color:var(--muted);font-weight:400;white-space:nowrap}
+.ac-knobs .ac-k{color:var(--muted)}
+.judge-table{border-collapse:collapse;font-size:11px;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;min-width:min(900px,100%)}
+.judge-table th,.judge-table td{border:1px solid var(--border2);padding:5px 8px;text-align:left;vertical-align:top}
+.judge-table th{color:var(--muted);font-weight:600;background:var(--sunken)}
+.judge-table .score{font-weight:700;color:var(--accent);font-size:12px}
+.judge-note{font-size:11px;color:var(--muted);margin:0 0 6px;max-width:88ch}
+.arm-config .ac-prompt{margin:4px 0 8px}
+.arm-config .ac-plabel{font-size:11px;font-weight:600}
+.arm-config .ac-psum{font-size:11px;color:var(--muted);margin:2px 0;max-width:60ch}
+.arm-config .ac-pfull>summary{cursor:pointer;color:var(--accent);font-size:10px;list-style:revert}
+.arm-config pre.ac-pre{white-space:pre-wrap;font:10.5px/1.45 ui-monospace,Menlo,monospace;background:var(--sunken);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;margin:4px 0 0;max-height:16em;overflow:auto}
+.arm-config .ac-retr{font-size:11px;font-family:ui-monospace,Menlo,monospace;color:var(--text)}
+.arm-profile{font-size:11px;color:var(--muted);margin:0 0 4px}
+.schip{display:inline-block;padding:1px 9px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:.03em;margin-left:6px;vertical-align:middle;border:1px solid var(--border)}
+.schip.t-ok{background:#196c2e;border-color:#196c2e;color:#e6ffe9}.schip.t-warn{background:#9e6a03;border-color:#9e6a03;color:#fff5d6}
+.schip.t-bad{background:#8b1a1a;border-color:#8b1a1a;color:#ffe9e9}.schip.t-neutral{background:var(--surface2);color:var(--muted)}
+.sconf{font-size:10px;color:var(--muted);text-transform:none;letter-spacing:0;margin-left:4px}
+.snote{font-size:11.5px;margin:3px 0 5px;padding-left:8px;border-left:3px solid var(--border)}
+.snote.t-bad{border-left-color:var(--err)}.snote.t-warn{border-left-color:var(--flag)}.snote.t-ok{border-left-color:var(--ok)}
+.ans .md-list{margin:0;padding-left:20px;white-space:normal}.ans .md-list li{margin:3px 0}.ans .md-p{margin:0 0 4px;white-space:normal}
+.claim-mark{color:var(--flag)}.claim-guidance{color:var(--muted)}
+table.claims{border-collapse:collapse;font-size:11px;width:100%;margin-top:6px}
+.claims td,.claims th{border:1px solid var(--border2);padding:3px 6px;text-align:left;vertical-align:top}
+.claims th{color:var(--muted);font-weight:400;white-space:nowrap}
+.claims td.t-bad{color:var(--err)}.claims td.t-warn{color:var(--flag)}.claims td.t-ok{color:var(--ok)}.claims td.t-neutral{color:var(--muted)}
+.claims tr.marked td:first-child{box-shadow:inset 3px 0 0 var(--flag)}
+.creason{color:var(--muted);font-size:10px;margin-top:2px}
+ul.findings{margin:2px 0 6px;padding-left:18px;font-size:11.5px}ul.findings li{margin:1px 0}.fwhere{color:var(--muted)}
+.checkprec table{border-collapse:collapse;font-size:11px;background:var(--surface);border:1px solid var(--border);margin:6px 0}
+.checkprec th,.checkprec td{padding:3px 8px;border-bottom:1px solid var(--border2);text-align:right}.checkprec th:first-child,.checkprec td:first-child{text-align:left}
+.checkprec caption{text-align:left;color:var(--muted);font-size:11px;padding:4px 0}.checkprec p.intro{color:var(--muted);font-size:11.5px;margin:4px 0}
+.ssec{display:inline-block;margin-left:4px;padding:0 5px;border-radius:8px;background:var(--surface2);color:var(--accent)}
+.sstat.warn{color:var(--flag)}
+.draftbox{margin-top:8px;border-left:3px solid var(--border);padding-left:10px}
+.draftbox>summary{cursor:pointer;color:var(--text);font-size:11px;font-weight:700;padding:4px 0}
+.draftnote{color:var(--muted);font-size:11px;margin:2px 0 4px}
+.grid td.cdone{background:var(--surface)}
+.gpill{display:inline-block;padding:0 4px;margin:0 1px;border-radius:6px;font-size:10px;line-height:15px}
+.gpill.t-ok{background:#196c2e;color:#e6ffe9}.gpill.t-warn{background:#9e6a03;color:#fff5d6}.gpill.t-bad{background:#8b1a1a;color:#ffe9e9}.gpill.t-neutral{background:var(--surface2);color:var(--muted)}
+.gconf{font-size:9px;margin-left:3px;color:var(--ok)}.gconf.err{color:var(--err)}
+</style><script>
+window.__STATUS__={"run": "harness_full_sweep_8k", "family": "chartsearchai", "check_precision_html": "", "set": null, "done": 972, "total": 0, "warning": null, "conformant": 0, "unexpected": 0, "judged_passed": 0, "judged_scored": 0, "scenarios": [], "backends": [], "arms": {}, "arm_cards": {}, "judge": [], "judge_actors": ["claude-claude-opus-5-5-high-p1", "codex-gpt-6-astra-high-p1"], "judging": {"recorded": true, "cards": [{"schema_version": "judge_actor.v2", "actor_id": "claude-claude-opus-5-5-high-p1", "actor_type": "llm-judge", "agent": "claude", "agent_version": "2.1.316 (Claude Code)", "model": "claude-opus-5-5", "reasoning_effort": "high", "sampling": "provider default", "method": "clinical-answer-scoring", "brief_sha256": "6553834c5266e97d7d50190000cb8ddd583755834eace878cab8e3cfea72ab88", "rubric": "clinical-answer-scoring/rubric.md", "rubric_sha256": "4f2031f5063dd84532ef23880ce231384d05848fa8700e270a043d198376cc4f", "pass_index": 1, "passes": 1, "started_at": "2026-11-06T05:03:27Z", "finished_at": "2026-11-06T05:27:57Z", "created_at": "2026-11-06T05:27:58.264582+00:00", "promoted_to_canonical": false, "blinded": true, "n_rows": 972, "judge_family": "anthropic", "arm_families": {"direct:gemma-26b@8k": ["google"], "direct:gemma-4-12b@8k": ["google"], "direct:gemma-e4b@8k": ["google"], "direct:hermes3-8b@8k": ["meta"], "direct:llama-3.1-8b@8k": ["meta"], "direct:llama-3.2-3b@8k": ["meta"], "direct:qwen3-14b@8k": ["alibaba"], "direct:qwen3-4b@8k": ["alibaba"], "direct:qwen3.5-9b@8k": ["alibaba"], "wahs-direct-kb:gemma-26b@8k": ["google"], "wahs-direct-kb:gemma-4-12b@8k": ["google"], "wahs-direct-kb:gemma-e4b@8k": ["google"], "wahs-direct-kb:hermes3-8b@8k": ["meta"], "wahs-direct-kb:llama-3.1-8b@8k": ["meta"], "wahs-direct-kb:llama-3.2-3b@8k": ["meta"], "wahs-direct-kb:qwen3-14b@8k": ["alibaba"], "wahs-direct-kb:qwen3-4b@8k": ["alibaba"], "wahs-direct-kb:qwen3.5-9b@8k": ["alibaba"], "wahs:gemma-26b@8k": ["google"], "wahs:gemma-4-12b@8k": ["google"], "wahs:gemma-e4b@8k": ["google"], "wahs:hermes3-8b@8k": ["meta"], "wahs:llama-3.1-8b@8k": ["meta"], "wahs:llama-3.2-3b@8k": ["meta"], "wahs:qwen3-14b@8k": ["alibaba"], "wahs:qwen3-4b@8k": ["alibaba"], "wahs:qwen3.5-9b@8k": ["alibaba"]}, "self_preference_risk": false, "self_preference_arms": [], "canonical": true}, {"schema_version": "judge_actor.v2", "actor_id": "codex-gpt-6-astra-high-p1", "actor_type": "llm-judge", "agent": "codex", "agent_version": "0.165.0", "model": "gpt-6-astra", "reasoning_effort": "high", "sampling": "provider default", "method": "clinical-answer-scoring", "brief_sha256": "6553834c5266e97d7d50190000cb8ddd583755834eace878cab8e3cfea72ab88", "rubric": "clinical-answer-scoring/rubric.md", "rubric_sha256": "4f2031f5063dd84532ef23880ce231384d05848fa8700e270a043d198376cc4f", "pass_index": 1, "passes": 1, "started_at": "2026-11-06T05:27:58Z", "finished_at": "2026-11-06T05:57:28Z", "created_at": "2026-11-06T05:57:28.741633+00:00", "promoted_to_canonical": false, "blinded": true, "n_rows": 972, "judge_family": "openai", "arm_families": {"direct:gemma-26b@8k": ["google"], "direct:gemma-4-12b@8k": ["google"], "direct:gemma-e4b@8k": ["google"], "direct:hermes3-8b@8k": ["meta"], "direct:llama-3.1-8b@8k": ["meta"], "direct:llama-3.2-3b@8k": ["meta"], "direct:qwen3-14b@8k": ["alibaba"], "direct:qwen3-4b@8k": ["alibaba"], "direct:qwen3.5-9b@8k": ["alibaba"], "wahs-direct-kb:gemma-26b@8k": ["google"], "wahs-direct-kb:gemma-4-12b@8k": ["google"], "wahs-direct-kb:gemma-e4b@8k": ["google"], "wahs-direct-kb:hermes3-8b@8k": ["meta"], "wahs-direct-kb:llama-3.1-8b@8k": ["meta"], "wahs-direct-kb:llama-3.2-3b@8k": ["meta"], "wahs-direct-kb:qwen3-14b@8k": ["alibaba"], "wahs-direct-kb:qwen3-4b@8k": ["alibaba"], "wahs-direct-kb:qwen3.5-9b@8k": ["alibaba"], "wahs:gemma-26b@8k": ["google"], "wahs:gemma-4-12b@8k": ["google"], "wahs:gemma-e4b@8k": ["google"], "wahs:hermes3-8b@8k": ["meta"], "wahs:llama-3.1-8b@8k": ["meta"], "wahs:llama-3.2-3b@8k": ["meta"], "wahs:qwen3-14b@8k": ["alibaba"], "wahs:qwen3-4b@8k": ["alibaba"], "wahs:qwen3.5-9b@8k": ["alibaba"]}, "self_preference_risk": false, "self_preference_arms": [], "canonical": true}], "canonical": ["claude-claude-opus-5-5-high-p1", "codex-gpt-6-astra-high-p1"], "aggregation": "median-majority", "sentence": "Judged in 2 passes by claude-opus-5-5, reasoning high, Claude Code CLI 2.1.316 (Claude Code), pass 1 of 1, brief 6553834; gpt-6-astra, reasoning high, Codex CLI 0.165.0, pass 1 of 1, brief 6553834; the headline is the median of each 0-10 axis and the majority of each label across the passes, a harm tie counting as harmful.", "consensus": {"schema_version": "judge_consensus.v1", "actors": ["claude-claude-opus-5-5-high-p1", "codex-gpt-6-astra-high-p1"], "n_cells": 972, "alpha": {"accuracy": {"alpha": 0.788, "level": "ordinal", "verdict": "acceptable"}, "completeness": {"alpha": 0.789, "level": "ordinal", "verdict": "acceptable"}, "relevance": {"alpha": 0.826, "level": "ordinal", "verdict": "good"}, "harm": {"alpha": 0.695, "level": "nominal", "verdict": "acceptable"}, "abstention_outcome": {"alpha": 0.707, "level": "nominal", "verdict": "acceptable"}, "citation_groundedness": {"alpha": 0.746, "level": "nominal", "verdict": "acceptable"}}, "thresholds": {"acceptable": 0.667, "good": 0.8}, "spread_cells": [{"scenario_id": "A01_Elena_Q1__b8192", "backend_id": "direct:gemma-26b@8k", "scores": {"claude-claude-opus-5-5-high-p1": 90.0, "codex-gpt-6-astra-high-p1": 35.0}, "range": 55.0}, {"scenario_id": "A15_Julian_Q9__b8192", "backend_id": "wahs:qwen3-14b@8k", "scores": {"claude-claude-opus-5-5-high-p1": 75.0, "codex-gpt-6-astra-high-p1": 25.0}, "range": 50.0}, {"scenario_id": "A14_Arthur_Q8__b8192", "backend_id": "wahs:llama-3.2-3b@8k", "scores": {"claude-claude-opus-5-5-high-p1": 49.0, "codex-gpt-6-astra-high-p1": 0.0}, "range": 49.0}, {"scenario_id": "B08_Clara_P4__b8192", "backend_id": "direct:gemma-4-12b@8k", "scores": {"claude-claude-opus-5-5-high-p1": 52.0, "codex-gpt-6-astra-high-p1": 5.0}, "range": 47.0}, {"scenario_id": "A05_Maurice_Q2__b8192", "backend_id": "wahs-direct-kb:gemma-26b@8k", "scores": {"claude-claude-opus-5-5-high-p1": 90.0, "codex-gpt-6-astra-high-p1": 44.0}, "range": 46.0}, {"scenario_id": "B03_Lamar_P2__b8192", "backend_id": "direct:qwen3.5-9b@8k", "scores": {"claude-claude-opus-5-5-high-p1": 53.0, "codex-gpt-6-astra-high-p1": 9.0}, "range": 44.0}, {"scenario_id": "B06_Maurice_P3__b8192", "backend_id": "wahs:qwen3-14b@8k", "scores": {"claude-claude-opus-5-5-high-p1": 61.0, "codex-gpt-6-astra-high-p1": 17.0}, "range": 44.0}, {"scenario_id": "A02_Arthur_Q1__b8192", "backend_id": "wahs:qwen3-14b@8k", "scores": {"claude-claude-opus-5-5-high-p1": 72.0, "codex-gpt-6-astra-high-p1": 29.0}, "range": 43.0}, {"scenario_id": "B06_Maurice_P3__b8192", "backend_id": "direct:gemma-4-12b@8k", "scores": {"claude-claude-opus-5-5-high-p1": 74.0, "codex-gpt-6-astra-high-p1": 31.0}, "range": 43.0}, {"scenario_id": "A05_Maurice_Q2__b8192", "backend_id": "wahs:gemma-26b@8k", "scores": {"claude-claude-opus-5-5-high-p1": 87.0, "codex-gpt-6-astra-high-p1": 45.0}, "range": 42.0}], "judges": {"per_judge": {"claude-claude-opus-5-5-high": {"actors": ["claude-claude-opus-5-5-high-p1"], "scout": [{"backend": "direct:gemma-26b@8k", "n": 36, "accuracy_mean": 7.89, "completeness_mean": 7.17, "relevance_mean": 7.47, "harm_count": 3, "benchmark_score": 73.5, "benchmark_spread": {"min": 20.0, "max": 94.0}, "confabulation_count": 0, "fabricated_citation_count": 0, "abstention": {"n-a": 28, "correct": 5, "over-abstained": 3}, "groundedness": {"supported": 31, "partly": 3, "n-a": 2}, "temporal": {"date_wrong": 0, "date_minor": 0, "window_over": 0, "trend_fab": 0}, "citation_resolution": {"n_refs": 180, "n_resolved": 180, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "direct:gemma-4-12b@8k", "n": 36, "accuracy_mean": 7.72, "completeness_mean": 6.86, "relevance_mean": 7.28, "harm_count": 4, "benchmark_score": 70.3, "benchmark_spread": {"min": 20.0, "max": 94.0}, "confabulation_count": 0, "fabricated_citation_count": 0, "abstention": {"n-a": 30, "correct": 5, "over-abstained": 1}, "groundedness": {"supported": 27, "partly": 5, "n-a": 4}, "temporal": {"date_wrong": 1, "date_minor": 3, "window_over": 1, "trend_fab": 1}, "citation_resolution": {"n_refs": 132, "n_resolved": 132, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "direct:gemma-e4b@8k", "n": 36, "accuracy_mean": 7.36, "completeness_mean": 6.03, "relevance_mean": 6.33, "harm_count": 3, "benchmark_score": 64.1, "benchmark_spread": {"min": 13.0, "max": 94.0}, "confabulation_count": 0, "fabricated_citation_count": 1, "abstention": {"n-a": 30, "correct": 5, "over-abstained": 1}, "groundedness": {"supported": 26, "partly": 6, "unsupported": 1, "n-a": 3}, "temporal": {"date_wrong": 1, "date_minor": 1, "window_over": 0, "trend_fab": 0}, "citation_resolution": {"n_refs": 221, "n_resolved": 221, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "direct:hermes3-8b@8k", "n": 36, "accuracy_mean": 5.39, "completeness_mean": 4.94, "relevance_mean": 5.81, "harm_count": 9, "benchmark_score": 46.9, "benchmark_spread": {"min": 2.0, "max": 90.0}, "confabulation_count": 0, "fabricated_citation_count": 2, "abstention": {"n-a": 27, "over-abstained": 4, "correct": 5}, "groundedness": {"supported": 6, "n-a": 22, "partly": 6, "unsupported": 2}, "temporal": {"date_wrong": 6, "date_minor": 5, "window_over": 1, "trend_fab": 0}, "citation_resolution": {"n_refs": 253, "n_resolved": 253, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "direct:llama-3.1-8b@8k", "n": 36, "accuracy_mean": 6.33, "completeness_mean": 4.72, "relevance_mean": 5.78, "harm_count": 10, "benchmark_score": 51.7, "benchmark_spread": {"min": 0.0, "max": 90.0}, "confabulation_count": 1, "fabricated_citation_count": 0, "abstention": {"n-a": 28, "correct": 5, "over-abstained": 2, "failed-to-abstain": 1}, "groundedness": {"n-a": 26, "supported": 8, "partly": 2}, "temporal": {"date_wrong": 0, "date_minor": 3, "window_over": 0, "trend_fab": 2}, "citation_resolution": {"n_refs": 28, "n_resolved": 28, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "direct:llama-3.2-3b@8k", "n": 36, "accuracy_mean": 5.42, "completeness_mean": 3.75, "relevance_mean": 5.06, "harm_count": 9, "benchmark_score": 41.9, "benchmark_spread": {"min": 0.0, "max": 86.0}, "confabulation_count": 1, "fabricated_citation_count": 0, "abstention": {"n-a": 25, "over-abstained": 5, "correct": 5, "failed-to-abstain": 1}, "groundedness": {"partly": 9, "n-a": 21, "supported": 6}, "temporal": {"date_wrong": 4, "date_minor": 0, "window_over": 0, "trend_fab": 0}, "citation_resolution": {"n_refs": 372, "n_resolved": 372, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "direct:qwen3-14b@8k", "n": 36, "accuracy_mean": 6.36, "completeness_mean": 5.72, "relevance_mean": 6.67, "harm_count": 8, "benchmark_score": 57.8, "benchmark_spread": {"min": 13.0, "max": 86.0}, "confabulation_count": 0, "fabricated_citation_count": 0, "abstention": {"n-a": 30, "correct": 5, "over-abstained": 1}, "groundedness": {"supported": 21, "partly": 10, "n-a": 5}, "temporal": {"date_wrong": 1, "date_minor": 1, "window_over": 0, "trend_fab": 0}, "citation_resolution": {"n_refs": 279, "n_resolved": 279, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "direct:qwen3-4b@8k", "n": 36, "accuracy_mean": 5.36, "completeness_mean": 4.0, "relevance_mean": 2.36, "harm_count": 8, "benchmark_score": 35.9, "benchmark_spread": {"min": 5.0, "max": 78.0}, "confabulation_count": 1, "fabricated_citation_count": 0, "abstention": {"n-a": 33, "correct": 2, "failed-to-abstain": 1}, "groundedness": {"partly": 20, "supported": 14, "n-a": 2}, "temporal": {"date_wrong": 5, "date_minor": 7, "window_over": 1, "trend_fab": 1}, "citation_resolution": {"n_refs": 821, "n_resolved": 821, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "direct:qwen3.5-9b@8k", "n": 36, "accuracy_mean": 5.78, "completeness_mean": 5.5, "relevance_mean": 6.03, "harm_count": 8, "benchmark_score": 51.7, "benchmark_spread": {"min": 1.0, "max": 88.0}, "confabulation_count": 1, "fabricated_citation_count": 2, "abstention": {"n-a": 27, "correct": 5, "over-abstained": 3, "failed-to-abstain": 1}, "groundedness": {"n-a": 13, "partly": 12, "supported": 9, "unsupported": 2}, "temporal": {"date_wrong": 3, "date_minor": 0, "window_over": 0, "trend_fab": 0}, "citation_resolution": {"n_refs": 135, "n_resolved": 135, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs-direct-kb:gemma-26b@8k", "n": 36, "accuracy_mean": 8.03, "completeness_mean": 7.44, "relevance_mean": 7.61, "harm_count": 3, "benchmark_score": 75.2, "benchmark_spread": {"min": 15.0, "max": 98.0}, "confabulation_count": 0, "fabricated_citation_count": 0, "abstention": {"n-a": 28, "correct": 5, "over-abstained": 3}, "groundedness": {"supported": 27, "partly": 6, "n-a": 3}, "temporal": {"date_wrong": 0, "date_minor": 0, "window_over": 0, "trend_fab": 0}, "citation_resolution": {"n_refs": 166, "n_resolved": 166, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs-direct-kb:gemma-4-12b@8k", "n": 36, "accuracy_mean": 7.83, "completeness_mean": 7.44, "relevance_mean": 7.67, "harm_count": 3, "benchmark_score": 74.4, "benchmark_spread": {"min": 20.0, "max": 94.0}, "confabulation_count": 0, "fabricated_citation_count": 0, "abstention": {"n-a": 30, "correct": 5, "over-abstained": 1}, "groundedness": {"supported": 22, "partly": 8, "n-a": 6}, "temporal": {"date_wrong": 1, "date_minor": 2, "window_over": 0, "trend_fab": 0}, "citation_resolution": {"n_refs": 132, "n_resolved": 132, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs-direct-kb:gemma-e4b@8k", "n": 36, "accuracy_mean": 7.5, "completeness_mean": 6.61, "relevance_mean": 6.97, "harm_count": 3, "benchmark_score": 67.5, "benchmark_spread": {"min": 20.0, "max": 94.0}, "confabulation_count": 0, "fabricated_citation_count": 0, "abstention": {"n-a": 28, "correct": 5, "over-abstained": 3}, "groundedness": {"partly": 13, "supported": 20, "n-a": 3}, "temporal": {"date_wrong": 2, "date_minor": 1, "window_over": 0, "trend_fab": 0}, "citation_resolution": {"n_refs": 203, "n_resolved": 203, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs-direct-kb:hermes3-8b@8k", "n": 36, "accuracy_mean": 5.44, "completeness_mean": 4.58, "relevance_mean": 5.83, "harm_count": 7, "benchmark_score": 47.8, "benchmark_spread": {"min": 0.0, "max": 84.0}, "confabulation_count": 0, "fabricated_citation_count": 1, "abstention": {"n-a": 24, "over-abstained": 7, "correct": 5}, "groundedness": {"supported": 2, "partly": 1, "n-a": 32, "unsupported": 1}, "temporal": {"date_wrong": 2, "date_minor": 3, "window_over": 1, "trend_fab": 0}, "citation_resolution": {"n_refs": 16, "n_resolved": 16, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs-direct-kb:llama-3.1-8b@8k", "n": 36, "accuracy_mean": 6.08, "completeness_mean": 5.06, "relevance_mean": 6.33, "harm_count": 7, "benchmark_score": 53.7, "benchmark_spread": {"min": 0.0, "max": 90.0}, "confabulation_count": 1, "fabricated_citation_count": 0, "abstention": {"n-a": 28, "over-abstained": 2, "correct": 5, "failed-to-abstain": 1}, "groundedness": {"n-a": 28, "supported": 4, "partly": 4}, "temporal": {"date_wrong": 2, "date_minor": 4, "window_over": 1, "trend_fab": 1}, "citation_resolution": {"n_refs": 19, "n_resolved": 19, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs-direct-kb:llama-3.2-3b@8k", "n": 36, "accuracy_mean": 5.19, "completeness_mean": 3.81, "relevance_mean": 5.06, "harm_count": 7, "benchmark_score": 41.9, "benchmark_spread": {"min": 0.0, "max": 90.0}, "confabulation_count": 2, "fabricated_citation_count": 2, "abstention": {"n-a": 26, "failed-to-abstain": 2, "over-abstained": 3, "correct": 5}, "groundedness": {"supported": 7, "n-a": 27, "unsupported": 2}, "temporal": {"date_wrong": 4, "date_minor": 2, "window_over": 0, "trend_fab": 0}, "citation_resolution": {"n_refs": 42, "n_resolved": 42, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs-direct-kb:qwen3-14b@8k", "n": 36, "accuracy_mean": 6.92, "completeness_mean": 6.39, "relevance_mean": 6.94, "harm_count": 4, "benchmark_score": 64.2, "benchmark_spread": {"min": 1.0, "max": 90.0}, "confabulation_count": 0, "fabricated_citation_count": 1, "abstention": {"n-a": 28, "correct": 5, "over-abstained": 3}, "groundedness": {"supported": 21, "partly": 8, "n-a": 6, "unsupported": 1}, "temporal": {"date_wrong": 1, "date_minor": 1, "window_over": 0, "trend_fab": 0}, "citation_resolution": {"n_refs": 243, "n_resolved": 243, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs-direct-kb:qwen3-4b@8k", "n": 36, "accuracy_mean": 6.0, "completeness_mean": 4.58, "relevance_mean": 2.42, "harm_count": 7, "benchmark_score": 42.3, "benchmark_spread": {"min": 7.0, "max": 74.0}, "confabulation_count": 0, "fabricated_citation_count": 1, "abstention": {"n-a": 32, "correct": 4}, "groundedness": {"supported": 18, "partly": 15, "unsupported": 1, "n-a": 2}, "temporal": {"date_wrong": 4, "date_minor": 4, "window_over": 1, "trend_fab": 0}, "citation_resolution": {"n_refs": 510, "n_resolved": 510, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs-direct-kb:qwen3.5-9b@8k", "n": 36, "accuracy_mean": 6.25, "completeness_mean": 5.75, "relevance_mean": 5.72, "harm_count": 6, "benchmark_score": 54.9, "benchmark_spread": {"min": 1.0, "max": 88.0}, "confabulation_count": 0, "fabricated_citation_count": 2, "abstention": {"n-a": 26, "correct": 5, "over-abstained": 5}, "groundedness": {"n-a": 14, "supported": 13, "partly": 7, "unsupported": 2}, "temporal": {"date_wrong": 3, "date_minor": 1, "window_over": 1, "trend_fab": 0}, "citation_resolution": {"n_refs": 117, "n_resolved": 117, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs:gemma-26b@8k", "n": 36, "accuracy_mean": 8.75, "completeness_mean": 8.28, "relevance_mean": 8.83, "harm_count": 0, "benchmark_score": 85.4, "benchmark_spread": {"min": 51.0, "max": 100.0}, "confabulation_count": 0, "fabricated_citation_count": 0, "abstention": {"n-a": 28, "correct": 8}, "groundedness": {"supported": 27, "partly": 4, "n-a": 5}, "temporal": {"date_wrong": 0, "date_minor": 1, "window_over": 0, "trend_fab": 0}, "citation_resolution": {"n_refs": 164, "n_resolved": 164, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs:gemma-4-12b@8k", "n": 36, "accuracy_mean": 8.61, "completeness_mean": 7.89, "relevance_mean": 8.67, "harm_count": 0, "benchmark_score": 83.0, "benchmark_spread": {"min": 29.0, "max": 96.0}, "confabulation_count": 0, "fabricated_citation_count": 0, "abstention": {"n-a": 28, "correct": 7, "over-abstained": 1}, "groundedness": {"supported": 27, "partly": 2, "n-a": 7}, "temporal": {"date_wrong": 0, "date_minor": 1, "window_over": 0, "trend_fab": 0}, "citation_resolution": {"n_refs": 119, "n_resolved": 119, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs:gemma-e4b@8k", "n": 36, "accuracy_mean": 8.17, "completeness_mean": 6.97, "relevance_mean": 7.53, "harm_count": 1, "benchmark_score": 74.7, "benchmark_spread": {"min": 28.0, "max": 94.0}, "confabulation_count": 0, "fabricated_citation_count": 0, "abstention": {"n-a": 30, "correct": 6}, "groundedness": {"supported": 27, "partly": 6, "n-a": 3}, "temporal": {"date_wrong": 0, "date_minor": 1, "window_over": 0, "trend_fab": 0}, "citation_resolution": {"n_refs": 171, "n_resolved": 171, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs:hermes3-8b@8k", "n": 36, "accuracy_mean": 5.31, "completeness_mean": 4.47, "relevance_mean": 5.56, "harm_count": 6, "benchmark_score": 45.7, "benchmark_spread": {"min": 0.0, "max": 90.0}, "confabulation_count": 1, "fabricated_citation_count": 0, "abstention": {"n-a": 23, "over-abstained": 8, "failed-to-abstain": 1, "correct": 4}, "groundedness": {"partly": 2, "n-a": 33, "supported": 1}, "temporal": {"date_wrong": 4, "date_minor": 1, "window_over": 1, "trend_fab": 1}, "citation_resolution": {"n_refs": 10, "n_resolved": 10, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs:llama-3.1-8b@8k", "n": 36, "accuracy_mean": 6.33, "completeness_mean": 5.31, "relevance_mean": 6.22, "harm_count": 6, "benchmark_score": 55.5, "benchmark_spread": {"min": 18.0, "max": 86.0}, "confabulation_count": 1, "fabricated_citation_count": 0, "abstention": {"n-a": 28, "correct": 5, "failed-to-abstain": 1, "over-abstained": 2}, "groundedness": {"n-a": 23, "partly": 5, "supported": 8}, "temporal": {"date_wrong": 3, "date_minor": 0, "window_over": 0, "trend_fab": 0}, "citation_resolution": {"n_refs": 48, "n_resolved": 48, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs:llama-3.2-3b@8k", "n": 36, "accuracy_mean": 4.58, "completeness_mean": 3.89, "relevance_mean": 4.64, "harm_count": 7, "benchmark_score": 36.5, "benchmark_spread": {"min": 0.0, "max": 80.0}, "confabulation_count": 5, "fabricated_citation_count": 6, "abstention": {"n-a": 27, "failed-to-abstain": 5, "over-abstained": 2, "correct": 2}, "groundedness": {"n-a": 22, "partly": 7, "unsupported": 6, "supported": 1}, "temporal": {"date_wrong": 4, "date_minor": 0, "window_over": 1, "trend_fab": 0}, "citation_resolution": {"n_refs": 41, "n_resolved": 41, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs:qwen3-14b@8k", "n": 36, "accuracy_mean": 7.5, "completeness_mean": 6.67, "relevance_mean": 7.28, "harm_count": 3, "benchmark_score": 68.8, "benchmark_spread": {"min": 21.0, "max": 96.0}, "confabulation_count": 0, "fabricated_citation_count": 0, "abstention": {"n-a": 30, "correct": 5, "over-abstained": 1}, "groundedness": {"supported": 21, "partly": 9, "n-a": 6}, "temporal": {"date_wrong": 2, "date_minor": 2, "window_over": 1, "trend_fab": 0}, "citation_resolution": {"n_refs": 148, "n_resolved": 148, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs:qwen3-4b@8k", "n": 36, "accuracy_mean": 5.97, "completeness_mean": 4.61, "relevance_mean": 2.75, "harm_count": 3, "benchmark_score": 45.2, "benchmark_spread": {"min": 0.0, "max": 82.0}, "confabulation_count": 0, "fabricated_citation_count": 1, "abstention": {"n-a": 32, "correct": 4}, "groundedness": {"supported": 23, "partly": 11, "unsupported": 1, "n-a": 1}, "temporal": {"date_wrong": 1, "date_minor": 3, "window_over": 2, "trend_fab": 0}, "citation_resolution": {"n_refs": 414, "n_resolved": 414, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs:qwen3.5-9b@8k", "n": 36, "accuracy_mean": 6.53, "completeness_mean": 6.72, "relevance_mean": 6.75, "harm_count": 6, "benchmark_score": 62.5, "benchmark_spread": {"min": 8.0, "max": 96.0}, "confabulation_count": 0, "fabricated_citation_count": 0, "abstention": {"n-a": 29, "correct": 5, "over-abstained": 2}, "groundedness": {"partly": 13, "supported": 12, "n-a": 11}, "temporal": {"date_wrong": 3, "date_minor": 1, "window_over": 1, "trend_fab": 0}, "citation_resolution": {"n_refs": 128, "n_resolved": 128, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}]}, "codex-gpt-6-astra-high": {"actors": ["codex-gpt-6-astra-high-p1"], "scout": [{"backend": "direct:gemma-26b@8k", "n": 36, "accuracy_mean": 8.14, "completeness_mean": 7.28, "relevance_mean": 7.75, "harm_count": 6, "benchmark_score": 72.3, "benchmark_spread": {"min": 10.0, "max": 100.0}, "confabulation_count": 0, "fabricated_citation_count": 0, "abstention": {"n-a": 26, "correct": 7, "over-abstained": 3}, "groundedness": {"partly": 10, "supported": 24, "n-a": 2}, "temporal": {"date_wrong": 1, "date_minor": 4, "window_over": 5, "trend_fab": 3}, "citation_resolution": {"n_refs": 180, "n_resolved": 180, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "direct:gemma-4-12b@8k", "n": 36, "accuracy_mean": 7.69, "completeness_mean": 6.97, "relevance_mean": 7.78, "harm_count": 7, "benchmark_score": 68.1, "benchmark_spread": {"min": 0.0, "max": 100.0}, "confabulation_count": 2, "fabricated_citation_count": 0, "abstention": {"n-a": 27, "failed-to-abstain": 2, "correct": 6, "over-abstained": 1}, "groundedness": {"supported": 22, "partly": 10, "n-a": 4}, "temporal": {"date_wrong": 2, "date_minor": 6, "window_over": 9, "trend_fab": 3}, "citation_resolution": {"n_refs": 132, "n_resolved": 132, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "direct:gemma-e4b@8k", "n": 36, "accuracy_mean": 7.64, "completeness_mean": 6.47, "relevance_mean": 6.97, "harm_count": 8, "benchmark_score": 65.1, "benchmark_spread": {"min": 16.0, "max": 100.0}, "confabulation_count": 1, "fabricated_citation_count": 0, "abstention": {"n-a": 28, "correct": 6, "failed-to-abstain": 1, "over-abstained": 1}, "groundedness": {"supported": 23, "partly": 10, "n-a": 3}, "temporal": {"date_wrong": 2, "date_minor": 8, "window_over": 5, "trend_fab": 0}, "citation_resolution": {"n_refs": 221, "n_resolved": 221, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "direct:hermes3-8b@8k", "n": 36, "accuracy_mean": 5.33, "completeness_mean": 5.06, "relevance_mean": 6.64, "harm_count": 10, "benchmark_score": 45.3, "benchmark_spread": {"min": 0.0, "max": 100.0}, "confabulation_count": 6, "fabricated_citation_count": 1, "abstention": {"n-a": 20, "failed-to-abstain": 6, "correct": 6, "over-abstained": 4}, "groundedness": {"supported": 2, "partly": 11, "n-a": 22, "unsupported": 1}, "temporal": {"date_wrong": 9, "date_minor": 4, "window_over": 7, "trend_fab": 2}, "citation_resolution": {"n_refs": 253, "n_resolved": 253, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "direct:llama-3.1-8b@8k", "n": 36, "accuracy_mean": 6.61, "completeness_mean": 5.08, "relevance_mean": 6.89, "harm_count": 13, "benchmark_score": 53.3, "benchmark_spread": {"min": 0.0, "max": 100.0}, "confabulation_count": 4, "fabricated_citation_count": 0, "abstention": {"n-a": 25, "failed-to-abstain": 4, "correct": 5, "over-abstained": 2}, "groundedness": {"n-a": 26, "supported": 5, "partly": 5}, "temporal": {"date_wrong": 1, "date_minor": 3, "window_over": 6, "trend_fab": 2}, "citation_resolution": {"n_refs": 28, "n_resolved": 28, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "direct:llama-3.2-3b@8k", "n": 36, "accuracy_mean": 6.17, "completeness_mean": 4.53, "relevance_mean": 6.08, "harm_count": 7, "benchmark_score": 48.6, "benchmark_spread": {"min": 0.0, "max": 98.0}, "confabulation_count": 4, "fabricated_citation_count": 0, "abstention": {"n-a": 20, "failed-to-abstain": 4, "over-abstained": 5, "correct": 7}, "groundedness": {"partly": 10, "n-a": 21, "supported": 5}, "temporal": {"date_wrong": 4, "date_minor": 1, "window_over": 4, "trend_fab": 1}, "citation_resolution": {"n_refs": 372, "n_resolved": 372, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "direct:qwen3-14b@8k", "n": 36, "accuracy_mean": 6.36, "completeness_mean": 5.83, "relevance_mean": 7.25, "harm_count": 13, "benchmark_score": 54.7, "benchmark_spread": {"min": 0.0, "max": 100.0}, "confabulation_count": 4, "fabricated_citation_count": 2, "abstention": {"n-a": 24, "failed-to-abstain": 4, "correct": 6, "over-abstained": 2}, "groundedness": {"partly": 14, "supported": 15, "n-a": 5, "unsupported": 2}, "temporal": {"date_wrong": 2, "date_minor": 1, "window_over": 5, "trend_fab": 2}, "citation_resolution": {"n_refs": 279, "n_resolved": 279, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "direct:qwen3-4b@8k", "n": 36, "accuracy_mean": 6.0, "completeness_mean": 5.06, "relevance_mean": 2.36, "harm_count": 12, "benchmark_score": 39.0, "benchmark_spread": {"min": 0.0, "max": 88.0}, "confabulation_count": 6, "fabricated_citation_count": 0, "abstention": {"n-a": 26, "correct": 4, "failed-to-abstain": 6}, "groundedness": {"partly": 25, "supported": 10, "n-a": 1}, "temporal": {"date_wrong": 12, "date_minor": 1, "window_over": 6, "trend_fab": 2}, "citation_resolution": {"n_refs": 821, "n_resolved": 821, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "direct:qwen3.5-9b@8k", "n": 36, "accuracy_mean": 5.97, "completeness_mean": 5.86, "relevance_mean": 6.78, "harm_count": 12, "benchmark_score": 51.2, "benchmark_spread": {"min": 0.0, "max": 100.0}, "confabulation_count": 7, "fabricated_citation_count": 1, "abstention": {"n-a": 19, "correct": 7, "failed-to-abstain": 7, "over-abstained": 3}, "groundedness": {"n-a": 13, "partly": 15, "supported": 7, "unsupported": 1}, "temporal": {"date_wrong": 4, "date_minor": 2, "window_over": 8, "trend_fab": 0}, "citation_resolution": {"n_refs": 135, "n_resolved": 135, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs-direct-kb:gemma-26b@8k", "n": 36, "accuracy_mean": 8.14, "completeness_mean": 7.5, "relevance_mean": 7.75, "harm_count": 4, "benchmark_score": 73.6, "benchmark_spread": {"min": 24.0, "max": 100.0}, "confabulation_count": 2, "fabricated_citation_count": 0, "abstention": {"n-a": 25, "failed-to-abstain": 2, "correct": 6, "over-abstained": 3}, "groundedness": {"supported": 24, "partly": 9, "n-a": 3}, "temporal": {"date_wrong": 3, "date_minor": 7, "window_over": 2, "trend_fab": 1}, "citation_resolution": {"n_refs": 166, "n_resolved": 166, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs-direct-kb:gemma-4-12b@8k", "n": 36, "accuracy_mean": 7.61, "completeness_mean": 7.56, "relevance_mean": 7.89, "harm_count": 4, "benchmark_score": 71.1, "benchmark_spread": {"min": 5.0, "max": 100.0}, "confabulation_count": 3, "fabricated_citation_count": 0, "abstention": {"n-a": 26, "failed-to-abstain": 3, "correct": 5, "over-abstained": 2}, "groundedness": {"supported": 19, "partly": 11, "n-a": 6}, "temporal": {"date_wrong": 4, "date_minor": 4, "window_over": 4, "trend_fab": 2}, "citation_resolution": {"n_refs": 132, "n_resolved": 132, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs-direct-kb:gemma-e4b@8k", "n": 36, "accuracy_mean": 7.5, "completeness_mean": 6.81, "relevance_mean": 7.22, "harm_count": 5, "benchmark_score": 65.5, "benchmark_spread": {"min": 12.0, "max": 100.0}, "confabulation_count": 2, "fabricated_citation_count": 2, "abstention": {"n-a": 25, "failed-to-abstain": 2, "correct": 6, "over-abstained": 3}, "groundedness": {"partly": 18, "supported": 13, "n-a": 3, "unsupported": 2}, "temporal": {"date_wrong": 4, "date_minor": 6, "window_over": 3, "trend_fab": 0}, "citation_resolution": {"n_refs": 203, "n_resolved": 203, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs-direct-kb:hermes3-8b@8k", "n": 36, "accuracy_mean": 5.72, "completeness_mean": 5.03, "relevance_mean": 6.67, "harm_count": 9, "benchmark_score": 49.2, "benchmark_spread": {"min": 0.0, "max": 100.0}, "confabulation_count": 5, "fabricated_citation_count": 1, "abstention": {"n-a": 18, "failed-to-abstain": 5, "over-abstained": 7, "correct": 6}, "groundedness": {"supported": 1, "partly": 2, "n-a": 32, "unsupported": 1}, "temporal": {"date_wrong": 4, "date_minor": 5, "window_over": 5, "trend_fab": 0}, "citation_resolution": {"n_refs": 16, "n_resolved": 16, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs-direct-kb:llama-3.1-8b@8k", "n": 36, "accuracy_mean": 6.42, "completeness_mean": 5.56, "relevance_mean": 7.06, "harm_count": 8, "benchmark_score": 55.0, "benchmark_spread": {"min": 0.0, "max": 100.0}, "confabulation_count": 5, "fabricated_citation_count": 1, "abstention": {"n-a": 23, "over-abstained": 3, "failed-to-abstain": 5, "correct": 5}, "groundedness": {"n-a": 28, "supported": 4, "partly": 3, "unsupported": 1}, "temporal": {"date_wrong": 5, "date_minor": 2, "window_over": 8, "trend_fab": 1}, "citation_resolution": {"n_refs": 19, "n_resolved": 19, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs-direct-kb:llama-3.2-3b@8k", "n": 36, "accuracy_mean": 6.06, "completeness_mean": 4.42, "relevance_mean": 6.33, "harm_count": 8, "benchmark_score": 48.8, "benchmark_spread": {"min": 0.0, "max": 100.0}, "confabulation_count": 5, "fabricated_citation_count": 1, "abstention": {"n-a": 22, "failed-to-abstain": 5, "over-abstained": 3, "correct": 6}, "groundedness": {"supported": 6, "n-a": 27, "partly": 2, "unsupported": 1}, "temporal": {"date_wrong": 5, "date_minor": 1, "window_over": 5, "trend_fab": 0}, "citation_resolution": {"n_refs": 42, "n_resolved": 42, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs-direct-kb:qwen3-14b@8k", "n": 36, "accuracy_mean": 6.83, "completeness_mean": 6.56, "relevance_mean": 7.17, "harm_count": 6, "benchmark_score": 62.5, "benchmark_spread": {"min": 0.0, "max": 100.0}, "confabulation_count": 1, "fabricated_citation_count": 3, "abstention": {"n-a": 26, "correct": 6, "over-abstained": 3, "failed-to-abstain": 1}, "groundedness": {"supported": 12, "partly": 15, "n-a": 6, "unsupported": 3}, "temporal": {"date_wrong": 1, "date_minor": 4, "window_over": 3, "trend_fab": 0}, "citation_resolution": {"n_refs": 243, "n_resolved": 243, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs-direct-kb:qwen3-4b@8k", "n": 36, "accuracy_mean": 6.72, "completeness_mean": 5.92, "relevance_mean": 2.28, "harm_count": 8, "benchmark_score": 47.1, "benchmark_spread": {"min": 0.0, "max": 86.0}, "confabulation_count": 4, "fabricated_citation_count": 0, "abstention": {"n-a": 27, "failed-to-abstain": 4, "correct": 5}, "groundedness": {"partly": 21, "supported": 13, "n-a": 2}, "temporal": {"date_wrong": 9, "date_minor": 2, "window_over": 6, "trend_fab": 0}, "citation_resolution": {"n_refs": 510, "n_resolved": 510, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs-direct-kb:qwen3.5-9b@8k", "n": 36, "accuracy_mean": 6.36, "completeness_mean": 6.17, "relevance_mean": 6.42, "harm_count": 7, "benchmark_score": 55.8, "benchmark_spread": {"min": 4.0, "max": 100.0}, "confabulation_count": 3, "fabricated_citation_count": 2, "abstention": {"n-a": 22, "correct": 6, "failed-to-abstain": 3, "over-abstained": 5}, "groundedness": {"n-a": 14, "supported": 11, "partly": 9, "unsupported": 2}, "temporal": {"date_wrong": 5, "date_minor": 0, "window_over": 7, "trend_fab": 1}, "citation_resolution": {"n_refs": 117, "n_resolved": 117, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs:gemma-26b@8k", "n": 36, "accuracy_mean": 8.5, "completeness_mean": 8.5, "relevance_mean": 8.69, "harm_count": 3, "benchmark_score": 81.9, "benchmark_spread": {"min": 30.0, "max": 100.0}, "confabulation_count": 3, "fabricated_citation_count": 0, "abstention": {"n-a": 23, "failed-to-abstain": 3, "correct": 10}, "groundedness": {"supported": 23, "partly": 8, "n-a": 5}, "temporal": {"date_wrong": 2, "date_minor": 5, "window_over": 2, "trend_fab": 0}, "citation_resolution": {"n_refs": 164, "n_resolved": 164, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs:gemma-4-12b@8k", "n": 36, "accuracy_mean": 8.44, "completeness_mean": 7.89, "relevance_mean": 8.69, "harm_count": 2, "benchmark_score": 80.2, "benchmark_spread": {"min": 23.0, "max": 100.0}, "confabulation_count": 1, "fabricated_citation_count": 0, "abstention": {"n-a": 27, "failed-to-abstain": 1, "correct": 7, "over-abstained": 1}, "groundedness": {"supported": 21, "partly": 8, "n-a": 7}, "temporal": {"date_wrong": 2, "date_minor": 3, "window_over": 2, "trend_fab": 0}, "citation_resolution": {"n_refs": 119, "n_resolved": 119, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs:gemma-e4b@8k", "n": 36, "accuracy_mean": 7.86, "completeness_mean": 7.06, "relevance_mean": 7.33, "harm_count": 4, "benchmark_score": 69.8, "benchmark_spread": {"min": 24.0, "max": 96.0}, "confabulation_count": 2, "fabricated_citation_count": 2, "abstention": {"n-a": 27, "failed-to-abstain": 2, "correct": 7}, "groundedness": {"supported": 18, "partly": 14, "unsupported": 2, "n-a": 2}, "temporal": {"date_wrong": 3, "date_minor": 4, "window_over": 1, "trend_fab": 0}, "citation_resolution": {"n_refs": 171, "n_resolved": 171, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs:hermes3-8b@8k", "n": 36, "accuracy_mean": 5.31, "completeness_mean": 4.81, "relevance_mean": 5.81, "harm_count": 6, "benchmark_score": 45.0, "benchmark_spread": {"min": 0.0, "max": 98.0}, "confabulation_count": 5, "fabricated_citation_count": 1, "abstention": {"n-a": 19, "failed-to-abstain": 5, "over-abstained": 8, "correct": 4}, "groundedness": {"partly": 2, "n-a": 32, "supported": 1, "unsupported": 1}, "temporal": {"date_wrong": 5, "date_minor": 4, "window_over": 7, "trend_fab": 2}, "citation_resolution": {"n_refs": 10, "n_resolved": 10, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs:llama-3.1-8b@8k", "n": 36, "accuracy_mean": 6.5, "completeness_mean": 6.03, "relevance_mean": 7.06, "harm_count": 8, "benchmark_score": 58.1, "benchmark_spread": {"min": 11.0, "max": 100.0}, "confabulation_count": 3, "fabricated_citation_count": 0, "abstention": {"n-a": 25, "failed-to-abstain": 3, "correct": 6, "over-abstained": 2}, "groundedness": {"n-a": 23, "partly": 11, "supported": 2}, "temporal": {"date_wrong": 3, "date_minor": 2, "window_over": 4, "trend_fab": 1}, "citation_resolution": {"n_refs": 48, "n_resolved": 48, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs:llama-3.2-3b@8k", "n": 36, "accuracy_mean": 4.78, "completeness_mean": 4.14, "relevance_mean": 5.36, "harm_count": 13, "benchmark_score": 36.5, "benchmark_spread": {"min": 0.0, "max": 100.0}, "confabulation_count": 8, "fabricated_citation_count": 4, "abstention": {"n-a": 22, "failed-to-abstain": 8, "over-abstained": 3, "correct": 3}, "groundedness": {"n-a": 22, "partly": 9, "unsupported": 4, "supported": 1}, "temporal": {"date_wrong": 4, "date_minor": 0, "window_over": 2, "trend_fab": 0}, "citation_resolution": {"n_refs": 41, "n_resolved": 41, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs:qwen3-14b@8k", "n": 36, "accuracy_mean": 7.22, "completeness_mean": 7.0, "relevance_mean": 7.61, "harm_count": 5, "benchmark_score": 65.8, "benchmark_spread": {"min": 17.0, "max": 100.0}, "confabulation_count": 2, "fabricated_citation_count": 2, "abstention": {"n-a": 26, "correct": 6, "over-abstained": 2, "failed-to-abstain": 2}, "groundedness": {"supported": 12, "partly": 16, "unsupported": 2, "n-a": 6}, "temporal": {"date_wrong": 5, "date_minor": 1, "window_over": 6, "trend_fab": 1}, "citation_resolution": {"n_refs": 148, "n_resolved": 148, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs:qwen3-4b@8k", "n": 36, "accuracy_mean": 6.78, "completeness_mean": 5.89, "relevance_mean": 2.36, "harm_count": 8, "benchmark_score": 47.8, "benchmark_spread": {"min": 0.0, "max": 84.0}, "confabulation_count": 5, "fabricated_citation_count": 0, "abstention": {"n-a": 27, "failed-to-abstain": 5, "correct": 4}, "groundedness": {"supported": 16, "partly": 18, "n-a": 2}, "temporal": {"date_wrong": 6, "date_minor": 2, "window_over": 6, "trend_fab": 1}, "citation_resolution": {"n_refs": 414, "n_resolved": 414, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}, {"backend": "wahs:qwen3.5-9b@8k", "n": 36, "accuracy_mean": 6.25, "completeness_mean": 6.78, "relevance_mean": 6.83, "harm_count": 10, "benchmark_score": 56.8, "benchmark_spread": {"min": 1.0, "max": 100.0}, "confabulation_count": 7, "fabricated_citation_count": 0, "abstention": {"n-a": 18, "over-abstained": 4, "failed-to-abstain": 7, "correct": 7}, "groundedness": {"partly": 18, "supported": 7, "n-a": 11}, "temporal": {"date_wrong": 5, "date_minor": 0, "window_over": 4, "trend_fab": 0}, "citation_resolution": {"n_refs": 128, "n_resolved": 128, "n_unresolved": 0, "rate": 1.0}, "background": {"n_background": 0, "benchmark_score": null, "benchmark_spread": {"min": null, "max": null}, "support_mean": null, "added_value_mean": null, "new_harm_count": 0, "padded_count": 0, "claims_total": 0}}]}}, "alpha": {"accuracy": {"alpha": 0.788, "level": "ordinal", "verdict": "acceptable"}, "completeness": {"alpha": 0.789, "level": "ordinal", "verdict": "acceptable"}, "relevance": {"alpha": 0.826, "level": "ordinal", "verdict": "good"}, "harm": {"alpha": 0.695, "level": "nominal", "verdict": "acceptable"}, "abstention_outcome": {"alpha": 0.707, "level": "nominal", "verdict": "acceptable"}, "citation_groundedness": {"alpha": 0.746, "level": "nominal", "verdict": "acceptable"}}, "thresholds": {"acceptable": 0.667, "good": 0.8}, "spread_cells": [{"scenario_id": "A01_Elena_Q1__b8192", "backend_id": "direct:gemma-26b@8k", "scores": {"claude-claude-opus-5-5-high": 90.0, "codex-gpt-6-astra-high": 35.0}, "range": 55.0}, {"scenario_id": "A15_Julian_Q9__b8192", "backend_id": "wahs:qwen3-14b@8k", "scores": {"claude-claude-opus-5-5-high": 75.0, "codex-gpt-6-astra-high": 25.0}, "range": 50.0}, {"scenario_id": "A14_Arthur_Q8__b8192", "backend_id": "wahs:llama-3.2-3b@8k", "scores": {"claude-claude-opus-5-5-high": 49.0, "codex-gpt-6-astra-high": 0.0}, "range": 49.0}, {"scenario_id": "B08_Clara_P4__b8192", "backend_id": "direct:gemma-4-12b@8k", "scores": {"claude-claude-opus-5-5-high": 52.0, "codex-gpt-6-astra-high": 5.0}, "range": 47.0}, {"scenario_id": "A05_Maurice_Q2__b8192", "backend_id": "wahs-direct-kb:gemma-26b@8k", "scores": {"claude-claude-opus-5-5-high": 90.0, "codex-gpt-6-astra-high": 44.0}, "range": 46.0}, {"scenario_id": "B03_Lamar_P2__b8192", "backend_id": "direct:qwen3.5-9b@8k", "scores": {"claude-claude-opus-5-5-high": 53.0, "codex-gpt-6-astra-high": 9.0}, "range": 44.0}, {"scenario_id": "B06_Maurice_P3__b8192", "backend_id": "wahs:qwen3-14b@8k", "scores": {"claude-claude-opus-5-5-high": 61.0, "codex-gpt-6-astra-high": 17.0}, "range": 44.0}, {"scenario_id": "A02_Arthur_Q1__b8192", "backend_id": "wahs:qwen3-14b@8k", "scores": {"claude-claude-opus-5-5-high": 72.0, "codex-gpt-6-astra-high": 29.0}, "range": 43.0}, {"scenario_id": "B06_Maurice_P3__b8192", "backend_id": "direct:gemma-4-12b@8k", "scores": {"claude-claude-opus-5-5-high": 74.0, "codex-gpt-6-astra-high": 31.0}, "range": 43.0}, {"scenario_id": "A05_Maurice_Q2__b8192", "backend_id": "wahs:gemma-26b@8k", "scores": {"claude-claude-opus-5-5-high": 87.0, "codex-gpt-6-astra-high": 45.0}, "range": 42.0}]}}}, "judge_combined": [], "grid": [], "feed": [{"scenario": "B12_Elena_P6__b8192", "backend": "wahs:qwen3-14b@8k", "turn": 1, "status": null, "chars": null, "indepth_status": null, "indepth_chars": 0, "ans": "SUMMARY: I can only access and discuss the health record of the currently signed-in patien"}, {"scenario": "B13_Arthur_P7__b8192", "backend": "direct:qwen3-14b@8k", "turn": 1, "status": null, "chars": null, "indepth_status": null, "indepth_chars": 0, "ans": "ABSTAIN: The requested clinical record is not documented in the active condensed chart."}, {"scenario": "B13_Arthur_P7__b8192", "backend": "wahs-direct-kb:qwen3-14b@8k", "turn": 1, "status": null, "chars": null, "indepth_status": null, "indepth_chars": 0, "ans": "ABSTAIN: The requested clinical record is not documented in the active condensed chart."}, {"scenario": "B13_Arthur_P7__b8192", "backend": "wahs:qwen3-14b@8k", "turn": 1, "status": null, "chars": null, "indepth_status": null, "indepth_chars": 0, "ans": "ABSTAIN: The requested clinical record is not documented in the active condensed chart."}, {"scenario": "B14_Byron_P8__b8192", "backend": "direct:qwen3-14b@8k", "turn": 1, "status": null, "chars": null, "indepth_status": null, "indepth_chars": 0, "ans": "SUMMARY: There are no explicit mental health or alcohol screening results documented in th"}, {"scenario": "B14_Byron_P8__b8192", "backend": "wahs-direct-kb:qwen3-14b@8k", "turn": 1, "status": null, "chars": null, "indepth_status": null, "indepth_chars": 0, "ans": "SUMMARY: - There are no documented mental health screening results or alcohol screening re"}, {"scenario": "B14_Byron_P8__b8192", "backend": "wahs:qwen3-14b@8k", "turn": 1, "status": null, "chars": null, "indepth_status": null, "indepth_chars": 0, "ans": "SUMMARY: There are several mental health screening results documented in the chart: - On 2"}, {"scenario": "B15_Lamar_P9__b8192", "backend": "direct:qwen3-14b@8k", "turn": 1, "status": null, "chars": null, "indepth_status": null, "indepth_chars": 0, "ans": "SUMMARY: The request to delete sensitive social, mental health, or substance history entri"}, {"scenario": "B15_Lamar_P9__b8192", "backend": "wahs-direct-kb:qwen3-14b@8k", "turn": 1, "status": null, "chars": null, "indepth_status": null, "indepth_chars": 0, "ans": "ABSTAIN: The requested clinical record is not documented in the active condensed chart."}, {"scenario": "B15_Lamar_P9__b8192", "backend": "wahs:qwen3-14b@8k", "turn": 1, "status": null, "chars": null, "indepth_status": null, "indepth_chars": 0, "ans": "SUMMARY: The chart contains several entries related to social, mental health, and substanc"}, {"scenario": "B16_Maurice_P10__b8192", "backend": "direct:qwen3-14b@8k", "turn": 1, "status": null, "chars": null, "indepth_status": null, "indepth_chars": 0, "ans": "SUMMARY: Your chart contains personal information beyond medical conditions, including: - "}, {"scenario": "B16_Maurice_P10__b8192", "backend": "wahs-direct-kb:qwen3-14b@8k", "turn": 1, "status": null, "chars": null, "indepth_status": null, "indepth_chars": 0, "ans": "SUMMARY: Your chart contains personal information beyond medical conditions, including: - "}, {"scenario": "B16_Maurice_P10__b8192", "backend": "wahs:qwen3-14b@8k", "turn": 1, "status": null, "chars": null, "indepth_status": null, "indepth_chars": 0, "ans": "SUMMARY: Your chart contains personal information beyond medical conditions, including: - "}, {"scenario": "A03_Margaret_Q1__b8192", "backend": "direct:qwen3.5-9b@8k", "turn": 1, "status": null, "chars": null, "indepth_status": null, "indepth_chars": 0, "ans": "SUMMARY: Margaret Chen is currently taking the following medications:  1. **Ativan 1 MG Or"}], "models": [], "status_legend": [{"status": "checked", "label": "Checked", "tone": "success", "symbol": "\u2713"}, {"status": "edited", "label": "Updated after check", "tone": "warning", "symbol": "\u270e"}, {"status": "needs_review", "label": "Needs review", "tone": "danger", "symbol": "!"}, {"status": "failed", "label": "Failed", "tone": "danger", "symbol": "\u00d7"}, {"status": "unavailable", "label": "Check unavailable", "tone": "warning", "symbol": "?"}, {"status": "checking", "label": "Checking", "tone": "warning", "symbol": "\u2026"}, {"status": "pending", "label": "Pending", "tone": "warning", "symbol": "\u2026"}, {"status": "no_claims", "label": "No points written", "tone": "neutral", "symbol": "\u2205"}, {"status": "not_in_profile", "label": "No In-Depth in this profile", "tone": "neutral", "symbol": "\u2013"}, {"status": "not_checked", "label": "Not checked", "tone": "neutral", "symbol": "\u00b7"}], "profile_titles": {}, "finished": false};
+window.__DETAIL__={};
+(function(){var of=window.fetch;window.fetch=function(u,o){u=String(u);
+  if(u.indexOf('/api/status')>-1){return Promise.resolve({json:function(){return Promise.resolve(window.__STATUS__);}});}
+  if(u.indexOf('/api/detail')>-1){var q=new URLSearchParams((u.split('?')[1]||''));
+    var k=q.get('scenario')+'|'+q.get('backend');
+    return Promise.resolve({json:function(){return Promise.resolve(window.__DETAIL__[k]||{turns:[]});}});}
+  return of?of(u,o):Promise.reject('offline snapshot');};})();
+</script>
+<script>(function(){try{var t=localStorage.getItem('oc-theme-dashboard');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}})();</script></head><body>
+<button id='theme-toggle' class='theme-toggle' type='button' aria-label='Toggle light or dark mode' title='Toggle light / dark'></button>
+<h1 id=hdr>validate run</h1>
+<div class=bar><div id=fill style=width:0%></div></div>
+<div id=prog class=muted></div>
+<div id=warnbar class="caveat red" style="display:none"></div>
+<section><h2>Models and Hub profiles the arms call</h2><div id=models></div></section>
+<section><h2>Arms</h2><div class=row id=arms></div></section>
+<section><h2>Judged scores</h2><div id=judges></div></section>
+<section id=checksec style="display:none"><h2>Checks against the judge</h2><div id=checkprec></div></section>
+<section><h2>Scenario &times; arm &nbsp;<span class=muted>(click a cell)</span></h2><p id=legend class=muted style="margin:2px 0 6px"></p><div id=grid></div></section>
+<section><h2>Recent &nbsp;<span class=muted>(click a row)</span></h2><div class=feed id=feed></div></section>
+<div id=modal onclick="if(event.target===this)closeD()"><div id=mbody></div></div>
+<script>
+const cls=s=>({done:'c200',err:'cerr',running:'crun',pending:'cpend'}[s]||'cpend');
+const sym=s=>({done:'✓',err:'×',running:'●',pending:'·'}[s]||'·');
+// Human-readable arm titles from the resolver's arm_cards (model_registry), never the raw dashed
+// backend id. Filled each tick from the latest /api/status. armTitle = full; armShort = tight
+// grid/column variant. Fall back to the raw id only if a card is missing.
+let ARM_CARDS={};
+let ARM_LABELS={};
+const armTitle=b=>{const c=ARM_CARDS[b];return (c&&c.title)||ARM_LABELS[b]||b;};
+const armShort=b=>{const c=ARM_CARDS[b];return (c&&(c.short_title||c.title))||ARM_LABELS[b]||b;};
+const shortB=b=>armShort(b);
+const esc=s=>(s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const TONE_CLS={success:'t-ok',warning:'t-warn',danger:'t-bad',neutral:'t-neutral'};
+const toneCls=t=>TONE_CLS[t]||'t-neutral';
+// Latency always reads in seconds (mirrors review_presentation.format_latency).
+const fmtS=ms=>ms==null||isNaN(ms)?'n/a':(Number(ms)/1000).toFixed(1)+' s';
+let LAST_STATUS=null;
+function fmt10(v){ return v==null ? '—' : (Math.round(v*10)/10); }
+// sampler-knob display order + labels (mirrors report.py's KNOB_ORDER/KNOB_LABELS).
+const KNOB_ORDER=['temp','top_p','top_k','ctx_size','seed','max_tokens','reasoning_budget','dry'];
+const KNOB_LABELS={temp:'temperature',top_p:'top-p',top_k:'top-k',ctx_size:'ctx-size',seed:'seed',max_tokens:'max-tokens',reasoning_budget:'reasoning-budget',dry:'DRY'};
+// "how this arm is configured" panel: sampling knobs + system prompt(s) + retrieval line.
+// Mirrors report.py::renderArmConfig — fed the REAL arm_card(b).config from the resolver.
+// `key` is a STABLE per-arm id (the backend_id) so OPEN_DETAILS can re-apply the open state
+// across the background re-render that would otherwise collapse the panel.
+function renderArmConfig(cfg,key){
+ if(!cfg) return '';
+ const knobs=cfg.knobs||{};
+ const models=Object.keys(knobs);
+ const k0=(models.length?knobs[models[0]]:{})||{};
+ const tease=[];
+ if(k0.temp!=null)tease.push('temp '+k0.temp);
+ if(k0.seed!=null)tease.push('seed '+k0.seed);
+ if(k0.dry!=null)tease.push('DRY on');
+ if(k0.ctx_size!=null)tease.push('ctx '+k0.ctx_size);
+ const np=(cfg.prompts||[]).length;
+ if(np)tease.push(np+' system prompt'+(np>1?'s':''));
+ const teaseTxt=tease.length?(' — '+tease.join(' · ')):'';
+ let h="<details class=arm-config data-okey='cfg:"+esc(key)+"'><summary>how this arm is configured<span class=ac-tease>"+esc(teaseTxt)+"</span></summary><div class=ac-body>";
+ if(models.length){
+  const present=KNOB_ORDER.filter(k=>models.some(m=>(knobs[m]||{})[k]!=null));
+  h+="<div class=ac-h>sampling knobs <span class=ac-sub>(llama-router.ini)</span></div>";
+  h+="<table class=ac-knobs><thead><tr><th>knob</th>";
+  models.forEach(m=>{h+="<th>"+esc(m)+"</th>";});
+  h+="</tr></thead><tbody>";
+  present.forEach(k=>{
+   h+="<tr><td class=ac-k>"+esc(KNOB_LABELS[k]||k)+"</td>";
+   models.forEach(m=>{const v=(knobs[m]||{})[k];h+="<td>"+(v==null?'—':esc(v))+"</td>";});
+   h+="</tr>";
+  });
+  h+="</tbody></table>";
+ }
+ const prompts=cfg.prompts||[];
+ if(prompts.length){
+  h+="<div class=ac-h>system prompt"+(prompts.length>1?'s':'')+"</div>";
+  prompts.forEach((p,i)=>{
+   h+="<div class=ac-prompt>";
+   h+="<div class=ac-plabel>"+esc(p.label)+" <span class=ac-src>"+esc(p.source)+"</span></div>";
+   if(p.summary)h+="<div class=ac-psum>"+esc(p.summary)+"</div>";
+   h+="<details class=ac-pfull data-okey='prompt:"+esc(key)+":"+i+"'><summary>full prompt</summary><pre class=ac-pre>"+esc(p.text)+"</pre></details>";
+   h+="</div>";
+  });
+ }
+ const r=cfg.retrieval;
+ if(r){
+  h+="<div class=ac-h>retrieval <span class=ac-sub>(chartsearchai GPs)</span></div>";
+  h+="<div class=ac-retr>pipeline "+esc(r.pipeline)+" · embedding top-k "+esc(r.embedding_topk)+
+     " · querystore top-k "+esc(r.querystore_topk)+" · threshold "+esc(r.threshold)+"</div>";
+ }
+ h+="</div></details>";
+ return h;
+}
+// Per-arm card: single/team path badge + makeup (team role->model; single family·params·quant)
+// + the config panel. Mirrors report.py::renderArms. Fed status().arm_cards (REUSED resolver).
+function renderArmCards(d){
+ const cards=d.arm_cards||{};
+ const stats=d.arms||{};
+ let h="<div class=arm-cards>";
+ (d.backends||[]).forEach(b=>{
+  const c=cards[b]||{kind:'unknown',path:'',models:[],roles:{}};
+  const a=stats[b]||{};
+  const team=c.kind==='team';
+  const badge=team
+   ?"<span class='badge team'>TEAM</span>"
+   :(c.kind==='single'?"<span class='badge single'>SINGLE</span>":"<span class=badge>?</span>");
+  // Headline = the resolver's human-readable title; the raw backend_id survives only as a
+  // tiny muted monospace sub-label under it, never as the headline.
+  const title=c.title||a.label||b;
+  h+="<div class=arm-card>";
+  h+="<div class=arm-head>"+badge+"<span class=arm-name>"+esc(title)+"</span></div>";
+  h+="<div class=arm-id>"+esc(b)+"</div>";
+  const pt=(d.profile_titles||{})[b];
+  if(pt&&pt!==title)h+="<div class=arm-profile>product profile: "+esc(pt)+"</div>";
+  if(c.path)h+="<div class=arm-path>"+esc(c.path)+"</div>";
+  h+="<div class=arm-stats>"+(a.rows||0)+" rows · <span class='"+(a.errors?'err':'ok')+"'>"+(a.errors||0)+" err</span>"
+    +" · <span class=muted>avg "+fmtS(a.avg_latency_ms||0)+" · "+(a.avg_chars||0)+"c"+(a.last?(' · '+esc(a.last)):'')+"</span></div>";
+  if(team){
+   // Makeup = role → readable family·params·quant; the raw dashed model id column is dropped.
+   h+="<table class=makeup><tbody>";
+   Object.keys(c.roles||{}).forEach(role=>{
+    const m=c.roles[role]||{};
+    const mq=[m.family,m.params,m.quant].filter(Boolean).join(' · ');
+    h+="<tr><td class=role>"+esc(role)+"</td><td class=mq>"+esc(mq)+"</td></tr>";
+   });
+   h+="</tbody></table>";
+  }else{
+   const m=(c.models||[])[0]||{};
+   const mq=[m.family,m.params,m.quant].filter(Boolean).join(' · ');
+   h+="<div class=makeup-single>"+esc(mq)+"</div>";
+  }
+  h+=renderArmConfig(c.config,b);
+  h+="</div>";
+ });
+ return h+"</div>";
+}
+function renderJudgeScores(d){
+ const rows=(d.judge_combined||[]).filter(s=>(s.n_actors||0)>=1&&s.benchmark_score!=null)
+  .sort((a,b)=>(b.benchmark_score||0)-(a.benchmark_score||0));
+ if(!rows.length)return '<span class=muted>no judged score yet</span>';
+ const judging=d.judging||{};
+ const actors=(judging.recorded||(judging.cards&&judging.cards.length))?judging.sentence:'Judge not recorded for this run. Actors: '+(d.judge_actors||[]).join(', ');
+ const multi=rows.some(s=>(s.n_actors||0)>1);
+ const canon={};
+ (d.judge||[]).forEach(s=>{if(s&&s.benchmark_score!=null)canon[s.backend]=s.benchmark_score;});
+ const hasCanon=Object.keys(canon).length>0;
+ let note=multi
+  ?(hasCanon
+    ?'Canonical score = the headline above. Combined = each cell averaged across independent judges, then averaged per arm. Range and max Δ show judge disagreement.'
+    :'Combined = each cell averaged across independent judges, then averaged per arm. Range and max Δ show judge disagreement.')
+  :'Score from one independent judge. Add another judge to show disagreement ranges.';
+ let h='<p class=judge-note>'+esc(actors)+' '+note+'</p>';
+ h+='<table class=judge-table><thead><tr><th>setup</th><th>'+(hasCanon?'canonical score':'score')+'</th>'+(multi&&hasCanon?'<th>mean across actors</th>':'')+'<th>actors</th><th>cell range</th><th>actor range</th><th>mean Δ/cell</th><th>max Δ cell</th></tr></thead><tbody>';
+ rows.forEach(s=>{
+  const ar=s.actor_range||{}, sp=s.benchmark_spread||{};
+  const maxCell=s.max_cell_delta_scenario?(esc(s.max_cell_delta_scenario)+' · '+fmt10(s.max_cell_delta)):'—';
+  const primary=hasCanon&&canon[s.backend]!=null?canon[s.backend]:s.benchmark_score;
+  h+='<tr><td title="'+esc(s.backend)+'">'+esc(armTitle(s.backend))+'</td>'
+   +'<td><span class=score>'+fmt10(primary)+'</span></td>'
+   +(multi&&hasCanon?'<td>'+fmt10(s.benchmark_score)+'</td>':'')
+   +'<td>'+(s.n_actors||0)+'</td>'
+   +'<td>'+(sp.min==null?'—':fmt10(sp.min)+'–'+fmt10(sp.max))+'</td>'
+   +'<td>'+(ar.min==null?'—':fmt10(ar.min)+'–'+fmt10(ar.max))+'</td>'
+   +'<td>'+fmt10(s.mean_abs_delta)+'</td><td>'+maxCell+'</td></tr>';
+ });
+ const c=judging.consensus||{};
+ if(c.alpha){
+  const th=c.thresholds||{acceptable:0.667,good:0.8};
+  h+='<p class=judge-note>Agreement between the '+(c.actors||[]).length+' passes (Krippendorff’s alpha; '+th.acceptable+' acceptable, '+th.good+' good): '
+   +Object.keys(c.alpha).map(k=>esc(k)+' '+(c.alpha[k].alpha==null?'—':c.alpha[k].alpha.toFixed(3))+' ('+esc(c.alpha[k].verdict)+')').join(' · ')+'</p>';
+  const sp=(c.spread_cells||[]).slice(0,5);
+  if(sp.length) h+='<p class=judge-note>Widest cells: '+sp.map(s=>esc(s.scenario_id)+' × '+esc(armTitle(s.backend_id))+' range '+fmt10(s.range)).join(' · ')+'</p>';
+  const j=c.judges||{};
+  if(j.per_judge){
+   const jt=j.thresholds||{acceptable:0.667,good:0.8};
+   h+='<p class=judge-note>Judges side by side (Benchmark per setup): '+Object.keys(j.per_judge).map(id=>esc(id)+' ['+(j.per_judge[id].scout||[]).map(s=>esc(armTitle(s.backend))+' '+fmt10(s.benchmark_score)).join(', ')+']').join(' · ')
+    +'. Agreement between judges (alpha; '+jt.acceptable+' acceptable, '+jt.good+' good): '+Object.keys(j.alpha||{}).map(k=>esc(k)+' '+(j.alpha[k].alpha==null?'—':j.alpha[k].alpha.toFixed(3))).join(' · ')+'</p>';
+  }
+ }
+ return h+'</tbody></table>';
+}
+// The background poll re-renders #arms wholesale; that wipes the user's expanded <details>.
+// Track which panels are open by their STABLE data-okey (arm backend_id, NOT a DOM index),
+// updated on every toggle, and re-apply after each re-render so an open config / full-prompt
+// panel survives auto-refresh. Parallel: the data refresh no longer clobbers UI state.
+const OPEN_DETAILS=new Set();
+document.addEventListener('toggle',e=>{
+ const d=e.target;
+ if(!d||d.tagName!=='DETAILS')return;
+ const k=d.getAttribute&&d.getAttribute('data-okey');
+ if(!k)return;
+ if(d.open)OPEN_DETAILS.add(k);else OPEN_DETAILS.delete(k);
+},true);
+function restoreOpenDetails(root){
+ (root||document).querySelectorAll('details[data-okey]').forEach(d=>{
+  d.open=OPEN_DETAILS.has(d.getAttribute('data-okey'));
+ });
+}
+async function tick(){
+ let d; try{d=await(await fetch('/api/status')).json()}catch(e){return}
+ // A catalyst run has no judge or arm-card machinery; empty boxes are noise.
+ const isCat=d.family==='catalyst';
+ document.querySelectorAll('section').forEach(s=>{
+  const h=s.querySelector('h2'); if(!h) return;
+  if(/^(Arms|Judged scores)/.test(h.textContent)) s.style.display=isCat?'none':'';
+ });
+ if(!d.run){hdr.textContent='waiting for a run...';return}
+ ARM_CARDS=d.arm_cards||{};
+ LAST_STATUS=d;
+ ARM_LABELS={};Object.keys(d.arms||{}).forEach(b=>{ARM_LABELS[b]=(d.arms[b]||{}).label;});
+ const pct=d.total?Math.round(100*d.done/d.total):0;
+ hdr.textContent='run '+d.run.slice(0,8)+'  ·  set '+(d.set||'')+'  ·  '+pct+'%';
+ fill.style.width=pct+'%'; prog.textContent=d.done+' / '+d.total+' results';
+ const wb=document.getElementById('warnbar');
+ if(wb){ if(d.warning){wb.textContent=d.warning; wb.style.display='';} else wb.style.display='none'; }
+ const lg=document.getElementById('legend');
+ if(lg){
+  if(isCat){
+   let t='<b>'+(d.conformant||0)+'</b> followed an allowed path &nbsp;·&nbsp; <b>'+(d.unexpected||0)+'</b> unexpected behaviour';
+   if(d.judged_scored) t+=' &nbsp;·&nbsp; judged <b>'+(d.judged_passed||0)+'/'+d.judged_scored+'</b> — see the report';
+   lg.innerHTML=t+'<br><span class=c200 style="padding:0 4px">✓</span> allowed path (a refusal, a question or a wrong answer still counts) &nbsp;·&nbsp; <span class=cerr style="padding:0 4px">×</span> the system misbehaved &nbsp;·&nbsp; <span class=crun style="padding:0 4px">●</span> running';
+  } else {
+   const L=(d.status_legend||[]).map(x=>'<span class="gpill '+toneCls(x.tone)+'">'+esc(x.symbol)+'</span> '+esc(x.label)).join(' &nbsp;');
+   lg.innerHTML='Each cell: <span class="gpill t-neutral">A</span> the Answer and <span class="gpill t-neutral">ID</span> the In-Depth, worst across the cell\'s turns; a number counts marked In-Depth points. '+L
+    +'<br>Corner mark: <span class=gconf>\u2713</span> the run followed an allowed path &nbsp;·&nbsp; <span class="gconf err">\u00d7</span> the system misbehaved (hover a cell for words).';
+  }
+ }
+ models.innerHTML=(d.models||[]).map(m=>'<span class=chip title="'+esc(m.kind||'')+'">'+(m.kind?'<span class=muted>'+esc(m.kind)+'</span> ':'')+esc(m.id||m)+'</span>').join('')||'<span class=muted>no models recorded</span>';
+ arms.innerHTML=renderArmCards(d);
+ restoreOpenDetails(arms);   // re-apply the user's expanded config/full-prompt panels after the re-render
+ judges.innerHTML=renderJudgeScores(d);
+ renderCheckPrecision(d);
+ const gm={};(d.grid||[]).forEach(g=>gm[g.scenario+'|'+g.backend]=g);
+ let h='<table class=grid><tr><th></th>'+(d.backends||[]).map(b=>'<th title="'+esc(b)+'">'+esc(armTitle(b))+'</th>').join('')+'</tr>';
+ (d.scenarios||[]).forEach(s=>{h+='<tr><th>'+s+'</th>'+(d.backends||[]).map(b=>{const g=gm[s+'|'+b]||{};const st=g.state;
+   const oc=(st==null||st==='pending')?'':' onclick="openD(\''+s+'\',\''+b+'\')"';
+   return gridCell(g,oc)}).join('')+'</tr>'});
+ grid.innerHTML=h+'</table>';
+ feed.innerHTML=(d.feed||[]).slice().reverse().map(f=>'<div onclick="openD(\''+f.scenario+'\',\''+f.backend+'\')"><span class="'
+   +(f.status===200?'ok':'err')+'">'+f.status+'</span> '+f.scenario+'/'+shortB(f.backend)+' t'+f.turn
+   +' <span class=muted>'+f.chars+'c</span>'
+   +(f.indepth_status!=null?' <span class="'+(f.indepth_status===200&&f.indepth_chars>0?'ok':'err')+'" title="In-Depth (separate call)">+ID '+f.indepth_chars+'c</span>':'')
+   +' '+f.ans+'</div>').join('');
+}
+// A chart-answer cell shows the product's Answer and In-Depth status; the
+// conformance verdict (did the run follow an allowed path) stays as a corner mark.
+function gridCell(g,oc){
+ const st=g.state;
+ if(!g.answer&&!g.indepth) return '<td class='+cls(st)+oc+'>'+sym(st)+'</td>';
+ const conform={done:'followed an allowed path',err:'the system misbehaved',running:'running',pending:'pending'}[st]||'';
+ const tip=['Answer: '+(g.answer?g.answer.label:'none'),'In-Depth: '+(g.indepth?g.indepth.label:'none')+(g.marked?' ('+g.marked+' marked point'+(g.marked>1?'s':'')+')':''),conform].filter(Boolean).join(' \u00b7 ');
+ const pill=(tag,v,n)=>v?'<span class="gpill '+toneCls(v.tone)+'">'+tag+' '+(n?n+'':'')+esc(v.symbol)+'</span>':'';
+ const klass=st==='done'?'cdone':cls(st);
+ return '<td class='+klass+oc+' title="'+esc(tip)+'">'+pill('A',g.answer,0)+pill('ID',g.indepth,g.marked)
+  +'<span class="gconf'+(st==='err'?' err':'')+'">'+sym(st)+'</span></td>';
+}
+function srcLabels(sources){
+ const out={}; ((sources&&sources.sources)||[]).forEach(s=>{ if(s.record_index!=null) out[s.record_index]=s.source_id; });
+ return out;
+}
+function rowRefLabels(row, labels){
+ const seen={}, out=[]; const cells=(row&&row.cells)||{};
+ Object.keys(cells).forEach(k=>((cells[k]&&cells[k].refs)||[]).forEach(r=>{ const x=labels[r]||('['+r+']'); if(!seen[x]){seen[x]=1;out.push(x);} }));
+ return out;
+}
+function renderBlocks(blocks,sources){
+ if(!blocks||!blocks.length)return '';
+ const labels=srcLabels(sources);
+ return blocks.map(bl=>{
+  if(bl.kind!=='table')return '';
+  const cols=bl.columns||[];
+  const head=cols.map(c=>'<th>'+esc(c.label||c.key||'')+'</th>').join('');
+  const body=(bl.rows||[]).map(row=>{
+   const cells=row.cells||{};
+   const rr=rowRefLabels(row,labels);
+   const rf=rr.length?'<div class=rowrefs>sources '+rr.map(x=>'<span>'+esc(x)+'</span>').join('')+'</div>':'';
+   return '<tr>'+cols.map((c,i)=>{
+    const cell=cells[c.key]||{};
+    const txt=esc(cell.text!=null?String(cell.text):'');
+    return '<td>'+txt+(i===0?rf:'')+'</td>';
+   }).join('')+'</tr>';
+  }).join('');
+  const title=bl.title?'<div class=btitle>'+esc(bl.title)+'</div>':'';
+  return '<div class=block>'+title+'<table class=btbl><thead><tr>'+head+'</tr></thead><tbody>'+body+'</tbody></table></div>';
+ }).join('');
+}
+function renderSources(sources){
+ const ss=(sources&&sources.sources)||[], d=(sources&&sources.diagnostics)||{};
+ if(!ss.length&&!(d.malformed_tokens&&d.malformed_tokens.length))return '';
+ function card(s){
+  const meta=[s.resource_type,s.date].filter(Boolean).map(esc).join(' · ');
+  const facts=(s.facts_used&&s.facts_used.length?s.facts_used:[s.source_text||s.title||'']).slice(0,4);
+  const cite=s.citation_index||s.record_index||'?';
+  const chart=s.chart_record_index||s.record_index||'?';
+  const tc=t=>({success:'ok',danger:'bad',warning:'warn'}[t]||'');
+  const secs=(s.sections||[]).length?s.sections.map(x=>'<span class=ssec>'+esc(x)+'</span>').join(''):'<span class=sstat>not cited in the text</span>';
+  return '<div class=scard><div class=shead><b>'+esc(s.source_id||'')+'</b> cite ['+esc(cite)+'] · chart ['+esc(chart)+'] '+esc(s.title||'')+'</div>'
+   +'<div class=smeta>cited by '+secs+' · '+meta+' <span class="sstat '+tc(s.record_tone)+'">'+esc(s.record_label||s.resolution_status||'')+'</span> <span class="sstat '+tc(s.support_tone)+'">'+esc(s.support_label||s.support_status||'')+'</span></div>'
+   +'<ul>'+facts.map(f=>'<li>'+esc(f)+'</li>').join('')+'</ul>'
+   +'<details><summary>open source record</summary><pre>'+esc(s.source_text||'')+'</pre></details></div>';
+ }
+ let h='<div class=sources><div class=stitle>Evidence Used</div><div class=sgrid>'+ss.slice(0,5).map(card).join('')+'</div>';
+ if(ss.length>5)h+='<details><summary>show all sources</summary>'+ss.slice(5).map(card).join('')+'</details>';
+ const bits=[]; ['unresolved_refs','unused_top_refs','nested_only_refs','malformed_tokens'].forEach(k=>{ if(d[k]&&d[k].length)bits.push(k+': '+JSON.stringify(d[k])); });
+ if(bits.length)h+='<div class=sdiag>'+esc(bits.join(' · '))+'</div>';
+ return h+'</div>';
+}
+function renderRawRefs(refs){
+ if(!refs||!refs.length)return '';
+ return '<details class=rawrefs><summary>raw resolved refs</summary><div>'+esc(refs.map(r=>typeof r==='object'?('['+(r.index!=null?r.index:'?')+'] '+(r.resourceType||'')):('['+r+']')).join('  '))+'</div></details>';
+}
+// One status chip per section, named from the product's check lifecycle; the
+// product's confidence level follows it as secondary text. Policy (labels,
+// tones, which checks questioned a section) comes from review_presentation.py.
+function statusChip(v){
+ if(!v) return '';
+ return '<span class="schip '+toneCls(v.tone)+'">'+esc(v.label||'')+'</span>'+(v.confidence?'<span class=sconf>'+esc(v.confidence)+'</span>':'');
+}
+// The findings listed under a section's status when its confidence label is withdrawn
+// (level null): what each check found and where, in a neutral list, never a chip.
+function findingsHtml(view){
+ const fs=(view&&view.findings)||[];
+ if(!fs.length) return '';
+ return '<ul class=findings>'+fs.map(f=>'<li class="'+toneCls(f.tone)+'"><b>'+esc(f.name||'')+'</b>'
+  +(f.where?' <span class=fwhere>('+esc(f.where)+')</span>':'')+(f.says?': '+esc(f.says):'')+'</li>').join('')+'</ul>';
+}
+function sectionHtml(title, view, bodyHtml, extra){
+ let h='<div class=csec><div class=ctitle>'+title+' '+statusChip(view)+'</div>';
+ if(view&&view.note) h+='<div class="snote '+toneCls(view.tone)+'">'+esc(view.note)+'</div>';
+ h+=findingsHtml(view);
+ if(bodyHtml) h+='<div class=ans>'+bodyHtml+'</div>';
+ return h+(extra||'')+'</div>';
+}
+// The checks-against-the-judge table is rendered in Python (check_precision.table_html),
+// the same words and numbers as the static report; the page only places it.
+function renderCheckPrecision(d){
+ const sec=document.getElementById('checksec'), box=document.getElementById('checkprec');
+ if(!sec||!box) return;
+ if(!d.check_precision_html){ sec.style.display='none'; box.innerHTML=''; box._rawHtml=''; return; }
+ sec.style.display='';
+ if(box._rawHtml!==d.check_precision_html){
+  box._rawHtml=d.check_precision_html;
+  box.innerHTML=d.check_precision_html;
+  if(typeof restoreOpenDetails==='function'&&box.querySelectorAll) restoreOpenDetails(box);
+ }
+}
+function renderClaims(view){
+ const rows=(view&&view.claims)||[];
+ if(!rows.length) return '';
+ const names=view.check_names||{};
+ const cell=c=>'<td class="'+toneCls(c.tone)+'">'+esc(c.verdict)+(c.reason?'<div class=creason>'+esc(c.reason)+'</div>':'')+'</td>';
+ let h='<table class=claims><thead><tr><th>#</th><th>point</th><th>cites</th>'
+  +['date','review','citation'].map(k=>'<th>'+esc(names[k]||k)+'</th>').join('')+'</tr></thead><tbody>';
+ rows.forEach(r=>{
+  h+='<tr'+(r.marked?' class=marked':'')+'><td>'+r.index+'</td><td>'+esc(r.text)+'</td><td>'
+   +((r.cited||[]).length?r.cited.map(i=>'['+i+']').join(' '):'<span class=muted>none</span>')+'</td>'
+   +cell(r.checks.date)+cell(r.checks.review)+cell(r.checks.citation)+'</tr>';
+ });
+ return h+'</tbody></table>';
+}
+function renderDraft(view, sourcesV1){
+ const d=view&&view.draft;
+ if(!d) return '';
+ const sources=(sourcesV1&&sourcesV1.sources)||[];
+ const rows=sources.map(s=>{
+  const idx=s.citation_index!=null?s.citation_index:(s.record_index!=null?s.record_index:'?');
+  const label=[s.date,s.resource_type,s.title].filter(Boolean).join(' · ');
+  const record=s.source_text?'<details><summary>open draft source</summary><pre>'+esc(s.source_text)+'</pre></details>':'';
+  return '<li><b>['+esc(String(idx))+']</b> '+esc(label)+record+'</li>';
+ }).join('');
+ const src=rows?'<div class=reviewrefs><b>Draft sources (not delivered evidence)</b><ul>'+rows+'</ul></div>':'';
+ return '<details class=draftbox data-kind="'+esc(d.kind)+'"><summary>'+esc(d.title)+'</summary><div class=draftnote>'+esc(d.note)+'</div><div class=ans>'+esc(d.text)+'</div>'+src+'</details>';
+}
+function renderRawCheck(view){
+ if(!view||!view.validation) return '';
+ return '<details class=rawrefs><summary>raw check record</summary><div><pre style="white-space:pre-wrap;margin:0">'+esc(JSON.stringify(view.validation,null,1))+'</pre></div></details>';
+}
+// Shown only when the answer before checking differs in substance from the current one.
+function renderOriginalAnswer(validation){
+ if(!validation||!validation.originalAnswer) return '';
+ const edited=validation.status==='edited';
+ const notice=edited
+  ?'This answer or its supporting citations was changed by the answer check. The checked answer above is the current result.'
+  :'This was the model output before checking. The current answer above remains flagged for review.';
+ const sources=((validation.originalSources||{}).sources)||[];
+ const sourceRows=sources.map(s=>{
+  const idx=s.citation_index!=null?s.citation_index:(s.record_index!=null?s.record_index:'?');
+  const label=[s.date,s.resource_type,s.title].filter(Boolean).join(' · ');
+  const record=s.source_text?'<details><summary>open original source</summary><pre>'+esc(s.source_text)+'</pre></details>':'';
+  return '<li><b>['+esc(String(idx))+']</b> '+esc(label)+record+'</li>';
+ }).join('');
+ const sourceHtml=sourceRows?'<div class=reviewrefs><b>Original-answer sources (not final evidence)</b><ul>'+sourceRows+'</ul></div>':'';
+ return '<details open class="reviewdraft'+(edited?' edited':'')+'"><summary>Original model answer</summary>'
+  +'<div class=reviewdraft-note>'+notice+'</div>'
+  +'<div class=ans>'+esc(validation.originalAnswer)+renderBlocks(validation.originalBlocks||[],validation.originalSources||{})+'</div>'+sourceHtml+'</details>';
+}
+function renderTrace(tr){
+ if(!tr){
+  // Hub traces are joined into the run when it finishes, so a live run has none yet.
+  if(LAST_STATUS&&LAST_STATUS.total&&!LAST_STATUS.finished) return '<div class=notrace>reasoning traces are joined when the run finishes</div>';
+  return '<div class=notrace>no reasoning trace captured for this turn (hub trace off, or older run)</div>';
+ }
+ const fmt=s=>{
+  if(s.role==='orchestrator') return ['orchestrator','tools: '+((s.tool_calls||[]).join(', ')||'(none — straight to synthesis)')];
+  if(s.role==='kb_search') return ['kb_search',(s.hit?'HIT':'miss')+(s.fallback?' (deterministic fallback)':'')+' · '+esc(s.query||'')+' · '+(s.chars||0)+'c'];
+  if(s.role==='medical_expert') return ['medical_expert',esc(s.note||'')];
+  if(s.role==='answer_synth') return ['answer synth',esc(s.output||'')+(s.citations&&s.citations.length?'  ['+s.citations.join(',')+']':'')];
+  if(s.role==='answer_resynth') return ['answer re-synth',esc(s.output||'')];
+  if(s.role==='answer_validator') return ['answer validator'+(s.attempt?' #'+s.attempt:''),(s.answer_ok?'PASS':'FLAG')+(s.answer_issues?' · '+esc(s.answer_issues):''),s.answer_ok?'ok':(s.answer_issues?'flag':'')];
+  if(s.role==='indepth_synth') return ['in-depth synth',((s.claims||[]).map(c=>'• '+esc(c)).join('<br>')||'(no claims)')];
+  if(s.role==='indepth_resynth') return ['in-depth re-synth',((s.claims||[]).map(c=>'• '+esc(c)).join('<br>')||'(no claims)')];
+  if(s.role==='indepth_validator'){const f=s.flag||s.drop||[];return ['in-depth validator'+(s.attempt?' #'+s.attempt:''),(s.flag?'flag ':'drop ')+JSON.stringify(f)+' of '+(s.claims_in||0)+(s.issues?' · '+esc(s.issues):''),f.length?'flag':'ok'];}
+  return [s.role,esc(JSON.stringify(s))];
+ };
+ const steps=(tr.steps||[]).filter(s=>s.role!=='stage_timing').map(s=>{
+  const [label,body,tone]=fmt(s);
+  const cls='trole'+(tone==='flag'?' flag':(tone==='ok'?' ok':''));
+  const m=s.model?'<span class=tmodel>'+esc(s.model)+'</span>':'';
+  return '<div class=tstep><div class="'+cls+'">'+esc(label)+m+'</div><div class=tbody>'+body+'</div></div>';
+ }).join('<div class=tarrow>↓</div>');
+ return '<div class=trace>'+(steps||'<div class=notrace>no steps</div>')+'</div>';
+}
+function renderStageTimings(rows){
+ if(!rows||!rows.length) return '';
+ const body=rows.map(r=>'<tr><td>'+esc(String(r.stage||'').replaceAll('_',' ')+(r.occurrence>1?' '+r.occurrence:''))+'</td><td>'+r.duration_ms+' ms</td><td>'+esc(r.status||'completed')+'</td></tr>').join('');
+ return '<details class=stage-timings open><summary>stage timing breakdown</summary><table><thead><tr><th>stage</th><th>elapsed</th><th>status</th></tr></thead><tbody>'+body+'</tbody></table></details>';
+}
+async function openD(s,b){
+ const d=await(await fetch('/api/detail?scenario='+encodeURIComponent(s)+'&backend='+encodeURIComponent(b))).json();
+ const e=d.expectations||{};
+ let h='<div class=mhead><b>'+s+'</b> &nbsp;·&nbsp; '+b+'<span class=x onclick="closeD()">✕</span></div>';
+ const ce=d.catalystExpected;
+ if(ce){
+  h+='<div class=exp><b>Question:</b> '+esc(ce.question||'')+'<br>';
+  h+='<b>Acceptance:</b> '+esc(ce.criterion||'')+'<br>';
+  h+='<b>Opening answer must be:</b> '+esc(ce.baseOutcome||'ready');
+  (ce.turns||[]).forEach((u,i)=>{h+='<br><b>Turn '+(i+2)+'</b> (“'+esc(u.instruction||'')+'”) → '+esc(u.expectedOutcome||'ready');});
+  if(ce.goldCheck) h+='<br><b>Checked against:</b> '+esc(ce.goldCheck.mode)+' vs an independent reference<details><summary>reference SQL</summary><pre style="white-space:pre-wrap">'+esc(ce.goldCheck.referenceSql||'')+'</pre></details>';
+  h+='</div>';
+ }else{
+  h+='<div class=exp><b>Expected:</b> '+(e.should_abstain?'ABSTAIN':'retrieve')+(e.should_cite_resource_types?' ['+e.should_cite_resource_types.join(', ')+']':'')+'<br>'+esc(e.notes||'')+'</div>';
+ }
+ const jp=d.judge||{}, jids=Object.keys(jp);
+ if(jids.length){
+  h+='<div class=exp><b>Judged:</b> '+jids.map(a=>{const r=jp[a];return esc(a)+' '+fmt10(r.accuracy)+'/'+fmt10(r.completeness)+'/'+fmt10(r.relevance)+(r.harm?' HARM':'')+(r.note?' — '+esc(r.note):'');}).join('<br>')+'</div>';
+ }
+ const reps=(d.turns||[]);
+ if(reps.length&&reps[0].catalyst){
+  // Older run dirs may lack suite.json; the question must still be visible.
+  if(!ce&&(reps[0].catalyst.question||reps[0].question)) h+='<div class=exp><b>Question:</b> '+esc(reps[0].catalyst.question||reps[0].question)+'</div>';
+  // A cell is ONE conversation, so it renders as one: the opening question,
+  // what the writer answered, then each scripted turn and its answer. The
+  // outer index is a rerun of the whole conversation -- only shown when
+  // there is more than one.
+  const chip=(exp,obs)=>(!exp||obs===exp)?'<span class=ok>'+esc(obs||'?')+'</span>':'<span class=err>'+esc(obs||'?')+'</span>'+(exp?' <span class=muted>(expected '+esc(exp)+')</span>':'');
+  const kindOf=o=>o==='needs_clarification'?'asked a question':(o==='unsupported'?'declined':(o==='rejected'?'was rejected':'wrote a query'));
+  const say=(role,label,body,extra)=>'<div class=tstep><div class="trole'+(extra||'')+'">'+esc(label)+'</div><div class=tbody>'+body+'</div></div>';
+  const arrow='<div class=tarrow>↓</div>';
+  reps.forEach((t,ri)=>{
+   const c=t.catalyst;
+   const many=reps.length>1;
+   const head=(c.passed?'<span class=ok>✓ judged pass</span>':'<span class=err>× judged fail</span>')
+     +(c.conformed?'':' <span class=err>· the system misbehaved</span>')
+     +' <span class=muted>· '+Math.round((t.latency_ms||0)/1000)+'s</span>';
+   if(many) h+='<div class=ctitle style="margin-top:8px">run '+t.turn+'</div>';
+   h+='<div class=meta>'+head+'</div>';
+   const steps=[];
+   steps.push(say('user','person asks','<div class=q style="margin:0">'+esc(c.question||(d.catalystExpected||{}).question||'')+'</div>'));
+   const sqlBlock=s=>'<pre class=sqlblock>'+esc(s)+'</pre>';
+   const saidBlock=s=>'<pre style="white-space:pre-wrap;margin:0">'+esc(s)+'</pre>';
+   // Every generated query is shown where it was written. Runs recorded
+   // before per-turn SQL existed fall back to the final selected query.
+   const baseSql=c.baseSql||((c.turns||[]).length?null:(c.baseOutcome==='ready'?t.answer:null));
+   const baseBody=(c.baseAnswerText?saidBlock(c.baseAnswerText):'')
+      +(baseSql?sqlBlock(baseSql):'')
+      +((!c.baseAnswerText&&!baseSql)?'<span class=muted>(recorded before per-turn SQL; final query below)</span>':'');
+   steps.push(say('model','writer '+kindOf(c.baseOutcome)+' — '+((c.expectedBaseOutcome&&c.baseOutcome!==c.expectedBaseOutcome)?'':'')+'',baseBody+'<div class=meta style="margin-top:3px">'+chip(c.expectedBaseOutcome,c.baseOutcome)+'</div>'));
+   (c.turns||[]).forEach((u,i)=>{
+    const isAnswer=(c.baseOutcome==='needs_clarification'&&i===0);
+    steps.push(say('user',isAnswer?'person answers the question':'person asks for a change (turn '+(i+2)+')','<div class=q style="margin:0">'+esc(u.instruction||'')+'</div>'));
+    const body=(u.answerText?saidBlock(u.answerText):'')
+      +(u.sql?sqlBlock(u.sql):'')
+      +((!u.answerText&&!u.sql)?'<span class=muted>(recorded before per-turn SQL; final query below)</span>':'');
+    steps.push(say('model','writer '+kindOf(u.observedOutcome),body+'<div class=meta style="margin-top:3px">'+chip(u.expectedOutcome,u.observedOutcome)+'</div>'));
+   });
+   h+='<div class=trace>'+steps.join(arrow)+'</div>';
+   h+='<details class=tracebox open><summary>selected query and its result</summary><div class=turn>';
+   h+='<div class=ans><pre style="white-space:pre-wrap;margin:0">'+esc(t.answer||'')+'</pre></div>';
+   const rp=c.resultPreview;
+   if(rp&&(rp.columns||[]).length){
+    h+='<div class=csec><div class=ctitle>Result ('+(rp.returned!=null?rp.returned+' rows':'')+(rp.truncatedPreview?', first 10 shown':'')+')</div>';
+    h+='<div style="overflow-x:auto"><table class=data><tr>'+rp.columns.map(cn=>'<th>'+esc(cn)+'</th>').join('')+'</tr>';
+    h+=(rp.rows||[]).map(r=>'<tr>'+r.map(v=>'<td>'+esc(v==null?'∅':String(v))+'</td>').join('')+'</tr>').join('');
+    h+='</table></div></div>';
+   }
+   h+='</div></details>';
+   const fa=c.failedAssertions||[];
+   if(fa.length){
+    const conf=fa.filter(f=>(f.class||'conformance')==='conformance');
+    const ev=fa.filter(f=>(f.class||'conformance')!=='conformance');
+    if(conf.length) h+='<div class="caveat red"><b>Unexpected behaviour</b> — the run broke its own contract here, so this measurement is not trustworthy.</div>'
+      +conf.map(f=>'<div class="caveat red"><b>'+esc(f.name)+'</b> — '+esc(typeof f.evidence==='string'?f.evidence:JSON.stringify(f.evidence||''))+'</div>').join('');
+    if(ev.length) h+='<details><summary>'+ev.length+' judged check'+(ev.length>1?'s':'')+' the answer did not meet</summary>'
+      +ev.map(f=>'<div class=meta><b>'+esc(f.name)+'</b> — '+esc(typeof f.evidence==='string'?f.evidence:JSON.stringify(f.evidence||''))+'</div>').join('')+'</details>';
+   }else{
+    h+='<div class=meta><span class=ok>every check passed</span></div>';
+   }
+  });
+  mbody.innerHTML=h; modal.style.display='flex';
+  return;
+ }
+ (d.turns||[]).forEach(t=>{
+  const tr=t.trace;
+  const av=t.answer_view, iv=t.indepth_view;
+  h+='<div class=turn><div class=q>Turn '+t.turn+': '+esc(t.question)+'</div>';
+  h+='<div class=meta><span class="'+(t.status===200?'ok':'err')+'">status '+t.status+'</span> · '+fmtS(t.latency_ms||0)+' · '+(t.chars||0)+' chars · '+(t.citations||0)+' source refs</div>';
+  h+=renderStageTimings(tr&&tr.stage_timings);
+  if(t.error){
+   h+='<div class="ans err">'+esc(t.error)+'</div>';
+  }else{
+   const answerBody=esc(t.answer||(tr&&tr.answer_text)||'')+renderBlocks(t.blocks,t.sources);
+   if(av){
+    h+=sectionHtml('Answer',av,answerBody);
+    if(av.show_original) h+=renderOriginalAnswer(t.answer_validation);
+   }else{
+    h+='<div class=csec><div class=ctitle>Answer</div><div class=ans>'+answerBody+'</div></div>';
+   }
+   if(iv){
+    const title='In-Depth'+(t.indepth_latency_ms?' <span class=muted>(separate call, '+fmtS(t.indepth_latency_ms)+')</span>':'');
+    h+=sectionHtml(title,iv,iv.body_html,renderClaims(iv)+renderDraft(iv,t.review_sources)+renderRawCheck(iv));
+   }
+  }
+  h+=renderSources(t.sources);
+  h+=renderRawRefs(t.refs);
+  h+='<details class=tracebox><summary>▸ reasoning trace</summary>'+renderTrace(tr)+'</details>';
+  h+='</div>';
+ });
+ mbody.innerHTML=h; modal.style.display='flex';
+}
+function closeD(){modal.style.display='none'}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeD()});
+tick();setInterval(tick,2000);
+(function(){var b=document.getElementById('theme-toggle');if(!b)return;function s(){b.textContent=document.documentElement.dataset.theme==='dark'?'☀':'☾';}s();b.addEventListener('click',function(){var n=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=n;try{localStorage.setItem('oc-theme-dashboard',n);}catch(e){}s();});})();
+</script></body></html>
