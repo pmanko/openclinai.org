@@ -1,6 +1,12 @@
 
-const DATA = JSON.parse(document.getElementById('report-data').textContent);
-let activeRunId = (DATA.runs[0] || {}).run_id;
+let DATA = (function(){
+  const el = document.getElementById('report-data');
+  if (el && el.textContent && el.textContent.trim()) {
+    try { return JSON.parse(el.textContent); } catch (e) {}
+  }
+  return { runs: [] };
+})();
+let activeRunId = ((DATA.runs && DATA.runs[0]) || {}).run_id;
 
 function runById(id){ return DATA.runs.find(r => r.run_id === id); }
 function el(tag, cls){ const e = document.createElement(tag); if(cls) e.className = cls; return e; }
@@ -2568,7 +2574,9 @@ function syncTopbarHeight(){
   var tb = document.querySelector('.topbar');
   if (tb) document.documentElement.style.setProperty('--topbar-h', tb.getBoundingClientRect().height + 'px');
 }
-function boot(){
+function initWithData(d){
+  DATA = d || { runs: [] };
+  activeRunId = ((DATA.runs && DATA.runs[0]) || {}).run_id;
   // Embedded multi-run selector: only relevant (and only shown) when this single file
   // carries more than one run. The cross-run switcher above handles the published case.
   const rs = document.getElementById('run-select');
@@ -2581,12 +2589,25 @@ function boot(){
     if (rsWrap && DATA.runs.length > 1) rsWrap.hidden = false;
   }
 
-  document.getElementById('print-pdf').addEventListener('click', () => window.print());
+  const pdfBtn = document.getElementById('print-pdf');
+  if (pdfBtn) pdfBtn.addEventListener('click', () => window.print());
 
   loadRunSwitcher();
   if (activeRunId) renderRun(activeRunId);
   syncTopbarHeight();
   window.addEventListener('resize', syncTopbarHeight);
+}
+function boot(){
+  if (DATA && Array.isArray(DATA.runs) && DATA.runs.length > 0) {
+    initWithData(DATA);
+    return;
+  }
+  const el = document.getElementById('report-data');
+  const src = (el && el.getAttribute('data-src')) || './report-data.json';
+  fetch(src, { cache: 'no-store' })
+    .then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function(d){ initWithData(d); })
+    .catch(function(){ initWithData({ runs: [] }); });
 }
 boot();
 (function(){var b=document.getElementById('theme-toggle');if(!b)return;function s(){b.textContent=document.documentElement.dataset.theme==='dark'?'☀':'☾';}s();b.addEventListener('click',function(){var n=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=n;try{localStorage.setItem('oc-theme-report',n);}catch(e){}s();});})();

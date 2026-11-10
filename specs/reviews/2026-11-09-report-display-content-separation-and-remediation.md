@@ -148,3 +148,24 @@ flowchart LR
 - [x] **4.2 Cross-Repository Worktree Hygiene (`hq/scripts/wt.sh audit` & `prune`):**
   - Pruned 14 broken `/private/tmp/*` worktree metadata entries (`clinical-ai-validation-harness`, `catalyst-dev`) and removed 17 clean merged/detached sibling worktrees across `openclinai.org`, `digging-in-research`, and `clinical-ai-validation-harness`.
   - Fast-forwarded `/Users/pmanko/.gemini/antigravity/worktrees/openclinai.org/organize_project_workstreams` to `main` so all active workspaces share the identical 33-report archive and Phase 1–4 publication guardrails.
+
+### Phase 5 — Full 3-Layer Architectural Decoupling & 6-Invariant Scorecard (COMPLETED 2026-11-09)
+
+To eliminate the remaining structural tangles between `clinical-ai-validation-harness` (producer) and `openclinai.org` (publisher/viewer), the report architecture enforces **6 measurable invariants** across three strict layers:
+
+- [x] **Invariant 1 — Native Data Deduplication & Enrichment in Harness (`harness/validate/report_data.py`):**
+  - `build_report()` in `clinical-ai-validation-harness` natively produces the deduplicated `source_card_pool` + `refs_pool` and Layer 1/2/3 summaries via `harness/validate/report_data.py`, and writes `run_dir / "report-data.json"` alongside `run_dir / "report.html"`.
+  - Zero scripts in `openclinai.org/scripts/` import `from harness` or `import harness` (enforced by `tests/website/test_website_ownership.py`).
+- [x] **Invariant 2 — First-Class CSS & JS Assets (`harness/report_shell/report-shell.{css,js}`):**
+  - `_STYLE` and `_SCRIPT` are extracted out of `harness/validate/report.py` into real static files `harness/report_shell/report-shell.css` and `harness/report_shell/report-shell.js` (loaded by `harness/report_shell/assets.py` and mirrored to `openclinai.org/reports/assets/report-shell.{css,js}`), shrinking `harness/validate/report.py` from 249.4 KB (4,267 lines) to 51.0 KB (1,194 lines) of pure Python.
+- [x] **Invariant 3 — Standalone `report-data.json` Separated from Display Shell in `openclinai.org/reports/<slug>/`:**
+  - Every published report directory in `openclinai.org/reports/<slug>/` carries a standalone `report-data.json` file alongside `meta.json` and a pure **2.7 KB** `index.html` shell (`<script type='application/json' id='report-data' data-src='./report-data.json'></script>`, loading `../assets/report-shell.{css,js}?v=58cbaf97e1`). Total HTML across all 35 published reports is **0.09 MB** (down from 49.56 MB).
+  - `report-shell.js` supports both inline `#report-data` and external `./report-data.json`.
+  - `scripts/reshell-reports.py` is a pure, harness-free static shell updater that reads `reports/assets/report-shell.{css,js}` and `reports/<slug>/report-data.json` without importing `harness`.
+- [x] **Invariant 4 — Single-Pass `publish-report.sh` & `stage-report.py`:**
+  - Running `publish-report.sh` stages a report and automatically links `../assets/report-shell.{css,js}?v=<hash>` and writes `report-data.json` when `reports/assets/report-shell.js` is present, while preserving 100% compatibility with `tests/website/test_publish_report_contract.py` and `test_stage_report.py`.
+- [x] **Invariant 5 — Catalog Builder (`build-reports-index.py`) Reads Canonical `meta.json` & `report-data.json`:**
+  - `build-reports-index.py` validates archives against `report-data.json` (or `#report-data`) and reads frozen `meta.json` / `report-data.json` first without requiring raw `results.jsonl` to be parsed when `meta.json` is populated.
+- [x] **Invariant 6 — Single Canonical `main` Baseline & Complete Published Catalog (35 Reports Live):**
+  - Canonical `main` in both `clinical-ai-validation-harness` and `openclinai.org` holds 100% of commits, the 2 stranded published reports from `checked-answers` (`l5-full-default-2026-10-28-2a053c09` and `l5-answer-rules-fresh-2026-10-29-effa8855`) are restored and reshelled onto `main` (35 active report directories total), `deploy-reports.sh` checks local branches as well as worktrees, and live `https://reports.openclinai.org/` matches `origin/main` byte-for-byte.
+

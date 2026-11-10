@@ -93,15 +93,26 @@ def validate_archive(runs: list[dict], reports_root: Path, *, pending_slug: str 
             missing.append(slug)
             continue
         # Guard against unpopulated report shells (e.g. built while results.jsonl was absent)
-        if entry.get("family") != "catalyst" and ((root / slug / "results.jsonl").is_file() or entry.get("family") == "wahs"):
+        if entry.get("family") != "catalyst" and (
+            (root / slug / "report-data.json").is_file()
+            or (root / slug / "results.jsonl").is_file()
+            or entry.get("family") == "wahs"
+        ):
             try:
-                html_text = page.read_text(encoding="utf-8", errors="replace")
-                m = report_data_re.search(html_text)
-                if m:
-                    payload = json.loads(m.group(1))
+                data_json = root / slug / "report-data.json"
+                if data_json.is_file():
+                    payload = json.loads(data_json.read_text(encoding="utf-8", errors="replace"))
                     r0 = (payload.get("runs") or [{}])[0] if isinstance(payload, dict) else {}
                     if not (r0.get("scenarios") or {}) or not (r0.get("backends") or []):
                         broken_pages.append(slug)
+                else:
+                    html_text = page.read_text(encoding="utf-8", errors="replace")
+                    m = report_data_re.search(html_text)
+                    if m:
+                        payload = json.loads(m.group(1))
+                        r0 = (payload.get("runs") or [{}])[0] if isinstance(payload, dict) else {}
+                        if not (r0.get("scenarios") or {}) or not (r0.get("backends") or []):
+                            broken_pages.append(slug)
             except Exception:
                 broken_pages.append(slug)
     if missing:

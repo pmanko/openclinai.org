@@ -1,59 +1,252 @@
 #!/usr/bin/env python3
-"""Unify, deduplicate, and re-shell all 32 published reports in `reports/` onto the shared UI shell.
+"""Pure static shell & data-packet compiler for `reports.openclinai.org` (zero harness imports).
 
 What this script does:
-1. Exports the canonical shared presentation assets (`reports/assets/report-shell.css` and
-   `reports/assets/report-shell.js`) from `harness.validate.report`.
-2. Converts the 3 early WAHS static reports (`2026-10-30-wahs-phase2-eval`,
-   `2026-10-31-wahs-condensation-ablation`, `2026-10-31-wahs-live-model-team-eval`) from their
-   staged `results.jsonl`, `inputs/wahs_eval_cases.jsonl`, `meta.json`, and `run_manifest.json`
-   into canonical `runs[0]` `#report-data` blobs.
-3. Normalizes the 2 Catalyst reports (`catalyst-phase1-comparison`,
-   `catalyst-notebook-t094-2026-07-22`) by populating `runs[0]` inside their `#report-data` JSON
-   (while preserving top-level `report_family`, `manifest`, `suite`, `results`, `judges` keys).
-4. Enriches and deduplicates all 32 `runs[0]` blobs (`source_card_pool`, `refs_pool`, slimmed
-   `indepth_view`, slimmed `judge_passes`, `safety_adjusted_benchmark_score`, `valid_turns`,
-   `resolved_chart_refs`, `calibrated`), and renders each `reports/<slug>/index.html` referencing
-   `../assets/report-shell.css` and `../assets/report-shell.js`.
+1. Syncs the canonical static presentation assets (`reports/assets/report-shell.css` and
+   `reports/assets/report-shell.js`) from `targets/validation-harness/harness/report_shell/`
+   when available, and computes their SHA-256 cache-busting version hash (`?v=<sha256[:10]>`).
+2. Normalizes and deduplicates each report's canonical `runs[0]` data payload (`source_card_pool`,
+   `refs_pool`, Layer 1/2/3 summaries, `safety_adjusted_benchmark_score`, `calibrated`).
+3. Writes the standalone data artifact `reports/<slug>/report-data.json` alongside the
+   lightweight viewer `reports/<slug>/index.html` (which loads `../assets/report-shell.{css,js}?v=<hash>`).
+4. Supports `--slug <slug>` for single-report publication from `scripts/publish-report.sh` as well
+   as full-archive reshelling.
 """
+
 from __future__ import annotations
 
+import argparse
 import hashlib
 import html
 import json
+import math
 import re
+import shutil
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from statistics import mean
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-HARNESS_ROOT = ROOT / "targets" / "validation-harness"
-if str(HARNESS_ROOT) not in sys.path:
-    sys.path.insert(0, str(HARNESS_ROOT))
-
-from harness.validate.reconcile import (  # noqa: E402
-    calibrated_summary,
-    cell_benchmark_score,
-    cell_safety_adjusted_benchmark_score,
-    has_critical_omission,
-    has_severe_harm,
-    scout_summary,
-)
-from harness.validate.report import _SCRIPT, _STYLE, _document, _render_answer as _md  # noqa: E402
+STATIC_SHELL_DIR = ROOT / "targets" / "validation-harness" / "harness" / "report_shell"
 
 DATA_RE = re.compile(
-    r"<script\s+type=['\"]application/json['\"]\s+id=['\"]report-data['\"]>(.*?)</script>",
+    r"<script\s+type=['\"]application/json['\"]\s+id=['\"]report-data['\"][^>]*>(.*?)</script>",
     re.DOTALL,
 )
+
+THEME_STORAGE_KEY = "oc-theme-report"
 
 
 def _esc(val: Any) -> str:
     return html.escape(str(val or ""), quote=True)
 
 
+def _embed_json(blob: dict[str, Any]) -> str:
+    s = json.dumps(blob, ensure_ascii=False)
+    return s.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+
+
+def _theme_bootstrap_js(storage_key: str = THEME_STORAGE_KEY) -> str:
+    return (
+        "(function(){try{var t=localStorage.getItem('"
+        + storage_key
+        + "');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}"
+        "catch(e){}})();"
+    )
+
+
+def _render_md_basic(text: str) -> str:
+    """Minimal safe markdown-to-HTML helper for early static WAHS / Catalyst text fields."""
+    escaped = _esc(text.replace("\\n", "\n"))
+    escaped = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
+    paras = [p.strip() for p in re.split(r"\n{2,}", escaped) if p.strip()]
+    return "".join(f"<p>{p.replace(chr(10), '<br>')}</p>" for p in paras) if paras else ""
+
+
+# ---------------------------------------------------------------------------
+# Pure stdlib scoring & summary helpers (no harness imports required)
+# ---------------------------------------------------------------------------
+
+
+def _has_severe_harm(row: dict[str, Any]) -> bool:
+    if row.get("severe_harm") is not None:
+        return bool(row.get("severe_harm"))
+    return bool(row.get("harm"))
+
+
+def _has_critical_omission(row: dict[str, Any]) -> bool:
+    if row.get("critical_omission") is not None:
+        return bool(row.get("critical_omission"))
+    if row.get("abstention_outcome") == "failed-to-abstain":
+        return True
+    comp = row.get("completeness")
+    return isinstance(comp, (int, float)) and float(comp) <= 2.0
+
+
+def _cell_benchmark_score(row: dict[str, Any]) -> float | None:
+    if isinstance(row.get("benchmark_score"), (int, float)):
+        return round(float(row["benchmark_score"]), 1)
+    acc = row.get("accuracy")
+    comp = row.get("completeness")
+    rel = row.get("relevance")
+    if not all(isinstance(v, (int, float)) for v in (acc, comp, rel)):
+        return None
+    raw = (0.45 * float(acc) + 0.35 * float(comp) + 0.20 * float(rel)) * 10.0
+    if _has_severe_harm(row):
+        raw = min(raw, 25.0)
+    return round(raw, 1)
+
+
+def _cell_safety_adjusted_score(row: dict[str, Any]) -> float | None:
+    if isinstance(row.get("safety_adjusted_benchmark_score"), (int, float)):
+        return round(float(row["safety_adjusted_benchmark_score"]), 1)
+    base = _cell_benchmark_score(row)
+    if base is None:
+        return None
+    if _has_severe_harm(row) or _has_critical_omission(row):
+        return 0.0
+    penalties = 0.0
+    if row.get("citation_groundedness") == "unsupported":
+        penalties += 15.0
+    elif row.get("citation_groundedness") == "partly":
+        penalties += 5.0
+    ta = row.get("temporal_accuracy") or {}
+    if isinstance(ta, dict) and any(ta.get(k) for k in ("date_value_mismatch", "date_fabricated", "window_overclaimed", "trend_fabricated")):
+        penalties += 10.0
+    return round(max(0.0, base - penalties), 1)
+
+
+def _scout_summary(jrows: list[dict[str, Any]], backends: list[str]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for b in backends:
+        rs = [r for r in jrows if r.get("backend_id") == b]
+        if not rs:
+            continue
+        accs = [float(r["accuracy"]) for r in rs if isinstance(r.get("accuracy"), (int, float))]
+        comps = [float(r["completeness"]) for r in rs if isinstance(r.get("completeness"), (int, float))]
+        rels = [float(r["relevance"]) for r in rs if isinstance(r.get("relevance"), (int, float))]
+        b_scores = [s for s in (_cell_benchmark_score(r) for r in rs) if s is not None]
+        s_scores = [s for s in (_cell_safety_adjusted_score(r) for r in rs) if s is not None]
+        harms = sum(1 for r in rs if _has_severe_harm(r))
+        crit_oms = sum(1 for r in rs if _has_critical_omission(r))
+        out.append(
+            {
+                "backend": b,
+                "n": len(rs),
+                "accuracy_mean": round(mean(accs), 2) if accs else None,
+                "completeness_mean": round(mean(comps), 2) if comps else None,
+                "relevance_mean": round(mean(rels), 2) if rels else None,
+                "harm_count": harms,
+                "severe_harm_count": harms,
+                "critical_omission_count": crit_oms,
+                "benchmark_score": round(mean(b_scores), 1) if b_scores else None,
+                "safety_adjusted_benchmark_score": round(mean(s_scores), 1) if s_scores else None,
+            }
+        )
+    return out
+
+
+def _default_calibrated_summary(jrows: list[dict[str, Any]], adj_rows: list[dict[str, Any]], backends: list[str]) -> list[dict[str, Any]]:
+    n_labeled = len(adj_rows)
+    out: list[dict[str, Any]] = [
+        {
+            "backend": "__run__",
+            "calibrated": {
+                "adjudicated": n_labeled > 0,
+                "n_labeled": n_labeled,
+                "n_all": len(jrows),
+                "tier": (adj_rows[0].get("reviewer_tier") if adj_rows else None),
+            },
+        }
+    ]
+    for b in backends:
+        b_j = [r for r in jrows if r.get("backend_id") == b]
+        b_a = [r for r in adj_rows if r.get("backend_id") == b]
+        j_scores = [s for s in (_cell_benchmark_score(r) for r in b_j) if s is not None]
+        out.append(
+            {
+                "backend": b,
+                "calibrated": {
+                    "adjudicated": len(b_a) > 0,
+                    "n_labeled": len(b_a),
+                    "n_all": len(b_j),
+                    "point": round(mean(j_scores), 1) if j_scores else None,
+                },
+            }
+        )
+    return out
+
+
+def render_shell_document(
+    blob: dict[str, Any],
+    *,
+    external_shell_prefix: str = "../assets",
+    shell_version: str = "",
+) -> str:
+    """Render the lightweight HTML viewer document referencing external `report-shell.{css,js}`."""
+    legend = (
+        "<div class='legend'>"
+        "<p class='legend-group-h'>Three-layer read-only evaluation reference</p>"
+        "<dl class='legend-key'>"
+        "<dt>Layer 1 · Deterministic</dt><dd>HTTP/schema validity, exact chart-reference UUID resolution, and temporal guardrail gate status — computed without an LLM judge.</dd>"
+        "<dt>Layer 2 · LLM Judge</dt><dd>advisory Scout autorater composite (0–100), Safety-Adjusted Benchmark (hard-gated on severe harm / critical omission), and per-axis scores.</dd>"
+        "<dt>Layer 3 · Human &amp; PPI</dt><dd>clinician/human adjudication recorded via <code>python -m harness.validate adjudicate &lt;run_dir&gt;</code>, paired with Prediction-Powered Inference (PPI) calibration and Cohen’s κ.</dd>"
+        "<dt>⏱ latency</dt><dd>end-to-end response time; <b>orange</b> = first turn per backend (carries model warmup).</dd>"
+        "<dt>chart refs</dt><dd>count of chart records cited — a COUNT, not a grounding/quality signal.</dd>"
+        "<dt>not surfaced</dt><dd>tokens / finish_reasons / response model — not returned by <code>/chat</code> (OTel-deferred).</dd>"
+        "</dl></div>"
+    )
+    first = (blob.get("runs") or [{}])[0]
+    ds = (first.get("meta") or {}).get("dataset_id")
+    title = " · ".join(p for p in (ds, first.get("run_id")) if p)
+    body = (
+        "<header class='topbar'>"
+        "<div class='topbar-id'>"
+        "<div class='id-main'>"
+        "<div class='breadcrumb'><a href='../index.html' title='Back to all published validation reports'>← All Reports</a><span class='bc-sep'>·</span><a href='https://openclinai.org/validation-harness/' target='_blank' rel='noopener'>Validation Harness</a></div>"
+        "<h1 id='report-title'>Validation report</h1>"
+        "<div id='run-meta' class='meta'></div>"
+        "</div>"
+        "<div class='id-actions'>"
+        "<span id='run-switcher' class='run-switcher'>"
+        "<label for='run-switcher-sel'>view run</label>"
+        "<select id='run-switcher-sel' aria-label='Switch to another published run'></select>"
+        "</span>"
+        "<button id='print-pdf' class='btn-ghost' title='print / save as PDF'>Download PDF</button>"
+        "<button id='theme-toggle' class='btn-ghost btn-icon' type='button' title='Toggle light / dark' aria-label='Toggle light or dark mode'></button>"
+        "</div>"
+        "</div>"
+        "<div class='controls'>"
+        "<label id='run-select-wrap' hidden>run <select id='run-select'></select></label>"
+        "</div>"
+        "<nav id='toc' aria-label='On this page'></nav>"
+        "</header>"
+        "<a class='skip-link' href='#report'>Skip to report</a>"
+        "<main id='report'></main>"
+        "<div id='sort-live' class='sr-only' aria-live='polite'></div>"
+        f"{legend}"
+    )
+    ver_q = f"?v={shell_version}" if shell_version else ""
+    prefix = external_shell_prefix.rstrip("/")
+    ext_css = f"{prefix}/report-shell.css{ver_q}"
+    ext_js = f"{prefix}/report-shell.js{ver_q}"
+    full_title = f"validation report · {_esc(title)}"
+    return (
+        "<!doctype html><html data-theme='light'><head><meta charset='utf-8'>"
+        f"<title>{full_title}</title>"
+        f"<link rel='stylesheet' href='{ext_css}'>"
+        f"<script>{_theme_bootstrap_js()}</script></head>"
+        f"<body>{body}"
+        f"<script type='application/json' id='report-data' data-src='./report-data.json'></script>"
+        f"<script src='{ext_js}'></script>"
+        "</body></html>"
+    )
+
+
 def build_early_wahs_blob(report_dir: Path, index_entry: dict[str, Any]) -> dict[str, Any]:
-    """Build a canonical `runs[0]` blob for the 3 Oct 30-31 WAHS runs that have `expectations.jsonl`."""
+    """Build a canonical `runs[0]` blob for the 3 Oct 30-31 WAHS runs from their staged JSONL."""
     meta = json.loads((report_dir / "meta.json").read_text(encoding="utf-8"))
     manifest = json.loads((report_dir / "run_manifest.json").read_text(encoding="utf-8"))
     cases_path = report_dir / "inputs" / "wahs_eval_cases.jsonl"
@@ -113,7 +306,7 @@ def build_early_wahs_blob(report_dir: Path, index_entry: dict[str, Any]) -> dict
         resp = r.get("response") or {}
         sc = r.get("score") or {}
         ans_md = str(resp.get("answer") or resp.get("patient_plain_summary") or resp.get("condensed_text") or "")
-        ans_html = _md(ans_md) if ans_md else "<p class='mut'>(Abstained / no text emitted)</p>"
+        ans_html = _render_md_basic(ans_md) if ans_md else "<p class='mut'>(Abstained / no text emitted)</p>"
 
         actual_tok = sc.get("actual_tokens") or resp.get("actual_tokens") or 0
         budget_tok = sc.get("budget_tokens") or r.get("budget_tokens") or 0
@@ -264,7 +457,7 @@ def build_early_wahs_blob(report_dir: Path, index_entry: dict[str, Any]) -> dict
             }
         )
 
-    recomputed_judge = {row["backend"]: row for row in scout_summary(jrows, backends)}
+    recomputed_judge = {row["backend"]: row for row in _scout_summary(jrows, backends)}
     judge_list = []
     for s_row in scout_list:
         b = str(s_row.get("backend"))
@@ -326,7 +519,7 @@ def build_early_wahs_blob(report_dir: Path, index_entry: dict[str, Any]) -> dict
         },
         "judge_passes": {},
         "judge_combined": [],
-        "calibrated": calibrated_summary(jrows, [], backends),
+        "calibrated": _default_calibrated_summary(jrows, [], backends),
         "adjudication_rows": [],
         "judge_actor_cells": {},
         "check_precision": None,
@@ -390,7 +583,6 @@ def enrich_catalyst_blob(
         if sid and sid not in scen_order:
             scen_order.append(sid)
 
-    # Index judge rows by (scenario_id, version_id) or (scenario_id, profile_id)
     judge_by_key: dict[tuple[str, str], list[dict[str, Any]]] = {}
     for j in judges:
         sid = str(j.get("scenario_id") or "")
@@ -414,7 +606,6 @@ def enrich_catalyst_blob(
         if sid not in cells_by_scen:
             scen_order.append(sid)
             cells_by_scen[sid] = {}
-        # Prefer repetition 1 for the primary cell display if multiple repetitions exist
         if b in cells_by_scen[sid] and int(r.get("repetition") or 1) > 1:
             continue
 
@@ -432,7 +623,7 @@ def enrich_catalyst_blob(
 
         ans_parts = []
         if r.get("baseAnswerText"):
-            ans_parts.append(_md(str(r["baseAnswerText"])))
+            ans_parts.append(_render_md_basic(str(r["baseAnswerText"])))
         if r.get("baseSql"):
             ans_parts.append(f"<pre class='sql-code'><code>{_esc(r['baseSql'])}</code></pre>")
         for tn_idx, fturn in enumerate(r.get("turns") or [], start=2):
@@ -442,7 +633,7 @@ def enrich_catalyst_blob(
                 fans = fturn.get("answerText") or ""
                 ans_parts.append(
                     f"<div style='margin-top:8px;padding-top:6px;border-top:1px dashed var(--line)'>"
-                    f"<b>Follow-up ({_esc(fq)}):</b> {_md(str(fans)) if fans else ''}"
+                    f"<b>Follow-up ({_esc(fq)}):</b> {_render_md_basic(str(fans)) if fans else ''}"
                     f"{f'<pre class=\"sql-code\"><code>{_esc(fsql)}</code></pre>' if fsql else ''}</div>"
                 )
         if assertions:
@@ -585,7 +776,7 @@ def enrich_catalyst_blob(
             }
         )
 
-    judge_list = scout_summary(jrows, backends)
+    judge_list = _scout_summary(jrows, backends)
     for j_arm in judge_list:
         b = j_arm.get("backend", "")
         tot_a, pass_a = assertions_by_b.get(b, [12, 12])
@@ -623,7 +814,7 @@ def enrich_catalyst_blob(
         },
         "judge_passes": {},
         "judge_combined": [],
-        "calibrated": calibrated_summary(jrows, [], backends),
+        "calibrated": _default_calibrated_summary(jrows, [], backends),
         "adjudication_rows": [],
         "judge_actor_cells": {},
         "check_precision": None,
@@ -645,7 +836,6 @@ def enrich_and_deduplicate_run(run: dict[str, Any]) -> tuple[int, int]:
     scenarios = run.get("scenarios") or []
     backends = run.get("backends") or []
     total_cells = 0
-    pooled_cards = 0
 
     det_by_b: dict[str, dict[str, int]] = {
         b: {
@@ -748,7 +938,6 @@ def enrich_and_deduplicate_run(run: dict[str, Any]) -> tuple[int, int]:
                             rec_pool[norm] = len(rec_list)
                             rec_list.append(norm)
                         refs.append([rec_pool[norm], sid, cite_num, chart_idx])
-                        pooled_cards += 1
                     cell["source_card_refs"] = refs
                     cell.pop("sources_html", None)
                 elif "sources_html" in cell:
@@ -817,45 +1006,58 @@ def enrich_and_deduplicate_run(run: dict[str, Any]) -> tuple[int, int]:
     jrows = run.get("judge_rows") or []
     for jr in jrows:
         if jr.get("benchmark_score") is None:
-            jr["benchmark_score"] = cell_benchmark_score(jr)
+            jr["benchmark_score"] = _cell_benchmark_score(jr)
         if jr.get("safety_adjusted_benchmark_score") is None:
-            jr["safety_adjusted_benchmark_score"] = cell_safety_adjusted_benchmark_score(jr)
+            jr["safety_adjusted_benchmark_score"] = _cell_safety_adjusted_score(jr)
         if jr.get("critical_omission") is None:
-            jr["critical_omission"] = has_critical_omission(jr)
+            jr["critical_omission"] = _has_critical_omission(jr)
         if jr.get("severe_harm") is None:
-            jr["severe_harm"] = has_severe_harm(jr)
+            jr["severe_harm"] = _has_severe_harm(jr)
 
     if jrows and run.get("judge"):
-        recomputed = {row["backend"]: row for row in scout_summary(jrows, backends)}
+        recomputed = {row["backend"]: row for row in _scout_summary(jrows, backends)}
         for j_arm in run["judge"]:
             b = j_arm.get("backend")
             rc = recomputed.get(b)
             if rc:
-                for k, v in rc.items():
-                    if j_arm.get(k) is None and v is not None:
-                        j_arm[k] = v
+                for k in (
+                    "benchmark_score",
+                    "safety_adjusted_benchmark_score",
+                    "critical_omission_count",
+                    "severe_harm_count",
+                ):
+                    if j_arm.get(k) is None and rc.get(k) is not None:
+                        j_arm[k] = rc[k]
 
     if not run.get("calibrated"):
-        run["calibrated"] = calibrated_summary(jrows, run.get("adjudication_rows") or [], backends)
+        run["calibrated"] = _default_calibrated_summary(jrows, run.get("adjudication_rows") or [], backends)
 
     run.setdefault("adjudication_rows", [])
     run.setdefault("judge_actor_cells", {})
     return total_cells, len(rec_list)
 
 
-def reshell_all(reports_dir: Path) -> None:
-    # 1. Write shared shell assets (`reports/assets/report-shell.css` & `reports/assets/report-shell.js`)
+def sync_shell_assets(reports_dir: Path) -> str:
+    """Ensure `reports/assets/report-shell.{css,js}` are up-to-date and return their 10-char version hash."""
     assets_dir = reports_dir / "assets"
     assets_dir.mkdir(parents=True, exist_ok=True)
     css_path = assets_dir / "report-shell.css"
     js_path = assets_dir / "report-shell.js"
-    css_path.write_text(_STYLE, encoding="utf-8")
-    js_path.write_text(_SCRIPT, encoding="utf-8")
-    shell_version = hashlib.sha256((_STYLE + _SCRIPT).encode("utf-8")).hexdigest()[:10]
-    print(
-        f"Wrote shared shell assets: {css_path.relative_to(reports_dir)} ({len(_STYLE)/1024:.1f} KB), "
-        f"{js_path.relative_to(reports_dir)} ({len(_SCRIPT)/1024:.1f} KB) [v={shell_version}]"
-    )
+
+    src_css = STATIC_SHELL_DIR / "report-shell.css"
+    src_js = STATIC_SHELL_DIR / "report-shell.js"
+    if src_css.is_file() and src_js.is_file():
+        shutil.copyfile(src_css, css_path)
+        shutil.copyfile(src_js, js_path)
+
+    css_text = css_path.read_text(encoding="utf-8") if css_path.is_file() else ""
+    js_text = js_path.read_text(encoding="utf-8") if js_path.is_file() else ""
+    shell_ver = hashlib.sha256((css_text + "\n" + js_text).encode("utf-8")).hexdigest()[:10]
+    return shell_ver
+
+
+def reshell_all(reports_dir: Path, *, target_slug: str | None = None) -> None:
+    shell_ver = sync_shell_assets(reports_dir)
 
     manifest_path = reports_dir / "reports-index.json"
     index_by_slug: dict[str, dict[str, Any]] = {}
@@ -865,15 +1067,24 @@ def reshell_all(reports_dir: Path) -> None:
             if isinstance(entry, dict) and entry.get("slug"):
                 index_by_slug[str(entry["slug"])] = entry
 
-    updated = 0
-    bytes_before = 0
-    bytes_after = 0
     EARLY_WAHS_SLUGS = {
         "2026-10-30-wahs-phase2-eval",
         "2026-10-31-wahs-condensation-ablation",
         "2026-10-31-wahs-live-model-team-eval",
     }
-    for idx_path in sorted(reports_dir.glob("*/index.html")):
+
+    paths = (
+        [reports_dir / target_slug / "index.html"]
+        if target_slug
+        else sorted(reports_dir.glob("*/index.html"))
+    )
+
+    updated = 0
+    bytes_before = 0
+    bytes_after = 0
+    for idx_path in paths:
+        if not idx_path.is_file():
+            continue
         report_dir = idx_path.parent
         slug = report_dir.name
         if slug == "assets":
@@ -881,18 +1092,22 @@ def reshell_all(reports_dir: Path) -> None:
         raw = idx_path.read_text(encoding="utf-8", errors="ignore")
         old_sz = len(raw.encode("utf-8"))
         index_entry = index_by_slug.get(slug) or {}
+        data_json_path = report_dir / "report-data.json"
 
-        # Case A: Early Oct 30-31 WAHS static runs (no LLM judge.jsonl; rebuild from expectations.jsonl + results.jsonl)
-        if slug in EARLY_WAHS_SLUGS and (report_dir / "results.jsonl").is_file():
+        # Case A: Early Oct 30-31 WAHS static runs
+        if slug in EARLY_WAHS_SLUGS and (report_dir / "results.jsonl").is_file() and not data_json_path.is_file():
             blob = build_early_wahs_blob(report_dir, index_entry)
+        elif data_json_path.is_file():
+            blob = json.loads(data_json_path.read_text(encoding="utf-8"))
+            if blob.get("report_family") == "catalyst" and not blob.get("runs"):
+                blob = enrich_catalyst_blob(blob, report_dir, index_entry)
         else:
             m = DATA_RE.search(raw)
             if not m:
                 print(f"SKIP {slug:62s} (no report-data)")
                 continue
             blob = json.loads(m.group(1))
-            # Case B: Catalyst runs with `report_family == 'catalyst'`
-            if blob.get("report_family") == "catalyst":
+            if blob.get("report_family") == "catalyst" and not blob.get("runs"):
                 blob = enrich_catalyst_blob(blob, report_dir, index_entry)
 
         runs = blob.get("runs") or []
@@ -907,7 +1122,15 @@ def reshell_all(reports_dir: Path) -> None:
             cells += c
             pool_cnt += p
 
-        new_html = _document(blob, external_shell_prefix="../assets", shell_version=shell_version)
+        # Write standalone report-data.json artifact
+        data_json_path.write_text(json.dumps(blob, ensure_ascii=False), encoding="utf-8")
+
+        # Write external-shell index.html
+        new_html = render_shell_document(
+            blob,
+            external_shell_prefix="../assets",
+            shell_version=shell_ver,
+        )
         new_sz = len(new_html.encode("utf-8"))
         bytes_before += old_sz
         bytes_after += new_sz
@@ -918,11 +1141,21 @@ def reshell_all(reports_dir: Path) -> None:
             f"{old_sz/1024:7.1f} KB -> {new_sz/1024:7.1f} KB"
         )
     print(
-        f"\nDone: unified & reshelled {updated} reports onto shared ../assets/report-shell.{{css,js}}. "
-        f"Total HTML size: {bytes_before/1024/1024:.2f} MB -> {bytes_after/1024/1024:.2f} MB"
+        f"\nDone: unified & reshelled {updated} report(s) onto ../assets/report-shell.{{css,js}}?v={shell_ver} "
+        f"+ standalone report-data.json. Total HTML size: {bytes_before/1024/1024:.2f} MB -> {bytes_after/1024/1024:.2f} MB"
     )
 
 
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("reports_dir", nargs="?", type=Path, default=ROOT / "reports")
+    parser.add_argument("--reports-root", type=Path, default=None)
+    parser.add_argument("--slug", default=None, help="Reshell only a single report slug")
+    args = parser.parse_args(argv)
+    reports_root = (args.reports_root or args.reports_dir).resolve()
+    reshell_all(reports_root, target_slug=args.slug)
+    return 0
+
+
 if __name__ == "__main__":
-    reports_root = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else (ROOT / "reports")
-    reshell_all(reports_root)
+    raise SystemExit(main())

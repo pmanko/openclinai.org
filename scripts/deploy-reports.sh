@@ -128,6 +128,32 @@ if manifest_path == (root_path / "reports" / "reports-index.json").resolve():
                         + "\nSync reports/ across worktrees before deploying (or set ALLOW_REPORT_REMOVAL=1).\n"
                     )
                     sys.exit(1)
+        branches = subprocess.check_output(
+            ["git", "-C", str(root_path), "for-each-ref", "--format=%(refname:short)", "refs/heads/"],
+            text=True, stderr=subprocess.DEVNULL
+        ).splitlines()
+        for br in branches:
+            br = br.strip()
+            if not br:
+                continue
+            try:
+                br_raw = subprocess.check_output(
+                    ["git", "-C", str(root_path), "show", f"{br}:reports/reports-index.json"],
+                    text=True, stderr=subprocess.DEVNULL
+                )
+                br_slugs = extract_slugs(json.loads(br_raw))
+            except Exception:
+                continue
+            missing_br = [s for s in br_slugs if s not in local_slugs]
+            if missing_br:
+                sys.stderr.write(
+                    f"error: refusing to deploy because local branch '{br}' has published report(s) missing here: "
+                    + ", ".join(missing_br)
+                    + "\nMerge or sync those report packets onto main before deploying (or set ALLOW_REPORT_REMOVAL=1).\n"
+                )
+                sys.exit(1)
+    except SystemExit:
+        raise
     except Exception:
         pass
 PY

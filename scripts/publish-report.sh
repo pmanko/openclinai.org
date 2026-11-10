@@ -32,6 +32,10 @@ fi
 (cd "${ROOT}" && python3 scripts/stage-report.py \
   "${FAMILY}" "${RUN_DIR}" "${SLUG}" "${TITLE}" "${SUMMARY}" "${TAKEAWAY}" \
   --reports-root "${REPORTS_ROOT}" --manifest "${MANIFEST}" --root "${ROOT}")
+if [[ -f "${REPORTS_ROOT}/assets/report-shell.js" && -f "${ROOT}/scripts/reshell-reports.py" ]]; then
+  (cd "${ROOT}" && python3 scripts/reshell-reports.py \
+    --reports-root "${REPORTS_ROOT}" --slug "${SLUG}")
+fi
 (cd "${ROOT}" && python3 scripts/build-reports-index.py \
   --reports-root "${REPORTS_ROOT}" --manifest "${MANIFEST}" --root "${ROOT}")
 
