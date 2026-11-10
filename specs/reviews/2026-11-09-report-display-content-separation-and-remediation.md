@@ -140,3 +140,11 @@ flowchart LR
 - [x] **3.1 Externalize Shared Versioned Report Shell (`reports/assets/report-shell.css`, `reports/assets/report-shell.js`):**
   - Updated `render_document()` (`harness/report_shell/document.py`) and `_document()` (`harness/validate/report.py`) to support `external_shell_prefix="../assets"` (while keeping inline `<style>`/`<script>` default for standalone `build_report()` runs).
   - All 33 staged reports in `reports/*/index.html` now load `../assets/report-shell.css` (`53.6 KB`) and `../assets/report-shell.js` (`148.1 KB`). Updating the shared shell assets updates every published report simultaneously without modifying individual report HTML files.
+
+### Phase 4 — Additive Per-Slug Publishing on Feature Branches & Worktree Hygiene (COMPLETED 2026-11-09)
+- [x] **4.1 Additive Per-Slug Rsync on Feature Branches (`scripts/publish-report.sh` & `scripts/deploy-reports.sh`):**
+  - `scripts/deploy-reports.sh` now supports `--slug <slug>` (or `DEPLOY_SLUG`), scoping `rsync --delete` strictly to `artifacts/reports/<slug>/` while syncing `index.html`, `reports-index.json`, `sitemap.xml`, and `assets/` additively without root `--delete`.
+  - `scripts/publish-report.sh` automatically invokes `deploy-reports.sh --slug "${SLUG}"` when executed on a non-`main`/`master` branch, and `deploy-reports.sh` refuses full-archive `rsync --delete` from feature branches unless `--slug <slug>` (or `ALLOW_BRANCH_FULL_DEPLOY=1`) is explicitly passed.
+- [x] **4.2 Cross-Repository Worktree Hygiene (`hq/scripts/wt.sh audit` & `prune`):**
+  - Pruned 14 broken `/private/tmp/*` worktree metadata entries (`clinical-ai-validation-harness`, `catalyst-dev`) and removed 17 clean merged/detached sibling worktrees across `openclinai.org`, `digging-in-research`, and `clinical-ai-validation-harness`.
+  - Fast-forwarded `/Users/pmanko/.gemini/antigravity/worktrees/openclinai.org/organize_project_workstreams` to `main` so all active workspaces share the identical 33-report archive and Phase 1–4 publication guardrails.

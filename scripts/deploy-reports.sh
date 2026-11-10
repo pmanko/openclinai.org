@@ -12,6 +12,33 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPORTS_ROOT="${REPORTS_ROOT:-${ROOT}/reports}"
 MANIFEST="${REPORTS_ROOT}/reports-index.json"
 
+SLUG=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --slug)
+      SLUG="${2:?usage: deploy-reports.sh [--slug <slug>]}"
+      shift 2
+      ;;
+    *)
+      echo "error: unknown argument: $1 (usage: deploy-reports.sh [--slug <slug>])" >&2
+      exit 1
+      ;;
+  esac
+done
+SLUG="${SLUG:-${DEPLOY_SLUG:-}}"
+
+if [[ -n "${SLUG}" && ! -f "${REPORTS_ROOT}/${SLUG}/index.html" ]]; then
+  echo "error: staged report ${REPORTS_ROOT}/${SLUG}/index.html does not exist." >&2
+  exit 1
+fi
+
+BRANCH="$(git -C "${REPORTS_ROOT}" symbolic-ref --short HEAD 2>/dev/null || echo "detached")"
+if [[ -z "${SLUG}" && "${BRANCH}" != "main" && "${BRANCH}" != "master" && "${ALLOW_BRANCH_FULL_DEPLOY:-0}" != "1" ]]; then
+  echo "error: refusing full-archive rsync --delete from non-main branch '${BRANCH}'." >&2
+  echo "Use 'scripts/deploy-reports.sh --slug <slug>' (or 'scripts/publish-report.sh') for additive per-slug publishing on feature branches, or deploy from main." >&2
+  exit 1
+fi
+
 uncommitted() { git -C "${REPORTS_ROOT}" status --porcelain --untracked-files=all -- . ; }
 
 if [[ -n "$(uncommitted)" ]]; then
@@ -106,12 +133,31 @@ if manifest_path == (root_path / "reports" / "reports-index.json").resolve():
 PY
 fi
 
-rsync -az --delete --exclude='*.mp4' --exclude='*.webm' --exclude='.DS_Store' \
-  -e "ssh -i ${GCP_SSH_KEY} -o StrictHostKeyChecking=accept-new" \
-  "${REPORTS_ROOT}/" \
-  "${GCP_SSH_USER}@${IP}:${GCP_REMOTE_REPO}/artifacts/reports/"
+if [[ -n "${SLUG}" ]]; then
+  gcp_ssh "mkdir -p ${GCP_REMOTE_REPO}/artifacts/reports/${SLUG}"
+  rsync -az --delete --exclude='*.mp4' --exclude='*.webm' --exclude='.DS_Store' \
+    -e "ssh -i ${GCP_SSH_KEY} -o StrictHostKeyChecking=accept-new" \
+    "${REPORTS_ROOT}/${SLUG}/" \
+    "${GCP_SSH_USER}@${IP}:${GCP_REMOTE_REPO}/artifacts/reports/${SLUG}/"
+  CATALOG_ITEMS=("${REPORTS_ROOT}/index.html" "${REPORTS_ROOT}/reports-index.json")
+  [[ -f "${REPORTS_ROOT}/sitemap.xml" ]] && CATALOG_ITEMS+=("${REPORTS_ROOT}/sitemap.xml")
+  [[ -d "${REPORTS_ROOT}/assets" ]] && CATALOG_ITEMS+=("${REPORTS_ROOT}/assets")
+  rsync -az --exclude='.DS_Store' \
+    -e "ssh -i ${GCP_SSH_KEY} -o StrictHostKeyChecking=accept-new" \
+    "${CATALOG_ITEMS[@]}" \
+    "${GCP_SSH_USER}@${IP}:${GCP_REMOTE_REPO}/artifacts/reports/"
+else
+  rsync -az --delete --exclude='*.mp4' --exclude='*.webm' --exclude='.DS_Store' \
+    -e "ssh -i ${GCP_SSH_KEY} -o StrictHostKeyChecking=accept-new" \
+    "${REPORTS_ROOT}/" \
+    "${GCP_SSH_USER}@${IP}:${GCP_REMOTE_REPO}/artifacts/reports/"
+fi
 gcp_ssh "chmod -R a+rX ${GCP_REMOTE_REPO}/artifacts/reports"
 
 SITE="${CADDY_SITE_REPORTS:-reports.openclinai.org}"
 curl -fsS --retry 5 --retry-delay 2 --max-time 30 "https://${SITE}/" | cmp - "${REPORTS_ROOT}/index.html"
-echo "==> deployed https://${SITE}/ from commit $(git -C "${REPORTS_ROOT}" rev-parse --short HEAD)"
+if [[ -n "${SLUG}" ]]; then
+  echo "==> deployed report ${SLUG} additively to https://${SITE}/${SLUG}/ from commit $(git -C "${REPORTS_ROOT}" rev-parse --short HEAD)"
+else
+  echo "==> deployed https://${SITE}/ from commit $(git -C "${REPORTS_ROOT}" rev-parse --short HEAD)"
+fi

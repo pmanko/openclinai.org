@@ -50,6 +50,12 @@ else
   echo "==> committed reports/${SLUG} and the catalog as $(git -C "${REPORTS_ROOT}" rev-parse --short HEAD)"
 fi
 
-"${ROOT}/scripts/deploy-reports.sh"
+BRANCH="$(git -C "${REPORTS_ROOT}" symbolic-ref --short HEAD 2>/dev/null || echo "detached")"
+if [[ "${BRANCH}" == "main" || "${BRANCH}" == "master" ]]; then
+  "${ROOT}/scripts/deploy-reports.sh"
+else
+  echo "==> feature branch (${BRANCH}): deploying ${SLUG} additively (without root --delete)"
+  "${ROOT}/scripts/deploy-reports.sh" --slug "${SLUG}"
+fi
 SITE="${CADDY_SITE_REPORTS:-reports.openclinai.org}"
 echo "==> published: https://${SITE}/${SLUG}/"

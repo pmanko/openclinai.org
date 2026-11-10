@@ -57,6 +57,7 @@ def publisher(tmp_path):
         "python3": f'exec "{sys.executable}" "$@"\n',
         "ssh": "exit 0\n",
         "rsync": f'echo "trace: publish upload"\nprintf "%s\\n" "$@" > "{tmp_path}/rsync-args"\n'
+                 f'{{ printf "%s\\n" "$@"; echo "---"; }} >> "{tmp_path}/rsync-calls"\n'
                  'exit "${PUBLISH_EXIT_CODE:-0}"\n',
         "curl": 'cat "${REPORTS_ROOT}/index.html"\n',
         "gcloud": '''echo "trace: cloud command" >&2
@@ -75,18 +76,19 @@ esac
         executable.chmod(0o755)
 
     # The archive starts committed and the catalog built, as the real repository is kept.
-    (tmp_path / ".gitignore").write_text("*.mp4\nbin/\nrun/\n", encoding="utf-8")
-    git(tmp_path, "init", "-q")
+    (tmp_path / ".gitignore").write_text("*.mp4\nbin/\nrun/\nrsync-args*\n", encoding="utf-8")
+    git(tmp_path, "init", "-q", "-b", "main")
     subprocess.run([sys.executable, str(scripts / "build-reports-index.py"), "--root", str(tmp_path),
                     "--reports-root", str(reports), "--manifest", str(reports / "reports-index.json")],
                    check=True, capture_output=True)
     git(tmp_path, "add", "--", "reports", "scripts", ".gitignore")
     git(tmp_path, "commit", "-q", "-m", "Archive")
 
-    def run(*, publish_exit=0, dry_run=False, script="publish-report.sh"):
+    def run(*, publish_exit=0, dry_run=False, script="publish-report.sh", extra_args=()):
         argv = ["/bin/bash", str(scripts / script)]
         if script == "publish-report.sh":
             argv += ["chartsearchai", str(tmp_path / "run"), "example"]
+        argv += list(extra_args)
         return subprocess.run(
             argv, cwd=tmp_path, capture_output=True, text=True, check=False,
             env={
@@ -248,4 +250,43 @@ def test_publication_stages_judging_metadata_and_renders_judge_sentence_on_catal
     )
     catalog_html = (tmp_path / "reports/index.html").read_text(encoding="utf-8")
     assert "Judged by claude-opus-5-5, reasoning high, Claude Code CLI, pass 1 of 1." in catalog_html
+
+
+def test_feature_branch_publish_uses_additive_per_slug_rsync_without_root_delete(publisher, tmp_path):
+    git(tmp_path, "checkout", "-q", "-b", "s6/wahs-feature")
+    (tmp_path / "reports/assets").mkdir(exist_ok=True)
+    (tmp_path / "reports/assets/report-shell.css").write_text("body{}\n", encoding="utf-8")
+    git(tmp_path, "add", "--", "reports/assets")
+    git(tmp_path, "commit", "-q", "-m", "Add shared assets")
+
+    result = publisher()
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "feature branch (s6/wahs-feature): deploying example additively" in result.stdout
+    assert "==> deployed report example additively" in result.stdout
+    calls = [
+        [line for line in block.splitlines() if line.strip()]
+        for block in (tmp_path / "rsync-calls").read_text(encoding="utf-8").split("---\n")
+        if block.strip()
+    ]
+    assert len(calls) == 2
+    slug_call, catalog_call = calls
+    # Call 1 scopes --delete strictly to reports/example/ -> .../artifacts/reports/example/
+    assert "--delete" in slug_call
+    assert slug_call[-2] == str(tmp_path / "reports/example") + "/"
+    assert slug_call[-1].endswith("/artifacts/reports/example/")
+    # Call 2 syncs catalog + assets without --delete on the root reports/ folder
+    assert "--delete" not in catalog_call
+    assert str(tmp_path / "reports/index.html") in catalog_call
+    assert str(tmp_path / "reports/reports-index.json") in catalog_call
+    assert str(tmp_path / "reports/assets") in catalog_call
+    assert catalog_call[-1].endswith("/artifacts/reports/")
+
+
+def test_deploy_refuses_full_archive_delete_from_feature_branch_without_slug(publisher, tmp_path):
+    git(tmp_path, "checkout", "-q", "-b", "s6/wahs-feature")
+    result = publisher(script="deploy-reports.sh")
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "refusing full-archive rsync --delete from non-main branch 's6/wahs-feature'" in result.stderr
+    assert "trace:" not in result.stdout + result.stderr
+
 
