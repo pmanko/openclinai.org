@@ -25,9 +25,9 @@ On 9 November 2026, an end-to-end audit of `https://reports.openclinai.org/` and
 
 | Format / Generator | Count | Example Slugs | Data Representation | Current Status |
 | :--- | :---: | :--- | :--- | :--- |
-| **1. Unified `validate` Schema (`harness/validate/report.py`)** | **28** | All 21 ChartSearchAI runs (`2026-07-*` to `2026-11-07-*`) + 7 WAHS / MacBook runs (`2026-11-02` to `2026-11-06`, including `2026-11-05-wahs-multi-family-3-pathway-eval` & `2026-11-04-wahs-macbook-direct-vs-hub-multi-scenario-eval`) | `<script id="report-data">` containing `runs[0].{meta, context, summary, scenarios, judge, judge_rows, adjudication_rows, calibrated}` | **Unified & Live Now** (all 28 share the exact same shell via `scripts/reshell-reports.py`) |
-| **2. Early Bespoke WAHS Static HTML (`Oct 30–31`)** | **3** | `2026-10-30-wahs-phase2-eval`, `2026-10-31-wahs-condensation-ablation`, `2026-10-31-wahs-live-model-team-eval` | Hand-crafted HTML tables with **no** `<script id="report-data">` JSON island (`0 KB` data island) | **Phase 2.1:** One-time extraction of their static HTML tables into canonical `#report-data` JSON so they join the 28 unified reports permanently |
-| **3. Catalyst Suite Schema (`harness/catalyst/report.py`)** | **2** | `catalyst-phase1-comparison`, `catalyst-notebook-t094-2026-07-22` | `<script id="report-data">` with `{report_family: "catalyst", manifest, suite, results, judges, judge_rankings}` | **Phase 2.3:** Normalize into the shared `runs[0]` envelope (with optional `sql_queries` / `pathway` fields) so `catalyst/report.py` is retired as a separate UI shell |
+| **1. Unified `validate` Schema (`harness/validate/report.py`)** | **28** | All 21 ChartSearchAI runs (`2026-07-*` to `2026-11-07-*`) + 7 WAHS / MacBook runs (`2026-11-02` to `2026-11-06`, including `2026-11-05-wahs-multi-family-3-pathway-eval` & `2026-11-04-wahs-macbook-direct-vs-hub-multi-scenario-eval`) | `<script id="report-data">` containing `runs[0].{meta, context, summary, scenarios, judge, judge_rows, adjudication_rows, calibrated}` | **Unified & Live Now** (all 28 share `../assets/report-shell.{css,js}`) |
+| **2. Early Bespoke WAHS Runs (`Oct 30–31`)** | **3** | `2026-10-30-wahs-phase2-eval`, `2026-10-31-wahs-condensation-ablation`, `2026-10-31-wahs-live-model-team-eval` | Converted from `results.jsonl` + `inputs/wahs_eval_cases.jsonl` + `meta.json` into canonical `runs[0]` `#report-data` (`96`, `160`, and `128` cells) | **Unified & Live Now** (all 3 share `../assets/report-shell.{css,js}`) |
+| **3. Catalyst Suite Runs (`catalyst-*`)** | **2** | `catalyst-phase1-comparison`, `catalyst-notebook-t094-2026-07-22` | `<script id="report-data">` enriched with canonical `runs[0]` (`36` and `5` SQL cells) alongside `{report_family: "catalyst", manifest, suite, results, judges}` | **Unified & Live Now** (both share `../assets/report-shell.{css,js}`) |
 | **4. Catalog-Only Unavailable Entry** | **1** | `catalyst-t094-release` | No `index.html` (`availability: "unavailable"`) | Handled by catalog index |
 
 ### 2.2 The Architectural Rule: Capability-Driven Rendering Over One Canonical Data Contract
@@ -127,17 +127,16 @@ flowchart LR
   - Scoped `div.exec-row { display: grid }` so `<tr class="exec-row">` inside `<table class="ov-comp-table">` renders as proper table rows.
   - Surfaced `run.context.text` + `run.context.url` in `Overview`, fell back to `judge[b].citation_resolution` for Layer 1 (`5,112/5,112 refs resolved`), replaced blank `Response Speed` KPI card with `3 · Safety-Adjusted Score & Spread` + `Resolved Refs` when `avg_latency_ms == 0`, and generalized `classifyScenario()` for WAHS (`A01–A20`, `B01–B16`) and ChartSearchAI.
 
-### Phase 2 — Unify the Remaining 5 Non-`validate` Reports & Client-Side Evidence Rendering (Next Slice)
-- [ ] **2.1 Convert the 3 Early Static WAHS Reports (`2026-10-30-wahs-phase2-eval`, `2026-10-31-wahs-condensation-ablation`, `2026-10-31-wahs-live-model-team-eval`) to Canonical `#report-data` Blobs:**
-  - Extract their run metrics and scenario tables into canonical `#report-data` JSON blobs so `scripts/reshell-reports.py` manages all 30 non-Catalyst reports uniformly.
-- [ ] **2.2 Render `sources_html` & `refs_html` Purely Client-Side from Deduplicated Patient Records:**
-  - In `harness/validate/report.py`, store cited chart records once per patient in `run.patient_records[patient_uuid][record_index]` and store compact per-cell citation refs (`cell.source_refs`) instead of repeating pre-rendered `cell.sources_html` (6.0 MB) across every cell.
-  - Expected impact on `2026-11-05-wahs-multi-family-3-pathway-eval`: shrinks file size from **12.6 MB $\to$ ~2.8 MB** (an additional **~78% reduction**).
-- [ ] **2.3 Normalize the 2 Catalyst Reports (`catalyst-phase1-comparison`, `catalyst-notebook-t094-2026-07-22`) into the Shared `runs[0]` Envelope:**
-  - Map `{manifest, suite, results, judges, judge_rankings}` into `runs[0].{meta, summary, judge, scenarios}` with optional `sql_queries` capability so a single UI shell renders `validate`, `wahs`, and `catalyst` without maintaining `harness/catalyst/report.py`.
+### Phase 2 — Unify the Remaining 5 Non-`validate` Reports & Client-Side Evidence Pool Reconstruction (COMPLETED 2026-11-09)
+- [x] **2.1 Convert the 3 Early Static WAHS Reports (`2026-10-30-wahs-phase2-eval`, `2026-10-31-wahs-condensation-ablation`, `2026-10-31-wahs-live-model-team-eval`) to Canonical `#report-data` Blobs:**
+  - Built `build_early_wahs_blob()` in `scripts/reshell-reports.py` reading their staged `results.jsonl`, `inputs/wahs_eval_cases.jsonl`, `meta.json`, and `run_manifest.json` (`96`, `160`, and `128` cells across all 32 WAHS cases).
+- [x] **2.2 Deduplicate `source_card_pool` & `refs_pool` and Reconstruct Evidence Cards Client-Side:**
+  - Added `resolveCellSourcesHtml(run, cell)` and `resolveCellRefsHtml(run, cell)` in `harness/validate/report.py`, deduplicated repeated `<article class='source-card'>` blocks into `run.source_card_pool` and `cell.refs_html` into `run.refs_pool`, and slimmed redundant `indepth_view` and `judge_passes` fields.
+  - Shrunk `2026-11-05-wahs-multi-family-3-pathway-eval/index.html` from **18.54 MB $\to$ 4.67 MB (4,783 KB)** (a **75% reduction**) and the entire 33-report archive from **49.56 MB $\to$ 24.20 MB**!
+- [x] **2.3 Normalize the 2 Catalyst Reports (`catalyst-phase1-comparison`, `catalyst-notebook-t094-2026-07-22`) into the Shared `runs[0]` Envelope:**
+  - Built `enrich_catalyst_blob()` in `scripts/reshell-reports.py` mapping `{manifest, suite, results, judges}` into `runs[0].{meta, summary, judge, judge_rows, scenarios}` with `.sql-code` query blocks and gold execution-match assertions while keeping top-level Catalyst keys intact.
 
-### Phase 3 — Externalized Shared Shell Assets & Split Overview/Detail Payloads (`reports.openclinai.org`)
-- [ ] **3.1 Externalize Shared Versioned Report Shell (`/assets/report-shell.css`, `/assets/report-shell.js`):**
-  - `build_report()` emits a lightweight HTML loader referencing `/assets/report-shell.css` and `/assets/report-shell.js` for published reports on `reports.openclinai.org` (while keeping `--standalone` single-file HTML for offline email/file attachments). Updating `/assets/report-shell.{css,js}` instantly updates every published report without touching `reports/<slug>/index.html`.
-- [ ] **3.2 Split `report-data.json` into `overview.json` (Tab 1) + Lazy-Fetched `cells.json` (Tabs 2–4):**
-  - `reports/<slug>/index.html` loads `overview.json` (~40–80 KB: `meta`, `context`, `summary`, `judge`, `calibrated`, `arm_cards`, scenario titles/scores) for an instant **<100 ms** network + render load on `Overview (At a Glance)`, and fetches `cells.json` asynchronously in the background when the user opens a question drawer or switches to `Browse All Questions`.
+### Phase 3 — Externalized Shared Shell Assets (`reports.openclinai.org`) (COMPLETED 2026-11-09)
+- [x] **3.1 Externalize Shared Versioned Report Shell (`reports/assets/report-shell.css`, `reports/assets/report-shell.js`):**
+  - Updated `render_document()` (`harness/report_shell/document.py`) and `_document()` (`harness/validate/report.py`) to support `external_shell_prefix="../assets"` (while keeping inline `<style>`/`<script>` default for standalone `build_report()` runs).
+  - All 33 staged reports in `reports/*/index.html` now load `../assets/report-shell.css` (`53.6 KB`) and `../assets/report-shell.js` (`148.1 KB`). Updating the shared shell assets updates every published report simultaneously without modifying individual report HTML files.
