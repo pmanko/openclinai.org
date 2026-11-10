@@ -277,7 +277,7 @@
           <ul>
             <li><strong>Terminology challenge for smaller models:</strong> Larger frontier models know LOINC/FHIR syntax natively, whereas smaller open-weight models often need an injected knowledge base or a specialist retrieval agent to translate clinical questions into codes accurately.</li>
             <li><strong>Retrieved FHIR still needs condensation:</strong> Raw FHIR query responses remain token-heavy and benefit from engine-side condensation before synthesis.</li>
-            <li><strong>Security &amp; multi-agent UX:</strong> Requires strict query guardrails across pooled multi-clinic patient IDs, plus UI progress steps for multi-agent orchestration + retrieval.</li>
+            <li><strong>Security &amp; multi-agent UX:</strong> Requires strict query guardrails so every AI-generated query stays within the logged-in user’s own Patient record, plus UI progress steps for multi-agent orchestration + retrieval.</li>
           </ul>
         </article>
       </div>
@@ -448,7 +448,7 @@
 
       <div class="flow-diagram" role="region" aria-label="WAHS Pilot Architecture Flow">
 [1. WAHS Frontend &amp; Auth Proxy]
-   • Patient logs in; WAHS auth proxy enforces patient-scoped FHIR access (master patient ID)
+   • Patient logs in; WAHS auth proxy limits FHIR access to the user's own Patient record
    • Simple Chat Tab sends OpenAI-format request (conversation history + patient context)
           │
           ▼  (OpenAI REST /v1/chat/completions, stream=true)
@@ -469,7 +469,7 @@
           <span class="strategy-badge">Security &amp; Access Control</span>
           <h3>Enforcing the single-patient boundary before any AI call</h3>
           <ul>
-            <li><strong>Scoped at login:</strong> Existing authentication proxies in WAHS enforce OAuth scopes and resolve a patient’s pooled records (across clinics that may use different local medical record numbers under one master patient ID) <em>before</em> the WAHS Engine processes the bundle.</li>
+            <li><strong>Scoped at login:</strong> Existing authentication proxies in WAHS enforce OAuth scopes that limit access to the logged-in user’s single Patient record in the WAHS HAPI FHIR server, which holds the records they have downloaded from each of their healthcare organizations, <em>before</em> the WAHS Engine processes them.</li>
             <li><strong>No cross-patient query surface:</strong> In the pilot, the AI model never writes database queries against a multi-patient FHIR server; all condensation, clinical rule checks, and note lookups run strictly inside the logged-in patient’s isolated bundle.</li>
             <li><strong>Patient-controlled sharing:</strong> Patients choose which of their records to share by creating an International Patient Summary (IPS) within WAHS and sharing it via a SMART Health Link.</li>
           </ul>
