@@ -251,7 +251,7 @@
         <article class="strategy-card recommended">
           <span class="strategy-badge">Option 1 · First Pilot Iteration</span>
           <h3>Condense FHIR Record into Context</h3>
-          <p>The WAHS engine grabs the logged-in patient’s authorized FHIR bundle once, shrinks it by <strong>90%–99%</strong> into a clean clinical ledger with <span class="code-inline">[N]</span> source links, attaches automated clinical conflict checks, and sends it with the prompt in a single AI call.</p>
+          <p>The WAHS engine reads the logged-in patient’s current FHIR data from the HAPI FHIR server that runs as part of the WAHS deployment, shrinks it by <strong>90%–99%</strong> into a clean clinical ledger with <span class="code-inline">[N]</span> source links, attaches automated clinical conflict checks, and sends it with the prompt in a single AI call. Because WAHS is a personal health record, this data changes over time: patients download records from their providers’ EHRs (for example via USCDI or TEFCA), enter their own concerns and goals through web forms, and curate what they keep. The condensed ledger must reflect the record as it stands when the question is asked, not a one-time snapshot.</p>
           <ul>
             <li><strong>Immediate streaming:</strong> Everything happens in ~100 ms inside the engine before a single AI call, so answers stream right away.</li>
             <li><strong>No missed LOINC codes:</strong> Deterministic clinical rules map terms like <em>“diabetes tests”</em> to HbA1c, glucose, and kidney labs without requiring a small AI model to write raw FHIR queries.</li>
@@ -283,7 +283,7 @@
       </div>
 
       <div class="strategy-callout">
-        <strong>How the approaches fit together:</strong> These three options are complementary rather than mutually exclusive. Even when records are retrieved dynamically via FHIR queries or semantic search, raw FHIR JSON is costly in tokens and needs condensation. Starting the pilot with <strong>Option 1 (Condense what fits into context)</strong> while benchmarking <strong>Option 2 (Note embeddings)</strong> and <strong>Option 3 (Dynamic FHIR querying)</strong> on smaller models gives WAHS a fast, secure pilot today and a clear path for 100–200 MB records.
+        <strong>How the approaches fit together:</strong> These three options are complementary rather than mutually exclusive. Even when records are retrieved dynamically via FHIR queries or semantic search, raw FHIR JSON is costly in tokens and needs condensation. Starting the pilot with <strong>Option 1 (Condense what fits into context)</strong> while benchmarking <strong>Option 2 (Note embeddings)</strong> and <strong>Option 3 (Dynamic FHIR querying)</strong> on smaller models gives WAHS a fast pilot today and a clear path for 100–200 MB records.
       </div>
     </section>
 
@@ -453,7 +453,7 @@
           │
           ▼  (OpenAI REST /v1/chat/completions, stream=true)
 [2. WAHS Engine (Scoped from Med Agent Hub · Separate Server)]
-   • Condenses the patient's authorized FHIR bundle by 90%–99% (condenser.py)
+   • Reads the patient's current records from the WAHS HAPI FHIR server and condenses them by 90%–99% (condenser.py)
    • Runs deterministic 4-Layer Clinical KB + Patient Relationship Graph (clinical_graph.py)
    • Pulls omitted clinical notes / labs matching the user's question (wahs_tools.py)
    • Keeps [System Prompt + 8k Condensed Chart] as a fixed prefix for GPU session caching
@@ -471,7 +471,7 @@
           <ul>
             <li><strong>Scoped at login:</strong> Existing authentication proxies in WAHS enforce OAuth scopes and resolve a patient’s pooled records (across clinics that may use different local medical record numbers under one master patient ID) <em>before</em> the WAHS Engine processes the bundle.</li>
             <li><strong>No cross-patient query surface:</strong> In the pilot, the AI model never writes database queries against a multi-patient FHIR server; all condensation, clinical rule checks, and note lookups run strictly inside the logged-in patient’s isolated bundle.</li>
-            <li><strong>Screen-sharing &amp; sensitive history controls:</strong> Patients can toggle 42 CFR Part 2 / WA My Health My Data Act segmentation, and the engine automatically withholds sensitive social/survey entries when a caregiver or bystander is viewing the screen.</li>
+            <li><strong>Patient-controlled sharing:</strong> Patients choose which of their records to share by creating an International Patient Summary (IPS) within WAHS and sharing it via a SMART Health Link.</li>
           </ul>
         </article>
 
@@ -480,7 +480,7 @@
           <h3>Instant follow-up answers via GPU prefix caching</h3>
           <ul>
             <li><strong>Multi-turn from day one:</strong> The WAHS chat interface passes the conversation history with each turn so patients can ask natural follow-up questions.</li>
-            <li><strong>Prefix-cached chart memory:</strong> By placing the static <span class="code-inline">[1]...[N]</span> condensed patient chart at the very top of the prompt and appending turn-specific rule alerts and chat turns below it, the GPU server reuses its cached memory (KV cache) across follow-up questions for the same patient.</li>
+            <li><strong>Prefix-cached chart memory:</strong> By placing the static <span class="code-inline">[1]...[N]</span> condensed patient chart at the very top of the prompt and appending turn-specific rule alerts and chat turns below it, the GPU server reuses its cached memory (KV cache) across follow-up questions for the same patient. When the patient’s records change, the condensed chart is rebuilt so answers reflect the current record.</li>
             <li><strong>Transparent progress cues:</strong> Single-call streaming starts almost immediately for the pilot; as multi-step retrieval or specialist checks are added later, lightweight status steps (<em>“Checking medication conflicts…”</em>, <em>“Reading discharge note…”</em>) keep the user informed.</li>
           </ul>
         </article>
@@ -512,7 +512,7 @@
             <tr>
               <td><strong>2</strong></td>
               <td><strong>Extract Simplified WAHS Engine from Med Agent Hub</strong></td>
-              <td>Package a clean, standalone WAHS Engine service (free of legacy OpenMRS/Catalyst routes) that accepts OpenAI-format requests from the WAHS frontend, condenses the patient’s authorized FHIR bundle in the engine, and streams responses from the UW GPU server.</td>
+              <td>Package a clean, standalone WAHS Engine service (free of legacy OpenMRS/Catalyst routes) that accepts OpenAI-format requests from the WAHS frontend, condenses the patient’s current records from the WAHS HAPI FHIR server in the engine, and streams responses from the UW GPU server.</td>
               <td><span class="score-pill">Pilot Iteration 1</span></td>
             </tr>
             <tr>
@@ -524,7 +524,7 @@
             <tr>
               <td><strong>4</strong></td>
               <td><strong>Align on Session Memory &amp; GPU Prefix Caching</strong></td>
-              <td>Compare Ollama session IDs, LiteLLM session/caching capabilities, and repeated context with fixed chart prefixes so follow-up questions on the same patient leverage GPU-side caching without duplicating proxy logic.</td>
+              <td>Compare Ollama session IDs, LiteLLM session/caching capabilities, and repeated context with fixed chart prefixes so follow-up questions on the same patient leverage GPU-side caching without duplicating proxy logic. Any session or caching mechanism adopted must meet three requirements. <strong>Security:</strong> no user’s or patient’s interaction can ever reach another user’s or patient’s data, whether through session IDs, response caches or shared prefix caches. <strong>Data timeliness:</strong> cached context is discarded when the patient’s records in WAHS change, so answers never draw on data that has since been added, corrected or deleted. <strong>Reliability:</strong> a cache miss, eviction or restart may slow a response but never changes its content.</td>
               <td><span class="score-pill">Pilot Iteration 1</span></td>
             </tr>
             <tr>
