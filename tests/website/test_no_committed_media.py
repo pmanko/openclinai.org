@@ -19,7 +19,7 @@ VIDEO_SUFFIXES = {".mp4", ".mov", ".webm", ".m4v", ".avi", ".mkv"}
 # Small hand-made page assets are fine; renderer output and screen captures are
 # what grow without bound. 400 KB clears every poster in landing/media today.
 LARGE_BINARY_BYTES = 400 * 1024
-BINARY_SUFFIXES = VIDEO_SUFFIXES | {".png", ".jpg", ".jpeg", ".gif", ".webp", ".pdf"}
+BINARY_SUFFIXES = VIDEO_SUFFIXES | {".png", ".jpg", ".jpeg", ".gif", ".webp", ".pdf", ".docx", ".zip"}
 
 
 def tracked_files(root: Path = ROOT) -> list[tuple[str, int]]:
@@ -90,12 +90,27 @@ def test_no_oversized_binaries_are_tracked():
     oversized = [
         (path, size)
         for path, size in tracked_files()
-        if Path(path).suffix.lower() in BINARY_SUFFIXES and size > LARGE_BINARY_BYTES
+        if (Path(path).suffix.lower() in BINARY_SUFFIXES or path.startswith(("landing/", "wahs/")))
+        and size > LARGE_BINARY_BYTES
     ]
     assert oversized == [], (
-        "Large binaries accumulate in history forever. Host it and link to it, "
+        "Large binaries or website bundles accumulate in history forever. Host it and link to it, "
         f"or shrink it below {LARGE_BINARY_BYTES // 1024} KB. Offending files: "
         f"{oversized}"
+    )
+
+
+def test_no_harness_scratch_payloads_are_tracked_in_reports():
+    scratch_segments = {"inputs", "judge-bundles", "scenarios", "judges", "demos"}
+    offending = [
+        path
+        for path, _ in tracked_files()
+        if path.startswith("reports/")
+        and (path.endswith(".jsonl") or bool(scratch_segments.intersection(path.split("/"))))
+    ]
+    assert offending == [], (
+        "Raw harness scratch inputs, JSONL run logs, and judge bundles belong in evaluation "
+        f"working trees, not in published reports/. Offending files: {offending[:10]}"
     )
 
 

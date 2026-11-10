@@ -33,6 +33,17 @@ class Page(HTMLParser):
             for attr in ("src", "poster"):
                 if values.get(attr):
                     self.references.append(values[attr])
+            if values.get("srcset"):
+                for candidate in values["srcset"].split(","):
+                    tokens = candidate.strip().split()
+                    if tokens:
+                        self.references.append(tokens[0])
+        if tag == "meta" and values.get("property") == "og:image" and values.get("content"):
+            content = values["content"]
+            if content.startswith("https://openclinai.org/"):
+                self.references.append(content.removeprefix("https://openclinai.org"))
+            else:
+                self.references.append(content)
         if tag == "link" and values.get("href") and values.get("rel") in {"stylesheet", "icon", "modulepreload"}:
             self.references.append(values["href"])
 

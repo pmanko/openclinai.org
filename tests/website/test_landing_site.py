@@ -20,6 +20,7 @@ class LandingParser(HTMLParser):
         self.h1_count = 0
         self.scripts: list[dict[str, str | None]] = []
         self.assets: list[str] = []
+        self.meta_images: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         values = dict(attrs)
@@ -29,10 +30,26 @@ class LandingParser(HTMLParser):
             self.links.append(str(values["href"]))
         elif tag == "img":
             self.images.append(values)
+            if values.get("srcset"):
+                for candidate in str(values["srcset"]).split(","):
+                    tokens = candidate.strip().split()
+                    if tokens:
+                        self.assets.append(tokens[0])
         elif tag == "video":
             self.videos.append(values)
-        elif tag == "source" and values.get("src"):
-            self.sources.append(str(values["src"]))
+        elif tag == "source":
+            if values.get("src"):
+                self.sources.append(str(values["src"]))
+            if values.get("srcset"):
+                for candidate in str(values["srcset"]).split(","):
+                    tokens = candidate.strip().split()
+                    if tokens:
+                        self.assets.append(tokens[0])
+        elif tag == "meta" and values.get("property") == "og:image" and values.get("content"):
+            content = str(values["content"])
+            self.meta_images.append(content)
+            if content.startswith("https://openclinai.org/"):
+                self.assets.append(content.removeprefix("https://openclinai.org"))
         elif tag == "h1":
             self.h1_count += 1
         elif tag == "script":
@@ -53,7 +70,7 @@ def local_asset(path: str) -> Path:
 
 
 MEDIA_HOST = "https://storage.googleapis.com/openclinai-media/"
-DEMO_HOSTS = ("catalyst.openelis-global.org",)
+DEMO_HOSTS = ("catalyst.openelis-global.org", "openmrs.openclinai.org", "pmanko.github.io")
 
 
 def parsed_page(relative_path):
@@ -100,8 +117,15 @@ def test_every_site_local_link_fragment_asset_and_image_resolves():
         for image in page.images:
             assert image.get("alt") is not None, (path, image)
             src = str(image.get("src") or "")
-            if not urlparse(src).scheme:
+            if urlparse(src).scheme:
+                assert src.startswith(MEDIA_HOST), (path, src)
+            else:
                 assert resolve(path, src).is_file(), (path, src)
+        for meta_img in page.meta_images:
+            if urlparse(meta_img).scheme:
+                assert meta_img.startswith((MEDIA_HOST, "https://openclinai.org/")), (path, meta_img)
+            else:
+                assert resolve(path, meta_img).is_file(), (path, meta_img)
 
 
 def test_every_video_is_accessible_and_streamed_from_the_media_host():
@@ -121,7 +145,7 @@ def test_every_video_is_accessible_and_streamed_from_the_media_host():
 def test_pages_never_link_to_a_demo_host():
     """Forbidden coupling: public pages never depend on a demo server, which is stopped and redeployed."""
     for path, page in pages():
-        urls = page.links + page.sources + page.assets
+        urls = page.links + page.sources + page.assets + page.meta_images
         urls += [str(media.get(key) or "") for media in page.images + page.videos for key in ("src", "poster")]
         for url in urls:
             assert urlparse(url).hostname not in DEMO_HOSTS, (path, url)
@@ -130,7 +154,23 @@ def test_pages_never_link_to_a_demo_host():
 def test_legacy_homepage_fragments_retain_onward_links():
     """Public URL stability: fragments that earlier versions of the homepage published keep resolving."""
     _, home = parsed_landing()
-    assert {"project", "openmrs", "catalyst", "hub", "evidence", "wahs", "paths", "reporting-pathways", "catalyst-openelis-video", "catalyst-openmrs-video"} <= home.ids
+    assert {
+        "project",
+        "projects",
+        "openmrs",
+        "catalyst",
+        "hub",
+        "evidence",
+        "wahs",
+        "paths",
+        "reporting-pathways",
+        "reporting-path-1",
+        "reporting-path-2",
+        "reporting-path-3",
+        "reporting-path-4",
+        "catalyst-openelis-video",
+        "catalyst-openmrs-video",
+    } <= home.ids
 
 
 def test_website_stack_is_static_and_independent_of_products():
