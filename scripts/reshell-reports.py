@@ -18,6 +18,7 @@ What this script does:
 """
 from __future__ import annotations
 
+import hashlib
 import html
 import json
 import re
@@ -830,15 +831,9 @@ def enrich_and_deduplicate_run(run: dict[str, Any]) -> tuple[int, int]:
             b = j_arm.get("backend")
             rc = recomputed.get(b)
             if rc:
-                for k in (
-                    "benchmark_score",
-                    "safety_adjusted_benchmark_score",
-                    "safety_adjusted_ci",
-                    "critical_omission_count",
-                    "severe_harm_count",
-                ):
-                    if j_arm.get(k) is None and rc.get(k) is not None:
-                        j_arm[k] = rc[k]
+                for k, v in rc.items():
+                    if j_arm.get(k) is None and v is not None:
+                        j_arm[k] = v
 
     if not run.get("calibrated"):
         run["calibrated"] = calibrated_summary(jrows, run.get("adjudication_rows") or [], backends)
@@ -856,9 +851,10 @@ def reshell_all(reports_dir: Path) -> None:
     js_path = assets_dir / "report-shell.js"
     css_path.write_text(_STYLE, encoding="utf-8")
     js_path.write_text(_SCRIPT, encoding="utf-8")
+    shell_version = hashlib.sha256((_STYLE + _SCRIPT).encode("utf-8")).hexdigest()[:10]
     print(
         f"Wrote shared shell assets: {css_path.relative_to(reports_dir)} ({len(_STYLE)/1024:.1f} KB), "
-        f"{js_path.relative_to(reports_dir)} ({len(_SCRIPT)/1024:.1f} KB)"
+        f"{js_path.relative_to(reports_dir)} ({len(_SCRIPT)/1024:.1f} KB) [v={shell_version}]"
     )
 
     manifest_path = reports_dir / "reports-index.json"
@@ -911,7 +907,7 @@ def reshell_all(reports_dir: Path) -> None:
             cells += c
             pool_cnt += p
 
-        new_html = _document(blob, external_shell_prefix="../assets")
+        new_html = _document(blob, external_shell_prefix="../assets", shell_version=shell_version)
         new_sz = len(new_html.encode("utf-8"))
         bytes_before += old_sz
         bytes_after += new_sz

@@ -494,10 +494,23 @@ function renderExecutiveSummary(run){
   }
   var ctxBoxHtml = '';
   if(run.context && (run.context.text || run.context.url)){
-    ctxBoxHtml = '<div style="margin:0 0 14px;padding:11px 14px;background:var(--surface2);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;font-size:13px;line-height:1.55;color:var(--fg)">'
-      + (run.context.text ? htmlEsc(run.context.text) + ' ' : '')
-      + (run.context.url ? ('<a href="' + htmlEsc(run.context.url) + '" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700;text-decoration:none">' + htmlEsc(run.context.label || 'Learn more →') + '</a>') : '')
-      + '</div>';
+    var cTxt = String(run.context.text || '');
+    var cLink = run.context.url ? (' <a href="' + htmlEsc(run.context.url) + '" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700;text-decoration:none">' + htmlEsc(run.context.label || 'Learn more →') + '</a>') : '';
+    if(cTxt.length > 260){
+      var mSent = cTxt.slice(140, 340).match(/([a-z0-9\)\]])\.\s+/i);
+      var cutIdx = mSent ? (140 + mSent.index + 2) : cTxt.lastIndexOf(' ', 250);
+      if(cutIdx <= 80) cutIdx = 240;
+      var cShort = cTxt.slice(0, cutIdx).trim();
+      var cRest = cTxt.slice(cutIdx).trim();
+      ctxBoxHtml = '<div style="margin:0 0 14px;padding:10px 14px;background:var(--surface2);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;font-size:13px;line-height:1.5;color:var(--fg)">'
+        + htmlEsc(cShort)
+        + '<details style="margin-top:4px"><summary style="cursor:pointer;color:var(--accent);font-weight:700;font-size:12px">Read full study context ▾</summary><div style="margin-top:6px;color:var(--mut)">' + htmlEsc(cRest) + cLink + '</div></details>'
+        + '</div>';
+    } else {
+      ctxBoxHtml = '<div style="margin:0 0 14px;padding:11px 14px;background:var(--surface2);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;font-size:13px;line-height:1.55;color:var(--fg)">'
+        + (cTxt ? htmlEsc(cTxt) + ' ' : '') + cLink
+        + '</div>';
+    }
   }
 
   // Hero Card 3: Multi-user scaling (when concurrency_runs present), single-user response speed (when latency recorded), or Safety-Adjusted Score & Spread
@@ -579,7 +592,7 @@ function renderExecutiveSummary(run){
     var cN4 = concRuns.find(function(c){ return c.backend_id === s.backend && c.n_users === 4; });
     var concSub = cN4 ? (' · ' + cN4.throughput_turns_per_min + ' turns/min @ N=4') : '';
 
-    return '<tr class="exec-row' + (idx === 0 ? ' is-leader is-best' : '') + '">'
+    return '<tr class="exec-row' + (idx === 0 ? ' is-leader is-best' : '') + (idx >= 6 ? ' exec-row-extra' : '') + '">'
       + '<td><div class="ov-setup-name exec-arm" title="' + htmlEsc(s.backend) + '">' + badge + '<span>' + htmlEsc(armTitle(s.backend)) + '</span></div>'
       + '<div class="ov-setup-desc">' + htmlEsc(plainArmRoleDesc(s.backend)) + '</div></td>'
       + '<td><div class="ov-score-cell exec-bar-wrap"><span class="ov-score-num exec-bscore">' + fmt10(s.benchmark_score) + '</span>'
@@ -594,13 +607,21 @@ function renderExecutiveSummary(run){
       + '</tr>';
   }).join('');
 
+  var hasExtraSetups = scored.length > 6;
+  var tableToggleHtml = hasExtraSetups
+    ? ('<div class="ov-table-toggle-wrap"><button type="button" class="btn-ghost ov-table-toggle" id="ov-table-toggle" data-collapsed="1">'
+       + 'Show all ' + scored.length + ' setups (+' + (scored.length - 6) + ' more) ▾</button></div>')
+    : '';
+
   var block2 = '<div class="ov-block ov-table-card exec-board">'
     + '<div class="ov-sec-head exec-board-h">'
-    +   '<div><h3 class="ov-sec-title">Head-to-Head Comparison (' + scored.length + ' Setups)</h3><div class="ov-sec-sub">At-a-Glance Setup Leaderboard · Higher is better on quality &amp; safety-adjusted scores (0–100 overall, 0–10 per dimension).</div></div>'
+    +   '<div><h3 class="ov-sec-title">Head-to-Head Comparison (' + (hasExtraSetups ? ('Top 6 of ' + scored.length + ' Setups') : (scored.length + ' Setups')) + ')</h3><div class="ov-sec-sub">At-a-Glance Setup Leaderboard · Higher is better on quality &amp; safety-adjusted scores (0–100 overall, 0–10 per dimension).</div></div>'
     + '</div>'
-    + '<div class="ov-comp-wrap"><table class="ov-comp-table">'
+    + '<div class="ov-comp-wrap"><table class="ov-comp-table"' + (hasExtraSetups ? ' data-collapsed="1"' : '') + '>'
     + '<thead><tr><th>Setup</th><th>Overall Score (0–100)</th><th>Safety-Adj</th><th>Fact Accuracy</th><th>Completeness</th><th>Clarity</th><th>Safety &amp; Date Checks</th><th>' + (hasAnyLatency ? 'Typical Wait Time' : 'Resolved Refs') + '</th></tr></thead>'
-    + '<tbody>' + tableRows + '</tbody></table></div></div>';
+    + '<tbody>' + tableRows + '</tbody></table></div>'
+    + tableToggleHtml
+    + '</div>';
 
   // ---- BLOCK 3: Why Did [Leading Setup] Score Higher? (Clinical Task Categories + Top 3 Differentiators) ----
   var scenMap = {}; (run.scenarios || []).forEach(function(sc){ scenMap[sc.scenario_id] = sc; });
@@ -772,6 +793,19 @@ function renderExecutiveSummary(run){
   sec.innerHTML = block1 + block2 + block3;
 
   // Wire interactive buttons inside Overview
+  var tblToggle = sec.querySelector('#ov-table-toggle');
+  if(tblToggle){
+    tblToggle.addEventListener('click', function(){
+      var compTbl = sec.querySelector('table.ov-comp-table');
+      if(!compTbl) return;
+      var isCol = compTbl.getAttribute('data-collapsed') === '1';
+      compTbl.setAttribute('data-collapsed', isCol ? '0' : '1');
+      tblToggle.setAttribute('data-collapsed', isCol ? '0' : '1');
+      tblToggle.textContent = isCol
+        ? 'Show Top 6 setups only ▴'
+        : ('Show all ' + scored.length + ' setups (+' + (scored.length - 6) + ' more) ▾');
+    });
+  }
   sec.querySelectorAll('[data-open-sid]').forEach(function(btn){
     btn.addEventListener('click', function(){ openScenarioDrawer(run, btn.getAttribute('data-open-sid')); });
   });
@@ -921,6 +955,11 @@ function openScenarioDrawer(run, sid, initialTab){
   var sc = scens[sIdx];
   var cat = classifyScenario(sc.scenario_id, sc.turns);
   var subTab = initialTab || 'answers';
+  var scoredArms = (run.judge || []).slice().filter(function(s){ return (s.n||0) > 0 && s.benchmark_score != null; })
+                     .sort(function(a,b){ return (b.benchmark_score||0) - (a.benchmark_score||0); })
+                     .map(function(s){ return s.backend; });
+  var allArms = scoredArms.length ? scoredArms : (run.backends || []);
+  var showAllDrawerArms = false;
 
   var backdrop = document.getElementById('scenario-drawer-backdrop');
   if(!backdrop){
@@ -933,12 +972,17 @@ function openScenarioDrawer(run, sid, initialTab){
 
   function renderDrawerContent(){
     var turns = sc.turns || [];
-    var arms = run.backends || [];
+    var arms = (allArms.length > 4 && !showAllDrawerArms) ? allArms.slice(0, 4) : allArms;
     var jRows = (run.judge_rows || []).filter(function(r){ return r.scenario_id === sc.scenario_id; });
     var jByArm = {}; jRows.forEach(function(r){ jByArm[r.backend_id] = r; });
 
     var prevSid = sIdx > 0 ? scens[sIdx - 1].scenario_id : null;
     var nextSid = sIdx < scens.length - 1 ? scens[sIdx + 1].scenario_id : null;
+    var armsToggleBtn = allArms.length > 4
+      ? ('<button type="button" class="btn-ghost" id="sd-arms-toggle" style="margin-left:auto">'
+         + (showAllDrawerArms ? ('Showing all ' + allArms.length + ' setups · Show Top 4 ▴') : ('Showing Top 4 setups · Show all ' + allArms.length + ' ▾'))
+         + '</button>')
+      : '';
 
     var tabPaneHtml = '';
     if(subTab === 'answers'){
@@ -1018,6 +1062,7 @@ function openScenarioDrawer(run, sid, initialTab){
       +   '<button type="button" class="sd-tab' + (subTab==='answers'?' active':'') + '" data-sd-tab="answers">1. Side-by-Side Answers (Clean View)</button>'
       +   '<button type="button" class="sd-tab' + (subTab==='judge'?' active':'') + '" data-sd-tab="judge">2. Why It Scored This Way (Judge Notes)</button>'
       +   '<button type="button" class="sd-tab' + (subTab==='evidence'?' active':'') + '" data-sd-tab="evidence">3. Chart Evidence &amp; Technical Timings</button>'
+      +   armsToggleBtn
       + '</div>'
       + '<div class="sdrawer-body">' + tabPaneHtml + '</div>'
       + '</aside>';
@@ -1025,6 +1070,8 @@ function openScenarioDrawer(run, sid, initialTab){
     backdrop.querySelector('#sd-close').addEventListener('click', closeScenarioDrawer);
     if(prevSid) backdrop.querySelector('#sd-prev').addEventListener('click', function(){ openScenarioDrawer(run, prevSid, subTab); });
     if(nextSid) backdrop.querySelector('#sd-next').addEventListener('click', function(){ openScenarioDrawer(run, nextSid, subTab); });
+    var armsTgl = backdrop.querySelector('#sd-arms-toggle');
+    if(armsTgl) armsTgl.addEventListener('click', function(){ showAllDrawerArms = !showAllDrawerArms; renderDrawerContent(); });
     backdrop.querySelectorAll('[data-sd-tab]').forEach(function(btn){
       btn.addEventListener('click', function(){
         subTab = btn.getAttribute('data-sd-tab');
@@ -1048,8 +1095,18 @@ function renderSpeedVisual(run){
   var sec = el('section', 'speed-visual');
   sec.setAttribute('aria-label', 'Speed and Multi-User Scaling Visual Summary');
 
+  var hasTiming = summaries.some(function(s){ return (s.avg_latency_ms || 0) > 0; });
+  var concRuns = (run.hardware && Array.isArray(run.hardware.concurrency_runs)) ? run.hardware.concurrency_runs : [];
+  if(!hasTiming && !concRuns.length){
+    sec.innerHTML = '<div class="ov-block">'
+      + '<div class="ov-sec-head"><div><h3 class="ov-sec-title">Response Speed &amp; Operational Metrics</h3>'
+      + '<div class="ov-sec-sub">Live streaming latency (TTFT / total wait) was not captured for this run (e.g., offline batch or pre-generated evaluation). See the operational tables below for turn counts, chart reference volume, and answer length distributions across all ' + summaries.length + ' setups.</div></div></div>'
+      + '</div>';
+    return sec;
+  }
+
   var maxLat = Math.max.apply(null, summaries.map(function(s){ return s.avg_latency_ms || 1; }).concat([1000]));
-  var stageBars = summaries.map(function(s){
+  var stageBars = summaries.map(function(s, idx){
     var totalMs = s.avg_latency_ms || 0;
     var sl = s.streaming_latency || {};
     var ttftMs = sl.avg_ttft_ms != null ? sl.avg_ttft_ms : Math.round(totalMs * 0.35);
@@ -1060,7 +1117,7 @@ function renderSpeedVisual(run){
     var wStream = Math.max(8, (streamMs / maxLat) * 100);
     var wCheck = checkMs > 30 ? Math.max(4, (checkMs / maxLat) * 100) : 0;
 
-    return '<div class="speed-stage-row">'
+    return '<div class="speed-stage-row' + (idx >= 8 ? ' speed-row-extra' : '') + '"' + (idx >= 8 ? ' data-hidden="1"' : '') + '>'
       + '<div class="speed-stage-head"><span>' + htmlEsc(armTitle(s.backend_id)) + '</span>'
       + '<span>' + (totalMs/1000).toFixed(1) + 's avg total (' + (ttftMs/1000).toFixed(1) + 's to first word' + (sl.avg_tpot_ms ? (' · ' + sl.avg_tpot_ms + ' ms/tok') : '') + ')</span></div>'
       + '<div class="speed-bar-track">'
@@ -1069,9 +1126,11 @@ function renderSpeedVisual(run){
       +   (wCheck > 0 ? ('<div class="speed-seg-check" style="width:' + wCheck.toFixed(1) + '%" title="Deterministic checks: ' + checkMs + ' ms">' + checkMs + 'ms</div>') : '')
       + '</div></div>';
   }).join('');
+  var speedToggleHtml = summaries.length > 8
+    ? ('<div class="ov-table-toggle-wrap"><button type="button" class="btn-ghost ov-table-toggle" id="speed-bars-toggle" data-collapsed="1">Show all ' + summaries.length + ' setups (+' + (summaries.length - 8) + ' more) ▾</button></div>')
+    : '';
 
   var concHtml = '';
-  var concRuns = (run.hardware && Array.isArray(run.hardware.concurrency_runs)) ? run.hardware.concurrency_runs : [];
   if(concRuns.length){
     var byN = {1: [], 4: []};
     concRuns.forEach(function(c){ if(byN[c.n_users]) byN[c.n_users].push(c); });
@@ -1105,8 +1164,21 @@ function renderSpeedVisual(run){
     + '<div class="ov-sec-head"><div><h3 class="ov-sec-title">Where Does the Wait Time Go? (Single-Turn Pipeline Breakdown)</h3>'
     + '<div class="ov-sec-sub">Blue = waiting for the first word to appear (TTFT) · Green = streaming the clinical answer text · Slate = deterministic date &amp; citation verification.</div></div></div>'
     + stageBars
+    + speedToggleHtml
     + '</div>'
     + concHtml;
+
+  var spdTgl = sec.querySelector('#speed-bars-toggle');
+  if(spdTgl){
+    spdTgl.addEventListener('click', function(){
+      var isCol = spdTgl.getAttribute('data-collapsed') === '1';
+      sec.querySelectorAll('.speed-row-extra').forEach(function(r){ r.setAttribute('data-hidden', isCol ? '0' : '1'); });
+      spdTgl.setAttribute('data-collapsed', isCol ? '0' : '1');
+      spdTgl.textContent = isCol
+        ? 'Show Top 8 setups only ▴'
+        : ('Show all ' + summaries.length + ' setups (+' + (summaries.length - 8) + ' more) ▾');
+    });
+  }
 
   return sec;
 }
@@ -1269,6 +1341,8 @@ function judgeHeatmap(run){
           if(mEl && mEl.dataset.activeTab && mEl.dataset.activeTab !== 'all' && mEl.dataset.activeTab !== 'questions'){
             switchReportTab('questions');
           }
+          var secAns=document.getElementById('sec-answers');
+          if(secAns && secAns._expandWorkspace) secAns._expandWorkspace();
           var sf=document.getElementById('scenario-filter');
           if(sf){ sf.value=''; applyScenarioFilter(); }
           var target=document.querySelector('#report .scenario[data-scenario="'+cssEsc(td.dataset.sid)+'"]');
@@ -1904,9 +1978,10 @@ let _spyScroll = null;
 function switchReportTab(tabId, filterCat){
   const main = document.getElementById('report');
   if(!main) return;
-  if(tabId === 'questions' || tabId === 'all'){
+  if(tabId === 'all'){
     const secAns = document.getElementById('sec-answers');
-    if(secAns && secAns._ensureRendered) secAns._ensureRendered();
+    if(secAns && secAns._expandWorkspace) secAns._expandWorkspace();
+    else if(secAns && secAns._ensureRendered) secAns._ensureRendered();
   }
   main.dataset.activeTab = tabId;
   document.querySelectorAll('#toc .rtab').forEach(btn => {
@@ -2191,7 +2266,9 @@ function renderRun(runId){
   const scenIntro = el('p', 'intro');
   scenIntro.textContent = 'The actual answers, one column per setup, lined up question-by-question so you can read and copy them side by side. Each tile shows compact read-only verification pills at the bottom; click expand or ⛶ to inspect full evidence and claim tables, or use the filter bar below.';
   scenSec.appendChild(scenIntro);
-  scenSec.appendChild(buildAnswersFilters(run));
+  const filtersBar = buildAnswersFilters(run);
+  scenSec.appendChild(filtersBar);
+  const bandsWrap = el('div', 'scenario-bands-wrap');
   let _scenariosRendered = false;
   function renderScenarioBands(){
     if (_scenariosRendered) return;
@@ -2222,15 +2299,51 @@ function renderRun(runId){
         band.appendChild(wrap);
         sec.appendChild(band);
       });
-      scenSec.appendChild(sec);
+      bandsWrap.appendChild(sec);
     });
     applyFilters();
   }
-  const ansWrapped = wrapSection(scenSec, 'sec-answers', 'Answers', 'Per-scenario answers');
-  ansWrapped._ensureRendered = renderScenarioBands;
-  if (defaultTab !== 'overview' || ((run.scenarios || []).length * (run.backends || []).length) <= 20){
+  const nScenCnt = (run.scenarios || []).length;
+  const nBackCnt = (run.backends || []).length;
+  const collapseByDefault = (defaultTab === 'overview');
+  let wsToggleBtn = null;
+  function expandTileWorkspace(){
+    renderScenarioBands();
+    bandsWrap.hidden = false;
+    if (wsToggleBtn){
+      wsToggleBtn.setAttribute('data-expanded', '1');
+      wsToggleBtn.textContent = 'Hide Full Side-by-Side Tile Grid ▴';
+    }
+  }
+  if (collapseByDefault){
+    bandsWrap.hidden = true;
+    const wsBar = el('div', 'tile-workspace-bar');
+    wsBar.innerHTML = "<span style='font-size:12.5px;color:var(--mut)'>Tip: Click any row in the <b>Browse All Clinical Questions</b> table above to open the clean Slide-Over Answer Reader, or expand the full tile grid below.</span>";
+    wsToggleBtn = el('button', 'btn-ghost ov-table-toggle');
+    wsToggleBtn.type = 'button';
+    wsToggleBtn.id = 'toggle-tile-workspace';
+    wsToggleBtn.setAttribute('data-expanded', '0');
+    wsToggleBtn.textContent = 'Show Full Side-by-Side Tile Grid (' + nScenCnt + ' scenarios × ' + nBackCnt + ' setups) ▾';
+    wsToggleBtn.addEventListener('click', () => {
+      if (bandsWrap.hidden){
+        expandTileWorkspace();
+      } else {
+        bandsWrap.hidden = true;
+        wsToggleBtn.setAttribute('data-expanded', '0');
+        wsToggleBtn.textContent = 'Show Full Side-by-Side Tile Grid (' + nScenCnt + ' scenarios × ' + nBackCnt + ' setups) ▾';
+      }
+    });
+    wsBar.appendChild(wsToggleBtn);
+    scenSec.appendChild(wsBar);
+    filtersBar.addEventListener('change', expandTileWorkspace);
+    filtersBar.addEventListener('input', expandTileWorkspace);
+  } else {
     renderScenarioBands();
   }
+  scenSec.appendChild(bandsWrap);
+  const ansWrapped = wrapSection(scenSec, 'sec-answers', 'Answers', 'Per-scenario answers');
+  ansWrapped._ensureRendered = renderScenarioBands;
+  ansWrapped._expandWorkspace = expandTileWorkspace;
   ansWrapped.dataset.tabGroup = 'questions';
   main.appendChild(ansWrapped);
 
