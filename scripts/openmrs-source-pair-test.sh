@@ -32,13 +32,13 @@ verify_pinned_source "${ROOT}/targets/chartsearchai-esm" "ChartSearchAI ESM" "ta
 echo "==> installing the pinned Querystore source"
 (
   cd "${ROOT}/targets/querystore"
-  "${MVN_BIN}" -q -B clean install
+  "${MVN_BIN}" -q -B -DskipTests clean install
 )
 
-echo "==> building the pinned ChartSearchAI source against that Querystore artifact"
+echo "==> building the pinned ChartSearchAI source (main + test-compile + package) against that Querystore artifact"
 (
   cd "${ROOT}/targets/chartsearchai"
-  "${MVN_BIN}" -q -B clean package
+  "${MVN_BIN}" -q -B -DskipTests clean test-compile package
 )
 
 echo "OpenMRS source-pair build passed."
