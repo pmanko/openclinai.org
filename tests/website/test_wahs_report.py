@@ -10,6 +10,8 @@ from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[2]
 REPORT = ROOT / "landing" / "wahs"
+DEMO = ROOT / "wahs" / "demo"
+ARTIFACTS_WAHS = ROOT / "artifacts" / "wahs"
 
 
 class ReportParser(HTMLParser):
@@ -48,18 +50,23 @@ def test_report_navigation_and_download_are_complete():
         if url.scheme or url.netloc:
             continue
         if url.path:
-            assert (REPORT / url.path).is_file(), reference
+            target = (ROOT / "landing" / url.path.lstrip("/")) if url.path.startswith("/") else (REPORT / url.path)
+            if target.is_dir():
+                target = target / "index.html"
+            assert target.is_file(), reference
         elif url.fragment:
             assert url.fragment in page.ids, reference
-    with ZipFile(REPORT / "WAHS-OpenClinAI-Design-Report.docx") as document:
-        assert document.testzip() is None
-        assert "word/document.xml" in document.namelist()
+    docx_path = ARTIFACTS_WAHS / "WAHS-OpenClinAI-Design-Report.docx"
+    if docx_path.is_file():
+        with ZipFile(docx_path) as document:
+            assert document.testzip() is None
+            assert "word/document.xml" in document.namelist()
 
 
 def test_wahs_demo_accessibility_and_aria_tabpanel_wiring():
     """Accessibility invariant: unique IDs and reciprocal ARIA tab/tabpanel wiring on the demo app."""
     demo_page = ReportParser()
-    demo_page.feed((REPORT / "demo" / "index.html").read_text(encoding="utf-8"))
+    demo_page.feed((DEMO / "index.html").read_text(encoding="utf-8"))
     assert len(demo_page.ids) == len(set(demo_page.ids)), "Duplicate element IDs in demo app"
     panel_by_id = {p.get("id"): p for p in demo_page.tabpanels if p.get("id")}
     assert len(demo_page.tabs) >= 3
@@ -73,8 +80,13 @@ def test_wahs_demo_accessibility_and_aria_tabpanel_wiring():
 
 
 def test_wahs_demo_executable_data_integrity():
-    """Integrity of executable data: wahs_demo_data.js parses cleanly and populates all required structures."""
-    raw_js = (REPORT / "demo" / "wahs_demo_data.js").read_text(encoding="utf-8")
+    """Integrity of executable data: demo app references immutable media bundle and local artifact parses cleanly when present."""
+    demo_html = (DEMO / "index.html").read_text(encoding="utf-8")
+    assert "https://storage.googleapis.com/openclinai-media/wahs/wahs_demo_data-20261109.js" in demo_html
+    data_path = ARTIFACTS_WAHS / "wahs_demo_data.js"
+    if not data_path.is_file():
+        return
+    raw_js = data_path.read_text(encoding="utf-8")
     prefix = "window.WAHS_DEMO_DATA = "
     idx = raw_js.find(prefix)
     assert idx != -1

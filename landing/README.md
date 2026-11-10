@@ -3,26 +3,29 @@
 `landing/` contains the static website configured for publication at <https://openclinai.org/>. Caddy serves
 these files directly; there is no application runtime or frontend build step.
 The umbrella owns these pages, assets, hosting configuration and publication.
-The searchable documentation/status application lives in `site/`.
+Published evaluation reports live in `reports/` (<https://reports.openclinai.org/>), and the interactive WA Health Summary Patient Chart Explorer demo lives in `wahs/demo/` (<https://wahs-demo.openclinai.org/>).
 
 ## Content and navigation
 
-The homepage introduces ChartSearchAI, Catalyst, Med Agent Hub and the Validation
-Harness. Keep application entry points balanced and the shared components visible.
+The homepage introduces the four core platform areas (**01 · Client Applications**, **02 · Clinical AI Engine (`Med Agent Hub`)**, **03 · Evaluation Approaches (`Validation Harness`)**, and **04 · Post-Training & Decision-Layer Lab**) and links out to `/projects/` for applied clinical & public-health initiatives. Keep application entry points balanced and the shared components visible.
 Use project pages for demonstrations, transcripts, processing explanations and
 contribution resources rather than expanding the homepage.
 
 | Destination | Purpose |
 | --- | --- |
-| `/` | Initiative, projects, evidence and contribution links |
+| `/` | Four-pillar platform overview, architecture strip, evidence and contribution links |
 | `/chartsearchai/` | Patient-chart questions, OpenMRS recordings and integration resources |
+| `/chartsearchai/comparing-answer-paths/` | Comparing ChartSearchAI's built-in provider with Med Agent Hub |
 | `/catalyst/` | Query/import-to-dashboard workflows, human review and demonstrations |
-| `/med-agent-hub/` | Shared model profiles and application integration |
-| `/validation-harness/` | Configured experiments, captured evidence and evaluation reports |
 | `/catalyst/reporting-pathways/` | Four complementary OpenELIS reporting routes and their limits |
 | `/catalyst/questions/`, `/catalyst/hiv-gallery/` | Recorded questions and screenshot walkthroughs |
-| `/docs/openmrs-upstream/` | Dated contribution-review evidence |
-| `/wahs/` | Shareable WAHS design report, also served on its optional subdomain |
+| `/med-agent-hub/` | 4-layer clinical AI engine architecture, model profile namespaces, and integration |
+| `/med-agent-hub/wahs-architecture/` | WAHS+ clinical entity graph, progressive condensation, and Tier-0 overflow recovery |
+| `/validation-harness/` | 4-Layer Clinical Verification Stack, streaming telemetry, and evaluation methodology |
+| `/experiments/` | Post-Training & Decision-Layer Lab: Track A (`Laya` ~0.4B System-1 gate) and Track B (5-Rung Post-Training Ladder) |
+| `/projects/` | Applied Projects & Clinical Collaborations catalog (WA Health Summary, WHO SMART Guidelines L2→L3) |
+| `/wahs/`, `/wahs/llm-strategy/`, `/wahs/walkthrough/`, `/wahs/design-report/` | WA Health Summary project overview, AI architecture synthesis, walkthrough, and design report (`wahs.openclinai.org` redirects 308 to `/wahs/*`) |
+| `/docs/openmrs-upstream/` | Dated OpenMRS upstream pull-request stacks and review evidence |
 
 Product-native documentation owns application contracts. The native OpenELIS
 CSV-to-Superset route does not require Catalyst or Hub. ChartSearchAI retains a
@@ -51,14 +54,12 @@ and usable narrow-screen layouts.
 From the umbrella root:
 
 ```sh
-python3 scripts/build-landing-sitemap.py
-python3 -m pytest -q tests/website
-python3 scripts/check-website-links.py
+uv run python scripts/build-landing-sitemap.py
+uv run pytest -q tests/website
+uv run python scripts/check-website-links.py
 ```
 
-The link checker also expects built documentation in `site/dist/`; see the
-[website operator guide](../site/README.md) for build and static publication.
-Tests cover local links/fragments, assets, media markup and isolated publication
+Tests cover local links/fragments, assets, media markup, size caps (`<= 400 KiB` across `landing/`), and isolated publication
 control flow. Inspect actual playback, desktop/phone rendering, keyboard tasks
 and text zoom separately; static checks are not browser or deployed acceptance.
 

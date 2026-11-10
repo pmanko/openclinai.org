@@ -1135,6 +1135,29 @@ def reshell_all(reports_dir: Path, *, target_slug: str | None = None) -> None:
         bytes_before += old_sz
         bytes_after += new_sz
         idx_path.write_text(new_html, encoding="utf-8")
+
+        # Freeze cells/patients/date in meta.json and prune raw harness scratch files
+        meta_path = report_dir / "meta.json"
+        meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.is_file() else {}
+        if meta.get("cells") is None and cells:
+            meta["cells"] = cells
+        meta_path.write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
+
+        allowlist = {
+            "index.html",
+            "report-data.json",
+            "meta.json",
+            "dashboard.html",
+            "comparison.html",
+            "summary.json",
+            "run-config.json",
+        }
+        for item in list(report_dir.iterdir()):
+            if item.is_dir():
+                shutil.rmtree(item)
+            elif item.is_file() and item.name not in allowlist:
+                item.unlink()
+
         updated += 1
         print(
             f"OK   {slug:62s} | cells={cells:4d} | pool={pool_cnt:4d} | "

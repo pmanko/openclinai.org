@@ -96,10 +96,15 @@ def check(root: Path, base: str = "/") -> list[str]:
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--landing", type=Path, default=ROOT / "landing")
-    parser.add_argument("--docs", type=Path, default=ROOT / "site/dist")
+    parser.add_argument("--docs", type=Path, default=None)
     args = parser.parse_args(argv)
     errors = []
-    for root, base in ((args.landing, "/"), (args.docs, DOCS_BASE)):
+    targets = [(args.landing, "/")]
+    if args.docs is not None:
+        targets.append((args.docs, DOCS_BASE))
+    elif (ROOT / "site/dist/index.html").is_file():
+        targets.append((ROOT / "site/dist", DOCS_BASE))
+    for root, base in targets:
         if not (root / "index.html").is_file():
             errors.append(f"missing built entry: {root / 'index.html'}")
         else:
@@ -108,7 +113,7 @@ def main(argv=None):
         print(error, file=sys.stderr)
     if errors:
         return 1
-    print("Website navigation, fragments and local assets resolve (landing and rendered documentation).")
+    print("Website navigation, fragments and local assets resolve.")
     return 0
 
 

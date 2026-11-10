@@ -21,21 +21,16 @@ def test_publication_does_not_import_or_install_the_harness():
             text = script.read_text()
             for coupling in ('from harness', 'import harness', 'harness-cli', 'uv run'):
                 assert coupling not in text, (script.name, coupling)
-    selected = (ROOT / 'site/published-content.ts').read_text()
-    assert 'targets/validation-harness/harness' not in selected
 
 
 def test_relocated_media_is_checked_before_it_is_staged_in_git():
-    """Invariant: no video and no binary over 400 KiB is committed to website sources."""
+    """Invariant: no video and no file over 400 KiB is committed to landing website sources."""
     video = {'.mp4', '.mov', '.webm', '.m4v', '.avi', '.mkv'}
-    binary = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.pdf'}
-    for directory in (ROOT / 'landing', ROOT / 'site/public'):
-        for path in directory.rglob('*'):
-            if not path.is_file():
-                continue
-            assert path.suffix.lower() not in video, path
-            if path.suffix.lower() in binary:
-                assert path.stat().st_size <= 400 * 1024, path
+    for path in (ROOT / 'landing').rglob('*'):
+        if not path.is_file():
+            continue
+        assert path.suffix.lower() not in video, path
+        assert path.stat().st_size <= 400 * 1024, (path, path.stat().st_size)
 
 
 def test_published_reports_separate_data_from_display_shell():

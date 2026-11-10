@@ -18,9 +18,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: site
     steps:
       - uses: actions/checkout@v4
 
@@ -28,25 +25,50 @@ jobs:
         with:
           python-version: '3.13'
       - name: Test static website and publication
-        working-directory: .
         run: |
           python -m pip install pytest PyYAML
           python -m pytest -q tests/website
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: site/package-lock.json
-      - run: npm ci
-      - run: npm test
-      - run: npm run build:pages
-      - name: Check rendered links and assets
-        working-directory: .
-        run: python3 scripts/check-website-links.py
+          python3 scripts/build-landing-sitemap.py --check
+          python3 scripts/build-reports-index.py --check-archive
+          python3 scripts/check-website-links.py
+      - name: Build GitHub Pages canonical redirect bundle
+        run: |
+          mkdir -p _pages_redirect/status
+          cat > _pages_redirect/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <title>Redirecting to OpenClinAI</title>
+            <link rel="canonical" href="https://openclinai.org/">
+            <meta http-equiv="refresh" content="0; url=https://openclinai.org/">
+            <script>window.location.replace("https://openclinai.org/");</script>
+          </head>
+          <body>
+            <p>Redirecting to <a href="https://openclinai.org/">https://openclinai.org/</a>...</p>
+          </body>
+          </html>
+          EOF
+          cp _pages_redirect/index.html _pages_redirect/404.html
+          cat > _pages_redirect/status/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <title>Redirecting to OpenClinAI Evaluation Reports</title>
+            <link rel="canonical" href="https://reports.openclinai.org/">
+            <meta http-equiv="refresh" content="0; url=https://reports.openclinai.org/">
+            <script>window.location.replace("https://reports.openclinai.org/");</script>
+          </head>
+          <body>
+            <p>Redirecting to <a href="https://reports.openclinai.org/">https://reports.openclinai.org/</a>...</p>
+          </body>
+          </html>
+          EOF
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site/dist
+          path: _pages_redirect
 
   deploy:
     needs: build

@@ -19,19 +19,18 @@
 # Optional publication hosts use unpublished local ports by default.
 {$CADDY_SITE_REPORTS::8091} {
     root * /srv/reports
-    file_server browse
-}
-
-{$CADDY_SITE_WAHS::8092} {
-    root * /srv/landing/wahs
-    redir /demo https://wahs-demo.openclinai.org/ 302
-    redir /demo/ https://wahs-demo.openclinai.org/ 302
-    redir /wahs/* https://openclinai.org{uri} 302
     file_server
 }
 
+{$CADDY_SITE_WAHS::8092} {
+    redir /demo https://wahs-demo.openclinai.org/ 302
+    redir /demo/ https://wahs-demo.openclinai.org/ 302
+    redir /wahs/* https://openclinai.org{uri} 308
+    redir * https://openclinai.org/wahs{uri} 308
+}
+
 {$CADDY_SITE_WAHS_DEMO::8093} {
-    root * /srv/landing/wahs/demo
+    root * /srv/wahs-demo
     redir /wahs/* https://openclinai.org{uri} 302
     file_server
 }
