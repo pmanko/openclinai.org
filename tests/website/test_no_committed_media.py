@@ -2,9 +2,8 @@
 
 A recording re-cut after every UI change is a new blob, and git keeps every
 one of them forever: the repository was carrying ~11 MB of MP4 in a 40 MB pack
-before these moved to the demo host, with more queued in an open PR. The pages
-link to https://catalyst.openelis-global.org/media/<name> instead, which the
-deploy writes and Caddy serves.
+before these moved out of the repository. The pages link to
+https://storage.googleapis.com/openclinai-media/<project>/<name> instead.
 
 This guard exists because the previous arrangement was also deliberate, and it
 still drifted -- landing/media held symlinks specifically "to avoid committing
@@ -79,9 +78,10 @@ def test_no_video_files_are_tracked():
         if Path(path).suffix.lower() in VIDEO_SUFFIXES
     ]
     assert videos == [], (
-        "Video belongs on the demo host, not in git — upload it to "
-        "targets/catalyst/runtime/media/ and link to "
-        "https://catalyst.openelis-global.org/media/<name>. Offending files: "
+        "Video belongs in the openclinai-media bucket, not in git; upload it "
+        "as described in landing/README.md and link to "
+        "https://storage.googleapis.com/openclinai-media/<project>/<name>. "
+        "Offending files: "
         f"{videos}"
     )
 

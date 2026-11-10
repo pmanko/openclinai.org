@@ -52,7 +52,8 @@ def local_asset(path: str) -> Path:
     return LANDING / path.removeprefix("/")
 
 
-MEDIA_HOST = "https://catalyst.openelis-global.org/media/"
+MEDIA_HOST = "https://storage.googleapis.com/openclinai-media/"
+DEMO_HOSTS = ("catalyst.openelis-global.org",)
 
 
 def parsed_page(relative_path):
@@ -115,6 +116,15 @@ def test_every_video_is_accessible_and_streamed_from_the_media_host():
             assert poster.startswith(MEDIA_HOST) or local_asset(poster).is_file(), (path, poster)
         for source in page.sources:
             assert source.startswith(MEDIA_HOST), (path, source)
+
+
+def test_pages_never_link_to_a_demo_host():
+    """Forbidden coupling: public pages never depend on a demo server, which is stopped and redeployed."""
+    for path, page in pages():
+        urls = page.links + page.sources + page.assets
+        urls += [str(media.get(key) or "") for media in page.images + page.videos for key in ("src", "poster")]
+        for url in urls:
+            assert urlparse(url).hostname not in DEMO_HOSTS, (path, url)
 
 
 def test_legacy_homepage_fragments_retain_onward_links():

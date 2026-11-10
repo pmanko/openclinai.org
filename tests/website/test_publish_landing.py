@@ -17,7 +17,7 @@ import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
-MEDIA = 'https://catalyst.openelis-global.org/media/'
+MEDIA = 'https://storage.googleapis.com/openclinai-media/catalyst/'
 FULL_SITE = 'full.example.invalid'
 LANDING_ONLY_SITE = 'landing.example.invalid'
 
@@ -45,8 +45,8 @@ if '--itemize-changes' in sys.argv and os.environ.get('CONFIG_CHANGED') == '1': 
 from pathlib import Path
 log(['curl', *sys.argv[1:]])
 url = next(arg for arg in sys.argv if arg.startswith('https://'))
-if url.startswith('https://catalyst.openelis-global.org/'):
-    raise SystemExit('publication must not depend on the demo host')
+if url.startswith(('https://catalyst.openelis-global.org/', 'https://storage.googleapis.com/')):
+    raise SystemExit('publication must not depend on the demo host or the media bucket')
 if '-o' not in sys.argv:
     relative = url.split('/', 3)[3]
     body = (Path(os.environ['TEST_ROOT']) / 'landing' / relative).read_bytes()

@@ -32,9 +32,19 @@ requirements, clinical safety or release acceptance.
 
 ## Assets and verification
 
-Keep small, reviewed page assets here. Recordings and large screenshots live on
-the Catalyst demo host, with explicit URLs, accessible playback controls and
-transcripts. Do not introduce video blobs or media symlinks into Git. Preserve
+Keep small, reviewed page assets here. Recordings and large screenshots live in
+the public `openclinai-media` Cloud Storage bucket (project `clinical-ai-harness`)
+and are linked as `https://storage.googleapis.com/openclinai-media/<project>/<name>`,
+with accessible playback controls and transcripts. Never link media or pages on a
+demo or product server; those are stopped and redeployed. Give each new file a
+dated or hashed name, since uploads are cached for a year, and upload it with:
+
+```sh
+gcloud storage cp --cache-control='public, max-age=31536000, immutable' \
+  FILE gs://openclinai-media/catalyst/NAME
+```
+
+Do not introduce video blobs or media symlinks into Git. Preserve
 parent navigation, descriptive headings, keyboard focus, reduced-motion styling
 and usable narrow-screen layouts.
 
