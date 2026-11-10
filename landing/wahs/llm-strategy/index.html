@@ -320,7 +320,7 @@
             </tr>
             <tr>
               <td><strong>3. Smaller models don’t know LOINC codes or subtle drug interactions — how much does injecting a clinical knowledge base help?</strong></td>
-              <td><strong>Injecting clinical rules helps every model ≥ 4B, and pairing rules with a patient relationship graph helps even more.</strong> Across 972 runs on 36 clinical accuracy &amp; privacy scenarios, adding static clinical rules (<em>Direct + KB</em>) improved accuracy and reduced unsafe answers across all three model families. Routing through the full <em>Med Agent Hub</em> (which links each patient’s problems, medications, lab trends, and conflicting clinic notes into a compact graph before generation) delivered an even larger jump — cutting unsafe answers by <strong>43% to 71%</strong>.</td>
+              <td><strong>Injecting clinical rules helps every model ≥ 4B, and pairing rules with a patient relationship graph helps even more.</strong> Across 972 runs on 36 clinical accuracy &amp; abstention scenarios, adding static clinical rules (<em>Direct + KB</em>) improved accuracy and reduced unsafe answers across all three model families. Routing through the full <em>Med Agent Hub</em> (which links each patient’s problems, medications, lab trends, and conflicting clinic notes into a compact graph before generation) delivered an even larger jump — cutting unsafe answers by <strong>43% to 71%</strong>.</td>
               <td>
                 <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">9-Model × 3-Pathway Report →</a><br />
                 <a href="https://github.com/pmanko/med-agent-hub/blob/main/server/fhir/clinical_graph.py"><code>clinical_graph.py</code> on GitHub →</a>
@@ -335,8 +335,8 @@
               </td>
             </tr>
             <tr>
-              <td><strong>5. How do we prevent the AI from leaking sensitive records or guessing when asked about facts not in the chart?</strong></td>
-              <td><strong>Pre-call privacy filtering + strict abstention rules.</strong> Tested across 16 conversational privacy, caregiver-boundary, and coercion stress tests (e.g., a family member looking over the patient’s shoulder, or prompts pressuring the AI to invent a missing colonoscopy or allergy), Med Agent Hub enforces screen-privacy filtering and grounded abstention — holding Gemma 4 12B to just <strong>2/36 unsafe answers</strong> and <strong>0 fabricated citations</strong> across the entire suite.</td>
+              <td><strong>5. How do we prevent the AI from guessing when asked about facts not in the chart?</strong></td>
+              <td><strong>Grounded abstention and prompt-coercion guardrails.</strong> Across benchmark stress tests that ask about undocumented procedures or allergies (or pressure the model to guess), Med Agent Hub requires every claim to cite a source record and explicitly abstain when information is absent — holding Gemma 4 12B to <strong>2/36 unsafe answers</strong> and <strong>0 fabricated citations</strong> across the suite.</td>
               <td>
                 <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">Suite A + Suite B Report →</a>
               </td>
@@ -349,7 +349,7 @@
     <section class="strategy-section page-width" id="model-selection" aria-labelledby="model-title">
       <p class="section-kicker">Section 3 · Model &amp; Pathway Selection (972 Live Runs)</p>
       <h2 id="model-title">Why Google Gemma 4 + Med Agent Hub is the clear choice for a single-model pilot</h2>
-      <p>To choose the best open-weight model for our single-call streaming pilot, we tested <strong>nine models across three families</strong> — Google Gemma 4 (E4B, 12B, 26B), Alibaba Qwen 3 (4B, 9B, 14B), and Meta Llama 3.x / Hermes 3 (3.2B, 8B, Hermes 3 8B) — across <strong>three pathways</strong> at an 8k chart budget across 36 clinical accuracy and conversational privacy scenarios (972 total answers, graded in a blinded review by Claude Opus 4.6 and GPT-5.4).</p>
+      <p>To choose the best open-weight model for our single-call streaming pilot, we tested <strong>nine models across three families</strong> — Google Gemma 4 (E4B, 12B, 26B), Alibaba Qwen 3 (4B, 9B, 14B), and Meta Llama 3.x / Hermes 3 (3.2B, 8B, Hermes 3 8B) — across <strong>three pathways</strong> at an 8k chart budget across 36 clinical accuracy and abstention scenarios (972 total answers, graded in a blinded review by Claude Opus 4.6 and GPT-5.4).</p>
 
       <div class="strategy-table-wrap">
         <table class="strategy-table">
@@ -456,7 +456,7 @@
    • Reads the patient's current records from the WAHS HAPI FHIR server and condenses them by 90%–99% (condenser.py)
    • Runs deterministic 4-Layer Clinical KB + Patient Relationship Graph (clinical_graph.py)
    • Pulls omitted clinical notes / labs matching the user's question (wahs_tools.py)
-   • Keeps [System Prompt + 8k Condensed Chart] as a fixed prefix for GPU session caching
+   • Keeps [System Prompt + 8k Condensed Chart] as a fixed prefix across follow-up turns (rebuilt when HAPI records change)
           │
           ▼  (OpenAI REST /v1/chat/completions + KV prefix cache reuse)
 [3. UW CIRG GPU Server (Gemma 4 12B / 26B / E4B)]
