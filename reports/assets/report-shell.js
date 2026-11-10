@@ -75,6 +75,7 @@ function renderRunMeta(run){
 // THIS run actually was. Counts are derived from the blob; missing pieces are skipped.
 function buildTitle(run){
   const m = run.meta || {};
+  const cm = run.catalog_meta || {};
   const nArms = (run.backends || []).length;
   let nQ = 0;
   (run.scenarios || []).forEach(s => { nQ += (s.turns || []).length; });
@@ -83,9 +84,13 @@ function buildTitle(run){
   if (nArms) parts.push(nArms + ' setup' + (nArms === 1 ? '' : 's'));
   if (nQ) parts.push(nQ + ' question' + (nQ === 1 ? '' : 's'));
   if (nP) parts.push(nP + ' patient' + (nP === 1 ? '' : 's'));
-  // "11 setups · 32 questions · 3 patients" — the comparison shape, compactly.
-  let title = parts.length ? parts.join(' · ') : 'Validation report';
-  return { title: title, dataset: m.dataset_id || '', date: (m.generated_at || '').slice(0, 10) };
+  // "2 setups · 35 questions · 3 patients" — the comparison shape, compactly.
+  const shape = parts.length ? parts.join(' · ') : 'Validation report';
+  const date = cm.date || (m.generated_at || '').slice(0, 10);
+  if (cm.title) {
+    return { title: cm.title, shape: shape, dataset: '', date: date, hasCatalogTitle: true };
+  }
+  return { title: shape, shape: shape, dataset: m.dataset_id || '', date: date, hasCatalogTitle: false };
 }
 
 // Three-layer verification status banner directly below the patient banner:
@@ -283,10 +288,28 @@ function renderStageTimings(rows){
 // (the model_registry resolver), never the raw dashed backend id. `armTitle` = full title
 // ("Liquid coord · Qwen writer · validated"); `armShort` = the tight grid/SVG variant
 // (drops " · validated"/" · single"). Fall back to the raw id only if a card is missing.
+function compactArmLabel(raw, maxLen){
+  var s = String(raw || '').trim();
+  if (!s) return s;
+  if (/parity tap/i.test(s)) {
+    s = s.replace(/\s*\([^)]*parity tap[^)]*\)/gi, '').trim();
+  }
+  if (s.length > maxLen) {
+    var pIdx = s.indexOf(' (');
+    if (pIdx >= 6 && (s.length - pIdx) > 22) {
+      s = s.slice(0, pIdx).trim();
+    }
+  }
+  if (s.length > maxLen) {
+    var cut = s.lastIndexOf(' ', maxLen - 1);
+    s = (cut >= 12 ? s.slice(0, cut) : s.slice(0, maxLen - 1)).trim() + '…';
+  }
+  return s;
+}
 function armCardFor(b){ const r = runById(activeRunId); return (r && r.arm_cards && r.arm_cards[b]) || null; }
-function armTitle(b){ const c = armCardFor(b); return (c && c.title) || b; }
-function armShort(b){ const c = armCardFor(b); return (c && (c.short_title || c.title)) || b; }
-function bpShort(b){ return armShort(b); }
+function armTitle(b){ const c = armCardFor(b); return compactArmLabel((c && c.title) || b, 64); }
+function armShort(b){ const c = armCardFor(b); return compactArmLabel((c && (c.short_title || c.title)) || b, 42); }
+function bpShort(b){ return compactArmLabel(armShort(b), 28); }
 function resolveCellSourcesHtml(run, cell){
   if(!cell) return '';
   if(cell.sources_html) return cell.sources_html;
@@ -498,25 +521,44 @@ function renderExecutiveSummary(run){
     leadNarrative += '<b>' + htmlEsc(armShort(top.backend)) + '</b> leads by <b>+' + fmt10(leadDelta) + ' points</b> over <b>' + htmlEsc(armShort(second.backend)) + '</b> (and <b>+' + fmt10((top.benchmark_score||0) - (lowest.benchmark_score||0)) + ' points</b> across all ' + scored.length + ' setups), with accuracy <b>'
       + fmt10(top.accuracy_mean) + '/10</b>, completeness <b>' + fmt10(top.completeness_mean) + '/10</b>, and relevance <b>' + fmt10(top.relevance_mean) + '/10</b>.';
   }
+  var cm = run.catalog_meta || {};
+  var ctxObj = run.context || cm.context || null;
+  var guideObj = cm.guide || null;
   var ctxBoxHtml = '';
-  if(run.context && (run.context.text || run.context.url)){
-    var cTxt = String(run.context.text || '');
-    var cLink = run.context.url ? (' <a href="' + htmlEsc(run.context.url) + '" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700;text-decoration:none">' + htmlEsc(run.context.label || 'Learn more →') + '</a>') : '';
-    if(cTxt.length > 260){
-      var mSent = cTxt.slice(140, 340).match(/([a-z0-9\)\]])\.\s+/i);
-      var cutIdx = mSent ? (140 + mSent.index + 2) : cTxt.lastIndexOf(' ', 250);
-      if(cutIdx <= 80) cutIdx = 240;
-      var cShort = cTxt.slice(0, cutIdx).trim();
-      var cRest = cTxt.slice(cutIdx).trim();
-      ctxBoxHtml = '<div style="margin:0 0 14px;padding:10px 14px;background:var(--surface2);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;font-size:13px;line-height:1.5;color:var(--fg)">'
-        + htmlEsc(cShort)
-        + '<details style="margin-top:4px"><summary style="cursor:pointer;color:var(--accent);font-weight:700;font-size:12px">Read full study context ▾</summary><div style="margin-top:6px;color:var(--mut)">' + htmlEsc(cRest) + cLink + '</div></details>'
-        + '</div>';
-    } else {
-      ctxBoxHtml = '<div style="margin:0 0 14px;padding:11px 14px;background:var(--surface2);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;font-size:13px;line-height:1.55;color:var(--fg)">'
-        + (cTxt ? htmlEsc(cTxt) + ' ' : '') + cLink
-        + '</div>';
+  var whatTestedTxt = String(cm.summary || (ctxObj && ctxObj.text) || '').trim();
+  var extraCtxTxt = (cm.summary && ctxObj && ctxObj.text && String(ctxObj.text).trim() !== String(cm.summary).trim())
+    ? String(ctxObj.text).trim() : '';
+  var takeawayTxt = String(cm.takeaway || '').trim();
+  var guideLinkHtml = '';
+  if (guideObj && guideObj.url) {
+    guideLinkHtml = ' <a href="' + htmlEsc(guideObj.url) + '" target="_blank" rel="noopener">' + htmlEsc(guideObj.label || 'Read study guide →') + '</a>';
+  } else if (ctxObj && ctxObj.url) {
+    guideLinkHtml = ' <a href="' + htmlEsc(ctxObj.url) + '" target="_blank" rel="noopener">' + htmlEsc(ctxObj.label || 'Learn more →') + '</a>';
+  }
+  if (whatTestedTxt || takeawayTxt || guideLinkHtml) {
+    var boxes = [];
+    if (whatTestedTxt || guideLinkHtml) {
+      var body1 = '';
+      if (!cm.summary && whatTestedTxt.length > 280) {
+        var mSent = whatTestedTxt.slice(140, 340).match(/([a-z0-9\)\]])\.\s+/i);
+        var cutIdx = mSent ? (140 + mSent.index + 2) : whatTestedTxt.lastIndexOf(' ', 250);
+        if (cutIdx <= 80) cutIdx = 240;
+        var cShort = whatTestedTxt.slice(0, cutIdx).trim();
+        var cRest = whatTestedTxt.slice(cutIdx).trim();
+        body1 = htmlEsc(cShort)
+          + '<details style="margin-top:5px"><summary style="cursor:pointer;color:var(--accent);font-weight:700;font-size:12px">Read full study context ▾</summary><div style="margin-top:6px;color:var(--mut)">' + htmlEsc(cRest) + guideLinkHtml + '</div></details>';
+      } else {
+        body1 = (whatTestedTxt ? htmlEsc(whatTestedTxt) : '') + guideLinkHtml;
+        if (extraCtxTxt) {
+          body1 += '<details style="margin-top:6px"><summary style="cursor:pointer;color:var(--accent);font-weight:700;font-size:12px">Additional study notes ▾</summary><div style="margin-top:5px;color:var(--mut);font-size:12.5px">' + htmlEsc(extraCtxTxt) + '</div></details>';
+        }
+      }
+      boxes.push('<div class="ov-study-box"><div class="ov-study-kicker">What We Tested</div><div class="ov-study-body">' + body1 + '</div></div>');
     }
+    if (takeawayTxt) {
+      boxes.push('<div class="ov-study-box takeaway"><div class="ov-study-kicker">Key Takeaway · What Happened &amp; Why It Matters</div><div class="ov-study-body">' + htmlEsc(takeawayTxt) + '</div></div>');
+    }
+    ctxBoxHtml = '<div class="ov-study-brief">' + boxes.join('') + '</div>';
   }
 
   // Hero Card 3: Multi-user scaling (when concurrency_runs present), single-user response speed (when latency recorded), or Safety-Adjusted Score & Spread
@@ -763,7 +805,7 @@ function renderExecutiveSummary(run){
 
     return '<div class="ov-diff-card">'
       + '<div class="ov-diff-meta">'
-      +   '<div class="ov-diff-badges"><span class="ov-cat-pill">' + htmlEsc(d.cat.short) + '</span><span class="ov-sid-muted">' + htmlEsc(d.sid) + ' (' + turns.length + ' turn' + (turns.length===1?'':'s') + ')</span></div>'
+      +   '<div class="ov-diff-badges"><span class="ov-cat-pill">' + htmlEsc(d.cat.short) + '</span><span class="ov-sid-muted" title="' + htmlEsc(d.sid) + '">' + (turns.length === 1 ? 'Single question' : (turns.length + '-turn conversation')) + '</span></div>'
       +   '<span class="ov-delta-pill">' + htmlEsc(gapLabel) + '</span>'
       + '</div>'
       + '<div class="ov-diff-q">' + htmlEsc(qPreview) + '</div>'
@@ -890,7 +932,7 @@ function renderQuestionExplorer(run){
 
     return '<tr class="qe-row" data-qe-sid="' + htmlEsc(sc.scenario_id) + '" data-qe-cat="' + htmlEsc(cat.id) + '" data-qe-delta="' + delta.toFixed(1) + '" data-qe-flag="' + (hasFlag ? '1' : '0') + '">'
       + '<td><div class="qe-q-main">“' + htmlEsc(qMain) + '”<span style="font-weight:500;color:var(--mut)">' + htmlEsc(qExtra) + '</span></div>'
-      +   '<div class="qe-q-sub"><span class="ov-cat-pill">' + htmlEsc(cat.short) + '</span><span class="ov-sid-muted">' + htmlEsc(sc.scenario_id) + '</span><span>· ' + turns.length + ' turn' + (turns.length===1?'':'s') + '</span></div></td>'
+      +   '<div class="qe-q-sub"><span class="ov-cat-pill">' + htmlEsc(cat.short) + '</span><span class="ov-sid-muted" title="' + htmlEsc(sc.scenario_id) + '">' + (turns.length === 1 ? 'Single question' : (turns.length + ' turns')) + '</span></div></td>'
       + armCells
       + '<td class="qe-delta ' + (delta >= 10 ? 'big' : '') + '">' + (scores.length >= 2 ? (Math.abs(signed) < 0.1 ? '0.0 (Tie)' : ((signed > 0 ? '+' : '') + signed.toFixed(1) + ' pts')) : '—') + '</td>'
       + '<td><div class="qe-note">'
@@ -2191,7 +2233,12 @@ function renderRun(runId){
   const t = buildTitle(run);
   const ttl = document.getElementById('report-title');
   if (ttl) ttl.textContent = t.title;
-  const sub = [t.dataset, t.date].filter(Boolean).join('  ·  ');
+  if (t.hasCatalogTitle && typeof document !== 'undefined') {
+    document.title = t.title + ' — OpenClinAI';
+  }
+  const sub = t.hasCatalogTitle
+    ? [t.shape, t.date].filter(Boolean).join('  ·  ')
+    : [t.dataset, t.date].filter(Boolean).join('  ·  ');
   const meta = document.getElementById('run-meta');
   meta.textContent = sub;
   meta.title = renderRunMeta(run);
