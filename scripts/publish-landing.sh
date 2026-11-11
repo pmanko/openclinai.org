@@ -142,7 +142,7 @@ if [ "${PUBLISH_MODE}" = "preview" ]; then
   fi
   SITE="${SITE:-${CADDY_SITE:-openclinai.org}}"
   PREVIEW_HOST="${PREVIEW_SLUG}-preview.${SITE}"
-  DEMO_PREVIEW_HOST="${PREVIEW_SLUG}-demo-preview.${SITE}"
+  DEMO_PREVIEW_HOST="${PREVIEW_SLUG}-preview-demo.${SITE}"
   REMOTE_PREVIEW_DIR="${GCP_REMOTE_REPO}/artifacts/previews/${PREVIEW_HOST}"
 
   gcp_ssh "mkdir -p ${REMOTE_PREVIEW_DIR}"

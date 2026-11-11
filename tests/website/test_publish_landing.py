@@ -333,7 +333,7 @@ def test_preview_mode_publishes_isolated_subdomain_from_feature_branch_even_when
     rsync_targets = [call[-1] for call in commands(calls, 'rsync')]
     assert rsync_targets == [
         f'test-user@192.0.2.1:openclinai.org/artifacts/previews/new-layout-preview.{FULL_SITE}/',
-        f'test-user@192.0.2.1:openclinai.org/artifacts/previews/new-layout-demo-preview.{FULL_SITE}/',
+        f'test-user@192.0.2.1:openclinai.org/artifacts/previews/new-layout-preview-demo.{FULL_SITE}/',
     ]
     assert all(':openclinai.org/landing/' not in target for target in rsync_targets)
     assert all('.landing-deploy-receipt.json' not in call[-1] for call in commands(calls, 'ssh'))
@@ -345,6 +345,21 @@ def test_preview_mode_publishes_isolated_subdomain_from_feature_branch_even_when
         if url.startswith(f'https://new-layout-preview.{FULL_SITE}/')
     }
     assert set(publisher.published) <= verified
+
+
+def test_preview_slugs_feature_and_feature_demo_use_disjoint_remote_directories(publisher):
+    demo_dir = publisher.repo / 'wahs' / 'demo'
+    demo_dir.mkdir(parents=True)
+    (demo_dir / 'index.html').write_text('<h1>Demo preview</h1>')
+
+    res_a, calls_a = publisher('--preview', 'feature')
+    res_b, calls_b = publisher('--preview', 'feature-demo')
+    assert res_a.returncode == 0 and res_b.returncode == 0
+
+    targets_a = {call[-1] for call in commands(calls_a, 'rsync')}
+    targets_b = {call[-1] for call in commands(calls_b, 'rsync')}
+    assert len(targets_a) == 2 and len(targets_b) == 2
+    assert targets_a.isdisjoint(targets_b)
 
 
 @pytest.mark.parametrize('bad_args', [

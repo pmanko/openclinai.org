@@ -15,7 +15,7 @@
 http://127.0.0.1:8099 {
 	@valid {
 		path /check-preview
-		expression {query.domain}.matches('^[a-z0-9]([a-z0-9-]{0,54}[a-z0-9])?-preview\\.[a-z0-9-]+(\\.[a-z0-9-]+)+$')
+		expression {query.domain}.matches('^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?-preview(-demo)?\\.[a-z0-9-]+(\\.[a-z0-9-]+)+$')
 	}
 	handle @valid {
 		root * /srv/previews
@@ -61,19 +61,25 @@ http://127.0.0.1:8099 {
 	file_server
 }
 
-# Isolated branch previews (<slug>-preview.<site> and <slug>-demo-preview.<site>).
+# Isolated branch previews (<slug>-preview.<site> and <slug>-preview-demo.<site>).
 https:// {
 	tls {
 		on_demand
 	}
-	@preview expression {host}.matches('^[a-z0-9]([a-z0-9-]{0,54}[a-z0-9])?-preview\\.[a-z0-9-]+(\\.[a-z0-9-]+)+$')
-	handle @preview {
+	@landing_preview expression {host}.matches('^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?-preview\\.[a-z0-9-]+(\\.[a-z0-9-]+)+$')
+	handle @landing_preview {
 		header X-Robots-Tag "noindex, nofollow"
 		root * /srv/previews/{host}
 		redir /wahs/design-report /wahs/llm-strategy/ 308
 		redir /wahs/design-report/* /wahs/llm-strategy/ 308
 		redir /med-agent-hub/wahs-architecture /wahs/llm-strategy/#engine-internals 308
 		redir /med-agent-hub/wahs-architecture/* /wahs/llm-strategy/#engine-internals 308
+		file_server
+	}
+	@demo_preview expression {host}.matches('^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?-preview-demo\\.[a-z0-9-]+(\\.[a-z0-9-]+)+$')
+	handle @demo_preview {
+		header X-Robots-Tag "noindex, nofollow"
+		root * /srv/previews/{host}
 		file_server
 	}
 	abort
