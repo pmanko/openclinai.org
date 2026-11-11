@@ -8,13 +8,13 @@
       "summary": "We tested whether tightening Med Agent Hub's date-window filters fixes a stubborn failure mode: mixing older lab or imaging orders into a strict 6-month lookback, or dropping earlier drug refills inside that same window. Both setups — OpenMRS's built-in ChartSearchAI and Med Agent Hub's single-call answer path — ran the exact same Google Gemma 4 12B model on a shared 24 GB cloud GPU across three HIV patients and 17 clinical scenarios (35 questions per setup, 70 answers total), anchored to June 20, 2026 and graded blind by two independent AI judges.",
       "takeaway": "Med Agent Hub scored 89.8/100 (9.32/10 accuracy, 9.03/10 completeness, 9.12/10 clarity) versus 75.4/100 for built-in ChartSearchAI — a +14.4-point lead with zero unsafe answers, zero wrong dates (vs. 3 on built-in), zero unnecessary refusals (vs. 4 on built-in), and 100% verified chart citations (94/94). On the 6-month orders question that motivated this test, Med Agent Hub jumped from 53.0 to 94.0/100 by capturing all eight qualifying prescriptions across both January and December visits while excluding December 14 labs and chest X-rays that fell six days outside the cutoff. Trade-off and remaining gap: Med Agent Hub averaged 17.0s per answer vs. 4.4s on built-in ChartSearchAI, and its one weak spot (53.0/100) was a 5-turn counseling follow-up about stopping an older HIV medication.",
       "family": "chartsearchai",
-      "arms": {
-        "engine-parity-hub-answer-12b": "Med Agent Hub (Gemma 4 12B, 1-call answer)",
-        "engine-parity-bundled-12b": "Built-in ChartSearchAI (Gemma 4 12B)"
-      },
       "guide": {
         "label": "How the answer paths differ",
         "url": "https://openclinai.org/chartsearchai/comparing-answer-paths/"
+      },
+      "arms": {
+        "engine-parity-hub-answer-12b": "Med Agent Hub (Gemma 4 12B, 1-call answer)",
+        "engine-parity-bundled-12b": "Built-in ChartSearchAI (Gemma 4 12B)"
       }
     },
     {
@@ -45,6 +45,10 @@
       "summary": "To separate the impact of model size, clinical rule checks, and full Med Agent Hub orchestration, we evaluated nine open-weight models across three model families — Google Gemma 4 (E4B, 12B, 26B), Alibaba Qwen 3 (4B, 9B, 14B), and Meta Llama 3.x / Hermes 3 (3.2B, 8B, Hermes 3 8B) — under three pathways at a standard 8k chart budget: (1) Direct AI on the condensed chart alone, (2) Direct AI + Stage-2 4-Layer Clinical KB alerts, and (3) the full Med Agent Hub pipeline (condensed chart + clinical conflict rules + patient entity-relationship subgraph + Tier-0 safety net recovery). Every setup was tested across 36 clinical scenarios spanning 10 complex multi-clinic and ICU patients (20 clinical accuracy & conflict reconciliation questions and 16 conversational privacy, caregiver-boundary, and coercion stress tests — 972 total answers) and graded in a blinded review by two independent AI judges (Claude Opus 4.6 and GPT-5.4) anchored to a clinician-verified ground-truth rubric.",
       "takeaway": "Google Gemma 4 is the clear winner for a single-model clinical pathway, sweeping the top 7 spots out of all 27 setups (67.2–82.1/100) ahead of the best Qwen 3 (65.4/100) and Llama 3.1 (55.3/100) setups — and across every model 4B and above in all three families, routing through Med Agent Hub monotonically raised scores and cut unsafe answers by 33%–71%. Why Gemma 4 dominates: across all 216 answers from Gemma 4 12B and 26B (all 6 setups), neither model ever produced a fabricated or unsupported [N] citation (0/216 vs. 2–3/36 per setup on Qwen 3 14B, while Llama 3.1 8B frequently dropped inline [N] citations with only 2–5/36 answers fully supported). Gemma 4 26B + Med Agent Hub led overall at 82.1/100 (8.62 accuracy, 8.39 completeness, 8.76 relevance, 3/36 unsafe vs. 72.9/100 for Direct + KB and 71.3/100 with 6/36 unsafe for Direct AI — a 50% reduction in unsafe answers). Gemma 4 12B + Med Agent Hub (80.5/100, 8.53 accuracy, 8.68 relevance) emerged as the practical single-model sweet spot: it came within 1.6 points of 26B while recording the lowest unsafe-answer rate (2/36 vs. 7/36 on Direct 12B — a 71% reduction) and lowest confabulation count (1/36) in the entire sweep, beating raw Gemma 4 26B (71.3/100) by +9.2 points. For edge or laptop deployments, compact Gemma 4 E4B (4B effective parameters) + Med Agent Hub scored 70.4/100 (8.01 accuracy, 4/36 unsafe vs. 8/36 on Direct E4B), outperforming both raw Gemma 4 12B (67.2/100) and Qwen 3 14B + Med Agent Hub (65.4/100) at roughly one-third the active parameter footprint. The same pathway gains held across non-Gemma families: Qwen 3 14B climbed from 53.4/100 (13/36 unsafe) on Direct AI to 61.8/100 (6/36 unsafe) with Direct + KB and 65.4/100 (5/36 unsafe, −62% unsafe) with Med Agent Hub; Qwen 3.5 9B climbed from 49.4 to 57.1/100; Qwen 3 4B climbed from 34.7 (12/36 unsafe) to 43.5/100 (8/36 unsafe); and Llama 3.1 8B climbed from 50.6 (14/36 unsafe) to 55.3/100 (8/36 unsafe, −43% unsafe). Only the ultra-small 3.2B tier (Llama 3.2 3B, 33.8–44.2/100) struggled to synthesize dense multi-clinic FHIR + rule context simultaneously, establishing ~4B effective parameters as the capability floor.",
       "family": "wahs",
+      "guide": {
+        "label": "How Med Agent Hub works",
+        "url": "https://openclinai.org/med-agent-hub/wahs-architecture/"
+      },
       "arms": {
         "wahs:gemma-26b@8k": "Gemma 4 26B — Med Agent Hub + clinical graph & KB (8k chart)",
         "wahs:gemma-4-12b@8k": "Gemma 4 12B — Med Agent Hub + clinical graph & KB (8k chart)",
@@ -73,10 +77,6 @@
         "wahs-direct-kb:qwen3-4b@8k": "Qwen 3 4B — Direct AI + clinical KB rules only (8k chart)",
         "direct:qwen3-4b@8k": "Qwen 3 4B — Direct AI model, no Hub (8k chart)",
         "wahs:llama-3.2-3b@8k": "Llama 3.2 3B — Med Agent Hub + clinical graph & KB (8k chart)"
-      },
-      "guide": {
-        "label": "How Med Agent Hub works",
-        "url": "https://openclinai.org/med-agent-hub/wahs-architecture/"
       }
     },
     {
@@ -107,6 +107,10 @@
       "summary": "In our earlier cloud GPU test, large patient charts failed because the shared server silently cut off anything past 16,000 tokens of memory. Here we ran the same Google Gemma 4 12B model on a 64 GB MacBook with a 96,000-token memory window — large enough to hold the entire chart at once — across two complex multi-clinic patients and six clinical questions (medication conflicts, hospital history, and knowing when to say 'not in chart'). At each chart size (compact 1k, standard 8k, and large 32k), we compared three setups — calling the AI model directly on the chart, routing through Med Agent Hub with the chart alone, and routing through Med Agent Hub with its automated clinical rule checks — and graded all 54 answers with two independent blinded AI judges (Claude Opus 4.6 and GPT-5.4).",
       "takeaway": "Giving the AI enough memory completely eliminated the 32k chart collapse, and scoping Med Agent Hub's clinical rules to the question being asked put the KB-enriched setup on top at every chart size with zero unsafe answers. At the standard 8k chart, Med Agent Hub + clinical rules led overall at 92.5/100 (9.42 accuracy, 9.33 completeness, 9.08 relevance, 0 unsafe answers), ahead of Hub chart-only (89.2/100, 0 unsafe) and calling the AI model directly (86.5/100, 1 unsafe). At the large 32k chart, Med Agent Hub + clinical rules also led at 91.3/100 (0 unsafe), ahead of Hub chart-only (89.8/100, 0 unsafe) and Direct AI (85.5/100, 1 unsafe). On the compact 1k summary — where older prescriptions and labs were squeezed out of the static chart — Med Agent Hub's clinical rules and Tier-0 overflow recovery rescued the missing safety records and scored 68.2/100 (0 unsafe), beating Hub chart-only (49.2/100, 1 unsafe) by +19.0 points and Direct AI (47.0/100, 2 unsafe) by +21.2 points.",
       "family": "wahs",
+      "guide": {
+        "label": "How Med Agent Hub works",
+        "url": "https://openclinai.org/med-agent-hub/wahs-architecture/"
+      },
       "arms": {
         "wahs-12b-kb@8k": "Med Agent Hub + clinical rules (standard 8k chart)",
         "wahs-12b-kb@32k": "Med Agent Hub + clinical rules (large 32k chart)",
@@ -117,10 +121,6 @@
         "wahs-12b-kb@1k": "Med Agent Hub + clinical rules (compact 1k summary)",
         "wahs-12b-raw@1k": "Med Agent Hub, chart only (compact 1k summary)",
         "direct-12b@1k": "Direct AI model, no Hub (compact 1k summary)"
-      },
-      "guide": {
-        "label": "How Med Agent Hub works",
-        "url": "https://openclinai.org/med-agent-hub/wahs-architecture/"
       }
     },
     {
@@ -129,6 +129,10 @@
       "summary": "How much of a patient's medical record should we feed an AI at once? We tested five chart summary sizes — from a tiny 1k-token emergency snapshot up to a massive 128k-token multi-decade history — across four patients with records from multiple hospitals and clinics (48 runs total). All models ran on a standard shared 24 GB cloud GPU with a fixed 16,000-token active memory limit, comparing answers with and without Med Agent Hub's clinical rule checks, and were graded in a blinded review by two independent AI judges (Claude Opus 4.6 and GPT-5.4).",
       "takeaway": "Feeding a bigger chart to an AI backfires if the server's active memory window is smaller than the prompt. Scores peaked at the standard 8k summary, which fit comfortably inside the server's 16k memory limit: Gemma 4 26B with clinical rules led at 88.0/100 (8.75 accuracy, 9.12 completeness, zero unsafe answers), followed by Gemma 4 12B with clinical rules (80.5/100) and chart-only (80.2/100), while Qwen 3 14B scored 67.0/100. On the tight 1k summary, Med Agent Hub's clinical rule safety net beat chart-only by +19 points (43.8 vs. 24.8/100). When we sent 32k to 128k of chart text to that same 16k server, the server silently cut off the beginning of the prompt — erasing active allergies, current medications, and recent hospital stays — so chart-only scores collapsed to 0.0–2.8/100 (with 4/4 unsafe answers). Because Med Agent Hub attaches its pre-computed clinical conflict alerts at the very end of the prompt, those alerts survived the cutoff and rescued the medication conflict portion of the answer (27.0–32.8/100), though top-of-chart allergy checks remained cut off.",
       "family": "wahs",
+      "guide": {
+        "label": "How Med Agent Hub works",
+        "url": "https://openclinai.org/med-agent-hub/wahs-architecture/"
+      },
       "arms": {
         "wahs-26b-kb@8k": "Gemma 4 26B + clinical rules (standard 8k chart)",
         "wahs-qwen3-14b-kb@8k": "Qwen 3 14B + clinical rules (standard 8k chart)",
@@ -142,10 +146,6 @@
         "wahs-12b-raw@64k": "Gemma 4 12B, chart only (64k chart — exceeds 16k server memory)",
         "wahs-12b-raw@32k": "Gemma 4 12B, chart only (32k chart — exceeds 16k server memory)",
         "wahs-12b-raw@128k": "Gemma 4 12B, chart only (128k chart — exceeds 16k server memory)"
-      },
-      "guide": {
-        "label": "How Med Agent Hub works",
-        "url": "https://openclinai.org/med-agent-hub/wahs-architecture/"
       }
     },
     {
@@ -177,15 +177,15 @@
       "summary": "When a patient sees doctors at several different clinics, their combined record often contains duplicate prescriptions under different brand names, conflicting kidney-disease stages, or outdated medications. We tested four AI setups on 32 clinical questions: a single model reading the condensed chart alone, a single model with automated clinical rules attached, a two-model writer-and-reviewer pair, and a four-agent specialist team.",
       "takeaway": "A single AI model reading the chart on its own passed only 17 of 32 questions (80.0/100) because it overlooked brand-vs-generic drug duplicates and age-specific vaccine rules. Attaching automated clinical rule alerts raised the pass rate to 24/32 (80.7/100), adding a second reviewer model reached 29/32 (83.1/100), and the four-agent specialist team passed all 32 questions (88.6/100) while writing in clearer, more patient-friendly language.",
       "family": "wahs",
+      "guide": {
+        "label": "Interactive Per-Question Dashboard",
+        "url": "https://reports.openclinai.org/2026-10-31-wahs-live-model-team-eval/dashboard.html"
+      },
       "arms": {
         "team-wahs-kb": "4-agent specialist team + clinical rules",
         "single-xcheck-labeled": "Gemma 4 12B writer + Qwen 9B reviewer",
         "single-kb-augmented": "Single Gemma 4 12B + clinical rules",
         "single-raw-condensed": "Single Gemma 4 12B, chart only"
-      },
-      "guide": {
-        "label": "Interactive Per-Question Dashboard",
-        "url": "https://reports.openclinai.org/2026-10-31-wahs-live-model-team-eval/dashboard.html"
       }
     },
     {
@@ -194,16 +194,16 @@
       "summary": "Patient health exports can span thousands of pages, far too large for an AI to read reliably all at once. We compressed charts down to four summary sizes (16k, 8k, 4k, and a tiny 2k-token wallet summary) and tested 32 questions ranging from current medications to hospital surgeries years ago. We then tested whether giving the tiny 2k summary an on-demand search tool to look up older notes could match the full 16k summary.",
       "takeaway": "A static 2k-token summary keeps 100% of current allergies, active medications, and two-year lab trends, but drops older surgical and hospital details — passing only 18 of 32 questions (70.4/100). Giving that same 2k summary an on-demand search tool to pull older notes when asked recovered every missing historical detail (32/32 passed, 88.6/100), matching the 16k summary at a fraction of the size.",
       "family": "wahs",
+      "guide": {
+        "label": "Try the WA Health Summary Demo",
+        "url": "https://wahs-demo.openclinai.org/"
+      },
       "arms": {
         "wahs-tier1-16k-static": "16k-token summary (static)",
         "wahs-tier2-8k-static": "8k-token summary (static)",
         "wahs-tier3-4k-static": "4k-token summary (static)",
         "wahs-tier4-2k-static": "2k-token compact summary (no search tool)",
         "wahs-tier4-2k-hybrid-tools": "2k-token compact summary + on-demand chart search"
-      },
-      "guide": {
-        "label": "Try the WA Health Summary Demo",
-        "url": "https://wahs-demo.openclinai.org/"
       }
     },
     {
@@ -212,14 +212,14 @@
       "summary": "Before putting an AI model in the loop, we tested our chart condenser and clinical rule engine on 32 test cases across 53 years of multi-clinic records. The test checked whether shrinking an 18 MB health export into 2k–8k token summaries preserves all active conditions and allergies, catches 15 planted cross-clinic prescription and staging conflicts, and blocks sensitive mental-health or substance-use records when sharing externally.",
       "takeaway": "The condenser and rule engine passed all 32 test cases at every summary size (8k, 4k, and 2k tokens), shrinking a 53-year chart by over 99.6% while keeping 100% of active medications and allergies, catching all 15 cross-clinic conflicts with clickable source links, and blocking 100% of sensitive records in external-share mode.",
       "family": "wahs",
+      "guide": {
+        "label": "Try the WA Health Summary Demo",
+        "url": "https://wahs-demo.openclinai.org/"
+      },
       "arms": {
         "wahs-5tier-4layer-kb-8k": "8k-token condensed chart + clinical rules",
         "wahs-5tier-4layer-kb-4k": "4k-token condensed chart + clinical rules",
         "wahs-5tier-4layer-kb-2k": "2k-token emergency summary + clinical rules"
-      },
-      "guide": {
-        "label": "Try the WA Health Summary Demo",
-        "url": "https://wahs-demo.openclinai.org/"
       }
     },
     {
@@ -264,15 +264,15 @@
       "summary": "Seventeen questions about three HIV patients, some with follow-ups (35 answers per setup), asked through three setups that all send their model calls to the same Gemma 4 12B engine: ChartSearchAI's bundled answer path on its default settings, the Hub's plain answer path, and the Hub's checked profile, which reviews each answer and labels what its checks found. One automated judge graded each question.",
       "takeaway": "On the same engine, the Hub's plain answer path scored 78.9 and bundled ChartSearchAI 59.8. The gap comes from things the bundled path does not have: it does not tell the model today's date, it has no guideline knowledge base or date checks, and its repetition penalty garbles long lists when it reads the whole chart. The checked profile (78.4) was the most complete but marked most In-Depth sections red, mostly guideline statements that cite a chart record which does not back them.",
       "family": "chartsearchai",
+      "guide": {
+        "label": "How the answer paths differ",
+        "url": "https://openclinai.org/chartsearchai/comparing-answer-paths/"
+      },
       "arms": {
         "engine-parity-bundled-12b": "Bundled ChartSearchAI",
         "engine-parity-hub-answer-12b": "Hub, answer only",
         "engine-parity-hub-answer-only-12b": "Hub, answer only",
         "hub-profile-single-12b-checked": "Hub, checked"
-      },
-      "guide": {
-        "label": "How the answer paths differ",
-        "url": "https://openclinai.org/chartsearchai/comparing-answer-paths/"
       },
       "earlier": [
         {
@@ -318,20 +318,22 @@
       "summary": "",
       "takeaway": "",
       "family": "catalyst",
-      "context": "Historical catalog entry. The linked report was unavailable when checked on 15 September 2026; no original summary was supplied.",
-      "availability": "unavailable"
+      "availability": "unavailable",
+      "context": "Historical catalog entry. The linked report was unavailable when checked on 15 September 2026; no original summary was supplied."
     },
     {
       "slug": "small-model-answer-paths-2026-07-15",
       "title": "Do automated date and citation checks improve 4B and 12B single-model answers?",
       "summary": "Twelve questions focused on timing and chart grounding, comparing three answer paths on Google's Gemma 4B and 12B models: a plain single-pass answer, an answer with deterministic date checking, and a fully checked profile with model review.",
-      "takeaway": "Automated date checking fixed the 4B model's past-appointment mistake, and the fully checked 4B profile scored highest overall while attaching verified source records. However, two strict six-month date-window questions still slipped through, showing where date filtering needed to be tightened."
+      "takeaway": "Automated date checking fixed the 4B model's past-appointment mistake, and the fully checked 4B profile scored highest overall while attaching verified source records. However, two strict six-month date-window questions still slipped through, showing where date filtering needed to be tightened.",
+      "family": "chartsearchai"
     },
     {
       "slug": "hub-profile-12b-checked-candidate-2026-07-13",
       "title": "How well does the checked 12B profile handle strict clinical date windows?",
       "summary": "Twelve date-sensitive clinical questions answered by the checked Gemma 4 12B profile. All answers passed the built-in automated checks and scored 88.4/100 from an independent AI judge with zero unsafe answers and 66/66 source citations verified.",
       "takeaway": "The checked 12B profile is strong on exact dates, visit ordering, appointments, and weight trends, but the independent judge caught two six-month cutoff mistakes that the built-in date check missed (including an X-ray six days outside the requested window). That shows why built-in runtime checks and independent judging both matter.",
+      "family": "chartsearchai",
       "arms": {
         "product-12b-checked": "Med Agent Hub (Gemma 4 12B, checked profile)"
       }
@@ -341,6 +343,7 @@
       "title": "Engineering diagnostic: testing the 4B, 12B, and multi-agent team pipelines end to end",
       "summary": "An 18-question engineering test of the 4B single model, 12B single model, and multi-agent team profiles to verify stage timing and formatting before running a full scored benchmark.",
       "takeaway": "Every setup ran end to end and recorded stage timings, while surfacing formatting and table-citation bugs that were fixed before the scored runs above.",
+      "family": "chartsearchai",
       "arms": {
         "product-e4b-checked": "Gemma 4 E4B (4-bit, checked single)",
         "product-12b-checked": "Gemma 4 12B (8-bit, checked single)",
@@ -352,6 +355,7 @@
       "title": "Do explicit date-window rules improve accuracy across 12B, 26B, and 31B Gemma models?",
       "summary": "Twelve date-sensitive HIV and TB chart questions tested across seven setups — comparing Google Gemma 4 12B (8-bit), Gemma 4 26B Mixture-of-Experts (4-bit), Gemma 4 31B (4-bit), and two multi-agent teams with and without explicit date-window prompt instructions alongside our automated temporal warning check.",
       "takeaway": "Explicit date-window instructions boosted both single-model tiers: Gemma 4 31B rose from 84.2 to 86.5/100 (zero unsafe answers) and Gemma 4 12B rose from 80.2 to 83.5/100, outperforming both the 26B Mixture-of-Experts model (77.3/100) and the multi-agent team setups (73.1/100; the oversized 31B/35B team timed out on most questions).",
+      "family": "chartsearchai",
       "arms": {
         "wide-31b-contract-warn": "Gemma 4 31B (4-bit, with date-window rules)",
         "wide-31b-current-warn": "Gemma 4 31B (4-bit, baseline)",
@@ -367,6 +371,7 @@
       "title": "When does adding a validator model beat a single model on its own?",
       "summary": "Across 297 graded answers, we tested whether pairing a writer model (Gemma 12B or Gemma 26B-A4B) with a separate Qwen 14B validator model and stricter 'cite or abstain' instructions beats running the writer model alone.",
       "takeaway": "A separate validator model helps weaker or more error-prone writers (cutting unsafe answers from 2 to 0 on the 26B-A4B setup and adding ~3 points), but does not improve an already-safe 12B model (~81/100 with zero unsafe answers on its own). Overly strict 'cite or abstain' rules made the 12B model too cautious.",
+      "family": "chartsearchai",
       "arms": {
         "m-12b-rewriteval": "Gemma 4 12B + rewrite-validator pass",
         "m-12b-solo": "Gemma 4 12B (8-bit, single model)",
@@ -381,6 +386,7 @@
       "title": "Does 4-bit quantization break a clinical AI — and can a bigger model fix it?",
       "summary": "Six single Google Gemma models reading the same patient charts, varied along two axes: precision (8-bit vs 4-bit) and size/architecture. Two are run at BOTH precisions — a 4-billion on-device model (E4B) and a 12B dense model — to isolate quantization; alongside them a 31B dense model and a 26B sparse Mixture-of-Experts (which fires only ~4B parameters per token), both at 4-bit. Each makes a fast Answer plus a separate In-Depth, both graded. 62 clinical questions across three patients (two adults with HIV/TB, a pediatric infant), judged against the full chart by an automated clinical rubric.",
       "takeaway": "Cutting a model to 4-bit costs the 12B about 7 benchmark points AND its safety — at 8-bit it scored 84 with zero unsafe answers; at 4-bit, 76 with two. Recovering that loss by going BIGGER barely works: a 31B at 4-bit buys back only ~1 point, while simply restoring 8-bit on the 12B buys back all 7 — for this model class, spend memory on precision, not parameters. The efficiency standout was the sparse Mixture-of-Experts (26B-A4B): second-best quality (80) at HALF the latency of any other model, with just one unsafe answer. And 4-bit is most dangerous where there's least capacity to spare: the small 4B model at 4-bit was the floor (68), with the most unsafe answers (3) and the most invented facts for things not in the chart (6). Directional results from a single automated judge on a small sample, not a formal benchmark.",
+      "family": "chartsearchai",
       "arms": {
         "q-12b-q8": "Gemma 4 12B (8-bit precision)",
         "q-26b-q4": "Gemma 4 26B MoE (4-bit precision)",
@@ -395,6 +401,7 @@
       "title": "Does the best AI model's lead come from quantization, or the model?",
       "summary": "Eleven single-model setups, each making a fast Answer plus a separate In-Depth explanation (both graded): five model families tested at both 8-bit and 4-bit precision — Google Gemma 4 12B, Alibaba Qwen 3 14B, Qwen 2.5 14B, IBM Granite 3.3 8B, and Mistral NeMo 12B — plus a reasoning model (Qwen 3.6 35B). 32 clinical questions across three patients, judged against the full chart on two independent axes.",
       "takeaway": "Gemma 4 12B tops both axes (Answer 75.8, In-Depth 65.7) — and its lead is not a precision artifact: Gemma at 4-bit matched (and slightly edged) Gemma at 8-bit, while quantization moved the other models inconsistently and mostly within noise. Mistral NeMo was the weakest clinical reader (55.8 at 8-bit, 7 unsafe answers). Grading the separate In-Depth explanation exposed safety failures the short Answer hides — Granite 4-bit's In-Depth produced 12 unsafe elaborations and Mistral 8-bit's produced 8. The reasoning model (Qwen 3.6 35B) was safe but did not top Gemma 12B.",
+      "family": "chartsearchai",
       "arms": {
         "gemma-12b-q4-2call": "Google Gemma 4 12B (4-bit)",
         "12b-2call": "Google Gemma 4 12B (8-bit)",
@@ -414,6 +421,7 @@
       "title": "Does an AI team's deeper explanation beat a single model's?",
       "summary": "The new two-call architecture: every setup returns a fast Answer and a separate, slower In-Depth, each independently timed and graded — for single models AND the multi-agent team, on equal footing, via the same shared in-depth prompt. Three patients, 32 clinical questions, five setups (Google Gemma 12B, Alibaba Qwen 14B, Google MedGemma 27B, Liquid LFM2 24B singles, plus a parity AI team).",
       "takeaway": "Holding the in-depth prompt fixed, the team's elaboration does NOT beat a single model's. The single Gemma 12B topped BOTH axes — best Answer (73) AND best In-Depth (added-value 6.9, zero unsafe elaborations) — while the parity team's in-depth was no better (6.2), and the fast on-device Liquid 24B's in-depth was actively dangerous (10 unsafe elaborations). Separate latencies confirm the design: a quick answer (Gemma ~20s, Liquid ~2s) followed by a slower in-depth (~12-24s). One strong general model gives the best answer AND the best background; the team scaffolding adds neither. Directional results from a single automated judge on a small sample, not a formal benchmark.",
+      "family": "chartsearchai",
       "arms": {
         "12b-2call": "Google Gemma 4 12B (single model)",
         "parity-team-2call": "Multi-agent parity team (Gemma + Qwen)",
@@ -427,6 +435,7 @@
       "title": "Which single AI model reads a clinical chart best?",
       "summary": "Three patients (two adults with HIV/TB and a pediatric infant), 32 clinical questions, seven setups: four single-model baselines across classes — Google Gemma 12B, Alibaba Qwen 14B, Google MedGemma 27B (a medical-specialist model), and the fast on-device Liquid LFM2 24B — plus a single model with an added elaboration and two multi-agent AI-team configurations. Every answer was graded against the full patient chart by an automated clinical rubric.",
       "takeaway": "A strong GENERAL single model wins: Gemma 12B (72) tied the full multi-agent team, and Qwen 14B (71) was just behind AND the safest single arm (1 unsafe answer vs Gemma's 3). The surprise: the medical-specialist MedGemma 27B scored BELOW the general models (65) with more unsafe answers (5) — domain fine-tuning did not help here — and the fast on-device Liquid 24B was the weakest and least safe (49, 8 unsafe). Directional results from a single automated judge on a small sample, not a formal benchmark.",
+      "family": "chartsearchai",
       "arms": {
         "12b-baseline": "Google Gemma 4 12B (single model)",
         "qwen2.5-14b-baseline": "Alibaba Qwen 2.5 14B (single model)",
@@ -442,6 +451,7 @@
       "title": "Inside an AI team, which model decides if the answer is safe?",
       "summary": "Three patients — two adults with HIV/TB and a pediatric perinatal-HIV infant — 62 clinical questions, six AI setups. A 2×2 ablation swaps the AI team's coordinator and answer-writer between a Google (Gemma) and a fast on-device (Liquid LFM2) model — every team cross-checked by a strong non-Liquid validator — alongside two single-model anchors (Gemma 12B and Liquid 24B). Every answer was graded against the full patient chart by an automated clinical rubric.",
       "takeaway": "The model that WRITES the answer decides clinical quality. Setups with a Qwen writer scored ~70; those with a Liquid writer ~43–51 — a ~25-point gap that tracks the writer alone, whichever model coordinates. A single strong general model (Gemma 12B, 71.4) matched or beat the full multi-agent team, and a strong non-Liquid validator did not rescue a Liquid writer (13–17 unsafe answers with it switched on). Pick a strong writer model before adding team scaffolding. Directional results from a single automated judge, not a formal benchmark.",
+      "family": "chartsearchai",
       "arms": {
         "12b-baseline": "Google Gemma 4 12B (single model)",
         "lfm2-24b-baseline": "Liquid LFM2 24B (on-device single model)"
@@ -452,6 +462,7 @@
       "title": "Can a safety checker make a fast on-device AI team safe?",
       "summary": "A follow-up to the Liquid-team run: same two patients, 16 clinical questions, four AI setups — our proper multi-agent team, a single strong model (Gemma 12B), and the fast on-device 'Liquid' team in two forms: as-is, and with a strong non-Liquid Gemma-12B 'validator' that independently re-checks each answer against the chart before it's returned. Every answer was graded against the full chart by an automated clinical rubric.",
       "takeaway": "Adding a strong non-Liquid validator to the Liquid team helped — it eliminated the made-up 'I don't know' answers and removed one unsafe response, raising the headline score from 43 to 52 — but it did not make the team safe: the validated Liquid team still produced four unsafe answers (including a harmful regimen error the validator passed) and stayed far below both a proper model team (81) and a single strong model (74). A validator catches over-confident gaps, not the subtler clinical fabrications. These are directional results from a single automated judge on a small sample, not a formal benchmark.",
+      "family": "chartsearchai",
       "arms": {
         "12b-baseline": "Google Gemma 4 12B (single model)"
       }
@@ -461,6 +472,7 @@
       "title": "Can a careful AI team rescue fast on-device models?",
       "summary": "Two patients, 8 clinical questions, five AI setups: a strong single model (Gemma 12B), our proper multi-agent AI team, a stripped-down 'parity' team, and two teams built around fast on-device 'Liquid' (LFM2) models — one all-Liquid, one that keeps a medical-specialist model. Every answer was graded against the full patient chart by an automated clinical rubric.",
       "takeaway": "Putting fast on-device 'Liquid' models inside a careful multi-agent team improved their sourcing — they now cite real chart records instead of nothing — but did not make them safe: both Liquid teams still fabricated medications, reversed a weight trend, and hid an AIDS-defining CD4 count, landing far below both the proper model team and a single strong model. Team scaffolding helped grounding, not clinical accuracy. These are directional results from a single automated judge on a small sample, not a formal benchmark.",
+      "family": "chartsearchai",
       "arms": {
         "12b-baseline": "Google Gemma 4 12B (single model)"
       }
@@ -470,6 +482,7 @@
       "title": "Fast on-device models or a careful AI team — which is safer?",
       "summary": "Two patients, 8 clinical questions, five AI setups: Google's Gemma 12B and 4B single models, two brand-new on-device 'Liquid' (LFM2) single models (24B and 1.2B), and our multi-agent AI team. Every answer was graded against the full patient chart by an automated clinical rubric.",
       "takeaway": "The Gemma 12B single model was the most accurate and the safest — no unsafe answers, and it cited a chart record for every claim. The two new Liquid models were the fastest but the least safe: they often answered confidently without grounding their claims in the chart (almost never citing a record) and produced several unsafe answers — including a 'no allergies' reply for a patient whose chart documents a penicillin allergy. The AI team cited its sources and was far safer than the Liquid models, though it didn't beat the strong single model here. These are directional results from a single automated judge on a small sample, not a formal benchmark.",
+      "family": "chartsearchai",
       "arms": {
         "12b-baseline": "Google Gemma 4 12B (single model)",
         "gemma-e4b-llamacpp": "Google Gemma 4 E4B (4B compact single)",
@@ -482,6 +495,7 @@
       "title": "Can the AI get clinical dates and trends right?",
       "summary": "Two patients, 16 questions that hinge on timing: the most-recent lab value, weight trends over months, what's changed recently, and whether a medication regimen is current. We compared plain single models (Gemma 4B → 12B → 26B) against our multi-agent AI team at four configurations.",
       "takeaway": "Re-scored with our updated temporal rubric. The Gemma 12B single model led on the overall benchmark (80/100) and accuracy (8.7/10); the AI team's Advanced tier gave the most complete answers (7.8/10). The stricter date/trend scoring surfaced unsafe answers the first pass missed: a few setups fabricated dates or trends — the Basic AI team 3, and the Gemma 4B and 26B single models one each — while the Gemma 12B single and the Standard/Advanced/matched teams had none. Bigger isn't automatically better, and getting the timing right is where several setups slip.",
+      "family": "chartsearchai",
       "arms": {
         "12b-baseline": "Google Gemma 4 12B (single model)",
         "a4b-baseline": "Google Gemma 4 26B MoE (single model)",
@@ -493,6 +507,7 @@
       "title": "Single model or AI team — which answers priority questions better?",
       "summary": "21 high-priority questions about one complex HIV/TB patient (Aloice), comparing two single models (Gemma 2B and 26B) with three AI-team configurations.",
       "takeaway": "The 26B single model led on accuracy (9.1/10); the AI team's Advanced tier led on completeness (8.4/10). No unsafe answers in this run.",
+      "family": "chartsearchai",
       "arms": {
         "a4b-baseline": "Google Gemma 4 26B MoE (single model)",
         "e2b-baseline": "Google Gemma 4 E2B (2B compact single)"
@@ -503,6 +518,7 @@
       "title": "How safe were our earliest AI-team setups?",
       "summary": "An earlier, broader sweep of 22 scenarios on the same patient, comparing the Gemma 12B single model with several AI-team configurations. This run predates our safety cross-checker and the temporal-reasoning fixes.",
       "takeaway": "The Advanced AI team led on both accuracy and completeness — but the smaller team tiers produced several unsafe answers (Basic tier: 5). That's exactly what motivated the cross-checking 'validator' added in the later runs.",
+      "family": "chartsearchai",
       "arms": {
         "12b-baseline": "Google Gemma 4 12B (single model)"
       }

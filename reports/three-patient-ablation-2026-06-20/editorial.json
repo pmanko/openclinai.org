@@ -1,0 +1,16 @@
+{
+  "schema": "openclinai.editorial.v2",
+  "schema_version": 2,
+  "slug": "three-patient-ablation-2026-06-20",
+  "title": "Inside an AI team, which model decides if the answer is safe?",
+  "summary": "Three patients — two adults with HIV/TB and a pediatric perinatal-HIV infant — 62 clinical questions, six AI setups. A 2×2 ablation swaps the AI team's coordinator and answer-writer between a Google (Gemma) and a fast on-device (Liquid LFM2) model — every team cross-checked by a strong non-Liquid validator — alongside two single-model anchors (Gemma 12B and Liquid 24B). Every answer was graded against the full patient chart by an automated clinical rubric.",
+  "takeaway": "The model that WRITES the answer decides clinical quality. Setups with a Qwen writer scored ~70; those with a Liquid writer ~43–51 — a ~25-point gap that tracks the writer alone, whichever model coordinates. A single strong general model (Gemma 12B, 71.4) matched or beat the full multi-agent team, and a strong non-Liquid validator did not rescue a Liquid writer (13–17 unsafe answers with it switched on). Pick a strong writer model before adding team scaffolding. Directional results from a single automated judge, not a formal benchmark.",
+  "family": "chartsearchai",
+  "featured": true,
+  "catalog_order": 28,
+  "arms": {
+    "12b-baseline": "Google Gemma 4 12B (single model)",
+    "lfm2-24b-baseline": "Liquid LFM2 24B (on-device single model)"
+  },
+  "date": "20 Jun 2026"
+}

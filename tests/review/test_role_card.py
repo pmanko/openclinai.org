@@ -44,7 +44,7 @@ def test_a_human_role_without_an_answer_asks_for_one_and_writes_no_card(tmp_path
 def test_the_judge_card_adds_the_brief_hash_and_the_pass_to_the_session(tmp_path):
     import hashlib
     import importlib.util
-    spec = importlib.util.spec_from_file_location("review_driver", ROOT / "review" / "bin" / "review.py")
+    spec = importlib.util.spec_from_file_location("run_eval_driver", ROOT / "scripts" / "run-eval.py")
     assert spec and spec.loader
     review = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(review)
@@ -66,7 +66,7 @@ def test_the_judge_card_adds_the_brief_hash_and_the_pass_to_the_session(tmp_path
 
 def test_judge_match_compares_the_canonical_cards_not_the_actor_names():
     import importlib.util
-    spec = importlib.util.spec_from_file_location("review_driver2", ROOT / "review" / "bin" / "review.py")
+    spec = importlib.util.spec_from_file_location("run_eval_driver2", ROOT / "scripts" / "run-eval.py")
     assert spec and spec.loader
     review = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(review)
@@ -150,7 +150,7 @@ def test_parse_judges_resolves_defaults_and_rejects_nonpositive_passes(monkeypat
     from types import SimpleNamespace
     import pytest
 
-    spec = importlib.util.spec_from_file_location("review_driver3", ROOT / "review" / "bin" / "review.py")
+    spec = importlib.util.spec_from_file_location("run_eval_driver3", ROOT / "scripts" / "run-eval.py")
     assert spec and spec.loader
     review = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(review)
@@ -173,7 +173,7 @@ def test_judge_sessions_validates_cell_coverage_and_isolates_blinded_inputs(tmp_
     from types import SimpleNamespace
     import pytest
 
-    spec = importlib.util.spec_from_file_location("review_driver4", ROOT / "review" / "bin" / "review.py")
+    spec = importlib.util.spec_from_file_location("run_eval_driver4", ROOT / "scripts" / "run-eval.py")
     assert spec and spec.loader
     review = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(review)

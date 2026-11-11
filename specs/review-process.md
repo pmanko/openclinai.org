@@ -232,12 +232,11 @@ and a person at a terminal.
   the run directory and, when `BASELINE` was given, the earlier report it was compared
   with. The report, not the score, is what publication consumes.
 - Every harness run starts the live dashboard (`make validate-dashboard`,
-  http://localhost:8099), which follows the newest run. When publication is explicitly requested for a judged L5 run, the publication
-  step freezes that dashboard beside the report and publishes both to the reports site
-  (`scripts/publish-report.sh`), so a PR or record can link the published page;
-  reports stay local by default; `PUBLISH_EVALUATION=1` publishes them, `PUBLISH=<run dir>` publishes a judged run later, and
-  `L5_RESUME=<run dir>` with `PROFILES=` adds arms to a finished run without re-running
-  the cells it already completed.
+  http://localhost:8099), which follows the newest run. Local runs can be previewed via
+  `python3 scripts/preview-report.py <run_dir>` and explicitly staged and deployed to the
+  reports site via `python3 scripts/publish-report.py stage <run_dir> --slug <slug>` and
+  `python3 scripts/publish-report.py deploy`; `L5_RESUME=<run dir>` with `PROFILES=` adds
+  arms to a finished run without re-running the cells it already completed.
 
 ## Mapping to the maintainer's checks
 

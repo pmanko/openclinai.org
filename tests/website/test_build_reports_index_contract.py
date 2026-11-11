@@ -569,3 +569,79 @@ def test_card_renders_highlight_pills_takeaway_first_and_collapsible_disclosures
     assert '<details class="indepth-details">' in html
     assert '<details class="earlier">' in html
 
+
+def test_validate_archive_rejects_placeholder_titles_jargon_missing_takeaway_and_missing_viewport(tmp_path):
+    """Editorial & viewport quality gates block placeholder titles, internal harness jargon,
+    empty takeaways on real reports, missing viewport meta tags, and mismatched arm keys."""
+    import pytest
+
+    bri = _load()
+    reports = tmp_path / "reports"
+    packet = _packet(reports, "sample-run")
+
+    # 1. Auto-generated placeholder title + hex hash is rejected immediately
+    with pytest.raises(ValueError, match="Full evaluation"):
+        bri.validate_archive(
+            [{"slug": "sample-run", "title": "Full evaluation full-default, 2026-11-10 (38e68e2a)"}],
+            reports,
+        )
+
+    # 2. Internal harness jargon (L5, parity tap, date_wrong, raw scenario IDs) is rejected
+    for bad_field, bad_val in (
+        ("summary", "Evaluated L5 full-default via parity tap across 3 patients."),
+        ("takeaway", "Zero date_wrong flags and am-orders-6mo improved."),
+        ("takeaway", "Takeaway: Duplicate prefix should be rejected."),
+    ):
+        entry = {
+            "slug": "sample-run",
+            "title": "How accurately does Med Agent Hub read HIV charts?",
+            "summary": "Plain-English summary explaining the clinical questions and patients tested.",
+            "takeaway": "Plain-English takeaway explaining the clinical quality and safety outcome.",
+        }
+        entry[bad_field] = bad_val
+        with pytest.raises(ValueError, match="editorial / viewport quality check failed"):
+            bri.validate_archive([entry], reports)
+
+    # 3. Real report with report-data.json requires viewport tag, complete copy, and synced catalog_meta
+    clean_title = "How accurately does Med Agent Hub read HIV charts?"
+    clean_entry = {
+        "slug": "sample-run",
+        "title": clean_title,
+        "summary": "We tested two clinical AI setups across three HIV patient charts and 35 clinical questions.",
+        "takeaway": "Med Agent Hub improved accuracy and completeness by 14 points with zero unsafe answers.",
+        "arms": {"arm-real": "Med Agent Hub (Gemma 4 12B)"},
+    }
+    (packet / "report-data.json").write_text(
+        json.dumps({
+            "runs": [{
+                "backends": ["arm-real"],
+                "scenarios": [{"scenario_id": "s1", "turns": [{"turn": 1, "cells": {}}]}],
+                "catalog_meta": {"title": clean_title},
+                "arm_cards": {"arm-real": {"title": "Med Agent Hub (Gemma 4 12B)", "short_title": "Med Agent Hub (Gemma 4 12B)"}},
+            }]
+        }),
+        encoding="utf-8",
+    )
+    (packet / "meta.json").write_text(json.dumps({"scout": [{"backend": "arm-real", "benchmark_score": 89.8}]}), encoding="utf-8")
+
+    # Missing <meta name="viewport"> in index.html fails
+    (packet / "index.html").write_text("<!doctype html><html><head></head><body></body></html>", encoding="utf-8")
+    with pytest.raises(ValueError, match="viewport"):
+        bri.validate_archive([clean_entry], reports)
+
+    # With viewport tag present, empty takeaway fails
+    (packet / "index.html").write_text(
+        "<!doctype html><html><head><meta name='viewport' content='width=device-width, initial-scale=1'></head><body></body></html>",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="takeaway is missing or too brief"):
+        bri.validate_archive([{**clean_entry, "takeaway": ""}], reports)
+
+    # Mismatched arms key vs meta.json scout backend fails
+    with pytest.raises(ValueError, match="mismatched backend keys"):
+        bri.validate_archive([{**clean_entry, "arms": {"wrong-key": "Med Agent Hub"}}], reports)
+
+    # Clean, complete, viewport-ready entry passes
+    bri.validate_archive([clean_entry], reports)
+
+

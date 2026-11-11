@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Drive `make review`: threads, fresh-session roles, rounds, and the optional layers.
+"""Drive `make review`: PR threads, fresh-session reviewer/fixer/reply roles, and stack consolidation.
 
-Writes everything to work/review/<component>-<encoded-repository>-<pr>/: threads.json, the prompts, each role's
-answer, findings-<round>.json and round-<round>.md. Posts nothing.
+Writes everything to work/review/<component>-<encoded-repository>-<pr>/: threads.json, the prompts,
+each role's answer, findings-<round>.json and round-<round>.md. Posts nothing and never runs
+clinical AI benchmark evaluations or report publication (see scripts/run-eval.py and
+scripts/publish-report.py).
 """
 from __future__ import annotations
 
@@ -12,14 +14,10 @@ import hashlib
 import json
 import os
 import re
-import shutil
 import shlex
+import shutil
 import subprocess
 import sys
-import threading
-import time
-from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
 from pathlib import Path
 from urllib.parse import quote
 
@@ -32,12 +30,21 @@ from reviewkit.stack import consolidate, merge_ledger  # noqa: E402
 BIN = UMBRELLA / "review" / "bin"
 BRIEFS = UMBRELLA / "review" / "briefs"
 ACTIVE_RESULT = None
-REPOS = {"chartsearchai": "targets/chartsearchai", "esm": "targets/chartsearchai-esm",
-         "querystore": "targets/querystore", "hub": "targets/med-agent-hub",
-         "harness": "targets/validation-harness", "umbrella": "."}
-# The other side of the contract. Select its feature revision explicitly when stacks
-# differ; otherwise use its current local checkout and record that limitation.
-CONSUMERS = {"querystore": "chartsearchai", "chartsearchai": "querystore", "esm": "chartsearchai", "hub": "harness", "harness": "hub"}
+REPOS = {
+    "chartsearchai": "targets/chartsearchai",
+    "esm": "targets/chartsearchai-esm",
+    "querystore": "targets/querystore",
+    "hub": "targets/med-agent-hub",
+    "harness": "targets/validation-harness",
+    "umbrella": ".",
+}
+CONSUMERS = {
+    "querystore": "chartsearchai",
+    "chartsearchai": "querystore",
+    "esm": "chartsearchai",
+    "hub": "harness",
+    "harness": "hub",
+}
 OPENMRS = re.compile(r"github\.com[:/]+(openmrs/[^/\s]+?)(\.git)?$")
 
 
@@ -45,7 +52,11 @@ def upstream(checkout: Path, repository: str | None = None) -> tuple[str, str]:
     """Select the requested GitHub repository, or the default OpenMRS upstream."""
     for line in git(checkout, "remote", "-v").splitlines():
         name, url = line.split()[:2]
-        m = re.search(r"github\.com[:/]+([^/\s]+/[^/\s]+?)(\.git)?$", url) if repository else OPENMRS.search(url)
+        m = (
+            re.search(r"github\.com[:/]+([^/\s]+/[^/\s]+?)(\.git)?$", url)
+            if repository
+            else OPENMRS.search(url)
+        )
         if m and (repository is None or m.group(1) == repository):
             return name, m.group(1)
     raise SystemExit(f"{checkout}: no remote points at github.com/{repository or 'openmrs/*'}")
@@ -57,12 +68,17 @@ def fetch_pr(checkout: Path, remote: str, pr: int) -> str:
 
 
 def current_identity(slug: str, pr: int) -> dict:
-    out = subprocess.run(["gh", "pr", "view", str(pr), "-R", slug, "--json",
-                          "headRefOid,baseRefOid,baseRefName"],
-                         capture_output=True, text=True, check=True).stdout
+    out = subprocess.run(
+        ["gh", "pr", "view", str(pr), "-R", slug, "--json", "headRefOid,baseRefOid,baseRefName"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
     identity = json.loads(out)
-    if not isinstance(identity, dict) or any(not isinstance(identity.get(k), str) or not identity[k]
-            for k in ("headRefOid", "baseRefOid", "baseRefName")):
+    if not isinstance(identity, dict) or any(
+        not isinstance(identity.get(k), str) or not identity[k]
+        for k in ("headRefOid", "baseRefOid", "baseRefName")
+    ):
         raise ValueError("PR identity is unavailable")
     return identity
 
@@ -95,42 +111,75 @@ def worktree(checkout: Path, path: Path, ref: str, branch: str | None = None) ->
 
 def stack(checkout: Path, remote: str, slug: str, author: str, pr: int, head: str) -> list[dict]:
     """Open PRs by the same author whose heads lie on one line with this PR's head."""
-    out = subprocess.run(["gh", "pr", "list", "-R", slug, "--author", author, "--state", "open",
-                          "--json", "number,title,headRefName,baseRefName,baseRefOid,createdAt", "-L", "1000"],
-                         capture_output=True, text=True, check=True).stdout
+    out = subprocess.run(
+        [
+            "gh",
+            "pr",
+            "list",
+            "-R",
+            slug,
+            "--author",
+            author,
+            "--state",
+            "open",
+            "--json",
+            "number,title,headRefName,baseRefName,baseRefOid,createdAt",
+            "-L",
+            "1000",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
     candidates = json.loads(out)
     if len(candidates) >= 1000:
         raise ValueError("Stack discovery reached its result cap; refusing an incomplete stack")
     layers = []
     from reviewkit.stack import ancestor
+
     anc = lambda a, b: ancestor(checkout, a, b)
     for p in candidates:
         sha = fetch_pr(checkout, remote, p["number"])
         commits = set(git(checkout, "rev-list", sha, f"^{remote}/main").splitlines())
-        layers.append({**p, "head": sha, "base": p["baseRefOid"], "created_at": p["createdAt"],
-                       "commits": len(commits), "feature_commits": commits})
+        layers.append(
+            {
+                **p,
+                "head": sha,
+                "base": p["baseRefOid"],
+                "created_at": p["createdAt"],
+                "commits": len(commits),
+                "feature_commits": commits,
+            }
+        )
     selected = {pr}
-    if pr not in {p['number'] for p in layers}:
-        raise ValueError('Requested PR is missing from stack discovery')
+    if pr not in {p["number"] for p in layers}:
+        raise ValueError("Requested PR is missing from stack discovery")
     while True:
-        included = [p for p in layers if p['number'] in selected]
-        additions = {p['number'] for p in layers if any(
-            p['baseRefName'] == q['headRefName'] or q['baseRefName'] == p['headRefName'] or
-            bool(p['feature_commits'] & q['feature_commits']) for q in included)}
-        if additions.issubset(selected): break
+        included = [p for p in layers if p["number"] in selected]
+        additions = {
+            p["number"]
+            for p in layers
+            if any(
+                p["baseRefName"] == q["headRefName"]
+                or q["baseRefName"] == p["headRefName"]
+                or bool(p["feature_commits"] & q["feature_commits"])
+                for q in included
+            )
+        }
+        if additions.issubset(selected):
+            break
         selected.update(additions)
-    layers = [{k: v for k, v in p.items() if k != 'feature_commits'}
-              for p in layers if p['number'] in selected]
+    layers = [{k: v for k, v in p.items() if k != "feature_commits"} for p in layers if p["number"] in selected]
     ordered = sorted(layers, key=lambda l: l["commits"])
     if any(not anc(a["head"], b["head"]) for a, b in zip(ordered, ordered[1:])):
-        raise SystemExit("Connected stack has divergent heads; use a curated consolidation manifest with each examined revision")
+        raise SystemExit(
+            "Connected stack has divergent heads; use a curated consolidation manifest with each examined revision"
+        )
     return ordered
 
 
 def last_json(text: str):
-    """The last ```json block of a role's answer, parsed. A trailing comma before a closing
-    bracket (a judge wrote one on 27 October and lost a whole pass to it) is removed first
-    outside string literals so quoted evidence is never rewritten."""
+    """The last ```json block of a role's answer, parsed."""
     blocks = re.findall(r"```json\s*(.*?)```", text, re.S)
     if not blocks:
         raise SystemExit("the role's answer has no ```json block")
@@ -158,7 +207,13 @@ def validate_review(data: dict, head: str, changed: list[str]) -> None:
     if set(changed) != set(data["reviewed_files"]) | set(data["unreviewed_files"]):
         raise ValueError("review must account for every changed file")
     for finding in data["findings"]:
-        if not isinstance(finding, dict) or not isinstance(finding.get("blocking"), bool) or not isinstance(finding.get("line"), int) or not isinstance(finding.get("file"), str) or not isinstance(finding.get("finding"), str):
+        if (
+            not isinstance(finding, dict)
+            or not isinstance(finding.get("blocking"), bool)
+            or not isinstance(finding.get("line"), int)
+            or not isinstance(finding.get("file"), str)
+            or not isinstance(finding.get("finding"), str)
+        ):
             raise ValueError("invalid finding")
 
 
@@ -171,21 +226,33 @@ def settle(findings: list[dict]) -> list[dict]:
     return findings
 
 
-def run_role(args, role: str, workdir: Path, prompt: str, out: Path,
-             agent: str | None = None, env: dict | None = None) -> str:
-    """One fresh session of the agent (the run's, or ``agent``), with ``env`` added to the
-    environment role.sh reads its model and effort from."""
+def run_role(
+    args,
+    role: str,
+    workdir: Path,
+    prompt: str,
+    out: Path,
+    agent: str | None = None,
+    env: dict | None = None,
+) -> str:
+    """One fresh session of the agent (the run's, or ``agent``), with ``env`` added."""
     prompt_file = out.with_suffix(".prompt.md")
     scratch = out.parent / "scratch"
     scratch.mkdir(exist_ok=True)
     prompt += f"\nKeep all working scripts and logs in {scratch}, never /tmp. Preserve reproduction scripts there.\n"
     if role != "fixer":
-        prompt += ("\nYour final message is saved as your answer: do not write it to a file, and "
-                   "leave the repository as you found it.\n")
+        prompt += (
+            "\nYour final message is saved as your answer: do not write it to a file, and "
+            "leave the repository as you found it.\n"
+        )
     if (agent or getattr(args, "agent", None)) == "human" and out.exists() and prompt_file.exists():
         previous_prompt = prompt_file.read_text()
         if previous_prompt != prompt:
-            archive = out.parent / "history" / hashlib.sha256(previous_prompt.encode() + out.read_bytes()).hexdigest()[:16]
+            archive = (
+                out.parent
+                / "history"
+                / hashlib.sha256(previous_prompt.encode() + out.read_bytes()).hexdigest()[:16]
+            )
             archive.mkdir(parents=True, exist_ok=True)
             shutil.copy2(out, archive / out.name)
             (archive / prompt_file.name).write_text(previous_prompt)
@@ -193,8 +260,10 @@ def run_role(args, role: str, workdir: Path, prompt: str, out: Path,
     prompt_file.write_text(prompt)
     role_script = out.with_suffix(".role.sh")
     role_script.write_bytes((BIN / "role.sh").read_bytes())
-    rc = subprocess.run(["bash", str(role_script), agent or args.agent, role, str(workdir),
-                         str(prompt_file), str(out)], env={**os.environ, **(env or {})}).returncode
+    rc = subprocess.run(
+        ["bash", str(role_script), agent or args.agent, role, str(workdir), str(prompt_file), str(out)],
+        env={**os.environ, **(env or {})},
+    ).returncode
     if rc == 3:
         sys.exit(3)
     if rc or not out.exists():
@@ -207,744 +276,28 @@ def record(round_dir: Path, k: int, data: dict) -> None:
     lines = [f"# Round {k}: {data['repo']}#{data['pr']} at {data['head'][:7]}", ""]
     for f in data["findings"]:
         kind = "BLOCKING" if f.get("blocking") else "question"
-        lines += [f"- **{kind}** `{f.get('file')}:{f.get('line')}` {f.get('finding')}",
-                  f"  - failure mode: {f.get('failure_mode') or '-'}",
-                  f"  - evidence: {f.get('evidence') or '-'}"]
+        lines += [
+            f"- **{kind}** `{f.get('file')}:{f.get('line')}` {f.get('finding')}",
+            f"  - failure mode: {f.get('failure_mode') or '-'}",
+            f"  - evidence: {f.get('evidence') or '-'}",
+        ]
     (round_dir / f"round-{k}.md").write_text("\n".join(lines) + "\n")
-
-
-def harness(*args: str) -> subprocess.CompletedProcess:
-    return subprocess.run(["uv", "--directory", str(UMBRELLA / "targets/validation-harness"),
-                           "run", "harness-cli", *args], capture_output=True, text=True)
-
-
-HARNESS = UMBRELLA / "targets/validation-harness"
-DATA = HARNESS / "datasets/validation"
-LLM_SETTINGS = ("chartsearchai.llm.engine", "chartsearchai.llm.remote.endpointUrl",
-                "chartsearchai.llm.remote.modelName")
-HUB_TAP = f"http://host.docker.internal:{os.environ.get('HUB_TAP_PORT', '8079')}"
-
-
-def openmrs(shell: str) -> str:
-    """Run a command with the umbrella's OpenMRS REST helpers loaded."""
-    return subprocess.run(["bash", "-c", f". scripts/openmrs-settings-lib.sh; {shell}"],
-                          cwd=UMBRELLA, capture_output=True, text=True, check=True).stdout
-
-
-def rest_get(path: str) -> dict:
-    return json.loads(openmrs('openmrs_curl -fsS -u "$OPENMRS_SETTINGS_USER:$OPENMRS_SETTINGS_PASS" '
-                              f'"$OPENMRS_SETTINGS_BASE_URL/ws/rest/v1/{path}"'))
-
-
-@contextmanager
-def run_environment(data_root: Path, set_id: str, record: Path):
-    """Bring the parity taps up for sets with provider arms; restore what was found."""
-    cset = json.loads((data_root / "comparison_sets" / f"{set_id}.json").read_text())
-    backends = json.loads((data_root / "backends.json").read_text())
-    if not any(backends[b].get("kind") == "provider_arm" for b in cset["backend_ids"]):
-        yield {}
-        return
-    found = {r["property"]: r["value"] for r in
-             rest_get("systemsetting?q=chartsearchai.llm&v=full")["results"]
-             if r["property"] in LLM_SETTINGS}
-    record.write_text(json.dumps(found, indent=1))
-    subprocess.run([str(UMBRELLA / "scripts/parity-engine-up.sh")], check=True, cwd=UMBRELLA)
-    try:
-        yield {"MED_AGENT_LLM_BASE_URL": HUB_TAP}
-    finally:
-        for name in LLM_SETTINGS:
-            if name in found:
-                openmrs(f"set_openmrs_property {json.dumps(name)} {json.dumps(found[name] or '')}")
-            else:
-                openmrs('openmrs_curl -fsS -o /dev/null -X DELETE -u "$OPENMRS_SETTINGS_USER:'
-                        '$OPENMRS_SETTINGS_PASS" "$OPENMRS_SETTINGS_BASE_URL/ws/rest/v1/'
-                        f'systemsetting/{name}?purge=true"')
-        subprocess.run(["make", "-C", str(UMBRELLA), "med-agent-hub-up"], check=True,
-                       env={k: v for k, v in os.environ.items() if k != "MED_AGENT_LLM_BASE_URL"})
-        print(f"restored {', '.join(found) or 'nothing'} as found; Hub back on its configured engine")
-
-
-def run_set(make_target: str, comparison_set: str, out: Path, env: dict | None = None,
-            data_root: Path | None = None, resume: str | None = None) -> Path:
-    """Run a comparison set through the umbrella's make target; return the run directory.
-
-    With ``resume``, the cells that run completed cleanly are carried over and only the rest
-    run, so arms added since are the only new work.
-    """
-    cmd = ["make", "-C", str(UMBRELLA), make_target, f"SET={comparison_set}"]
-    if data_root:
-        cmd.append(f"VALIDATE_DATA_ROOT={data_root}")
-    if resume:
-        cmd.append(f"RESUME={Path(resume).resolve()}")
-    proc = subprocess.run(cmd, capture_output=True, text=True, env={**os.environ, **(env or {})})
-    out.write_text(proc.stdout + proc.stderr)
-    m = re.search(r"results -> (\S+)/results\.jsonl", proc.stdout)
-    if proc.returncode or not m:
-        raise SystemExit(f"{make_target} {comparison_set} failed; see {out}")
-    run_dir = Path(m.group(1))
-    return run_dir if run_dir.is_absolute() else UMBRELLA / "targets/validation-harness" / run_dir
-
-
-def scenarios(args, head: str, out_dir: Path) -> int:
-    """L3: deploy the PR head (backend modules), replay the set, check its expectations."""
-    deploy = BIN / "deploy-head.sh"
-    module = args.repo if args.repo in ("querystore", "chartsearchai") else None
-    try:
-        if module:
-            subprocess.run([str(deploy), module, head], check=True)
-        with run_environment(DATA, args.scenarios, out_dir / "settings-as-found.json") as env:
-            run_dir = run_set("validate-run", args.scenarios,
-                              out_dir / f"scenarios-{args.scenarios}.log", env)
-        expect = harness("validate", "expect", "--run-dir", str(run_dir))
-    finally:
-        if module:
-            subprocess.run([str(deploy), module, "--restore"], check=True)
-    summary = f"# Scenarios {args.scenarios} at {head[:7]}\n\nRun: {run_dir}\n\n```\n{expect.stdout}```\n"
-    (out_dir / f"scenarios-{args.scenarios}.md").write_text(summary)
-    print(expect.stdout.strip().splitlines()[-1] if expect.stdout.strip() else expect.stderr)
-    return expect.returncode
-
-
-GATE_KEYS = ("set", "gold", "metric", "direction", "baseline_run", "baseline", "threshold",
-             "date", "signed_off")
-
-
-def read_gate(name: str) -> dict:
-    """A gate file is `key: value` lines, committed before the run it governs."""
-    path = UMBRELLA / "review" / "gates" / f"{name}.md"
-    if not path.is_file():
-        raise SystemExit(f"no gate {path}")
-    rel = str(path.relative_to(UMBRELLA))
-    if not git(UMBRELLA, "log", "-1", "--format=%H", "--", rel, check=False).strip() \
-            or git(UMBRELLA, "status", "--porcelain", "--", rel).strip():
-        raise SystemExit(f"{rel} must be committed, unchanged, before the gate runs")
-    gate = {}
-    for line in path.read_text().splitlines():
-        m = re.match(r"^([a-z_]+):\s*(.+?)\s*$", line)
-        if m:
-            gate[m.group(1)] = m.group(2)
-    missing = [k for k in GATE_KEYS if k not in gate]
-    if missing:
-        raise SystemExit(f"{rel} lacks {', '.join(missing)}")
-    if gate["direction"] not in ("higher", "lower"):
-        raise SystemExit(f"{rel}: direction must be higher or lower")
-    gate["committed"] = git(UMBRELLA, "log", "-1", "--format=%h %cI", "--", rel).strip()
-    return gate
-
-
-def gate_passes(gate: dict, value: float | None) -> bool:
-    if value is None:
-        return False
-    threshold = float(gate["threshold"])
-    return value >= threshold if gate["direction"] == "higher" else value <= threshold
-
-
-def run_gate(args, checkout: Path, base: str, head: str, out_dir: Path) -> int:
-    """L4: the pre-registered gate's set on base and head; the head's number decides."""
-    gate = read_gate(args.gate)
-    module = args.repo if args.repo in ("querystore", "chartsearchai") else None
-    if not module:
-        raise SystemExit("a model gate deploys a backend module; REPO must be querystore or chartsearchai")
-    deploy = BIN / "deploy-head.sh"
-    measured = {}
-    try:
-        with run_environment(DATA, gate["set"], out_dir / "settings-as-found.json") as env:
-            for label, ref in (("base", base), ("head", head)):
-                subprocess.run([str(deploy), module, ref], check=True)
-                run_dir = run_set("validate-run", gate["set"], out_dir / f"gate-{args.gate}-{label}.log", env)
-                scored = harness("validate", "score-citations", "--run-dir", str(run_dir),
-                                 "--gold", str(DATA / gate["gold"]))
-                if scored.returncode:
-                    raise SystemExit(f"scoring {run_dir} failed: {scored.stderr[-500:]}")
-                summary = json.loads((run_dir / "citation_scores.json").read_text())["summary"]
-                arm = gate.get("backend") or next(iter(summary))
-                measured[label] = {"ref": ref, "run": str(run_dir), "summary": summary[arm],
-                                   "value": summary[arm].get(gate["metric"])}
-    finally:
-        subprocess.run([str(deploy), module, "--restore"], check=True)
-    passed = gate_passes(gate, measured["head"]["value"])
-    lines = [f"# Gate {args.gate}: {'PASS' if passed else 'FAIL'}", "",
-             f"Pre-registered {gate['date']} by {gate['signed_off']} (committed {gate['committed']}): "
-             f"{gate['metric']} {'>=' if gate['direction'] == 'higher' else '<='} {gate['threshold']} "
-             f"on {gate['set']}; baseline {gate['baseline']} from run {gate['baseline_run']}.", "",
-             "| Arm | Commit | Run | " + gate["metric"] + " |", "| --- | --- | --- | ---: |"]
-    for label, m in measured.items():
-        lines.append(f"| {label} | {m['ref'][:7]} | {m['run']} | {m['value']} |")
-    (out_dir / f"gate-{args.gate}.md").write_text("\n".join(lines) + "\n")
-    print(lines[0], f"head {measured['head']['value']} base {measured['base']['value']}")
-    return 0 if passed else 1
-
-
-def measure(set_id: str, gold: str) -> int:
-    """Run a set on the stack as deployed and score it: the number a gate pre-registers."""
-    out_dir = work_dir() / f"measure-{set_id}-{time.strftime('%Y%m%d-%H%M%S')}"
-    out_dir.mkdir(parents=True)
-    with run_environment(DATA, set_id, out_dir / "settings-as-found.json") as env:
-        run_dir = run_set("validate-run", set_id, out_dir / "run.log", env)
-    scored = harness("validate", "score-citations", "--run-dir", str(run_dir), "--gold", str(DATA / gold))
-    print(f"run {run_dir.name}\n{scored.stdout}")
-    return scored.returncode
-
-
-def advertised_profiles() -> dict[str, str]:
-    """The profiles the Hub advertises as available, each with its product title."""
-    data = rest_get("chartsearchai/models").get("data", [])
-    return {m["id"]: str(m.get("label") or m["id"]) for m in data if m.get("available")}
-
-
-def profile_arms(offered: dict[str, str], wanted: list[str]) -> dict[str, dict]:
-    """One provider arm per wanted profile, titled as the product titles it."""
-    return {f"hub-profile-{profile}": {"label": offered.get(profile) or profile, "kind": "provider_arm",
-                                       "provider": "hub",
-                                       "endpointUrl": "http://med-agent-hub:8080/v1/chat/completions",
-                                       "modelName": profile}
-            for profile in wanted}
-
-
-def _resolve_data_root(raw: Path | str | None) -> Path:
-    if not raw:
-        return DATA
-    p = Path(raw)
-    if p.is_absolute():
-        return p.resolve()
-    if p.exists():
-        return p.resolve()
-    return (UMBRELLA / p).resolve()
-
-
-def run_full(args) -> int:
-    """L5: the full matrix, extra arms from the Hub's advertised profiles, judged and reported."""
-    stamp = time.strftime("%Y%m%d-%H%M%S")
-    out_dir = work_dir() / f"full-{stamp}"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    explicit_data_root = getattr(args, "data_root", None)
-    source = _resolve_data_root( getattr(args, "data_root", None) or DATA )
-    data_root = source
-    if args.profiles:
-        wanted = [p.strip() for p in args.profiles.split(",") if p.strip()]
-        offered = advertised_profiles()
-        missing = [p for p in wanted if p not in offered]
-        if missing:
-            raise SystemExit(f"not advertised by the Hub now: {', '.join(missing)} "
-                             f"(advertised: {', '.join(sorted(offered))})")
-        data_root = out_dir / "data"
-        shutil.copytree(source, data_root)
-        backends = json.loads((data_root / "backends.json").read_text())
-        cset_path = data_root / "comparison_sets" / f"{args.set}.json"
-        cset = json.loads(cset_path.read_text())
-        for arm, backend in profile_arms(offered, wanted).items():
-            backends[arm] = backend
-            cset["backend_ids"].append(arm)
-        (data_root / "backends.json").write_text(json.dumps(backends, indent=1))
-        cset_path.write_text(json.dumps(cset, indent=1))
-    with run_environment(data_root, args.set, out_dir / "settings-as-found.json") as env:
-        run_dir = run_set("validate-run", args.set, out_dir / "run.log", env,
-                          data_root if (explicit_data_root is not None or data_root != DATA) else None,
-                          args.resume)
-    subprocess.run(["make", "-C", str(HARNESS), "validate-judge-prep", f"RUN={run_dir}"]
-                   + (["BLIND=1"] if getattr(args, "blind", False) else []), check=True, capture_output=True)
-    judge_passes(args, run_dir, out_dir)
-    report = harness("validate", "report", "--run-dir", str(run_dir))
-    lines = [f"# Full evaluation {args.set} ({stamp})", "", f"Run: {run_dir}",
-             f"Report: {report.stdout.strip()}", "", judging(run_dir)["sentence"], ""] + arm_table(run_dir)
-    if args.baseline:
-        base = HARNESS / "artifacts/validate" / args.baseline
-        lines += ["", f"Compared with run {args.baseline}: {base / 'report.html'}",
-                  baseline_note(run_dir, base)]
-    if getattr(args, "publish_evaluation", False) and not getattr(args, "no_publish", False):
-        lines += ["", f"Published: {publish_full(run_dir, args.set)}"]
-    (out_dir / "summary.md").write_text("\n".join(lines) + "\n")
-    print("\n".join(lines))
-    return 0
-
-
-DEFAULT_JUDGE_SETTINGS = {
-    "claude": ("claude-sonnet-5-5", "medium"),
-    "codex": ("gpt-6.1-sol", "medium"),
-    "gemini": ("unrecorded", "unrecorded"),
-    "human": ("human", ""),
-}
-_ALLOC_LOCK = threading.Lock()
-
-
-@contextmanager
-def _run_judge_lock(run_dir: Path):
-    """Process- and thread-safe lock around pass reservation and finalization."""
-    judges_dir = run_dir / "judges"
-    judges_dir.mkdir(parents=True, exist_ok=True)
-    lock_path = judges_dir / ".alloc.lock"
-    with _ALLOC_LOCK:
-        with open(lock_path, "a+", encoding="utf-8") as fh:
-            fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
-            try:
-                yield judges_dir
-            finally:
-                fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
-
-
-def parse_judges(args) -> list[dict]:
-    """The judges a run uses: each ``--judge agent:model:effort[:passes]``, or the run's agent
-    with the model and effort role.sh resolves from REVIEW_MODEL and REVIEW_REASONING. A judge
-    without its own pass count takes ``--judge-passes``."""
-    raw_passes = getattr(args, "judge_passes", 1)
-    default = 1 if raw_passes is None else int(raw_passes)
-    if default < 1:
-        raise SystemExit(f"--judge-passes must be at least 1, got {raw_passes!r}")
-    judges = []
-    for spec in getattr(args, "judges", None) or []:
-        parts = spec.split(":")
-        if len(parts) not in (3, 4) or not all(parts) or (len(parts) == 4 and not parts[3].isdigit()):
-            raise SystemExit(f"--judge wants agent:model:effort[:passes], got {spec!r}")
-        passes = int(parts[3]) if len(parts) == 4 else default
-        if passes < 1:
-            raise SystemExit(f"--judge {spec!r}: passes must be at least 1")
-        judges.append({"agent": parts[0], "model": parts[1], "effort": parts[2], "passes": passes})
-    if judges:
-        return judges
-    default_model, default_effort = DEFAULT_JUDGE_SETTINGS.get(args.agent, ("gpt-6.1-sol", "medium"))
-    return [{
-        "agent": args.agent,
-        "model": os.environ.get("REVIEW_MODEL") or default_model,
-        "effort": os.environ.get("REVIEW_REASONING") or default_effort,
-        "passes": default,
-    }]
-
-
-def run_judges(run_dir: Path) -> tuple[list[str], dict[tuple, int], bool]:
-    """What a run already holds: the passes its headline was built from, the highest pass
-    number each judge (agent, model, effort) has used, and whether the headline was blinded."""
-    try:
-        built = json.loads((run_dir / "judges" / "canonical.json").read_text()).get("built_from") or []
-    except (OSError, json.JSONDecodeError):
-        built = []
-    last: dict[tuple, int] = {}
-    blinded = False
-    for manifest in sorted((run_dir / "judges").glob("*/manifest.json")):
-        try:
-            card = json.loads(manifest.read_text())
-        except (OSError, json.JSONDecodeError):
-            continue
-        key = (str(card.get("agent") or ""), str(card.get("model") or ""),
-               str(card.get("reasoning_effort") or ""))
-        last[key] = max(last.get(key, 0), int(card.get("pass_index") or 1))
-        blinded = blinded or (manifest.parent.name in built and bool(card.get("blinded")))
-    return [str(a) for a in built], last, blinded
-
-
-def _reserve_judge_passes(run_dir: Path, judges: list[dict]) -> list[tuple[dict, int, int]]:
-    """Atomically reserve contiguous pass numbers for each judge before sessions run."""
-    with _run_judge_lock(run_dir) as judges_dir:
-        _, last, _ = run_judges(run_dir)
-        res_file = judges_dir / ".reserved.json"
-        try:
-            raw_res = json.loads(res_file.read_text()) if res_file.exists() else {}
-        except (OSError, json.JSONDecodeError):
-            raw_res = {}
-        reserved: dict[tuple, int] = {}
-        for k_str, val in raw_res.items():
-            parts = k_str.split("\0")
-            if len(parts) == 3 and isinstance(val, int):
-                reserved[tuple(parts)] = val
-        allocations = []
-        for judge in judges:
-            key = (judge["agent"], judge["model"], judge["effort"])
-            start = max(last.get(key, 0), reserved.get(key, 0))
-            end = start + judge["passes"]
-            reserved[key] = end
-            allocations.append((judge, start, end))
-        res_file.write_text(json.dumps({"\0".join(k): v for k, v in reserved.items()}, indent=1))
-        return allocations
-
-
-def _expected_session_cells(cells_path: Path) -> list[tuple[str, str]]:
-    if not cells_path.is_file():
-        return []
-    expected = []
-    for line in cells_path.read_text().splitlines():
-        if not line.strip():
-            continue
-        cell = json.loads(line)
-        expected.append((str(cell["scenario_id"]), str(cell["backend_id"])))
-    return expected
-
-
-def _validate_session_rows(rows, expected: list[tuple[str, str]]) -> list[dict]:
-    if not isinstance(rows, list) or not rows:
-        raise ValueError("verdict JSON must be a non-empty list of cell rows")
-    seen: list[tuple[str, str]] = []
-    for idx, row in enumerate(rows):
-        if not isinstance(row, dict):
-            raise ValueError(f"row {idx} is not an object")
-        for req in ("scenario_id", "backend_id", "accuracy"):
-            if req not in row:
-                raise ValueError(f"row {idx} is missing {req!r}")
-        for axis in ("accuracy", "completeness", "relevance"):
-            if axis in row:
-                val = row[axis]
-                if isinstance(val, bool) or not isinstance(val, (int, float)):
-                    raise ValueError(f"row {idx} {axis!r} must be numeric")
-        if "harm" in row and not isinstance(row["harm"], bool):
-            raise ValueError(f"row {idx} 'harm' must be boolean")
-        seen.append((str(row["scenario_id"]), str(row["backend_id"])))
-    if len(set(seen)) != len(seen):
-        raise ValueError("duplicate (scenario_id, backend_id) in verdict rows")
-    if expected and set(seen) != set(expected):
-        missing = sorted(set(expected) - set(seen))
-        extra = sorted(set(seen) - set(expected))
-        raise ValueError(f"cell coverage mismatch (missing={missing}, unexpected={extra})")
-    return rows
-
-
-def _prepare_blind_session_dir(run_dir: Path, out_dir: Path, tag: str, bundle: Path) -> tuple[Path, Path]:
-    """Create a bounded directory with only this scenario's bundle and chart snapshots."""
-    session_dir = out_dir / f"{tag}-input-{bundle.stem}"
-    if session_dir.exists():
-        shutil.rmtree(session_dir)
-    session_dir.mkdir(parents=True, exist_ok=True)
-    staged_bundle = session_dir / bundle.name
-    shutil.copy2(bundle, staged_bundle)
-    charts_src = run_dir / "charts"
-    if charts_src.is_dir():
-        shutil.copytree(charts_src, session_dir / "charts")
-    return session_dir, staged_bundle
-
-
-def judge_sessions(args, run_dir: Path, out_dir: Path, pass_index: int, passes: int,
-                   judge: dict, blind: bool, tag: str = "judge") -> tuple[Path, Path]:
-    """One pass of one judge: a single session over judge-cells.jsonl, or, blinded, one
-    session per scenario bundle (up to four at once, a failed session re-run once). Writes the
-    pass's rows (every session's, concatenated) and its card (the first session's, with the
-    brief hash and the pass) beside the answers. Returns the rows and card paths."""
-    base = out_dir / f"{tag}.md"
-    brief = (BRIEFS / "judge.md").read_text()
-    env = {k: v for k, v in (("REVIEW_MODEL", judge.get("model")), ("REVIEW_REASONING", judge.get("effort"))) if v}
-    if blind:
-        bundles = sorted((run_dir / "judge-bundles").glob("*.jsonl"))
-        if not bundles:
-            raise SystemExit(f"{run_dir}: no judge-bundles; run validate-judge-prep with BLIND=1")
-        sessions = []
-        for b in bundles:
-            s_dir, s_bundle = _prepare_blind_session_dir(run_dir, out_dir, tag, b)
-            s_inputs = (
-                f"\n## Inputs\n\n- Session directory (bounded input containing only this scenario's "
-                f"bundle and chart snapshots; do not read outside {s_dir} or inspect maps, other "
-                f"scenarios, or earlier judgments): {s_dir}\n"
-                f"- Rubric: {HARNESS / '.claude/skills/clinical-answer-scoring/rubric.md'}\n"
-                f"- Cells for this session: {s_bundle} (one scenario; its arms are lettered, so score each "
-                "answer on its own against the chart and keep the letter as backend_id)\n"
-            )
-            sessions.append((out_dir / f"{tag}-{b.stem}.md", brief + s_inputs, s_dir, s_bundle))
-    else:
-        inputs = (f"\n## Inputs\n\n- Run directory: {run_dir}\n"
-                  f"- Rubric: {HARNESS / '.claude/skills/clinical-answer-scoring/rubric.md'}\n")
-        sessions = [(base, brief + inputs, run_dir, run_dir / "judge-cells.jsonl")]
-
-    attempts = max(1, int(os.environ.get("JUDGE_ATTEMPTS", "4")))
-    retry_delay = int(os.environ.get("JUDGE_RETRY_DELAY", "60"))
-
-    def one(session):
-        out, prompt, workdir, cells_path = session
-        expected = _expected_session_cells(cells_path)
-        for attempt in range(1, attempts + 1):
-            try:
-                answer = run_role(args, "judge", workdir, prompt, out, agent=judge["agent"], env=env)
-                return _validate_session_rows(last_json(answer), expected)
-            except SystemExit as e:
-                if e.code == 3 or attempt == attempts:
-                    raise
-            except (json.JSONDecodeError, ValueError) as e:
-                # An unreadable, empty, or incomplete verdict block is a failed session: run it again, alone.
-                if attempt == attempts:
-                    raise SystemExit(f"{out}: the judge's verdict block is invalid ({e})")
-            # A judge that rate-limits (429) answers again after a pause that grows per attempt.
-            time.sleep(retry_delay * attempt)
-        return []
-
-    # JUDGE_PARALLEL caps the sessions in flight; a rate-limited judge wants 1.
-    parallel = max(1, int(os.environ.get("JUDGE_PARALLEL", "4")))
-    with ThreadPoolExecutor(max_workers=min(parallel, len(sessions))) as pool:
-        rows = [r for session_rows in pool.map(one, sessions) for r in session_rows]
-    rows_path = base.with_suffix(".rows.json")
-    rows_path.write_text(json.dumps(rows))
-    cards = [json.loads(out.with_suffix(".md.card.json").read_text()) for out, _, _, _ in sessions]
-    identities = {(c.get("agent"), c.get("agent_version"), c.get("model"),
-                   c.get("reasoning_effort"), c.get("sampling")) for c in cards}
-    if len(identities) > 1:
-        raise SystemExit(f"{base}: session cards diverged within one pass: {identities}")
-    merged = {**cards[0], "started_at": min(c.get("started_at", "") for c in cards),
-              "finished_at": max(c.get("finished_at", "") for c in cards),
-              "sessions": len(cards), "session_cards": cards, "blinded": blind}
-    base.with_suffix(".md.card.json").write_text(json.dumps(merged, indent=1))
-    return rows_path, judge_card(base, pass_index=pass_index, passes=passes)
-
-
-def judge_passes(args, run_dir: Path, out_dir: Path, keep: list[str] | None = None) -> list[str]:
-    """Judge the run's cells with each judge, its own number of fresh passes, every pass stored
-    as its own actor with its card. A judge's pass numbers continue after the passes it
-    already has on the run, so no earlier pass is overwritten. The headline is built from
-    ``keep`` (passes already on the run) plus the new passes: one pass alone is promoted as it
-    is; anything more is aggregated per cell (median of the 0-10 axes, majority of the
-    categorical ones, a harm tie counting as harmful) into the canonical judge.jsonl by the
-    harness. Returns the actor ids of the headline."""
-    keep = list(keep or [])
-    judges = parse_judges(args)
-    blind = bool(getattr(args, "blind", False))
-    allocations = _reserve_judge_passes(run_dir, judges)
-    total_new = sum(j["passes"] for j in judges)
-    actors = []
-    for k, (judge, start, end) in enumerate(allocations, 1):
-        for i in range(start + 1, end + 1):
-            tag = "judge" + (f"-j{k}" if len(judges) > 1 else "") + (f"-p{i}" if total_new > 1 or start else "")
-            rows, card = judge_sessions(args, run_dir, out_dir, i, end, judge, blind, tag)
-            with _run_judge_lock(run_dir):
-                done = subprocess.run(["make", "-C", str(HARNESS), "validate-judge-finalize", f"RUN={run_dir}",
-                                       f"ROWS={rows}", f"JUDGE_CARD={card}"]
-                                      + (["JUDGE_PROMOTE=1"] if total_new == 1 and not keep else []),
-                                      check=True, capture_output=True, text=True).stdout
-            m = re.search(r"judges/([^/\s]+)/judge\.jsonl", done)
-            if not m:
-                raise SystemExit(f"finalize named no actor for {tag}:\n{done}")
-            actors.append(m.group(1))
-            manifest = run_dir / "judges" / m.group(1) / "manifest.json"
-            if manifest.exists() and json.loads(manifest.read_text()).get("self_preference_risk"):
-                print(f"WARNING: {m.group(1)} is from the same model family as an arm it judged "
-                      f"(self-preference risk); see its manifest")
-    headline = keep + [a for a in actors if a not in keep]
-    if len(headline) > 1:
-        with _run_judge_lock(run_dir):
-            subprocess.run(["uv", "--directory", str(HARNESS), "run", "python", "scripts/judge-aggregate.py",
-                            str(run_dir)] + [a for actor in headline for a in ("--actor", actor)],
-                           check=True, capture_output=True, text=True)
-    return headline
-
-
-def judge_match(a: dict, b: dict) -> bool:
-    """Whether two judging summaries came from the same judge: the canonical cards agree on
-    model, reasoning effort, brief, blinding and session isolation, and the passes were
-    combined the same way."""
-    def key(summary: dict) -> tuple:
-        cards = [c for c in summary.get("cards", []) if c.get("actor_id") in summary.get("canonical", [])]
-        return (summary.get("aggregation") or "", len(cards),
-                tuple(sorted((str(c.get("model")), str(c.get("reasoning_effort")),
-                              str(c.get("brief_sha256")), bool(c.get("blinded")),
-                              int(c.get("sessions") or 1))
-                             for c in cards)))
-    return bool(a.get("recorded")) and bool(b.get("recorded")) and key(a) == key(b)
-
-
-def baseline_note(run_dir: Path, base: Path) -> str:
-    """One line saying whether the baseline's scores are comparable with this run's."""
-    mine, theirs = judging(run_dir), judging(base)
-    if judge_match(mine, theirs):
-        return "Like for like: the baseline was judged the same way."
-    return (f"Not like for like: the baseline reads \"{theirs['sentence']}\" while this run reads "
-            f"\"{mine['sentence']}\". Re-judge the baseline's frozen cells with this judge: "
-            f"make review REJUDGE={base} JUDGES=\"agent:model:effort:passes ...\"")
-
-
-def rejudge(args) -> int:
-    """Judge an existing run's frozen cells again. With ``--rejudge`` the new passes become the
-    headline; with ``--add-judges`` they join the passes the headline already holds and the
-    headline is rebuilt from all of them, blinded if those were. Earlier passes stay as actors
-    either way. Publish separately."""
-    adding = bool(getattr(args, "add_judges", None))
-    run_dir = Path(args.add_judges if adding else args.rejudge).resolve()
-    keep, _, blinded = run_judges(run_dir) if adding else ([], {}, False)
-    if adding and not keep:
-        raise SystemExit(f"{run_dir} has no judged headline to add to; use --rejudge")
-    args.blind = bool(args.blind) or blinded
-    stamp = time.strftime("%Y%m%d-%H%M%S")
-    out_dir = work_dir() / f"{'add-judges' if adding else 'rejudge'}-{stamp}"
-    out_dir.mkdir(parents=True)
-    subprocess.run(["make", "-C", str(HARNESS), "validate-judge-prep", f"RUN={run_dir}"]
-                   + (["BLIND=1"] if args.blind else []), check=True, capture_output=True)
-    actors = judge_passes(args, run_dir, out_dir, keep)
-    report = harness("validate", "report", "--run-dir", str(run_dir))
-    title = "Added judges to" if adding else "Re-judged"
-    lines = [f"# {title} {run_dir.name} ({stamp})", "", f"Headline passes: {', '.join(actors)}",
-             f"Report: {report.stdout.strip()}", "", judging(run_dir)["sentence"], ""] + arm_table(run_dir)
-    (out_dir / "summary.md").write_text("\n".join(lines) + "\n")
-    print("\n".join(lines))
-    return 0
-
-
-def judge_card(answer: Path, pass_index: int, passes: int) -> Path:
-    """The judge card for one pass: the session facts role.sh wrote beside the answer, plus
-    the brief's hash and which pass of how many this was. Written beside the answer."""
-    session = json.loads(answer.with_suffix(".md.card.json").read_text())
-    brief = BRIEFS / "judge.md"
-    session.update({"brief_sha256": hashlib.sha256(brief.read_bytes()).hexdigest(),
-                    "brief_path": str(brief.relative_to(UMBRELLA)),
-                    "pass_index": pass_index, "passes": passes})
-    card = answer.with_suffix(".card.json")
-    card.write_text(json.dumps(session, indent=1))
-    return card
-
-
-def judging(run_dir: Path) -> dict:
-    """Who judged the run, read through the harness's own card reader."""
-    out = subprocess.run(
-        ["uv", "--directory", str(HARNESS), "run", "python", "-c",
-         "import json, sys\nfrom harness.validate.judging import judge_summary\n"
-         "print(json.dumps(judge_summary(sys.argv[1])))", str(run_dir)],
-        check=True, capture_output=True, text=True).stdout
-    return json.loads(out)
-
-
-def arm_means(run_dir: Path) -> dict[str, dict]:
-    """Each arm's judged cell count, mean scores and harm flags."""
-    judged = [json.loads(l) for l in (run_dir / "judge.jsonl").read_text().splitlines() if l.strip()]
-    out = {}
-    for arm in sorted({r["backend_id"] for r in judged}):
-        rs = [r for r in judged if r["backend_id"] == arm]
-        mean = lambda k: round(sum(r[k] for r in rs) / len(rs), 2)
-        out[arm] = {"cells": len(rs), "accuracy": mean("accuracy"), "completeness": mean("completeness"),
-                    "relevance": mean("relevance"), "harm": sum(r["harm"] for r in rs)}
-    return out
-
-
-def arm_table(run_dir: Path) -> list[str]:
-    lines = ["| Arm | Cells | Accuracy | Completeness | Relevance | Harm |",
-             "| --- | ---: | ---: | ---: | ---: | ---: |"]
-    for arm, m in arm_means(run_dir).items():
-        lines.append(f"| {arm} | {m['cells']} | {m['accuracy']} | {m['completeness']} | "
-                     f"{m['relevance']} | {m['harm']} |")
-    return lines
-
-
-def run_day(run_dir: Path) -> str:
-    """Derive the run's YYYY-MM-DD date from recorded run metadata before mtime fallback."""
-    events_path = run_dir / "events.jsonl"
-    if events_path.is_file():
-        for line in events_path.read_text(encoding="utf-8").splitlines():
-            if not line.strip():
-                continue
-            try:
-                ev = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            ts = str(ev.get("timestamp") or "")
-            if ev.get("event_type") == "run" and re.match(r"^\d{4}-\d{2}-\d{2}", ts):
-                return ts[:10]
-    for name, keys in (("meta.json", ("slug", "generated_at")),
-                       ("run_meta.json", ("generated_at",)),
-                       ("run_manifest.json", ("generated_at",))):
-        p = run_dir / name
-        if p.is_file():
-            try:
-                payload = json.loads(p.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
-                continue
-            for k in keys:
-                val = str(payload.get(k) or "")
-                m = re.search(r"(\d{4}-\d{2}-\d{2})", val)
-                if m:
-                    return m.group(1)
-    return time.strftime("%Y-%m-%d", time.localtime((run_dir / "results.jsonl").stat().st_mtime))
-
-
-def publish_full(run_dir: Path, set_id: str) -> str:
-    """Freeze the run's dashboard beside its report and publish both to the reports site.
-
-    The frozen dashboard is the live one with every cell embedded, so the published page
-    drills into each turn as the live page did. Returns the published URL.
-    """
-    harness("validate", "report", "--run-dir", str(run_dir))
-    subprocess.run(["uv", "--directory", str(HARNESS), "run", "python", "scripts/validate-dashboard.py",
-                    "--freeze", str(run_dir / "dashboard.html"), "--run", str(run_dir)],
-                   check=True, capture_output=True)
-    # The run's day comes from its recorded run timestamp (or results mtime fallback) so
-    # copying a run directory or adding a judge pass later republishes into the same slug.
-    day = run_day(run_dir)
-    slug = f"l5-{set_id}-{day}-{run_dir.name[:8]}"
-    means = arm_means(run_dir)
-    # The index's score table is the report's own judge summary, frozen beside the report.
-    scout = subprocess.run(
-        ["uv", "--directory", str(HARNESS), "run", "python", "-c",
-         "import json, sys\nfrom harness.validate.reconcile import scout_summary\n"
-         "rows = [json.loads(l) for l in open(sys.argv[1]) if l.strip()]\n"
-         "print(json.dumps(scout_summary(rows, list(dict.fromkeys(r['backend_id'] for r in rows)))))",
-         str(run_dir / "judge.jsonl")], check=True, capture_output=True, text=True).stdout
-    # The judge travels with the scores: the catalog names it under every score table.
-    existing_meta = {}
-    if (run_dir / "meta.json").is_file():
-        try:
-            existing_meta = json.loads((run_dir / "meta.json").read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            existing_meta = {}
-    (run_dir / "meta.json").write_text(
-        json.dumps({**existing_meta, "scout": json.loads(scout), "judging": judging(run_dir)}, indent=2) + "\n"
-    )
-    # The index shows the judged scores as a table; the catalog's editor writes the takeaway.
-    # A run already in the catalog keeps the copy written for it.
-    listed = {r["slug"] for r in json.loads((UMBRELLA / "reports/reports-index.json").read_text())["runs"]}
-    title = "" if slug in listed else f"Full evaluation {set_id}, {day} ({run_dir.name[:8]})"
-    summary = "" if slug in listed else (
-        f"Full evaluation (L5) of the {set_id} comparison on the assembled local stack: "
-        f"{len(means)} setups, {sum(m['cells'] for m in means.values())} graded conversations.")
-    proc = subprocess.run([str(UMBRELLA / "scripts/publish-report.sh"), "chartsearchai", str(run_dir), slug,
-                           title, summary],
-                          cwd=UMBRELLA, capture_output=True, text=True)
-    (run_dir.parent / f"{run_dir.name}-publish.log").write_text(proc.stdout + proc.stderr)
-    log = run_dir.parent / f"{run_dir.name}-publish.log"
-    m = re.search(r"==> published: (\S+)", proc.stdout)
-    if not proc.returncode and m:
-        return m.group(1)
-    raise SystemExit(f"publishing {slug} failed; see {log}")
-
-
-def run_set_id(run_dir: Path) -> str:
-    """The comparison set a run recorded in its run event."""
-    for line in (run_dir / "events.jsonl").read_text().splitlines():
-        event = json.loads(line) if line.strip() else {}
-        if event.get("event_type") == "run" and event.get("comparison_set"):
-            return event["comparison_set"]
-    raise SystemExit(f"{run_dir}: no comparison_set in its run event")
 
 
 def main() -> int:
     global ACTIVE_RESULT
     ACTIVE_RESULT = None
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--pr", type=int)
+    ap = argparse.ArgumentParser(description="Run PR code review, stack review, reply drafting, and fixer rounds.")
+    ap.add_argument("--pr", type=int, required=True, help="Pull request number to review")
     ap.add_argument("--repository", help="Exact GitHub owner/repository; selects the matching remote")
     ap.add_argument("--fix", action="store_true", help="Authorize fixer commits and pushes between rounds")
-    ap.add_argument("--publish-evaluation", action="store_true")
     ap.add_argument("--repo", default="chartsearchai", choices=REPOS)
     ap.add_argument("--agent", default="claude", choices=("claude", "codex", "gemini", "human"))
     ap.add_argument("--effort", default="medium", choices=("low", "medium", "high"))
     ap.add_argument("--rounds", type=int, default=1)
     ap.add_argument("--stack", action="store_true")
     ap.add_argument("--replies", action="store_true", help="draft replies from the last round")
-    ap.add_argument("--scenarios", help="L3: a harness comparison set with turn checks")
     ap.add_argument("--no-review", action="store_true", help="skip the reviewer rounds")
-    ap.add_argument("--gate", help="L4: a pre-registered gate under review/gates/")
-    ap.add_argument("--gate-base", help="the base the gate compares with (default: the layer below)")
-    ap.add_argument("--full", action="store_true", help="L5: the full evaluation matrix")
-    ap.add_argument("--set", default="full-default")
-    ap.add_argument("--data-root", type=Path,
-                    help="a validation data root other than the harness's own (charts, scenarios, sets)")
-    ap.add_argument("--profiles", help="extra arms: comma-separated profiles the Hub advertises")
-    ap.add_argument("--baseline", help="an earlier full run id to cite for comparison")
-    ap.add_argument("--judge-passes", type=int, default=1,
-                    help="L5: judge the cells this many times in fresh sessions (default 1)")
-    ap.add_argument("--judge", dest="judges", action="append", metavar="AGENT:MODEL:EFFORT[:PASSES]",
-                    help="L5: a judge to use and its passes (default --judge-passes), repeatable; "
-                         "default is the run's agent with REVIEW_MODEL and REVIEW_REASONING")
-    ap.add_argument("--blind", action="store_true",
-                    help="L5: letter the arms and judge one scenario per session")
-    ap.add_argument("--no-publish", action="store_true",
-                    help="L5: keep the report and dashboard local instead of publishing them")
-    ap.add_argument("--publish", metavar="RUN_DIR", help="publish an already judged L5 run")
-    ap.add_argument("--rejudge", metavar="RUN_DIR",
-                    help="L5: judge an existing run's frozen cells again with the current judge")
-    ap.add_argument("--add-judges", metavar="RUN_DIR",
-                    help="L5: judge a judged run with more judges or passes; the headline is rebuilt "
-                         "from its passes and the new ones")
-    ap.add_argument("--resume", metavar="RUN_DIR",
-                    help="L5: carry that run's clean cells over and run only the rest (an added arm)")
-    ap.add_argument("--measure", help="run a set on the deployed stack and score it against --gold")
-    ap.add_argument("--gold", help="gold file under the harness's datasets/validation/")
     ap.add_argument("--checkout", help="a checkout other than the umbrella's for --repo")
     ap.add_argument("--threads-until", help="ISO instant: review the PR as it stood then")
     ap.add_argument("--consumer-head", help="Explicit consumer revision for cross-repository review")
@@ -963,18 +316,6 @@ def main() -> int:
         ap.error("--stack is report-only; fix an explicitly selected owning PR separately")
     if args.head and args.stack:
         ap.error("--head reviews one local layer; --stack reads the pushed stack")
-    if args.measure:
-        return measure(args.measure, args.gold)
-    if args.rejudge or args.add_judges:
-        return rejudge(args)
-    if args.publish:
-        run_dir = Path(args.publish).resolve()
-        print(f"Published: {publish_full(run_dir, run_set_id(run_dir))}")
-        return 0
-    if args.full and not args.pr:
-        return run_full(args)
-    if not args.pr:
-        ap.error("--pr is required unless --full runs alone")
 
     checkout = Path(args.checkout).resolve() if args.checkout else UMBRELLA / REPOS[args.repo]
     remote, slug = upstream(checkout, args.repository)
@@ -986,14 +327,30 @@ def main() -> int:
     fcntl.flock(run_lock, fcntl.LOCK_EX)
     if not args.replies and not args.no_review:
         ACTIVE_RESULT = out_dir / "result.json"
-        ACTIVE_RESULT.write_text(json.dumps({"execution": "running", "assessment": "undetermined",
-                                            "repository": slug, "pr": args.pr,
-                                            "requested_consumer_repo": args.consumer_repo,
-                                            "requested_consumer_head": args.consumer_head}))
-    threads = out_dir / ("reply-threads.json" if args.replies else
-                         "evaluation-threads.json" if args.no_review else "threads.json")
-    subprocess.run([str(BIN / "threads.py"), slug, str(args.pr), str(threads)]
-                   + (["--until", args.threads_until] if args.threads_until else []), check=True)
+        ACTIVE_RESULT.write_text(
+            json.dumps(
+                {
+                    "execution": "running",
+                    "assessment": "undetermined",
+                    "repository": slug,
+                    "pr": args.pr,
+                    "requested_consumer_repo": args.consumer_repo,
+                    "requested_consumer_head": args.consumer_head,
+                }
+            )
+        )
+    threads = out_dir / (
+        "reply-threads.json"
+        if args.replies
+        else "evaluation-threads.json"
+        if args.no_review
+        else "threads.json"
+    )
+    subprocess.run(
+        [str(BIN / "threads.py"), slug, str(args.pr), str(threads)]
+        + (["--until", args.threads_until] if args.threads_until else []),
+        check=True,
+    )
     meta = json.loads(threads.read_text())
     snapshot_hash = hashlib.sha256(threads.read_bytes()).hexdigest()
 
@@ -1002,25 +359,31 @@ def main() -> int:
         rounds = sorted(out_dir.glob("findings-*.json"))
         ledger = work_dir() / "ledger"
         prompt = (BRIEFS / "reply.md").read_text() + (
-            f"\n## Inputs\n\n- Threads: {threads} (snapshot {snapshot_hash})\n- Last round: {rounds[-1] if rounds else 'none'}\n"
+            f"\n## Inputs\n\n- Threads: {threads} (snapshot {snapshot_hash})\n"
+            f"- Last round: {rounds[-1] if rounds else 'none'}\n"
             f"- Probe ledger (red and green lines by commit): {ledger}\n"
-            f"- Commits on the PR: `git log {meta['base']}..refs/review/pr/{args.pr}`\n")
+            f"- Commits on the PR: `git log {meta['base']}..refs/review/pr/{args.pr}`\n"
+        )
         run_role(args, "reply", checkout, prompt, out_dir / "replies.md")
         print(f"drafted {out_dir / 'replies.md'}")
         return 0
 
     for k in range(1, 0 if args.no_review else args.rounds + 1):
-        # A local head is the round before the push: the PR's threads and body still apply, the
-        # code under review is the checkout's own ref, and the base is the local layer below.
-        head = (git(checkout, "rev-parse", "--verify", f"{args.head}^{{commit}}").strip() if args.head
-                else fetch_pr(checkout, remote, args.pr))
+        head = (
+            git(checkout, "rev-parse", "--verify", f"{args.head}^{{commit}}").strip()
+            if args.head
+            else fetch_pr(checkout, remote, args.pr)
+        )
         base = git(checkout, "rev-parse", args.base if args.base else f"{remote}/{meta['base']}").strip()
         wt = work_dir() / "wt-review" / args.repo / repository_key / str(args.pr)
         brief = (BRIEFS / "reviewer.md").read_text()
-        inputs = [f"- Repository checkout at the {'local, not yet pushed' if args.head else 'PR'} head {head}: {wt}",
-                  f"- Base: {base}", f"- Prepared Python interpreter: {os.environ.get('REVIEW_PYTHON', 'not supplied; report dependency gaps')}", f"- Threads and ticket: {threads} (snapshot {snapshot_hash})",
-                  f"- Effort: {args.effort}" + (" (from round 2 on, blocking findings only)"
-                                               if k > 1 else "")]
+        inputs = [
+            f"- Repository checkout at the {'local, not yet pushed' if args.head else 'PR'} head {head}: {wt}",
+            f"- Base: {base}",
+            f"- Prepared Python interpreter: {os.environ.get('REVIEW_PYTHON', 'not supplied; report dependency gaps')}",
+            f"- Threads and ticket: {threads} (snapshot {snapshot_hash})",
+            f"- Effort: {args.effort}" + (" (from round 2 on, blocking findings only)" if k > 1 else ""),
+        ]
         previous = out_dir / f"findings-{k - 1}.json"
         if previous.exists():
             inputs.append(f"- Previous round: {previous}")
@@ -1036,10 +399,15 @@ def main() -> int:
             brief += "\n" + (BRIEFS / "stack.md").read_text()
             inputs.append("- Layer snapshots: " + json.dumps(layers))
             if ledger_path.exists():
-                inputs.append("- Known issue identities (reuse root-cause keys; absence is not resolution): " + ledger_path.read_text())
-            inputs.append("- Stack, bottom to top (the checkout is the merged top "
-                          f"{target[:7]}):\n" + "\n".join(
-                              f"  - #{l['number']} {l['title']} ({l['head'][:7]})" for l in layers))
+                inputs.append(
+                    "- Known issue identities (reuse root-cause keys; absence is not resolution): "
+                    + ledger_path.read_text()
+                )
+            inputs.append(
+                "- Stack, bottom to top (the checkout is the merged top "
+                f"{target[:7]}):\n"
+                + "\n".join(f"  - #{l['number']} {l['title']} ({l['head'][:7]})" for l in layers)
+            )
         worktree(checkout, wt, target)
         consumer = None if args.no_consumer else args.consumer_repo or CONSUMERS.get(args.repo)
         missing_consumer = False
@@ -1055,10 +423,17 @@ def main() -> int:
             consumer_checkout = UMBRELLA / REPOS[consumer]
             consumer_sha = git(consumer_checkout, "rev-parse", args.consumer_head or "HEAD").strip()
             consumer_wt = worktree(consumer_checkout, out_dir / "consumer" / consumer, consumer_sha)
-            inputs.append(f"- Consumer repository ({consumer}) at supplied local revision {consumer_sha[:7]}, read-only: "
-                          f"{consumer_wt}")
-        answer = run_role(args, "reviewer", wt, brief + "\n## Inputs\n\n" + "\n".join(inputs) + "\n",
-                          out_dir / f"reviewer-{k}.md")
+            inputs.append(
+                f"- Consumer repository ({consumer}) at supplied local revision {consumer_sha[:7]}, read-only: "
+                f"{consumer_wt}"
+            )
+        answer = run_role(
+            args,
+            "reviewer",
+            wt,
+            brief + "\n## Inputs\n\n" + "\n".join(inputs) + "\n",
+            out_dir / f"reviewer-{k}.md",
+        )
         verify_checkout(wt, target)
         if consumer:
             verify_checkout(consumer_wt, consumer_sha)
@@ -1066,83 +441,119 @@ def main() -> int:
         changed = git(wt, "diff", "--name-only", f"{base}...{target}").splitlines()
         validate_review(data, target, changed)
         fresh = current_identity(slug, args.pr) if not args.head else None
-        stale = bool(fresh and (fresh["headRefOid"] != head or fresh["baseRefOid"] != requested_base
-                               or fresh["baseRefName"] != meta["base"]))
+        stale = bool(
+            fresh
+            and (
+                fresh["headRefOid"] != head
+                or fresh["baseRefOid"] != requested_base
+                or fresh["baseRefName"] != meta["base"]
+            )
+        )
         if args.stack and layers:
             for layer in layers:
                 current = current_identity(slug, layer["number"])
-                stale |= (current["headRefOid"] != layer["head"] or current["baseRefOid"] != layer["base"])
-        data.update(scope="source_review", repo=args.repo, repository=slug, pr=args.pr, requested_head=head, base=base, pr_base=requested_base,
-                    base_branch=meta["base"], identity_after=fresh,
-                    consumer_repo=consumer,
-                    consumer_head=consumer_sha if consumer else None,
-                    execution=("superseded" if stale else "partial" if data["unreviewed_files"] or missing_consumer else "complete"),
-                    behavior_verification="see evidence; not inferred from source review",
-                    findings=settle(data["findings"]))
+                stale |= current["headRefOid"] != layer["head"] or current["baseRefOid"] != layer["base"]
+        data.update(
+            scope="source_review",
+            repo=args.repo,
+            repository=slug,
+            pr=args.pr,
+            requested_head=head,
+            base=base,
+            pr_base=requested_base,
+            base_branch=meta["base"],
+            identity_after=fresh,
+            consumer_repo=consumer,
+            consumer_head=consumer_sha if consumer else None,
+            execution=(
+                "superseded"
+                if stale
+                else "partial"
+                if data["unreviewed_files"] or missing_consumer
+                else "complete"
+            ),
+            behavior_verification="see evidence; not inferred from source review",
+            findings=settle(data["findings"]),
+        )
         if args.stack and not stale:
-            # Attribution is structural data, not a prose suggestion. A stack
-            # report cannot publish one independent action item per occurrence.
             observations, decisions = [], []
-            for index, finding in enumerate(data['findings']):
-                required = ('issue_key', 'introduced_commit', 'origin_file', 'origin_evidence', 'owner_pr', 'affected_prs')
+            for index, finding in enumerate(data["findings"]):
+                required = (
+                    "issue_key",
+                    "introduced_commit",
+                    "origin_file",
+                    "origin_evidence",
+                    "owner_pr",
+                    "affected_prs",
+                )
                 if any(name not in finding for name in required):
-                    raise ValueError('Stack finding lacks canonical identity or introduction evidence')
+                    raise ValueError("Stack finding lacks canonical identity or introduction evidence")
                 occurrence_ids = []
-                for number in finding['affected_prs']:
-                    layer = next((p for p in layers if p['number'] == number), None)
+                for number in finding["affected_prs"]:
+                    layer = next((p for p in layers if p["number"] == number), None)
                     if layer is None:
-                        raise ValueError('Affected PR is outside the examined stack')
+                        raise ValueError("Affected PR is outside the examined stack")
                     oid = f"{index}:{number}"
                     occurrence_ids.append(oid)
-                    observations.append(dict(id=oid, pr=number, head=layer['head'], finding=finding))
-                decisions.append(dict(issue_key=finding['issue_key'], title=finding['finding'],
-                    introduced_commit=finding['introduced_commit'], origin_file=finding['origin_file'],
-                    origin_evidence=finding['origin_evidence'], owner_pr=finding['owner_pr'],
-                    status=finding.get('attribution_status', 'open'), occurrences=occurrence_ids,
-                    regression_of=finding.get('regression_of')))
-            data['stack_plan'] = consolidate(slug, checkout, layers, observations, decisions)
-            if data['stack_plan']['attribution_pending'] and data['execution'] == 'complete':
-                data['execution'] = 'partial'
-            if data['execution'] == 'complete':
-                merge_ledger(ledger_path, data['stack_plan'])
-        data["dependency_files"] = {str(p.relative_to(wt)): hashlib.sha256(p.read_bytes()).hexdigest()
-                                    for name in ("uv.lock", "poetry.lock", "yarn.lock", "package-lock.json", "pyproject.toml")
-                                    if (p := wt / name).is_file()}
-        data["assessment"] = ("undetermined" if data["execution"] != "complete" else
-                              "findings" if data["findings"] else "no_findings")
+                    observations.append(dict(id=oid, pr=number, head=layer["head"], finding=finding))
+                decisions.append(
+                    dict(
+                        issue_key=finding["issue_key"],
+                        title=finding["finding"],
+                        introduced_commit=finding["introduced_commit"],
+                        origin_file=finding["origin_file"],
+                        origin_evidence=finding["origin_evidence"],
+                        owner_pr=finding["owner_pr"],
+                        status=finding.get("attribution_status", "open"),
+                        occurrences=occurrence_ids,
+                        regression_of=finding.get("regression_of"),
+                    )
+                )
+            data["stack_plan"] = consolidate(slug, checkout, layers, observations, decisions)
+            if data["stack_plan"]["attribution_pending"] and data["execution"] == "complete":
+                data["execution"] = "partial"
+            if data["execution"] == "complete":
+                merge_ledger(ledger_path, data["stack_plan"])
+        data["dependency_files"] = {
+            str(p.relative_to(wt)): hashlib.sha256(p.read_bytes()).hexdigest()
+            for name in ("uv.lock", "poetry.lock", "yarn.lock", "package-lock.json", "pyproject.toml")
+            if (p := wt / name).is_file()
+        }
+        data["assessment"] = (
+            "undetermined"
+            if data["execution"] != "complete"
+            else "findings"
+            if data["findings"]
+            else "no_findings"
+        )
         ACTIVE_RESULT.write_text(json.dumps(data, indent=2))
         record(out_dir, k, data)
         blocking = [f for f in data["findings"] if f.get("blocking")]
-        print(f"round {k}: {len(blocking)} blocking, "
-              f"{len(data['findings']) - len(blocking)} questions -> {out_dir / f'round-{k}.md'}")
+        print(
+            f"round {k}: {len(blocking)} blocking, "
+            f"{len(data['findings']) - len(blocking)} questions -> {out_dir / f'round-{k}.md'}"
+        )
         if data["execution"] != "complete" or not blocking or k == args.rounds or not args.fix:
             break
         if args.agent == "human":
             print("fix the blocking findings on the PR branch, push, and re-run")
             return 3
-        fix_wt = worktree(checkout, work_dir() / "wt-fix" / args.repo / repository_key / str(args.pr),
-                          head, branch=meta["head_branch"])
-        run_role(args, "fixer", fix_wt, (BRIEFS / "fixer.md").read_text() +
-                 f"\n## Inputs\n\n- Findings to fix: {out_dir / f'findings-{k}.json'}\n"
-                 f"- Push with: git push -- {shlex.quote(remote)} {shlex.quote('HEAD:' + meta['head_branch'])}\n",
-                 out_dir / f"fixer-{k}.md")
-    status = 0
-    head = fetch_pr(checkout, remote, args.pr)
-    if args.scenarios:
-        status |= scenarios(args, head, out_dir)
-    if args.gate:
-        base = args.gate_base
-        if not base:
-            layers = [l for l in stack(checkout, remote, slug, meta["author"], args.pr, head)
-                      if l["head"] != head and subprocess.run(
-                          ["git", "-C", str(checkout), "merge-base", "--is-ancestor", l["head"], head]
-                      ).returncode == 0]
-            base = layers[-1]["head"] if layers else git(
-                checkout, "merge-base", head, f"{remote}/{meta['base']}").strip()
-        status |= run_gate(args, checkout, base, head, out_dir)
-    if args.full:
-        status |= run_full(args)
-    return status
+        fix_wt = worktree(
+            checkout,
+            work_dir() / "wt-fix" / args.repo / repository_key / str(args.pr),
+            head,
+            branch=meta["head_branch"],
+        )
+        run_role(
+            args,
+            "fixer",
+            fix_wt,
+            (BRIEFS / "fixer.md").read_text()
+            + f"\n## Inputs\n\n- Findings to fix: {out_dir / f'findings-{k}.json'}\n"
+            f"- Push with: git push -- {shlex.quote(remote)} {shlex.quote('HEAD:' + meta['head_branch'])}\n",
+            out_dir / f"fixer-{k}.md",
+        )
+    return 0
 
 
 if __name__ == "__main__":

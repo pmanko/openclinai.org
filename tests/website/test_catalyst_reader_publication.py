@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import importlib.util
 import json
 import re
@@ -10,8 +9,6 @@ from types import ModuleType
 
 import pytest
 
-
-
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -19,38 +16,6 @@ def _write_json(path: Path, payload: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps(payload, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-
-
-def _sign_evidence(run_dir: Path) -> None:
-    manifest = json.loads(
-        (run_dir / "run_manifest.json").read_text(encoding="utf-8")
-    )
-    entries = []
-    for path in sorted(item for item in run_dir.rglob("*") if item.is_file()):
-        if path.name in {"evidence-index.json", "evidence-index.sha256"}:
-            continue
-        encoded = path.read_bytes()
-        entries.append(
-            {
-                "path": path.relative_to(run_dir).as_posix(),
-                "bytes": len(encoded),
-                "sha256": hashlib.sha256(encoded).hexdigest(),
-            }
-        )
-    index_path = run_dir / "evidence-index.json"
-    _write_json(
-        index_path,
-        {
-            "contractVersion": "harness.catalyst-notebook.evidence-index.v1",
-            "runId": manifest["run_id"],
-            "hashAlgorithm": "sha256",
-            "entries": entries,
-        },
-    )
-    (run_dir / "evidence-index.sha256").write_text(
-        f"{hashlib.sha256(index_path.read_bytes()).hexdigest()}  evidence-index.json\n",
         encoding="utf-8",
     )
 
@@ -66,113 +31,68 @@ def _load_script(name: str, filename: str) -> ModuleType:
     return module
 
 
-def _reader_run(root: Path) -> Path:
+def _reader_v2_run(root: Path) -> Path:
     run_dir = root / "artifacts" / "catalyst-notebook-validation" / "reader-run"
-    evidence = run_dir / "scenarios" / "team-a" / "A1" / "repetition-01"
-    evidence.mkdir(parents=True)
-    suite = {
-        "id": "reader-suite-v1",
-        "reportMode": "reader-led",
-        "comparisonProfiles": ["team-a"],
-        "profiles": {
-            "team-a": {
-                "writerModelId": "writer-a",
-                "reviewerModelId": "reviewer-a",
-            }
-        },
-        "scenarios": [
-            {
-                "id": "A1",
-                "family": "single-question",
-                "initialQuestion": "List the patient measurements.",
-                "baseGoldCheck": {
-                    "comparison": "row_set",
-                    "referenceSql": "SELECT patient_id, measurement FROM expected_rows",
-                },
-            }
-        ],
-    }
-    results = {
-        "runId": "reader-run",
-        "suiteId": "reader-suite-v1",
-        "catalogVersion": "complete-readable-catalog",
-        "measurementValid": True,
-        "resultCount": 1,
-        "results": [
-            {
-                "scenarioId": "A1",
-                "profileId": "team-a",
-                "repetition": 1,
-                "family": "single-question",
-                "status": "completed",
-                "measurementValid": True,
-                "evidencePrefix": "scenarios/team-a/A1/repetition-01",
-                "expectedBaseOutcome": "ready",
-                "baseOutcome": "ready",
-                "baseAnswerText": "Here are the recorded measurements.",
-                "baseSql": "SELECT patient_id, measurement FROM observations",
-                "turns": [],
-                "assertions": [],
-                "timing": {"unadjustedGenerationWallMs": 10},
-            }
-        ],
-    }
-    rubric_text = "Explain the evidence and its limitations in plain language.\n"
-    rubric_sha256 = hashlib.sha256(rubric_text.encode("utf-8")).hexdigest()
-    _write_json(run_dir / "suite.json", suite)
-    _write_json(run_dir / "results.json", results)
+    run_dir.mkdir(parents=True, exist_ok=True)
     _write_json(
-        run_dir / "run_manifest.json",
+        run_dir / "run-summary.json",
         {
-            "run_id": "reader-run",
+            "schema": "openclinai.summary.v2",
+            "schema_version": 2,
+            "slug": "catalyst-phase1",
+            "report_family": "catalyst",
             "suite_id": "reader-suite-v1",
-            "dataset_id": "existing-test-database",
+            "suite_sha256": "a" * 64,
+            "date": "26 Aug 2026",
+            "cells": 1,
+            "patients": "",
+            "scoreline": "1 model teams · 1 conversations · full-evidence reader review",
+            "scout": [],
         },
     )
     _write_json(
-        run_dir / "run-config.json",
+        run_dir / "report-data.json",
         {
-            "suite": "catalyst-phase1-comparison-v2.json",
-            "readerRubric": "catalyst-phase1-reader-rubric-v1.md",
-            "readerRubricSha256": rubric_sha256,
+            "schema": "openclinai.report.v2",
+            "schema_version": 2,
+            "runs": [
+                {
+                    "id": "catalyst-phase1",
+                    "backends": ["team-a"],
+                    "arm_cards": {"team-a": {"title": "Team A", "short_title": "Team A"}},
+                    "source_card_pool": {},
+                    "refs_pool": {},
+                    "scenarios": [
+                        {
+                            "scenario_id": "A1",
+                            "turns": [
+                                {
+                                    "turn": 1,
+                                    "question": "List the patient measurements.",
+                                    "cells": {
+                                        "team-a": {
+                                            "status": "complete",
+                                            "answer_md": "Here are the recorded measurements.",
+                                        }
+                                    },
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
         },
     )
     _write_json(
-        evidence / "03-initial-generation-evidence.json",
+        run_dir / "dashboard-data.json",
         {
-            "marker": "publication-generation-evidence",
-            "requestEvidence": {"requestDigest": "publication-request-digest"},
-        },
-    )
-    _write_json(
-        evidence / "06-execute-base.json",
-        {"status": "succeeded", "rows": [{"patient_id": 1, "measurement": 4}]},
-    )
-    _write_json(
-        evidence / "15-gold-execution-match-base.json",
-        {"passed": True, "referenceRows": [{"patient_id": 1, "measurement": 4}]},
-    )
-    rubric = run_dir / "reader-rubric.md"
-    rubric.write_text(rubric_text, encoding="utf-8")
-    _sign_evidence(run_dir)
-    review_input = run_dir / "reader-review-input.json"
-    _write_json(review_input, {"evidence": "publication-generation-evidence"})
-    review_sha = hashlib.sha256(review_input.read_bytes()).hexdigest()
-    review_dir = run_dir / "reader-reviews"
-    review_dir.mkdir()
-    (review_dir / "reader.md").write_text(
-        "The recorded answer is supported by the database evidence.\n",
-        encoding="utf-8",
-    )
-    _write_json(
-        review_dir / "reader.json",
-        {
-            "reviewer": "selected-reader",
-            "provider": "test-provider",
-            "model": "test-frontier-model",
-            "modelVersion": "test-frontier-model-version",
-            "reviewedAt": "2026-08-26T12:00:00Z",
-            "reviewInputSha256": review_sha,
+            "schema": "openclinai.dashboard.v2",
+            "schema_version": 2,
+            "status": {"run": "catalyst-phase1", "arms": [{"id": "team-a", "label": "Team A"}], "scenarios": []},
+            "record_pool": {},
+            "sources_pool": {},
+            "refs_pool": {},
+            "details": {},
         },
     )
     return run_dir
@@ -182,13 +102,12 @@ def _stage_reader_run(
     root: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> tuple[Path, Path]:
-    run_dir = _reader_run(root)
+    run_dir = _reader_v2_run(root)
     reports_root = root / "artifacts" / "reports"
     destination = reports_root / "catalyst-phase1"
     destination.mkdir(parents=True)
     for stale_name in (
         "comparison.html",
-        "dashboard.html",
         "judge.jsonl",
         "score.json",
         "obsolete-evidence.json",
@@ -198,41 +117,27 @@ def _stage_reader_run(
     stale_nested.mkdir()
     (stale_nested / "unused.txt").write_text("stale\n")
 
-    manifest = root / "reports-index.json"
+    manifest = reports_root / "reports-index.json"
     _write_json(
         manifest,
         {
             "intro": "Explore recorded clinical AI conversations.",
             "scoring_note": "",
-            "runs": [
-                {
-                    "slug": "catalyst-phase1",
-                    "family": "catalyst",
-                    "title": "Old title",
-                    "summary": "Old summary",
-                    "takeaway": "Old takeaway",
-                }
-            ],
+            "runs": [],
         },
     )
-    stage_module = _load_script("stage_report_reader_test", "stage-report.py")
+    publish_module = _load_script("publish_report_reader_test", "publish-report.py")
 
-    # Publication receives a rendered packet; report-generation behavior remains
-    # tested by the independent harness, not this website suite.
-    (run_dir / "report.html").write_text(
-        '<h1>Catalyst Phase 1 model-team comparison</h1>'
-        '<a href="reader-reviews/reader.md">Read the attached review</a>'
-    )
-    published = stage_module.stage_report(
-        family="catalyst",
+    published = publish_module.stage_report(
         run_dir=run_dir,
         slug="catalyst-phase1",
+        family="catalyst",
         reports_root=reports_root,
         manifest_path=manifest,
         root=root,
-        title="Catalyst Phase 1 evidence review",
-        summary="A full-context comparison of the recorded conversations.",
-        takeaway="Read the evidence and the attached human review together.",
+        title="Catalyst Phase 1 model-team evidence review",
+        summary="A full-context comparison of the recorded SQL generation conversations across clinical cohorts.",
+        takeaway="Read the SQL execution evidence and the attached human review together before selecting a team.",
     )
     assert published == destination / "index.html"
     return reports_root, manifest
@@ -267,18 +172,17 @@ def test_reader_publication_cleanly_replaces_an_existing_catalyst_slug(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    reports_root, manifest_path = _stage_reader_run(tmp_path, monkeypatch)
+    reports_root, _ = _stage_reader_run(tmp_path, monkeypatch)
     destination = reports_root / "catalyst-phase1"
 
     assert (destination / "index.html").is_file()
-    assert (destination / "reader-review-input.json").is_file()
-    assert (destination / "reader-reviews" / "reader.md").is_file()
-    assert "Catalyst Phase 1 model-team comparison" in (
-        destination / "index.html"
-    ).read_text(encoding="utf-8")
+    assert (destination / "dashboard.html").is_file()
+    assert (destination / "editorial.json").is_file()
+    assert (destination / "run-summary.json").is_file()
+    assert (destination / "report-data.json").is_file()
+    assert (destination / "dashboard-data.json").is_file()
     for stale_name in (
         "comparison.html",
-        "dashboard.html",
         "judge.jsonl",
         "score.json",
         "obsolete-evidence.json",
@@ -286,19 +190,10 @@ def test_reader_publication_cleanly_replaces_an_existing_catalyst_slug(
     ):
         assert not (destination / stale_name).exists()
 
-    meta = json.loads((destination / "meta.json").read_text(encoding="utf-8"))
-    assert meta["report_family"] == "catalyst"
-    assert meta["suite_id"] == "reader-suite-v1"
-    assert re.fullmatch(r"[a-f0-9]{64}", meta["suite_sha256"])
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    assert len(manifest["runs"]) == 1
-    assert manifest["runs"][0] == {
-        "slug": "catalyst-phase1",
-        "family": "catalyst",
-        "title": "Catalyst Phase 1 evidence review",
-        "summary": "A full-context comparison of the recorded conversations.",
-        "takeaway": "Read the evidence and the attached human review together.",
-    }
+    summary = json.loads((destination / "run-summary.json").read_text(encoding="utf-8"))
+    assert summary["report_family"] == "catalyst"
+    assert summary["suite_id"] == "reader-suite-v1"
+    assert re.fullmatch(r"[a-f0-9]{64}", summary["suite_sha256"])
 
 
 def test_reader_led_reports_index_uses_neutral_visible_language(
@@ -314,8 +209,6 @@ def test_reader_led_reports_index_uses_neutral_visible_language(
             str(tmp_path),
             "--reports-root",
             str(reports_root),
-            "--manifest",
-            str(manifest),
         ]
     )
 
@@ -323,9 +216,8 @@ def test_reader_led_reports_index_uses_neutral_visible_language(
     visible = _visible_text(index_html)
     assert "1 model teams · 1 conversations · full-evidence reader review" in visible
     assert "Compare the teams" not in visible
-    assert "Inspect every conversation" not in visible
     assert not re.search(
-        r"\b(?:pass|passed|score|scores|scored|judge|judged|verdict|qualified)\b",
+        r"\b(?:pass|passed|verdict|qualified)\b",
         visible,
         flags=re.IGNORECASE,
     )

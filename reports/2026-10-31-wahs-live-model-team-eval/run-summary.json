@@ -1,0 +1,172 @@
+{
+  "schema": "openclinai.summary.v2",
+  "schema_version": 2,
+  "slug": "2026-10-31-wahs-live-model-team-eval",
+  "run_id": "c92f81d0-6b34-4e11-8f22-91a4e5082031",
+  "report_family": "wahs",
+  "dataset_id": "wahs-synthetic-and-real-r4",
+  "git_sha": "b6c2320",
+  "generated_at": "2026-10-31T08:15:00Z",
+  "date": "31 Oct 2026",
+  "cells": 128,
+  "patients": "Longitudinal complex care patient · 8 clinical questions × 3 setups",
+  "evaluation_modality": "live_model_and_team_eval",
+  "scoreline": "",
+  "scout": [
+    {
+      "backend": "team-wahs-kb",
+      "n": 32,
+      "benchmark_score": 88.6,
+      "accuracy_mean": 10.0,
+      "completeness_mean": 10.0,
+      "relevance_mean": 5.7,
+      "harm_count": 0,
+      "confabulation_count": 0,
+      "fabricated_citation_count": 0
+    },
+    {
+      "backend": "single-xcheck-labeled",
+      "n": 32,
+      "benchmark_score": 83.1,
+      "accuracy_mean": 9.1,
+      "completeness_mean": 9.6,
+      "relevance_mean": 5.5,
+      "harm_count": 0,
+      "confabulation_count": 0,
+      "fabricated_citation_count": 0
+    },
+    {
+      "backend": "single-kb-augmented",
+      "n": 32,
+      "benchmark_score": 80.7,
+      "accuracy_mean": 8.8,
+      "completeness_mean": 9.3,
+      "relevance_mean": 4.8,
+      "harm_count": 0,
+      "confabulation_count": 0,
+      "fabricated_citation_count": 0
+    },
+    {
+      "backend": "single-raw-condensed",
+      "n": 32,
+      "benchmark_score": 80.0,
+      "accuracy_mean": 8.4,
+      "completeness_mean": 9.0,
+      "relevance_mean": 5.2,
+      "harm_count": 0,
+      "confabulation_count": 0,
+      "fabricated_citation_count": 0
+    }
+  ],
+  "calibrated": [
+    {
+      "backend": "__run__",
+      "calibrated": {
+        "adjudicated": false,
+        "n_labeled": 0,
+        "n_all": 128,
+        "tier": null
+      }
+    },
+    {
+      "backend": "team-wahs-kb",
+      "calibrated": {
+        "adjudicated": false,
+        "n_labeled": 0,
+        "n_all": 32,
+        "point": 88.6
+      }
+    },
+    {
+      "backend": "single-xcheck-labeled",
+      "calibrated": {
+        "adjudicated": false,
+        "n_labeled": 0,
+        "n_all": 32,
+        "point": 83.1
+      }
+    },
+    {
+      "backend": "single-kb-augmented",
+      "calibrated": {
+        "adjudicated": false,
+        "n_labeled": 0,
+        "n_all": 32,
+        "point": 80.7
+      }
+    },
+    {
+      "backend": "single-raw-condensed",
+      "calibrated": {
+        "adjudicated": false,
+        "n_labeled": 0,
+        "n_all": 32,
+        "point": 80.0
+      }
+    }
+  ],
+  "judging": {
+    "recorded": true,
+    "sentence": "Judged by our automated clinical checklist and source-citation verifier."
+  },
+  "backends": [
+    "team-wahs-kb",
+    "single-xcheck-labeled",
+    "single-kb-augmented",
+    "single-raw-condensed"
+  ],
+  "arm_cards": {
+    "team-wahs-kb": {
+      "title": "4-agent specialist team + clinical rules",
+      "short_title": "4-agent specialist team + clinical rules",
+      "kind": "team",
+      "path": "4-agent specialist team + clinical rules",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "12B",
+          "quant": "Q8_0"
+        }
+      ]
+    },
+    "single-xcheck-labeled": {
+      "title": "Gemma 4 12B writer + Qwen 9B reviewer",
+      "short_title": "Gemma 4 12B writer + Qwen 9B reviewer",
+      "kind": "single",
+      "path": "Gemma 4 12B writer + Qwen 9B reviewer",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "12B",
+          "quant": "Q8_0"
+        }
+      ]
+    },
+    "single-kb-augmented": {
+      "title": "Single Gemma 4 12B + clinical rules",
+      "short_title": "Single Gemma 4 12B + clinical rules",
+      "kind": "single",
+      "path": "Single Gemma 4 12B + clinical rules",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "12B",
+          "quant": "Q8_0"
+        }
+      ]
+    },
+    "single-raw-condensed": {
+      "title": "Single Gemma 4 12B, chart only",
+      "short_title": "Single Gemma 4 12B, chart only",
+      "kind": "single",
+      "path": "Single Gemma 4 12B, chart only",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "12B",
+          "quant": "Q8_0"
+        }
+      ]
+    }
+  }
+}

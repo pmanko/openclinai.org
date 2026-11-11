@@ -1,0 +1,20 @@
+{
+  "schema": "openclinai.editorial.v2",
+  "schema_version": 2,
+  "slug": "gemma-quant-curve-2026-06-25",
+  "title": "Does 4-bit quantization break a clinical AI — and can a bigger model fix it?",
+  "summary": "Six single Google Gemma models reading the same patient charts, varied along two axes: precision (8-bit vs 4-bit) and size/architecture. Two are run at BOTH precisions — a 4-billion on-device model (E4B) and a 12B dense model — to isolate quantization; alongside them a 31B dense model and a 26B sparse Mixture-of-Experts (which fires only ~4B parameters per token), both at 4-bit. Each makes a fast Answer plus a separate In-Depth, both graded. 62 clinical questions across three patients (two adults with HIV/TB, a pediatric infant), judged against the full chart by an automated clinical rubric.",
+  "takeaway": "Cutting a model to 4-bit costs the 12B about 7 benchmark points AND its safety — at 8-bit it scored 84 with zero unsafe answers; at 4-bit, 76 with two. Recovering that loss by going BIGGER barely works: a 31B at 4-bit buys back only ~1 point, while simply restoring 8-bit on the 12B buys back all 7 — for this model class, spend memory on precision, not parameters. The efficiency standout was the sparse Mixture-of-Experts (26B-A4B): second-best quality (80) at HALF the latency of any other model, with just one unsafe answer. And 4-bit is most dangerous where there's least capacity to spare: the small 4B model at 4-bit was the floor (68), with the most unsafe answers (3) and the most invented facts for things not in the chart (6). Directional results from a single automated judge on a small sample, not a formal benchmark.",
+  "family": "chartsearchai",
+  "featured": true,
+  "catalog_order": 24,
+  "arms": {
+    "q-12b-q8": "Gemma 4 12B (8-bit precision)",
+    "q-26b-q4": "Gemma 4 26B MoE (4-bit precision)",
+    "q-31b-q4": "Gemma 4 31B (4-bit precision)",
+    "q-12b-q4": "Gemma 4 12B (4-bit precision)",
+    "q-e4b-q8": "Gemma 4 E4B (8-bit precision)",
+    "q-e4b-q4": "Gemma 4 E4B (4-bit precision)"
+  },
+  "date": "25 Jun 2026"
+}

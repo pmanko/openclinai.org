@@ -1,0 +1,17 @@
+{
+  "schema": "openclinai.editorial.v2",
+  "schema_version": 2,
+  "slug": "catalyst-notebook-t094-2026-07-22",
+  "title": "Catalyst notebook acceptance: can an AI-drafted SQL conversation survive real refinement?",
+  "summary": "A different validation family from the chart-QA runs above: Catalyst turns a plain-language clinical question into governed SQL (a Gemma 4 12B writer drafted, a Qwen 2.5 14B reviewer checked, a deterministic policy enforcing read-only execution), then a follow-up instruction refines the exact current query. Four scenario families × 3 repetitions against the live stack and a real PostgreSQL: narrowing an unchanged base, aggregating from a dirty editor with a mid-session profile switch, correcting an unresolved parameter, and a semantic distinct-patient review. Every executed result is re-checked two ways — against an independently-run gold query (byte-level execution match) and by an independent read-only PostgreSQL cross-check.",
+  "takeaway": "All 12 scenario repetitions passed — 384/384 assertions, including every gold execution-match: the SQL the models produced returned exactly the rows an independently-authored gold query returns, on every repetition. This is an acceptance gate on one synthetic 96-patient laboratory cohort, not a benchmark — it demonstrates the governed notebook loop (draft → review → validate → execute → refine) is reliable end-to-end on real infrastructure, not that the models never err (the advisory validator and deterministic policy exist precisely because they do).",
+  "family": "catalyst",
+  "featured": true,
+  "catalog_order": 17,
+  "arms": {
+    "catalyst-query-gemma-4-12b": "Gemma 4 12B writer + Qwen 2.5 14B reviewer",
+    "catalyst-query-qwen-2.5-14b": "Qwen 2.5 14B writer + Gemma 4 12B reviewer"
+  },
+  "context": "Historical development report. Its methods, acceptance rules and conclusions apply to that recorded run, not the current release.",
+  "date": "22 Jul 2026"
+}

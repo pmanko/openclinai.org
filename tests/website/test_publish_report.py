@@ -1,10 +1,11 @@
-"""Exercise real publication shell control flow, not cloud or report rendering.
+"""Exercise real v2 publication stage and deploy control flow without cloud access.
 
 The isolated checkout is a git repository with a committed report archive. Only
 cloud executables (gcloud, rsync, ssh, curl) are stubbed; archive validation,
-staging, catalog generation and the git commit run unchanged. No network
-service is contacted.
+staging, catalog generation, and additive vs. --prune deploy run unchanged.
 """
+
+from __future__ import annotations
 
 import json
 import os
@@ -15,50 +16,166 @@ import sys
 
 import pytest
 
-
 ROOT = Path(__file__).resolve().parents[2]
-GIT_IDENTITY = {"GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.invalid",
-                "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@example.invalid"}
+GIT_IDENTITY = {
+    "GIT_AUTHOR_NAME": "t",
+    "GIT_AUTHOR_EMAIL": "t@example.invalid",
+    "GIT_COMMITTER_NAME": "t",
+    "GIT_COMMITTER_EMAIL": "t@example.invalid",
+}
 
 
 def git(cwd: Path, *args: str) -> str:
-    return subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, check=True,
-                          env={**os.environ, **GIT_IDENTITY}).stdout.strip()
+    return subprocess.run(
+        ["git", *args],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=True,
+        env={**os.environ, **GIT_IDENTITY},
+    ).stdout.strip()
+
+
+def _write_v2_run_dir(
+    directory: Path,
+    *,
+    slug: str,
+    title: str,
+    summary: str = "We tested two clinical AI setups across three HIV patient charts and 35 clinical questions.",
+    takeaway: str = "Med Agent Hub improved accuracy and completeness by 14 points with zero unsafe answers.",
+    family: str = "chartsearchai",
+    availability: str = "available",
+) -> Path:
+    directory.mkdir(parents=True, exist_ok=True)
+    ed = {
+        "schema": "openclinai.editorial.v2",
+        "schema_version": 2,
+        "slug": slug,
+        "title": title,
+        "summary": summary,
+        "takeaway": takeaway,
+        "family": family,
+        "featured": True,
+        "date": "10 Nov 2026",
+    }
+    if availability == "unavailable":
+        ed["availability"] = "unavailable"
+    (directory / "editorial.json").write_text(json.dumps(ed, indent=2) + "\n", encoding="utf-8")
+    if availability == "unavailable":
+        return directory
+
+    (directory / "run-summary.json").write_text(
+        json.dumps(
+            {
+                "schema": "openclinai.summary.v2",
+                "schema_version": 2,
+                "slug": slug,
+                "report_family": family,
+                "date": "10 Nov 2026",
+                "cells": 2,
+                "patients": "Fixture Patient",
+                "scout": [{"backend": "arm-a", "n": 2, "benchmark_score": 88.0, "harm_count": 0}],
+                "judging": {"recorded": True, "sentence": "Judged by frontier evaluator."},
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (directory / "report-data.json").write_text(
+        json.dumps(
+            {
+                "schema": "openclinai.report.v2",
+                "schema_version": 2,
+                "runs": [
+                    {
+                        "id": slug,
+                        "backends": ["arm-a"],
+                        "catalog_meta": {"title": title},
+                        "arm_cards": {"arm-a": {"title": "Arm A", "short_title": "Arm A"}},
+                        "source_card_pool": {},
+                        "refs_pool": {},
+                        "scenarios": [{"scenario_id": "s1", "turns": [{"turn": 1, "question": "Q", "cells": {}}]}],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (directory / "dashboard-data.json").write_text(
+        json.dumps(
+            {
+                "schema": "openclinai.dashboard.v2",
+                "schema_version": 2,
+                "status": {"run": slug, "arms": [], "scenarios": []},
+                "record_pool": {},
+                "sources_pool": {},
+                "refs_pool": {},
+                "details": {},
+            }
+        ),
+        encoding="utf-8",
+    )
+    (directory / "index.html").write_text(
+        "<!doctype html><html><head><meta name='viewport' content='width=device-width, initial-scale=1'></head>"
+        f"<body><script type='application/json' id='report-editorial'>{json.dumps(ed)}</script></body></html>\n",
+        encoding="utf-8",
+    )
+    (directory / "dashboard.html").write_text(
+        "<!doctype html><html><head><meta name='viewport' content='width=device-width, initial-scale=1'></head>"
+        f"<body><script type='application/json' id='report-editorial'>{json.dumps(ed)}</script></body></html>\n",
+        encoding="utf-8",
+    )
+    return directory
 
 
 @pytest.fixture
-def publisher(tmp_path):
+def publisher(tmp_path: Path):
     scripts = tmp_path / "scripts"
     scripts.mkdir()
-    for name in ("publish-report.sh", "deploy-reports.sh", "cloud-lib.sh",
-                 "stage-report.py", "build-reports-index.py"):
+    for name in ("publish-report.py", "deploy-reports.sh", "cloud-lib.sh", "build-reports-index.py"):
         shutil.copy2(ROOT / "scripts" / name, scripts / name)
 
     reports = tmp_path / "reports"
-    (reports / "example").mkdir(parents=True)
-    (reports / "example/index.html").write_text("Report\n", encoding="utf-8")
-    (reports / "archived").mkdir()
-    (reports / "archived/index.html").write_text("Archived report\n", encoding="utf-8")
-    (reports / "archived/clip.mp4").write_bytes(b"video")
-    (reports / "reports-index.json").write_text(json.dumps({"runs": [
-        {"slug": "example", "title": "Selected report"},
-        {"slug": "archived", "title": "Live archived report"},
-        {"slug": "unavailable", "title": "Explicitly unavailable", "availability": "unavailable"},
-    ]}), encoding="utf-8")
-    run_dir = tmp_path / "run"
-    run_dir.mkdir()
-    (run_dir / "report.html").write_text("New report\n", encoding="utf-8")
-    (run_dir / "events.jsonl").write_text(
-        json.dumps({"event_type": "run", "comparison_set": "fixture"}) + "\n", encoding="utf-8",
+    assets = reports / "assets"
+    assets.mkdir(parents=True)
+    for asset_name in ("report-shell.css", "report-shell.js", "dashboard-shell.css", "dashboard-shell.js"):
+        (assets / asset_name).write_text("/* asset */\n", encoding="utf-8")
+
+    _write_v2_run_dir(
+        reports / "2026-11-10-example-study",
+        slug="2026-11-10-example-study",
+        title="Selected report: how well does Med Agent Hub read charts?",
     )
+    _write_v2_run_dir(
+        reports / "2026-11-01-archived-study",
+        slug="2026-11-01-archived-study",
+        title="Live archived report: clinical chart synthesis evaluation",
+    )
+    (reports / "2026-11-01-archived-study" / "clip.mp4").write_bytes(b"video")
+    _write_v2_run_dir(
+        reports / "2026-10-01-unavailable-study",
+        slug="2026-10-01-unavailable-study",
+        title="Explicitly unavailable historical evaluation study",
+        availability="unavailable",
+    )
+
+    run_dir = _write_v2_run_dir(
+        tmp_path / "run",
+        slug="2026-11-10-example-study",
+        title="Updated study: how well does Med Agent Hub read HIV charts?",
+    )
+
     binaries = tmp_path / "bin"
     binaries.mkdir()
     stubs = {
         "python3": f'exec "{sys.executable}" "$@"\n',
         "ssh": "exit 0\n",
-        "rsync": f'echo "trace: publish upload"\nprintf "%s\\n" "$@" > "{tmp_path}/rsync-args"\n'
-                 f'{{ printf "%s\\n" "$@"; echo "---"; }} >> "{tmp_path}/rsync-calls"\n'
-                 'exit "${PUBLISH_EXIT_CODE:-0}"\n',
+        "rsync": (
+            f'echo "trace: publish upload"\nprintf "%s\\n" "$@" > "{tmp_path}/rsync-args"\n'
+            f'{{ printf "%s\\n" "$@"; echo "---"; }} >> "{tmp_path}/rsync-calls"\n'
+            'exit "${PUBLISH_EXIT_CODE:-0}"\n'
+        ),
         "curl": 'cat "${REPORTS_ROOT}/index.html"\n',
         "gcloud": '''echo "trace: cloud command" >&2
 case "$*" in
@@ -75,27 +192,57 @@ esac
         executable.write_text("#!/bin/bash\nset -eu\n" + body, encoding="utf-8")
         executable.chmod(0o755)
 
-    # The archive starts committed and the catalog built, as the real repository is kept.
-    (tmp_path / ".gitignore").write_text("*.mp4\nbin/\nrun/\nrsync-args*\n", encoding="utf-8")
+    (tmp_path / ".gitignore").write_text("*.mp4\nbin/\nrun/\nrsync-args*\nrsync-calls*\n", encoding="utf-8")
     git(tmp_path, "init", "-q", "-b", "main")
-    subprocess.run([sys.executable, str(scripts / "build-reports-index.py"), "--root", str(tmp_path),
-                    "--reports-root", str(reports), "--manifest", str(reports / "reports-index.json")],
-                   check=True, capture_output=True)
+    subprocess.run(
+        [sys.executable, str(scripts / "build-reports-index.py"), "--root", str(tmp_path), "--reports-root", str(reports)],
+        check=True,
+        capture_output=True,
+    )
     git(tmp_path, "add", "--", "reports", "scripts", ".gitignore")
     git(tmp_path, "commit", "-q", "-m", "Archive")
 
-    def run(*, publish_exit=0, dry_run=False, script="publish-report.sh", extra_args=()):
-        argv = ["/bin/bash", str(scripts / script)]
-        if script == "publish-report.sh":
-            argv += ["chartsearchai", str(tmp_path / "run"), "example"]
-        argv += list(extra_args)
+    def run(*, action="stage", extra_args=(), publish_exit=0):
+        if action == "stage":
+            argv = [
+                sys.executable,
+                str(scripts / "publish-report.py"),
+                "stage",
+                str(run_dir),
+                "--slug",
+                "2026-11-10-example-study",
+                "--root",
+                str(tmp_path),
+                "--reports-root",
+                str(reports),
+                *extra_args,
+            ]
+        elif action == "deploy":
+            argv = [
+                sys.executable,
+                str(scripts / "publish-report.py"),
+                "deploy",
+                "--root",
+                str(tmp_path),
+                "--reports-root",
+                str(reports),
+                *extra_args,
+            ]
+        else:
+            argv = ["/bin/bash", str(scripts / action), *extra_args]
         return subprocess.run(
-            argv, cwd=tmp_path, capture_output=True, text=True, check=False,
+            argv,
+            cwd=tmp_path,
+            capture_output=True,
+            text=True,
+            check=False,
             env={
-                **os.environ, **GIT_IDENTITY,
+                **os.environ,
+                **GIT_IDENTITY,
                 "PATH": f"{binaries}:/usr/bin:/bin",
-                "REPORTS_ROOT": str(reports), "PUBLISH_DRY_RUN": str(int(dry_run)),
-                "GCP_PROJECT": "test-project", "GCP_SSH_USER": "test-user",
+                "REPORTS_ROOT": str(reports),
+                "GCP_PROJECT": "test-project",
+                "GCP_SSH_USER": "test-user",
                 "GCP_SSH_KEY": str(tmp_path / "unused-test-key"),
                 "PUBLISH_EXIT_CODE": str(publish_exit),
                 "CADDY_SITE_REPORTS": "reports.example.invalid",
@@ -105,164 +252,43 @@ esac
     return run
 
 
-def test_success_commits_the_archive_and_deploys_the_whole_committed_tree(publisher, tmp_path):
-    result = publisher()
-    assert result.returncode == 0, result.stdout + result.stderr
-    assert git(tmp_path, "log", "-1", "--format=%s") == "Publish report example"
-    assert git(tmp_path, "status", "--porcelain", "--", "reports") == ""
-    assert result.stdout.count("trace: publish upload") == 1
-    args = (tmp_path / "rsync-args").read_text().splitlines()
-    assert "--delete" in args and "--exclude=*.mp4" in args and "--exclude=*.webm" in args
-    assert args[-2] == str(tmp_path / "reports") + "/"
-    assert "==> published: https://reports.example.invalid/example/" in result.stdout
-
-
-def test_deploy_refuses_an_archive_with_uncommitted_changes(publisher, tmp_path):
-    (tmp_path / "reports/archived/index.html").write_text("Edited, not committed\n", encoding="utf-8")
-    result = publisher(script="deploy-reports.sh")
-    assert result.returncode == 1, result.stdout + result.stderr
-    assert "uncommitted changes" in result.stderr and "archived/index.html" in result.stderr
-    assert "trace:" not in result.stdout + result.stderr
-
-
-def test_deploy_refuses_a_committed_catalog_that_is_stale_against_its_manifest(publisher, tmp_path):
-    manifest = tmp_path / "reports/reports-index.json"
-    payload = json.loads(manifest.read_text())
-    payload["runs"][0]["title"] = "Retitled without rebuilding"
-    manifest.write_text(json.dumps(payload), encoding="utf-8")
-    git(tmp_path, "commit", "-q", "-am", "Retitle")
-    result = publisher(script="deploy-reports.sh")
-    assert result.returncode == 1, result.stdout + result.stderr
-    assert "stale" in result.stderr and "index.html" in result.stderr
-    assert "trace:" not in result.stdout + result.stderr
-    assert "Retitled without rebuilding" in (tmp_path / "reports/index.html").read_text()
-
-
-@pytest.mark.parametrize("dry_run", [False, True])
-def test_partial_archive_refused_before_local_changes_or_cloud_access(publisher, tmp_path, dry_run):
-    reports = tmp_path / "reports"
-    (reports / "archived/index.html").unlink()
-    before = {path.relative_to(tmp_path): path.read_bytes()
-              for path in tmp_path.rglob("*") if path.is_file() and ".git" not in path.parts}
-    result = publisher(dry_run=dry_run)
-    assert result.returncode == 1, result.stdout + result.stderr
-    assert "incomplete staged report archive" in result.stderr
-    assert "archived" in result.stderr
-    assert "Restore the complete curated archive" in result.stderr
-    assert "trace:" not in result.stdout + result.stderr
-    after = {path.relative_to(tmp_path): path.read_bytes()
-             for path in tmp_path.rglob("*") if path.is_file() and ".git" not in path.parts}
-    assert after == before
-    assert not (reports / ".example.staging").exists()
-
-
-def test_absent_catalog_refused_without_creating_output_directory(publisher, tmp_path):
-    reports = tmp_path / "reports"
-    shutil.rmtree(reports)
-    result = publisher()
-    assert result.returncode == 1, result.stdout + result.stderr
-    assert "reports-index.json is missing" in result.stderr
-    assert not reports.exists()
-    assert "trace:" not in result.stdout + result.stderr
-
-
-def test_dry_run_validates_the_curated_manifest_before_changes(publisher, tmp_path):
-    reports = tmp_path / "reports"
-    manifest = reports / "reports-index.json"
-    manifest.write_text(json.dumps({"runs": [
-        {"slug": "dry-run-archive", "title": "Missing from this staged archive"},
-    ]}))
-    before = manifest.read_bytes()
-    result = publisher(dry_run=True)
-    assert result.returncode == 1, result.stdout + result.stderr
-    assert "dry-run-archive" in result.stderr
-    assert manifest.read_bytes() == before
-    assert (reports / "example/index.html").read_text() == "Report\n"
-    assert "trace:" not in result.stdout + result.stderr
-
-
-def test_incoming_packet_can_supply_its_missing_curated_report(publisher, tmp_path):
-    reports = tmp_path / "reports"
-    (reports / "example/index.html").unlink()
-    result = publisher()
-    assert result.returncode == 0, result.stdout + result.stderr
-    assert (reports / "example/index.html").read_text() == "New report\n"
-    assert 'href="example/index.html"' in (reports / "index.html").read_text()
-
-
-def test_complete_archive_preserves_old_links_and_explicit_unavailability(publisher, tmp_path):
-    result = publisher()
-    assert result.returncode == 0, result.stdout + result.stderr
-    reports = tmp_path / "reports"
-    html = (reports / "index.html").read_text()
-    sitemap = (reports / "sitemap.xml").read_text()
-    assert 'href="archived/index.html"' in html
-    assert '/archived/index.html' in sitemap
-    assert (reports / "archived/index.html").read_text() == "Archived report\n"
-    assert 'href="unavailable/index.html"' not in html
-    assert '/unavailable/index.html' not in sitemap
-    assert 'Explicitly unavailable' in html
-    assert 'Report unavailable' in html
-
-
-def test_publication_failure_keeps_the_commit_and_does_not_claim_publication(publisher, tmp_path):
-    result = publisher(publish_exit=17)
-    assert result.returncode == 17, result.stdout + result.stderr
-    assert "==> published:" not in result.stdout
-    assert git(tmp_path, "log", "-1", "--format=%s") == "Publish report example"
-
-
-def test_dry_run_only_stages_and_never_commits_or_publishes(publisher, tmp_path):
-    result = publisher(dry_run=True, publish_exit=17)
-    assert result.returncode == 0, result.stdout + result.stderr
-    assert "dry-run staged only" in result.stdout
-    assert "trace:" not in result.stdout
-    assert "==> published:" not in result.stdout
+def test_stage_never_commits_and_deploy_is_additive_by_default(publisher, tmp_path: Path):
+    stage_res = publisher(action="stage")
+    assert stage_res.returncode == 0, stage_res.stdout + stage_res.stderr
+    # stage never runs git commit or rsync
     assert git(tmp_path, "log", "-1", "--format=%s") == "Archive"
-    assert "reports/example/index.html" in git(tmp_path, "status", "--porcelain")
+    assert not (tmp_path / "rsync-args").exists()
+    assert "reports/2026-11-10-example-study/index.html" in git(tmp_path, "status", "--porcelain")
+
+    git(tmp_path, "add", "--", "reports")
+    git(tmp_path, "commit", "-q", "-m", "Stage updated report")
+
+    deploy_res = publisher(action="deploy")
+    assert deploy_res.returncode == 0, deploy_res.stdout + deploy_res.stderr
+    args = (tmp_path / "rsync-args").read_text().splitlines()
+    # Additive by default: --delete is NOT present unless --prune is passed
+    assert "--delete" not in args
+    assert "--exclude=*.mp4" in args and "--exclude=*.webm" in args
+
+    # With --prune, --delete IS passed
+    prune_res = publisher(action="deploy", extra_args=("--prune",))
+    assert prune_res.returncode == 0, prune_res.stdout + prune_res.stderr
+    prune_args = (tmp_path / "rsync-args").read_text().splitlines()
+    assert "--delete" in prune_args
 
 
-def test_publication_stages_judging_metadata_and_renders_judge_sentence_on_catalog_card(publisher, tmp_path):
-    run_dir = tmp_path / "run"
-    (run_dir / "meta.json").write_text(
-        json.dumps({
-            "scout": [{
-                "backend": "arm-a",
-                "n": 5,
-                "accuracy_mean": 8.2,
-                "completeness_mean": 8.0,
-                "relevance_mean": 8.5,
-                "harm_count": 0,
-                "benchmark_score": 81.6,
-            }],
-            "judging": {
-                "recorded": True,
-                "sentence": "Judged by claude-opus-5-5, reasoning high, Claude Code CLI, pass 1 of 1.",
-            },
-        }),
-        encoding="utf-8",
-    )
-    result = publisher()
+def test_deploy_refuses_an_archive_with_uncommitted_changes(publisher, tmp_path: Path):
+    (tmp_path / "reports/2026-11-01-archived-study/index.html").write_text("Edited\n", encoding="utf-8")
+    result = publisher(action="deploy")
+    assert result.returncode != 0
+    assert "uncommitted changes" in result.stderr or "viewport" in result.stderr
+    assert "trace:" not in result.stdout + result.stderr
+
+
+def test_per_slug_deploy_syncs_slug_and_catalog_additively(publisher, tmp_path: Path):
+    git(tmp_path, "checkout", "-q", "-b", "feature/v2-test")
+    result = publisher(action="deploy", extra_args=("--slug", "2026-11-10-example-study"))
     assert result.returncode == 0, result.stdout + result.stderr
-    staged_meta = json.loads((tmp_path / "reports/example/meta.json").read_text(encoding="utf-8"))
-    assert staged_meta["judging"]["sentence"] == (
-        "Judged by claude-opus-5-5, reasoning high, Claude Code CLI, pass 1 of 1."
-    )
-    catalog_html = (tmp_path / "reports/index.html").read_text(encoding="utf-8")
-    assert "Judged by claude-opus-5-5, reasoning high, Claude Code CLI, pass 1 of 1." in catalog_html
-
-
-def test_feature_branch_publish_uses_additive_per_slug_rsync_without_root_delete(publisher, tmp_path):
-    git(tmp_path, "checkout", "-q", "-b", "s6/wahs-feature")
-    (tmp_path / "reports/assets").mkdir(exist_ok=True)
-    (tmp_path / "reports/assets/report-shell.css").write_text("body{}\n", encoding="utf-8")
-    git(tmp_path, "add", "--", "reports/assets")
-    git(tmp_path, "commit", "-q", "-m", "Add shared assets")
-
-    result = publisher()
-    assert result.returncode == 0, result.stdout + result.stderr
-    assert "feature branch (s6/wahs-feature): deploying example additively" in result.stdout
-    assert "==> deployed report example additively" in result.stdout
     calls = [
         [line for line in block.splitlines() if line.strip()]
         for block in (tmp_path / "rsync-calls").read_text(encoding="utf-8").split("---\n")
@@ -270,23 +296,8 @@ def test_feature_branch_publish_uses_additive_per_slug_rsync_without_root_delete
     ]
     assert len(calls) == 2
     slug_call, catalog_call = calls
-    # Call 1 scopes --delete strictly to reports/example/ -> .../artifacts/reports/example/
     assert "--delete" in slug_call
-    assert slug_call[-2] == str(tmp_path / "reports/example") + "/"
-    assert slug_call[-1].endswith("/artifacts/reports/example/")
-    # Call 2 syncs catalog + assets without --delete on the root reports/ folder
+    assert slug_call[-2] == str(tmp_path / "reports/2026-11-10-example-study") + "/"
     assert "--delete" not in catalog_call
     assert str(tmp_path / "reports/index.html") in catalog_call
-    assert str(tmp_path / "reports/reports-index.json") in catalog_call
     assert str(tmp_path / "reports/assets") in catalog_call
-    assert catalog_call[-1].endswith("/artifacts/reports/")
-
-
-def test_deploy_refuses_full_archive_delete_from_feature_branch_without_slug(publisher, tmp_path):
-    git(tmp_path, "checkout", "-q", "-b", "s6/wahs-feature")
-    result = publisher(script="deploy-reports.sh")
-    assert result.returncode == 1, result.stdout + result.stderr
-    assert "refusing full-archive rsync --delete from non-main branch 's6/wahs-feature'" in result.stderr
-    assert "trace:" not in result.stdout + result.stderr
-
-

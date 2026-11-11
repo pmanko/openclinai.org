@@ -17,10 +17,12 @@ def test_harness_carries_no_website_sources_or_publication_tooling():
 def test_publication_does_not_import_or_install_the_harness():
     """Invariant: publication reads captured artifacts and never imports or runs the harness."""
     for script in (ROOT / 'scripts').iterdir():
-        if script.name.startswith(('publish-', 'stage-report', 'build-reports', 'reshell-reports')):
+        if script.name.startswith(('publish-', 'preview-report', 'build-reports')):
             text = script.read_text()
             for coupling in ('from harness', 'import harness', 'harness-cli', 'uv run'):
                 assert coupling not in text, (script.name, coupling)
+    for retired in ('reshell-reports.py', 'publish-report.sh', 'stage-report.py'):
+        assert not (ROOT / 'scripts' / retired).exists(), f'retired script {retired} still exists'
 
 
 def test_relocated_media_is_checked_before_it_is_staged_in_git():
@@ -34,22 +36,33 @@ def test_relocated_media_is_checked_before_it_is_staged_in_git():
 
 
 def test_published_reports_separate_data_from_display_shell():
-    """Invariant: every published report separates report-data.json from a lightweight index.html shell."""
+    """Invariant: every published report is a 6-file v2 packet separating JSON data from lightweight HTML shells."""
     reports_root = ROOT / 'reports'
     assert (reports_root / 'assets' / 'report-shell.css').is_file()
     assert (reports_root / 'assets' / 'report-shell.js').is_file()
+    assert (reports_root / 'assets' / 'dashboard-shell.css').is_file()
+    assert (reports_root / 'assets' / 'dashboard-shell.js').is_file()
     report_dirs = [
         d for d in sorted(reports_root.iterdir())
         if d.is_dir() and d.name != 'assets' and (d / 'index.html').is_file()
     ]
     assert len(report_dirs) >= 35
     for d in report_dirs:
+        for req_file in ('editorial.json', 'run-summary.json', 'report-data.json', 'dashboard-data.json', 'index.html', 'dashboard.html'):
+            assert (d / req_file).is_file(), f'missing {req_file} in {d.name}'
         html_path = d / 'index.html'
+        dash_path = d / 'dashboard.html'
         data_path = d / 'report-data.json'
-        assert data_path.is_file(), f'missing report-data.json in {d.name}'
         assert data_path.stat().st_size > 100, f'empty report-data.json in {d.name}'
         html = html_path.read_text(encoding='utf-8')
+        dash_html = dash_path.read_text(encoding='utf-8')
         assert html_path.stat().st_size <= 10 * 1024, f'index.html not a lightweight shell in {d.name}'
+        assert dash_path.stat().st_size <= 10 * 1024, f'dashboard.html not a lightweight shell in {d.name}'
         assert '../assets/report-shell.css?v=' in html, d.name
         assert '../assets/report-shell.js?v=' in html, d.name
-        assert "data-src='./report-data.json'" in html, d.name
+        assert "data-src='./report-data.json" in html, d.name
+        assert "id='report-editorial'" in html, d.name
+        assert '../assets/dashboard-shell.css?v=' in dash_html, d.name
+        assert '../assets/dashboard-shell.js?v=' in dash_html, d.name
+        assert "data-src='./dashboard-data.json" in dash_html, d.name
+        assert "id='report-editorial'" in dash_html, d.name

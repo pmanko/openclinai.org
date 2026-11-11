@@ -206,10 +206,10 @@
     <div class="links"><a class="btn" href="2026-11-05-macbook-full-default-12b-parallel1-a35a95fd/index.html">Full report</a><a class="btn ghost" href="2026-11-05-macbook-full-default-12b-parallel1-a35a95fd/dashboard.html">Interactive dashboard</a></div>
   </header>
   
-  
+  <div class="card-highlights"><span class="hl-pill hl-safe">✓ 0 unsafe answers across all 2 setups</span></div>
   <p class="takeaway"><span class="tk">Takeaway</span>Both setups answered all 35 questions with zero system errors and smooth live word-by-word streaming once generation started, but the single memory slot exposed a major caching bottleneck. Built-in ChartSearchAI reused 99.9% of the patient chart in memory across follow-up questions (1.3s median wait for the first word), whereas Med Agent Hub&#x27;s short post-answer citation-matching call overwrote that single memory slot — forcing a 34.0s chart reload on the next question and motivating our two-slot and single-call fixes.</p>
   <p class="summary">To diagnose why local laptop deployments sometimes pause for 30 seconds before streaming the first word, we instrumented live token-by-token streaming and memory-cache tracking on a 64 GB MacBook running Gemma 4 12B with a single active memory slot, comparing built-in ChartSearchAI and Med Agent Hub across 35 HIV chart questions each.</p>
-  <div class="unscored">34/34 scenario×arm cells conformant (70 turns, 0 errors) · Bundled TTFT 1.3s median (9.4s Answer-Done) vs. Hub TTFT 34.0s median (35.9s Answer-Done) on single-slot parallel=1 · 20–30 streamed SSE answer_delta frames/turn</div>
+  <div class="report-table-scroll" role="region" aria-label="Recorded score tables" tabindex="0"><table class="scout"><thead><tr><th class="arm">AI setup</th><th>Questions</th><th>Accuracy</th><th>Completeness</th><th>Relevance</th><th>Unsafe<br>answers</th></tr></thead><tbody><tr><td class="arm" title="engine-parity-bundled-12b">Built-in ChartSearchAI (Gemma 4 12B)</td><td>0</td><td>—</td><td>—</td><td>—</td><td title="harm: 0 · confabulations: 0 · fabricated citations: 0">0</td></tr><tr><td class="arm" title="engine-parity-hub-answer-12b">Med Agent Hub (Gemma 4 12B)</td><td>0</td><td>—</td><td>—</td><td>—</td><td title="harm: 0 · confabulations: 0 · fabricated citations: 0">0</td></tr></tbody></table></div><p class="judged-by">Judge not recorded for this run.</p>
   
   </article>
   <article class="card" data-family="wahs">
@@ -263,7 +263,7 @@
   <article class="card" data-family="wahs">
   <header class="card-head">
     <div class="titles"><span class="family wahs">WA Health Summary · Condensation &amp; Retrieval Ablation</span><h2>How tightly can we shrink a multi-decade medical chart before the AI loses important history — and can on-demand search win it back?</h2><div class="slug">Longitudinal complex care patient · 8 clinical questions × 2 condensation methods · 160 graded answers · 31 Oct 2026</div></div>
-    <div class="links"><a class="btn" href="2026-10-31-wahs-condensation-ablation/index.html">Full report</a><a class="btn ghost" href="https://wahs-demo.openclinai.org/">Try the WA Health Summary Demo</a></div>
+    <div class="links"><a class="btn" href="2026-10-31-wahs-condensation-ablation/index.html">Full report</a><a class="btn ghost" href="2026-10-31-wahs-condensation-ablation/dashboard.html">Interactive dashboard</a><a class="btn ghost" href="https://wahs-demo.openclinai.org/">Try the WA Health Summary Demo</a></div>
   </header>
   
   <div class="card-highlights"><span class="hl-pill hl-win">★ Best setup: <b>2k-token compact summary + on-demand chart search</b> (88.6/100)</span><span class="hl-pill hl-safe">✓ 0 unsafe answers across all 5 setups</span></div>
@@ -275,7 +275,7 @@
   <article class="card" data-family="wahs">
   <header class="card-head">
     <div class="titles"><span class="family wahs">WA Health Summary · Deterministic Pipeline Gate</span><h2>Can deterministic chart condensation shrink an 18 MB medical record by 99% without losing active problems, drug conflicts, or privacy protections?</h2><div class="slug">Longitudinal complex care patient · 8 clinical questions × 5 summary budgets · 96 rubric cases · 30 Oct 2026</div></div>
-    <div class="links"><a class="btn" href="2026-10-30-wahs-phase2-eval/index.html">Full report</a><a class="btn ghost" href="https://wahs-demo.openclinai.org/">Try the WA Health Summary Demo</a></div>
+    <div class="links"><a class="btn" href="2026-10-30-wahs-phase2-eval/index.html">Full report</a><a class="btn ghost" href="2026-10-30-wahs-phase2-eval/dashboard.html">Interactive dashboard</a><a class="btn ghost" href="https://wahs-demo.openclinai.org/">Try the WA Health Summary Demo</a></div>
   </header>
   
   <div class="card-highlights"><span class="hl-pill hl-win">★ Best setup: <b>8k-token condensed chart + clinical rules</b> (88.6/100)</span><span class="hl-pill hl-safe">✓ 0 unsafe answers across all 3 setups</span></div>
@@ -335,25 +335,25 @@
   <article class="card" data-family="catalyst">
   <header class="card-head">
     <div class="titles"><span class="family catalyst">Catalyst SQL</span><h2>Catalyst Phase 1: three model teams on the locked HIV suite</h2><div class="slug">36 conversations · 25 Aug 2026</div></div>
-    <div class="links"><a class="btn" href="catalyst-phase1-comparison/index.html">Read the report</a><a class="btn ghost" href="catalyst-phase1-comparison/comparison.html">Compare the teams</a><a class="btn ghost" href="catalyst-phase1-comparison/dashboard.html">Inspect every conversation</a><a class="btn ghost" href="catalyst-phase1-comparison/run-config.json">Run seed (JSON)</a></div>
+    <div class="links"><a class="btn" href="catalyst-phase1-comparison/index.html">Read the report</a><a class="btn ghost" href="catalyst-phase1-comparison/dashboard.html">Inspect every conversation</a></div>
   </header>
   <p class="report-context">Historical development report. Its methods, acceptance rules and conclusions apply to that recorded run, not the current release.</p>
-  
+  <div class="card-highlights"><span class="hl-pill hl-win">★ Best setup: <b>Gemma 4 12B writer + Qwen 2.5 14B reviewer</b> (82.9/100)</span><span class="hl-pill hl-warn">0 of 3 setups with 0 unsafe answers (14 flagged total)</span></div>
   <p class="takeaway"><span class="tk">Takeaway</span>No team cleared the acceptance bar (≥90% overall, ≥80% per scenario). Best: the Qwen-reviewed team at 8/12. An independent AI judge rated the SQL itself consistently well-built (median 100/100 across 44 queries) — the failures came from misreading ambiguous questions, the same two follow-ups for every team. Next lever: question understanding, not query craft.</p>
   <p class="summary">Catalyst turns plain-English clinical questions into database queries it runs itself. Three AI team configurations each faced the same twelve questions about an HIV dataset — including vague ones they had to ask about, and impossible ones they had to refuse — with every answer checked row-for-row against an independently written reference.</p>
-  <div class="unscored">3 teams · gemma-4-12b 7/12 · gemma-4-12b-q4-checked 7/12 · gemma-4-12b-qwen2.5-14b-checked 8/12 · Advisory judge median: 100/100</div>
+  <div class="report-table-scroll" role="region" aria-label="Recorded score tables" tabindex="0"><table class="scout"><thead><tr><th class="arm">AI setup</th><th>Questions</th><th class="bench">Benchmark<br>/100</th><th>Accuracy</th><th>Completeness</th><th>Relevance</th><th>Unsafe<br>answers</th></tr></thead><tbody><tr><td class="arm" title="catalyst-query-gemma-4-12b-qwen2.5-14b-checked">Gemma 4 12B writer + Qwen 2.5 14B reviewer</td><td>12</td><td class="bench best">82.9</td><td class="best">7.9</td><td class="best">9.8</td><td>8.8</td><td class="harm" title="harm: 4 · confabulations: 0 · fabricated citations: 0">4</td></tr><tr><td class="arm" title="catalyst-query-gemma-4-12b-q4-checked">Gemma 4 12B writer + Gemma 4 12B reviewer</td><td>12</td><td class="bench">80.9</td><td>7.6</td><td class="best">9.8</td><td class="best">9.1</td><td class="harm" title="harm: 5 · confabulations: 0 · fabricated citations: 0">5</td></tr><tr><td class="arm" title="catalyst-query-gemma-4-12b">Gemma 4 12B (single-model SQL)</td><td>12</td><td class="bench">79.2</td><td>7.3</td><td class="best">9.8</td><td>8.8</td><td class="harm" title="harm: 5 · confabulations: 0 · fabricated citations: 0">5</td></tr></tbody></table></div><p class="judged-by">Evaluated via deterministic PostgreSQL row-set execution match + advisory SQL rubric judge.</p>
   
   </article>
   <article class="card" data-family="catalyst">
   <header class="card-head">
-    <div class="titles"><span class="family catalyst">Catalyst SQL</span><h2>Catalyst notebook acceptance: can an AI-drafted SQL conversation survive real refinement?</h2><div class="slug">5 graded answers · 22 Jul 2026</div></div>
-    <div class="links"><a class="btn" href="catalyst-notebook-t094-2026-07-22/index.html">Read the report</a></div>
+    <div class="titles"><span class="family catalyst">Catalyst SQL</span><h2>Catalyst notebook acceptance: can an AI-drafted SQL conversation survive real refinement?</h2><div class="slug">5 conversations · 22 Jul 2026</div></div>
+    <div class="links"><a class="btn" href="catalyst-notebook-t094-2026-07-22/index.html">Read the report</a><a class="btn ghost" href="catalyst-notebook-t094-2026-07-22/dashboard.html">Inspect every conversation</a></div>
   </header>
   <p class="report-context">Historical development report. Its methods, acceptance rules and conclusions apply to that recorded run, not the current release.</p>
-  
+  <div class="card-highlights"><span class="hl-pill hl-win">★ Best setup: <b>Gemma 4 12B writer + Qwen 2.5 14B reviewer</b> (91.0/100)</span><span class="hl-pill hl-safe">✓ 0 unsafe answers across all 2 setups</span></div>
   <p class="takeaway"><span class="tk">Takeaway</span>All 12 scenario repetitions passed — 384/384 assertions, including every gold execution-match: the SQL the models produced returned exactly the rows an independently-authored gold query returns, on every repetition. This is an acceptance gate on one synthetic 96-patient laboratory cohort, not a benchmark — it demonstrates the governed notebook loop (draft → review → validate → execute → refine) is reliable end-to-end on real infrastructure, not that the models never err (the advisory validator and deterministic policy exist precisely because they do).</p>
   <p class="summary">A different validation family from the chart-QA runs above: Catalyst turns a plain-language clinical question into governed SQL (a Gemma 4 12B writer drafted, a Qwen 2.5 14B reviewer checked, a deterministic policy enforcing read-only execution), then a follow-up instruction refines the exact current query. Four scenario families × 3 repetitions against the live stack and a real PostgreSQL: narrowing an unchanged base, aggregating from a dirty editor with a mid-session profile switch, correcting an unresolved parameter, and a semantic distinct-patient review. Every executed result is re-checked two ways — against an independently-run gold query (byte-level execution match) and by an independent read-only PostgreSQL cross-check.</p>
-  <div class="unscored">12/12 scenario repetitions passed · 384 assertions · gold execution-match + independent PostgreSQL cross-checks · 22 Jul 2026</div>
+  <div class="report-table-scroll" role="region" aria-label="Recorded score tables" tabindex="0"><table class="scout"><thead><tr><th class="arm">AI setup</th><th>Questions</th><th class="bench">Benchmark<br>/100</th><th>Accuracy</th><th>Completeness</th><th>Relevance</th><th>Unsafe<br>answers</th></tr></thead><tbody><tr><td class="arm" title="catalyst-query-gemma-4-12b">Gemma 4 12B writer + Qwen 2.5 14B reviewer</td><td>5</td><td class="bench best">91.0</td><td class="best">10.0</td><td class="best">8.0</td><td class="best">9.5</td><td title="harm: 0 · confabulations: 0 · fabricated citations: 0">0</td></tr><tr><td class="arm" title="catalyst-query-qwen-2.5-14b">Qwen 2.5 14B writer + Gemma 4 12B reviewer</td><td>0</td><td class="bench">—</td><td>—</td><td>—</td><td>—</td><td title="harm: 0 · confabulations: 0 · fabricated citations: 0">0</td></tr></tbody></table></div><p class="judged-by">Evaluated via deterministic PostgreSQL row-set execution match + advisory SQL rubric judge.</p>
   
   </article>
   <article class="card" data-family="catalyst">
@@ -398,10 +398,10 @@
     <div class="links"><a class="btn" href="hub-profile-team-focus-diagnostic-2026-07-13/index.html">Full report</a><a class="btn ghost" href="hub-profile-team-focus-diagnostic-2026-07-13/dashboard.html">Interactive dashboard</a></div>
   </header>
   
-  
+  <div class="card-highlights"><span class="hl-pill hl-safe">✓ 0 unsafe answers across all 3 setups</span></div>
   <p class="takeaway"><span class="tk">Takeaway</span>Every setup ran end to end and recorded stage timings, while surfacing formatting and table-citation bugs that were fixed before the scored runs above.</p>
   <p class="summary">An 18-question engineering test of the 4B single model, 12B single model, and multi-agent team profiles to verify stage timing and formatting before running a full scored benchmark.</p>
-  <div class="unscored">Open the report for its recorded methods and results.</div>
+  <div class="report-table-scroll" role="region" aria-label="Recorded score tables" tabindex="0"><table class="scout"><thead><tr><th class="arm">AI setup</th><th>Questions</th><th>Accuracy</th><th>Completeness</th><th>Relevance</th><th>Unsafe<br>answers</th></tr></thead><tbody><tr><td class="arm" title="product-e4b-checked">Gemma 4 E4B (4-bit, checked single)</td><td>0</td><td>—</td><td>—</td><td>—</td><td title="harm: 0 · confabulations: 0 · fabricated citations: 0">0</td></tr><tr><td class="arm" title="product-12b-checked">Gemma 4 12B (8-bit, checked single)</td><td>0</td><td>—</td><td>—</td><td>—</td><td title="harm: 0 · confabulations: 0 · fabricated citations: 0">0</td></tr><tr><td class="arm" title="product-team-med-checked">Multi-agent medical team (Gemma + MedGemma + Qwen)</td><td>0</td><td>—</td><td>—</td><td>—</td><td title="harm: 0 · confabulations: 0 · fabricated citations: 0">0</td></tr></tbody></table></div><p class="judged-by">Judge not recorded for this run.</p>
   
   </article>
   <article class="card" data-family="chartsearchai">
@@ -539,7 +539,7 @@
   <article class="card" data-family="chartsearchai">
   <header class="card-head">
     <div class="titles"><span class="family chartsearchai">ChartSearchAI</span><h2>Single model or AI team — which answers priority questions better?</h2><div class="slug">Zabella Talai Halambe · 160 graded answers · 7 Jun 2026</div></div>
-    <div class="links"><a class="btn" href="priority-run-5arm-judged-2026-06-04/index.html">Full report</a></div>
+    <div class="links"><a class="btn" href="priority-run-5arm-judged-2026-06-04/index.html">Full report</a><a class="btn ghost" href="priority-run-5arm-judged-2026-06-04/dashboard.html">Interactive dashboard</a></div>
   </header>
   
   <div class="card-highlights"><span class="hl-pill hl-win">★ Best setup: <b>Google Gemma 4 26B MoE (single model)</b> (84.0/100)</span><span class="hl-pill hl-safe">✓ 0 unsafe answers across all 5 setups</span></div>
@@ -551,7 +551,7 @@
   <article class="card" data-family="chartsearchai">
   <header class="card-head">
     <div class="titles"><span class="family chartsearchai">ChartSearchAI</span><h2>How safe were our earliest AI-team setups?</h2><div class="slug">Aloice Beiywa Mukangu · 180 graded answers · 7 Jun 2026</div></div>
-    <div class="links"><a class="btn" href="aloice-run-5arm-2026-06-04/index.html">Full report</a></div>
+    <div class="links"><a class="btn" href="aloice-run-5arm-2026-06-04/index.html">Full report</a><a class="btn ghost" href="aloice-run-5arm-2026-06-04/dashboard.html">Interactive dashboard</a></div>
   </header>
   
   <div class="card-highlights"><span class="hl-pill hl-win">★ Best setup: <b>AI team — Advanced</b> (70.4/100)</span><span class="hl-pill hl-warn">2 of 5 setups with 0 unsafe answers (11 flagged total)</span></div>

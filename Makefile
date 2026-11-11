@@ -417,18 +417,9 @@ review-hooks-install:
 	  [ "$$d" = . ] || review/bin/probe --repo $$d --baseline; \
 	done
 
-REVIEW_ARGS = $(if $(REPOSITORY),--repository $(REPOSITORY)) $(if $(FIX),--fix) $(if $(PUBLISH_EVALUATION),--publish-evaluation) $(if $(PR),--pr $(PR)) $(if $(REPO),--repo $(REPO)) $(if $(AGENT),--agent $(AGENT)) \
+REVIEW_ARGS = $(if $(REPOSITORY),--repository $(REPOSITORY)) $(if $(FIX),--fix) $(if $(PR),--pr $(PR)) $(if $(REPO),--repo $(REPO)) $(if $(AGENT),--agent $(AGENT)) \
 	$(if $(EFFORT),--effort $(EFFORT)) $(if $(ROUNDS),--rounds $(ROUNDS)) $(if $(STACK),--stack) \
-	$(if $(SCENARIOS),--scenarios $(SCENARIOS)) $(if $(NO_REVIEW),--no-review) \
-	$(if $(GATE),--gate $(GATE)) $(if $(GATE_BASE),--gate-base $(GATE_BASE)) \
-	$(if $(FULL),--full $(if $(filter command line,$(origin SET)),--set $(SET))) \
-	$(if $(PROFILES),--profiles $(PROFILES)) $(if $(BASELINE),--baseline $(BASELINE)) \
-	$(if $(DATA_ROOT),--data-root $(abspath $(DATA_ROOT))) \
-	$(if $(NO_PUBLISH),--no-publish) $(if $(PUBLISH),--publish $(PUBLISH)) $(if $(L5_RESUME),--resume $(L5_RESUME)) \
-	$(if $(JUDGE_PASSES),--judge-passes $(JUDGE_PASSES)) $(if $(REJUDGE),--rejudge $(REJUDGE)) \
-	$(if $(ADD_JUDGES),--add-judges $(ADD_JUDGES)) \
-	$(foreach j,$(JUDGES),--judge $(j)) $(if $(BLIND),--blind) \
-	$(if $(MEASURE),--measure $(MEASURE) --gold $(GOLD)) \
+	$(if $(NO_REVIEW),--no-review) \
 	$(if $(THREADS_UNTIL),--threads-until $(THREADS_UNTIL)) $(if $(NO_CONSUMER),--no-consumer) \
 	$(if $(CONSUMER_HEAD),--consumer-head $(CONSUMER_HEAD)) \
 	$(if $(CONSUMER_REPO),--consumer-repo $(CONSUMER_REPO)) \
@@ -441,3 +432,11 @@ review:
 
 review-replies:
 	review/bin/review.py $(REVIEW_ARGS) --replies
+
+run-eval:
+	python3 scripts/run-eval.py $(if $(FULL),--full) $(if $(filter command line,$(origin SET)),--set $(SET)) \
+		$(if $(PROFILES),--profiles $(PROFILES)) $(if $(BASELINE),--baseline $(BASELINE)) \
+		$(if $(DATA_ROOT),--data-root $(abspath $(DATA_ROOT))) $(if $(L5_RESUME),--resume $(L5_RESUME)) \
+		$(if $(AGENT),--agent $(AGENT)) $(if $(JUDGE_PASSES),--judge-passes $(JUDGE_PASSES)) \
+		$(if $(REJUDGE),--rejudge $(REJUDGE)) $(if $(ADD_JUDGES),--add-judges $(ADD_JUDGES)) \
+		$(foreach j,$(JUDGES),--judge $(j)) $(if $(BLIND),--blind)

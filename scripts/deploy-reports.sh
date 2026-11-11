@@ -13,19 +13,29 @@ REPORTS_ROOT="${REPORTS_ROOT:-${ROOT}/reports}"
 MANIFEST="${REPORTS_ROOT}/reports-index.json"
 
 SLUG=""
+PRUNE="0"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --slug)
-      SLUG="${2:?usage: deploy-reports.sh [--slug <slug>]}"
+      SLUG="${2:?usage: deploy-reports.sh [--slug <slug>] [--prune]}"
       shift 2
       ;;
+    --prune)
+      PRUNE="1"
+      shift
+      ;;
     *)
-      echo "error: unknown argument: $1 (usage: deploy-reports.sh [--slug <slug>])" >&2
+      echo "error: unknown argument: $1 (usage: deploy-reports.sh [--slug <slug>] [--prune])" >&2
       exit 1
       ;;
   esac
 done
 SLUG="${SLUG:-${DEPLOY_SLUG:-}}"
+
+if [[ -n "${SLUG}" && "${PRUNE}" == "1" ]]; then
+  echo "error: --prune cannot be combined with --slug." >&2
+  exit 1
+fi
 
 if [[ -n "${SLUG}" && ! -f "${REPORTS_ROOT}/${SLUG}/index.html" ]]; then
   echo "error: staged report ${REPORTS_ROOT}/${SLUG}/index.html does not exist." >&2
@@ -35,7 +45,7 @@ fi
 BRANCH="$(git -C "${REPORTS_ROOT}" symbolic-ref --short HEAD 2>/dev/null || echo "detached")"
 if [[ -z "${SLUG}" && "${BRANCH}" != "main" && "${BRANCH}" != "master" && "${ALLOW_BRANCH_FULL_DEPLOY:-0}" != "1" ]]; then
   echo "error: refusing full-archive rsync --delete from non-main branch '${BRANCH}'." >&2
-  echo "Use 'scripts/deploy-reports.sh --slug <slug>' (or 'scripts/publish-report.sh') for additive per-slug publishing on feature branches, or deploy from main." >&2
+  echo "Use 'scripts/publish-report.py deploy --slug <slug>' for additive per-slug publishing on feature branches, or deploy from main." >&2
   exit 1
 fi
 
@@ -173,7 +183,11 @@ if [[ -n "${SLUG}" ]]; then
     "${CATALOG_ITEMS[@]}" \
     "${GCP_SSH_USER}@${IP}:${GCP_REMOTE_REPO}/artifacts/reports/"
 else
-  rsync -az --delete --exclude='*.mp4' --exclude='*.webm' --exclude='.DS_Store' \
+  RSYNC_DEL_FLAG=()
+  if [[ "${PRUNE}" == "1" ]]; then
+    RSYNC_DEL_FLAG=(--delete)
+  fi
+  rsync -az ${RSYNC_DEL_FLAG[@]+"${RSYNC_DEL_FLAG[@]}"} --exclude='*.mp4' --exclude='*.webm' --exclude='.DS_Store' \
     -e "ssh -i ${GCP_SSH_KEY} -o StrictHostKeyChecking=accept-new" \
     "${REPORTS_ROOT}/" \
     "${GCP_SSH_USER}@${IP}:${GCP_REMOTE_REPO}/artifacts/reports/"
