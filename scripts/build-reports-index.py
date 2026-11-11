@@ -13,6 +13,7 @@ Edit reports/reports-index.json to add/remove runs or change the copy, then reru
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -966,6 +967,23 @@ def stamp_editorial_into_page(html_path: Path, ed: dict) -> None:
             count=1,
             flags=re.S,
         )
+    page_dir = html_path.parent
+    assets_dir = page_dir.parent / "assets"
+    for rel_url, disk_path in (
+        ("../assets/report-shell.css", assets_dir / "report-shell.css"),
+        ("../assets/report-shell.js", assets_dir / "report-shell.js"),
+        ("../assets/dashboard-shell.css", assets_dir / "dashboard-shell.css"),
+        ("../assets/dashboard-shell.js", assets_dir / "dashboard-shell.js"),
+        ("./report-data.json", page_dir / "report-data.json"),
+        ("./dashboard-data.json", page_dir / "dashboard-data.json"),
+    ):
+        if disk_path.is_file():
+            ver = hashlib.sha256(disk_path.read_bytes()).hexdigest()[:10]
+            updated = re.sub(
+                re.escape(rel_url) + r"\?v=[A-Za-z0-9_-]+",
+                f"{rel_url}?v={ver}",
+                updated,
+            )
     if updated != raw:
         html_path.write_text(updated, encoding="utf-8")
 
@@ -973,6 +991,8 @@ def stamp_editorial_into_page(html_path: Path, ed: dict) -> None:
 def stamp_editorial_shells(reports_root: Path) -> None:
     """Stamp `<script id='report-editorial'>` into staged report shells after validation succeeds."""
     for ed_path in sorted(reports_root.glob("*/editorial.json")):
+        if ed_path.parent.name.startswith("."):
+            continue
         ed = json.loads(ed_path.read_text(encoding="utf-8"))
         ed["slug"] = ed_path.parent.name
         if ed.get("availability") != "unavailable":
@@ -986,7 +1006,9 @@ def compile_manifest_from_editorial(
     *,
     stamp_shells: bool = False,
 ) -> dict | None:
-    ed_files = sorted(reports_root.glob("*/editorial.json"))
+    ed_files = [
+        p for p in sorted(reports_root.glob("*/editorial.json")) if not p.parent.name.startswith(".")
+    ]
     if not ed_files:
         return None
     base = existing_manifest if isinstance(existing_manifest, dict) else {}

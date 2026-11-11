@@ -301,3 +301,28 @@ def test_per_slug_deploy_syncs_slug_and_catalog_additively(publisher, tmp_path: 
     assert "--delete" not in catalog_call
     assert str(tmp_path / "reports/index.html") in catalog_call
     assert str(tmp_path / "reports/assets") in catalog_call
+
+
+def test_stage_restores_previous_packet_when_archive_validation_fails(publisher, tmp_path: Path):
+    existing_dir = tmp_path / "reports/2026-11-10-example-study"
+    before_files = {
+        p.name: p.read_bytes() for p in sorted(existing_dir.iterdir()) if p.is_file()
+    }
+    before_manifest = (tmp_path / "reports/reports-index.json").read_bytes()
+    before_index = (tmp_path / "reports/index.html").read_bytes()
+
+    # Overlong arm_cards[*].short_title (>48 chars) passes schema check but fails catalog archive check
+    bad_rd_path = tmp_path / "run/report-data.json"
+    bad_rd = json.loads(bad_rd_path.read_text(encoding="utf-8"))
+    bad_rd["runs"][0]["arm_cards"]["arm-a"]["short_title"] = "X" * 49
+    bad_rd_path.write_text(json.dumps(bad_rd), encoding="utf-8")
+
+    result = publisher(action="stage")
+    assert result.returncode != 0
+
+    after_files = {
+        p.name: p.read_bytes() for p in sorted(existing_dir.iterdir()) if p.is_file()
+    }
+    assert after_files == before_files
+    assert (tmp_path / "reports/reports-index.json").read_bytes() == before_manifest
+    assert (tmp_path / "reports/index.html").read_bytes() == before_index

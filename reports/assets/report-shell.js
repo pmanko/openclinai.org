@@ -398,7 +398,7 @@ function renderMarkdown(text){
 }
 function renderStatusChip(view){
   if (!view || typeof view !== 'object') return '';
-  var chip = "<span class='schip " + toneClass(view.tone) + "'>" + htmlEsc(view.label || '') + "</span>";
+  var chip = view.label ? ("<span class='schip " + toneClass(view.tone) + "'>" + htmlEsc(view.label) + "</span>") : "";
   if (view.confidence){
     chip += "<span class='sconf'>" + htmlEsc(view.confidence) + "</span>";
   }

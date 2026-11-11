@@ -163,12 +163,18 @@ def validate_v2_report_packet(
     r0 = runs[0]
     if "check_precision_html" in r0:
         raise ValueError(f"{slug}: report-data.json contains forbidden check_precision_html")
-    for k, v in (r0.get("source_card_pool") or {}).items():
-        if isinstance(v, str) and "<" in v:
-            raise ValueError(f"{slug}: report-data.json source_card_pool[{k!r}] contains raw HTML")
-    for k, v in (r0.get("refs_pool") or {}).items():
-        if isinstance(v, str) and "<" in v:
-            raise ValueError(f"{slug}: report-data.json refs_pool[{k!r}] contains raw HTML")
+    for pool_name in ("source_card_pool", "refs_pool"):
+        pool = r0.get(pool_name)
+        pool_items = (
+            pool.items()
+            if isinstance(pool, dict)
+            else enumerate(pool)
+            if isinstance(pool, list)
+            else ()
+        )
+        for k, v in pool_items:
+            if isinstance(v, str) and "<" in v:
+                raise ValueError(f"{slug}: report-data.json {pool_name}[{k!r}] contains raw HTML")
     for sc in r0.get("scenarios") or []:
         for tn in sc.get("turns") or []:
             for b_k, cell_v in (tn.get("cells") or {}).items():
@@ -442,27 +448,39 @@ def stage_report(
             encoding="utf-8",
         )
 
-        if destination.exists():
-            shutil.rmtree(destination)
+        backup = reports_root.parent / f".stage-backup-{slug}-{os.getpid()}"
+        if backup.exists():
+            shutil.rmtree(backup)
+        had_previous = destination.exists()
+        if had_previous:
+            destination.replace(backup)
         temporary.replace(destination)
     except Exception:
         shutil.rmtree(temporary, ignore_errors=True)
         raise
 
-    if build_script.is_file():
-        subprocess.run(
-            [
-                sys.executable,
-                str(build_script),
-                "--root",
-                str(root),
-                "--reports-root",
-                str(reports_root),
-                "--manifest",
-                str(manifest_path),
-            ],
-            check=True,
-        )
+    try:
+        if build_script.is_file():
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(build_script),
+                    "--root",
+                    str(root),
+                    "--reports-root",
+                    str(reports_root),
+                    "--manifest",
+                    str(manifest_path),
+                ],
+                check=True,
+            )
+    except BaseException:
+        shutil.rmtree(destination, ignore_errors=True)
+        if had_previous and backup.exists():
+            backup.replace(destination)
+        raise
+    finally:
+        shutil.rmtree(backup, ignore_errors=True)
     return destination / "index.html"
 
 
