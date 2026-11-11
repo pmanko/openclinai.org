@@ -1,23 +1,13 @@
 # Website and publication
 
-**Thread:** the documentation site and the openclinai.org landing content ·
-**Status:** the documentation site deploys from `main`; the landing site is live
-from the umbrella's own website proxy as of 18 October · **Owner:** umbrella
+**Thread:** `openclinai.org` static platform site, `reports.openclinai.org` evaluation archive, `wahs-demo.openclinai.org` sandbox, and isolated `<slug>-preview.openclinai.org` branch previews ·
+**Status:** GitHub Pages serves only canonical redirects to `openclinai.org` and `reports.openclinai.org`; production static hosts deploy from clean `main` checkouts with remote fast-forward receipt protection · **Owner:** umbrella
 
-- [x] The documentation site publishes from `main` through the Pages workflow on
-      every merge ([latest run](https://github.com/pmanko/openclinai.org/actions/runs/37865757697)).
-- [x] The reviewed landing content is deployed to `openclinai.org` and every live
-      page matches the checkout
-      ([18 October publication](reviews/2026-10-18-landing-publication.md)).
-- [x] The public contribution page links the current coordination record instead
-      of a retired branch
-      ([18 October publication](reviews/2026-10-18-landing-publication.md)).
-- [x] The VM serves the site from the umbrella's own website proxy
-      (`compose/website/`) with no product behind it; the pre-split harness Caddy
-      and the OpenMRS demo it fronted are down
-      ([record](reviews/2026-10-18-landing-publication.md#the-site-became-its-own-deployment)).
-- [ ] The report-catalog provenance mismatch (documentation audit W04) is
-      investigated and its disposition recorded.
+- [x] GitHub Pages (`pages.yml`) runs website link/contract checks on pull requests and deploys a minimal canonical redirect bundle to `https://openclinai.org/` and `https://reports.openclinai.org/` on `main` ([PR #39](https://github.com/pmanko/openclinai.org/pull/39)).
+- [x] The reviewed landing content is deployed to `openclinai.org` and every live page matches the checkout ([18 October publication](reviews/2026-10-18-landing-publication.md)).
+- [x] The public contribution page links the current coordination record instead of a retired branch ([18 October publication](reviews/2026-10-18-landing-publication.md)).
+- [x] The VM serves the site from the umbrella's own website proxy (`compose/website/`) with no product behind it; the pre-split harness Caddy and the OpenMRS demo it fronted are down ([record](reviews/2026-10-18-landing-publication.md#the-site-became-its-own-deployment)).
+- [x] `scripts/publish-landing.sh` enforces clean-tree, `main` / `origin/main` ancestry, remote deploy locking, and `.landing-deploy-receipt.json` fast-forward checks on production deploys, and supports isolated HTTPS branch previews at `https://<slug>-preview.openclinai.org/` via `--preview <slug>` ([publish-landing.sh](../scripts/publish-landing.sh), [test_publish_landing.py](../tests/website/test_publish_landing.py)).
+- [ ] The report-catalog provenance mismatch (documentation audit W04) is investigated and its disposition recorded.
 
-Broader navigation proposals and the separate landing deployment retain owner
-review ([audit](reviews/2026-10-02-documentation-audit.md)).
+Broader navigation proposals and the separate landing deployment retain owner review ([audit](reviews/2026-10-02-documentation-audit.md)).
