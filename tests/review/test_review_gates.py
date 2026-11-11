@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-spec = importlib.util.spec_from_file_location("review_driver", ROOT / "review/bin/review.py")
+spec = importlib.util.spec_from_file_location("run_eval_driver", ROOT / "scripts/run-eval.py")
 review = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(review)
 

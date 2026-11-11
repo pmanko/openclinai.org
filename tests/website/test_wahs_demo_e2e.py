@@ -10,7 +10,8 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 ROOT = Path(__file__).resolve().parents[2]
-DEMO_DIR = ROOT / "landing" / "wahs" / "demo"
+DEMO_DIR = ROOT / "wahs" / "demo"
+DEMO_DATA_PATH = ROOT / "artifacts" / "wahs" / "wahs_demo_data.js"
 
 
 class _StubMedAgentHubHandler(BaseHTTPRequestHandler):
@@ -114,12 +115,17 @@ class _StubMedAgentHubHandler(BaseHTTPRequestHandler):
         rel = parsed.path.lstrip("/")
         if not rel or rel == "wahs/demo" or rel == "wahs/demo/":
             target = DEMO_DIR / "index.html"
-        elif rel.endswith("wahs_demo_data.js"):
-            target = DEMO_DIR / "wahs_demo_data.js"
+        elif "wahs_demo_data" in rel:
+            target = DEMO_DATA_PATH
         else:
             target = DEMO_DIR / Path(rel).name
         if target.is_file():
             data = target.read_bytes()
+            if target.suffix == ".html" and DEMO_DATA_PATH.is_file():
+                data = data.replace(
+                    b"https://storage.googleapis.com/openclinai-media/wahs/wahs_demo_data-20261109.js",
+                    b"/wahs_demo_data.js",
+                )
             ctype = "text/html; charset=utf-8" if target.suffix == ".html" else "application/javascript; charset=utf-8"
             self.send_response(200)
             self._send_cors_headers()
@@ -407,7 +413,7 @@ class TestWahsDemoEndToEnd(unittest.TestCase):
             self.skipTest("playwright is not installed in this Python environment")
 
         index_html = (DEMO_DIR / "index.html").read_text(encoding="utf-8")
-        demo_data_js = (DEMO_DIR / "wahs_demo_data.js").read_text(encoding="utf-8")
+        demo_data_js = DEMO_DATA_PATH.read_text(encoding="utf-8")
         probed_urls: list[str] = []
 
         with sync_playwright() as p:
@@ -425,7 +431,7 @@ class TestWahsDemoEndToEnd(unittest.TestCase):
                 url = route.request.url
                 if url == "https://wahs-demo.openclinai.org/":
                     route.fulfill(status=200, content_type="text/html; charset=utf-8", body=index_html)
-                elif url.endswith("/wahs_demo_data.js"):
+                elif "wahs_demo_data" in url:
                     route.fulfill(status=200, content_type="application/javascript; charset=utf-8", body=demo_data_js)
                 elif "/v1/models" in url or "/api/v0/models" in url:
                     probed_urls.append(url)
@@ -487,7 +493,7 @@ class TestWahsDemoEndToEnd(unittest.TestCase):
             self.skipTest("playwright is not installed in this Python environment")
 
         index_html = (DEMO_DIR / "index.html").read_text(encoding="utf-8")
-        demo_data_js = (DEMO_DIR / "wahs_demo_data.js").read_text(encoding="utf-8")
+        demo_data_js = DEMO_DATA_PATH.read_text(encoding="utf-8")
         captured_completions: list[dict] = []
 
         with sync_playwright() as p:
@@ -499,7 +505,7 @@ class TestWahsDemoEndToEnd(unittest.TestCase):
                 url = route.request.url
                 if url == "https://wahs-demo.openclinai.org/":
                     route.fulfill(status=200, content_type="text/html; charset=utf-8", body=index_html)
-                elif url.endswith("/wahs_demo_data.js"):
+                elif "wahs_demo_data" in url:
                     route.fulfill(status=200, content_type="application/javascript; charset=utf-8", body=demo_data_js)
                 elif url.startswith("http://127.0.0.1:1235/api/v0/models"):
                     route.fulfill(
@@ -664,7 +670,7 @@ class TestWahsDemoEndToEnd(unittest.TestCase):
             self.skipTest("playwright is not installed in this Python environment")
 
         index_html = (DEMO_DIR / "index.html").read_text(encoding="utf-8")
-        demo_data_js = (DEMO_DIR / "wahs_demo_data.js").read_text(encoding="utf-8")
+        demo_data_js = DEMO_DATA_PATH.read_text(encoding="utf-8")
 
         with sync_playwright() as p:
             browser = self._launch_chromium(p)
@@ -673,9 +679,9 @@ class TestWahsDemoEndToEnd(unittest.TestCase):
 
             def handle_route(route) -> None:
                 url = route.request.url
-                if url.startswith("https://wahs-demo.openclinai.org/") and "/wahs_demo_data.js" not in url:
+                if url.startswith("https://wahs-demo.openclinai.org/") and "wahs_demo_data" not in url:
                     route.fulfill(status=200, content_type="text/html; charset=utf-8", body=index_html)
-                elif "/wahs_demo_data.js" in url:
+                elif "wahs_demo_data" in url:
                     route.fulfill(status=200, content_type="application/javascript; charset=utf-8", body=demo_data_js)
                 elif "wahs-gpu-auth-relay" in url and "/v1/models" in url:
                     headers = {k.lower(): v for k, v in route.request.headers.items()}

@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def _review():
-    spec = importlib.util.spec_from_file_location("review_driver3", ROOT / "review" / "bin" / "review.py")
+    spec = importlib.util.spec_from_file_location("run_eval_driver", ROOT / "scripts" / "run-eval.py")
     assert spec and spec.loader
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)

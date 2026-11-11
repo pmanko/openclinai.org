@@ -25,21 +25,22 @@
   <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
 
-<header class="site-header project-header"><a class="brand" href="/" aria-label="Open Clinical AI home"><span class="brand-mark" aria-hidden="true"><span></span></span><span>Open Clinical AI</span></a><nav class="primary-nav" aria-label="Primary navigation"><a href="/#projects">Projects</a><a href="https://reports.openclinai.org/">Evidence</a><a href="/#about">About</a></nav><details class="nav-toggle"><summary>Menu</summary><nav aria-label="Mobile navigation"><a href="/#projects">Projects</a><a href="https://reports.openclinai.org/">Evidence</a><a href="/#about">About</a></nav></details></header>
+<header class="site-header project-header"><a class="brand" href="/" aria-label="Open Clinical AI home"><span class="brand-mark" aria-hidden="true"><span></span></span><span>Open Clinical AI</span></a><nav class="primary-nav" aria-label="Primary navigation"><a href="/#project">Client Apps</a><a href="/#hub">AI Engine</a><a href="/#evidence">Evaluation</a><a href="/#experiments">Experiments</a><a href="/projects/">Projects</a><a href="https://reports.openclinai.org/">Reports <span aria-hidden="true">↗</span></a><a href="/#about">About</a></nav><details class="nav-toggle"><summary>Menu</summary><nav aria-label="Mobile navigation"><a href="/#project">Client Apps</a><a href="/#hub">AI Engine</a><a href="/#evidence">Evaluation</a><a href="/#experiments">Experiments</a><a href="/projects/">Projects</a><a href="https://reports.openclinai.org/">Reports <span aria-hidden="true">↗</span></a><a href="/#about">About</a></nav></details></header>
 
     <main id="main-content" tabindex="-1">
       <section class="doc-intro" aria-labelledby="doc-title">
         <div class="page-width">
-          <p class="section-kicker">Documentation · OpenMRS integration · updated 18 October 2026</p>
+          <p class="section-kicker">Documentation · OpenMRS integration · updated November 2026</p>
           <h1 id="doc-title">What we are contributing to OpenMRS.</h1>
           <p>
-            We are proposing our ChartSearchAI work to the OpenMRS projects as eight backend, five frontend and three
-            QueryStore pull requests. Each project has one ordered stack: every pull request targets main, each builds
-            on the one before it, and each description links the diff of its own step.
+            We are contributing our ChartSearchAI and QueryStore work upstream to the OpenMRS repositories across three
+            ordered <code>gh-stack</code> pull-request stacks: seven QueryStore layers, nine ChartSearchAI backend layers,
+            and five ChartSearchAI frontend (ESM) layers. Each layer targets the layer below it so its diff and test checks
+            are scoped to a single reviewable step.
           </p>
           <div class="doc-meta">
-            <span>GitHub status checked 18 October 2026: all sixteen pull requests are open and under maintainer review; none has merged yet.</span>
-            <span><a href="https://github.com/pmanko/openclinai.org/blob/main/specs/openmrs-contribution.md">Coordination record and acceptance criteria</a></span>
+            <span>GitHub status checked November 2026: all five Frontend ESM PRs (#72–#76), QueryStore #92–#93, and Backend #615, #616 &amp; #625 are merged upstream; QueryStore #94–#98 and Backend #617–#623 are in active maintainer review.</span>
+            <span><a href="https://github.com/openmrs/openmrs-module-chartsearchai/pulls">Browse upstream OpenMRS PRs</a></span>
           </div>
         </div>
       </section>
@@ -57,45 +58,42 @@
           </p>
           <p class="section-lead">
             Both stacks keep the bundled model as the default and add Med Agent Hub behind a shared interface. Maintainers
-            review and merge each stack from the bottom up; a pull request's full diff includes the steps below it until
-            they merge. The backend context changes depend on the QueryStore API, and
-            the frontend consumes the backend contract, so building and checking them together does not wait for an
-            upstream merge or a published dependency package.
+            review and merge each stack from the bottom up via <code>gh-stack</code>. The frontend ESM stack (#72–#76) has
+            merged into upstream <code>main</code>; QueryStore (#92–#93 merged, #94–#98 open) and the backend module
+            (#615, #616 &amp; #625 merged, #617–#623 open) are advancing through maintainer review.
           </p>
           <div class="guarantees">
-            <h3>Shared dependency: QueryStore <a href="https://github.com/openmrs/openmrs-module-querystore/pull/85">#85</a>, <a href="https://github.com/openmrs/openmrs-module-querystore/pull/86">#86</a> and <a href="https://github.com/openmrs/openmrs-module-querystore/pull/87">#87</a></h3>
-            <p>Patient-record reads over REST with completeness and date semantics (#85, <span class="sha">c30b660</span>),
-              the tiered context slice (#86, <span class="sha">709511f</span>) and question interpretation with retrieval
-              preprocessing (#87, <span class="sha">844dcd0</span>). They replace the single
-              <a href="https://github.com/openmrs/openmrs-module-querystore/pull/68">#68</a>, open since 5 August, whose
-              29 review threads were all answered with fixes before the maintainer asked on 29 September for smaller
-              pieces; those fixes are carried over unchanged. The backend stack is tested against revision
-              <span class="sha">844dcd0</span>.</p>
+            <h3>Shared dependency: QueryStore <a href="https://github.com/openmrs/openmrs-module-querystore/pull/92">#92</a>–<a href="https://github.com/openmrs/openmrs-module-querystore/pull/98">#98</a></h3>
+            <p>Query-cache separator spelling (<a href="https://github.com/openmrs/openmrs-module-querystore/pull/92">#92</a>, merged <span class="sha">3491096</span>)
+              and versioned Elasticsearch deletes (<a href="https://github.com/openmrs/openmrs-module-querystore/pull/93">#93</a>, merged <span class="sha">0c12429</span>)
+              are in upstream <code>main</code>. Open layers cover incremental bootstrap skip-unchanged (<a href="https://github.com/openmrs/openmrs-module-querystore/pull/94">#94</a>, <span class="sha">f08dc41</span>),
+              patient-record reads over REST with completeness and date semantics (<a href="https://github.com/openmrs/openmrs-module-querystore/pull/95">#95</a>, <span class="sha">aecb9f6</span>),
+              the tiered context slice (<a href="https://github.com/openmrs/openmrs-module-querystore/pull/96">#96</a>, <span class="sha">7a1f47f</span>),
+              question interpretation with retrieval preprocessing (<a href="https://github.com/openmrs/openmrs-module-querystore/pull/97">#97</a>, <span class="sha">bc3d7d5</span>),
+              and similarity diversity with deeper hybrid pools (<a href="https://github.com/openmrs/openmrs-module-querystore/pull/98">#98</a>, <span class="sha">3c0783d</span>).</p>
           </div>
           <h3>Backend review and merge order</h3>
           <ol class="pr-stack">
-            <li><a href="https://github.com/openmrs/openmrs-module-chartsearchai/pull/583">#583 Shared provider contract</a> <span class="sha">b5f58037</span></li>
-            <li><a href="https://github.com/openmrs/openmrs-module-chartsearchai/pull/584">#584 Exact token counting</a> <span class="sha">9175af80</span></li>
-            <li><a href="https://github.com/openmrs/openmrs-module-chartsearchai/pull/585">#585 Safety-check execution status</a> <span class="sha">3b76f561</span></li>
-            <li><a href="https://github.com/openmrs/openmrs-module-chartsearchai/pull/586">#586 Conversation persistence</a> <span class="sha">89522817</span></li>
-            <li><a href="https://github.com/openmrs/openmrs-module-chartsearchai/pull/587">#587 QueryStore context and token budgets</a> <span class="sha">27057db7</span></li>
-            <li><a href="https://github.com/openmrs/openmrs-module-chartsearchai/pull/588">#588 Bundled inference and cancellation</a> <span class="sha">0629d311</span></li>
-            <li><a href="https://github.com/openmrs/openmrs-module-chartsearchai/pull/589">#589 Hub discovery and transport</a> <span class="sha">cabaa13d</span></li>
-            <li><a href="https://github.com/openmrs/openmrs-module-chartsearchai/pull/590">#590 Conversation endpoints and history</a> <span class="sha">38409f0b</span></li>
+            <li><a href="https://github.com/openmrs/openmrs-module-chartsearchai/pull/615">#615 Shared provider contract</a> <span class="sha">5272a5c · Merged</span></li>
+            <li><a href="https://github.com/openmrs/openmrs-module-chartsearchai/pull/616">#616 Exact token counting</a> <span class="sha">69add36 · Merged</span></li>
+            <li><a href="https://github.com/openmrs/openmrs-module-chartsearchai/pull/617">#617 Safety-check execution status</a> <span class="sha">c83fa3c · In Review</span></li>
+            <li><a href="https://github.com/openmrs/openmrs-module-chartsearchai/pull/618">#618 Conversation persistence</a> <span class="sha">b5d4115 · In Review</span></li>
+            <li><a href="https://github.com/openmrs/openmrs-module-chartsearchai/pull/619">#619 QueryStore context and token budgets</a> <span class="sha">09ad023 · In Review</span></li>
+            <li><a href="https://github.com/openmrs/openmrs-module-chartsearchai/pull/620">#620 Bundled inference and cancellation</a> <span class="sha">455fcdf · In Review</span></li>
+            <li><a href="https://github.com/openmrs/openmrs-module-chartsearchai/pull/621">#621 Hub discovery and transport</a> <span class="sha">bbb1f57 · In Review</span></li>
+            <li><a href="https://github.com/openmrs/openmrs-module-chartsearchai/pull/622">#622 Conversation endpoints and history</a> <span class="sha">03325a3 · In Review</span></li>
+            <li><a href="https://github.com/openmrs/openmrs-module-chartsearchai/pull/623">#623 Account context forwarding</a> <span class="sha">a087da3 · In Review</span></li>
           </ol>
-          <p class="ledger-note">Next in line, prepared on our fork and not yet proposed upstream: the signed-in account's
-            roles and location travel with each question to the external provider
-            (<a href="https://github.com/pmanko/openmrs-module-chartsearchai/pull/35">fork PR #35</a>).</p>
-          <h3>Frontend review and merge order</h3>
+          <p class="ledger-note">Additionally, <a href="https://github.com/openmrs/openmrs-module-chartsearchai/pull/625">#625</a> (<span class="sha">88f369f</span>) has merged into upstream <code>main</code>.</p>
+          <h3>Frontend review and merge order (Merged 27 October 2026)</h3>
           <ol class="pr-stack">
-            <li><a href="https://github.com/openmrs/openmrs-esm-chartsearchai/pull/55">#55 Staged stream transport</a> <span class="sha">56b41e6e</span></li>
-            <li><a href="https://github.com/openmrs/openmrs-esm-chartsearchai/pull/56">#56 History client and session state</a> <span class="sha">22f0944e</span></li>
-            <li><a href="https://github.com/openmrs/openmrs-esm-chartsearchai/pull/57">#57 Markdown, tables and citations</a> <span class="sha">8a599e9b</span></li>
-            <li><a href="https://github.com/openmrs/openmrs-esm-chartsearchai/pull/58">#58 Provider and model-profile selection</a> <span class="sha">71018374</span></li>
-            <li><a href="https://github.com/openmrs/openmrs-esm-chartsearchai/pull/59">#59 Conversation lifecycle, staged answers, evidence and streaming toggle</a> <span class="sha">f99b9ebd</span></li>
+            <li><a href="https://github.com/openmrs/openmrs-esm-chartsearchai/pull/72">#72 Staged stream transport</a> <span class="sha">Merged</span></li>
+            <li><a href="https://github.com/openmrs/openmrs-esm-chartsearchai/pull/73">#73 History client and session state</a> <span class="sha">Merged</span></li>
+            <li><a href="https://github.com/openmrs/openmrs-esm-chartsearchai/pull/74">#74 Markdown, tables and citations</a> <span class="sha">Merged</span></li>
+            <li><a href="https://github.com/openmrs/openmrs-esm-chartsearchai/pull/75">#75 Provider and model-profile selection</a> <span class="sha">Merged</span></li>
+            <li><a href="https://github.com/openmrs/openmrs-esm-chartsearchai/pull/76">#76 Conversation lifecycle, staged answers, evidence and streaming toggle</a> <span class="sha">aee3449 · Merged</span></li>
           </ol>
-          <p class="ledger-note">The revisions above are the heads on 18 October 2026, rebased that day onto the current
-            OpenMRS main branches. Open each pull request for its latest checks and review discussion.</p>
+          <p class="ledger-note">All five frontend ESM layers (#72–#76) are merged into <code>openmrs/openmrs-esm-chartsearchai</code> <code>main</code>. Open any pull request above for its review history and checks.</p>
         </div>
       </section>
 
@@ -310,8 +308,7 @@
           <p class="section-kicker">How this fits our other work</p>
           <h2 id="ledger-title">The same revisions run our local research environment.</h2>
           <p class="section-lead">The pull-request heads listed above are the exact module revisions pinned in our
-            <a href="https://github.com/pmanko/openclinai.org">coordination repository</a> and installed by its local
-            OpenMRS research environment with the HIV dataset. Timing comparisons between the bundled model and Med
+            local OpenMRS research environment with the HIV dataset. Timing comparisons between the bundled model and Med
             Agent Hub, and the evaluations run by the validation harness, use those pinned revisions, so what is
             measured locally is what is proposed upstream.</p>
           <p class="ledger-note">Deployment, release signoff and clinical acceptance are separate from everything on this
@@ -323,9 +320,7 @@
       <section class="section doc-section" aria-label="Sources and scope">
         <div class="page-width">
           <div class="doc-sources">
-            <p>Sources: the linked pull requests' heads, bases, review threads and build results checked on 18 October 2026,
-              the <a href="https://github.com/pmanko/openclinai.org/blob/main/specs/openmrs-contribution.md">coordination record</a>
-              and its <a href="https://github.com/pmanko/openclinai.org/tree/main/specs/reviews">dated verification records</a>.
+            <p>Sources: the linked pull requests' heads, bases, review threads and build results checked in November 2026.
               Product behavior is defined in the
               <a href="https://github.com/pmanko/openmrs-module-chartsearchai/blob/38409f0b/README.md">assembled backend documentation</a>
               and the <a href="https://github.com/pmanko/openmrs-module-querystore/blob/844dcd0ccad275831ecfaca6fe6cf4e4d8acaa2c/docs/rest-api.md">QueryStore API contract</a>.</p>
@@ -345,12 +340,12 @@
           <p>Open-source tools for clinical AI integration and evaluation.</p>
         </div>
         <nav aria-label="Project links">
-          <a href="https://pmanko.github.io/openclinai.org/">Project documentation</a>
-          <a href="/docs/openmrs-upstream/">OpenMRS upstream contributions</a>
-          <a href="https://github.com/pmanko/clinical-ai-validation-harness">Validation harness (GitHub)</a>
-          <a href="https://github.com/pmanko/med-agent-hub">Med Agent Hub</a>
-          <a href="https://openmrs.org/">OpenMRS</a>
-          <a href="https://digi.uw.edu/">DIGI at UW</a>
+          <a href="/chartsearchai/">ChartSearchAI</a>
+          <a href="/catalyst/">Catalyst</a>
+          <a href="/med-agent-hub/">Med Agent Hub</a>
+          <a href="/validation-harness/">Validation Harness</a>
+          <a href="/experiments/">Post-Training &amp; Lab</a>
+          <a href="/projects/">Applied Projects</a>
         </nav>
         <p class="footer-disclaimer">For research and demonstration only. AI output may be inaccurate and is not a substitute for clinical judgment.</p>
       </div>

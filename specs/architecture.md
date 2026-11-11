@@ -119,10 +119,13 @@ It also contains the associated build tools, publication scripts, deployment
 workflows and web-server configuration. Website CI and release operations run
 from this repository.
 
-The validation harness produces experiment artifacts and rendered reports.
-OpenClinAI publication tooling consumes selected artifacts, maintains public
-catalogs and publishes them to the configured web destinations. Publication uses
-the recorded evidence and evaluation results as its inputs.
+The validation harness is a pure JSON report producer (`run-summary.json`,
+`report-data.json`, and `dashboard-data.json` with `schema_version: 2` and zero
+embedded HTML strings). `openclinai.org` owns the canonical viewer shells
+(`reports/assets/report-shell.{css,js}` and `dashboard-shell.{css,js}`), per-run
+`editorial.json` metadata, local preview (`scripts/preview-report.py`), catalog
+compilation (`scripts/build-reports-index.py`), and explicit staging and
+additive deployment (`scripts/publish-report.py`).
 
 ## 6. Contract References
 

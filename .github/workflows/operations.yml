@@ -1,15 +1,53 @@
 name: operations
 on:
   pull_request:
+    paths:
+      - 'Makefile'
+      - 'compose/**'
+      - 'environments/**'
+      - 'review/**'
+      - 'scripts/**'
+      - 'targets/**'
+      - 'tests/**'
+      - '.github/workflows/operations.yml'
   push:
     branches: [main]
+    paths:
+      - 'Makefile'
+      - 'compose/**'
+      - 'environments/**'
+      - 'review/**'
+      - 'scripts/**'
+      - 'targets/**'
+      - 'tests/**'
+      - '.github/workflows/operations.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   operational-tests:
     runs-on: ubuntu-latest
+    outputs:
+      openmrs_changed: ${{ steps.changes.outputs.openmrs_changed }}
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           submodules: false
+      - name: Detect whether OpenMRS source-pair pins changed
+        id: changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "${BASE_SHA}" ] || [ "${BASE_SHA}" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            echo "openmrs_changed=true" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet "${BASE_SHA}" HEAD -- targets/querystore targets/chartsearchai targets/chartsearchai-esm scripts/openmrs-source-pair-test.sh Makefile .github/workflows/operations.yml; then
+            echo "openmrs_changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "openmrs_changed=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: ShellCheck local lifecycle and Catalyst scripts
         run: |
           docker run --rm -v "$PWD:/mnt:ro" -w /mnt \
@@ -28,6 +66,8 @@ jobs:
           make test
 
   openmrs-integration-source:
+    needs: operational-tests
+    if: needs.operational-tests.outputs.openmrs_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

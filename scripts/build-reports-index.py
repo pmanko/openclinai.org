@@ -13,6 +13,7 @@ Edit reports/reports-index.json to add/remove runs or change the copy, then reru
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -73,8 +74,191 @@ MANIFEST = REPORTS / "reports-index.json"
 DATE_FORMAT = "%-d %b %Y"
 
 
-def validate_archive(runs: list[dict], reports_root: Path, *, pending_slug: str | None = None) -> None:
-    """Require every available curated report locally (and non-empty report-data) before replacing the catalog."""
+FORBIDDEN_TITLE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("auto-generated 'Full evaluation' placeholder", re.compile(r"^\s*Full evaluation\b", re.IGNORECASE)),
+    ("unedited '(auto-added' placeholder", re.compile(r"\(auto-added\b", re.IGNORECASE)),
+    ("trailing git/run hex hash in title", re.compile(r"\([0-9a-f]{7,}\)\s*$", re.IGNORECASE)),
+    ("internal run code in title", re.compile(r"\b(?:Answer Rules R\d+|Run D\d+)\b")),
+)
+
+FORBIDDEN_PROSE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("comparison-set ID 'full-default'", re.compile(r"\bfull-default\b", re.IGNORECASE)),
+    ("harness tier code (L1–L5)", re.compile(r"\bL[1-5]\b")),
+    ("internal profile ID", re.compile(r"\b(?:single-12b-(?:answer|bare|verify|checked)|engine-parity-[a-z0-9-]+|hub-profile-[a-z0-9-]+)\b", re.IGNORECASE)),
+    ("plumbing phrase 'parity tap' / 'wire tap'", re.compile(r"\b(?:parity tap|wire taps?)\b", re.IGNORECASE)),
+    ("raw rubric/SSE field name", re.compile(r"\b(?:date_wrong|window_over|trend_fab|answer_delta)\b")),
+    ("raw scenario slug", re.compile(r"\b(?:am-[a-z0-9-]+|ek-[a-z0-9-]+|convo-[a-z0-9-]+|single-upcoming-[a-z0-9-]+)\b")),
+    ("raw GGUF/Ollama tag", re.compile(r"\b(?:Q4_K_M|Q8_0|gemma4:12b)\b")),
+    ("internal CLI flag '--parallel'", re.compile(r"--parallel\b")),
+    ("internal judge codename", re.compile(r"\b(?:claude-opus-5-5|gpt-6-astra)\b", re.IGNORECASE)),
+)
+
+
+def _arm_labels(arms: dict | None) -> dict[str, str]:
+    """Normalize an arms map (either {id: label} or {id: {label, sub}}) to {id: label}."""
+    if not isinstance(arms, dict):
+        return {}
+    out: dict[str, str] = {}
+    for k, v in arms.items():
+        if isinstance(v, dict):
+            lbl = str(v.get("label") or "").strip()
+        else:
+            lbl = str(v or "").strip()
+        if lbl:
+            out[str(k)] = lbl
+    return out
+
+
+def _check_editorial_entry(
+    entry: dict,
+    *,
+    root: Path,
+    pending_slug: str | None = None,
+    check_stamped_sync: bool = True,
+) -> list[str]:
+    """Return human-readable editorial/viewport quality violations for a catalog entry."""
+    issues: list[str] = []
+    slug = str(entry.get("slug") or "")
+    is_earlier_sub = "label" in entry and "title" not in entry
+
+    if is_earlier_sub:
+        for field in ("label", "note"):
+            txt = str(entry.get(field) or "")
+            for desc, pat in FORBIDDEN_PROSE_PATTERNS:
+                if pat.search(txt):
+                    issues.append(f"{slug}.{field} contains {desc}")
+    else:
+        title = str(entry.get("title") or "").strip()
+        summary = str(entry.get("summary") or "").strip()
+        takeaway = str(entry.get("takeaway") or "").strip()
+        for desc, pat in FORBIDDEN_TITLE_PATTERNS:
+            if pat.search(title):
+                issues.append(f"{slug}.title has {desc}: {title!r}")
+        if re.match(r"^\s*Takeaway\s*:", takeaway, flags=re.IGNORECASE):
+            issues.append(f"{slug}.takeaway starts with redundant 'Takeaway:' prefix")
+        for field, txt in (("title", title), ("summary", summary), ("takeaway", takeaway)):
+            for desc, pat in FORBIDDEN_PROSE_PATTERNS:
+                if pat.search(txt):
+                    issues.append(f"{slug}.{field} contains {desc}")
+        arms = _arm_labels(entry.get("arms"))
+        if arms:
+            for arm_k, val in arms.items():
+                if len(val) > 80:
+                    issues.append(f"{slug}.arms[{arm_k!r}] exceeds 80 chars ({len(val)} chars)")
+                for desc, pat in FORBIDDEN_PROSE_PATTERNS:
+                    if pat.search(val):
+                        issues.append(f"{slug}.arms[{arm_k!r}] contains {desc}")
+
+    if entry.get("availability") == "unavailable" or slug == pending_slug:
+        return issues
+
+    data_json = root / slug / "report-data.json"
+    page = root / slug / "index.html"
+    if data_json.is_file() and page.is_file():
+        if not is_earlier_sub:
+            title = str(entry.get("title") or "").strip()
+            summary = str(entry.get("summary") or "").strip()
+            takeaway = str(entry.get("takeaway") or "").strip()
+            if len(title) < 15:
+                issues.append(f"{slug}.title is too short (<15 chars) for a published report")
+            if len(summary) < 40:
+                issues.append(f"{slug}.summary is missing or too brief (<40 chars); explain what was tested in plain English")
+            if len(takeaway) < 40:
+                issues.append(f"{slug}.takeaway is missing or too brief (<40 chars); explain the key takeaway for readers")
+        html_text = page.read_text(encoding="utf-8", errors="replace")
+        html_head = html_text[:2500]
+        if not re.search(r"<meta\s+name=['\"]viewport['\"]", html_head, flags=re.IGNORECASE):
+            issues.append(f"{slug}/index.html is missing <meta name='viewport' content='width=device-width, initial-scale=1'>")
+        try:
+            payload = json.loads(data_json.read_text(encoding="utf-8", errors="replace"))
+            r0 = (payload.get("runs") or [{}])[0] if isinstance(payload, dict) else {}
+            if not is_earlier_sub and check_stamped_sync:
+                m_ed = re.search(
+                    r"<script[^>]*id=['\"]report-editorial['\"][^>]*>(.*?)</script>",
+                    html_text,
+                    flags=re.S | re.I,
+                )
+                ed_title = ""
+                if m_ed and m_ed.group(1).strip():
+                    try:
+                        ed_obj = json.loads(m_ed.group(1))
+                        ed_title = str(ed_obj.get("title") or "").strip()
+                    except Exception:
+                        ed_title = ""
+                if not ed_title:
+                    ed_title = str(((r0.get("catalog_meta") or {}).get("title")) or "").strip()
+                if ed_title != str(entry.get("title") or "").strip():
+                    issues.append(
+                        f"{slug} stamped report-editorial / catalog_meta title is out of sync with catalog entry "
+                        "(re-run scripts/build-reports-index.py)"
+                    )
+            if isinstance(payload, dict) and payload.get("schema_version") == 2:
+                forbidden_html_keys = {
+                    "answer_html",
+                    "conf_html",
+                    "chips_html",
+                    "blocks_html",
+                    "sources_html",
+                    "refs_html",
+                    "check_precision_html",
+                    "body_html",
+                }
+                if "check_precision_html" in r0:
+                    issues.append(f"{slug}/report-data.json v2 contains forbidden check_precision_html")
+                for sc in r0.get("scenarios") or []:
+                    for tn in sc.get("turns") or []:
+                        for b_k, cell_v in (tn.get("cells") or {}).items():
+                            if not isinstance(cell_v, dict):
+                                continue
+                            bad_k = forbidden_html_keys.intersection(cell_v.keys())
+                            if bad_k:
+                                issues.append(
+                                    f"{slug}/report-data.json v2 cell ({sc.get('scenario_id')}, {b_k}) contains forbidden HTML keys: {sorted(bad_k)}"
+                                )
+            for b_id, card in (r0.get("arm_cards") or {}).items():
+                if not isinstance(card, dict):
+                    continue
+                st = str(card.get("short_title") or "").strip()
+                if len(st) > 48:
+                    issues.append(f"{slug}/report-data.json arm_cards[{b_id!r}].short_title exceeds 48 chars ({len(st)})")
+                if "parity tap" in st.lower() or "parity tap" in str(card.get("title") or "").lower():
+                    issues.append(f"{slug}/report-data.json arm_cards[{b_id!r}] leaks 'parity tap' plumbing label")
+        except Exception as exc:
+            issues.append(f"{slug}/report-data.json could not be parsed for quality check: {exc}")
+
+        meta_file = (
+            root / slug / "run-summary.json"
+            if (root / slug / "run-summary.json").is_file()
+            else root / slug / "meta.json"
+        )
+        arms = _arm_labels(entry.get("arms"))
+        if not is_earlier_sub and arms and meta_file.is_file():
+            try:
+                m_obj = json.loads(meta_file.read_text(encoding="utf-8"))
+                scout_bs = {str(s["backend"]) for s in (m_obj.get("scout") or []) if isinstance(s, dict) and s.get("backend")}
+                if not scout_bs and isinstance(m_obj.get("arms"), list):
+                    scout_bs = {str(a["id"]) for a in m_obj["arms"] if isinstance(a, dict) and a.get("id")}
+                if scout_bs:
+                    mapped_targets = set(arms.keys()) | set(arms.values())
+                    unmapped = scout_bs - mapped_targets
+                    unused = set(arms.keys()) - scout_bs
+                    if unmapped and unused:
+                        issues.append(
+                            f"{slug}.arms has mismatched backend keys (unused={sorted(unused)}, unmapped={sorted(unmapped)})"
+                        )
+            except Exception:
+                pass
+    return issues
+
+
+def validate_archive(
+    runs: list[dict],
+    reports_root: Path,
+    *,
+    pending_slug: str | None = None,
+    check_stamped_sync: bool = True,
+) -> None:
+    """Require every available curated report locally (and non-empty report-data + editorial quality) before replacing the catalog."""
     safe_slug = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
     report_data_re = re.compile(r"<script[^>]*id=['\"]report-data['\"][^>]*>(.*?)</script>", re.S)
     if pending_slug is not None and not safe_slug.fullmatch(pending_slug):
@@ -82,10 +266,19 @@ def validate_archive(runs: list[dict], reports_root: Path, *, pending_slug: str 
     root = reports_root.resolve()
     missing = []
     broken_pages = []
+    editorial_issues: list[str] = []
     for entry in runs:
         slug = entry.get("slug")
         if not isinstance(slug, str) or not safe_slug.fullmatch(slug):
             raise ValueError(f"invalid curated report slug: {slug!r}")
+        editorial_issues.extend(
+            _check_editorial_entry(
+                entry,
+                root=root,
+                pending_slug=pending_slug,
+                check_stamped_sync=check_stamped_sync,
+            )
+        )
         if entry.get("availability") == "unavailable" or slug == pending_slug:
             continue
         page = (root / slug / "index.html").resolve()
@@ -129,6 +322,11 @@ def validate_archive(runs: list[dict], reports_root: Path, *, pending_slug: str 
             + ", ".join(broken_pages)
             + ". Ensure results.jsonl is present and re-render report.html before publishing."
         )
+    if editorial_issues:
+        raise ValueError(
+            "editorial / viewport quality check failed:\n  - "
+            + "\n  - ".join(editorial_issues)
+        )
 
 
 def human_arm(arm: str) -> tuple[str, str]:
@@ -137,14 +335,16 @@ def human_arm(arm: str) -> tuple[str, str]:
 
 
 def _run_meta(slug: str) -> dict:
-    meta = REPORTS / slug / "meta.json"
-    if not meta.is_file():
-        return {}
-    try:
-        payload = json.loads(meta.read_text(encoding="utf-8"))
-        return payload if isinstance(payload, dict) else {}
-    except (OSError, json.JSONDecodeError):
-        return {}
+    for fname in ("run-summary.json", "meta.json"):
+        meta = REPORTS / slug / fname
+        if meta.is_file():
+            try:
+                payload = json.loads(meta.read_text(encoding="utf-8"))
+                if isinstance(payload, dict):
+                    return payload
+            except (OSError, json.JSONDecodeError):
+                pass
+    return {}
 
 
 def _run_dir_for(slug: str) -> Path | None:
@@ -173,16 +373,43 @@ def _patient_names(run_dir: Path, uuids: set[str]) -> str:
 def gather(slug: str) -> dict:
     """Pull the score table + subtitle facts for one curated run from its data."""
     meta = _run_meta(slug)
-    family = str(meta.get("report_family") or "chartsearchai")
+    family = str(meta.get("report_family") or meta.get("family") or "chartsearchai")
+    scout = list(meta.get("scout") or [])
+    if not scout and isinstance(meta.get("arms"), list):
+        for a in meta["arms"]:
+            if isinstance(a, dict) and a.get("id"):
+                scout.append(
+                    {
+                        "backend": a["id"],
+                        "n": a.get("turns") or 0,
+                        "benchmark_score": a.get("benchmark_score"),
+                        "safety_adjusted_benchmark_score": a.get("safety_adjusted_benchmark_score"),
+                        "accuracy_mean": a.get("accuracy_mean"),
+                        "completeness_mean": a.get("completeness_mean"),
+                        "relevance_mean": a.get("relevance_mean"),
+                        "harm_count": a.get("harm_count") or 0,
+                    }
+                )
+    patients_raw = meta.get("patients")
+    if isinstance(patients_raw, list):
+        patients_str = " + ".join(str(p) for p in patients_raw if p)
+    else:
+        patients_str = str(patients_raw or "")
+    cells = meta.get("cells")
+    if cells is None and meta.get("turns") is not None and isinstance(meta.get("backends"), list):
+        cells = int(meta["turns"]) * len(meta["backends"])
+    reader_led = bool(
+        meta.get("reader_led") or (meta.get("catalyst") or {}).get("kind") == "reader_led"
+    )
     out: dict = {
         "family": family,
         "evaluation_modality": str(meta.get("evaluation_modality") or ""),
-        "reader_led": False,
+        "reader_led": reader_led,
         # Facts frozen beside a report whose packet no longer carries its results.
-        "cells": meta.get("cells"),
-        "patients": str(meta.get("patients") or ""),
+        "cells": cells,
+        "patients": patients_str,
         "date": meta.get("date"),
-        "scout": list(meta.get("scout") or []),
+        "scout": scout,
         "scoreline": str(meta.get("scoreline") or ""),
         # Who judged, frozen with the scores; a run that recorded no judge says so.
         "judging": _judging_line(meta.get("judging")),
@@ -311,6 +538,7 @@ def _judging_line(judging) -> str:
 def _scout_table(scout: list[dict], labels: dict | None = None) -> str:
     if not scout:
         return '<div class="unscored">This run is an answer comparison only — not yet scored.</div>'
+    labels = _arm_labels(labels)
     # best (max) per column, to highlight the winner. Benchmark is the headline.
     best = {}
     for key in ("benchmark_score", "accuracy_mean", "completeness_mean", "relevance_mean"):
@@ -454,7 +682,7 @@ FILTER_JS = (
 def _card_highlights(scout: list[dict], labels: dict | None = None) -> str:
     if not scout:
         return ""
-    labels = labels or {}
+    labels = _arm_labels(labels)
     bench_rows = [s for s in scout if isinstance(s.get("benchmark_score"), (int, float))]
     pills = []
     if bench_rows:
@@ -618,7 +846,7 @@ _STYLE_CORE = """
   body.compact-catalog .summary{display:none;}
   .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px 24px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.03);}
   .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:10px;}
-  .titles{flex:1;min-width:260px;}
+  .titles{flex:1;min-width:min(100%,260px);}
   .titles h2{margin:0;font-size:19.5px;color:var(--ink);font-weight:650;line-height:1.32;}
   .family{display:inline-block;margin:0 0 6px;padding:2px 8px;border:1px solid var(--border);
     border-radius:999px;color:var(--muted);font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;}
@@ -657,7 +885,7 @@ _STYLE_CORE = """
   table.scout td.bench{color:var(--ink);font-weight:800;font-size:15.5px;}
   table.scout td.bench.best{color:var(--best);}
   table.scout tbody tr:last-child td.bench{border-bottom:2px solid var(--accent);}
-  details.indepth-details{margin-top:12px;border:1px solid var(--border);border-radius:8px;padding:8px 12px;background:var(--panel2);}
+  details.indepth-details{margin-top:12px;border:1px solid var(--border);border-radius:8px;padding:8px 12px;background:var(--panel2);max-width:100%;overflow-x:auto;}
   details.indepth-details > summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);}
   details.indepth-details > table.scout{margin-top:10px;}
   .unscored{color:var(--muted);font-size:13.5px;font-style:italic;}
@@ -667,9 +895,164 @@ _STYLE_CORE = """
   details.earlier ul{margin:6px 0 0;padding-left:20px;}
   details.earlier a{color:var(--accent);}
   footer.page{color:var(--muted);font-size:12px;margin-top:36px;text-align:center;}
+  @media (max-width:640px){
+    body{padding:20px 14px 56px;}
+    .card{padding:16px;}
+    .toolbar-right{width:100%;}
+    .search-input{min-width:0;width:100%;}
+  }
 """
 
 STYLE = _STYLE_CORE + THEME_TOGGLE_CSS
+
+
+DEFAULT_INTRO = (
+    "Every evaluation run we publish is archived here with its full answers, "
+    "chart citations, and reviewer scores. Each card below summarizes what question "
+    "we tested, the main takeaway, and the head-to-head benchmark table — click "
+    "<b>Full report</b> to inspect every clinical question and response side by side."
+)
+
+DEFAULT_SCORING_NOTE = (
+    "A strong AI reviewer grades each answer against the patient's chart on "
+    "<b>Accuracy</b> (are the stated facts right, 0–10), <b>Completeness</b> "
+    "(does it include the needed clinical context, 0–10), and <b>Relevance</b> "
+    "(on-question without padding, 0–10), plus safety, abstention, citation, "
+    "and timing checks. The <b>Benchmark (/100)</b> column combines those axes "
+    "(accuracy 40%, completeness 40%, relevance 20%) minus bounded penalties for "
+    "unsafe, ungrounded, or mis-dated claims. Where a run was judged across "
+    "multiple passes or models, the headline uses the median score and majority "
+    "flag across passes, and the report shows inter-rater agreement (Krippendorff's α)."
+)
+
+
+def _embed_editorial_json(ed: dict) -> str:
+    s = json.dumps(ed, ensure_ascii=False)
+    return s.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+
+
+def stamp_editorial_into_page(html_path: Path, ed: dict) -> None:
+    if not html_path.is_file():
+        return
+    raw = html_path.read_text(encoding="utf-8", errors="ignore")
+    tag = f"<script type='application/json' id='report-editorial'>{_embed_editorial_json(ed)}</script>"
+    if re.search(r"<script[^>]*id=['\"]report-editorial['\"][^>]*>.*?</script>", raw, flags=re.S | re.I):
+        updated = re.sub(
+            r"<script[^>]*id=['\"]report-editorial['\"][^>]*>.*?</script>",
+            lambda _: tag,
+            raw,
+            count=1,
+            flags=re.S | re.I,
+        )
+    elif "<script type='application/json' id='report-data'" in raw:
+        updated = raw.replace(
+            "<script type='application/json' id='report-data'",
+            tag + "<script type='application/json' id='report-data'",
+            1,
+        )
+    elif "<script type='application/json' id='dashboard-data'" in raw:
+        updated = raw.replace(
+            "<script type='application/json' id='dashboard-data'",
+            tag + "<script type='application/json' id='dashboard-data'",
+            1,
+        )
+    else:
+        updated = raw
+    title = str(ed.get("title") or "").strip()
+    if title:
+        updated = re.sub(
+            r"<h1 id=['\"]report-title['\"]>.*?</h1>",
+            lambda _: f"<h1 id='report-title'>{esc(title)}</h1>",
+            updated,
+            count=1,
+            flags=re.S,
+        )
+    page_dir = html_path.parent
+    assets_dir = page_dir.parent / "assets"
+    for rel_url, disk_path in (
+        ("../assets/report-shell.css", assets_dir / "report-shell.css"),
+        ("../assets/report-shell.js", assets_dir / "report-shell.js"),
+        ("../assets/dashboard-shell.css", assets_dir / "dashboard-shell.css"),
+        ("../assets/dashboard-shell.js", assets_dir / "dashboard-shell.js"),
+        ("./report-data.json", page_dir / "report-data.json"),
+        ("./dashboard-data.json", page_dir / "dashboard-data.json"),
+    ):
+        if disk_path.is_file():
+            ver = hashlib.sha256(disk_path.read_bytes()).hexdigest()[:10]
+            updated = re.sub(
+                re.escape(rel_url) + r"\?v=[A-Za-z0-9_-]+",
+                f"{rel_url}?v={ver}",
+                updated,
+            )
+    if updated != raw:
+        html_path.write_text(updated, encoding="utf-8")
+
+
+def stamp_editorial_shells(reports_root: Path) -> None:
+    """Stamp `<script id='report-editorial'>` into staged report shells after validation succeeds."""
+    for ed_path in sorted(reports_root.glob("*/editorial.json")):
+        if ed_path.parent.name.startswith("."):
+            continue
+        ed = json.loads(ed_path.read_text(encoding="utf-8"))
+        ed["slug"] = ed_path.parent.name
+        if ed.get("availability") != "unavailable":
+            stamp_editorial_into_page(ed_path.parent / "index.html", ed)
+            stamp_editorial_into_page(ed_path.parent / "dashboard.html", ed)
+
+
+def compile_manifest_from_editorial(
+    reports_root: Path,
+    existing_manifest: dict | None = None,
+    *,
+    stamp_shells: bool = False,
+) -> dict | None:
+    ed_files = [
+        p for p in sorted(reports_root.glob("*/editorial.json")) if not p.parent.name.startswith(".")
+    ]
+    if not ed_files:
+        return None
+    base = existing_manifest if isinstance(existing_manifest, dict) else {}
+    top_entries: list[tuple[int, str, dict]] = []
+    sub_by_parent: dict[str, list[tuple[int, dict]]] = {}
+    for ed_path in ed_files:
+        slug = ed_path.parent.name
+        ed = json.loads(ed_path.read_text(encoding="utf-8"))
+        ed["slug"] = slug
+        if stamp_shells and ed.get("availability") != "unavailable":
+            stamp_editorial_into_page(ed_path.parent / "index.html", ed)
+            stamp_editorial_into_page(ed_path.parent / "dashboard.html", ed)
+        order = int(ed.get("catalog_order") if isinstance(ed.get("catalog_order"), int) else 9999)
+        if ed.get("parent_slug") or ed.get("featured") is False:
+            parent = str(ed.get("parent_slug") or "")
+            if parent:
+                sub_entry = {"slug": slug, "label": str(ed.get("label") or slug)}
+                if ed.get("note"):
+                    sub_entry["note"] = str(ed["note"])
+                sub_by_parent.setdefault(parent, []).append((order, sub_entry))
+            continue
+        run_item: dict = {"slug": slug, "title": str(ed.get("title") or "").strip()}
+        for k in ("summary", "takeaway", "family", "evaluation_modality", "availability", "guide", "context", "arms", "earlier"):
+            if ed.get(k) is not None:
+                if k == "arms":
+                    flat_arms = _arm_labels(ed.get("arms"))
+                    if flat_arms:
+                        run_item["arms"] = flat_arms
+                else:
+                    run_item[k] = ed[k]
+        top_entries.append((order, slug, run_item))
+
+    top_entries.sort(key=lambda t: (t[0], t[1]))
+    runs_out: list[dict] = []
+    for _, slug, item in top_entries:
+        if not item.get("earlier") and slug in sub_by_parent:
+            subs = [s for _, s in sorted(sub_by_parent[slug], key=lambda x: x[0])]
+            item["earlier"] = subs
+        runs_out.append(item)
+    return {
+        "intro": str(base.get("intro") or DEFAULT_INTRO),
+        "scoring_note": str(base.get("scoring_note") or DEFAULT_SCORING_NOTE),
+        "runs": runs_out,
+    }
 
 
 def main(
@@ -678,6 +1061,7 @@ def main(
     global ROOT, REPORTS, MANIFEST
     check_archive = False
     pending_slug = None
+    explicit_manifest = False
     if argv is not None:
         parser = argparse.ArgumentParser()
         parser.add_argument("--root", type=Path, default=ROOT)
@@ -693,18 +1077,39 @@ def main(
         ROOT = args.root.resolve()
         REPORTS = (args.reports_root or ROOT / "reports").resolve()
         MANIFEST = (args.manifest or REPORTS / "reports-index.json").resolve()
-    manifest = json.loads(MANIFEST.read_text())
+        explicit_manifest = (
+            args.manifest is not None
+            and MANIFEST != (REPORTS / "reports-index.json").resolve()
+        )
+    existing_manifest = json.loads(MANIFEST.read_text(encoding="utf-8")) if MANIFEST.is_file() else {}
+    compiled = (
+        None
+        if explicit_manifest
+        else compile_manifest_from_editorial(REPORTS, existing_manifest, stamp_shells=False)
+    )
+    manifest = compiled if compiled is not None else existing_manifest
     runs = _newest_first(manifest.get("runs", []))
     earlier = [e for r in runs for e in r.get("earlier") or [] if isinstance(e, dict)]
-    validate_archive(runs + earlier, REPORTS, pending_slug=pending_slug)
+    validate_archive(
+        runs + earlier,
+        REPORTS,
+        pending_slug=pending_slug,
+        check_stamped_sync=(check_archive or compiled is None),
+    )
     if check_archive:
         print("Staged report archive is complete for the curated catalog.")
         return
+    if compiled is not None:
+        stamp_editorial_shells(REPORTS)
+        MANIFEST.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     # Loud, not silent: a run whose report is staged under reports/ but absent from the
     # curated manifest gets DEPLOYED (rsync, no --delete) yet never LISTED. Warn so a missed
     # publish-time upsert is visible instead of quietly producing a deployed-but-unlisted run.
     listed = {r.get("slug") for r in runs + earlier}
-    staged = {p.parent.name for p in REPORTS.glob("*/meta.json")}
+    staged = {
+        p.parent.name
+        for p in list(REPORTS.glob("*/run-summary.json")) + list(REPORTS.glob("*/meta.json"))
+    }
     for slug in sorted(staged - listed):
         print(f"warn: {slug} is staged under reports/ but NOT in reports-index.json "
               f"(deployed but unlisted) — add it to the manifest to list it.", file=sys.stderr)

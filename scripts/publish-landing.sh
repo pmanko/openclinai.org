@@ -44,6 +44,12 @@ echo "==> syncing tested landing files only"
 rsync -avz --delete -e "${SSH_TRANSPORT}" \
   "${ROOT}/landing/" \
   "${GCP_SSH_USER}@${IP}:${GCP_REMOTE_REPO}/landing/"
+if [ -d "${ROOT}/wahs/demo" ]; then
+  gcp_ssh "mkdir -p ${GCP_REMOTE_REPO}/wahs/demo"
+  rsync -avz --delete -e "${SSH_TRANSPORT}" \
+    "${ROOT}/wahs/demo/" \
+    "${GCP_SSH_USER}@${IP}:${GCP_REMOTE_REPO}/wahs/demo/"
+fi
 if [ "${PUBLISH_MODE}" = "--landing-only" ]; then
   echo "==> landing-only mode; proxy configuration and services unchanged"
 else

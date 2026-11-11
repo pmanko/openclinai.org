@@ -101,7 +101,7 @@ Connection settings and credentials belong in ignored environment files.
 
 ### Website
 
-Website pages and assets are in `landing/`; documentation and interactive previews
-are in `site/`. The [website guide](site/README.md) covers local builds, checks and
-publication. Static hosting configuration lives in `compose/website/`, and the
-GitHub Pages workflow is configured in this repository.
+Website pages and assets live in `landing/`, published evaluation reports live in
+`reports/`, and the interactive WA Health Summary demo lives in `wahs/demo/`.
+The [website guide](landing/README.md) covers local checks and publication.
+Static hosting configuration lives in `compose/website/`.

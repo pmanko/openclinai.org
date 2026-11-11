@@ -27,15 +27,23 @@
 <span>Open Clinical AI</span>
 </a>
 <nav class="primary-nav" aria-label="Primary navigation">
-<a href="/#projects">Projects</a>
-<a href="https://reports.openclinai.org/">Evidence</a>
+<a href="/#project">Client Apps</a>
+<a href="/#hub">AI Engine</a>
+<a href="/#evidence">Evaluation</a>
+<a href="/#experiments">Experiments</a>
+<a href="/projects/">Projects</a>
+<a href="https://reports.openclinai.org/">Reports <span aria-hidden="true">↗</span></a>
 <a href="/#about">About</a>
 </nav>
 <details class="nav-toggle">
 <summary>Menu</summary>
 <nav aria-label="Mobile navigation">
-<a href="/#projects">Projects</a>
-<a href="https://reports.openclinai.org/">Evidence</a>
+<a href="/#project">Client Apps</a>
+<a href="/#hub">AI Engine</a>
+<a href="/#evidence">Evaluation</a>
+<a href="/#experiments">Experiments</a>
+<a href="/projects/">Projects</a>
+<a href="https://reports.openclinai.org/">Reports <span aria-hidden="true">↗</span></a>
 <a href="/#about">About</a>
 </nav>
 </details>
@@ -43,20 +51,68 @@
 <main id="main-content" tabindex="-1">
 <section class="project-intro page-width">
 <nav class="breadcrumbs" aria-label="Breadcrumb">
-<a href="/#projects">All projects</a>
+<a href="/#evidence">Evaluation Approaches</a> · Validation Harness
 </nav>
 <div class="overview-grid ">
 <div>
-<p class="section-kicker">Validation Harness</p>
+<p class="section-kicker">Validation Harness · 4-Layer Clinical Verification Stack</p>
 <h1>Repeatable clinical AI and LLM evaluation.</h1>
-<p class="overview-lead">A modular evaluation runner built on one shared provenance, streaming-telemetry and report spine. Run reproducible experiments across point-of-care EHR chart assistants (<a href="/chartsearchai/">ChartSearchAI</a>), iterative SQL and cohort analytics (<a href="/catalyst/">Catalyst</a>), multi-source FHIR R4 summarization (<a href="https://wahs.openclinai.org/">WA Health Summary</a>), or any OpenAI-compatible model or agent endpoint.</p>
+<p class="overview-lead">A modular evaluation runner built on one shared provenance, streaming-telemetry and report spine. Run reproducible experiments across point-of-care EHR chart assistants (<a href="/chartsearchai/">ChartSearchAI</a>), iterative SQL and cohort analytics (<a href="/catalyst/">Catalyst</a>), multi-source FHIR R4 summarization (<a href="/wahs/">WA Health Summary</a>), or any OpenAI-compatible model or agent endpoint.</p>
 <div class="project-actions">
 <a class="button button-primary" href="https://reports.openclinai.org/">Inspect published evidence <span aria-hidden="true">→</span>
+</a>
+<a class="button button-secondary" href="#verification-stack">4-Layer Verification Stack <span aria-hidden="true">↓</span>
 </a>
 <a class="button button-secondary" href="https://github.com/pmanko/clinical-ai-validation-harness#run-an-experiment">Read setup and documentation <span aria-hidden="true">→</span>
 </a>
 </div>
 </div>
+</div>
+</section>
+<section class="section page-width" id="verification-stack">
+<p class="section-kicker">Evaluation Methodology</p>
+<h2>The 4-Layer Clinical Verification Stack</h2>
+<p>Every evaluation in the OpenClinAI Validation Harness separates fast, deterministic provenance and execution checks from blinded multi-family autorater juries and human clinician calibration:</p>
+<div class="pillar-grid-4">
+<article class="pillar-card">
+<span class="pill-badge">Layer 1 · Deterministic Oracles</span>
+<h3>Clinical, Provenance &amp; Execution Gates</h3>
+<p>Zero-LLM checks that run on every turn before any autorater is invoked:</p>
+<ul>
+<li><strong>Provenance &amp; Citation Recall:</strong> Exact <code>[N]</code> source index resolution, claim-level grounding (<code>sources.v1</code>), and abstention on absent records.</li>
+<li><strong>Temporal &amp; Safety Rules (<code>R1–R10</code>):</strong> Reference-date anchoring, numeric value/unit preservation, and drug-allergy / renal safety checks.</li>
+<li><strong>Execution Oracles:</strong> Live read-only SQL execution &amp; schema-boundary audit (Catalyst) and CQL / FHIR `$apply` parity against WHO SMART L2 decision tables.</li>
+</ul>
+</article>
+<article class="pillar-card">
+<span class="pill-badge teal">Layer 2 · Pinned System-1 Encoders</span>
+<h3>Non-Autoregressive Entailment &amp; Drift Control</h3>
+<p>Pinned encoder scorers that audit atomic claim support and embedding stability:</p>
+<ul>
+<li><strong>Atomic Claim Entailment:</strong> Sentence-level premise-hypothesis entailment scoring across retrieved chart records and generated claims.</li>
+<li><strong>System-1 Gate Evaluation:</strong> Precision/recall and Expected Calibration Error (<code>ECE</code>) for Phase 0a context-admission and Phase 0b review-error triggers (<a href="/experiments/">see Lab</a>).</li>
+<li><strong>Embedding Drift Control:</strong> Pinned SHA-256 encoder digests across QueryStore and evaluation runs.</li>
+</ul>
+</article>
+<article class="pillar-card">
+<span class="pill-badge amber">Layer 3 · Blinded Multi-Family LLM Judges</span>
+<h3>Cross-Family Autorater Panels</h3>
+<p>Blinded multi-model juries that prevent self-preference bias when grading open-weight models:</p>
+<ul>
+<li><strong>Cross-Family Jury:</strong> <code>Claude Opus 4.6</code> + <code>GPT-5.4</code> / <code>Gemini 3.1 Pro</code> grading randomized, anonymized model outputs.</li>
+<li><strong>Multi-Axis Clinical Rubric:</strong> Factual accuracy, clinical completeness, relevance, temporal precision, and explicit clinical safety / harm severity.</li>
+<li><strong>Safety-Adjusted Composite:</strong> Severe clinical safety errors or fabricated citations directly penalize composite scores rather than averaging out.</li>
+</ul>
+</article>
+<article class="pillar-card">
+<span class="pill-badge">Layer 4 · Clinician Adjudication &amp; PPI</span>
+<h3>Human Calibration &amp; Confidence Intervals</h3>
+<p>Anchoring automated rubric scores to blinded human clinical review:</p>
+<ul>
+<li><strong>Blind Clinician Adjudication:</strong> Structured review packets capturing clinician agreement, error taxonomy, and preferred answer paths.</li>
+<li><strong>Prediction-Powered Inference (PPI):</strong> Combines large-scale autorater runs with gold clinician-adjudicated subsets to compute rectified 95% confidence intervals and Cohen’s $\kappa$.</li>
+</ul>
+</article>
 </div>
 </section>
 <section class="section page-width" id="modalities">
@@ -70,7 +126,7 @@
 <tbody>
 <tr><th scope="row">Point-of-care EHR chart Q&amp;A (<a href="/chartsearchai/">ChartSearchAI</a>)</th><td><code>harness-cli validate</code><br />(<code>transport="chartsearchai"</code>, <code>ChartSearchAiClient</code>)</td><td>OpenMRS REST &amp; SSE stream (<code>/ws/rest/v1/chartsearchai/chat/stream</code>) under provisioned clinical roles</td><td>Compares built-in (<code>bundled</code>) vs. <a href="/med-agent-hub/">Med Agent Hub</a> profiles; scores chart-record citation precision/recall (<code>score-citations</code>) and claim-level support (<code>sources.v1</code>).</td></tr>
 <tr><th scope="row">Iterative clinical &amp; cohort analytics (<a href="/catalyst/">Catalyst</a>)</th><td><code>harness-cli catalyst</code><br />(<code>NotebookHttpClient</code>)</td><td>Multi-turn notebook &amp; text-to-SQL gateway across OpenELIS and OpenMRS reporting schemas</td><td>Verifies read-only SQL execution, schema-boundary compliance, live database reconciliation against ground-truth cohort counts, and zero-row fabrication guardrails.</td></tr>
-<tr><th scope="row">Multi-source FHIR R4 / IPS condensation (<a href="https://wahs.openclinai.org/">WA Health Summary</a>)</th><td><code>harness-cli wahs</code><br />(<code>WahsHubClient</code>)</td><td>FHIR R4 bundle condensation (<code>/v1/wahs/condense</code>) and downstream clinical Q&amp;A across <code>1k–8k</code> token budgets</td><td>Evaluates deterministic vs. hybrid LLM condensation, International Patient Summary (IPS) section coverage, clinical entity retention, and grounded abstention &amp; provenance gates.</td></tr>
+<tr><th scope="row">Multi-source FHIR R4 / IPS condensation (<a href="/wahs/">WA Health Summary</a>)</th><td><code>harness-cli wahs</code><br />(<code>WahsHubClient</code>)</td><td>FHIR R4 bundle condensation (<code>/v1/wahs/condense</code>) and downstream clinical Q&amp;A across <code>1k–8k</code> token budgets</td><td>Evaluates deterministic vs. hybrid LLM condensation, International Patient Summary (IPS) section coverage, clinical entity retention, and grounded abstention &amp; provenance gates.</td></tr>
 <tr><th scope="row">General OpenAI-compatible LLM &amp; agent evaluation</th><td><code>harness-cli validate</code><br />(<code>transport="openai-compatible"</code> or <code>"med-agent-hub"</code>, <code>OpenAICompatibleClient</code> / <code>MedAgentHubClient</code>)</td><td>Any <code>/v1/chat/completions</code> server (<code>vLLM</code>, <code>llama-server</code>, <code>LiteLLM</code>, <code>Ollama</code>, custom agent gateways) via JSON or SSE streaming</td><td>Evaluates arbitrary models and prompts without requiring an EHR host: per-backend <code>endpointUrl</code> routing, plain-text or JSON responses, deterministic turn checks, multi-judge Scout rubrics, and multi-session concurrency goodput.</td></tr>
 </tbody>
 </table>
@@ -116,7 +172,7 @@
 </section>
 <section class="section page-width" id="hardware-sizing">
 <h2>Workload and hardware sizing guide</h2>
-<p>Deployment sizing depends on the <strong>prompt context length per turn</strong> and <strong>number of concurrent active sessions (<code>N</code>)</strong>. Condensed <a href="https://wahs.openclinai.org/">WA Health Summary</a> views (<code>1k–4k</code> tokens) and <a href="/catalyst/">Catalyst</a> SQL generation turns require modest prefill compute, whereas <a href="/chartsearchai/">ChartSearchAI</a> with <code>fullChart</code> enabled on a longitudinal HIV record sends roughly <strong>12,200 input tokens</strong> per turn. Using the ~12.2k-token longitudinal chart workload as an upper-bound sizing benchmark, the matrix below summarizes what implementers can expect across four hardware tiers:</p>
+<p>Deployment sizing depends on the <strong>prompt context length per turn</strong> and <strong>number of concurrent active sessions (<code>N</code>)</strong>. Condensed <a href="/wahs/">WA Health Summary</a> views (<code>1k–4k</code> tokens) and <a href="/catalyst/">Catalyst</a> SQL generation turns require modest prefill compute, whereas <a href="/chartsearchai/">ChartSearchAI</a> with <code>fullChart</code> enabled on a longitudinal HIV record sends roughly <strong>12,200 input tokens</strong> per turn. Using the ~12.2k-token longitudinal chart workload as an upper-bound sizing benchmark, the matrix below summarizes what implementers can expect across four hardware tiers:</p>
 <div class="table-scroll">
 <table class="comparison-table">
 <thead>
@@ -140,7 +196,7 @@
 <tr><th scope="col">Benchmark / tool</th><th scope="col">Focus area</th><th scope="col">How OpenClinAI uses or adapts its ideas</th></tr>
 </thead>
 <tbody>
-<tr><th scope="row">ArchEHR-QA &amp; EHRNoteQA (PhysioNet / BioNLP)</th><td>Patient-specific multi-note EHR question answering and sentence-level evidence grounding</td><td>Separates <em>evidence identification</em> (whether the assistant retrieved and cited the right OpenMRS chart records in <code>score-citations</code>) from <em>answer-evidence alignment</em> (whether each clinical claim is supported by its cited record in <code>sources.v1</code>) across <a href="/chartsearchai/">ChartSearchAI</a> and <a href="https://wahs.openclinai.org/">WA Health Summary</a>.</td></tr>
+<tr><th scope="row">ArchEHR-QA &amp; EHRNoteQA (PhysioNet / BioNLP)</th><td>Patient-specific multi-note EHR question answering and sentence-level evidence grounding</td><td>Separates <em>evidence identification</em> (whether the assistant retrieved and cited the right OpenMRS chart records in <code>score-citations</code>) from <em>answer-evidence alignment</em> (whether each clinical claim is supported by its cited record in <code>sources.v1</code>) across <a href="/chartsearchai/">ChartSearchAI</a> and <a href="/wahs/">WA Health Summary</a>.</td></tr>
 <tr><th scope="row">EHRSQL &amp; Spider 2.0 / BIRD-SQL</th><td>Clinical text-to-SQL accuracy, unanswerable-query abstention and execution-grounded database verification</td><td>Informs <a href="/catalyst/">Catalyst</a> notebook validation: live read-only SQL reconciliation against ground-truth database queries, schema-boundary auditing, and explicit abstention checks when a schema lacks requested clinical fields.</td></tr>
 <tr><th scope="row">HealthBench (OpenAI) &amp; MedHELM (Stanford CRFM)</th><td>Multi-turn clinical conversations, physician-authored rubrics and LLM-jury evaluation</td><td>Combines scenario-specific deterministic turn checks (<code>expectations.py</code>) with multi-axis rubric grading and explicit clinical harm flags, anchored to human reviews via Prediction-Powered Inference (PPI) across all four target modalities.</td></tr>
 <tr><th scope="row">NVIDIA AIPerf, GuideLLM &amp; <code>vllm bench serve</code></th><td>Streaming LLM serving telemetry (<code>TTFT</code>, <code>ITL</code>, <code>TPOT</code>), multi-turn prefix caching and SLO goodput</td><td>Adopts streaming milestone decomposition, turn-position prefix-cache tracking (<code>turn_1_ttft_p50_ms</code> vs. <code>turn_2plus_ttft_p50_ms</code>, <code>cache_hit_ratio</code>) and <strong>SLO goodput</strong> in <code>harness-cli validate concurrency</code> across OpenMRS, Med Agent Hub, and general OpenAI-compatible endpoints.</td></tr>
@@ -158,7 +214,7 @@
 <div class="resource-panel">
 <a class="text-link" href="https://reports.openclinai.org/small-model-answer-paths-2026-07-15/index.html">Open an example ChartSearchAI report <span aria-hidden="true">→</span>
 </a>
-<a class="text-link" href="https://pmanko.github.io/openclinai.org/status/">Browse dated evaluation reports <span aria-hidden="true">→</span>
+<a class="text-link" href="https://reports.openclinai.org/">Browse all 34 dated evaluation reports <span aria-hidden="true">→</span>
 </a>
 <a class="text-link" href="/chartsearchai/comparing-answer-paths/">How ChartSearchAI answer paths are compared <span aria-hidden="true">→</span>
 </a>
@@ -167,9 +223,9 @@
 </div>
 </section>
 <section class="section page-width">
-<h2>WA Health Summary collaboration</h2>
-<p>The WA Health Summary proposal explores how source-based review, human decisions and shared testing tools could support record reconciliation.</p>
-<a class="text-link" href="https://wahs.openclinai.org/">Read the WAHS design report <span aria-hidden="true">→</span>
+<h2>Applied project evaluations</h2>
+<p>Explore how the Validation Harness evaluates multi-clinic FHIR R4 patient summaries and WHO SMART Guidelines L2→L3 knowledge compilation across our applied projects.</p>
+<a class="text-link" href="/projects/index.html">Explore Applied Projects (WA Health Summary &amp; WHO SMART L2→L3) <span aria-hidden="true">→</span>
 </a>
 </section>
 </main>
@@ -190,6 +246,8 @@
 <a href="/catalyst/">Catalyst</a>
 <a href="/med-agent-hub/">Med Agent Hub</a>
 <a href="/validation-harness/">Validation Harness</a>
+<a href="/experiments/">Post-Training &amp; Lab</a>
+<a href="/projects/">Applied Projects</a>
 </nav>
 <p class="footer-disclaimer">For research and demonstration. AI output can be inaccurate and requires review.<br />
 <a href="https://digi.uw.edu/">DIGI at the University of Washington</a>

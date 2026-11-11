@@ -3,6 +3,20 @@ name: Build and deploy site to GitHub Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    paths:
+      - 'landing/**'
+      - 'wahs/**'
+      - 'reports/**'
+      - 'compose/website/**'
+      - 'scripts/build-landing-sitemap.py'
+      - 'scripts/build-reports-index.py'
+      - 'scripts/check-website-links.py'
+      - 'scripts/publish-landing.sh'
+      - 'scripts/publish-report.py'
+      - 'scripts/preview-report.py'
+      - 'tests/website/**'
+      - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 permissions:
@@ -10,17 +24,14 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one concurrent deploy; queue subsequent pushes.
+# Allow only one concurrent deploy on main; cancel superseded PR checks.
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: pages-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: site
     steps:
       - uses: actions/checkout@v4
 
@@ -28,27 +39,56 @@ jobs:
         with:
           python-version: '3.13'
       - name: Test static website and publication
-        working-directory: .
         run: |
           python -m pip install pytest PyYAML
           python -m pytest -q tests/website
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: site/package-lock.json
-      - run: npm ci
-      - run: npm test
-      - run: npm run build:pages
-      - name: Check rendered links and assets
-        working-directory: .
-        run: python3 scripts/check-website-links.py
+          python3 scripts/build-landing-sitemap.py --check
+          python3 scripts/build-reports-index.py --check-archive
+          python3 scripts/check-website-links.py
+      - name: Build GitHub Pages canonical redirect bundle
+        if: github.event_name != 'pull_request'
+        run: |
+          mkdir -p _pages_redirect/status
+          cat > _pages_redirect/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <title>Redirecting to OpenClinAI</title>
+            <link rel="canonical" href="https://openclinai.org/">
+            <meta http-equiv="refresh" content="0; url=https://openclinai.org/">
+            <script>window.location.replace("https://openclinai.org/");</script>
+          </head>
+          <body>
+            <p>Redirecting to <a href="https://openclinai.org/">https://openclinai.org/</a>...</p>
+          </body>
+          </html>
+          EOF
+          cp _pages_redirect/index.html _pages_redirect/404.html
+          cat > _pages_redirect/status/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <title>Redirecting to OpenClinAI Evaluation Reports</title>
+            <link rel="canonical" href="https://reports.openclinai.org/">
+            <meta http-equiv="refresh" content="0; url=https://reports.openclinai.org/">
+            <script>window.location.replace("https://reports.openclinai.org/");</script>
+          </head>
+          <body>
+            <p>Redirecting to <a href="https://reports.openclinai.org/">https://reports.openclinai.org/</a>...</p>
+          </body>
+          </html>
+          EOF
       - uses: actions/configure-pages@v5
+        if: github.event_name != 'pull_request'
       - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
         with:
-          path: site/dist
+          path: _pages_redirect
 
   deploy:
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:

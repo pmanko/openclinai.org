@@ -1,0 +1,18 @@
+{
+  "schema": "openclinai.editorial.v2",
+  "schema_version": 2,
+  "slug": "l5-full-default-2026-10-28-2a053c09",
+  "title": "After fixing false-positive date warnings, do we still need a second AI model to verify every answer?",
+  "summary": "Across 17 HIV chart scenarios (35 questions per setup), we compared four ways of running Google Gemma 4 12B: OpenMRS's built-in ChartSearchAI, Med Agent Hub's fast answer-only path, Med Agent Hub with deterministic chart and date checks, and a two-model setup that adds a separate Qwen 9B verifier model after every answer.",
+  "takeaway": "Refining the deterministic date and chart checks eliminated false-positive warning banners and achieved zero unsafe answers and zero wrong dates across all three Med Agent Hub setups (79.0–81.1/100), compared with 70.6/100, 1 unsafe answer, and 3 wrong dates on built-in ChartSearchAI. Adding a second 9B AI verifier nudged the headline score by less than 1 point (81.1 vs. 80.4/100) at the cost of 27 extra seconds per question — showing fast deterministic checks do the real safety work.",
+  "family": "chartsearchai",
+  "featured": true,
+  "catalog_order": 13,
+  "arms": {
+    "hub-profile-single-12b-verify": "Med Agent Hub (Gemma 4 12B + Qwen 9B verifier)",
+    "hub-profile-single-12b-bare": "Med Agent Hub (Gemma 4 12B, deterministic checks)",
+    "engine-parity-hub-answer-12b": "Med Agent Hub (Gemma 4 12B, answer only)",
+    "engine-parity-bundled-12b": "Built-in ChartSearchAI (Gemma 4 12B)"
+  },
+  "date": "29 Oct 2026"
+}

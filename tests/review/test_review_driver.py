@@ -266,26 +266,12 @@ def test_a_round_records_findings_and_downgrades_unevidenced_blockers(tmp_path):
     assert report["requested_consumer_head"] == consumer_head
 
 
-def test_full_evaluation_publishes_only_when_explicitly_requested(tmp_path, monkeypatch):
+def test_review_driver_is_strictly_code_review_and_rejects_publishing_or_eval_flags():
     import runpy
-    from types import SimpleNamespace
-    from contextlib import nullcontext
     api = runpy.run_path(str(REVIEW))
-    state = api['run_full'].__globals__
-    published = []
-    for name, value in dict(work_dir=lambda: tmp_path,
-            run_environment=lambda *args: nullcontext({}), run_set=lambda *args: tmp_path,
-            run_role=lambda *args: '```json\n[]\n```', arm_table=lambda *args: [],
-            judge_passes=lambda *args: ['fixture-actor'],
-            judging=lambda *args: {'sentence': 'fixture judging'},
-            harness=lambda *args: SimpleNamespace(stdout='fixture report'),
-            subprocess=SimpleNamespace(run=lambda *args, **kwargs: SimpleNamespace(returncode=0)),
-            publish_full=lambda *args: published.append(args) or 'fixture-url').items():
-        monkeypatch.setitem(state, name, value)
-    for index, (opt_in, suppress, expected) in enumerate([(False, False, 0), (True, False, 1), (True, True, 0)]):
-        monkeypatch.setitem(state, 'time', SimpleNamespace(strftime=lambda *args: str(index)))
-        args = SimpleNamespace(profiles=None, set='fixture', resume=None, baseline=None,
-                               publish_evaluation=opt_in, no_publish=suppress)
-        published.clear()
-        assert api['run_full'](args) == 0
-        assert len(published) == expected
+    assert "publish_full" not in api
+    assert "run_full" not in api
+    for retired_flag in ("--publish", "--publish-evaluation", "--full"):
+        proc = subprocess.run([sys.executable, str(REVIEW), retired_flag], capture_output=True, text=True)
+        assert proc.returncode == 2
+        assert "unrecognized arguments" in proc.stderr or "--pr" in proc.stderr

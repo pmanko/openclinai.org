@@ -10,6 +10,14 @@ let activeRunId = ((DATA.runs && DATA.runs[0]) || {}).run_id;
 
 function runById(id){ return DATA.runs.find(r => r.run_id === id); }
 function el(tag, cls){ const e = document.createElement(tag); if(cls) e.className = cls; return e; }
+function htmlEsc(s){
+  return (s == null ? '' : String(s))
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
 
 /* ---- sortable tables (every data table) ----
    UX research (W3C APG sortable-table, Adrian Roselli, NN/g): each header label
@@ -69,12 +77,23 @@ function renderRunMeta(run){
          ' · ' + m.dataset_id + ' · provider ' + m.provider + ' · ' + m.generated_at + rd;
 }
 
-// A real run identity for the header, built from the embedded run data instead of a
-// constant "Validation report". Leads with the comparison shape (N setups over M
-// question sets), then the dataset + patient cohort + date — so the header says what
-// THIS run actually was. Counts are derived from the blob; missing pieces are skipped.
+let EDITORIAL = (function(){
+  const el = document.getElementById('report-editorial');
+  if (el && el.textContent && el.textContent.trim()) {
+    try { return JSON.parse(el.textContent); } catch (e) {}
+  }
+  return null;
+})();
+
+function getEditorial(run){
+  const r = run || runById(activeRunId) || {};
+  return Object.assign({}, r.catalog_meta || {}, r.editorial || {}, (DATA && DATA.editorial) || {}, EDITORIAL || {});
+}
+
+// A real run identity for the header, built from editorial.json or the embedded run data.
 function buildTitle(run){
   const m = run.meta || {};
+  const cm = getEditorial(run);
   const nArms = (run.backends || []).length;
   let nQ = 0;
   (run.scenarios || []).forEach(s => { nQ += (s.turns || []).length; });
@@ -83,9 +102,12 @@ function buildTitle(run){
   if (nArms) parts.push(nArms + ' setup' + (nArms === 1 ? '' : 's'));
   if (nQ) parts.push(nQ + ' question' + (nQ === 1 ? '' : 's'));
   if (nP) parts.push(nP + ' patient' + (nP === 1 ? '' : 's'));
-  // "11 setups · 32 questions · 3 patients" — the comparison shape, compactly.
-  let title = parts.length ? parts.join(' · ') : 'Validation report';
-  return { title: title, dataset: m.dataset_id || '', date: (m.generated_at || '').slice(0, 10) };
+  const shape = parts.length ? parts.join(' · ') : 'Validation report';
+  const date = cm.date || (m.generated_at || '').slice(0, 10);
+  if (cm.title) {
+    return { title: cm.title, shape: shape, dataset: '', date: date, hasCatalogTitle: true };
+  }
+  return { title: shape, shape: shape, dataset: m.dataset_id || '', date: date, hasCatalogTitle: false };
 }
 
 // Three-layer verification status banner directly below the patient banner:
@@ -283,15 +305,377 @@ function renderStageTimings(rows){
 // (the model_registry resolver), never the raw dashed backend id. `armTitle` = full title
 // ("Liquid coord · Qwen writer · validated"); `armShort` = the tight grid/SVG variant
 // (drops " · validated"/" · single"). Fall back to the raw id only if a card is missing.
+function compactArmLabel(raw, maxLen){
+  var s = String(raw || '').trim();
+  if (!s) return s;
+  if (/parity tap/i.test(s)) {
+    s = s.replace(/\s*\([^)]*parity tap[^)]*\)/gi, '').trim();
+  }
+  if (s.length > maxLen) {
+    var pIdx = s.indexOf(' (');
+    if (pIdx >= 6 && (s.length - pIdx) > 22) {
+      s = s.slice(0, pIdx).trim();
+    }
+  }
+  if (s.length > maxLen) {
+    var cut = s.lastIndexOf(' ', maxLen - 1);
+    s = (cut >= 12 ? s.slice(0, cut) : s.slice(0, maxLen - 1)).trim() + '…';
+  }
+  return s;
+}
+function armEditorialFor(b){
+  const ed = getEditorial();
+  const map = (ed && ed.arm_labels) || {};
+  const val = map[b];
+  if (!val) return null;
+  if (typeof val === 'string') return { title: val, short_title: val };
+  return val;
+}
 function armCardFor(b){ const r = runById(activeRunId); return (r && r.arm_cards && r.arm_cards[b]) || null; }
-function armTitle(b){ const c = armCardFor(b); return (c && c.title) || b; }
-function armShort(b){ const c = armCardFor(b); return (c && (c.short_title || c.title)) || b; }
-function bpShort(b){ return armShort(b); }
+function armTitle(b){
+  const ov = armEditorialFor(b);
+  if (ov && ov.title) return compactArmLabel(ov.title, 64);
+  const c = armCardFor(b);
+  return compactArmLabel((c && c.title) || b, 64);
+}
+function armShort(b){
+  const ov = armEditorialFor(b);
+  if (ov && (ov.short_title || ov.title)) return compactArmLabel(ov.short_title || ov.title, 42);
+  const c = armCardFor(b);
+  return compactArmLabel((c && (c.short_title || c.title)) || b, 42);
+}
+function bpShort(b){ return compactArmLabel(armShort(b), 28); }
+
+var TONE_CLASSES = {success:'t-ok', warning:'t-warn', danger:'t-bad', neutral:'t-neutral', 't-ok':'t-ok', 't-warn':'t-warn', 't-bad':'t-bad', 't-neutral':'t-neutral'};
+function toneClass(t){ return TONE_CLASSES[String(t || '')] || 't-neutral'; }
+function fmtLatSec(ms){
+  if (ms == null || isNaN(ms)) return 'n/a';
+  return (Number(ms) / 1000).toFixed(1) + ' s';
+}
+function renderAnswerBody(text){
+  var s = htmlEsc(text == null ? '' : String(text)).replace(/\\n/g, '\n');
+  s = s.replace(/^##\s+(.+?)\s*$/gm, '<h3>$1</h3>');
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  return s;
+}
+function inlineMarkdown(escaped){
+  var out = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  out = out.replace(/\*\((Check:?.*?)\)\*/gi, "<em class='claim-mark'>($1)</em>");
+  out = out.replace(/\*\((General guidance.*?)\)\*/gi, "<em class='claim-guidance'>($1)</em>");
+  out = out.replace(/(?<![\w*])\*(?![\s*])(.+?)(?<![\s*])\*(?![\w*])/g, '<em>$1</em>');
+  return out;
+}
+function renderMarkdown(text){
+  var lines = htmlEsc(text == null ? '' : String(text)).replace(/\\n/g, '\n').split('\n');
+  var parts = [], paragraph = [], items = [], listTag = '';
+  function flushParagraph(){
+    if (paragraph.length){ parts.push("<p class='md-p'>" + paragraph.join('<br>') + "</p>"); paragraph = []; }
+  }
+  function flushList(){
+    if (items.length){ parts.push('<' + listTag + " class='md-list'>" + items.join('') + '</' + listTag + '>'); items = []; }
+    listTag = '';
+  }
+  for (var i = 0; i < lines.length; i++){
+    var line = lines[i].trim();
+    var bullet = line.match(/^[-*•]\s+(.*)$/);
+    var numbered = line.match(/^\d+[.)]\s+(.*)$/);
+    if (bullet || numbered){
+      flushParagraph();
+      var tag = bullet ? 'ul' : 'ol';
+      if (listTag && listTag !== tag) flushList();
+      listTag = tag;
+      items.push('<li>' + inlineMarkdown((bullet || numbered)[1]) + '</li>');
+      continue;
+    }
+    flushList();
+    if (!line){ flushParagraph(); continue; }
+    var heading = line.match(/^#{1,6}\s+(.*)$/);
+    paragraph.push(heading ? ('<strong>' + inlineMarkdown(heading[1]) + '</strong>') : inlineMarkdown(line));
+  }
+  flushList();
+  flushParagraph();
+  return parts.join('');
+}
+function renderStatusChip(view){
+  if (!view || typeof view !== 'object') return '';
+  var chip = view.label ? ("<span class='schip " + toneClass(view.tone) + "'>" + htmlEsc(view.label) + "</span>") : "";
+  if (view.confidence){
+    chip += "<span class='sconf'>" + htmlEsc(view.confidence) + "</span>";
+  }
+  return chip;
+}
+function renderFindingsList(view){
+  var fs = (view && view.findings) || [];
+  if (!fs.length) return '';
+  return "<ul class='findings'>" + fs.map(function(f){
+    if (!f || typeof f !== 'object') return '';
+    return "<li class='" + toneClass(f.tone) + "'><b>" + htmlEsc(f.name || '') + "</b>"
+      + (f.where ? " <span class='fwhere'>(" + htmlEsc(f.where) + ")</span>" : "")
+      + (f.says ? ": " + htmlEsc(f.says) : "") + "</li>";
+  }).join('') + "</ul>";
+}
+function renderSectionBlock(label, bodyHtml, view, extraHtml){
+  var title = (htmlEsc(label) + ' ' + renderStatusChip(view)).trim();
+  var h = "<div class='csec'><div class='ctitle'>" + title + "</div>";
+  if (view && view.note){
+    h += "<div class='snote " + toneClass(view.tone) + "'>" + htmlEsc(view.note) + "</div>";
+  }
+  h += renderFindingsList(view);
+  if (bodyHtml && String(bodyHtml).trim()){
+    h += "<div class='secbody'>" + bodyHtml + "</div>";
+  }
+  return h + (extraHtml || '') + "</div>";
+}
+function renderIndepthClaimsTable(view){
+  var rows = (view && view.claims) || [];
+  if (!rows.length) return '';
+  var names = (view && view.check_names) || {};
+  var claimChecks = ['date', 'review', 'citation'];
+  var head = claimChecks.map(function(k){ return '<th>' + htmlEsc(names[k] || k) + '</th>'; }).join('');
+  var body = rows.map(function(row){
+    var marked = row.marked ? " class='marked'" : "";
+    var cited = (row.cited && row.cited.length)
+      ? row.cited.map(function(i){ return '[' + htmlEsc(i) + ']'; }).join(' ')
+      : "<span class='mut'>none</span>";
+    var checks = row.checks || {};
+    var cells = claimChecks.map(function(k){
+      var v = checks[k] || {};
+      var r = v.reason ? ("<div class='creason'>" + htmlEsc(v.reason) + "</div>") : "";
+      return "<td class='" + toneClass(v.tone) + "'>" + htmlEsc(v.verdict || '') + r + "</td>";
+    }).join('');
+    return "<tr" + marked + "><td>" + htmlEsc(row.index) + "</td><td>" + htmlEsc(row.text || '') + "</td><td>" + cited + "</td>" + cells + "</tr>";
+  }).join('');
+  return "<table class='claims'><thead><tr><th>#</th><th>point</th><th>cites</th>" + head + "</tr></thead><tbody>" + body + "</tbody></table>";
+}
+function renderDraftDisclosure(view, reviewSources){
+  var draft = view && view.draft;
+  if (!draft || typeof draft !== 'object') return '';
+  var rSources = Array.isArray(reviewSources) ? reviewSources : (((reviewSources || {}).sources) || []);
+  var srcRows = rSources.map(function(s){
+    var idx = s.citation_index || s.record_index || '?';
+    return "<li><b>[" + htmlEsc(idx) + "]</b> " + htmlEsc(s.date || '') + " " + htmlEsc(s.resource_type || '') + " " + htmlEsc(s.title || '')
+      + "<details><summary>open draft source</summary><pre>" + htmlEsc(s.source_text || '') + "</pre></details></li>";
+  }).join('');
+  var srcHtml = srcRows ? ("<div class='reviewrefs'><b>Draft sources (not delivered evidence)</b><ul>" + srcRows + "</ul></div>") : "";
+  return "<details class='draftbox' data-kind='" + htmlEsc(draft.kind || '') + "'>"
+    + "<summary>" + htmlEsc(draft.title || 'Earlier In-Depth draft') + "</summary>"
+    + "<div class='draftnote'>" + htmlEsc(draft.note || '') + "</div>"
+    + "<div class='secbody'>" + renderAnswerBody(draft.text || '') + "</div>" + srcHtml + "</details>";
+}
+function renderRawCheckDisclosure(view){
+  var val = view && view.validation;
+  if (!val) return '';
+  return "<details class='raw-refs'><summary>raw check record</summary><pre class='rawcheck'>" + htmlEsc(JSON.stringify(val, null, 1)) + "</pre></details>";
+}
+function renderOriginalAnswerDisclosure(validation, view){
+  if (!validation || typeof validation !== 'object' || !(view && view.show_original)) return '';
+  var orig = String(validation.originalAnswer || '').trim();
+  var origBlocks = validation.originalBlocks || [];
+  var edited = validation.status === 'edited';
+  var cls = edited ? 'reviewdraft edited' : 'reviewdraft';
+  var notice = edited
+    ? 'This answer or its supporting citations was changed by the answer check. The checked answer above is the current result.'
+    : 'This was the model output before checking. The current answer above remains flagged for review.';
+  var origSources = ((validation.originalSources || {}).sources) || [];
+  var srcRows = origSources.map(function(s){
+    var idx = s.citation_index || s.record_index || '?';
+    return "<li><b>[" + htmlEsc(idx) + "]</b> " + htmlEsc(s.date || '') + " " + htmlEsc(s.resource_type || '') + " " + htmlEsc(s.title || '')
+      + "<details><summary>open original source</summary><pre>" + htmlEsc(s.source_text || '') + "</pre></details></li>";
+  }).join('');
+  var srcHtml = srcRows ? ("<div class='reviewrefs'><b>Original-answer sources (not final evidence)</b><ul>" + srcRows + "</ul></div>") : "";
+  return "<details class='" + cls + "'><summary>Original model answer</summary>"
+    + "<div class='reviewdraft-note'>" + htmlEsc(notice) + "</div>"
+    + "<div class='secbody'>" + renderAnswerBody(orig) + renderBlocksFromData(origBlocks, validation.originalSources) + "</div>"
+    + srcHtml + "</details>";
+}
+function renderCatalystTurnHtml(ct){
+  if (!ct || typeof ct !== 'object') return '';
+  var h = '';
+  if (ct.conversation_turns && ct.conversation_turns.length){
+    h += ct.conversation_turns.map(function(step){
+      var sqlHtml = step.sql ? ("<pre class='sql-code'>" + htmlEsc(step.sql) + "</pre>") : "";
+      var outBadge = step.outcome ? (" <span class='chip'>" + htmlEsc(step.outcome) + "</span>") : "";
+      return "<div class='cat-turn-step'><div class='cat-turn-role'>" + htmlEsc(step.role || 'turn') + outBadge + "</div>"
+        + (step.text ? ("<div>" + renderAnswerBody(step.text) + "</div>") : "")
+        + sqlHtml + "</div>";
+    }).join('');
+  } else if (ct.final_answer){
+    h += "<pre class='sql-code'>" + htmlEsc(ct.final_answer) + "</pre>";
+  }
+  if (ct.sql_diff){
+    h += "<details class='raw-refs'><summary>SQL evolution diff (" + ((ct.sql_versions || []).length) + " versions)</summary>"
+      + "<pre class='sql-diff'>" + htmlEsc(ct.sql_diff) + "</pre></details>";
+  }
+  if (ct.result_preview && (ct.result_preview.columns || []).length){
+    var rp = ct.result_preview;
+    var rowCnt = rp.returned != null ? rp.returned : rp.row_count;
+    h += "<div class='block'><div class='block-title'>Query Result (" + (rowCnt != null ? rowCnt + " rows" : "") + ")</div>"
+      + "<table class='block-tbl'><thead><tr>" + rp.columns.map(function(c){ return "<th>" + htmlEsc(c) + "</th>"; }).join('') + "</tr></thead><tbody>"
+      + (rp.rows || []).slice(0, 10).map(function(r){
+          return "<tr>" + r.map(function(v){ return "<td>" + htmlEsc(v == null ? '\u2205' : String(v)) + "</td>"; }).join('') + "</tr>";
+        }).join('')
+      + "</tbody></table></div>";
+  }
+  if (ct.failed_assertions && ct.failed_assertions.length){
+    h += "<ul class='findings'>" + ct.failed_assertions.map(function(fa){
+      var cls = (fa.class || 'conformance') === 'conformance' ? 't-bad' : 't-warn';
+      return "<li class='" + cls + "'><b>" + htmlEsc(fa.name || 'assertion') + "</b> <span class='fwhere'>(" + htmlEsc(fa.class || 'evaluation') + ")</span>: "
+        + htmlEsc(typeof fa.evidence === 'string' ? fa.evidence : JSON.stringify(fa.evidence || '')) + "</li>";
+    }).join('') + "</ul>";
+  }
+  return h;
+}
+function renderCellAnswerHtml(run, cell){
+  if (!cell) return '';
+  if (cell.catalyst_turn) return renderCatalystTurnHtml(cell.catalyst_turn);
+  var ansText = cell.answer_text != null ? String(cell.answer_text) : '';
+  var av = cell.answer_view;
+  var iv = cell.indepth_view;
+  var out = '';
+  if (av && typeof av === 'object'){
+    var cleanAns = ansText.replace(/^\s*\*\*Answer\*\*\s*/i, '').trim();
+    if (cleanAns || (av.note && String(av.note).trim()) || (av.findings && av.findings.length)){
+      out += renderSectionBlock('Answer', renderAnswerBody(cleanAns), av);
+    }
+    out += renderOriginalAnswerDisclosure(cell.answer_validation, av);
+  } else {
+    out += renderAnswerBody(ansText);
+  }
+  if (iv && typeof iv === 'object' && !(iv.status === 'not_in_profile' && !iv.body_text)){
+    var idBody = iv.body_text ? renderMarkdown(iv.body_text) : '';
+    var idExtra = renderIndepthClaimsTable(iv) + renderDraftDisclosure(iv, cell.review_sources) + renderRawCheckDisclosure(iv);
+    out += renderSectionBlock('In-Depth', idBody, iv, idExtra);
+  } else if (av && iv && iv.status === 'not_in_profile'){
+    out += renderSectionBlock('In-Depth', '', {status:'not_in_profile', label:iv.label || 'No In-Depth in this profile', tone:'neutral'});
+  }
+  return out;
+}
+function renderBlocksFromData(blocks, sourcesObj, cellSourceRefs){
+  if (!blocks || !blocks.length) return '';
+  var labels = {};
+  if (sourcesObj && Array.isArray(sourcesObj.sources)){
+    sourcesObj.sources.forEach(function(s){
+      if (s && s.citation_index != null && s.source_id) labels[s.citation_index] = s.source_id;
+      if (s && s.record_index != null && s.source_id && !labels[s.record_index]) labels[s.record_index] = s.source_id;
+    });
+  }
+  if (Array.isArray(cellSourceRefs)){
+    cellSourceRefs.forEach(function(ref){
+      if (Array.isArray(ref) && ref[2] != null && ref[1]) labels[ref[2]] = ref[1];
+    });
+  }
+  return blocks.map(function(b){
+    if (!b || b.kind !== 'table') return '';
+    var cols = b.columns || [];
+    var head = cols.map(function(c){ return '<th>' + htmlEsc(c.label || c.key || '') + '</th>'; }).join('');
+    var rowsHtml = (b.rows || []).map(function(row){
+      var cells = (row && row.cells) || {};
+      var rowRefs = [], rowSids = [];
+      Object.keys(cells).forEach(function(k){
+        var cObj = cells[k];
+        if (cObj && Array.isArray(cObj.refs)){
+          cObj.refs.forEach(function(i){ if (typeof i === 'number') rowRefs.push(i); });
+        }
+        if (cObj && Array.isArray(cObj.source_ids)){
+          cObj.source_ids.forEach(function(s){ if (s) rowSids.push(String(s)); });
+        }
+      });
+      var seen = {}, sids = [];
+      rowSids.forEach(function(lbl){
+        if (!seen[lbl]){ seen[lbl] = 1; sids.push(lbl); }
+      });
+      rowRefs.forEach(function(i){
+        var lbl = labels[i] || labels[String(i)] || ('[' + i + ']');
+        if (!seen[lbl]){ seen[lbl] = 1; sids.push(lbl); }
+      });
+      var rowSourceHtml = sids.length
+        ? ("<div class='row-sources'>sources " + sids.map(function(s){ return '<span>' + htmlEsc(s) + '</span>'; }).join(' ') + "</div>")
+        : "";
+      var tds = cols.map(function(c, ci){
+        var cellObj = cells[c.key] || {};
+        return '<td>' + htmlEsc(cellObj.text || '') + (ci === 0 ? rowSourceHtml : '') + '</td>';
+      }).join('');
+      return '<tr>' + tds + '</tr>';
+    }).join('');
+    var title = b.title ? ("<div class='block-title'>" + htmlEsc(b.title) + "</div>") : "";
+    return "<div class='block'>" + title + "<table class='block-tbl'><thead><tr>" + head + "</tr></thead><tbody>" + rowsHtml + "</tbody></table></div>";
+  }).join('');
+}
+function renderCellBlocksHtml(cell){
+  if (!cell) return '';
+  return renderBlocksFromData(cell.blocks || [], cell.sources, cell.source_card_refs);
+}
+function renderCellChipsHtml(cell){
+  if (!cell) return '';
+  var chips = [];
+  if (Array.isArray(cell.custom_chips) && cell.custom_chips.length){
+    cell.custom_chips.forEach(function(c){
+      if (c && typeof c === 'object' && c.text){
+        var tone = c.tone ? (' ' + htmlEsc(c.tone)) : '';
+        chips.push("<span class='chip" + tone + "'>" + htmlEsc(c.text) + "</span>");
+      }
+    });
+    return chips.join(' ');
+  }
+  var m = cell.metrics || {};
+  chips.push("<span class='chip" + (m.first_turn ? " warm" : "") + "'>⏱ " + htmlEsc(fmtLatSec(m.latency_ms)) + "</span>");
+  chips.push("<span class='chip'>" + htmlEsc(m.citation_count != null ? m.citation_count : 0) + " chart refs</span>");
+  if (m.ttft_ms != null) chips.push("<span class='chip'>TTFT " + htmlEsc(fmtLatSec(m.ttft_ms)) + "</span>");
+  if (m.answer_done_ms != null && m.answer_done_ms !== m.latency_ms){
+    chips.push("<span class='chip'>answer " + htmlEsc(fmtLatSec(m.answer_done_ms)) + "</span>");
+  }
+  if (m.tpot_ms != null) chips.push("<span class='chip'>TPOT " + htmlEsc(m.tpot_ms) + "ms/tok</span>");
+  if (m.json_valid === false) chips.push("<span class='chip bad'>invalid</span>");
+  if (cell.degraded) chips.push("<span class='chip bad'>⚠ degraded</span>");
+  var gate = cell.temporal_gate;
+  if (gate && typeof gate === 'object'){
+    var mode = gate.mode || 'off';
+    var status = gate.status || 'not_applicable';
+    if (mode === 'off' || status === 'not_applicable'){
+      chips.push("<span class='chip'>temporal gate " + htmlEsc(mode) + "</span>");
+    } else {
+      var cls = status === 'fail' ? ' bad' : ' warm';
+      var applied = (gate.applied && gate.applied !== 'none') ? (' ' + htmlEsc(gate.applied)) : '';
+      chips.push("<span class='chip" + cls + "'>temporal gate " + htmlEsc(mode) + ": " + htmlEsc(status) + applied + "</span>");
+    }
+  }
+  return chips.join('');
+}
+function renderSourceCardFromData(s, sidOverride, citeOverride, chartOverride){
+  if (!s || typeof s !== 'object') return '';
+  var sid = sidOverride || s.source_id || 'S1';
+  var cite = citeOverride != null ? citeOverride : (s.citation_index != null ? s.citation_index : (s.record_index != null ? s.record_index : '?'));
+  var chart = chartOverride != null ? chartOverride : (s.chart_record_index != null ? s.chart_record_index : (s.record_index != null ? s.record_index : cite));
+  var meta = [s.resource_type, s.date].filter(Boolean).map(htmlEsc).join(' · ');
+  var factsArr = (s.facts_used && s.facts_used.length) ? s.facts_used.slice(0, 4) : (s.source_text ? [s.source_text] : []);
+  var titleStr = String(s.title || '').trim();
+  var srcText = String(s.source_text || '').trim();
+  var showFacts = !(factsArr.length === 1 && titleStr && String(factsArr[0]).trim().indexOf(titleStr) !== -1);
+  var showDetails = srcText && !(factsArr.length === 1 && String(factsArr[0]).trim() === srcText && showFacts);
+  var factsHtml = showFacts && factsArr.length
+    ? ('<ul>' + factsArr.map(function(f){ return '<li>' + htmlEsc(f) + '</li>'; }).join('') + '</ul>')
+    : '';
+  var detailsHtml = showDetails
+    ? ('<details><summary>open source record</summary><pre>' + htmlEsc(srcText) + '</pre></details>')
+    : '';
+  var toneMap = {success:' ok', danger:' bad', warning:' warn', ok:' ok', bad:' bad', warn:' warn'};
+  var secsHtml = (s.sections && s.sections.length)
+    ? s.sections.map(function(nm){ return "<span class='source-section'>" + htmlEsc(nm) + "</span>"; }).join('')
+    : "<span class='source-status'>not cited in the text</span>";
+  var recLbl = s.record_label || s.resolution_status || 'unknown';
+  var supLbl = s.support_label || s.support_status || 'unchecked';
+  return "<article class='source-card'>"
+    + "<div class='source-head'><b>" + htmlEsc(sid) + "</b> <span>cite [" + htmlEsc(cite) + "] · chart [" + htmlEsc(chart) + "] " + htmlEsc(s.title || '') + "</span></div>"
+    + "<div class='source-meta'>cited by " + secsHtml + (meta ? " · " + meta : "")
+    + " <span class='source-status" + (toneMap[s.record_tone] || '') + "'>" + htmlEsc(recLbl) + "</span>"
+    + " <span class='source-status" + (toneMap[s.support_tone] || '') + "'>" + htmlEsc(supLbl) + "</span></div>"
+    + factsHtml + detailsHtml + "</article>";
+}
 function resolveCellSourcesHtml(run, cell){
   if(!cell) return '';
-  if(cell.sources_html) return cell.sources_html;
   var refs = cell.source_card_refs;
   var pool = (run && run.source_card_pool) || [];
+  var inlineSources = (cell.sources && Array.isArray(cell.sources.sources)) ? cell.sources.sources : [];
   var diag = ((cell.sources || {}).diagnostics) || {};
   var diagBits = [];
   var diagMap = [['unresolved_refs','unresolved'],['unused_top_refs','unused top-level'],['nested_only_refs','nested only'],['malformed_tokens','malformed tokens']];
@@ -299,28 +683,41 @@ function resolveCellSourcesHtml(run, cell){
     var k=diagMap[d][0], lbl=diagMap[d][1], vals=diag[k]||[];
     if(vals.length){ diagBits.push(lbl+': '+vals.map(htmlEsc).join(', ')); }
   }
-  if((!refs || !refs.length) && !diagBits.length) return '';
-  function buildCard(entry){
-    var idx = entry[0], sid = entry[1] || 'S1', cite = entry[2] || '?', chart = entry[3] || cite;
-    var tpl = pool[idx] || '';
-    return tpl.replace('<b>__SID__</b>', '<b>'+htmlEsc(sid)+'</b>')
-              .replace('__CITE_CHART__', 'cite ['+htmlEsc(cite)+'] · chart ['+htmlEsc(chart)+'] ');
+  var cardEntries = [];
+  if (refs && refs.length){
+    cardEntries = refs.map(function(entry){
+      var idx = entry[0], sid = entry[1] || 'S1', cite = entry[2] || '?', chart = entry[3] || cite;
+      var item = pool[idx];
+      return renderSourceCardFromData(item, sid, cite, chart);
+    });
+  } else if (inlineSources.length){
+    cardEntries = inlineSources.map(function(s){ return renderSourceCardFromData(s); });
   }
-  var shown = (refs || []).slice(0, 5).map(buildCard).join('');
-  var more = '';
-  if(refs && refs.length > 5){
-    more = "<details class='source-more'><summary>show all sources</summary>" + refs.slice(5).map(buildCard).join('') + "</details>";
-  }
+  if(!cardEntries.length && !diagBits.length) return '';
+  var shown = cardEntries.slice(0, 5).join('');
+  var more = cardEntries.length > 5
+    ? ("<details class='source-more'><summary>show all sources</summary>" + cardEntries.slice(5).join('') + "</details>")
+    : "";
   var diagHtml = diagBits.length ? ("<div class='source-diag'>" + diagBits.join(' · ') + "</div>") : "";
-  return "<section class='sources'><div class='sources-title'>Evidence Used</div><div class='source-grid'>" + shown + "</div>" + more + diagHtml + "</section>";
+  return "<section class='sources'><div class='sources-title'>Evidence Used <span class='sources-sub'>(per-citation support — not a whole-answer quality verdict)</span></div><div class='source-grid'>" + shown + "</div>" + more + diagHtml + "</section>";
 }
 function resolveCellRefsHtml(run, cell){
   if(!cell) return '';
-  if(cell.refs_html) return cell.refs_html;
+  var refsArr = null;
   if(cell.refs_pool_id != null && run && run.refs_pool && run.refs_pool[cell.refs_pool_id]){
-    return run.refs_pool[cell.refs_pool_id];
+    refsArr = run.refs_pool[cell.refs_pool_id];
+  } else if (Array.isArray(cell.refs) && cell.refs.length){
+    refsArr = cell.refs;
   }
-  return '';
+  if (!Array.isArray(refsArr) || !refsArr.length) return '';
+  var shown = refsArr.slice(0, 8).map(function(x){
+    if (x && typeof x === 'object'){
+      return "<span class='ref'>[" + htmlEsc(x.index != null ? x.index : '?') + "] " + htmlEsc(x.resourceType || '') + "</span>";
+    }
+    return "<span class='ref'>" + htmlEsc(x) + "</span>";
+  }).join(' ');
+  var more = refsArr.length > 8 ? (" <span class='more'>+" + (refsArr.length - 8) + "</span>") : "";
+  return "<details class='raw-refs'><summary>raw resolved refs</summary><div class='refs'>" + shown + more + "</div></details>";
 }
 function bpNiceCeil(v){ if(v<=0) return 1; var p=Math.pow(10,Math.floor(Math.log10(v))); var f=v/p; var nf=f<=1?1:(f<=2?2:(f<=5?5:10)); return nf*p; }
 function bpFmt(v){ v=Math.round(v); return v>=1000?((v/1000).toFixed(v>=10000?0:1)+'k'):String(v); }
@@ -416,6 +813,8 @@ function classifyScenario(sid, turns){
 }
 
 function plainArmRoleDesc(b){
+  var ov = armEditorialFor(b);
+  if (ov && ov.desc) return ov.desc;
   var c = armCardFor(b) || {};
   if(c.path && c.path !== c.title && c.path !== b) return c.path;
   if(c.kind === 'single'){
@@ -498,25 +897,46 @@ function renderExecutiveSummary(run){
     leadNarrative += '<b>' + htmlEsc(armShort(top.backend)) + '</b> leads by <b>+' + fmt10(leadDelta) + ' points</b> over <b>' + htmlEsc(armShort(second.backend)) + '</b> (and <b>+' + fmt10((top.benchmark_score||0) - (lowest.benchmark_score||0)) + ' points</b> across all ' + scored.length + ' setups), with accuracy <b>'
       + fmt10(top.accuracy_mean) + '/10</b>, completeness <b>' + fmt10(top.completeness_mean) + '/10</b>, and relevance <b>' + fmt10(top.relevance_mean) + '/10</b>.';
   }
+  var cm = getEditorial(run);
+  var ctxObj = run.context || cm.context || null;
+  var guideObj = cm.guide || null;
+  var catMeta = run.catalyst || null;
+  var catAbs = (catMeta && catMeta.plain_language_abstract) || {};
   var ctxBoxHtml = '';
-  if(run.context && (run.context.text || run.context.url)){
-    var cTxt = String(run.context.text || '');
-    var cLink = run.context.url ? (' <a href="' + htmlEsc(run.context.url) + '" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700;text-decoration:none">' + htmlEsc(run.context.label || 'Learn more →') + '</a>') : '';
-    if(cTxt.length > 260){
-      var mSent = cTxt.slice(140, 340).match(/([a-z0-9\)\]])\.\s+/i);
-      var cutIdx = mSent ? (140 + mSent.index + 2) : cTxt.lastIndexOf(' ', 250);
-      if(cutIdx <= 80) cutIdx = 240;
-      var cShort = cTxt.slice(0, cutIdx).trim();
-      var cRest = cTxt.slice(cutIdx).trim();
-      ctxBoxHtml = '<div style="margin:0 0 14px;padding:10px 14px;background:var(--surface2);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;font-size:13px;line-height:1.5;color:var(--fg)">'
-        + htmlEsc(cShort)
-        + '<details style="margin-top:4px"><summary style="cursor:pointer;color:var(--accent);font-weight:700;font-size:12px">Read full study context ▾</summary><div style="margin-top:6px;color:var(--mut)">' + htmlEsc(cRest) + cLink + '</div></details>'
-        + '</div>';
-    } else {
-      ctxBoxHtml = '<div style="margin:0 0 14px;padding:11px 14px;background:var(--surface2);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;font-size:13px;line-height:1.55;color:var(--fg)">'
-        + (cTxt ? htmlEsc(cTxt) + ' ' : '') + cLink
-        + '</div>';
+  var whatTestedTxt = String(cm.summary || catAbs.tested || (ctxObj && ctxObj.text) || '').trim();
+  var extraCtxTxt = (cm.summary && ctxObj && ctxObj.text && String(ctxObj.text).trim() !== String(cm.summary).trim())
+    ? String(ctxObj.text).trim() : '';
+  var takeawayTxt = String(cm.takeaway || catAbs.takeaway || catAbs.outcome || '').trim();
+  var guideLinkHtml = '';
+  if (guideObj && guideObj.url) {
+    guideLinkHtml = ' <a href="' + htmlEsc(guideObj.url) + '" target="_blank" rel="noopener">' + htmlEsc(guideObj.label || 'Read study guide →') + '</a>';
+  } else if (ctxObj && ctxObj.url) {
+    guideLinkHtml = ' <a href="' + htmlEsc(ctxObj.url) + '" target="_blank" rel="noopener">' + htmlEsc(ctxObj.label || 'Learn more →') + '</a>';
+  }
+  if (whatTestedTxt || takeawayTxt || guideLinkHtml) {
+    var boxes = [];
+    if (whatTestedTxt || guideLinkHtml) {
+      var body1 = '';
+      if (!cm.summary && whatTestedTxt.length > 280) {
+        var mSent = whatTestedTxt.slice(140, 340).match(/([a-z0-9\)\]])\.\s+/i);
+        var cutIdx = mSent ? (140 + mSent.index + 2) : whatTestedTxt.lastIndexOf(' ', 250);
+        if (cutIdx <= 80) cutIdx = 240;
+        var cShort = whatTestedTxt.slice(0, cutIdx).trim();
+        var cRest = whatTestedTxt.slice(cutIdx).trim();
+        body1 = htmlEsc(cShort)
+          + '<details style="margin-top:5px"><summary style="cursor:pointer;color:var(--accent);font-weight:700;font-size:12px">Read full study context ▾</summary><div style="margin-top:6px;color:var(--mut)">' + htmlEsc(cRest) + guideLinkHtml + '</div></details>';
+      } else {
+        body1 = (whatTestedTxt ? htmlEsc(whatTestedTxt) : '') + guideLinkHtml;
+        if (extraCtxTxt) {
+          body1 += '<details style="margin-top:6px"><summary style="cursor:pointer;color:var(--accent);font-weight:700;font-size:12px">Additional study notes ▾</summary><div style="margin-top:5px;color:var(--mut);font-size:12.5px">' + htmlEsc(extraCtxTxt) + '</div></details>';
+        }
+      }
+      boxes.push('<div class="ov-study-box"><div class="ov-study-kicker">What We Tested</div><div class="ov-study-body">' + body1 + '</div></div>');
     }
+    if (takeawayTxt) {
+      boxes.push('<div class="ov-study-box takeaway"><div class="ov-study-kicker">Key Takeaway · What Happened &amp; Why It Matters</div><div class="ov-study-body">' + htmlEsc(takeawayTxt) + '</div></div>');
+    }
+    ctxBoxHtml = '<div class="ov-study-brief">' + boxes.join('') + '</div>';
   }
 
   // Hero Card 3: Multi-user scaling (when concurrency_runs present), single-user response speed (when latency recorded), or Safety-Adjusted Score & Spread
@@ -754,7 +1174,7 @@ function renderExecutiveSummary(run){
     var previewTurn = turns[0] || { turn: 1, question: '', cells: {} };
     var previewCols = [top].concat(second ? [second] : []).map(function(s){
       var cell = (previewTurn.cells || {})[s.backend];
-      var ansHtml = cell ? (cell.answer_html || '') : '<em>No response</em>';
+      var ansHtml = cell ? renderCellAnswerHtml(run, cell) : '<em>No response</em>';
       return '<div class="diff-qa-col">'
         + '<div class="diff-qa-head"><span>' + htmlEsc(armShort(s.backend)) + '</span><span style="font-size:11px;color:var(--mut)">Turn ' + previewTurn.turn + '</span></div>'
         + '<div class="diff-qa-body">' + ansHtml + '</div>'
@@ -763,7 +1183,7 @@ function renderExecutiveSummary(run){
 
     return '<div class="ov-diff-card">'
       + '<div class="ov-diff-meta">'
-      +   '<div class="ov-diff-badges"><span class="ov-cat-pill">' + htmlEsc(d.cat.short) + '</span><span class="ov-sid-muted">' + htmlEsc(d.sid) + ' (' + turns.length + ' turn' + (turns.length===1?'':'s') + ')</span></div>'
+      +   '<div class="ov-diff-badges"><span class="ov-cat-pill">' + htmlEsc(d.cat.short) + '</span><span class="ov-sid-muted" title="' + htmlEsc(d.sid) + '">' + (turns.length === 1 ? 'Single question' : (turns.length + '-turn conversation')) + '</span></div>'
       +   '<span class="ov-delta-pill">' + htmlEsc(gapLabel) + '</span>'
       + '</div>'
       + '<div class="ov-diff-q">' + htmlEsc(qPreview) + '</div>'
@@ -890,7 +1310,7 @@ function renderQuestionExplorer(run){
 
     return '<tr class="qe-row" data-qe-sid="' + htmlEsc(sc.scenario_id) + '" data-qe-cat="' + htmlEsc(cat.id) + '" data-qe-delta="' + delta.toFixed(1) + '" data-qe-flag="' + (hasFlag ? '1' : '0') + '">'
       + '<td><div class="qe-q-main">“' + htmlEsc(qMain) + '”<span style="font-weight:500;color:var(--mut)">' + htmlEsc(qExtra) + '</span></div>'
-      +   '<div class="qe-q-sub"><span class="ov-cat-pill">' + htmlEsc(cat.short) + '</span><span class="ov-sid-muted">' + htmlEsc(sc.scenario_id) + '</span><span>· ' + turns.length + ' turn' + (turns.length===1?'':'s') + '</span></div></td>'
+      +   '<div class="qe-q-sub"><span class="ov-cat-pill">' + htmlEsc(cat.short) + '</span><span class="ov-sid-muted" title="' + htmlEsc(sc.scenario_id) + '">' + (turns.length === 1 ? 'Single question' : (turns.length + ' turns')) + '</span></div></td>'
       + armCells
       + '<td class="qe-delta ' + (delta >= 10 ? 'big' : '') + '">' + (scores.length >= 2 ? (Math.abs(signed) < 0.1 ? '0.0 (Tie)' : ((signed > 0 ? '+' : '') + signed.toFixed(1) + ' pts')) : '—') + '</td>'
       + '<td><div class="qe-note">'
@@ -1003,7 +1423,7 @@ function openScenarioDrawer(run, sid, initialTab){
             ? ((cell.metrics.latency_ms / 1000).toFixed(1) + 's') : '';
           var bodyHtml = !cell ? '<em>No response</em>'
             : (cell.error ? ('<div class="err">HTTP ' + htmlEsc(cell.http_status) + ': ' + htmlEsc(cell.error) + '</div>')
-                          : ('<div class="sd-col-body">' + (cell.answer_html || '') + (cell.blocks_html || '') + '</div>'));
+                          : ('<div class="sd-col-body">' + renderCellAnswerHtml(run, cell) + renderCellBlocksHtml(cell) + '</div>'));
           return '<div class="sd-col">'
             + '<div class="sd-col-head"><div><b>' + htmlEsc(armShort(b)) + '</b> <span style="font-size:11px;color:var(--mut)">' + htmlEsc(latSec) + '</span></div>' + scorePill + '</div>'
             + bodyHtml
@@ -1041,7 +1461,7 @@ function openScenarioDrawer(run, sid, initialTab){
           var rh = resolveCellRefsHtml(run, cell);
           return '<div class="sd-col">'
             + '<div class="sd-col-head"><b>' + htmlEsc(armShort(b)) + '</b></div>'
-            + '<div class="chips" style="margin-bottom:8px">' + (cell.chips_html || '') + '</div>'
+            + '<div class="chips" style="margin-bottom:8px">' + renderCellChipsHtml(cell) + '</div>'
             + renderStageTimings(cell.stage_timings)
             + (sh || '<p class="mut" style="font-size:12px">No chart citations in this turn.</p>')
             + rh
@@ -1558,15 +1978,131 @@ function renderAdjudication(run){
   return sec;
 }
 
+var CHECKPREC_ANSWER_CHECKS = ['date', 'date_patched', 'record', 'citation', 'review', 'needs_review'];
+var CHECKPREC_INDEPTH_CHECKS = ['date', 'citation', 'review', 'marked'];
+var CHECKPREC_LABELS = {
+  date: 'Date check',
+  date_patched: 'Date check (answer patched; judged after the patch)',
+  record: 'Record check',
+  citation: 'Citation support',
+  review: 'Model review',
+  needs_review: 'Status: needs review',
+  marked: 'Any mark'
+};
+var CHECKPREC_VERDICTS = ['correct', 'wrong_fact', 'wrong_citation', 'unsupported', 'guidance'];
+var CHECKPREC_EXPLANATION = 'Precision: of the items a check marked, the share the judge also faulted. Recall: of the items the judge faulted, the share the check marked.';
+
+function fmtCheckPrecRatio(v){
+  return (v == null || isNaN(v)) ? 'n/a' : Number(v).toFixed(2);
+}
+function renderCheckPrecTableHtml(head, rows, caption){
+  var h = "<table class='summary checkprec'><caption>" + htmlEsc(caption) + "</caption><thead><tr>";
+  h += head.map(function(c){ return '<th>' + htmlEsc(c) + '</th>'; }).join('') + "</tr></thead><tbody>";
+  rows.forEach(function(row){
+    h += '<tr>' + row.map(function(c, i){
+      return (i === 0 ? "<td class='b'>" : '<td>') + htmlEsc(c) + '</td>';
+    }).join('') + '</tr>';
+  });
+  return h + '</tbody></table>';
+}
+function buildCheckPrecisionHtml(data){
+  if (!data || typeof data !== 'object') return '';
+  var ref = data.reference || {};
+  var actors = ref.actors || [];
+  var otherActors = actors.filter(function(a){ return a !== ref.headline; });
+  var h = "<div class='checkprec'><p class='intro'>" + htmlEsc(CHECKPREC_EXPLANATION)
+    + ' Reference: the ' + htmlEsc(String(ref.headline || 'judge')) + ' judge pass'
+    + ' (an accuracy below ' + htmlEsc(String((ref.thresholds || {}).accuracy_error_below)) + ','
+    + ' a citation the judge found unsupported or partly supported, harm, or a temporal axis not ok counts as a judged error).'
+    + (otherActors.length ? (' Other passes scored: ' + htmlEsc(otherActors.join(', ')) + '.') : '')
+    + '</p>';
+  var ansHead = ['check', 'marked', 'marked, any turn', 'judged errors', 'hits', 'precision', 'recall'];
+  var idHead = ['check', 'marked', 'judged errors', 'hits', 'precision', 'recall'];
+  function ansRows(block){
+    return CHECKPREC_ANSWER_CHECKS.map(function(chk){
+      var s = (block && block[chk]) || {};
+      return [
+        CHECKPREC_LABELS[chk] || chk,
+        String(s.marked || 0),
+        String(s.marked_any_turn || 0),
+        String(s.judged_errors || 0),
+        String(s.hits || 0),
+        fmtCheckPrecRatio(s.precision),
+        fmtCheckPrecRatio(s.recall)
+      ];
+    });
+  }
+  function idRows(block){
+    return CHECKPREC_INDEPTH_CHECKS.map(function(chk){
+      var s = (block && block[chk]) || {};
+      return [
+        CHECKPREC_LABELS[chk] || chk,
+        String(s.marked || 0),
+        String(s.judged_errors || 0),
+        String(s.hits || 0),
+        fmtCheckPrecRatio(s.precision),
+        fmtCheckPrecRatio(s.recall)
+      ];
+    });
+  }
+  var answer = data.answer || {};
+  var ansExtra = [];
+  if (answer.unmatched_cells) ansExtra.push(answer.unmatched_cells + ' unmatched');
+  if (answer.unscored_rows) ansExtra.push(answer.unscored_rows + ' unscored');
+  var ansCaption = 'Answer checks, all arms (' + (answer.cells || 0) + ' judged cells' + (ansExtra.length ? (', ' + ansExtra.join(', ')) : '') + ')';
+  h += renderCheckPrecTableHtml(ansHead, ansRows(answer.overall || {}), ansCaption);
+  var byArm = answer.by_arm || {};
+  var armKeys = Object.keys(byArm);
+  if (armKeys.length){
+    h += "<details class='checkprec-arms'><summary>Answer checks per arm</summary>";
+    armKeys.forEach(function(arm){
+      var blk = byArm[arm] || {};
+      var n = ((blk.needs_review || {}).n) || 0;
+      h += renderCheckPrecTableHtml(ansHead, ansRows(blk), armTitle(arm) + ' (' + n + ' cells)');
+    });
+    h += '</details>';
+  }
+  var indepth = data.indepth || {};
+  if (!indepth.available){
+    var mObj = indepth.marked || {};
+    var marks = Object.keys(mObj).map(function(c){ return (CHECKPREC_LABELS[c] || c) + ' ' + mObj[c]; }).join(', ');
+    h += "<p class='intro'>In-Depth per point: no per-point verdicts in the judge rows (" + (indepth.points || 0) + ' points; marks: ' + htmlEsc(marks) + ').</p>';
+  } else {
+    var idCaption = 'In-Depth checks per point, all arms (' + (indepth.judged_points || 0) + ' judged of ' + (indepth.points || 0) + ' points'
+      + (indepth.unmatched_verdicts ? (', ' + indepth.unmatched_verdicts + ' unmatched verdicts') : '') + ')';
+    h += renderCheckPrecTableHtml(idHead, idRows(indepth.overall || {}), idCaption);
+    var vHead = ['check']
+      .concat(CHECKPREC_VERDICTS.map(function(v){ return 'marked: ' + v; }))
+      .concat(CHECKPREC_VERDICTS.map(function(v){ return 'unmarked: ' + v; }));
+    var vRows = CHECKPREC_INDEPTH_CHECKS.map(function(chk){
+      var byV = (((indepth.overall || {})[chk] || {}).by_verdict) || {};
+      return [CHECKPREC_LABELS[chk] || chk]
+        .concat(CHECKPREC_VERDICTS.map(function(v){ return String((byV.marked || {})[v] || 0); }))
+        .concat(CHECKPREC_VERDICTS.map(function(v){ return String((byV.unmarked || {})[v] || 0); }));
+    });
+    h += renderCheckPrecTableHtml(vHead, vRows, 'Marks by judge verdict, all arms');
+    var idArms = indepth.by_arm || {};
+    var idArmKeys = Object.keys(idArms);
+    if (idArmKeys.length){
+      h += "<details class='checkprec-arms'><summary>In-Depth checks per arm</summary>";
+      idArmKeys.forEach(function(arm){
+        var blk = idArms[arm] || {};
+        var n = ((blk.marked || {}).n) || 0;
+        h += renderCheckPrecTableHtml(idHead, idRows(blk), armTitle(arm) + ' (' + n + ' judged points)');
+      });
+      h += '</details>';
+    }
+  }
+  return h + '</div>';
+}
+
 function renderCheckPrecision(run){
-  // The table is rendered in Python (check_precision.table_html) so the report and the
-  // live dashboard show the same numbers with the same words; the JS only places it.
-  if(!run.check_precision_html) return null;
+  if(!run.check_precision) return null;
   var sec=el('section','checks-section');
   var intro=el('p','intro');
   intro.textContent='How often each product check (date check, record check, citation support, model review, and the section status the clinician sees) agreed with the judge. Under the confidence-labels target policy, a check earns a place in the clinician view only after its precision clears the calibration bar; this table measures each check against that bar.';
   sec.appendChild(intro);
-  var wrap=el('div'); wrap.innerHTML=run.check_precision_html; sec.appendChild(wrap);
+  var wrap=el('div'); wrap.innerHTML=buildCheckPrecisionHtml(run.check_precision); sec.appendChild(wrap);
   wrap.querySelectorAll('table').forEach(function(t){ makeSortable(t); });
   return sec;
 }
@@ -1791,8 +2327,8 @@ function buildTile(run, backend, cell, turn, scenarioId){
     body.querySelector('.err').textContent = 'HTTP ' + (cell.http_status == null ? '' : cell.http_status) +
                                              ': ' + String(cell.error).slice(0, 400);
   } else if (lazyEvidence) {
-    body.innerHTML = (cell.conf_html || '') + "<div class='ans'>" + cell.answer_html + '</div>' +
-                     (cell.blocks_html || '');
+    body.innerHTML = "<div class='ans'>" + renderCellAnswerHtml(run, cell) + '</div>' +
+                     renderCellBlocksHtml(cell);
     body.querySelectorAll('details.reviewdraft[open]').forEach(d => { d.open = false; });
     tile._ensureEvidence = function(){
       if (tile._evidenceLoaded) return;
@@ -1802,8 +2338,8 @@ function buildTile(run, backend, cell, turn, scenarioId){
       while (evWrap.firstChild) body.appendChild(evWrap.firstChild);
     };
   } else {
-    body.innerHTML = (cell.conf_html || '') + "<div class='ans'>" + cell.answer_html + '</div>' +
-                     (cell.blocks_html || '') + resolveCellSourcesHtml(run, cell) + resolveCellRefsHtml(run, cell);
+    body.innerHTML = "<div class='ans'>" + renderCellAnswerHtml(run, cell) + '</div>' +
+                     renderCellBlocksHtml(cell) + resolveCellSourcesHtml(run, cell) + resolveCellRefsHtml(run, cell);
     body.querySelectorAll('details.reviewdraft[open]').forEach(d => { d.open = false; });
   }
   tile.appendChild(body);
@@ -1830,7 +2366,7 @@ function buildTile(run, backend, cell, turn, scenarioId){
   tile.appendChild(expand);
 
   const chips = el('div', 'chips');
-  chips.innerHTML = cell.chips_html;
+  chips.innerHTML = renderCellChipsHtml(cell);
   tile.appendChild(chips);
   const timing = el('div');
   timing.innerHTML = renderStageTimings(cell.stage_timings);
@@ -2183,6 +2719,54 @@ function updateSetupCount(wrap, total){
   if (badge){ badge.textContent = on + ' of ' + total; badge.classList.toggle('partial', on < total); }
 }
 
+function renderCatalystSection(run){
+  var cat = run && run.catalyst;
+  if (!cat || typeof cat !== 'object') return null;
+  var sec = el('section', 'det-section');
+  var h = '';
+  var gv = cat.gate_verdict || {};
+  if (gv.verdict){
+    var vCls = gv.qualified ? 'qualified' : 'undecidable';
+    h += "<div class='ov-block' style='margin-bottom:14px'><div class='ov-kicker'>Catalyst Qualification Gate</div>"
+      + "<div style='display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0'>"
+      + "<span class='cat-verdict-pill " + vCls + "'>" + htmlEsc(gv.verdict) + "</span>";
+    var ac = cat.assertion_counts || {};
+    if (ac.evaluation || ac.conformance){
+      var evP = (ac.evaluation && ac.evaluation.passed) || 0, evF = (ac.evaluation && ac.evaluation.failed) || 0;
+      var cfP = (ac.conformance && ac.conformance.passed) || 0, cfF = (ac.conformance && ac.conformance.failed) || 0;
+      h += "<span class='chip'>Evaluation checks: " + evP + " passed / " + evF + " failed</span>"
+        + "<span class='chip'>Conformance checks: " + cfP + " passed / " + cfF + " failed</span>";
+    }
+    h += "</div>";
+    if (gv.blockers && gv.blockers.length){
+      h += "<ul class='findings'>" + gv.blockers.map(function(b){ return "<li class='t-bad'>" + htmlEsc(b) + "</li>"; }).join('') + "</ul>";
+    }
+    h += "</div>";
+  }
+  if (cat.reader_led && typeof cat.reader_led === 'object'){
+    var rl = cat.reader_led;
+    var cs = rl.collection_summary || {};
+    h += "<h3>Reader-Led Phase 1 Evidence (" + (cs.case_count || 0) + " cases)</h3>";
+    if (rl.case_records && rl.case_records.length){
+      h += "<table class='summary'><thead><tr><th>case</th><th>scenario</th><th>profile</th><th>question</th><th>outcome</th><th>reader verdict</th></tr></thead><tbody>"
+        + rl.case_records.map(function(cr){
+            var rv = (rl.reader_reviews || {})[cr.case_id] || {};
+            return "<tr><td class='b'>" + htmlEsc(cr.case_id || '') + "</td><td>" + htmlEsc(cr.scenario_id || '') + "</td><td>" + htmlEsc(cr.profile_id || cr.team_id || '') + "</td><td>" + htmlEsc(cr.question || '') + "</td><td>" + htmlEsc(cr.observed_outcome || '') + "</td><td>" + htmlEsc(rv.verdict || rv.summary || '—') + "</td></tr>";
+          }).join('') + "</tbody></table>";
+    }
+  }
+  if (cat.comparison_entries && cat.comparison_entries.length){
+    h += "<h3>Profile Comparison Entries</h3><table class='summary'><thead><tr><th>entry</th><th>profile</th><th>model</th><th>passed</th><th>conformed</th><th>avg latency</th></tr></thead><tbody>"
+      + cat.comparison_entries.map(function(e){
+          return "<tr><td class='b'>" + htmlEsc(e.entry_id || e.label || '') + "</td><td>" + htmlEsc(e.profile_id || '') + "</td><td>" + htmlEsc(e.model_id || '') + "</td><td>" + htmlEsc(e.passed_count != null ? e.passed_count : '—') + "</td><td>" + htmlEsc(e.conformed_count != null ? e.conformed_count : '—') + "</td><td>" + htmlEsc(e.avg_latency_ms != null ? (e.avg_latency_ms + ' ms') : '—') + "</td></tr>";
+        }).join('') + "</tbody></table>";
+  }
+  if (!h) return null;
+  sec.innerHTML = h;
+  sec.querySelectorAll('table').forEach(function(t){ makeSortable(t); });
+  return sec;
+}
+
 function renderRun(runId){
   const run = runById(runId);
   if (!run) return;
@@ -2191,7 +2775,12 @@ function renderRun(runId){
   const t = buildTitle(run);
   const ttl = document.getElementById('report-title');
   if (ttl) ttl.textContent = t.title;
-  const sub = [t.dataset, t.date].filter(Boolean).join('  ·  ');
+  if (t.hasCatalogTitle && typeof document !== 'undefined') {
+    document.title = t.title + ' — OpenClinAI';
+  }
+  const sub = t.hasCatalogTitle
+    ? [t.shape, t.date].filter(Boolean).join('  ·  ')
+    : [t.dataset, t.date].filter(Boolean).join('  ·  ');
   const meta = document.getElementById('run-meta');
   meta.textContent = sub;
   meta.title = renderRunMeta(run);
@@ -2232,6 +2821,11 @@ function renderRun(runId){
   }
 
   // 0) Deterministic Verification & Guardrails (Layer 1)
+  const catSec = wrapSection(renderCatalystSection(run), 'sec-catalyst', 'Catalyst Gate', 'Catalyst qualification & SQL conformance');
+  if (catSec){
+    catSec.dataset.tabGroup = 'overview methodology';
+    main.appendChild(catSec);
+  }
   const detSec = wrapSection(renderDeterministic(run), 'sec-deterministic', 'Guardrails', 'Deterministic verification & guardrails', 'exact programmatic checks, no LLM judge');
   if (detSec){
     detSec.dataset.tabGroup = 'methodology';
@@ -2438,7 +3032,6 @@ function applyBackendToggle(backend, on){
   });
 }
 function cssEsc(s){ return (window.CSS && CSS.escape) ? CSS.escape(s) : s.replace(/'/g, "\\'"); }
-function htmlEsc(s){ const d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; }
 function applyFilters(){
   applyScenarioFilter();
   applyQuestionSearch();

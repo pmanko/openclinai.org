@@ -8,11 +8,17 @@ SPEC.loader.exec_module(links)
 
 
 def test_link_checker_reports_missing_assets_and_fragments(tmp_path):
-    (tmp_path / 'index.html').write_text('<a href="page.html#absent">Page</a><img src="missing.png">')
+    (tmp_path / 'index.html').write_text(
+        '<meta property="og:image" content="https://openclinai.org/media/missing-og.webp">'
+        '<a href="page.html#absent">Page</a>'
+        '<picture><source srcset="missing-srcset.webp"><img src="missing.png"></picture>'
+    )
     (tmp_path / 'page.html').write_text('<h1 id="present">Page</h1>')
     errors = links.check(tmp_path)
     assert any('missing fragment page.html#absent' in error for error in errors)
     assert any('missing local target missing.png' in error for error in errors)
+    assert any('missing local target missing-srcset.webp' in error for error in errors)
+    assert any('missing local target /media/missing-og.webp' in error for error in errors)
 
 
 def test_docs_hash_navigation_resolves_static_twins_and_correct_base(tmp_path):

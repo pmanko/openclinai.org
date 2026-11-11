@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Post-Training &amp; Decision-Layer Experiments — OpenClinAI</title>
+  <meta name="description" content="Empirical post-training and System-1 decision-layer research at OpenClinAI: Laya (~0.4B) non-autoregressive clinical verifiers, logit calibration, and the 5-rung post-training ladder for 1.7B–4B open-weight models.">
+  <link rel="canonical" href="https://openclinai.org/experiments/">
+  <meta property="og:url" content="https://openclinai.org/experiments/">
+  <meta property="og:title" content="Post-Training &amp; Decision-Layer Experiments — OpenClinAI">
+  <meta property="og:description" content="Empirical post-training and System-1 decision-layer research at OpenClinAI: Laya (~0.4B) non-autoregressive clinical verifiers, logit calibration, and the 5-rung post-training ladder for 1.7B–4B open-weight models.">
+  <meta property="og:image" content="https://openclinai.org/media/validation-reports-index.webp">
+  <meta name="theme-color" content="#4b2e83">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/projects.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <header class="site-header project-header">
+    <a class="brand" href="/index.html" aria-label="OpenClinAI home">
+      <span class="brand-mark" aria-hidden="true"><span></span></span>
+      <span class="brand-text">OpenClinAI</span>
+    </a>
+
+    <nav class="primary-nav" aria-label="Primary">
+      <a href="/index.html#project">Client Apps</a>
+      <a href="/med-agent-hub/index.html">AI Engine</a>
+      <a href="/validation-harness/index.html">Evaluation</a>
+      <a href="/experiments/index.html" aria-current="page">Experiments</a>
+      <a href="/projects/index.html">Projects</a>
+      <a href="https://reports.openclinai.org/">Reports <span aria-hidden="true">↗</span></a>
+      <a href="/index.html#about">About</a>
+    </nav>
+
+    <details class="nav-toggle">
+      <summary>Menu</summary>
+      <nav class="mobile-nav" aria-label="Mobile primary">
+        <a href="/index.html#project">Client Apps</a>
+        <a href="/med-agent-hub/index.html">AI Engine</a>
+        <a href="/validation-harness/index.html">Evaluation</a>
+        <a href="/experiments/index.html" aria-current="page">Experiments</a>
+        <a href="/projects/index.html">Projects</a>
+        <a href="https://reports.openclinai.org/">Reports <span aria-hidden="true">↗</span></a>
+        <a href="/index.html#about">About</a>
+      </nav>
+    </details>
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    <section class="project-intro" aria-labelledby="page-title">
+      <div class="page-width">
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+          <a href="/index.html">OpenClinAI</a>
+          <span aria-hidden="true">/</span>
+          <span>Post-Training &amp; Decision-Layer Experiments</span>
+        </nav>
+
+        <div class="overview-grid">
+          <div>
+            <p class="eyebrow">04 · AI Engineering &amp; Post-Training Laboratory</p>
+            <h1 id="page-title">System-1 clinical verifiers and the 5-rung post-training ladder</h1>
+            <p class="overview-lead">
+              Clinical deployments in public-sector hospitals and low-resource clinics rarely have multi-GPU datacenter clusters. Our experimental lab tests two tightly coupled questions: how to replace slow second-pass LLM verification calls with sub-50ms non-autoregressive encoders (<strong>Track A</strong>), and how far <code>1.7B–4B</code> open-weight generators can advance up a 5-rung post-training ladder when supervised by deterministic clinical oracles (<strong>Track B</strong>).
+            </p>
+            <div class="project-actions">
+              <a class="button button-primary" href="#decision-layer">Track A: System-1 Decision Layer <span aria-hidden="true">↓</span></a>
+              <a class="button button-secondary" href="#post-training-ladder">Track B: 5-Rung Training Ladder <span aria-hidden="true">↓</span></a>
+              <a class="text-link" href="https://reports.openclinai.org/">Browse Published Benchmark Reports <span aria-hidden="true">↗</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pillar-section alt-bg" id="decision-layer" aria-labelledby="decision-heading">
+      <div class="page-width">
+        <div class="pillar-header">
+          <p class="section-kicker">Track A · Non-Autoregressive System-1 Decision Layer (DECISION-LAYER-2026-10)</p>
+          <h2 id="decision-heading">Sub-50ms context admission and claim verification with Laya (~0.4B)</h2>
+          <p>
+            In a standard multi-stage clinical pipeline, invoking a second generative LLM pass to review draft answers against source records adds 1.5–4.0 seconds (~25% of turn wall-clock latency) and contends for KV-cache slots on a shared GPU. We evaluate compact, single-forward-pass decision encoders (<strong>Laya ~0.4B</strong> vs. the <strong>Jev-1.13</strong> reference architecture) that emit calibrated <code>Choice</code>, <code>Boolean</code>, and continuous <code>Score</code> outputs in a single forward pass (~25–50 ms).
+          </p>
+        </div>
+
+        <div class="pillar-grid-3">
+          <article class="pillar-card">
+            <span class="pill-badge">Phase 0a · Context Admission</span>
+            <h3>Recall-First Record Filtering</h3>
+            <p>
+              Evaluates 5-fold Leave-One-Patient-Out (LOPO) cross-validation across <strong>7,840 clinical record–topic pairs</strong> (1,120 longitudinal FHIR/OpenMRS records × 7 clinical query archetypes).
+            </p>
+            <ul>
+              <li><strong>Safety Gate:</strong> Operating threshold (&tau;<sub>admit</sub>) is anchored at <strong>&ge;99.0% recall</strong> on gold <em>must-include</em> clinical records before measuring prompt token reduction.</li>
+              <li><strong>Multi-Hop Risk Audit:</strong> Explicitly audits whether single-record admission drops bridge records needed for multi-hop reasoning (e.g., linking an active medication to a historic renal lab).</li>
+            </ul>
+          </article>
+
+          <article class="pillar-card">
+            <span class="pill-badge">Phase 0b · Claim Grounding</span>
+            <h3>Entailment &amp; Review-Error Gating</h3>
+            <p>
+              Tests whether a single-pass encoder can classify each generated clinical claim against its cited source record as <code>supported</code>, <code>partly</code>, or <code>unsupported</code> and gate when the heavy generative reviewer is needed.
+            </p>
+            <ul>
+              <li><strong>Latency Compression:</strong> Cuts verification latency from ~2,100 ms (autoregressive 12B review pass) to <strong>&lt;50 ms</strong> on local Apple Silicon or CPU.</li>
+              <li><strong>Hybrid Gate:</strong> Clean claims pass immediately; only flagged or ambiguous claims trigger a targeted rewrite or abstention warning.</li>
+            </ul>
+          </article>
+
+          <article class="pillar-card">
+            <span class="pill-badge">Calibration · Temperature Scaling</span>
+            <h3>Fixing Sharp Logit Overconfidence</h3>
+            <p>
+              Compact cross-encoders trained with margin or cross-entropy losses produce sharply peaked logits that are poorly calibrated as raw probabilities.
+            </p>
+            <ul>
+              <li><strong>Post-Hoc Temperature Scaling:</strong> Fitting a single validation scalar (<em>T</em> = 3.297) on held-out clinical pairs reduces Expected Calibration Error (ECE) from <code>0.466</code> down to <strong><code>0.081</code></strong> and Brier score from <code>0.312</code> to <strong><code>0.164</code></strong>.</li>
+              <li><strong>Rank Preservation:</strong> Monotonic scaling preserves exact AUROC and PR-AUC while making probability thresholds interpretable across clinical tasks.</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="table-scroll" style="margin-top: 32px;">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th scope="col">Verification / Admission Approach</th>
+                <th scope="col">Execution Mode</th>
+                <th scope="col">Typical Latency</th>
+                <th scope="col">Calibration (ECE)</th>
+                <th scope="col">Role in Med Agent Hub &amp; Harness</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Deterministic Rules (R1–R10 &amp; UUID Oracles)</th>
+                <td>Programmatic regex, AST &amp; timestamp checks</td>
+                <td>&lt;5 ms</td>
+                <td>Exact (binary rule)</td>
+                <td>Layer 1 hard gate on citation existence, date windows, and SQL/CQL syntax</td>
+              </tr>
+              <tr>
+                <th scope="row">Laya (~0.4B) System-1 Encoder (Calibrated)</th>
+                <td>Single forward pass (<code>Choice / Boolean / Score</code>)</td>
+                <td>25–50 ms</td>
+                <td>0.081 (post-<em>T</em> scaling)</td>
+                <td>Layer 2 semantic claim-to-record entailment, abstention check, and review gating</td>
+              </tr>
+              <tr>
+                <th scope="row">2nd-Call Generative LLM Reviewer (12B)</th>
+                <td>Autoregressive token generation (200–400 tokens)</td>
+                <td>1,500–4,000 ms</td>
+                <td>Unscored text verdict</td>
+                <td>Conditional fallback when Layer 1 or Layer 2 flags an unsupported or temporally drifted claim</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="pillar-section" id="post-training-ladder" aria-labelledby="ladder-heading">
+      <div class="page-width">
+        <div class="pillar-header">
+          <p class="section-kicker">Track B · Generative Post-Training Ladder</p>
+          <h2 id="ladder-heading">Climbing the 5-rung post-training ladder for 1.7B–4B clinical models</h2>
+          <p>
+            Before modifying model weights, we establish strict inference-time baselines on identical patient cohorts. Each rung of the ladder is evaluated against the previous rung using the <strong>4-Layer Clinical Verification Stack</strong> so we never mistake stylistic imitation for genuine clinical accuracy.
+          </p>
+        </div>
+
+        <div class="rung-ladder">
+          <article class="rung-step" id="rung-1">
+            <span class="rung-num">Rung 1 · Inference Scaling</span>
+            <h3>Constrained Decoding &amp; Best-of-<em>N</em></h3>
+            <p>
+              Enforces valid citation brackets, SQL ASTs, and JSON schemas at token-sampling time (XGrammar / Outlines) and reranks <em>N</em> candidate completions using Layer 1 deterministic checks + Layer 2 <code>Laya</code> entailment scores.
+            </p>
+          </article>
+
+          <article class="rung-step" id="rung-2">
+            <span class="rung-num">Rung 2 · Supervised SFT</span>
+            <h3>LoRA Without Regret</h3>
+            <p>
+              Systematic LoRA rank (<em>r</em> &in; {8, 16, 32, 64}) and all-linear target-module sweeps on verified clinical chart Q&amp;A, calibrated abstention, and FHIR/SQL synthesis, paired with general medical retention probes to prevent catastrophic forgetting.
+            </p>
+          </article>
+
+          <article class="rung-step" id="rung-3">
+            <span class="rung-num">Rung 3 · Distillation</span>
+            <h3>On-Policy Teacher→Student</h3>
+            <p>
+              Distills verified reasoning and citation trajectories from <code>12B–31B</code> teachers (Gemma 4 12B/26B/31B, MedGemma 27B) into compact <code>1.7B–4B</code> students (Gemma 4 E2B/E4B, Qwen3 1.7B/4B) using student-generated on-policy rollouts to eliminate exposure bias.
+            </p>
+          </article>
+
+          <article class="rung-step" id="rung-4-rlvr">
+            <span class="rung-num">Rung 4 · Verifiable RL</span>
+            <h3>RLVR / GRPO with Clinical Oracles</h3>
+            <p>
+              Group Relative Policy Optimization driven by <strong>deterministic execution rewards</strong>: PostgreSQL row-set equivalence for Catalyst SQL and <code>cqf-ruler</code> CQL execution against WHO SMART Guidelines, guarded by reward-hacking stress probes.
+            </p>
+          </article>
+
+          <article class="rung-step" id="rung-5">
+            <span class="rung-num">Rung 5 · Edge Deployment</span>
+            <h3>Quantization &amp; Tokenizer Fertility</h3>
+            <p>
+              Evaluates <code>BF16 → Q8_0 → Q4_K_M / AWQ</code> clinical safety degradation alongside LMIC multilingual tokenizer fertility (English, French, Swahili, Spanish, Portuguese) and roofline memory-bandwidth (GB/s vs. TPOT) scaling.
+            </p>
+          </article>
+        </div>
+
+        <div class="table-scroll" style="margin-top: 32px;">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th scope="col">Post-Training Rung</th>
+                <th scope="col">Primary Training / Inference Signal</th>
+                <th scope="col">Target Failure Mode Addressed</th>
+                <th scope="col">Reward-Hacking / Regression Guard</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Rung 1: Constrained Decoding &amp; Best-of-<em>N</em></th>
+                <td>CFG/JSON grammar masks + Layer 1/2 verifier reranking</td>
+                <td>Malformed UUID citations, broken SQL syntax, single-sample stochastic slips</td>
+                <td>Wall-clock TTFT/TPOT budget cap at <em>N</em> &le; 4 on single 24 GB GPU</td>
+              </tr>
+              <tr>
+                <th scope="row">Rung 2: LoRA SFT ("LoRA Without Regret")</th>
+                <td>Verified gold clinical trajectories &amp; abstention examples</td>
+                <td>Poor adherence to temporal rules (<code>R1–R10</code>) and missed multi-hop chart synthesis</td>
+                <td>Held-out patient LOPO splits + out-of-distribution clinical vignette retention probes</td>
+              </tr>
+              <tr>
+                <th scope="row">Rung 3: On-Policy Distillation</th>
+                <td>Teacher reverse-KL / logit matching on student rollouts</td>
+                <td>Distribution shift when a 2B–4B student diverges from 27B teacher prefixes</td>
+                <td>Layer 1 UUID provenance check on every distilled trajectory</td>
+              </tr>
+              <tr>
+                <th scope="row">Rung 4: RLVR / GRPO</th>
+                <td>Composite deterministic oracle reward (SQL row-set match, CQL MeasureReport, UUID binding)</td>
+                <td>Plausible-looking SQL/CQL or clinical claims that fail execution or temporal bounds</td>
+                <td>Explicit penalties for citation stuffing, strategic over-abstention, and verbosity gaming</td>
+              </tr>
+              <tr>
+                <th scope="row">Rung 5: PTQ / QAT Quantization</th>
+                <td>Activation-aware calibration on clinical chart contexts</td>
+                <td>4-bit quantization collapse on rare drug contraindications and numeric lab trends</td>
+                <td>Zero-harm floor &amp; <code>Safety-Adjusted Benchmark</code> parity against <code>Q8_0</code> baseline</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="pillar-section alt-bg" id="promotion-pipeline" aria-labelledby="promotion-heading">
+      <div class="page-width">
+        <div class="pillar-header">
+          <p class="section-kicker">From Lab to Production</p>
+          <h2 id="promotion-heading">How experimental checkpoints graduate into Med Agent Hub</h2>
+          <p>
+            Experiments run in isolated workstreams before any model weight, calibration scalar, or verifier policy is promoted into production client profiles.
+          </p>
+        </div>
+
+        <div class="workflow-grid">
+          <div>
+            <span>Step 01 · Isolated Lab Sweep</span>
+            <h3>Train &amp; calibrate on dev splits</h3>
+            <p>
+              Candidate adapters, distilled checkpoints, and <code>Laya</code> temperature scalars are trained and swept in the laboratory against deterministic oracles and LOPO cross-validation splits.
+            </p>
+          </div>
+          <div>
+            <span>Step 02 · Held-Out Harness Gate</span>
+            <h3>Run locked 4-layer benchmark</h3>
+            <p>
+              Promising candidates are registered as <code>lab-laya-*</code> or <code>lab-exp-*</code> profiles in <strong>Med Agent Hub</strong> and evaluated on held-out patients in the <strong>Validation Harness</strong>.
+            </p>
+          </div>
+          <div>
+            <span>Step 03 · Public Evidence Packet</span>
+            <h3>Publish report &amp; promote profile</h3>
+            <p>
+              Only candidates that improve or maintain the <code>Safety-Adjusted Benchmark</code> with zero severe harm and faster/equal latency are published to <code>reports.openclinai.org</code> and promoted to default profiles.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="page-width footer-grid">
+      <div>
+        <a class="brand footer-brand" href="/">
+          <span class="brand-mark" aria-hidden="true"><span></span></span>
+          <span>Open Clinical AI</span>
+        </a>
+        <p>
+          Open-source tools for clinical questions, reporting and reproducible evaluation from the <a href="https://digi.uw.edu/">University of Washington Digital Initiatives Group at I-TECH (DIGI)</a>.
+        </p>
+      </div>
+      <nav aria-label="Project links">
+        <a href="/chartsearchai/index.html">ChartSearchAI</a>
+        <a href="/catalyst/index.html">Catalyst</a>
+        <a href="/med-agent-hub/index.html">Med Agent Hub</a>
+        <a href="/validation-harness/index.html">Validation Harness</a>
+        <a href="/experiments/index.html">Post-Training &amp; Lab</a>
+        <a href="/projects/index.html">Applied Projects</a>
+      </nav>
+      <p class="footer-disclaimer">
+        For research and demonstration. AI output can be inaccurate and requires review.<br />
+        <a href="https://reports.openclinai.org/">Evaluation Reports</a> · <a href="/docs/openmrs-upstream/index.html">OpenMRS Upstream PRs</a>
+      </p>
+    </div>
+  </footer>
+</body>
+</html>
