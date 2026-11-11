@@ -325,7 +325,7 @@
         When a patient asks a question about their health history in Washington Health Summary (WAHS), how should the system give the AI the right medical context without exposing other patients' records, running out of memory on large charts, or making the user wait? This page summarizes the three approaches evaluated by the UW CIRG &amp; WAHS team, shows what our live benchmarks across 9 open-weight models prove, outlines the pilot architecture, and documents the engine internals.
       </p>
       <p class="strategy-meta">
-        Updated November 2026 · UW CIRG &amp; WAHS Architecture Synthesis · Backed by <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">972-run Multi-Family Benchmark ↗</a> &amp; <a href="#engine-internals">Med Agent Hub Engine Internals ↓</a>
+        Updated November 2026 · UW CIRG &amp; WAHS Architecture North Star · Backed by <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">972-run Multi-Family Benchmark ↗</a>, <a href="#pilot-architecture">Pilot Middleware &amp; Wire Contract ↓</a> &amp; <a href="#engine-internals"><code>wahs_core</code> Engine Internals ↓</a>
       </p>
       <div class="project-actions">
         <a class="button button-primary" href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">Read the 9-model benchmark report <span aria-hidden="true">↗</span></a>
@@ -452,9 +452,9 @@
 
     <section class="strategy-section page-width" id="model-selection" aria-labelledby="model-title">
       <p class="section-kicker">Section 3 · Model &amp; Pathway Selection (972 Live Runs)</p>
-      <h2 id="model-title">Why Google Gemma 4 + Med Agent Hub is the clear choice for a single-model pilot</h2>
+      <h2 id="model-title">Why Google Gemma 4 + WAHS Engine enrichment is the clear choice for a single-model pilot</h2>
       <p>
-        To choose the best open-weight model for our single-call streaming pilot, we tested <strong>nine models across three families</strong> — Google Gemma 4 (E4B, 12B, 26B), Alibaba Qwen 3 (4B, 9B, 14B), and Meta Llama 3.x / Hermes 3 (3.2B, 8B, Hermes 3 8B) — across <strong>three pathways</strong> at an 8k chart budget across 36 clinical accuracy and abstention scenarios (972 total answers, graded in a blinded review by Claude Opus 4.6 and GPT-5.4).
+        To choose the best open-weight model for our single-call streaming pilot, we tested <strong>nine models across three families</strong> — Google Gemma 4 (E4B, 12B, 26B), Alibaba Qwen 3 (4B, 9B, 14B), and Meta Llama 3.x / Hermes 3 (3.2B, 8B, Hermes 3 8B) — across <strong>three controlled context pathways</strong> at an 8k condensed chart budget across 36 clinical accuracy and abstention scenarios (972 total answers, graded in a blinded review by Claude Opus 4.6 and GPT-5.4).
       </p>
 
       <div class="strategy-table-wrap">
@@ -462,10 +462,10 @@
           <thead>
             <tr>
               <th>Model Family &amp; Size</th>
-              <th>1. Direct AI (Chart Only)</th>
-              <th>2. Direct AI + Clinical KB Rules</th>
-              <th>3. Full Med Agent Hub (Chart + KB + Graph)</th>
-              <th>Fabricated Citations (Hub)</th>
+              <th>1. Condensed Chart Only (Offline Baseline)</th>
+              <th>2. Condensed Chart + Clinical KB Rules</th>
+              <th>3. Full WAHS Engine / Hub (Chart + KB + Graph)</th>
+              <th>Fabricated Citations (Full)</th>
               <th>Key Takeaway for WAHS Pilot</th>
             </tr>
           </thead>
@@ -545,59 +545,123 @@
           </tbody>
         </table>
       </div>
+
+      <div class="strategy-callout">
+        <strong>Why direct raw-LLM calls are not a runtime option:</strong> Calling a raw model endpoint directly from a web app—bypassing the WAHS Engine—fails on three counts: a bare inference server cannot authenticate against WAHS’s HAPI FHIR security proxy, emits no clickable <span class="code-inline">[N]</span> FHIR resource provenance, and silently truncates uncondensed multi-clinic exports (0.0–2.8/100 on large charts). Column 1 above (<em>Condensed Chart Only</em>) is strictly an <strong>offline ablation baseline</strong> isolating how much accuracy and safety lift the 4-Layer Clinical KB and <code>ClinicalEntityGraph</code> add on top of 8k condensation; in deployed WAHS environments, every AI turn routes through the <strong>WAHS Engine middleware</strong>.
+      </div>
     </section>
 
     <section class="strategy-section page-width" id="pilot-architecture" aria-labelledby="arch-title">
-      <p class="section-kicker">Section 4 · Pilot System Architecture</p>
-      <h2 id="arch-title">How the WAHS Frontend, the WAHS Engine, and the UW GPU server fit together</h2>
+      <p class="section-kicker">Section 4 · Target Pilot Architecture &amp; Middleware Contract</p>
+      <h2 id="arch-title">Service-to-service flow across WAHS clients, <code>fhir-auth</code>, <code>wahs-engine</code>, and pluggable GPU inference</h2>
       <p>
-        Following the team’s architecture review, the WAHS pilot separates responsibilities across three clean layers so the FHIR store stays standard, the WAHS frontend stays simple, and the GPU server only runs model inference.
+        The target WAHS architecture keeps client frontends lightweight, delegates per-user data access control to WAHS’s existing <code>fhir-auth</code> security proxy, isolates FHIR condensation and clinical reasoning inside a lean standalone <strong><code>wahs-engine</code></strong> middleware service, and speaks standard OpenAI <span class="code-inline">/v1/chat/completions</span> on both sides for plug-and-play model portability.
       </p>
 
-      <div class="flow-diagram" role="region" aria-label="WAHS Pilot Architecture Flow">[1. WAHS Frontend &amp; Auth Proxy]
-   • Patient logs in; WAHS auth proxy limits FHIR access to the user's own Patient resources
-   • Simple Chat Tab sends OpenAI-format request (conversation history + patient context)
+      <div class="flow-diagram" role="region" aria-label="WAHS Pilot Architecture Flow">[1. Client-Agnostic WAHS Frontends &amp; Server-Side BFF]
+   • Unified responsive SvelteKit app (uwcirg/shl-ips) + interoperable mobile-first companion clients
+   • Authenticate via Keycloak OIDC; read/write datasets via fhir-auth and share IPS via shl-server
+   • Browser posts chat turn + optional chart filter to app BFF (/api/chat, Vercel AI SDK) — never straight to GPU
           │
-          ▼  (OpenAI REST /v1/chat/completions, stream=true)
-[2. WAHS Engine (Scoped from Med Agent Hub · Separate Server)]
-   • Reads the patient's current records from the WAHS HAPI FHIR server and condenses them by 90%–99% (condenser.py)
-   • Runs deterministic 4-Layer Clinical KB + Patient Relationship Graph (clinical_graph.py)
-   • Pulls omitted clinical notes / labs matching the user's question (wahs_tools.py)
-   • Keeps [System Prompt + 8k Condensed Chart] as a fixed prefix across follow-up turns (rebuilt when HAPI records change)
+          ▼  Internal network · OpenAI POST /v1/chat/completions (Bearer &lt;keycloak_jwt&gt; + optional wahs.chart_scope)
+[2. Standalone WAHS Engine Middleware (wahs-engine · Zero Med Agent Hub Dependency)]
+   • Zero HAPI admin credentials: forwards caller's Bearer JWT to fhir-auth (jwt-proxy, meta.security.code == sub)
+   • Bundle Assembler walks masterPatient.link[] → paginated Patient/{datasetId}/$everything (provider imports + My Story/Goals)
+   • Applies optional wahs.chart_scope (source/category/section/IPS filter) + merges unsaved wahs.overlay_resources
+   • Runs wahs_core: 90%–99% condensation (condenser.py) + 4-Layer Clinical KB + ClinicalEntityGraph + Tier-0 lookup
+   • Isolates dataset &amp; KV prefix caches strictly by (verified_sub, datasets_fingerprint, scope_hash)
           │
-          ▼  (OpenAI REST /v1/chat/completions + KV prefix cache reuse)
-[3. UW CIRG GPU Server (Gemma 4 12B / 26B / E4B)]
-   • Streams tokens back immediately (single-call workflow; &lt; 0.3s follow-up prefill with cache)
-   • Engine attaches [N] → FHIR resource UUID &amp; date mappings for clickable source inspection</div>
+          ▼  Standard OpenAI POST /v1/chat/completions (LLM_BASE_URL · fixed chart prefix + stream=true)
+[3. Pluggable OpenAI-Compatible Inference Backend (UW CIRG GPU / Agency Host)]
+   • Default pilot: LiteLLM / Ollama / vLLM on UW CIRG GPU server (Gemma 4 12B default · 26B · E4B)
+   • Zero-code portability: swap approved open-weight models or local agency GPU hosts via config alone
+   • Streams tokens immediately; wahs-engine appends x_wahs ([N] → FHIR UUID/source map + HL7 AI-Provenance)</div>
 
-      <div class="strategy-grid-2">
-        <article class="strategy-card">
-          <span class="strategy-badge">Security &amp; Access Control</span>
-          <h3>Enforcing the single-patient boundary before any AI call</h3>
+      <div class="strategy-grid-3">
+        <article class="strategy-card recommended">
+          <span class="strategy-badge">Zero-Privilege FHIR Assembly</span>
+          <h3>Live star-graph charts, user entries &amp; dynamic scoping</h3>
           <ul>
-            <li><strong>Scoped at login:</strong> Existing authentication proxies in WAHS enforce OAuth scopes that limit access to the logged-in user’s own records in the WAHS HAPI FHIR server, which span several Patient resources (one created at first login, one per data import, and one per IPS summary), <em>before</em> the WAHS Engine processes them.</li>
-            <li><strong>No cross-patient query surface:</strong> In the pilot, the AI model never writes database queries against a multi-patient FHIR server; all condensation, clinical rule checks, and note lookups run strictly inside the logged-in patient’s isolated bundle.</li>
-            <li><strong>Patient-controlled sharing:</strong> Patients choose which of their records to share by creating an International Patient Summary (IPS) within WAHS and sharing it via a SMART Health Link.</li>
+            <li><strong>Zero service credentials:</strong> <code>wahs-engine</code> never connects to raw internal HAPI; forwarding the user’s Keycloak <code>Bearer</code> token through <code>fhir-auth</code> enforces per-user security labels automatically.</li>
+            <li><strong>Provider + patient-authored records:</strong> Walking <code>masterPatient.link[]</code> across paginated <code>Patient/$everything</code> bundles pulls both EHR imports and saved patient-authored forms (<em>My Story</em> notes, <em>Goals</em>, <em>Care Needs</em>, <em>POLST</em>) without losing clinical notes stripped by stock HAPI <code>$summary</code>.</li>
+            <li><strong>Flexible <code>chart_scope</code>:</strong> Conversations can scope context by data source, category, clinical section, date window, or a specific shared IPS summary, and attach unsaved draft notes via <code>overlay_resources</code> without uploading multi-megabyte bundles from the browser.</li>
           </ul>
         </article>
 
         <article class="strategy-card">
-          <span class="strategy-badge secondary">Multi-Turn Memory &amp; Fast Streaming UX</span>
-          <h3>Instant follow-up answers via GPU prefix caching</h3>
+          <span class="strategy-badge secondary">Session Isolation &amp; Timeliness</span>
+          <h3>Prefix-cached follow-ups with strict HAPI invalidation</h3>
           <ul>
-            <li><strong>Multi-turn from day one:</strong> The WAHS chat interface passes the conversation history with each turn so patients can ask natural follow-up questions.</li>
-            <li><strong>Prefix-cached chart memory:</strong> By placing the static <span class="code-inline">[1]...[N]</span> condensed patient chart at the very top of the prompt and appending turn-specific rule alerts and chat turns below it, the GPU server reuses its cached memory (KV cache) across follow-up questions for the same patient. When the patient’s records change, the condensed chart is rebuilt so answers reflect the current record.</li>
-            <li><strong>Transparent progress cues:</strong> Single-call streaming starts almost immediately for the pilot; as multi-step retrieval or specialist checks are added later, lightweight status steps (<em>“Checking medication conflicts…”</em>, <em>“Reading discharge note…”</em>) keep the user informed.</li>
+            <li><strong>Cryptographic tenant boundary:</strong> Raw dataset caches key on <span class="code-inline">(verified_sub, dataset_id, lastUpdated)</span>, and condensed prompt prefixes key on <span class="code-inline">(verified_sub, datasets_fingerprint, scope_hash)</span>—preventing cross-user or cross-filter bleed.</li>
+            <li><strong>Immediate record timeliness:</strong> Whenever a patient imports new EHR records, updates a goal, or deletes a dataset in HAPI, <code>meta.lastUpdated</code> shifts and rebuilds the condensed chart automatically.</li>
+            <li><strong>Deterministic fallback:</strong> Placing the <span class="code-inline">[1]...[N]</span> condensed ledger first lets the GPU reuse its KV cache (&lt; 0.3s follow-up prefill), while any cache eviction simply recomputes the identical prompt.</li>
+          </ul>
+        </article>
+
+        <article class="strategy-card">
+          <span class="strategy-badge future">Portability &amp; Lean Packaging</span>
+          <h3>Decoupled clients, swappable models &amp; zero R&amp;D bloat</h3>
+          <ul>
+            <li><strong>Lean standalone engine vs. R&amp;D workbench:</strong> <code>wahs-engine</code> packages pure-Python <code>wahs_core</code> + a thin FastAPI service (~60 MB image, zero OpenMRS/Catalyst dependencies). <a href="/med-agent-hub/index.html">Med Agent Hub</a> and <a href="/validation-harness/index.html">Validation Harness</a> import <code>wahs_core</code> upstream so benchmarks and production never drift.</li>
+            <li><strong>Frontend independence:</strong> Decoupled <code>Keycloak</code>, <code>fhir-auth</code>, <code>shl-server</code>, and <code>wahs-engine</code> services let both the unified SvelteKit web app and mobile-first companion interfaces operate over the exact same patient record.</li>
+            <li><strong>EHIgnite model agnosticism:</strong> Standard southbound OpenAI <span class="code-inline">/v1</span> lets state public-health agencies swap local open-weight models or inference gateways via environment variables while preserving HL7 <span class="code-inline">AI-Provenance</span> transparency.</li>
           </ul>
         </article>
       </div>
+
+      <details class="internals-details" id="wire-contract-details">
+        <summary>Inspect OpenAI <code>/v1/chat/completions</code> middleware contract, <code>wahs.chart_scope</code> schema &amp; <code>x_wahs</code> provenance</summary>
+        <div class="internals-details-body">
+          <p>
+            Server-side routes in WAHS (such as SvelteKit <span class="code-inline">/api/chat/+server.ts</span> using the Vercel AI SDK <span class="code-inline">@ai-sdk/openai-compatible</span> provider) call <code>wahs-engine</code> using standard OpenAI chat completion payloads. Vanilla OpenAI requests with no <span class="code-inline">wahs</span> extension field default automatically to the signed-in user’s full <span class="code-inline">fhir-auth</span> record at the model’s recommended budget; optional <span class="code-inline">wahs.chart_scope</span> and <span class="code-inline">wahs.overlay_resources</span> fields control per-turn filtering and unsaved draft notes, while the final streamed chunk attaches <span class="code-inline">x_wahs</span> citation and HL7 AI Transparency metadata.
+          </p>
+
+          <div class="flow-diagram" role="region" aria-label="WAHS Engine OpenAI Wire Contract">POST /v1/chat/completions
+Authorization: Bearer &lt;keycloak_access_token&gt;
+Content-Type: application/json
+
+{
+  "model": "wahs-12b-kb",
+  "stream": true,
+  "messages": [
+    { "role": "user", "content": "Do any of my heart or kidney medications conflict across clinics?" }
+  ],
+  "wahs": {
+    "target_budget_tokens": 8192,
+    "chart_scope": {
+      "include_sources": ["UW Medicine", "MultiCare", "My Story"],
+      "exclude_categories": [],
+      "include_resource_types": [],
+      "exclude_resource_ids": [],
+      "ips_bundle_id": null,
+      "date_from": null,
+      "date_to": null
+    },
+    "overlay_resources": []
+  }
+}
+
+──► Standard OpenAI SSE token stream (data: {"object":"chat.completion.chunk", ...})
+──► Final chunk attaches x_wahs provenance for clickable [N] source pills &amp; HL7 AI-Provenance:
+{
+  "x_wahs": {
+    "citation_map": {
+      "7": { "resourceType": "MedicationRequest", "id": "med-spiro-01", "date": "2026-01-12", "source": "UW Medicine", "display": "Spironolactone 25 MG Oral Tablet" },
+      "10": { "resourceType": "Observation", "id": "obs-k-56", "date": "2026-01-16", "source": "MultiCare", "display": "Potassium 5.6 mEq/L" }
+    },
+    "condensation": { "budget_tokens": 8192, "actual_tokens": 6410, "datasets_included": 3, "omitted_clinical_items": 0 },
+    "ai_provenance": { "model": "ollama/gemma4:12b", "kb_enabled": true, "human_review_required": true }
+  }
+}</div>
+        </div>
+      </details>
     </section>
 
     <section class="strategy-section page-width" id="action-plan" aria-labelledby="plan-title">
       <p class="section-kicker">Section 5 · Next Steps &amp; Staged Development Plan</p>
-      <h2 id="plan-title">Immediate action items and horizon roadmap</h2>
+      <h2 id="plan-title">Target roadmap toward the WAHS pilot &amp; ONC/ASTP EHIgnite Phase 2</h2>
       <p>
-        With the condensation pipeline, 4-Layer Clinical KB, patient relationship graph, and 9-model benchmark complete, our next development cycle focuses on six concrete deliverables to launch the pilot chat experience in WAHS and evaluate retrieval strategies for larger records.
+        With the condensation pipeline, 4-Layer Clinical KB, patient relationship graph, and 972-run model benchmark complete, execution now advances through six concrete milestones—standing up the lean <code>wahs-engine</code> middleware, wiring service-to-service chat across WAHS frontends, verifying security and cache timeliness, and benchmarking long-record retrieval strategies.
       </p>
 
       <div class="strategy-table-wrap">
@@ -613,39 +677,39 @@
           <tbody>
             <tr>
               <td><strong>1</strong></td>
-              <td><strong>Share Condensation &amp; Graph Code for Team Review</strong></td>
-              <td>Share the non-destructive FHIR condenser (<span class="code-inline">condenser.py</span>), clinical entity extractor (<span class="code-inline">extractors.py</span>), and pre-generation clinical graph (<span class="code-inline">clinical_graph.py</span>) alongside the 972-run benchmark report.</td>
-              <td><span class="safe-pill">Ready Today</span><br /><a href="https://github.com/pmanko/med-agent-hub/tree/main/server/fhir"><code>server/fhir/</code> repo ↗</a></td>
+              <td><strong>Stand Up Standalone <code>wahs-engine</code> (<code>wahs_core</code> + FastAPI) &amp; Invert Hub Dependency</strong></td>
+              <td>Package the pure-stdlib clinical core (<span class="code-inline">wahs_core</span>: <span class="code-inline">condenser.py</span>, <span class="code-inline">clinical_graph.py</span>, 4-Layer KB, <span class="code-inline">wahs_tools.py</span>) and thin OpenAI-compatible <span class="code-inline">wahs_engine</span> server in a dedicated WAHS repository with zero <span class="code-inline">med-agent-hub</span> dependency, while <span class="code-inline">med-agent-hub</span> imports <span class="code-inline">wahs_core</span> upstream for zero-drift benchmarking.</td>
+              <td><span class="safe-pill">Core Verified</span><br /><a href="https://github.com/pmanko/med-agent-hub/tree/main/server/fhir"><code>server/fhir/</code> baseline ↗</a></td>
             </tr>
             <tr>
               <td><strong>2</strong></td>
-              <td><strong>Extract Simplified WAHS Engine from Med Agent Hub</strong></td>
-              <td>Package a clean, standalone WAHS Engine service (free of legacy OpenMRS/Catalyst routes) that accepts OpenAI-format requests from the WAHS frontend, condenses the patient’s current records from the WAHS HAPI FHIR server in the engine, and streams responses from the UW GPU server.</td>
-              <td><span class="score-pill">Pilot Iteration 1</span></td>
+              <td><strong>Implement Zero-Privilege <code>fhir-auth</code> Bundle Assembler &amp; <code>chart_scope</code></strong></td>
+              <td>Build the star-graph HAPI assembler that forwards the caller’s Keycloak <span class="code-inline">Bearer</span> token to <span class="code-inline">fhir-auth</span>, paginates linked <span class="code-inline">Patient/$everything</span> datasets (including patient-authored <em>My Story</em> and <em>Goals</em>), applies <span class="code-inline">chart_scope</span> filters and <span class="code-inline">overlay_resources</span>, and emits <span class="code-inline">x_wahs</span> source-pill mappings.</td>
+              <td><span class="score-pill">Pilot Stage 1</span></td>
             </tr>
             <tr>
               <td><strong>3</strong></td>
-              <td><strong>Build Open-Ended Streaming Chat Tab in WAHS</strong></td>
-              <td>Build a dedicated, open-ended Chat tab in the WAHS web application (text input + immediate streamed output via OpenAI REST spec) and evaluate pre-built frontend patterns for conversation history persistence and export.</td>
-              <td><span class="score-pill">Pilot Iteration 1</span></td>
+              <td><strong>Wire Service-to-Service <code>/api/chat</code> BFF Across WAHS Frontends</strong></td>
+              <td>Connect the SvelteKit server route (<span class="code-inline">Vercel AI SDK</span> <span class="code-inline">@ai-sdk/openai-compatible</span>) in <span class="code-inline">uwcirg/shl-ips</span> and interoperable mobile-first companion views to <span class="code-inline">wahs-engine</span> on the internal Docker network, surfacing clickable <span class="code-inline">[N]</span> FHIR provenance drawers, chart-scope chips, and HL7 <span class="code-inline">AI-Provenance</span> badges.</td>
+              <td><span class="score-pill">Pilot Stage 1</span></td>
             </tr>
             <tr>
               <td><strong>4</strong></td>
-              <td><strong>Align on Session Memory &amp; GPU Prefix Caching</strong></td>
-              <td>Compare Ollama session IDs, LiteLLM session/caching capabilities, and repeated context with fixed chart prefixes so follow-up questions on the same patient leverage GPU-side caching without duplicating proxy logic. Any session or caching mechanism adopted must meet three requirements. <strong>Security:</strong> no user’s or patient’s interaction can ever reach another user’s or patient’s data, whether through session IDs, response caches or shared prefix caches. <strong>Data timeliness:</strong> cached context is discarded when the patient’s records in WAHS change, so answers never draw on data that has since been added, corrected or deleted. <strong>Reliability:</strong> a cache miss, eviction or restart may slow a response but never changes its content.</td>
-              <td><span class="score-pill">Pilot Iteration 1</span></td>
+              <td><strong>Seed Shared Dev Stack &amp; Verify Session Isolation / Cache Timeliness</strong></td>
+              <td>Pre-seed <span class="code-inline">wahs-environments</span> with multi-source personas and historical Connectathon test accounts, and enforce automated gates across three invariants—<strong>Security:</strong> zero cross-user <span class="code-inline">sub</span>, session ID, or KV prefix bleed; <strong>Data timeliness:</strong> immediate cache invalidation whenever HAPI <span class="code-inline">meta.lastUpdated</span> changes; <strong>Reliability:</strong> cache misses or restarts never alter clinical output.</td>
+              <td><span class="score-pill">Pilot Stage 1</span></td>
             </tr>
             <tr>
               <td><strong>5</strong></td>
-              <td><strong>Benchmark Condensation vs. Dynamic FHIR Querying &amp; Note RAG</strong></td>
-              <td>Run head-to-head evaluations on smaller open-weight models comparing full-chart condensation against dynamic FHIR querying (translating clinical questions like <em>“Have I had any labs for my diabetes?”</em> into LOINC queries and condensing returned observations) and specialist multi-agent retrieval.</td>
+              <td><strong>Benchmark Condensation vs. Note Embeddings &amp; Dynamic FHIR Querying</strong></td>
+              <td>Run blinded multi-seed evaluations in <span class="code-inline">Validation Harness</span> across 4B–26B open-weight models comparing <span class="code-inline">wahs_core</span> condensation + Tier-0 overflow against per-patient note embeddings (RAG) and dynamic agentic LOINC/FHIR querying.</td>
               <td><span class="strategy-badge secondary">Next Evaluation</span></td>
             </tr>
             <tr>
               <td><strong>6</strong></td>
-              <td><strong>Real-Patient Long-Note (4k–14k Tokens) &amp; 100 MB+ Record Testing</strong></td>
-              <td>Expand test coverage with fuller real-world patient exports and long (4,000–14,000 token) palliative/specialty notes, combining core chart condensation with single-patient semantic note chunk retrieval.</td>
-              <td><span class="strategy-badge future">Phase 2 Expansion</span></td>
+              <td><strong>Long-Note (4k–14k Tokens) &amp; 100 MB+ Record Stress Testing</strong></td>
+              <td>Expand evaluation coverage to massive longitudinal exports and long (4,000–14,000 token) palliative, oncology, and discharge notes—combining 8k–16k core chart condensation with single-patient semantic note chunk retrieval ahead of the ONC/ASTP EHIgnite Phase 2 demonstration.</td>
+              <td><span class="strategy-badge future">EHIgnite Phase 2</span></td>
             </tr>
           </tbody>
         </table>
@@ -653,10 +717,10 @@
     </section>
 
     <section class="strategy-section page-width" id="engine-internals" aria-labelledby="internals-title">
-      <p class="section-kicker">Section 6 · Engine Internals Reference (Med Agent Hub)</p>
+      <p class="section-kicker">Section 6 · <code>wahs_core</code> Engine Internals Reference</p>
       <h2 id="internals-title">Progressive 9-budget condensation, <code>ClinicalEntityGraph</code>, and prompt enrichment</h2>
       <p>
-        For engineers inspecting the implementation in <a href="/med-agent-hub/index.html">Med Agent Hub</a> (<code>server/fhir/</code>), every condensed chart begins with patient demographics at <code>[1]</code> and a machine-readable <code>Completeness Manifest</code> at <code>[2]</code>. When a KB-guided profile executes (such as <code>wahs-12b-kb</code> or <code>wahs-26b-kb</code>), <code>build_wahs_hub_enrichment_block(...)</code> runs conditional Tier-0 overflow recovery, builds a patient-specific <code>ClinicalEntityGraph</code>, and attaches up to 800 tokens of matched clinical guidelines before calling the model.
+        For engineers inspecting the shared <code>wahs_core</code> clinical modules (developed and benchmarked in <a href="/med-agent-hub/index.html">Med Agent Hub</a> <code>server/fhir/</code> and packaged without R&amp;D dependencies in standalone <code>wahs-engine</code>), every condensed chart begins with patient demographics at <code>[1]</code> and a machine-readable <code>Completeness Manifest</code> at <code>[2]</code>. When a KB-guided profile executes (such as <code>wahs-12b-kb</code> or <code>wahs-26b-kb</code>), <code>build_wahs_hub_enrichment_block(...)</code> runs conditional Tier-0 overflow recovery, builds a patient-specific <code>ClinicalEntityGraph</code>, and attaches up to 800 tokens of matched clinical guidelines before calling the model.
       </p>
 
       <div class="strategy-table-wrap" role="region" aria-label="Nine condensation budget tiers">
