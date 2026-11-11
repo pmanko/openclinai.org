@@ -1,398 +1,354 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>WA Health Summary (WAHS) · Open Clinical AI</title>
-<meta name="description" content="Patient-mediated health summaries from real-world records: condense fragmented FHIR R4 exports, reconcile cross-clinic conflicts, protect sensitive information, and ask questions with linked source evidence." />
-<link rel="canonical" href="https://openclinai.org/wahs/" />
-<meta property="og:url" content="https://openclinai.org/wahs/" />
-<meta property="og:title" content="WA Health Summary (WAHS) · Open Clinical AI" />
-<meta property="og:description" content="Condense fragmented FHIR R4 health records, surface cross-clinic medication and problem conflicts, protect sensitive social history before sharing, and ask questions with verifiable source evidence." />
-<meta name="theme-color" content="#4b2e83" />
-<meta name="twitter:card" content="summary_large_image" />
-<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-<link rel="stylesheet" href="/styles.css" />
-<link rel="stylesheet" href="/projects.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WA Health Summary (WAHS) — OpenClinAI</title>
+  <meta name="description" content="Patient-mediated health summaries from real-world FHIR R4 records: condense fragmented multi-clinic exports, surface cross-clinic conflicts, share curated IPS summaries, and ask questions backed by source records." />
+  <link rel="canonical" href="https://openclinai.org/wahs/" />
+  <meta property="og:url" content="https://openclinai.org/wahs/" />
+  <meta property="og:title" content="WA Health Summary (WAHS) — OpenClinAI" />
+  <meta property="og:description" content="Condense fragmented FHIR R4 health records, surface cross-clinic medication and diagnosis conflicts, and ask questions with clickable source citations." />
+  <meta property="og:image" content="https://openclinai.org/wahs/walkthrough/media/step3-citation-drawer.webp" />
+  <meta name="theme-color" content="#4b2e83" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/projects.css" />
 </head>
 <body>
-<a class="skip-link" href="#main-content">Skip to content</a>
-<header class="site-header project-header">
-<a class="brand" href="https://openclinai.org/" aria-label="Open Clinical AI home">
-<span class="brand-mark" aria-hidden="true">
-<span>
-</span>
-</span>
-<span>Open Clinical AI</span>
-</a>
-<nav class="primary-nav" aria-label="Primary navigation">
-<a href="https://openclinai.org/#project">Client Apps</a>
-<a href="https://openclinai.org/#hub">AI Engine</a>
-<a href="https://openclinai.org/#evidence">Evaluation</a>
-<a href="https://openclinai.org/#experiments">Experiments</a>
-<a href="https://openclinai.org/projects/">Projects</a>
-<a href="https://reports.openclinai.org/">Reports <span aria-hidden="true">↗</span></a>
-<a href="https://openclinai.org/#about">About</a>
-</nav>
-<details class="nav-toggle">
-<summary>Menu</summary>
-<nav aria-label="Mobile navigation">
-<a href="https://openclinai.org/#project">Client Apps</a>
-<a href="https://openclinai.org/#hub">AI Engine</a>
-<a href="https://openclinai.org/#evidence">Evaluation</a>
-<a href="https://openclinai.org/#experiments">Experiments</a>
-<a href="https://openclinai.org/projects/">Projects</a>
-<a href="https://reports.openclinai.org/">Reports <span aria-hidden="true">↗</span></a>
-<a href="https://openclinai.org/#about">About</a>
-</nav>
-</details>
-</header>
-<main id="main-content" tabindex="-1">
-<section class="project-intro page-width">
-<nav class="breadcrumbs" aria-label="Breadcrumb">
-<a href="/projects/index.html">Applied Projects</a> · WA Health Summary (WAHS)
-</nav>
-<div class="overview-grid">
-<div>
-<p class="section-kicker">Washington Health Summary (WAHS) · UW CIRG &amp; WA DOH Collaboration</p>
-<h1>Patient-mediated health summaries from real-world records.</h1>
-<p class="overview-lead">People receiving care across multiple clinics, hospitals, and pharmacies often end up with large, fragmented health exports filled with repeated lab panels, duplicate notes, outdated problem-list stages, and conflicting medication lists. The WA Health Summary workstream explores how clinical rules and open-weight AI can condense these exports into a clear, verifiable summary that patients control and clinicians can trust.</p>
-<div class="project-actions">
-<a class="button button-primary" href="https://wahs-demo.openclinai.org/">Open the interactive WAHS demo <span aria-hidden="true">→</span></a>
-<a class="button button-secondary" href="llm-strategy/index.html">AI architecture &amp; model strategy <span aria-hidden="true">→</span></a>
-<a class="button button-secondary" href="walkthrough/index.html">Walkthrough &amp; experimentation guide <span aria-hidden="true">→</span></a>
-<a class="button button-secondary" href="../med-agent-hub/wahs-architecture/index.html">Med Agent Hub &amp; clinical graph architecture <span aria-hidden="true">→</span></a>
-<a class="button button-secondary" href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">Read the 9-model evaluation report <span aria-hidden="true">→</span></a>
-</div>
-</div>
-</div>
-</section>
+  <a class="skip-link" href="#main-content">Skip to content</a>
 
-<section class="page-width project-workflow" id="how-it-works">
-<p class="section-kicker">How it works</p>
-<h2>Four steps from a raw health export to a shareable summary</h2>
-<div class="workflow-grid">
-<article>
-<span>01 · Condense (Non-Destructive)</span>
-<h3>Condense without mutating clinical content</h3>
-<p>Multi-year FHIR R4 exports can exceed 18 megabytes and 7,000 entries—far too large for a clinician to scan or a standard language model window to process efficiently. Our content-invariant structural condenser strips FHIR transport boilerplate and collapses byte-identical Base64 note attachments across nine token budgets (`256k` down to `1k`) in two modes (`Lossless Verbatim` and `Grouped Renewal-Folded`). It prioritizes the IPS clinical safety core (allergies, active medications, active problems, and implants) first, folds historical renewals and lab series, and indexes any budget overflow in `[2] Completeness Manifest` for on-demand `Tier 0` chart lookup.</p>
-</article>
-<article>
-<span>02 · Reconcile (Skill Findings)</span>
-<h3>Surface duplicates &amp; conflicts as findings</h3>
-<p>In a multi-clinic health summary, duplicate orders, same-day registry entries, and overlapping disease stages are clinical findings about care fragmentation—never noise to be silently deleted during ingestion. Dedicated chart-hygiene and reconciliation skills inspect the unmutated chart and surface reviewable Finding Cards (with `Source A vs. Source B` provenance and next-visit checklists) for patients and clinicians.</p>
-</article>
-<article>
-<span>03 · Patient-Controlled Sharing</span>
-<h3>Share curated summaries via IPS &amp; SMART Health Links</h3>
-<p>In WA Health Summary, patients choose which records to share by creating an International Patient Summary (IPS) and sharing it via a SMART Health Link. In the OpenClinAI research sandbox, an experimental pre-condensation filter also explores optional sensitivity redaction (`42 CFR Part 2` / `WA My Health My Data Act`) logged in `[Privacy Manifest]`.</p>
-</article>
-<article>
-<span>04 · Ground &amp; verify</span>
-<h3>Ask questions with linked source records</h3>
-<p>Every summary statement, conflict alert, and Q&amp;A response cites the exact FHIR resource identifier and clinical date so a patient or clinician can inspect the underlying record. When asked about facts absent from the chart, the assistant explicitly abstains rather than guessing.</p>
-</article>
-</div>
-</section>
+  <header class="site-header project-header">
+    <a class="brand" href="/index.html" aria-label="OpenClinAI home">
+      <span class="brand-mark" aria-hidden="true"><span></span></span>
+      <span class="brand-text">OpenClinAI</span>
+    </a>
 
-<section class="page-width project-callout" id="use-cases">
-<div>
-<p class="section-kicker">What we evaluate &amp; current status</p>
-<h2>Grounded summaries and questions backed by source records</h2>
-<p>Every summary statement, conflict alert, and chat answer links directly to the underlying FHIR record identifier and date. When a question asks about a test, allergy, or procedure that is not in the patient’s chart, the system explicitly states that the information is not documented rather than guessing.</p>
-<p class="scope-note">Evaluated across 18 FHIR R4 bundles spanning 10 patients (3 EHIgnite/Synthea multi-clinic patients across `Set A` natural, `Set B` multi-clinic perturbations, and `Set C` uncoded/note-contradiction messy records; 5 US Core / IPS longitudinal clinical archetypes; and 2 PhysioNet MIMIC-IV-FHIR Demo 2.0 hospital/ICU patients) across three separated evaluation modalities: Deterministic Pipeline Gate, Condensation &amp; Retrieval Ablation (`256k` down to `1k`), and Unhinted Live Model &amp; Knowledge-Base Evaluation.</p>
-</div>
-<div class="resource-panel">
-<h3>Try the workflows</h3>
-<p>Walk through 10 multi-domain patient charts or paste/upload any custom FHIR R4 Bundle JSON to test non-destructive condensation (`256k` down to `1k` token budgets), toggle `🧠 + 4-Layer KB` vs. `📄 Raw Chart Only` across any selected model, inspect skill-based conflict findings, and run live grounded Q&amp;A step by step.</p>
-<a class="text-link" href="https://wahs-demo.openclinai.org/">Launch interactive UX (wahs-demo.openclinai.org) <span aria-hidden="true">→</span></a>
-<a class="text-link" href="llm-strategy/index.html">Read the WAHS AI architecture &amp; model strategy synthesis (/wahs/llm-strategy/) <span aria-hidden="true">→</span></a>
-<a class="text-link" href="walkthrough/index.html">Read the walkthrough &amp; experimentation tutorial <span aria-hidden="true">→</span></a>
-<a class="text-link" href="../med-agent-hub/wahs-architecture/index.html">Inspect Med Agent Hub &amp; WAHS+ clinical graph architecture (/med-agent-hub/wahs-architecture/) <span aria-hidden="true">→</span></a>
-<a class="text-link" href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">Inspect the 9-model × 3-pathway benchmark report <span aria-hidden="true">→</span></a>
-<a class="text-link" href="design-report/index.html">Open the detailed design &amp; architecture dashboard <span aria-hidden="true">→</span></a>
-</div>
-</section>
+    <nav class="primary-nav" aria-label="Primary">
+      <a href="/index.html#project">Client Apps</a>
+      <a href="/med-agent-hub/index.html">AI Engine</a>
+      <a href="/validation-harness/index.html">Evaluation</a>
+      <a href="/experiments/index.html">Experiments</a>
+      <a href="/projects/index.html" aria-current="page">Projects</a>
+      <a href="https://reports.openclinai.org/">Reports <span aria-hidden="true">↗</span></a>
+      <a href="/index.html#about">About</a>
+    </nav>
 
-<section class="section page-width resource-section" id="research-foundation" aria-labelledby="foundation-title">
-<p class="section-kicker">Background &amp; Standards Foundation</p>
-<h2 id="foundation-title">Researched best practices and clinical standards</h2>
-<p>Our condensation, reconciliation, privacy segmentation, and human-in-the-loop review workflows are grounded in established health interoperability standards, clinical practice guidelines, federal and Washington state privacy frameworks, and human-AI interaction research. See the <a href="design-report/index.html#research-foundation">detailed design &amp; research report</a> for the full technical synthesis.</p>
-<div class="resource-groups">
-<section class="resource-group">
-<h3>FHIR &amp; patient summary standards</h3>
-<ul class="resource-links">
-<li>
-<a href="https://build.fhir.org/ig/HL7/fhir-ips/">
-<span class="resource-link-title">HL7 International Patient Summary (IPS) &amp; ISO 27269 <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Defines the priority clinical safety core (allergies, active medications, active problems, and implants) prioritized across all nine token budgets (`256k` down to `1k`), with any micro-budget overflow indexed in `[2] Completeness Manifest`.</span>
-</a>
-</li>
-<li>
-<a href="https://hl7.org/fhir/us/core/">
-<span class="resource-link-title">HL7 US Core (FHIR R4) &amp; SMART Health Links <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Standards for patient-mediated longitudinal record retrieval and cross-organizational sharing used by WA Health Summary.</span>
-</a>
-</li>
-<li>
-<a href="https://build.fhir.org/ig/HL7/aitransparency-ig/branches/main/en/StructureDefinition-AI-Provenance.html">
-<span class="resource-link-title">HL7 AI Transparency on FHIR (AI-Provenance) <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Separates supporting FHIR source records, AI model involvement, and recorded human review so automated checks are never conflated with clinical sign-off.</span>
-</a>
-</li>
-</ul>
-</section>
-<section class="resource-group">
-<h3>Clinical terminology &amp; guideline authorities</h3>
-<ul class="resource-links">
-<li>
-<a href="https://kdigo.org/guidelines/ckd-evaluation-and-management/">
-<span class="resource-link-title">KDIGO 2024 CKD &amp; ADA Diabetes Standards <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Grounds Layer 1 SNOMED CT disease progression rules, detecting mutually exclusive CKD stages and uncoded renal or glycemic progression across serial labs.</span>
-</a>
-</li>
-<li>
-<a href="https://www.nlm.nih.gov/research/umls/rxnorm/index.html">
-<span class="resource-link-title">NLM RxNorm &amp; DailyMed / MedlinePlus <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Grounds Layer 2 brand-to-generic ingredient normalization (e.g., Clopidogrel vs. Plavix, Lisinopril vs. Prinivil) and therapeutic class duplication checks.</span>
-</a>
-</li>
-<li>
-<a href="https://www.cdc.gov/vaccines/hcp/imz-schedules/index.html">
-<span class="resource-link-title">CDC ACIP Immunization Schedules &amp; LOINC <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Grounds Layer 3 vaccine interval validation (CVX) and longitudinal consolidation of blood-versus-serum LOINC laboratory panels.</span>
-</a>
-</li>
-</ul>
-</section>
-<section class="resource-group">
-<h3>Privacy segmentation &amp; human-AI interaction</h3>
-<ul class="resource-links">
-<li>
-<a href="https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2">
-<span class="resource-link-title">42 CFR Part 2 &amp; WA My Health My Data Act (RCW 19.373) <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Federal and Washington privacy statutes explored in the OpenClinAI research sandbox for optional pre-condensation sensitivity filtering.</span>
-</a>
-</li>
-<li>
-<a href="https://www.healthit.gov/topic/privacy-security-and-hipaa">
-<span class="resource-link-title">ONC Cures Act Privacy &amp; HL7 FHIR DS4P <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Data Segmentation for Privacy (DS4P) principles distinguishing patient self-review (<code>patient_self</code>) from external provider sharing (<code>external_share</code>).</span>
-</a>
-</li>
-<li>
-<a href="https://www.microsoft.com/en-us/haxtoolkit/">
-<span class="resource-link-title">Microsoft HAX Toolkit &amp; NN/g Progressive Disclosure <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Human-AI interaction guidelines for efficient correction, source explainability, keeping original records immutable, and preserving unresolved differences.</span>
-</a>
-</li>
-</ul>
-</section>
-</div>
-</section>
+    <details class="nav-toggle">
+      <summary>Menu</summary>
+      <nav class="mobile-nav" aria-label="Mobile primary">
+        <a href="/index.html#project">Client Apps</a>
+        <a href="/med-agent-hub/index.html">AI Engine</a>
+        <a href="/validation-harness/index.html">Evaluation</a>
+        <a href="/experiments/index.html">Experiments</a>
+        <a href="/projects/index.html" aria-current="page">Projects</a>
+        <a href="https://reports.openclinai.org/">Reports <span aria-hidden="true">↗</span></a>
+        <a href="/index.html#about">About</a>
+      </nav>
+    </details>
+  </header>
 
-<section class="section page-width resource-section" id="open-questions" aria-labelledby="open-questions-title">
-<p class="section-kicker">Critical Review, Phase 3 Status &amp; Research Directions</p>
-<h2 id="open-questions-title">Implementation status, open questions, and next target areas</h2>
-<p>Our Phase 3 validation separates non-destructive structural condensation from skill-based conflict findings and evaluates three distinct modalities (`Deterministic Pipeline Gate`, `Condensation &amp; Retrieval Ablation`, and `Live Model &amp; KB Team Evaluation`). See <a href="design-report/index.html#phase3-roadmap">Section 09 of the detailed design &amp; architecture dashboard</a> for the complete technical analysis, saturation audit, model inventory, and experimental design.</p>
-<div class="resource-groups">
-<section class="resource-group">
-<h3>Evaluation rigor &amp; realistic data</h3>
-<ul class="resource-links">
-<li>
-<a href="design-report/index.html#audit-and-eval">
-<span class="resource-link-title">From rule checks to de-saturated live LLM benchmarking <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Separating deterministic pipeline gates from unscripted live open-weight LLM runs over unhinted charts, scored with HealthBench weighted criteria, VeriFact atomic entailment, fractional UUID recall, and readability grading.</span>
-</a>
-</li>
-<li>
-<a href="design-report/index.html#messy-data">
-<span class="resource-link-title">Pragmatic messy synthetic (Set C) &amp; hospital/ICU FHIR cohorts <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Evaluated across 18 bundles spanning 10 patients (`Set A/B`, `Set C` with 25% stripped codes and note-vs-medication contradictions, 5 US Core / IPS care-transition archetypes, plus 2 PhysioNet MIMIC-IV-FHIR Demo 2.0 hospital/ICU patients).</span>
-</a>
-</li>
-<li>
-<a href="design-report/index.html#patient-scenarios">
-<span class="resource-link-title">Patient-centered question taxonomy first <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Centering scenarios on what patients and caregivers actually ask (“Are two doctors prescribing me the same pill?”, “What changed during my hospital stay?”, “What should I ask at my next visit?”) with a secondary Clinician View toggle.</span>
-</a>
-</li>
-</ul>
-</section>
-<section class="resource-group">
-<h3>Models, non-destructive condensation &amp; skills</h3>
-<ul class="resource-links">
-<li>
-<a href="design-report/index.html#gpu-and-models">
-<span class="resource-link-title">Local &amp; UW GPU server model families <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Comparing 8 open-weight model families from 1.5B–35B (`Gemma 4 12B/26B/31B`, `MedGemma 27B`, `Qwen 3 14B/35B`, `Mistral Nemo 12B`, `Llama 3.1 8B`, `Granite`, `LFM2`) across local and shared UW GPU infrastructure.</span>
-</a>
-</li>
-<li>
-<a href="design-report/index.html#prompting-and-teams">
-<span class="resource-link-title">Knowledge-base toggle &amp; orchestrated KB agent teams <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Comparing `📄 Raw Chart Only` (unhinted control) against `🧠 + 4-Layer Clinical KB` (pre-condensation audit findings + clinical entity subgraph) and cross-family specialist verification across any selected model.</span>
-</a>
-</li>
-<li>
-<a href="design-report/index.html#condensation-and-retrieval">
-<span class="resource-link-title">Research brief: Condensed summaries, targeted lookup, and meaning-based search <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Plain-language guide and literature review comparing whole-summary condensation (`94.0/100`), on-demand `Tier 0` overflow lookup (`92.6/100`), and meaning-based search for deep note archives and everyday patient phrasing.</span>
-</a>
-</li>
-<li>
-<a href="design-report/index.html#non-destructive-condensation">
-<span class="resource-link-title">Non-destructive condensation vs. skill-based deduplication <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Running condensation in `Lossless Verbatim` or `Grouped Renewal-Folded` mode without mutating clinical content or pre-tagging conflicts, while surfacing duplicates and discrepancies via explicit chart-hygiene and reconciliation skills.</span>
-</a>
-</li>
-</ul>
-</section>
-<section class="resource-group">
-<h3>Privacy segmentation &amp; audit links</h3>
-<ul class="resource-links">
-<li>
-<a href="design-report/index.html#fhir-privacy-crypto">
-<span class="resource-link-title">Sandbox selective-disclosure &amp; element-level FHIR obfuscation <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">OpenClinAI research exploration of optional pre-condensation sensitivity filtering with `[Privacy Manifest]` auditing, cryptographic `DIGI-UW/ips-selective-disclosures` SD-JWT `sd-hash`, and SMART Health Links JWE transport.</span>
-</a>
-</li>
-<li>
-<a href="https://reports.openclinai.org/2026-10-30-wahs-phase2-eval/index.html#sec-audit">
-<span class="resource-link-title">Phase 2 evaluation audit &amp; plain-English metric guide <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Plain-language definitions of all evaluation metrics, exact measurement formulas, and candid disclosure of current prototype caveats.</span>
-</a>
-</li>
-</ul>
-</section>
-</div>
-</section>
+  <div class="wahs-subnav-bar">
+    <div class="page-width wahs-subnav-inner">
+      <span class="wahs-subnav-label">WA Health Summary</span>
+      <nav class="wahs-subnav" aria-label="WA Health Summary navigation">
+        <a href="/wahs/index.html" aria-current="page">Overview</a>
+        <a href="/wahs/llm-strategy/index.html">AI Strategy &amp; Architecture</a>
+        <a href="/wahs/walkthrough/index.html">Sandbox Walkthrough</a>
+        <a href="https://wahs-demo.openclinai.org/">Live Sandbox <span aria-hidden="true">↗</span></a>
+        <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">9-Model Benchmark <span aria-hidden="true">↗</span></a>
+      </nav>
+    </div>
+  </div>
 
-<section class="section page-width resource-section" aria-labelledby="resources-title">
-<h2 id="resources-title">Demonstrations, evaluations, and design resources</h2>
-<p>Explore the interactive patient summary prototype, read the recorded evaluation findings, or inspect the detailed technical design dashboard.</p>
-<div class="resource-groups">
-<section class="resource-group">
-<h3>Interactive environments</h3>
-<ul class="resource-links">
-<li>
-<a href="https://wahs-demo.openclinai.org/">
-<span class="resource-link-title">WAHS Interactive Prototype (wahs-demo.openclinai.org) <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">3-step interactive workbench: browse 10 multi-clinic and ICU FHIR R4 charts, condense across 9 token budgets (`256k` down to `1k`), toggle `🧠 + 4-Layer KB` vs. `📄 Raw Chart Only`, and run live synthesis across UW GPU, Med Agent Hub, and OpenRouter models.</span>
-</a>
-</li>
-<li>
-<a href="walkthrough/index.html">
-<span class="resource-link-title">Walkthrough &amp; Hands-On Experimentation Guide <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Annotated visual tour of Step 1 → Step 2 → Step 3 plus 4 reproducible recipes (`8k` vs. `1k` budget comparison, `🧠 + 4-Layer KB` vs. `📄 Raw Chart Only` ablation, model family comparison, and `[N]` citation auditing).</span>
-</a>
-</li>
-<li>
-<a href="https://myhealthsummary.demo.cirg.uw.edu/">
-<span class="resource-link-title">WA Health Summary reference application <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">The University of Washington CIRG and Washington State Department of Health standards-based patient summary application.</span>
-</a>
-</li>
-</ul>
-</section>
-<section class="resource-group">
-<h3>Evaluation &amp; design reports</h3>
-<ul class="resource-links">
-<li>
-<a href="https://reports.openclinai.org/2026-11-03-wahs-huge-context-and-hub-graph-eval/index.html">
-<span class="resource-link-title">Huge-context (64k vs. 8k vs. 1k) &amp; Med Agent Hub clinical entity subgraph report <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">32-cell evaluation across 4 high-volume longitudinal &amp; PhysioNet MIMIC-IV-FHIR 2.0 cohorts comparing 64k huge-context vs. 8k Recommended Limit vs. 1k micro-budgets and Med Agent Hub ClinicalEntityGraph + question-conditioned KB + Tier-0 overflow enrichment.</span>
-</a>
-</li>
-<li>
-<a href="https://reports.openclinai.org/2026-11-02-wahs-simple-profiles-multi-family-eval/index.html">
-<span class="resource-link-title">7-Family simple-profile benchmark &amp; KB ablation report <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">112-cell head-to-head comparison across 7 model families (`+ 4-Layer KB` vs. `Raw Chart Only` across Gemma 4, Qwen 3, Mistral, Granite, Llama, LFM2, and MedGemma), scored by deterministic checks and blinded dual-judge consensus (`Claude Opus 5.5` + `Gemini 4 Argon`; `87.1/100` on `Gemma 4 12B + KB`, `82.6/100` on `Qwen 3 14B + KB`, `+2.0` to `+14.1` pts from KB findings across all 8B–14B families).</span>
-</a>
-</li>
-<li>
-<a href="https://reports.openclinai.org/2026-10-31-wahs-live-model-team-eval/index.html">
-<span class="resource-link-title">Local model selection &amp; KB agent teams report <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">3-stage local model screening funnel (1.5B–35B GGUF) and de-saturated 4-arm comparison over unhinted `lossless_structural` charts (`83.5 → 85.5 → 88.5 → 93.0 / 100`; 128 cells).</span>
-</a>
-</li>
-<li>
-<a href="https://reports.openclinai.org/2026-10-31-wahs-condensation-ablation/index.html">
-<span class="resource-link-title">Condensation ablation &amp; messy multi-EHR cohort report <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Unhinted `lossless_structural` condensation ablation (`94.0` at 16k/8k → `88.5` at 4k → `75.1` at 2k static vs. `92.6 / 100` with `Tier 0` overflow lookup tools; 160 cells) plus Set C and hospital/ICU summary fixtures.</span>
-</a>
-</li>
-<li>
-<a href="https://reports.openclinai.org/2026-10-30-wahs-phase2-eval/index.html">
-<span class="resource-link-title">Phase 2 report: Deterministic pipeline gate <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Methods, synthetic patient cohorts, 32-case rubric results (96/96 deterministic gate), token-budget ablation, and plain-English metric guide.</span>
-</a>
-</li>
-<li>
-<a href="design-report/index.html">
-<span class="resource-link-title">Detailed design &amp; architecture dashboard <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">In-depth technical dashboard covering transfer opportunities, FHIR AI provenance, human-in-the-loop review workflows, and research questions.</span>
-</a>
-</li>
-<li>
-<a href="https://storage.googleapis.com/openclinai-media/wahs/WAHS-OpenClinAI-Design-Report-20261002.docx" download>
-<span class="resource-link-title">Downloadable design report (DOCX) <span aria-hidden="true">↓</span></span>
-<span class="resource-link-description">Shareable Word document version of the Phase 1 WAHS and OpenClinAI collaboration report.</span>
-</a>
-</li>
-</ul>
-</section>
-<section class="resource-group">
-<h3>Related OpenClinAI projects</h3>
-<ul class="resource-links">
-<li>
-<a href="https://openclinai.org/med-agent-hub/">
-<span class="resource-link-title">Med Agent Hub <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Provides the 5-Tier FHIR R4 Condenser, 4-Layer Clinical Knowledge Base, and shared model execution profiles.</span>
-</a>
-</li>
-<li>
-<a href="https://openclinai.org/validation-harness/">
-<span class="resource-link-title">Validation Harness <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Runs the repeatable WAHS evaluation suite and checks citation resolution, token budgets, privacy redaction, and abstention.</span>
-</a>
-</li>
-<li>
-<a href="https://openclinai.org/chartsearchai/">
-<span class="resource-link-title">ChartSearchAI <span aria-hidden="true">→</span></span>
-<span class="resource-link-description">Patient-chart question answering and source evidence inspection in OpenMRS.</span>
-</a>
-</li>
-</ul>
-</section>
-</div>
-<p class="scope-note">Experimental research and demonstration software using synthetic patient records. AI outputs and automated checks require human review and do not establish clinical safety or effectiveness.</p>
-</section>
-</main>
-<footer class="site-footer">
-<div class="page-width footer-grid">
-<div>
-<a class="brand footer-brand" href="https://openclinai.org/">
-<span class="brand-mark" aria-hidden="true">
-<span>
-</span>
-</span>
-<span>Open Clinical AI</span>
-</a>
-<p>Open-source tools for clinical questions, reporting and reproducible evaluation.</p>
-</div>
-<nav aria-label="Project links">
-<a href="https://openclinai.org/chartsearchai/">ChartSearchAI</a>
-<a href="https://openclinai.org/catalyst/">Catalyst</a>
-<a href="https://openclinai.org/med-agent-hub/">Med Agent Hub</a>
-<a href="https://openclinai.org/validation-harness/">Validation Harness</a>
-<a href="https://openclinai.org/experiments/">Post-Training &amp; Lab</a>
-<a href="https://openclinai.org/projects/">Applied Projects</a>
-</nav>
-<p class="footer-disclaimer">For research and demonstration. AI output can be inaccurate and requires review.<br />
-<a href="https://digi.uw.edu/">DIGI at the University of Washington</a>
-</p>
-</div>
-</footer>
+  <main id="main-content" tabindex="-1">
+    <section class="project-intro page-width">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <a href="/index.html">OpenClinAI</a>
+        <span aria-hidden="true">/</span>
+        <a href="/projects/index.html">Projects</a>
+        <span aria-hidden="true">/</span>
+        <span>WA Health Summary (WAHS)</span>
+      </nav>
+
+      <div class="overview-grid with-image">
+        <div>
+          <p class="section-kicker">UW CIRG &amp; WA Department of Health Collaboration</p>
+          <h1>Patient-mediated health summaries from real-world records.</h1>
+          <p class="overview-lead">
+            People receiving care across multiple clinics, hospitals, and pharmacies accumulate large, fragmented health exports filled with repeated lab panels, duplicate clinical notes, outdated problem-list stages, and conflicting medication orders. This collaboration explores how clinical rules and open-weight AI can condense multi-clinic FHIR R4 records into grounded answers that patients control and clinicians can verify.
+          </p>
+          <div class="project-actions">
+            <a class="button button-primary" href="https://wahs-demo.openclinai.org/">Open WAHS Explorer Sandbox <span aria-hidden="true">↗</span></a>
+            <a class="button button-secondary" href="/wahs/llm-strategy/index.html">AI Strategy &amp; Architecture <span aria-hidden="true">→</span></a>
+            <a class="text-link" href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">Read 9-Model Benchmark <span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+
+        <figure class="overview-image">
+          <a href="/wahs/walkthrough/index.html#scene-step3">
+            <img src="walkthrough/media/step3-citation-drawer.webp" alt="WAHS Explorer sandbox showing a generated visit summary with numbered citations and the open FHIR R4 source record drawer." width="1440" height="940" />
+          </a>
+          <figcaption>
+            Every claim in the <strong>WAHS Explorer</strong> sandbox links to its underlying FHIR R4 resource UUID and clinical date. <a href="/wahs/walkthrough/index.html">See the 3-step walkthrough →</a>
+          </figcaption>
+        </figure>
+      </div>
+
+      <div class="wahs-boundary-grid" role="region" aria-label="Application and sandbox scope">
+        <div class="wahs-boundary-card">
+          <span class="pill-badge">Reference PHR Application · UW CIRG &amp; WA DOH</span>
+          <h2>WA Health Summary (WAHS)</h2>
+          <p>
+            Standards-based personal health record backed by HAPI FHIR where Washington residents retrieve clinical data across providers, add personal health goals, curate an <strong>International Patient Summary (IPS)</strong>, and share chosen records via <strong>SMART Health Links</strong> (<a href="https://myhealthsummary.demo.cirg.uw.edu/">reference app ↗</a>).
+          </p>
+        </div>
+        <div class="wahs-boundary-card sandbox">
+          <span class="pill-badge teal">R&amp;D Workbench · OpenClinAI</span>
+          <h2>WAHS Explorer (OpenClinAI Sandbox)</h2>
+          <p>
+            Interactive research workbench (<a href="https://wahs-demo.openclinai.org/">wahs-demo.openclinai.org ↗</a>) evaluating non-destructive FHIR R4 condensation across 9 token budgets (<code>256k</code>–<code>1k</code>), pre-generation clinical graphs, open-weight models, and experimental sensitivity filters across 10 synthetic and de-identified ICU/multi-clinic charts (18 FHIR R4 bundles).
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-width project-workflow" id="how-it-works">
+      <p class="section-kicker">Core Capabilities</p>
+      <h2>Four steps from a fragmented FHIR export to verifiable answers</h2>
+      <div class="workflow-grid four-up">
+        <article>
+          <span>01 · Non-Destructive Condensation</span>
+          <h3>Shrink multi-megabyte charts by 90%–99% without losing clinical facts</h3>
+          <p>
+            Multi-year FHIR R4 exports can exceed 18.4 MB and 7,099 entries (~1.35M raw JSON tokens; 251,641 extracted clinical tokens). Our deterministic condenser strips transport boilerplate and duplicate Base64 note wrappers across nine token budgets (<code>256k</code> down to <code>1k</code>) in <em>Lossless Verbatim</em> or <em>Grouped Renewal-Folded</em> mode—prioritizing the HL7 IPS safety core (allergies, active medications, active problems, and implants) and indexing any trimmed history in a <code>Completeness Manifest</code> for on-demand lookup.
+          </p>
+        </article>
+        <article>
+          <span>02 · Pre-Generation Clinical Reconciliation</span>
+          <h3>Surface cross-clinic duplicates and conflicts as reviewable findings</h3>
+          <p>
+            Duplicate prescriptions, brand-versus-generic overlaps, conflicting kidney-disease stages, and hospital discharge notes instructing a patient to hold an active outpatient pill are clinical signals about care fragmentation—never noise to be silently deleted. Deterministic reconciliation skills and a patient <code>ClinicalEntityGraph</code> inspect the full record before generation and highlight <em>Source A vs. Source B</em> discrepancies.
+          </p>
+        </article>
+        <article>
+          <span>03 · Patient-Controlled Sharing</span>
+          <h3>Share curated IPS summaries via SMART Health Links</h3>
+          <p>
+            Authentication proxies scope every session strictly to the signed-in patient's own records before any AI processing. In WA Health Summary, patients choose what to share by generating an International Patient Summary (IPS) and issuing a SMART Health Link; in the OpenClinAI sandbox, an experimental pre-condensation toggle also tests sensitivity filtering for substance-use and behavioral-health records.
+          </p>
+        </article>
+        <article>
+          <span>04 · Citation-Grounded Q&amp;A &amp; Abstention</span>
+          <h3>Verify every statement against its source record</h3>
+          <p>
+            Every summary bullet, conflict alert, and chat response cites numbered <code>[N]</code> source tags mapped directly to FHIR resource UUIDs and clinical dates. When asked about undocumented procedures, allergies, or external pressures to guess, the engine explicitly abstains rather than fabricating clinical details.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="pillar-section alt-bg" id="research-foundation" aria-labelledby="foundation-title">
+      <div class="page-width resource-section">
+        <p class="section-kicker">Interoperability &amp; Clinical Standards</p>
+        <h2 id="foundation-title">Grounded in health data standards and clinical guidelines</h2>
+        <p>
+          Condensation priorities, terminology normalization, patient-mediated sharing, and provenance tracking build directly on established healthcare interoperability specifications and clinical practice guidelines. See <a href="/wahs/llm-strategy/index.html">AI Strategy &amp; Architecture</a> for how these rules run inside the pilot engine.
+        </p>
+        <div class="resource-groups">
+          <section class="resource-group">
+            <h3>FHIR &amp; patient summary standards</h3>
+            <ul class="resource-links">
+              <li>
+                <a href="https://build.fhir.org/ig/HL7/fhir-ips/">
+                  <span class="resource-link-title"><span>HL7 International Patient Summary (IPS) &amp; ISO 27269</span><span aria-hidden="true">↗</span></span>
+                  <span class="resource-link-description">Defines the priority clinical safety core (allergies, active medications, active problems, and implants) preserved first across all nine condensation budgets.</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://hl7.org/fhir/us/core/">
+                  <span class="resource-link-title"><span>HL7 US Core (FHIR R4) &amp; SMART Health Links</span><span aria-hidden="true">↗</span></span>
+                  <span class="resource-link-description">Standards for patient-mediated longitudinal record retrieval and cross-organizational IPS sharing used by WA Health Summary.</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://build.fhir.org/ig/HL7/aitransparency-ig/branches/main/en/StructureDefinition-AI-Provenance.html">
+                  <span class="resource-link-title"><span>HL7 AI Transparency on FHIR (AI-Provenance)</span><span aria-hidden="true">↗</span></span>
+                  <span class="resource-link-description">Separates supporting FHIR source records, AI model involvement, and human review so automated checks are never conflated with clinical sign-off.</span>
+                </a>
+              </li>
+            </ul>
+          </section>
+
+          <section class="resource-group">
+            <h3>Clinical terminology &amp; guidelines</h3>
+            <ul class="resource-links">
+              <li>
+                <a href="https://kdigo.org/guidelines/ckd-evaluation-and-management/">
+                  <span class="resource-link-title"><span>KDIGO 2024 CKD &amp; ADA Diabetes Standards</span><span aria-hidden="true">↗</span></span>
+                  <span class="resource-link-description">Grounds SNOMED CT stage-progression rules, renal dosing thresholds, and hyperkalemia hazard checks across serial laboratory panels.</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://www.nlm.nih.gov/research/umls/rxnorm/index.html">
+                  <span class="resource-link-title"><span>NLM RxNorm &amp; DailyMed</span><span aria-hidden="true">↗</span></span>
+                  <span class="resource-link-description">Normalizes brand-to-generic active ingredients (such as Clopidogrel vs. Plavix) and detects duplicate therapeutic classes across clinics.</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://www.cdc.gov/vaccines/hcp/imz-schedules/index.html">
+                  <span class="resource-link-title"><span>CDC ACIP Immunization Schedules &amp; LOINC</span><span aria-hidden="true">↗</span></span>
+                  <span class="resource-link-description">Supports CVX vaccine interval checks and longitudinal consolidation of multi-year LOINC laboratory trajectories.</span>
+                </a>
+              </li>
+            </ul>
+          </section>
+
+          <section class="resource-group">
+            <h3>Privacy &amp; human-AI interaction</h3>
+            <ul class="resource-links">
+              <li>
+                <a href="https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2">
+                  <span class="resource-link-title"><span>42 CFR Part 2 &amp; WA My Health My Data Act</span><span aria-hidden="true">↗</span></span>
+                  <span class="resource-link-description">Federal and Washington privacy statutes informing optional pre-condensation sensitivity filtering experiments in the OpenClinAI sandbox.</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://www.healthit.gov/topic/privacy-security-and-hipaa">
+                  <span class="resource-link-title"><span>ONC Cures Act &amp; HL7 FHIR DS4P</span><span aria-hidden="true">↗</span></span>
+                  <span class="resource-link-description">Data Segmentation for Privacy principles distinguishing full personal review from selective external sharing.</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://www.microsoft.com/en-us/haxtoolkit/">
+                  <span class="resource-link-title"><span>Microsoft HAX Toolkit &amp; Progressive Disclosure</span><span aria-hidden="true">↗</span></span>
+                  <span class="resource-link-description">Human-AI interaction patterns keeping original records immutable, exposing source provenance on click, and surfacing unresolved clinical differences.</span>
+                </a>
+              </li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="pillar-section" id="resources" aria-labelledby="resources-title">
+      <div class="page-width resource-section">
+        <p class="section-kicker">Explore Further</p>
+        <h2 id="resources-title">Sandbox, architecture, and published benchmarks</h2>
+        <p>
+          Try the interactive chart explorer on 10 multi-clinic and ICU patient cohorts, review the UW CIRG pilot strategy, or inspect full evaluation transcripts on <code>reports.openclinai.org</code>.
+        </p>
+        <div class="resource-groups">
+          <section class="resource-group">
+            <h3>Interactive sandbox &amp; guides</h3>
+            <ul class="resource-links">
+              <li>
+                <a href="https://wahs-demo.openclinai.org/">
+                  <span class="resource-link-title"><span>WAHS Explorer · OpenClinAI Sandbox</span><span aria-hidden="true">↗</span></span>
+                  <span class="resource-link-description">Browse 10 FHIR R4 charts (18 bundles across Synthea multi-clinic, US Core care-transition, and PhysioNet MIMIC-IV-FHIR 2.0 ICU cohorts), condense from <code>256k</code> to <code>1k</code>, and compare <code>+ 4-Layer KB</code> against <code>Raw Chart Only</code>.</span>
+                </a>
+              </li>
+              <li>
+                <a href="/wahs/walkthrough/index.html">
+                  <span class="resource-link-title"><span>3-Step Sandbox Walkthrough &amp; Experiments</span><span aria-hidden="true">→</span></span>
+                  <span class="resource-link-description">Visual guide to connecting Cloud Med Agent Hub or local models, inspecting context-window gauges, and running reproducible budget and abstention tests.</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://myhealthsummary.demo.cirg.uw.edu/">
+                  <span class="resource-link-title"><span>WA Health Summary Reference Application</span><span aria-hidden="true">↗</span></span>
+                  <span class="resource-link-description">The University of Washington CIRG and Washington State Department of Health patient-mediated IPS and SMART Health Link application.</span>
+                </a>
+              </li>
+            </ul>
+          </section>
+
+          <section class="resource-group">
+            <h3>Latest WAHS evaluation reports</h3>
+            <ul class="resource-links">
+              <li>
+                <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">
+                  <span class="resource-link-title"><span>9-Model × 3-Pathway Clinical Synthesis Benchmark</span><span aria-hidden="true">↗</span></span>
+                  <span class="resource-link-description">972 live runs across Gemma 4, Qwen 3, and Llama 3.x / Hermes 3 (graded blind by Claude Opus 4.6 and GPT-5.4): Gemma 4 26B + Hub leads at 82.1/100, and Gemma 4 12B + Hub reaches 80.5/100 with 2/36 unsafe answers and 0 fabricated citations.</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://reports.openclinai.org/2026-11-04-wahs-macbook-direct-vs-hub-multi-scenario-eval/index.html">
+                  <span class="resource-link-title"><span>Compact-Budget Overflow Lookup vs. Direct 96k Context</span><span aria-hidden="true">↗</span></span>
+                  <span class="resource-link-description">Demonstrates how pre-call Tier-0 overflow retrieval recovers +19 to +21 benchmark points when tight 1k budgets omit historical labs or notes.</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://reports.openclinai.org/2026-11-03-wahs-huge-context-and-hub-graph-eval/index.html">
+                  <span class="resource-link-title"><span>1k–128k Context Windows &amp; Clinical Entity Graph</span><span aria-hidden="true">↗</span></span>
+                  <span class="resource-link-description">Evaluates PhysioNet MIMIC-IV-FHIR 2.0 ICU and 53-year longitudinal charts across 1k to 128k budgets, showing why engine-side 8k–16k condensation prevents silent GPU context truncation.</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://reports.openclinai.org/#wahs">
+                  <span class="resource-link-title"><span>Browse All Published WAHS Reports</span><span aria-hidden="true">↗</span></span>
+                  <span class="resource-link-description">Full archive including the 7-family profile ablation, local GGUF screening funnel, and Phase 2 deterministic pipeline gate.</span>
+                </a>
+              </li>
+            </ul>
+          </section>
+
+          <section class="resource-group">
+            <h3>Architecture &amp; shared OpenClinAI stack</h3>
+            <ul class="resource-links">
+              <li>
+                <a href="/wahs/llm-strategy/index.html">
+                  <span class="resource-link-title"><span>AI Strategy, Pilot Architecture &amp; Engine Internals</span><span aria-hidden="true">→</span></span>
+                  <span class="resource-link-description">Comparing full-chart condensation, note RAG, and dynamic FHIR querying, with pilot security boundaries and <code>ClinicalEntityGraph</code> internals.</span>
+                </a>
+              </li>
+              <li>
+                <a href="/med-agent-hub/index.html">
+                  <span class="resource-link-title"><span>Med Agent Hub</span><span aria-hidden="true">→</span></span>
+                  <span class="resource-link-description">Shared clinical AI runtime providing the 5-Tier FHIR R4 Condenser, 4-Layer Clinical Knowledge Base, and workflow-isolated model profiles.</span>
+                </a>
+              </li>
+              <li>
+                <a href="/validation-harness/index.html">
+                  <span class="resource-link-title"><span>Validation Harness</span><span aria-hidden="true">→</span></span>
+                  <span class="resource-link-description">Executes repeatable deterministic provenance gates, condensation ablations, and blinded multi-judge clinical evaluations.</span>
+                </a>
+              </li>
+            </ul>
+          </section>
+        </div>
+        <p class="scope-note">
+          Experimental research and demonstration software using synthetic and de-identified patient records. AI outputs and automated checks require human review and do not establish clinical safety or effectiveness.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="page-width footer-grid">
+      <div>
+        <a class="brand footer-brand" href="/index.html">
+          <span class="brand-mark" aria-hidden="true"><span></span></span>
+          <span>OpenClinAI</span>
+        </a>
+        <p>
+          Open-source tools for clinical questions, reporting and reproducible evaluation from the <a href="https://digi.uw.edu/">University of Washington Digital Initiatives Group at I-TECH (DIGI)</a>.
+        </p>
+      </div>
+      <nav aria-label="Project links">
+        <a href="/chartsearchai/index.html">ChartSearchAI</a>
+        <a href="/catalyst/index.html">Catalyst</a>
+        <a href="/med-agent-hub/index.html">Med Agent Hub</a>
+        <a href="/validation-harness/index.html">Validation Harness</a>
+        <a href="/experiments/index.html">Post-Training &amp; Lab</a>
+        <a href="/projects/index.html">Applied Projects</a>
+      </nav>
+      <p class="footer-disclaimer">
+        For research and demonstration. AI output can be inaccurate and requires review.<br />
+        <a href="https://reports.openclinai.org/">Evaluation Reports</a> · <a href="/docs/openmrs-upstream/index.html">OpenMRS Upstream PRs</a>
+      </p>
+    </div>
+  </footer>
 </body>
 </html>

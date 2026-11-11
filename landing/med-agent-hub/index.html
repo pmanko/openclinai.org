@@ -67,7 +67,7 @@
             </p>
             <div class="project-actions">
               <a class="button button-primary" href="#architecture-layers">Explore the 4 Engine Layers <span aria-hidden="true">↓</span></a>
-              <a class="button button-secondary" href="/med-agent-hub/wahs-architecture/index.html">5-Tier FHIR Condenser Deep Dive <span aria-hidden="true">→</span></a>
+              <a class="button button-secondary" href="/wahs/llm-strategy/index.html#engine-internals">5-Tier FHIR Condenser Deep Dive <span aria-hidden="true">→</span></a>
               <a class="text-link" href="/chartsearchai/comparing-answer-paths/index.html">Compare Bundled vs. Hub Paths <span aria-hidden="true">→</span></a>
             </div>
           </div>
@@ -88,13 +88,13 @@
         <div class="project-grid">
           <article class="pillar-card">
             <span class="pill-badge">Layer 1 · Context Ingestion &amp; Normalization</span>
-            <h3>OpenMRS QueryStore &amp; 5-Tier/7-Budget FHIR Condenser</h3>
+            <h3>OpenMRS QueryStore &amp; 5-Tier/9-Budget FHIR Condenser</h3>
             <p>
               Raw EHR exports and longitudinal FHIR R4 bundles contain up to 90% administrative noise, duplicate boilerplate notes, and repeated prescription renewals.
             </p>
             <ul>
               <li><strong>OpenMRS <code>QueryStore</code>:</strong> Normalizes and caches patient encounters, observations, orders, and clinical notes with stable UUID provenance references across multi-turn conversations.</li>
-              <li><strong>Lossless Structural FHIR Condenser:</strong> Shrinks multi-decade FHIR R4 bundles across 7 token budgets (<code>256k</code> down to <code>1k</code>), folding duplicate LOINC labs into initial/min/max/latest trajectories and emitting an explicit <code>[Completeness Manifest]</code>.</li>
+              <li><strong>Lossless Structural FHIR Condenser:</strong> Shrinks multi-decade FHIR R4 bundles across 9 token budgets (<code>256k</code> down to <code>1k</code>), folding duplicate LOINC labs into initial/min/max/latest trajectories and emitting an explicit <code>[Completeness Manifest]</code>.</li>
               <li><strong>Conditional Tier-0 Recovery:</strong> Allows models to expand truncated note narratives or historical lab series on demand only when the condensed budget omits detail.</li>
             </ul>
           </article>
@@ -173,8 +173,8 @@
               </tr>
               <tr>
                 <th scope="row"><code>wahs-*</code></th>
-                <td>WA Health Summary (WAHS+) FHIR R4 explorer</td>
-                <td>5-Tier/7-Budget FHIR condenser + <code>ClinicalEntityGraph</code> + 4-Layer KB + Tier-0 recovery</td>
+                <td>WA Health Summary (WAHS) FHIR R4 explorer</td>
+                <td>5-Tier/9-Budget FHIR condenser + <code>ClinicalEntityGraph</code> + 4-Layer KB + Tier-0 recovery</td>
                 <td>Local MLX / LM Studio / <code>llama-router</code>, UW Cloud GPU Auth Relay, OpenRouter</td>
               </tr>
               <tr>
@@ -198,9 +198,9 @@
             <h3>Architecture Guides</h3>
             <ul class="resource-links">
               <li>
-                <a href="/med-agent-hub/wahs-architecture/index.html">
+                <a href="/wahs/llm-strategy/index.html#engine-internals">
                   <span class="resource-link-title"><span>5-Tier FHIR Condenser &amp; ClinicalEntityGraph</span><span aria-hidden="true">→</span></span>
-                  <span class="resource-link-description">Detailed breakdown of lossless structural condensation, 7 token budgets (256k–1k), and pre-generation clinical rules.</span>
+                  <span class="resource-link-description">Detailed breakdown of lossless structural condensation, 9 token budgets (256k–1k), and pre-generation clinical rules.</span>
                 </a>
               </li>
               <li>

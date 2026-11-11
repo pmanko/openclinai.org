@@ -676,9 +676,11 @@ class TestWahsDemoEndToEnd(unittest.TestCase):
             browser = self._launch_chromium(p)
 
             page = browser.new_page(viewport={"width": 1440, "height": 900})
+            probed_urls: list[str] = []
 
             def handle_route(route) -> None:
                 url = route.request.url
+                probed_urls.append(url)
                 if url.startswith("https://wahs-demo.openclinai.org/") and "wahs_demo_data" not in url:
                     route.fulfill(status=200, content_type="text/html; charset=utf-8", body=index_html)
                 elif "wahs_demo_data" in url:
@@ -823,8 +825,21 @@ class TestWahsDemoEndToEnd(unittest.TestCase):
             self.assertFalse(page.locator("#preset-gpu-llm-btn").is_visible())
             self.assertFalse(page.locator("#preset-cloud-hub-llm-btn").is_visible())
 
-            # 2. Default load: both Cloud Med Agent Hub and UW GPU Server preset buttons are cleanly visible
+            # 2. Default load on hosted HTTPS origin probes Cloud Med Agent Hub only (zero localhost PNA/CORS probes)
+            page.evaluate("localStorage.removeItem('wahs_llm_endpoint');")
+            probed_urls.clear()
             page.goto("https://wahs-demo.openclinai.org/", wait_until="domcontentloaded")
+            page.wait_for_function(
+                "() => document.getElementById('llm-status-label').textContent.includes('Cloud Hub')"
+            )
+            self.assertFalse(
+                any("127.0.0.1" in u or "localhost" in u for u in probed_urls),
+                f"Default hosted load must not probe localhost: {probed_urls}",
+            )
+            self.assertTrue(
+                any("wahs-gpu-auth-relay" in u and "/hub/v1/models" in u for u in probed_urls),
+                probed_urls,
+            )
             page.click("#open-llm-config-btn")
             self.assertTrue(page.locator("#preset-gpu-llm-btn").is_visible())
             self.assertTrue(page.locator("#preset-cloud-hub-llm-btn").is_visible())
