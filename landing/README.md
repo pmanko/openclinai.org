@@ -20,11 +20,10 @@ contribution resources rather than expanding the homepage.
 | `/catalyst/reporting-pathways/` | Four complementary OpenELIS reporting routes and their limits |
 | `/catalyst/questions/`, `/catalyst/hiv-gallery/` | Recorded questions and screenshot walkthroughs |
 | `/med-agent-hub/` | 4-layer clinical AI engine architecture, model profile namespaces, and integration |
-| `/med-agent-hub/wahs-architecture/` | WAHS+ clinical entity graph, progressive condensation, and Tier-0 overflow recovery |
 | `/validation-harness/` | 4-Layer Clinical Verification Stack, streaming telemetry, and evaluation methodology |
 | `/experiments/` | Post-Training & Decision-Layer Lab: Track A (`Laya` ~0.4B System-1 gate) and Track B (5-Rung Post-Training Ladder) |
 | `/projects/` | Applied Projects & Clinical Collaborations catalog (WA Health Summary, WHO SMART Guidelines L2→L3) |
-| `/wahs/`, `/wahs/llm-strategy/`, `/wahs/walkthrough/`, `/wahs/design-report/` | WA Health Summary project overview, AI architecture synthesis, walkthrough, and design report (`wahs.openclinai.org` redirects 308 to `/wahs/*`) |
+| `/wahs/`, `/wahs/llm-strategy/`, `/wahs/walkthrough/` | WA Health Summary project overview, AI strategy & architecture (`#engine-internals`), and Explorer sandbox walkthrough (`wahs.openclinai.org` redirects 308 to `/wahs/*`) |
 | `/docs/openmrs-upstream/` | Dated OpenMRS upstream pull-request stacks and review evidence |
 
 Product-native documentation owns application contracts. The native OpenELIS

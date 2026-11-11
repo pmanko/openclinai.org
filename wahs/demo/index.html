@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Washington Health Summary (WAHS+) — Interactive Patient Chart Explorer</title>
-  <meta name="description" content="Explore FHIR R4 patient charts in 3 clear steps: (1) Browse the original FHIR chart, (2) Adjust condensation levers, and (3) Run read-only patient skills & Q&A." />
+  <title>WAHS Explorer (OpenClinAI Sandbox) — Patient Chart Explorer</title>
+  <meta name="description" content="OpenClinAI's interactive FHIR R4 condensation and grounded synthesis sandbox for WA Health Summary (WAHS): browse original records, adjust 9 condensation budgets, and test clinical skills & Q&A." />
   <link rel="canonical" href="https://wahs-demo.openclinai.org/" />
   <script>
     if (typeof window !== "undefined" && window.location && (window.location.hostname === "openclinai.org" || window.location.hostname === "wahs.openclinai.org")) {
@@ -89,6 +89,8 @@
       border-radius: 999px;
       letter-spacing: 0.04em;
       text-transform: uppercase;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .topbar-links {
       display: flex;
@@ -1659,22 +1661,24 @@
     }
     @media (max-width: 1500px) {
       #header-next-phase-btn { display: none; }
-      .phase-shell-inner { padding: 0.42rem 1.15rem; gap: 0.4rem; flex-wrap: nowrap; }
-      .active-context-group { gap: 0.35rem; font-size: 0.8rem; flex-wrap: nowrap; }
-      .ctx-chip { padding: 0.24rem 0.5rem; font-size: 0.8rem; white-space: nowrap; }
-      .llm-bar-chip { padding: 0.22rem 0.46rem; font-size: 0.78rem; white-space: nowrap; }
-      .llm-model-select { max-width: 170px; font-size: 0.75rem; }
-      .kb-mode-btn { font-size: 0.74rem; padding: 0.2rem 0.5rem; white-space: nowrap; }
-      .phase-stepper { padding: 0.2rem; gap: 0.2rem; flex-shrink: 0; }
-      .phase-step-tab { padding: 0.34rem 0.68rem; font-size: 0.82rem; gap: 0.35rem; }
+      #ctx-lever-chip { display: none; }
+      .phase-shell-inner { padding: 0.42rem 1.1rem; gap: 0.35rem 0.45rem; flex-wrap: wrap; }
+      .active-context-group { gap: 0.3rem; font-size: 0.79rem; flex-wrap: wrap; min-width: 0; }
+      .ctx-chip { padding: 0.22rem 0.48rem; font-size: 0.78rem; white-space: nowrap; }
+      #ctx-patient-chip { max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+      .llm-bar-chip { padding: 0.2rem 0.44rem; font-size: 0.76rem; white-space: nowrap; }
+      .llm-model-select { max-width: 148px; font-size: 0.74rem; }
+      .kb-mode-btn { font-size: 0.72rem; padding: 0.18rem 0.46rem; white-space: nowrap; }
+      .phase-stepper { padding: 0.18rem; gap: 0.18rem; flex-shrink: 0; }
+      .phase-step-tab { padding: 0.3rem 0.56rem; font-size: 0.79rem; gap: 0.3rem; }
     }
     @media (max-width: 1180px) {
       .topbar { padding: 0.34rem 0.85rem; font-size: 0.78rem; }
-      .topbar-inner { padding: 0; gap: 0.5rem; flex-wrap: nowrap; }
+      .topbar-inner { padding: 0; gap: 0.35rem 0.65rem; flex-wrap: wrap; }
       .brand h1 { font-size: 0.84rem !important; white-space: nowrap; }
-      .topbar-links { gap: 0.65rem; font-size: 0.75rem; white-space: nowrap; }
-      .phase-shell-inner { padding: 0.32rem 0.85rem; gap: 0.32rem; flex-wrap: nowrap; }
-      .active-context-group { gap: 0.28rem; font-size: 0.75rem; flex-wrap: nowrap; min-width: 0; }
+      .topbar-links { gap: 0.65rem; font-size: 0.75rem; flex-wrap: wrap; }
+      .phase-shell-inner { padding: 0.32rem 0.85rem; gap: 0.32rem; flex-wrap: wrap; }
+      .active-context-group { gap: 0.28rem; font-size: 0.75rem; flex-wrap: wrap; min-width: 0; }
       .ctx-chip { padding: 0.18rem 0.42rem; font-size: 0.74rem; white-space: nowrap; }
       #ctx-lever-chip { display: none; }
       #header-next-phase-btn { display: none; }
@@ -1688,9 +1692,9 @@
       .tab-mobile-hide { display: none; }
     }
     @media (max-width: 680px) {
-      .topbar { padding: 0.24rem 0.55rem; }
-      .topbar-inner { padding: 0; gap: 0.35rem; flex-wrap: nowrap; }
-      .topbar-links { display: none; }
+      .topbar { padding: 0.3rem 0.55rem; }
+      .topbar-inner { padding: 0; gap: 0.22rem 0.5rem; flex-wrap: wrap; }
+      .topbar-links { display: flex; flex-wrap: wrap; gap: 0.25rem 0.65rem; font-size: 0.68rem; width: 100%; }
       .brand { gap: 0.35rem; min-width: 0; }
       .brand h1 { font-size: 0.76rem !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .phase-shell-inner {
@@ -1700,14 +1704,14 @@
         align-items: stretch;
       }
       .active-context-group {
-        gap: 0.2rem;
+        gap: 0.22rem;
         font-size: 0.68rem;
-        flex-wrap: nowrap;
-        justify-content: space-between;
-        overflow-x: auto;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        max-width: 100%;
       }
-      #ctx-patient-chip { padding: 0.12rem 0.3rem; font-size: 0.68rem; flex-shrink: 0; }
-      .llm-bar-chip { padding: 0.1rem 0.24rem; font-size: 0.68rem; flex: 1; min-width: 0; }
+      #ctx-patient-chip { padding: 0.12rem 0.3rem; font-size: 0.68rem; flex-shrink: 0; max-width: 135px; overflow: hidden; text-overflow: ellipsis; }
+      .llm-bar-chip { padding: 0.1rem 0.24rem; font-size: 0.68rem; flex: 1 1 130px; min-width: 0; }
       .llm-model-select { max-width: 98px; font-size: 0.66rem; padding: 0.05rem 0.15rem; }
       .kb-mode-toggle-wrap { flex-shrink: 0; padding: 0.06rem; }
       .kb-mode-btn { font-size: 0.62rem; padding: 0.1rem 0.26rem; }
@@ -1830,14 +1834,14 @@
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
-        <span class="brand-badge">WAHS+</span>
-        <h1 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #ffffff;">Washington Health Summary — Patient Chart Explorer</h1>
+        <span class="brand-badge">WAHS Explorer</span>
+        <h1 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #ffffff;">WA Health Summary — Patient Chart Explorer (OpenClinAI Sandbox)</h1>
       </div>
       <nav class="topbar-links" aria-label="WAHS Navigation">
-        <a href="https://openclinai.org/wahs/walkthrough/">📖 Walkthrough &amp; Tutorial</a>
-        <a href="https://openclinai.org/wahs/">Overview</a>
-        <a href="https://openclinai.org/wahs/design-report/">Design &amp; Evaluation Report</a>
-        <a href="https://reports.openclinai.org/2026-11-02-wahs-simple-profiles-multi-family-eval/index.html">📊 7-Family Benchmark</a>
+        <a href="https://openclinai.org/wahs/">WAHS Overview</a>
+        <a href="https://openclinai.org/wahs/llm-strategy/">AI Strategy</a>
+        <a href="https://openclinai.org/wahs/walkthrough/">📖 Walkthrough</a>
+        <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">📊 9-Model Benchmark</a>
         <a href="https://openclinai.org/">OpenClinAI</a>
       </nav>
     </div>
@@ -2034,7 +2038,7 @@
                 <strong>Stage 0 Structural Hygiene &amp; Privacy Segmentation:</strong><br/>
                 • <strong>Auto-Cleaned Wrapper Bloat:</strong> Strips FHIR JSON syntax overhead, administrative <code>Claim</code>/<code>ExplanationOfBenefit</code> billing records, and byte-identical SHA-256 Base64 note duplicates before token counting (<code>~97%</code> token reduction with zero clinical facts lost).<br/>
                 • <strong>Clinic Room Equipment (<code>Device</code>):</strong> Hides facility hardware (<code>Hospital bed</code>, <code>Examination table</code>, <code>Dental x-ray</code>) while always keeping patient implants (<code>ICD</code>, <code>Mechanical valve</code>, <code>Coronary stent</code>).<br/>
-                • <strong>External-Share Privacy (<code>42 CFR Part 2</code> / <code>WA MHMDA</code>):</strong> Withholds sensitive substance-use, behavioral health, and domestic safety findings and logs the redaction count in <code>[Privacy Manifest]</code>.
+                • <strong>Experimental Sandbox Sensitivity Filter (<code>42 CFR Part 2</code> / <code>WA MHMDA</code>):</strong> An OpenClinAI sandbox experiment (separate from WAHS's native IPS + SMART Health Link sharing) that withholds sensitive substance-use, behavioral health, and domestic safety findings and logs the redaction count in <code>[Privacy Manifest]</code>.
               </div>
               <label class="prep-toggle-item">
                 <input type="checkbox" id="toggle-filter-equip" />
@@ -2042,7 +2046,7 @@
               </label>
               <label class="prep-toggle-item">
                 <input type="checkbox" id="toggle-privacy-share" />
-                <span>Preview external-share privacy redaction (<span id="count-sdoh-label">0</span> sensitive)</span>
+                <span>Preview sandbox sensitivity filter (<span id="count-sdoh-label">0</span> sensitive)</span>
               </label>
               <div style="font-size: 0.83rem; color: var(--text-muted); margin-top: 0.55rem;">
                 Auto-cleaned: <span id="count-claims-label">0</span> billing claims &amp; <span id="count-b64-label">0</span> duplicate Base64 note wrappers excluded.
@@ -2094,7 +2098,7 @@
         </summary>
         <div class="condense-arch-body">
           <div>
-            Raw FHIR R4 exports (such as <strong>Maurice Auer's 18.8 MB / 7,099-entry bundle</strong>, ~6.1M raw JSON tokens / ~252k extracted clinical tokens) exceed standard single-shot LLM windows because of JSON syntax verbosity, billing claims, duplicate Base64 clinical notes, and years of repeated lab/medication entries. WAHS+ condenses any chart to fit your chosen budget (<code>256k</code> down to <code>1k</code>) while keeping <strong>100% of the chart accessible</strong> through three coordinated stages:
+            Raw FHIR R4 exports (such as <strong>Maurice Auer's 18.4 MB / 7,099-entry bundle</strong>, ~1.35M raw JSON tokens / 251,641 extracted clinical tokens) exceed standard single-shot LLM windows because of JSON syntax verbosity, billing claims, duplicate Base64 clinical notes, and years of repeated lab/medication entries. The WAHS Explorer condenses any chart to fit your chosen budget (<code>256k</code> down to <code>1k</code>) while keeping <strong>100% of the chart accessible</strong> through three coordinated stages:
           </div>
           <div class="condense-arch-grid">
             <div class="condense-stage-box">
@@ -2102,7 +2106,7 @@
               <ul>
                 <li><strong>Strips non-clinical bloat:</strong> Removes <code>Claim</code>, <code>ExplanationOfBenefit</code>, and transport lookup wrappers.</li>
                 <li><strong>Deduplicates Base64 notes:</strong> Hashes decoded UTF-8 clinical notes (SHA-256) across <code>DocumentReference</code> and <code>DiagnosticReport</code> to collapse syndication copies while keeping every <code>memberUuid</code>.</li>
-                <li><strong>Result:</strong> Removes ~96% of raw JSON wrapper overhead before any clinical record is touched (e.g., Maurice <code>6.1M</code> raw JSON tokens → <code>252.0k</code> full extracted clinical tokens).</li>
+                <li><strong>Result:</strong> Removes ~81% of raw JSON wrapper overhead before any clinical record is touched (e.g., Maurice <code>~1.35M</code> raw JSON tokens → <code>251,641</code> full extracted clinical tokens).</li>
               </ul>
             </div>
             <div class="condense-stage-box">
@@ -2238,9 +2242,9 @@
               <span role="button" tabindex="0" class="conn-preset-info-btn" data-conn-info="cloud_hub" aria-label="Info about Cloud Med Agent Hub" aria-expanded="false" title="Click or hover for details about Cloud Med Agent Hub">ⓘ</span>
             </span>
           </div>
-          <div class="conn-preset-sub">Cloud WAHS+ profiles on UW GPU</div>
+          <div class="conn-preset-sub">Cloud WAHS profiles on UW GPU</div>
           <div class="conn-preset-info-popover" id="conn-info-cloud_hub" role="region" aria-label="Cloud Med Agent Hub details">
-            <strong>Cloud Med Agent Hub (Cloud Run + UW GPU):</strong> Hosted <code>med-agent-hub</code> orchestration service on Google Cloud Run using the shared UW CIRG GPU server (<code>Gemma 4 26B/12B/E4B/E2B</code>, <code>Qwen 3 14B/8B/4B</code>, <code>Qwen 2.5 14B</code>, <code>Mistral Nemo 12B / 7B</code>, <code>Llama 3.1 8B</code>, <code>Granite 3.3 8B</code>) as its LLM provider. Serves curated WAHS+ clinical profiles with zero local setup. Requires a whitelisted Google account.
+            <strong>Cloud Med Agent Hub (Cloud Run + UW GPU):</strong> Hosted <code>med-agent-hub</code> orchestration service on Google Cloud Run using the shared UW CIRG GPU server (<code>Gemma 4 26B/12B/E4B/E2B</code>, <code>Qwen 3 14B/8B/4B</code>, <code>Qwen 2.5 14B</code>, <code>Mistral Nemo 12B / 7B</code>, <code>Llama 3.1 8B</code>, <code>Granite 3.3 8B</code>) as its LLM provider. Serves curated WAHS clinical profiles with zero local setup. Requires a whitelisted Google account.
           </div>
         </button>
         <button type="button" class="conn-preset-btn" id="preset-gpu-llm-btn" data-preset="gpu" title="Connect directly to shared UW CIRG GPU Server models (requires whitelisted Google Sign-In)">
@@ -2264,9 +2268,9 @@
               <span role="button" tabindex="0" class="conn-preset-info-btn" data-conn-info="hub" aria-label="Info about Local Med Agent Hub" aria-expanded="false" title="Click or hover for details about Local Med Agent Hub">ⓘ</span>
             </span>
           </div>
-          <div class="conn-preset-sub">Curated WAHS+ profiles (<code>:18081</code>)</div>
+          <div class="conn-preset-sub">Curated WAHS profiles (<code>:18081</code>)</div>
           <div class="conn-preset-info-popover" id="conn-info-hub" role="region" aria-label="Local Med Agent Hub details">
-            <strong>Local Med Agent Hub (<code>:18081</code>):</strong> Connects to a <code>med-agent-hub</code> instance running on your own workstation (<code>http://127.0.0.1:18081</code>). Serves curated WAHS+ clinical profiles (<code>wahs-12b-kb</code>, <code>wahs-e4b-kb</code>, etc.) backed by your local LLM router.
+            <strong>Local Med Agent Hub (<code>:18081</code>):</strong> Connects to a <code>med-agent-hub</code> instance running on your own workstation (<code>http://127.0.0.1:18081</code>). Serves curated WAHS clinical profiles (<code>wahs-12b-kb</code>, <code>wahs-e4b-kb</code>, etc.) backed by your local LLM router.
           </div>
         </button>
         <button type="button" class="conn-preset-btn" id="preset-lmstudio-llm-btn" data-preset="lmstudio" title="Connect to LM Studio (:1235 Bionic or :1234 Classic)">
@@ -3189,7 +3193,7 @@
             citation_grounding: "enforce",
             description: !includeKb
               ? "Unhinted control mode: passes ONLY the Step 2 Condensed FHIR Chart Ledger without 4-Layer Clinical KB hints."
-              : "Checked WAHS+ synthesis mode: combines the Step 2 Condensed FHIR Chart Ledger with 4-Layer Clinical KB Findings."
+              : "Checked WAHS synthesis mode: combines the Step 2 Condensed FHIR Chart Ledger with 4-Layer Clinical KB Findings."
           },
           prompts: { answer: !includeKb ? "wahs-raw-unhinted" : "wahs-kb-guided" },
           system_prompts: {}
@@ -3534,8 +3538,8 @@
 
         const sysMsg = (activeProf.system_prompts && activeProf.system_prompts.answer) ||
           (includeKb
-            ? "You are the WAHS+ Clinical Chart Assistant helping a patient and their care team understand their condensed health record. Answer the task or question in clear, empathetic plain English using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, colonoscopy, MRI, or fact NOT recorded in the chart, begin your SUMMARY with 'ABSTAIN:' and clearly explain that you checked their chart and there is no record of it, so you abstain for safety rather than guessing. Format your output in two parts:\nSUMMARY:\n2-3 clear plain-English bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 specific questions to review with the clinician."
-            : "You are the WAHS+ Raw-Chart Control Assistant. Answer the task or question using ONLY the provided Condensed FHIR Chart Ledger without 4-Layer KB hints. Cite specific chart entries using [N] brackets. If a requested record is absent from the active condensed chart, begin your SUMMARY with 'ABSTAIN:'. Format your output in two parts:\nSUMMARY:\n<Concise synthesis with [N] citations>\nQUESTIONS_FOR_DOCTOR:\n- <2-3 specific questions>");
+            ? "You are the WAHS Explorer Clinical Chart Assistant helping a patient and their care team understand their condensed health record. Answer the task or question in clear, empathetic plain English using ONLY the provided Condensed FHIR Chart Ledger and 4-Layer KB Findings. Cite specific chart entries using [N] brackets (e.g. [8], [19]). If asked about a test, allergy, colonoscopy, MRI, or fact NOT recorded in the chart, begin your SUMMARY with 'ABSTAIN:' and clearly explain that you checked their chart and there is no record of it, so you abstain for safety rather than guessing. Format your output in two parts:\nSUMMARY:\n2-3 clear plain-English bullet points or sentences with [N] citations.\nQUESTIONS_FOR_DOCTOR:\n- 2-3 specific questions to review with the clinician."
+            : "You are the WAHS Explorer Raw-Chart Control Assistant. Answer the task or question using ONLY the provided Condensed FHIR Chart Ledger without 4-Layer KB hints. Cite specific chart entries using [N] brackets. If a requested record is absent from the active condensed chart, begin your SUMMARY with 'ABSTAIN:'. Format your output in two parts:\nSUMMARY:\n<Concise synthesis with [N] citations>\nQUESTIONS_FOR_DOCTOR:\n- <2-3 specific questions>");
 
         const taskSuffix = "\n\nTask / Question: " + activeQuestionText;
         const userMsg = promptPreviewText + taskSuffix;
@@ -3545,7 +3549,7 @@
         const kbActiveTokens = Math.max(1, Math.round(nonChartChars / 4));
         const rawControlWrapperChars =
           ((activeProf.system_prompts && activeProf.system_prompts.answer) ||
-            "You are the WAHS+ Raw-Chart Control Assistant. Answer the task or question using ONLY the provided Condensed FHIR Chart Ledger without 4-Layer KB hints. Cite specific chart entries using [N] brackets. If a requested record is absent from the active condensed chart, begin your SUMMARY with 'ABSTAIN:'. Format your output in two parts:\nSUMMARY:\n<Concise synthesis with [N] citations>\nQUESTIONS_FOR_DOCTOR:\n- <2-3 specific questions>").length +
+            "You are the WAHS Explorer Raw-Chart Control Assistant. Answer the task or question using ONLY the provided Condensed FHIR Chart Ledger without 4-Layer KB hints. Cite specific chart entries using [N] brackets. If a requested record is absent from the active condensed chart, begin your SUMMARY with 'ABSTAIN:'. Format your output in two parts:\nSUMMARY:\n<Concise synthesis with [N] citations>\nQUESTIONS_FOR_DOCTOR:\n- <2-3 specific questions>").length +
           headerText.length +
           "\n\n[4-Layer Clinical KB Findings OMITTED by profile policy: Unhinted Raw-Chart Control]".length +
           taskSuffix.length;
@@ -3677,7 +3681,7 @@
             '</div>' +
             '<div class="context-gauge-note">' +
               '📊 <strong>Recommended Limit (' + formatTokenCountK(recLimit) + ' team setting):</strong> Configured from multi-budget recall and latency measurements in the ' +
-              '<a href="' + esc(spec.recommendedLimitUrl) + '" target="_blank" rel="noopener" style="font-weight: 700; text-decoration: underline;">7-Family WAHS Evaluation Report →</a>' +
+              '<a href="' + esc(spec.recommendedLimitUrl) + '" target="_blank" rel="noopener" style="font-weight: 700; text-decoration: underline;">Context-Budget Spectrum Evaluation Report →</a>' +
             '</div>';
         }
 
@@ -3928,8 +3932,8 @@
         const roleKnobs = (activeProf.role_knobs && activeProf.role_knobs.answer) || { temperature: 0.1, maxTokens: 4096, dry: 0.0 };
         const sysPromptText = (activeProf.system_prompts && activeProf.system_prompts.answer) ||
           (includeKb
-            ? "You are the Washington Health Summary (WAHS+) Clinical & Patient Synthesis Assistant operating inside med-agent-hub (server/prompts/wahs-kb-guided.txt). Combine the Condensed FHIR R4 Chart Ledger + 4-Layer Clinical KB Findings, cite [N] lines, and enforce ABSTAIN on unrecorded facts."
-            : "You are the Washington Health Summary (WAHS+) Raw-Chart Control Assistant operating inside med-agent-hub (server/prompts/wahs-raw-unhinted.txt). Answer ONLY from the raw Condensed FHIR R4 Chart Ledger without 4-Layer Clinical KB hints.");
+            ? "You are the WA Health Summary (WAHS) Clinical & Patient Synthesis Assistant operating inside med-agent-hub (server/prompts/wahs-kb-guided.txt). Combine the Condensed FHIR R4 Chart Ledger + 4-Layer Clinical KB Findings, cite [N] lines, and enforce ABSTAIN on unrecorded facts."
+            : "You are the WA Health Summary (WAHS) Raw-Chart Control Assistant operating inside med-agent-hub (server/prompts/wahs-raw-unhinted.txt). Answer ONLY from the raw Condensed FHIR R4 Chart Ledger without 4-Layer Clinical KB hints.");
         const stagesStr = (activeProf.stages || ["context", "answer", "gate"]).join(" → ");
         const modelsStr = Object.keys(roleModels).map(function (k) { return k + ": " + roleModels[k]; }).join(" • ");
         const kbPolicyBadge = includeKb
@@ -3941,9 +3945,9 @@
               'Stage 1 Tier-0 Overflow Recovery: <code>' + (hubEnrichment.overflowTriggered ? ('ACTIVE (' + hubEnrichment.overflowRecoveredCount + ' recovered from ' + hubEnrichment.overflowOmittedTotal + ' omitted items)') : 'SKIPPED (0 omitted items — 0 extra latency)') + '</code> • ' +
               'Stage 2 Clinical Entity Subgraph: <code>' + hubEnrichment.graphEdgeCount + ' linked edges</code> • ' +
               'Stage 3 Question KB Lookup: <code>' + hubEnrichment.kbHitCount + ' clinical rules</code> • ' +
-              '<a href="https://openclinai.org/med-agent-hub/wahs-architecture/" target="_blank" rel="noopener" style="color: var(--primary); font-weight: 700; text-decoration: underline;">📖 Med Agent Hub WAHS Architecture →</a>' +
+              '<a href="https://openclinai.org/wahs/llm-strategy/#engine-internals" target="_blank" rel="noopener" style="color: var(--primary); font-weight: 700; text-decoration: underline;">📖 Engine Internals &amp; Architecture →</a>' +
             '</div>'
-          : '<div style="margin-top: 0.35rem;"><a href="https://openclinai.org/med-agent-hub/wahs-architecture/" target="_blank" rel="noopener" style="color: var(--primary); font-weight: 700; text-decoration: underline;">📖 Med Agent Hub WAHS Architecture Documentation →</a></div>';
+          : '<div style="margin-top: 0.35rem;"><a href="https://openclinai.org/wahs/llm-strategy/#engine-internals" target="_blank" rel="noopener" style="color: var(--primary); font-weight: 700; text-decoration: underline;">📖 Engine Internals &amp; Architecture Documentation →</a></div>';
 
         return (
           '<details class="evidence-details-drawer" id="hub-profile-inspector-drawer">' +
@@ -3957,7 +3961,7 @@
             '<div class="evidence-drawer-body">' +
               '<div class="clinician-tech-box" style="margin-bottom: 0.75rem;">' +
                 '<div><strong>Profile Label:</strong> ' + esc(activeProf.label || activeProf.id) + '</div>' +
-                '<div style="margin-top: 0.25rem;"><strong>Description:</strong> ' + esc(policies.description || "Curated med-agent-hub profile for WAHS+ experimentation.") + '</div>' +
+                '<div style="margin-top: 0.25rem;"><strong>Description:</strong> ' + esc(policies.description || "Curated med-agent-hub profile for WAHS Explorer experimentation.") + '</div>' +
                 '<div style="margin-top: 0.25rem;"><strong>Workflow &amp; Stages:</strong> <code>' + esc(activeProf.workflow || "wahs") + '</code> (' + esc(stagesStr) + ') • <strong>Role Models:</strong> <code>' + esc(modelsStr) + '</code></div>' +
                 '<div style="margin-top: 0.25rem;"><strong>Sampling Knobs:</strong> <code>temperature=' + esc(roleKnobs.temperature) + ', maxTokens=' + esc(roleKnobs.maxTokens || 4096) + ', dry=' + esc(roleKnobs.dry || 0) + '</code> • <strong>Policies:</strong> <code>include_kb_findings=' + esc(String(includeKb)) + ', citation_grounding=' + esc(policies.citation_grounding || "enforce") + '</code></div>' +
                 hubIntelBox +
@@ -4150,7 +4154,7 @@
           if (state.openRouterKey && isDirectOr) {
             reqHeaders["Authorization"] = "Bearer " + state.openRouterKey;
             reqHeaders["HTTP-Referer"] = "https://wahs-demo.openclinai.org";
-            reqHeaders["X-Title"] = "OpenClinAI WAHS+ Explorer";
+            reqHeaders["X-Title"] = "OpenClinAI WAHS Explorer";
           }
 
           const reqPayload = {
@@ -4561,10 +4565,10 @@
         const isPrivacyRedactedView = state.privacyExternalShare && skill.id === "skill-privacy-preview";
         const effectiveStructRows = isPrivacyRedactedView
           ? [{
-              category: "External-Share Redaction Active",
+              category: "Sandbox Sensitivity Filter Active",
               label: allStructRows.length + " Sensitive SDOH / Behavioral / Personal-Safety Record(s) Withheld",
-              detail: "Sensitive social history, behavioral health, and personal-safety findings are stripped from the external-share view, condensed ledger, and LLM prompt under 42 CFR Part 2 / WA My Health My Data Act while retaining 100% of core clinical safety records.",
-              source_org: "WAHS+ Privacy Gate",
+              detail: "Experimental OpenClinAI sandbox filter: sensitive social history, behavioral health, and personal-safety findings are stripped from this preview, condensed ledger, and LLM prompt under 42 CFR Part 2 / WA My Health My Data Act rules while retaining 100% of core clinical safety records.",
+              source_org: "Sandbox Sensitivity Filter",
               code: "REDACTED (" + allStructRows.length + ")",
               tone: "ok"
             }]
@@ -5610,9 +5614,17 @@
           "http://127.0.0.1:11434": "https://127.0.0.1:11435",
           "http://localhost:11434": "https://127.0.0.1:11435"
         };
+        const isRemoteHttpsOrigin = typeof window !== "undefined" &&
+          window.location &&
+          window.location.protocol === "https:" &&
+          !/^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname || "");
         const savedEp = normalizeEndpointBase(localStorage.getItem("wahs_llm_endpoint") || "");
         const cleanOverride = normalizeEndpointBase(overrideUrl || "");
-        const targetPresetKind = forcePresetKind || inferPresetKindFromUrl(cleanOverride || savedEp || "http://127.0.0.1:18081");
+        const defaultRemoteCloudHub = isRemoteHttpsOrigin && !isSafariHttps && !cleanOverride && !savedEp && isGpuPresetEnabled();
+        const defaultFallbackEndpoint = defaultRemoteCloudHub
+          ? (WAHS_GPU_CONFIG.cloudHubEndpoint || WAHS_GPU_CONFIG.defaultEndpoint || "http://127.0.0.1:18081")
+          : "http://127.0.0.1:18081";
+        const targetPresetKind = forcePresetKind || inferPresetKindFromUrl(cleanOverride || savedEp || defaultFallbackEndpoint);
         const isGpuMode = targetPresetKind === "gpu" || targetPresetKind === "cloud_hub";
 
         function expandPresetCandidates(ep) {
@@ -5654,24 +5666,28 @@
                   "http://127.0.0.1:8076",
                   "http://127.0.0.1:1235"
                 ]
-              : [
-                  savedEp,
-                  sameOriginHub,
-                  "http://127.0.0.1:18081",
-                  "http://localhost:18081",
-                  (isGpuPresetEnabled() ? (WAHS_GPU_CONFIG.cloudHubEndpoint || WAHS_GPU_CONFIG.defaultEndpoint || "") : ""),
-                  "https://127.0.0.1:18443",
-                  "http://127.0.0.1:8077",
-                  "http://localhost:8077",
-                  "http://127.0.0.1:8076",
-                  "http://localhost:8076",
-                  "http://127.0.0.1:1235",
-                  "http://localhost:1235",
-                  "http://127.0.0.1:1234",
-                  "http://localhost:1234",
-                  "http://127.0.0.1:11434",
-                  "http://localhost:11434"
-                ]);
+              : (defaultRemoteCloudHub
+                  ? [
+                      WAHS_GPU_CONFIG.cloudHubEndpoint || WAHS_GPU_CONFIG.defaultEndpoint || ""
+                    ]
+                  : [
+                      savedEp,
+                      sameOriginHub,
+                      "http://127.0.0.1:18081",
+                      "http://localhost:18081",
+                      (isGpuPresetEnabled() ? (WAHS_GPU_CONFIG.cloudHubEndpoint || WAHS_GPU_CONFIG.defaultEndpoint || "") : ""),
+                      "https://127.0.0.1:18443",
+                      "http://127.0.0.1:8077",
+                      "http://localhost:8077",
+                      "http://127.0.0.1:8076",
+                      "http://localhost:8076",
+                      "http://127.0.0.1:1235",
+                      "http://localhost:1235",
+                      "http://127.0.0.1:1234",
+                      "http://localhost:1234",
+                      "http://127.0.0.1:11434",
+                      "http://localhost:11434"
+                    ]));
         const candidates = rawCandidates.filter(function (v, idx, arr) { return !!v && arr.indexOf(v) === idx; });
 
         const CURATED_OPENROUTER_DIRECT = {
