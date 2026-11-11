@@ -645,3 +645,44 @@ def test_validate_archive_rejects_placeholder_titles_jargon_missing_takeaway_and
     bri.validate_archive([clean_entry], reports)
 
 
+def test_failed_validation_leaves_manifest_and_shells_untouched(tmp_path, monkeypatch):
+    bri = _load()
+    reports = tmp_path / "reports"
+    good = _packet(reports, "good-run")
+    (good / "index.html").write_text(
+        "<!doctype html><html><head><meta name='viewport' content='width=device-width, initial-scale=1'></head>"
+        "<body><h1 id='report-title'>Old Title</h1><script type='application/json' id='report-data'>{}</script></body></html>",
+        encoding="utf-8",
+    )
+    (good / "editorial.json").write_text(
+        json.dumps({
+            "title": "New Title That Must Not Be Stamped On Failure",
+            "summary": "We tested two clinical AI setups across three HIV patient charts and 35 clinical questions.",
+            "takeaway": "Med Agent Hub improved accuracy and completeness by 14 points with zero unsafe answers.",
+        }),
+        encoding="utf-8",
+    )
+    bad = reports / "bad-run"
+    bad.mkdir(parents=True)
+    # Missing index.html + placeholder editorial causes validate_archive to fail
+    (bad / "editorial.json").write_text(
+        json.dumps({"title": "TODO", "summary": "short", "takeaway": ""}),
+        encoding="utf-8",
+    )
+
+    manifest = reports / "reports-index.json"
+    original_manifest = json.dumps({"intro": "keep-me", "scoring_note": "keep", "runs": []}, indent=2) + "\n"
+    manifest.write_text(original_manifest, encoding="utf-8")
+    original_shell = (good / "index.html").read_text(encoding="utf-8")
+
+    monkeypatch.setattr(bri, "REPORTS", reports)
+    monkeypatch.setattr(bri, "MANIFEST", manifest)
+    with pytest.raises(ValueError):
+        bri.main()
+
+    assert manifest.read_text(encoding="utf-8") == original_manifest
+    assert (good / "index.html").read_text(encoding="utf-8") == original_shell
+    assert not (reports / "index.html").exists()
+
+
+

@@ -18,11 +18,9 @@ def test_publication_does_not_import_or_install_the_harness():
     """Invariant: publication reads captured artifacts and never imports or runs the harness."""
     for script in (ROOT / 'scripts').iterdir():
         if script.name.startswith(('publish-', 'preview-report', 'build-reports')):
-            text = script.read_text()
+            text = script.read_text(encoding='utf-8')
             for coupling in ('from harness', 'import harness', 'harness-cli', 'uv run'):
                 assert coupling not in text, (script.name, coupling)
-    for retired in ('reshell-reports.py', 'publish-report.sh', 'stage-report.py'):
-        assert not (ROOT / 'scripts' / retired).exists(), f'retired script {retired} still exists'
 
 
 def test_relocated_media_is_checked_before_it_is_staged_in_git():

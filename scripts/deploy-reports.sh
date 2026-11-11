@@ -3,9 +3,10 @@
 #
 # The site is the committed reports/ folder, nothing more and nothing less. This
 # refuses uncommitted changes under reports/, rebuilds the catalog to prove the
-# committed index matches the manifest, then mirrors the whole folder with
-# --delete. Demo videos are git-ignored (.gitignore) and are neither uploaded nor
-# deleted; they live only on the host and in the checkouts that recorded them.
+# committed index matches the manifest, then syncs additively by default (or
+# mirrors with --delete only when --prune is explicitly passed). Demo videos are
+# git-ignored (.gitignore) and are neither uploaded nor deleted; they live only
+# on the host and in the checkouts that recorded them.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -32,6 +33,11 @@ while [[ $# -gt 0 ]]; do
 done
 SLUG="${SLUG:-${DEPLOY_SLUG:-}}"
 
+if [[ -n "${SLUG}" && ! "${SLUG}" =~ ^[a-z0-9][a-z0-9._-]*$ ]]; then
+  echo "error: invalid report slug '${SLUG}'." >&2
+  exit 1
+fi
+
 if [[ -n "${SLUG}" && "${PRUNE}" == "1" ]]; then
   echo "error: --prune cannot be combined with --slug." >&2
   exit 1
@@ -44,7 +50,7 @@ fi
 
 BRANCH="$(git -C "${REPORTS_ROOT}" symbolic-ref --short HEAD 2>/dev/null || echo "detached")"
 if [[ -z "${SLUG}" && "${BRANCH}" != "main" && "${BRANCH}" != "master" && "${ALLOW_BRANCH_FULL_DEPLOY:-0}" != "1" ]]; then
-  echo "error: refusing full-archive rsync --delete from non-main branch '${BRANCH}'." >&2
+  echo "error: refusing full-archive sync from non-main branch '${BRANCH}'." >&2
   echo "Use 'scripts/publish-report.py deploy --slug <slug>' for additive per-slug publishing on feature branches, or deploy from main." >&2
   exit 1
 fi

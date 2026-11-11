@@ -458,6 +458,8 @@ def stage_report(
                 str(root),
                 "--reports-root",
                 str(reports_root),
+                "--manifest",
+                str(manifest_path),
             ],
             check=True,
         )
@@ -472,6 +474,8 @@ def deploy_reports(
     reports_root: Path | None = None,
     root: Path = ROOT,
 ) -> int:
+    if slug:
+        validate_slug(slug, allow_legacy_slug=True)
     if slug and prune:
         raise ValueError("--prune cannot be combined with --slug (per-slug deploy is always additive)")
     reports_root = (reports_root or (root / "reports")).resolve()

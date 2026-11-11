@@ -1305,9 +1305,16 @@
   });
 
   function initThemeToggle() {
-    var key = 'oc-theme-dashboard';
-    var btn = document.getElementById('oc-theme-toggle');
+    var key = 'oc-theme-validate-dash';
+    var legacyKey = 'oc-theme-dashboard';
+    var btn = document.getElementById('theme-toggle') || document.getElementById('oc-theme-toggle');
     if (!btn) return;
+    try {
+      var saved = localStorage.getItem(key) || localStorage.getItem(legacyKey);
+      if (saved === 'light' || saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', saved);
+      }
+    } catch (e) {}
     function sync() {
       var cur = document.documentElement.getAttribute('data-theme') || 'dark';
       var next = cur === 'dark' ? 'light' : 'dark';
@@ -1321,6 +1328,7 @@
       document.documentElement.setAttribute('data-theme', next);
       try {
         localStorage.setItem(key, next);
+        localStorage.setItem(legacyKey, next);
       } catch (e) {}
       sync();
     });

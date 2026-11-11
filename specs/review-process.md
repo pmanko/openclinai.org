@@ -44,26 +44,28 @@ agent runs it. What the maintainer's process is, and where ours fell short on th
 | L4 Model gate | on request, optional, slice changes only | two harness runs | a pre-registered gate (comparison set, dataset, baseline, threshold) run on base and head; the record quotes the number |
 | L5 Full evaluation | per milestone: a stack head ready to merge, a baseline rebuild, a model or provider change | about an hour of 12B time for the default | the harness runs the default matrix (`full-default`: 17 scenarios against the bundled arm and the Hub's answer parity arm on one engine), scores it and produces its own report; further arms are the profiles the Hub advertises at run time; a previous run is cited only when a comparison is wanted |
 
-L0 and L1 are the default on every push. L2 to L5 run through `make review`. L0 to L2
+L0 and L1 are the default on every push. L2 runs through `make review`, while L3 to L5
+run directly through the validation harness (`make run-eval` / `python3 scripts/run-eval.py`
+and `harness-cli validate`). L0 to L2
 answer whether the code is right, L3 and L4 whether a change behaves or retrieves as
 claimed, L5 how the assembled stack performs. L2 runs on the local head of a round
 (`HEAD=` and `BASE=` name the layer and the layer below in the checkout) before the round
 is pushed, so what it finds is fixed or declined locally and does not become a thread
 upstream; the PR's threads and body still feed it, and `STACK=1` stays for pushed stacks. L5 is never a merge gate for one PR; its
-report is the validation thread's output and feeds publication.
+report is the validation thread's output and feeds publication via `scripts/publish-report.py`.
 
 ## Parameters
 
 ```
 make review PR=<n> [REPO=umbrella|hub|harness|chartsearchai|esm|querystore] [AGENT=claude|codex|gemini|human]
-            [EFFORT=low|medium|high] [ROUNDS=1] [STACK=1] [SCENARIOS=<set>] [GATE=<name>]
-            [FULL=1] [SET=full-default] [PROFILES=<advertised Hub profiles>] [BASELINE=<run id>]
+            [EFFORT=low|medium|high] [ROUNDS=1] [FIX=1] [STACK=1]
             [HEAD=<local ref> BASE=<local ref>]  review the layer before it is pushed
             [REPOSITORY=<owner/repo> CONSUMER_REPO=<alias> CONSUMER_HEAD=<commit>]  choose the fork and paired component
             [MODEL=gpt-6.1-sol REASONING=medium]  the reviewer's model and effort (never a personal config's)
-make review MEASURE=<set> GOLD=<gold file>      a gate's baseline, before the gate is written
-make review FULL=1 [SET=] [PROFILES=]           the full evaluation without a PR
 make review-replies PR=<n> [REPO=]              draft thread replies from the last round
+
+make run-eval [SET=full-default] [PROFILES="<advertised Hub profiles>"] [JUDGES="claude codex"]
+            [PASSES=2] [DEPLOY_HEAD=<repo:ref>]  run L3–L5 harness evaluation, blind judging, and v2 JSON report packet
 ```
 
 | Effort | Sweep |
@@ -80,13 +82,17 @@ connected branches require a curated manifest instead of an assumed merged top.
 [the tooling procedure](../review/README.md#reviewing-a-stack-without-duplicate-issues)
 for consolidation and guarded updates of existing reviews. `ROUNDS` above 1 with explicit `FIX=1` repeats
 review and fix until the reviewer records zero blocking findings on the pushed head,
-and every round after a clean one is blocking-only. `SCENARIOS`, `GATE` and `FULL` are off
-unless named. `FULL=1` runs the harness on `SET` (default `full-default`) against the set's two
-arms and produces that run's report. `PROFILES=` adds arms from the profiles the Hub
+and every round after a clean one is blocking-only. L3 to L5 evaluations run separately
+from `make review` through `make run-eval` (`scripts/run-eval.py`, delegating to
+`harness-cli validate run`, `harness-cli validate judge`, and `harness-cli validate report`).
+`make run-eval` runs the harness on `SET` (default `full-default`) against the set's arms,
+optionally scores blind multi-judge sessions via `harness/validate/judge_runner.py`, and
+emits a pure `v2` JSON report packet (`run-summary.json`, `report-data.json`,
+`dashboard-data.json`). `PROFILES=` adds arms from the profiles the Hub
 advertises at run time (read from ChartSearchAI's `/models`, the same list the picker
 shows), so a team or validated profile becomes an arm by being published on the Hub,
-never by editing a list here. `BASELINE=<run id>` adds a comparison with an earlier run's
-report; without it the report stands on its own.
+never by editing a list here. Use `python3 scripts/preview-report.py <run_dir>` for local
+browser inspection or `python3 scripts/publish-report.py stage <run_dir> --slug <slug>` to stage for publication.
 
 ## Layout
 
@@ -103,7 +109,6 @@ review/
     reply.md             what changed, commit, test, red and green lines, no longer than
                          the comment answered, no thanks, no acknowledgment of a fix
     stack.md             the cross-layer dimension for STACK=1
-    judge.md             the harness rubric, for FULL=1
   bin/
     threads.py           open threads per PR into work/review/<component>-<encoded-repository>-<pr>/threads.json
     probe                [--repo] <commit>...: revert the main files, expect red; restore,
@@ -260,14 +265,14 @@ and a person at a terminal.
       codex, gemini and human, `review.py` and `make review` with `EFFORT`, `ROUNDS`,
       `STACK` ([record](reviews/2026-10-20-review-layers.md)).
 - [x] Deployed-head scenarios: `deploy-head.sh`; harness checkable expectations (harness
-      PR); a `review-smoke` comparison set; `SCENARIOS=`
+      PR); a `review-smoke` comparison set executed via `make run-eval` / `harness-cli validate`
       ([record](reviews/2026-10-20-review-layers.md)).
 - [ ] Gates: the October cohort as a harness dataset, the citation scorer path,
-      `review/gates/`, `MEASURE=`, `GATE=`; the cohort's harness baseline replaces
+      harness gate configurations; the cohort's harness baseline replaces
       `work/eval-88/`; the first gate signed by the owner and run.
-- [x] Full evaluation: the `full-default` comparison set in the harness, `FULL=`,
-      `SET=`, `PROFILES=` from the Hub's advertised profiles, optional `BASELINE=`; tap
-      setup and property restore in the run step; the report recorded under `reviews/`
+- [x] Full evaluation: the `full-default` comparison set in the harness (`make run-eval`
+      with `SET=`, `PROFILES=` from the Hub's advertised profiles, and blind `JUDGES=` via
+      `harness-cli validate judge`); pure `v2` JSON report packets staged via `scripts/publish-report.py`
       ([record](reviews/2026-10-20-review-layers.md#l5-full-evaluation)).
 - [x] Applied to the open round: the twelve blocking findings fixed under L0 to L2 with
       probes and replies from the ledger; recorded under `reviews/`

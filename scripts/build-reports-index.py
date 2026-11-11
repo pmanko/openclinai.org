@@ -113,6 +113,7 @@ def _check_editorial_entry(
     *,
     root: Path,
     pending_slug: str | None = None,
+    check_stamped_sync: bool = True,
 ) -> list[str]:
     """Return human-readable editorial/viewport quality violations for a catalog entry."""
     issues: list[str] = []
@@ -170,7 +171,7 @@ def _check_editorial_entry(
         try:
             payload = json.loads(data_json.read_text(encoding="utf-8", errors="replace"))
             r0 = (payload.get("runs") or [{}])[0] if isinstance(payload, dict) else {}
-            if not is_earlier_sub:
+            if not is_earlier_sub and check_stamped_sync:
                 m_ed = re.search(
                     r"<script[^>]*id=['\"]report-editorial['\"][^>]*>(.*?)</script>",
                     html_text,
@@ -249,7 +250,13 @@ def _check_editorial_entry(
     return issues
 
 
-def validate_archive(runs: list[dict], reports_root: Path, *, pending_slug: str | None = None) -> None:
+def validate_archive(
+    runs: list[dict],
+    reports_root: Path,
+    *,
+    pending_slug: str | None = None,
+    check_stamped_sync: bool = True,
+) -> None:
     """Require every available curated report locally (and non-empty report-data + editorial quality) before replacing the catalog."""
     safe_slug = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
     report_data_re = re.compile(r"<script[^>]*id=['\"]report-data['\"][^>]*>(.*?)</script>", re.S)
@@ -263,7 +270,14 @@ def validate_archive(runs: list[dict], reports_root: Path, *, pending_slug: str 
         slug = entry.get("slug")
         if not isinstance(slug, str) or not safe_slug.fullmatch(slug):
             raise ValueError(f"invalid curated report slug: {slug!r}")
-        editorial_issues.extend(_check_editorial_entry(entry, root=root, pending_slug=pending_slug))
+        editorial_issues.extend(
+            _check_editorial_entry(
+                entry,
+                root=root,
+                pending_slug=pending_slug,
+                check_stamped_sync=check_stamped_sync,
+            )
+        )
         if entry.get("availability") == "unavailable" or slug == pending_slug:
             continue
         page = (root / slug / "index.html").resolve()
@@ -956,6 +970,16 @@ def stamp_editorial_into_page(html_path: Path, ed: dict) -> None:
         html_path.write_text(updated, encoding="utf-8")
 
 
+def stamp_editorial_shells(reports_root: Path) -> None:
+    """Stamp `<script id='report-editorial'>` into staged report shells after validation succeeds."""
+    for ed_path in sorted(reports_root.glob("*/editorial.json")):
+        ed = json.loads(ed_path.read_text(encoding="utf-8"))
+        ed["slug"] = ed_path.parent.name
+        if ed.get("availability") != "unavailable":
+            stamp_editorial_into_page(ed_path.parent / "index.html", ed)
+            stamp_editorial_into_page(ed_path.parent / "dashboard.html", ed)
+
+
 def compile_manifest_from_editorial(
     reports_root: Path,
     existing_manifest: dict | None = None,
@@ -1028,28 +1052,34 @@ def main(
             parser.error("--pending-slug requires --check-archive")
         check_archive = args.check_archive
         pending_slug = args.pending_slug
-        explicit_manifest = args.manifest is not None
         ROOT = args.root.resolve()
         REPORTS = (args.reports_root or ROOT / "reports").resolve()
         MANIFEST = (args.manifest or REPORTS / "reports-index.json").resolve()
+        explicit_manifest = (
+            args.manifest is not None
+            and MANIFEST != (REPORTS / "reports-index.json").resolve()
+        )
     existing_manifest = json.loads(MANIFEST.read_text(encoding="utf-8")) if MANIFEST.is_file() else {}
     compiled = (
         None
         if explicit_manifest
-        else compile_manifest_from_editorial(REPORTS, existing_manifest, stamp_shells=not check_archive)
+        else compile_manifest_from_editorial(REPORTS, existing_manifest, stamp_shells=False)
     )
-    if compiled is not None:
-        manifest = compiled
-        if not check_archive:
-            MANIFEST.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    else:
-        manifest = existing_manifest
+    manifest = compiled if compiled is not None else existing_manifest
     runs = _newest_first(manifest.get("runs", []))
     earlier = [e for r in runs for e in r.get("earlier") or [] if isinstance(e, dict)]
-    validate_archive(runs + earlier, REPORTS, pending_slug=pending_slug)
+    validate_archive(
+        runs + earlier,
+        REPORTS,
+        pending_slug=pending_slug,
+        check_stamped_sync=(check_archive or compiled is None),
+    )
     if check_archive:
         print("Staged report archive is complete for the curated catalog.")
         return
+    if compiled is not None:
+        stamp_editorial_shells(REPORTS)
+        MANIFEST.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     # Loud, not silent: a run whose report is staged under reports/ but absent from the
     # curated manifest gets DEPLOYED (rsync, no --delete) yet never LISTED. Warn so a missed
     # publish-time upsert is visible instead of quietly producing a deployed-but-unlisted run.

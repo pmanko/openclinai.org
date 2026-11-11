@@ -508,7 +508,8 @@ function renderCatalystTurnHtml(ct){
   }
   if (ct.result_preview && (ct.result_preview.columns || []).length){
     var rp = ct.result_preview;
-    h += "<div class='block'><div class='block-title'>Query Result (" + (rp.returned != null ? rp.returned + " rows" : "") + ")</div>"
+    var rowCnt = rp.returned != null ? rp.returned : rp.row_count;
+    h += "<div class='block'><div class='block-title'>Query Result (" + (rowCnt != null ? rowCnt + " rows" : "") + ")</div>"
       + "<table class='block-tbl'><thead><tr>" + rp.columns.map(function(c){ return "<th>" + htmlEsc(c) + "</th>"; }).join('') + "</tr></thead><tbody>"
       + (rp.rows || []).slice(0, 10).map(function(r){
           return "<tr>" + r.map(function(v){ return "<td>" + htmlEsc(v == null ? '\u2205' : String(v)) + "</td>"; }).join('') + "</tr>";
