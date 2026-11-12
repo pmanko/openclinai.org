@@ -59,7 +59,7 @@ services:
       retries: 5
 
   gateway:
-    image: openmrs/openmrs-reference-application-3-gateway:nightly-chartsearch@sha256:37b90415f83472106cf18ea0e4ffb2f2978deda1de0af7fbab5994fd0fc49c43
+    image: openmrs/openmrs-reference-application-3-gateway:nightly-chartsearch@sha256:5c56f1d8c4a48f95feaa7ab6fbc7155cd66a50c5a68f28ed4a3ce481ec53b79c
     container_name: harness-openmrs-gateway
     restart: "unless-stopped"
     depends_on:
@@ -81,7 +81,7 @@ services:
       start_period: 60s
 
   frontend:
-    image: openmrs/openmrs-reference-application-3-frontend:nightly-chartsearch@sha256:7a1810630a979c0df6575125c21690cb2208bba1e41d63c1136acda4f140f2b0
+    image: openmrs/openmrs-reference-application-3-frontend:nightly-chartsearch@sha256:d383882e287844c610fdaa4b4fc99e6895eb5894233338f17dc08f087e40dd44
     container_name: harness-openmrs-frontend
     restart: "unless-stopped"
     environment:
@@ -104,12 +104,12 @@ services:
     # native distribution startup on Temurin and excludes only the two upstream
     # snapshot omods supplied by our source-pair build.
     # The local tag names the pinned digest, so bumping the pin builds a new image.
-    image: harness-openmrs-backend:92cd19c480b5-temurin
+    image: harness-openmrs-backend:d8ae0294ff12-temurin
     build:
       context: .
       dockerfile: Dockerfile.backend
       args:
-        OPENMRS_BACKEND_IMAGE: openmrs/openmrs-reference-application-3-backend:nightly-chartsearch@sha256:92cd19c480b5416a353682d6b3a8a018b21524d9051ce8817b215836328dce70
+        OPENMRS_BACKEND_IMAGE: openmrs/openmrs-reference-application-3-backend:nightly-chartsearch@sha256:d8ae0294ff12390b1608fe70f8e6cb6fe2fc8a1d0f57d70ae776c463b8a4d88a
     container_name: harness-openmrs-backend
     restart: "unless-stopped"
     depends_on:
