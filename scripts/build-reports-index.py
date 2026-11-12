@@ -347,6 +347,26 @@ def _run_meta(slug: str) -> dict:
     return {}
 
 
+def _parse_report_date(raw: object) -> datetime | None:
+    txt = str(raw or "").strip()
+    if not txt:
+        return None
+    for fmt in ("%d %b %Y", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(txt, fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def _format_report_date(raw: object) -> str | None:
+    if raw is None:
+        return None
+    parsed = _parse_report_date(raw)
+    if parsed is not None:
+        return parsed.strftime(DATE_FORMAT)
+    txt = str(raw).strip()
+    return txt or None
 def _run_dir_for(slug: str) -> Path | None:
     """Catalogs read the staged packet only, never the source experiment workspace."""
     candidate = (REPORTS / slug).resolve()
@@ -416,7 +436,7 @@ def gather(slug: str) -> dict:
         # Facts frozen beside a report whose packet no longer carries its results.
         "cells": cells,
         "patients": patients_str,
-        "date": meta.get("date"),
+        "date": _format_report_date(meta.get("date")),
         "scout": scout,
         "statistical_benchmark": meta.get("statistical_benchmark") if isinstance(meta.get("statistical_benchmark"), dict) else None,
         "scoreline": str(meta.get("scoreline") or ""),
@@ -521,10 +541,9 @@ def _newest_first(runs: list[dict]) -> list[dict]:
     """
     keyed, last = [], datetime.max
     for position, entry in enumerate(runs):
-        try:
-            last = datetime.strptime(str(gather(entry["slug"]).get("date") or ""), "%d %b %Y")
-        except ValueError:
-            pass
+        parsed = _parse_report_date(gather(entry["slug"]).get("date") or entry.get("date"))
+        if parsed is not None:
+            last = parsed
         keyed.append((-last.toordinal(), position, entry))
     return [entry for _, _, entry in sorted(keyed, key=lambda k: k[:2])]
 
