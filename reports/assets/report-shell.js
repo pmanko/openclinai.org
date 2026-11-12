@@ -860,12 +860,90 @@ var CLINICAL_CATEGORIES = [
     desc: 'Verifying facts directly against chart citations and honestly abstaining when a record is absent.' }
 ];
 
+function baseScenarioId(sid){
+  return String(sid || '').replace(/__s\d+$/, '');
+}
+
+function aggregateSeedJudgeRows(rows, scenarioId, backend){
+  if(!rows || !rows.length) return null;
+  if(rows.length === 1){
+    var only = rows[0];
+    if(only.benchmark_score == null){
+      var s0 = cellBenchScore(only);
+      if(s0 != null) return Object.assign({}, only, { benchmark_score: s0 });
+    }
+    return only;
+  }
+  function meanKey(k){
+    var vs = rows.map(function(r){ return r[k]; }).filter(function(v){ return typeof v === 'number' && !isNaN(v); });
+    if(!vs.length) return null;
+    return Math.round((vs.reduce(function(a,x){return a+x;},0) / vs.length) * 100) / 100;
+  }
+  var bScores = rows.map(function(r){ return r.benchmark_score != null ? r.benchmark_score : cellBenchScore(r); })
+                    .filter(function(v){ return typeof v === 'number' && !isNaN(v); });
+  var meanBench = bScores.length ? (Math.round((bScores.reduce(function(a,x){return a+x;},0) / bScores.length) * 10) / 10) : null;
+  var abst = rows[0].abstention_outcome || 'n-a';
+  if(rows.some(function(r){ return r.abstention_outcome === 'failed-to-abstain'; })) abst = 'failed-to-abstain';
+  else if(rows.some(function(r){ return r.abstention_outcome === 'over-abstained'; })) abst = 'over-abstained';
+  else if(rows.some(function(r){ return r.abstention_outcome === 'correct'; })) abst = 'correct';
+  var cg = rows[0].citation_groundedness || 'supported';
+  if(rows.some(function(r){ return r.citation_groundedness === 'unsupported'; })) cg = 'unsupported';
+  else if(rows.some(function(r){ return r.citation_groundedness === 'partly'; })) cg = 'partly';
+  var notes = rows.map(function(r){
+    var m = String(r.scenario_id || '').match(/__s(\d+)$/);
+    var tag = m ? ('[s' + m[1] + '] ') : '';
+    return r.note ? (tag + r.note) : '';
+  }).filter(Boolean);
+  return {
+    scenario_id: scenarioId,
+    backend_id: backend,
+    accuracy: meanKey('accuracy'),
+    completeness: meanKey('completeness'),
+    relevance: meanKey('relevance'),
+    benchmark_score: meanBench,
+    harm: rows.some(function(r){ return Boolean(r.harm); }),
+    severe_harm: rows.some(function(r){ return Boolean(r.severe_harm); }),
+    critical_omission: rows.some(function(r){ return Boolean(r.critical_omission); }),
+    abstention_outcome: abst,
+    citation_groundedness: cg,
+    temporal_date_accuracy: rows.some(function(r){ return r.temporal_date_accuracy === 'wrong'; }) ? 'wrong' : (rows[0].temporal_date_accuracy || 'n-a'),
+    temporal_window: rows.some(function(r){ return r.temporal_window === 'over-claimed'; }) ? 'over-claimed' : (rows[0].temporal_window || 'n-a'),
+    temporal_trend: rows.some(function(r){ return r.temporal_trend === 'fabricated'; }) ? 'fabricated' : (rows[0].temporal_trend || 'n-a'),
+    note: notes.join(' | '),
+    seed_count: rows.length
+  };
+}
+
+function buildScenarioJudgeIndex(run){
+  if(run && run._scenJudgeIdx) return run._scenJudgeIdx;
+  var grouped = {};
+  (run && run.judge_rows || []).forEach(function(r){
+    var exactKey = r.scenario_id + '|' + r.backend_id;
+    if(!grouped[exactKey]) grouped[exactKey] = [];
+    grouped[exactKey].push(r);
+    var baseSid = baseScenarioId(r.scenario_id);
+    if(baseSid !== r.scenario_id){
+      var baseKey = baseSid + '|' + r.backend_id;
+      if(!grouped[baseKey]) grouped[baseKey] = [];
+      grouped[baseKey].push(r);
+    }
+  });
+  var out = {};
+  Object.keys(grouped).forEach(function(k){
+    var sep = k.indexOf('|');
+    var sid = k.slice(0, sep), arm = k.slice(sep + 1);
+    out[k] = aggregateSeedJudgeRows(grouped[k], sid, arm);
+  });
+  if(run) run._scenJudgeIdx = out;
+  return out;
+}
+
 function classifyScenario(sid, turns){
   var s = String(sid || '').toLowerCase();
   var nTurns = (turns && turns.length) || 1;
-  if(s.indexOf('convo') === 0 || nTurns > 1 || /^b\d+_|\bprivacy\b|_p\d+__/.test(s)) return CLINICAL_CATEGORIES[0];
-  if(/^a(09|1[0-5])_|\binpatient|\blookup|\btrend|series|history|growth|pediatric|numeric|milestone|care-gap/.test(s)) return CLINICAL_CATEGORIES[2];
-  if(/^a0[1-8]_|\breconcil|\bmed_staging|date-|window|temporal|last-visit|orders|upcoming|appointment|visit|cross-encounter|provenance/.test(s)) return CLINICAL_CATEGORIES[1];
+  if(s.indexOf('convo') === 0 || nTurns > 1 || /^b\d+_|privacy|_p\d+__/.test(s)) return CLINICAL_CATEGORIES[0];
+  if(/^a(09|1[0-5])_|inpatient|lookup|note_rag|timeline|trend|series|history|growth|pediatric|numeric|milestone|care-gap/.test(s)) return CLINICAL_CATEGORIES[2];
+  if(/^a0[1-8]_|reconcil|med_staging|date-|window|temporal|last-visit|orders|upcoming|appointment|visit|cross-encounter|provenance/.test(s)) return CLINICAL_CATEGORIES[1];
   return CLINICAL_CATEGORIES[3];
 }
 
@@ -1108,10 +1186,14 @@ function renderExecutiveSummary(run){
 
   // ---- BLOCK 3: Why Did [Leading Setup] Score Higher? (Clinical Task Categories + Top 3 Differentiators) ----
   var scenMap = {}; (run.scenarios || []).forEach(function(sc){ scenMap[sc.scenario_id] = sc; });
+  var scenJudgeIdx = buildScenarioJudgeIndex(run);
   var jByScenArm = {};
-  (run.judge_rows || []).forEach(function(r){
-    if(!jByScenArm[r.scenario_id]) jByScenArm[r.scenario_id] = {};
-    jByScenArm[r.scenario_id][r.backend_id] = r;
+  (run.scenarios || []).forEach(function(sc){
+    jByScenArm[sc.scenario_id] = {};
+    (run.backends || []).forEach(function(b){
+      var jr = scenJudgeIdx[sc.scenario_id + '|' + b];
+      if(jr) jByScenArm[sc.scenario_id][b] = jr;
+    });
   });
 
   // Group scenarios by clinical category & compute per-setup mean cellBenchScore
@@ -1782,7 +1864,7 @@ function judgeBarsSVG(series){
 }
 function judgeHeatmap(run){
   var jr=run.judge_rows||[]; if(!jr.length) return null;
-  var idx={}; for(var i=0;i<jr.length;i++){ idx[jr[i].scenario_id+'|'+jr[i].backend_id]=jr[i]; }
+  var idx=buildScenarioJudgeIndex(run);
   var qByScen={}; (run.scenarios||[]).forEach(function(s){
     var t0=(s.turns||[])[0]; qByScen[s.scenario_id]=(t0&&t0.question)||'';
   });
@@ -1839,13 +1921,20 @@ function judgeHeatmap(run){
 function judgePassLines(run, sid, arm){
   var passes=run.judge_passes||{}, ids=Object.keys(passes); if(ids.length<2) return '';
   var cards={}; (((run.judging||{}).cards)||[]).forEach(function(c){ cards[c.actor_id]=c; });
-  var recRow=((run.judge_rows||[]).filter(function(x){return x.scenario_id===sid&&x.backend_id===arm;})[0])||{};
+  var recRow=findJudgeRow(run, sid, arm)||{};
   var out='<div class="jh-passes"><b>Each pass:</b><ul>';
   ids.forEach(function(a){
-    var r=(passes[a]||[]).filter(function(x){return x.scenario_id===sid&&x.backend_id===arm;})[0]; if(!r) return;
+    var matches=(passes[a]||[]).filter(function(x){
+      return (x.scenario_id===sid || baseScenarioId(x.scenario_id)===sid) && x.backend_id===arm;
+    });
+    if(!matches.length) return;
     var who=cards[a]?judgeCardLine(cards[a]):a;
-    var noteTxt=(r.note!==undefined)?r.note:(recRow.note||'');
-    out+='<li><code>'+htmlEsc(a)+'</code> ('+htmlEsc(who)+'): '+fmt10(r.accuracy)+'/'+fmt10(r.completeness)+'/'+fmt10(r.relevance)+' · '+htmlEsc(r.abstention_outcome||'')+' · '+htmlEsc(r.citation_groundedness||'')+(r.harm?' · HARM':'')+(noteTxt?' — '+htmlEsc(noteTxt):'')+'</li>';
+    matches.forEach(function(r){
+      var m=String(r.scenario_id||'').match(/__s(\d+)$/);
+      var seedTag=m?(' [s'+m[1]+']'):'';
+      var noteTxt=(r.note!==undefined)?r.note:(recRow.note||'');
+      out+='<li><code>'+htmlEsc(a)+'</code>'+htmlEsc(seedTag)+' ('+htmlEsc(who)+'): '+fmt10(r.accuracy)+'/'+fmt10(r.completeness)+'/'+fmt10(r.relevance)+' · '+htmlEsc(r.abstention_outcome||'')+' · '+htmlEsc(r.citation_groundedness||'')+(r.harm?' · HARM':'')+(noteTxt?' — '+htmlEsc(noteTxt):'')+'</li>';
+    });
   });
   return out+'</ul></div>';
 }
@@ -2197,14 +2286,26 @@ function renderInDepth(run){
 }
 
 function findJudgeRow(run, scenarioId, backend){
-  var rows = run.judge_rows || [];
-  for(var i = 0; i < rows.length; i++){
-    if(rows[i].scenario_id === scenarioId && rows[i].backend_id === backend) return rows[i];
-  }
-  return null;
+  var idx = buildScenarioJudgeIndex(run);
+  return idx[scenarioId + '|' + backend] || null;
 }
 function findJudgeCell(run, scenarioId, backend){
   return findJudgeRow(run, scenarioId, backend);
+}
+function findJudgeActorCells(run, scenarioId, backend){
+  var map = (run && run.judge_actor_cells) || {};
+  var exact = map[scenarioId + '|' + backend];
+  if(exact && exact.length) return exact;
+  var out = [];
+  Object.keys(map).forEach(function(k){
+    var sep = k.indexOf('|');
+    if(sep < 0) return;
+    var sid = k.slice(0, sep), arm = k.slice(sep + 1);
+    if(arm === backend && baseScenarioId(sid) === scenarioId){
+      (map[k] || []).forEach(function(c){ out.push(c); });
+    }
+  });
+  return out;
 }
 function findHumanCell(run, scenarioId, backend){
   var ar = run.adjudication_rows || [];
@@ -2241,7 +2342,7 @@ function renderTileEvalFooter(run, backend, cell, scenarioId, tile){
 
   // 2) Layer 2: Advisory LLM Judge pill
   const jr = findJudgeCell(run, scenarioId, backend);
-  const actorCells = (run.judge_actor_cells && run.judge_actor_cells[scenarioId + '|' + backend]) || [];
+  const actorCells = findJudgeActorCells(run, scenarioId, backend);
   let hasHarmOrOmit = false;
   let hasDisagree = false;
   if (jr){

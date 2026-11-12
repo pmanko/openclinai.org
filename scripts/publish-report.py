@@ -615,6 +615,8 @@ def stage_report(
         editorial["date"] = run_summary["date"]
 
     validate_editorial_payload(editorial, slug=slug)
+    if editorial.get("date"):
+        run_summary["date"] = editorial["date"]
     validate_v2_report_packet(report_data, dashboard_data, run_summary, slug=slug, editorial=editorial)
 
     # Inject catalog_meta into report_data.runs[0] so viewer shell has immediate access
