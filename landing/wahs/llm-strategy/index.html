@@ -338,7 +338,7 @@
         <a href="#three-approaches">1. Comparing the 3 AI Approaches</a>
         <a href="#questions-and-evidence">2. Key Questions &amp; Evidence</a>
         <a href="#model-selection">3. Which Model &amp; Pathway Wins?</a>
-        <a href="#pilot-architecture">4. Pilot Engine, Security &amp; Chat UX</a>
+        <a href="#pilot-architecture">4. Pilot Engine, Sessions &amp; Scope</a>
         <a href="#action-plan">5. Next Steps &amp; Staged Roadmap</a>
         <a href="#engine-internals">6. Engine Internals &amp; Clinical Graph</a>
       </nav>
@@ -413,7 +413,7 @@
               <td><strong>Yes — 90% to 99.4% token reduction with 100% safety-core retention.</strong> Our deterministic condenser strips FHIR syntax boilerplate, deduplicates repeated lab panels into compact timelines, and prioritizes the HL7 International Patient Summary (IPS) safety core (allergies, active medications, active problems, implants). On an 18.4 MB chart, lossless structural condensation cuts tokens by &gt;90%, and grouped clinical condensation fits the core chart into <strong>8,000 tokens (99.4% reduction)</strong> while recording every omitted item in a completeness manifest.</td>
               <td>
                 <a href="https://reports.openclinai.org/2026-10-30-wahs-phase2-eval/index.html">Phase 2 Condensation Report ↗</a><br />
-                <a href="https://github.com/pmanko/med-agent-hub/blob/main/server/fhir/condenser.py"><code>condenser.py</code> on GitHub ↗</a>
+                <a href="https://github.com/pmanko/wahs-engine/blob/main/src/wahs_core/condenser.py"><code>condenser.py</code> on GitHub ↗</a>
               </td>
             </tr>
             <tr>
@@ -421,7 +421,7 @@
               <td><strong>Pre-call overflow lookup wins back +19 to +21 benchmark points.</strong> When older labs or long clinical notes are omitted at tighter budgets, the engine’s <em>Full-Chart Overflow Lookup</em> searches the patient’s full uncondensed record for the concepts in the user’s question and attaches the matching records with <span class="code-inline">[N]</span> citations before calling the AI. On compact 1k summaries, this raised Gemma 4 12B scores from <strong>47.0/100 (Direct AI) to 68.2/100 (Med Agent Hub, 0 unsafe answers)</strong>.</td>
               <td>
                 <a href="https://reports.openclinai.org/2026-11-04-wahs-macbook-direct-vs-hub-multi-scenario-eval/index.html">MacBook 96k vs. Hub Report ↗</a><br />
-                <a href="https://github.com/pmanko/med-agent-hub/blob/main/server/fhir/wahs_tools.py"><code>wahs_tools.py</code> on GitHub ↗</a>
+                <a href="https://github.com/pmanko/wahs-engine/blob/main/src/wahs_core/wahs_tools.py"><code>wahs_tools.py</code> on GitHub ↗</a>
               </td>
             </tr>
             <tr>
@@ -429,7 +429,7 @@
               <td><strong>Injecting clinical rules helps every model ≥ 4B, and pairing rules with a patient relationship graph helps even more.</strong> Across 972 runs on 36 clinical accuracy &amp; abstention scenarios, adding static clinical rules (<em>Direct + KB</em>) improved accuracy and reduced unsafe answers across all three model families. Routing through the full <em>Med Agent Hub</em> (which links each patient’s problems, medications, lab trends, and conflicting clinic notes into a compact graph before generation) delivered an even larger jump — cutting unsafe answers by <strong>43% to 71%</strong>.</td>
               <td>
                 <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">9-Model × 3-Pathway Report ↗</a><br />
-                <a href="https://github.com/pmanko/med-agent-hub/blob/main/server/fhir/clinical_graph.py"><code>clinical_graph.py</code> on GitHub ↗</a>
+                <a href="https://github.com/pmanko/wahs-engine/blob/main/src/wahs_core/clinical_graph.py"><code>clinical_graph.py</code> on GitHub ↗</a>
               </td>
             </tr>
             <tr>
@@ -611,6 +611,106 @@
         </article>
       </div>
 
+      <h3 id="worked-query-example" style="margin: 34px 0 10px; font-size: 21px; color: var(--purple-ink);">Worked example: tracing <em>“What are my diabetes labs?”</em> through <code>wahs-engine</code></h3>
+      <p style="max-width: 860px; color: var(--muted); font-size: 15.5px; line-height: 1.6; margin: 0;">
+        To keep follow-up questions fast while reflecting live HAPI FHIR updates, <code>wahs-engine</code> splits every GPU request into two prompt regions: a <strong>query-invariant chart prefix</strong> at <span class="code-inline">messages[0]</span> and a <strong>query-conditioned suffix</strong> at <span class="code-inline">messages[-1]</span>.
+      </p>
+
+      <div class="strategy-grid-2">
+        <article class="strategy-card recommended">
+          <span class="strategy-badge">Region 1 · Query-Invariant Prefix (messages[0])</span>
+          <h3>Condensed chart ledger cached across follow-up turns</h3>
+          <ul>
+            <li><strong>Live assembly (~10 ms check):</strong> Calls <span class="code-inline">fhir-auth</span> with the user’s <span class="code-inline">Bearer</span> token, checks <span class="code-inline">MasterPatient</span> + linked <span class="code-inline">Patient.meta.lastUpdated</span>, and re-fetches only newly synced or edited datasets.</li>
+            <li><strong>Deterministic condensation:</strong> Compresses the record into the target token budget (default 8k; configurable 1k–32k+), normalizes RxNorm/LOINC/SNOMED labels, numbers entries <span class="code-inline">[1]...[N]</span>, and writes <span class="code-inline">[2] Completeness Manifest</span>.</li>
+            <li><strong>Constant prefix:</strong> Remains byte-for-byte identical across follow-up questions unless HAPI data changes, <span class="code-inline">chart_scope</span> shifts, or an evaluation explicitly varies the condensation budget.</li>
+          </ul>
+        </article>
+
+        <article class="strategy-card">
+          <span class="strategy-badge secondary">Region 2 · Query-Conditioned Suffix (messages[-1], ≤ 800 tokens)</span>
+          <h3>Targeted diabetes KB, patient graph &amp; <code>[N]</code> source pills</h3>
+          <ul>
+            <li><strong>Clinical concept mapping:</strong> Injects matched LOINC/ADA rules connecting <em>“diabetes labs”</em> to HbA1c, fasting glucose, eGFR, and urine albumin-creatinine ratio so smaller models do not miss differently named labs.</li>
+            <li><strong>Patient relationship subgraph:</strong> Attaches verified edges such as <span class="code-inline">Type 2 diabetes [4] --[MONITORED_BY]--&gt; HbA1c 7.8% [12]</span> plus conditional Tier-0 overflow / Note-RAG excerpts when <span class="code-inline">omitted_clinical_items &gt; 0</span>.</li>
+            <li><strong>Streamed provenance:</strong> Sits after prior chat history so <span class="code-inline">messages[0]</span> hits the GPU’s KV cache while <span class="code-inline">x_wahs</span> maps <span class="code-inline">[12]</span> to the exact FHIR <span class="code-inline">Observation</span> UUID and clinic pill.</li>
+          </ul>
+        </article>
+      </div>
+
+      <h3 id="session-and-scope-model" style="margin: 34px 0 10px; font-size: 21px; color: var(--purple-ink);">Where “sessions” and “scope” live across the stack</h3>
+      <p style="max-width: 860px; color: var(--muted); font-size: 15.5px; line-height: 1.6; margin: 0;">
+        Separating authentication, chat history, chart freshness, and GPU KV caching eliminates any need for a stateful session database on the GPU server or custom session APIs in WAHS client backends.
+      </p>
+
+      <div class="strategy-table-wrap">
+        <table class="strategy-table" aria-label="Four state and session layers across WAHS">
+          <thead>
+            <tr>
+              <th style="width: 22%;">State / Session Layer</th>
+              <th style="width: 22%;">Where It Lives</th>
+              <th style="width: 56%;">Wire Contract, Ollama KV Connection &amp; Security Guarantee</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. User Auth Identity</strong></td>
+              <td>Keycloak · <code>shl-ips</code> · <code>fhir-auth</code></td>
+              <td><span class="code-inline">Authorization: Bearer &lt;keycloak_jwt&gt;</span> travels end-to-end from browser BFF to <span class="code-inline">wahs-engine</span> to <span class="code-inline">fhir-auth</span>; <span class="code-inline">wahs-engine</span> holds zero HAPI admin credentials.</td>
+            </tr>
+            <tr>
+              <td><strong>2. Chat Turn History</strong></td>
+              <td>Browser tab RAM (<span class="code-inline">messages[]</span>)</td>
+              <td>Ephemeral conversation array sent over stateless OpenAI <span class="code-inline">/v1/chat/completions</span>. Requires <strong>no</strong> <span class="code-inline">POST /new-chat-session</span> endpoint and intentionally avoids LiteLLM’s Postgres-backed <span class="code-inline">/v1/responses</span> (<span class="code-inline">previous_response_id</span>) so no PHI prompts or chat transcripts persist on the shared GPU server (<span class="code-inline">store_prompts_in_spend_logs: false</span>).</td>
+            </tr>
+            <tr>
+              <td><strong>3. Chart &amp; Prefix Cache</strong></td>
+              <td><code>wahs-engine</code> in-memory LRU</td>
+              <td>Checks live HAPI <span class="code-inline">meta.lastUpdated</span> via <span class="code-inline">fhir-auth</span> on every turn; reuses <span class="code-inline">(verified_sub, datasets_fingerprint, scope_hash)</span> in &lt; 1 ms when unchanged and re-fetches only modified datasets after EHR imports or patient edits.</td>
+            </tr>
+            <tr>
+              <td><strong>4. GPU KV-Cache Slots</strong></td>
+              <td>Ollama / vLLM VRAM</td>
+              <td>Stateless HTTP calls match the unchanged <span class="code-inline">messages[0]</span> token prefix automatically across <span class="code-inline">OLLAMA_NUM_PARALLEL</span> warm VRAM slots—cutting warm 32k follow-ups on UW CIRG H200 <span class="code-inline">MIG 2g.35gb</span> to <strong>2.5s–4.0s</strong> median latency with zero <span class="code-inline">session_id</span> and zero cross-patient bleed (slots activate only when the caller already sends matching patient tokens).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="strategy-table-wrap">
+        <table class="strategy-table" aria-label="Four scope boundaries in WAHS">
+          <thead>
+            <tr>
+              <th style="width: 24%;">Scope Boundary</th>
+              <th style="width: 20%;">Owner</th>
+              <th style="width: 56%;">What It Controls &amp; Why It Stays Separate</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. Security &amp; Ownership Scope</strong></td>
+              <td><code>fhir-auth</code> (<code>jwt-proxy</code>)</td>
+              <td>Hard authorization boundary enforcing <span class="code-inline">meta.security.code == jwt.sub</span> before <span class="code-inline">wahs-engine</span> sees any record.</td>
+            </tr>
+            <tr>
+              <td><strong>2. User View Filter</strong></td>
+              <td><code>wahs.chart_scope</code> + <span class="code-inline">overlay_resources</span></td>
+              <td>Optional patient-chosen UI lens over their <em>own</em> authorized data (clinic sources, resource categories, date window, specific <span class="code-inline">ips_bundle_id</span>, or unsaved drafts).</td>
+            </tr>
+            <tr>
+              <td><strong>3. Token-Budget Priority</strong></td>
+              <td><code>wahs_core</code> (<code>condenser.py</code>)</td>
+              <td>Deterministic 5-tier clinical priority (1k–32k+ tokens) pinning the HL7 IPS safety core first while logging any trimmed items in <span class="code-inline">[2] Completeness Manifest</span>.</td>
+            </tr>
+            <tr>
+              <td><strong>4. Explicit Sharing Posture</strong></td>
+              <td><code>sharing_posture</code></td>
+              <td>Separates private patient self-Q&amp;A (<span class="code-inline">patient_self</span>) from explicit external summary/IPS sharing (<span class="code-inline">external_share</span>, 0/288 leaks across 3 seeds).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <details class="internals-details" id="wire-contract-details">
         <summary>Inspect OpenAI <code>/v1/chat/completions</code> middleware contract, <code>wahs.chart_scope</code> schema &amp; <code>x_wahs</code> provenance</summary>
         <div class="internals-details-body">
@@ -687,7 +787,7 @@ Content-Type: application/json
               <td><strong>2</strong></td>
               <td><strong>Implement Zero-Privilege <code>fhir-auth</code> Bundle Assembler &amp; <code>chart_scope</code></strong></td>
               <td>Build the star-graph HAPI assembler that forwards the caller’s Keycloak <span class="code-inline">Bearer</span> token to <span class="code-inline">fhir-auth</span>, paginates linked <span class="code-inline">Patient/$everything</span> datasets (including patient-authored <em>My Story</em> and <em>Goals</em>), applies <span class="code-inline">chart_scope</span> filters and <span class="code-inline">overlay_resources</span>, and emits <span class="code-inline">x_wahs</span> source-pill mappings.</td>
-              <td><span class="safe-pill">Verified</span><br /><a href="https://github.com/pmanko/wahs-engine"><code>fhir_assembler.py</code> ↗</a></td>
+              <td><span class="safe-pill">Verified</span><br /><a href="https://github.com/pmanko/wahs-engine/blob/main/src/wahs_engine/assembler.py"><code>assembler.py</code> ↗</a></td>
             </tr>
             <tr>
               <td><strong>3</strong></td>
@@ -768,7 +868,7 @@ Content-Type: application/json
         <summary>Inspect <code>ClinicalEntityGraph</code> typed relationship edges &amp; orchestration prompt block</summary>
         <div class="internals-details-body">
           <p>
-            <code>server/fhir/clinical_graph.py</code> links seven FHIR resource categories (<code>Condition</code>, <code>MedicationRequest</code>, <code>Observation</code>, <code>DocumentReference</code>, <code>AllergyIntolerance</code>, <code>Immunization</code>, and <code>Organization</code>) across five typed clinical edges while preserving original <code>[N]</code> citation numbers so 4B–12B models do not have to infer multi-hop cardiorenal or anticoagulation hazards from raw text alone. Paired <code>wahs-*-raw</code> profiles omit this block for zero-hint baseline ablations.
+            <code>wahs_core/clinical_graph.py</code> links seven FHIR resource categories (<code>Condition</code>, <code>MedicationRequest</code>, <code>Observation</code>, <code>DocumentReference</code>, <code>AllergyIntolerance</code>, <code>Immunization</code>, and <code>Organization</code>) across five typed clinical edges while preserving original <code>[N]</code> citation numbers so 4B–12B models do not have to infer multi-hop cardiorenal or anticoagulation hazards from raw text alone. Paired <code>wahs-*-raw</code> profiles omit this block for zero-hint baseline ablations.
           </p>
 
           <div class="strategy-table-wrap" role="region" aria-label="ClinicalEntityGraph typed relationship edges">
@@ -798,8 +898,8 @@ Content-Type: application/json
                 </tr>
                 <tr>
                   <td><span class="code-inline">CONTRADICTED_OR_MODIFIED_BY_NOTE</span></td>
-                  <td><code>MedicationRequest</code> / <code>Condition</code> → <code>DocumentReference</code></td>
-                  <td>Detects narrative-vs-structured discrepancies where a clinical note documents self-discontinuation, a hospital hold order, walk-in urgent care changes, or disease stage progression.</td>
+                  <td><code>Condition</code> (Active ↔ Resolved)</td>
+                  <td>Detects structured cross-organization discrepancies where the same condition is marked active at one clinic and resolved at another, while full narrative notes route through Note-RAG / Tier-0 overflow.</td>
                 </tr>
                 <tr>
                   <td><span class="code-inline">REPORTED_BY_ORG</span></td>
@@ -810,13 +910,12 @@ Content-Type: application/json
             </table>
           </div>
 
-          <div class="flow-diagram" role="region" aria-label="Example Med Agent Hub orchestration block">[MED-AGENT-HUB ORCHESTRATION: CLINICAL ENTITY SUBGRAPH, QUESTION KB &amp; TIER-0 OVERFLOW RECOVERY]
-Hub Verification Directive: Preserve inline [N] citations when referencing linked clinical entities or Tier-0 overflow-recovered records below.
+          <div class="flow-diagram" role="region" aria-label="Example WAHS Clinical Context Enrichment block">[WAHS CLINICAL CONTEXT ENRICHMENT]
 1. Tier-0 Overflow Recovery (ACTIVE: omitted_clinical_items=6 [clinical_note=2, lab_observation=4]; recovered=3 records via wahs_tools):
-[6] (2026-01-18) Tier-0 Recovered Clinical Note: Outside Urgent Care Walk-In Note — Walk-in visit at UrgentCare Plus Medical Center: Patient states she stopped taking spironolactone 5 days ago... [UUID: note-outside-urgentcare-99]
+[6] (2026-01-18) Tier-0 Recovered Clinical Note: Outside Urgent Care Walk-In Note — Walk-in visit at UrgentCare Plus Medical Center: Holding spironolactone pending repeat potassium check... [UUID: note-outside-urgentcare-99]
 2. Patient Clinical Entity Subgraph (8 nodes, 7 edges):
 - [7] Spironolactone 25 MG Oral Tablet --[CONTRAINDICATED_OR_DOSE_ADJUST_IN]--&gt; [10] Potassium (latest 5.6 mEq/L) | RAAS / MRA cardiorenal safety
-- [7] Spironolactone 25 MG Oral Tablet --[CONTRADICTED_OR_MODIFIED_BY_NOTE]--&gt; [11] Cardiology Walk-In Note | Structured MedicationRequest modified in note (stopped)
+- [5] Heart failure --[CONTRADICTED_OR_MODIFIED_BY_NOTE]--&gt; [11] Heart failure (RESOLVED) | Cross-clinic status discrepancy (ACTIVE vs. RESOLVED)
 3. Question-Conditioned Clinical Knowledge Base (4 matched guidelines):
 - [KB wahs-kb-rx-hyperkalemia-01 | AHA/ACC/HFSA &amp; KDIGO] Spironolactone &amp; Hyperkalemia in Stage 3B/4 CKD: Hold MRA when serum K+ &gt; 5.0–5.5 mEq/L...</div>
         </div>
