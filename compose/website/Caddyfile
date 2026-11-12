@@ -1,44 +1,86 @@
 {
-    # Domain addresses enable automatic TLS; port-only defaults use HTTP.
-    admin off
-    email {$CADDY_EMAIL:nobody@example.com}
-    log {
-        output stderr
-        format console
-    }
+	# Domain addresses enable automatic TLS; port-only defaults use HTTP.
+	admin off
+	email {$CADDY_EMAIL:nobody@example.com}
+	on_demand_tls {
+		ask http://127.0.0.1:8099/check-preview
+	}
+	log {
+		output stderr
+		format console
+	}
+}
+
+# Local-only gate for on-demand TLS: issue certificates only for synced previews.
+http://127.0.0.1:8099 {
+	@valid {
+		path /check-preview
+		expression {query.domain}.matches('^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?-preview(-demo)?\\.[a-z0-9-]+(\\.[a-z0-9-]+)+$')
+	}
+	handle @valid {
+		root * /srv/previews
+		@exists file /{query.domain}/index.html
+		respond @exists 200
+		respond 404
+	}
+	respond 404
 }
 
 # Static OpenClinAI hosts. Product routing uses separate deployment configuration.
 {$CADDY_SITE::80} {
-    root * /srv/landing
-    redir /wahs/demo https://wahs-demo.openclinai.org/ 302
-    redir /wahs/demo/ https://wahs-demo.openclinai.org/ 302
-    redir /wahs/design-report https://openclinai.org/wahs/llm-strategy/ 308
-    redir /wahs/design-report/* https://openclinai.org/wahs/llm-strategy/ 308
-    redir /med-agent-hub/wahs-architecture https://openclinai.org/wahs/llm-strategy/#engine-internals 308
-    redir /med-agent-hub/wahs-architecture/* https://openclinai.org/wahs/llm-strategy/#engine-internals 308
-    file_server
+	root * /srv/landing
+	redir /wahs/demo https://wahs-demo.openclinai.org/ 302
+	redir /wahs/demo/ https://wahs-demo.openclinai.org/ 302
+	redir /wahs/design-report https://openclinai.org/wahs/llm-strategy/ 308
+	redir /wahs/design-report/* https://openclinai.org/wahs/llm-strategy/ 308
+	redir /med-agent-hub/wahs-architecture https://openclinai.org/wahs/llm-strategy/#engine-internals 308
+	redir /med-agent-hub/wahs-architecture/* https://openclinai.org/wahs/llm-strategy/#engine-internals 308
+	file_server
 }
 
 # Optional publication hosts use unpublished local ports by default.
 {$CADDY_SITE_REPORTS::8091} {
-    root * /srv/reports
-    file_server
+	root * /srv/reports
+	file_server
 }
 
 {$CADDY_SITE_WAHS::8092} {
-    redir /demo https://wahs-demo.openclinai.org/ 302
-    redir /demo/ https://wahs-demo.openclinai.org/ 302
-    redir /design-report https://openclinai.org/wahs/llm-strategy/ 308
-    redir /design-report/* https://openclinai.org/wahs/llm-strategy/ 308
-    redir /wahs/design-report https://openclinai.org/wahs/llm-strategy/ 308
-    redir /wahs/design-report/* https://openclinai.org/wahs/llm-strategy/ 308
-    redir /wahs/* https://openclinai.org{uri} 308
-    redir * https://openclinai.org/wahs{uri} 308
+	redir /demo https://wahs-demo.openclinai.org/ 302
+	redir /demo/ https://wahs-demo.openclinai.org/ 302
+	redir /design-report https://openclinai.org/wahs/llm-strategy/ 308
+	redir /design-report/* https://openclinai.org/wahs/llm-strategy/ 308
+	redir /wahs/design-report https://openclinai.org/wahs/llm-strategy/ 308
+	redir /wahs/design-report/* https://openclinai.org/wahs/llm-strategy/ 308
+	redir /wahs/* https://openclinai.org{uri} 308
+	redir * https://openclinai.org/wahs{uri} 308
 }
 
 {$CADDY_SITE_WAHS_DEMO::8093} {
-    root * /srv/wahs-demo
-    redir /wahs/* https://openclinai.org{uri} 302
-    file_server
+	root * /srv/wahs-demo
+	redir /wahs/* https://openclinai.org{uri} 302
+	file_server
+}
+
+# Isolated branch previews (<slug>-preview.<site> and <slug>-preview-demo.<site>).
+https:// {
+	tls {
+		on_demand
+	}
+	@landing_preview expression {host}.matches('^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?-preview\\.[a-z0-9-]+(\\.[a-z0-9-]+)+$')
+	handle @landing_preview {
+		header X-Robots-Tag "noindex, nofollow"
+		root * /srv/previews/{host}
+		redir /wahs/design-report /wahs/llm-strategy/ 308
+		redir /wahs/design-report/* /wahs/llm-strategy/ 308
+		redir /med-agent-hub/wahs-architecture /wahs/llm-strategy/#engine-internals 308
+		redir /med-agent-hub/wahs-architecture/* /wahs/llm-strategy/#engine-internals 308
+		file_server
+	}
+	@demo_preview expression {host}.matches('^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?-preview-demo\\.[a-z0-9-]+(\\.[a-z0-9-]+)+$')
+	handle @demo_preview {
+		header X-Robots-Tag "noindex, nofollow"
+		root * /srv/previews/{host}
+		file_server
+	}
+	abort
 }
