@@ -1,0 +1,34 @@
+{
+  "schema": "openclinai.editorial.v2",
+  "schema_version": 2,
+  "slug": "2026-11-11-wahs-engine-retrieval-and-portability-eval",
+  "title": "How do FHIR condensation, single-patient Note-RAG, and dynamic FHIR tools compare across 4B–26B open-weight models in standalone wahs-engine?",
+  "summary": "Ahead of the ONC/ASTP EHIgnite Phase 2 pilot, we benchmarked four context and retrieval strategies in the standalone WAHS Engine across four local open-weight models — Google Gemma 4 (E4B, 12B Q4, 26B) and Alibaba Qwen 3.5 9B — over three independent random seeds (seeds 42, 43, 44; temperature 0.2; 4,096-token chart budget; 384 total runs across 8 multi-clinic synthetic and de-identified PhysioNet MIMIC-IV-on-FHIR scenarios). The four arms compare: (1) WAHS Engine Condensation + 4-Layer Clinical KB + Tier-0 Overflow, (2) WAHS Engine Condensation + single-patient BM25 Note-RAG passage retrieval + 4-Layer KB, (3) WAHS Engine Dynamic FHIR Tool Querying over a compact IPS safety header, and (4) an offline uncondensed Raw FHIR baseline. Alongside the 384-run benchmark, we rehearsed zero-code model and host portability by switching wahs-engine live between two separate OpenAI-compatible inference servers (llama-router on port 8077 and standalone llama-server hosting MedGemma 1.5 4B Q8 on port 8078) while streaming answers through both the SvelteKit SHL/IPS frontend and the companion mobile frontend.",
+  "takeaway": "Pairing condensed structured FHIR with single-patient Note-RAG in WAHS Engine delivered the strongest all-around single-call pathway across all four models (76.0% pass rate, 95% Wilson CI [66.6%, 83.5%]; 84.9/100 quality, 95% bootstrap CI [79.6, 89.4]; 99.3% atomic claim entailment; 0/96 privacy leaks), while all three WAHS Engine pathways achieved 100.0% zero-leakage external-share privacy compliance (0/288 leaks across 36 external-share runs vs. 12/12 SDOH/IPV leaks and 18.8% overall pass rate on offline Raw FHIR). Why the pathways complement each other: static Condensation + KB hit 100% (24/24) on multi-clinic structured medication and disease-staging reconciliation with the tightest tail latency (p50 15.7s, p95 46.1s, 62 ms engine prep), whereas adding single-patient Note-RAG lifted deep inpatient and longitudinal note recall from 0% to 83.3%–100.0% in a single LLM round without extra tool round-trips. Dynamic FHIR Tool Querying tied for first on Gemma 4 26B (95.8% pass rate, 23/24; 94.3/100 quality), matching Gemma 4 26B + Note-RAG (95.8% pass rate, 23/24; 93.8/100 quality; 25% faster median wait at 9.39s vs. 12.58s), but dropped to 45.8% on Gemma 4 E4B and 37.5% on Qwen 3.5 9B when smaller models under-called multi-step FHIR lookup tools. Across model families, Google Gemma 4 led Qwen 3.5 9B on multi-seed pass rate (61.8% vs. 35.4%), grounded abstention precision (94.4% [86.6%, 97.8%] vs. 29.2% [14.9%, 49.2%]), and median response speed (11.2s vs. 30.2s), with Gemma 4 12B + Note-RAG (87.5% pass rate, 92.5/100 quality, 100% entailment) serving as the practical single-GPU sweet spot and Gemma 4 E4B + Note-RAG (70.8% pass rate, 8.55s median wait) leading compact 4B edge setups. Finally, switching only LLM_BASE_URL and WAHS_DEFAULT_MODEL cleanly migrated live SSE streaming, [N] FHIR source pills, and HL7 AI-Provenance across independent inference hosts with zero code edits or frontend container restarts.",
+  "family": "wahs",
+  "featured": true,
+  "catalog_order": 2,
+  "arms": {
+    "wahs-engine-tools:gemma-26b@4k": "Gemma 4 26B — WAHS Engine Dynamic FHIR Tools (4k budget)",
+    "wahs-engine-rag:gemma-26b@4k": "Gemma 4 26B — WAHS Engine Condensation + Note-RAG & KB (4k budget)",
+    "wahs-engine-rag:gemma-4-12b-q4@4k": "Gemma 4 12B (Q4) — WAHS Engine Condensation + Note-RAG & KB (4k budget)",
+    "wahs-engine-kb:gemma-26b@4k": "Gemma 4 26B — WAHS Engine Condensation + 4-Layer KB (4k budget)",
+    "wahs-engine-rag:gemma-e4b@4k": "Gemma 4 E4B (4B eff.) — WAHS Engine Condensation + Note-RAG & KB (4k budget)",
+    "wahs-engine-kb:gemma-e4b@4k": "Gemma 4 E4B (4B eff.) — WAHS Engine Condensation + 4-Layer KB (4k budget)",
+    "wahs-engine-kb:gemma-4-12b-q4@4k": "Gemma 4 12B (Q4) — WAHS Engine Condensation + 4-Layer KB (4k budget)",
+    "wahs-engine-tools:gemma-4-12b-q4@4k": "Gemma 4 12B (Q4) — WAHS Engine Dynamic FHIR Tools (4k budget)",
+    "wahs-engine-rag:qwen3.5-9b@4k": "Qwen 3.5 9B — WAHS Engine Condensation + Note-RAG & KB (4k budget)",
+    "wahs-engine-kb:qwen3.5-9b@4k": "Qwen 3.5 9B — WAHS Engine Condensation + 4-Layer KB (4k budget)",
+    "wahs-engine-tools:gemma-e4b@4k": "Gemma 4 E4B (4B eff.) — WAHS Engine Dynamic FHIR Tools (4k budget)",
+    "wahs-engine-tools:qwen3.5-9b@4k": "Qwen 3.5 9B — WAHS Engine Dynamic FHIR Tools (4k budget)",
+    "raw-fhir:gemma-e4b@4k": "Gemma 4 E4B (4B eff.) — Offline Raw FHIR Baseline, No Engine (4k budget)",
+    "raw-fhir:gemma-26b@4k": "Gemma 4 26B — Offline Raw FHIR Baseline, No Engine (4k budget)",
+    "raw-fhir:gemma-4-12b-q4@4k": "Gemma 4 12B (Q4) — Offline Raw FHIR Baseline, No Engine (4k budget)",
+    "raw-fhir:qwen3.5-9b@4k": "Qwen 3.5 9B — Offline Raw FHIR Baseline, No Engine (4k budget)"
+  },
+  "guide": {
+    "label": "WAHS AI Strategy & Pilot Architecture",
+    "url": "https://openclinai.org/wahs/llm-strategy/"
+  },
+  "date": "11 Nov 2026"
+}

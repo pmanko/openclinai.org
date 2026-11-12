@@ -374,22 +374,30 @@ def gather(slug: str) -> dict:
     """Pull the score table + subtitle facts for one curated run from its data."""
     meta = _run_meta(slug)
     family = str(meta.get("report_family") or meta.get("family") or "chartsearchai")
-    scout = list(meta.get("scout") or [])
+    scout = [
+        s for s in (meta.get("scout") or [])
+        if isinstance(s, dict) and (s.get("n") or s.get("benchmark_score") is not None or s.get("accuracy_mean") is not None)
+    ]
     if not scout and isinstance(meta.get("arms"), list):
-        for a in meta["arms"]:
-            if isinstance(a, dict) and a.get("id"):
-                scout.append(
-                    {
-                        "backend": a["id"],
-                        "n": a.get("turns") or 0,
-                        "benchmark_score": a.get("benchmark_score"),
-                        "safety_adjusted_benchmark_score": a.get("safety_adjusted_benchmark_score"),
-                        "accuracy_mean": a.get("accuracy_mean"),
-                        "completeness_mean": a.get("completeness_mean"),
-                        "relevance_mean": a.get("relevance_mean"),
-                        "harm_count": a.get("harm_count") or 0,
-                    }
-                )
+        has_judged_arms = any(
+            isinstance(a, dict) and (a.get("benchmark_score") is not None or a.get("accuracy_mean") is not None)
+            for a in meta["arms"]
+        )
+        if has_judged_arms:
+            for a in meta["arms"]:
+                if isinstance(a, dict) and a.get("id"):
+                    scout.append(
+                        {
+                            "backend": a["id"],
+                            "n": a.get("turns") or 0,
+                            "benchmark_score": a.get("benchmark_score"),
+                            "safety_adjusted_benchmark_score": a.get("safety_adjusted_benchmark_score"),
+                            "accuracy_mean": a.get("accuracy_mean"),
+                            "completeness_mean": a.get("completeness_mean"),
+                            "relevance_mean": a.get("relevance_mean"),
+                            "harm_count": a.get("harm_count") or 0,
+                        }
+                    )
     patients_raw = meta.get("patients")
     if isinstance(patients_raw, list):
         patients_str = " + ".join(str(p) for p in patients_raw if p)
@@ -410,6 +418,7 @@ def gather(slug: str) -> dict:
         "patients": patients_str,
         "date": meta.get("date"),
         "scout": scout,
+        "statistical_benchmark": meta.get("statistical_benchmark") if isinstance(meta.get("statistical_benchmark"), dict) else None,
         "scoreline": str(meta.get("scoreline") or ""),
         # Who judged, frozen with the scores; a run that recorded no judge says so.
         "judging": _judging_line(meta.get("judging")),
@@ -715,6 +724,108 @@ def _card_highlights(scout: list[dict], labels: dict | None = None) -> str:
     return '<div class="card-highlights">' + "".join(pills) + "</div>"
 
 
+def _stat_bench_highlights(sb: dict | None, labels: dict | None = None) -> str:
+    if not isinstance(sb, dict):
+        return ""
+    by_prof = sb.get("by_profile") or {}
+    if not isinstance(by_prof, dict) or not by_prof:
+        return ""
+    labels = _arm_labels(labels)
+    ordered = sorted(
+        by_prof.items(),
+        key=lambda kv: (
+            float((kv[1] or {}).get("pass_rate") or 0.0),
+            float((kv[1] or {}).get("mean_case_quality_score") or 0.0),
+        ),
+        reverse=True,
+    )
+    top_id, top_v = ordered[0]
+    win_name = labels.get(top_id) or human_arm(top_id)[0]
+    w_ci = top_v.get("pass_rate_wilson_ci_95") or {}
+    pr_pct = float(top_v.get("pass_rate") or 0.0) * 100.0
+    ci_txt = (
+        f' [{float(w_ci["ci95_low"])*100:.1f}%, {float(w_ci["ci95_high"])*100:.1f}%]'
+        if "ci95_low" in w_ci and "ci95_high" in w_ci
+        else ""
+    )
+    pills = [
+        f'<span class="hl-pill hl-win">★ Best setup: <b>{esc(win_name)}</b> '
+        f'({pr_pct:.1f}% pass{esc(ci_txt)} · {float(top_v.get("mean_case_quality_score") or 0.0):.1f}/100 quality)</span>'
+    ]
+    engine_profs = [v for k, v in by_prof.items() if not str(k).startswith("raw-fhir:")]
+    engine_leaks = sum(int(v.get("privacy_leaks") or 0) for v in engine_profs)
+    raw_leaks = sum(int(v.get("privacy_leaks") or 0) for k, v in by_prof.items() if str(k).startswith("raw-fhir:"))
+    if engine_profs and engine_leaks == 0:
+        pills.append(
+            f'<span class="hl-pill hl-safe">✓ 0 privacy leaks across all {len(engine_profs)} WAHS Engine setups '
+            f'({raw_leaks} leaks on offline raw-FHIR baseline)</span>'
+        )
+    return '<div class="card-highlights">' + "".join(pills) + "</div>"
+
+
+def _stat_bench_table(sb: dict | None, labels: dict | None = None) -> str:
+    if not isinstance(sb, dict):
+        return ""
+    by_prof = sb.get("by_profile") or {}
+    if not isinstance(by_prof, dict) or not by_prof:
+        return ""
+    labels = _arm_labels(labels)
+    ordered = sorted(
+        by_prof.items(),
+        key=lambda kv: (
+            float((kv[1] or {}).get("pass_rate") or 0.0),
+            float((kv[1] or {}).get("mean_case_quality_score") or 0.0),
+        ),
+        reverse=True,
+    )
+    best_pr = max((float((v or {}).get("pass_rate") or 0.0) for _, v in ordered), default=0.0)
+    best_q = max((float((v or {}).get("mean_case_quality_score") or 0.0) for _, v in ordered), default=0.0)
+    head = (
+        '<table class="scout"><thead><tr>'
+        '<th class="arm">AI setup</th><th>Runs</th>'
+        '<th class="bench">Pass rate<br>(95% Wilson CI)</th>'
+        '<th>Quality /100<br>(95% Bootstrap CI)</th>'
+        '<th>Atomic<br>entailment</th>'
+        '<th>p50 / p95<br>latency</th>'
+        '<th>Privacy<br>leaks</th></tr></thead><tbody>'
+    )
+    rows = []
+    for bid, v in ordered:
+        name, detail = human_arm(bid)
+        if labels.get(bid):
+            name, detail = labels[bid], bid
+        n_runs = int(v.get("total") or 0)
+        pr = float(v.get("pass_rate") or 0.0)
+        w = v.get("pass_rate_wilson_ci_95") or {}
+        pr_str = (
+            f'{pr*100:.1f}% ({float(w["ci95_low"])*100:.1f}–{float(w["ci95_high"])*100:.1f}%)'
+            if "ci95_low" in w and "ci95_high" in w
+            else f"{pr*100:.1f}%"
+        )
+        pr_cls = "bench best" if abs(pr - best_pr) < 1e-9 else "bench"
+        qv = float(v.get("mean_case_quality_score") or 0.0)
+        qb = v.get("quality_score_bootstrap_ci_95") or {}
+        q_str = (
+            f'{qv:.1f} ({float(qb["ci95_low"]):.1f}–{float(qb["ci95_high"]):.1f})'
+            if "ci95_low" in qb and "ci95_high" in qb
+            else f"{qv:.1f}"
+        )
+        q_cls = ' class="best"' if abs(qv - best_q) < 1e-9 else ""
+        ent = float(v.get("mean_atomic_entailment_rate") or 0.0) * 100.0
+        t_ms = ((v.get("latency_stats") or {}).get("total_ms")) or {}
+        p50_s = f'{float(t_ms["p50_ms"])/1000:.1f}s' if t_ms.get("p50_ms") is not None else "—"
+        p95_s = f'{float(t_ms["p95_ms"])/1000:.1f}s' if t_ms.get("p95_ms") is not None else "—"
+        leaks = int(v.get("privacy_leaks") or 0)
+        leak_cls = ' class="harm"' if leaks else ""
+        rows.append(
+            f'<tr><td class="arm" title="{esc(detail)}">{esc(name)}</td>'
+            f'<td>{n_runs}</td><td class="{pr_cls}">{esc(pr_str)}</td>'
+            f'<td{q_cls}>{esc(q_str)}</td><td>{ent:.1f}%</td>'
+            f'<td>{esc(p50_s)} / {esc(p95_s)}</td><td{leak_cls}>{leaks}</td></tr>'
+        )
+    return head + "".join(rows) + "</tbody></table>"
+
+
 def _card(entry: dict) -> str:
     slug = entry["slug"]
     g = gather(slug)
@@ -758,15 +869,21 @@ def _card(entry: dict) -> str:
     unavailable = entry.get("availability") == "unavailable"
     if unavailable:
         links = ['<span class="unscored">Report unavailable</span>']
+    stat_table_html = _stat_bench_table(g.get("statistical_benchmark"), entry.get("arms")) if not g["scout"] else ""
     statistics = "" if unavailable else (
-        f'<div class="unscored">{esc(g["scoreline"])}</div>' if g.get("scoreline") and not g["scout"]
-        else _scout_table(g["scout"], entry.get("arms")) if g["scout"]
+        _scout_table(g["scout"], entry.get("arms")) if g["scout"]
+        else stat_table_html if stat_table_html
+        else f'<div class="unscored">{esc(g["scoreline"])}</div>' if g.get("scoreline")
         else '<div class="unscored">Open the report for its recorded methods and results.</div>'
     )
-    if g["scout"] and not unavailable:
+    if (g["scout"] or stat_table_html) and not unavailable:
         statistics = '<div class="report-table-scroll" role="region" aria-label="Recorded score tables" tabindex="0">' + statistics + '</div>'
         statistics += ('<p class="judged-by">' + esc(g["judging"] or "Judge not recorded for this run.") + '</p>')
-    highlights = "" if unavailable else _card_highlights(g["scout"], entry.get("arms"))
+    highlights = "" if unavailable else (
+        _card_highlights(g["scout"], entry.get("arms"))
+        if g["scout"]
+        else _stat_bench_highlights(g.get("statistical_benchmark"), entry.get("arms"))
+    )
     takeaway = (f'<p class="takeaway"><span class="tk">Takeaway</span>{esc(entry["takeaway"])}</p>'
                 if entry.get("takeaway") else "")
     # Earlier runs of the same comparison stay published but are listed under the

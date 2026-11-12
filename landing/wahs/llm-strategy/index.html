@@ -303,6 +303,7 @@
         <a href="/wahs/walkthrough/index.html">Sandbox Walkthrough</a>
         <a href="https://wahs-demo.openclinai.org/">Live Sandbox <span aria-hidden="true">↗</span></a>
         <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">9-Model Benchmark <span aria-hidden="true">↗</span></a>
+        <a href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">Retrieval &amp; Portability Eval <span aria-hidden="true">↗</span></a>
       </nav>
     </div>
   </div>
@@ -322,13 +323,14 @@
       <p class="section-kicker">Washington Health Summary (WAHS) · Architecture &amp; Empirical Strategy</p>
       <h1>How WAHS connects open-weight AI to patient health records safely and fast.</h1>
       <p class="overview-lead">
-        When a patient asks a question about their health history in Washington Health Summary (WAHS), how should the system give the AI the right medical context without exposing other patients' records, running out of memory on large charts, or making the user wait? This page summarizes the three approaches evaluated by the UW CIRG &amp; WAHS team, shows what our live benchmarks across 9 open-weight models prove, outlines the pilot architecture, and documents the engine internals.
+        When a patient asks a question about their health history in Washington Health Summary (WAHS), how should the system give the AI the right medical context without exposing other patients' records, running out of memory on large charts, or making the user wait? This page summarizes the three approaches evaluated by the UW CIRG &amp; WAHS team, shows what our live benchmarks across 9 open-weight models and 4 retrieval pathways prove, outlines the pilot architecture, and documents the engine internals.
       </p>
       <p class="strategy-meta">
-        Updated November 2026 · UW CIRG &amp; WAHS Architecture North Star · Backed by <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">972-run Multi-Family Benchmark ↗</a>, <a href="#pilot-architecture">Pilot Middleware &amp; Wire Contract ↓</a> &amp; <a href="#engine-internals"><code>wahs_core</code> Engine Internals ↓</a>
+        Updated November 2026 · UW CIRG &amp; WAHS Architecture North Star · Backed by <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">972-run Multi-Family Benchmark ↗</a>, <a href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">384-run Retrieval &amp; Portability Eval ↗</a>, <a href="#pilot-architecture">Pilot Middleware &amp; Wire Contract ↓</a> &amp; <a href="#engine-internals"><code>wahs_core</code> Engine Internals ↓</a>
       </p>
       <div class="project-actions">
-        <a class="button button-primary" href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">Read the 9-model benchmark report <span aria-hidden="true">↗</span></a>
+        <a class="button button-primary" href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">Read the 4-pathway retrieval &amp; portability report <span aria-hidden="true">↗</span></a>
+        <a class="button button-secondary" href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">9-model benchmark <span aria-hidden="true">↗</span></a>
         <a class="button button-secondary" href="https://wahs-demo.openclinai.org/">Try the WAHS Explorer sandbox <span aria-hidden="true">↗</span></a>
         <a class="button button-secondary" href="/wahs/walkthrough/index.html">3-step walkthrough <span aria-hidden="true">→</span></a>
       </div>
@@ -679,37 +681,37 @@ Content-Type: application/json
               <td><strong>1</strong></td>
               <td><strong>Stand Up Standalone <code>wahs-engine</code> (<code>wahs_core</code> + FastAPI) &amp; Invert Hub Dependency</strong></td>
               <td>Package the pure-stdlib clinical core (<span class="code-inline">wahs_core</span>: <span class="code-inline">condenser.py</span>, <span class="code-inline">clinical_graph.py</span>, 4-Layer KB, <span class="code-inline">wahs_tools.py</span>) and thin OpenAI-compatible <span class="code-inline">wahs_engine</span> server in a dedicated WAHS repository with zero <span class="code-inline">med-agent-hub</span> dependency, while <span class="code-inline">med-agent-hub</span> imports <span class="code-inline">wahs_core</span> upstream for zero-drift benchmarking.</td>
-              <td><span class="safe-pill">Core Verified</span><br /><a href="https://github.com/pmanko/med-agent-hub/tree/main/server/fhir"><code>server/fhir/</code> baseline ↗</a></td>
+              <td><span class="safe-pill">Verified</span><br /><a href="https://github.com/pmanko/wahs-engine"><code>wahs-engine</code> repo ↗</a></td>
             </tr>
             <tr>
               <td><strong>2</strong></td>
               <td><strong>Implement Zero-Privilege <code>fhir-auth</code> Bundle Assembler &amp; <code>chart_scope</code></strong></td>
               <td>Build the star-graph HAPI assembler that forwards the caller’s Keycloak <span class="code-inline">Bearer</span> token to <span class="code-inline">fhir-auth</span>, paginates linked <span class="code-inline">Patient/$everything</span> datasets (including patient-authored <em>My Story</em> and <em>Goals</em>), applies <span class="code-inline">chart_scope</span> filters and <span class="code-inline">overlay_resources</span>, and emits <span class="code-inline">x_wahs</span> source-pill mappings.</td>
-              <td><span class="score-pill">Pilot Stage 1</span></td>
+              <td><span class="safe-pill">Verified</span><br /><a href="https://github.com/pmanko/wahs-engine"><code>fhir_assembler.py</code> ↗</a></td>
             </tr>
             <tr>
               <td><strong>3</strong></td>
               <td><strong>Wire Service-to-Service <code>/api/chat</code> BFF Across WAHS Frontends</strong></td>
-              <td>Connect the SvelteKit server route (<span class="code-inline">Vercel AI SDK</span> <span class="code-inline">@ai-sdk/openai-compatible</span>) in <span class="code-inline">uwcirg/shl-ips</span> and interoperable mobile-first companion views to <span class="code-inline">wahs-engine</span> on the internal Docker network, surfacing clickable <span class="code-inline">[N]</span> FHIR provenance drawers, chart-scope chips, and HL7 <span class="code-inline">AI-Provenance</span> badges.</td>
-              <td><span class="score-pill">Pilot Stage 1</span></td>
+              <td>Connect the SvelteKit server route (<span class="code-inline">Vercel AI SDK</span> <span class="code-inline">@ai-sdk/openai-compatible</span>) in <span class="code-inline">shl-ips</span> and interoperable mobile-first companion views to <span class="code-inline">wahs-engine</span> on the internal Docker network, surfacing clickable <span class="code-inline">[N]</span> FHIR provenance drawers, chart-scope chips, and HL7 <span class="code-inline">AI-Provenance</span> badges across swappable OpenAI <span class="code-inline">/v1</span> inference hosts.</td>
+              <td><span class="safe-pill">Verified</span><br /><a href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">Portability Rehearsal ↗</a></td>
             </tr>
             <tr>
               <td><strong>4</strong></td>
               <td><strong>Seed Shared Dev Stack &amp; Verify Session Isolation / Cache Timeliness</strong></td>
-              <td>Pre-seed <span class="code-inline">wahs-environments</span> with multi-source personas and historical Connectathon test accounts, and enforce automated gates across three invariants—<strong>Security:</strong> zero cross-user <span class="code-inline">sub</span>, session ID, or KV prefix bleed; <strong>Data timeliness:</strong> immediate cache invalidation whenever HAPI <span class="code-inline">meta.lastUpdated</span> changes; <strong>Reliability:</strong> cache misses or restarts never alter clinical output.</td>
-              <td><span class="score-pill">Pilot Stage 1</span></td>
+              <td>Pre-seed <span class="code-inline">wahs-environments</span> with multi-source personas and historical Connectathon test accounts, and enforce automated gates across three invariants—<strong>Security:</strong> zero cross-user <span class="code-inline">sub</span>, session ID, or KV prefix bleed and 0/288 external-share privacy leaks; <strong>Data timeliness:</strong> immediate cache invalidation whenever HAPI <span class="code-inline">meta.lastUpdated</span> changes; <strong>Reliability:</strong> cache misses or restarts never alter clinical output.</td>
+              <td><span class="safe-pill">Verified</span><br /><a href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">0/288 Leaks Verified ↗</a></td>
             </tr>
             <tr>
               <td><strong>5</strong></td>
               <td><strong>Benchmark Condensation vs. Note Embeddings &amp; Dynamic FHIR Querying</strong></td>
-              <td>Run blinded multi-seed evaluations in <span class="code-inline">Validation Harness</span> across 4B–26B open-weight models comparing <span class="code-inline">wahs_core</span> condensation + Tier-0 overflow against per-patient note embeddings (RAG) and dynamic agentic LOINC/FHIR querying.</td>
-              <td><span class="strategy-badge secondary">Next Evaluation</span></td>
+              <td>Run 3-seed evaluations (384 runs across Gemma 4 E4B, 12B, 26B and Qwen 3.5 9B) in <span class="code-inline">Validation Harness</span> comparing <span class="code-inline">wahs_core</span> condensation + Tier-0 overflow (64.6% pass), single-patient Note-RAG + condensation (76.0% pass, 99.3% atomic entailment), dynamic FHIR tool querying (61.5% overall; 95.8% on 26B), and offline raw FHIR (18.8% pass, 12/12 leaks).</td>
+              <td><span class="safe-pill">Verified (384 Runs)</span><br /><a href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">3-Seed Report ↗</a></td>
             </tr>
             <tr>
               <td><strong>6</strong></td>
               <td><strong>Long-Note (4k–14k Tokens) &amp; 100 MB+ Record Stress Testing</strong></td>
-              <td>Expand evaluation coverage to massive longitudinal exports and long (4,000–14,000 token) palliative, oncology, and discharge notes—combining 8k–16k core chart condensation with single-patient semantic note chunk retrieval ahead of the ONC/ASTP EHIgnite Phase 2 demonstration.</td>
-              <td><span class="strategy-badge future">EHIgnite Phase 2</span></td>
+              <td>Verified single-patient BM25 Note-RAG lifting deep inpatient and longitudinal note recall from 0% to 83.3%–100.0% at a compact 4k chart budget; next phase scales shared multi-tenant H200 GPU load testing and 100 MB+ partner exports ahead of ONC/ASTP EHIgnite Phase 2.</td>
+              <td><span class="strategy-badge secondary">EHIgnite Phase 2</span><br /><a href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">Long-Note Readout ↗</a></td>
             </tr>
           </tbody>
         </table>
