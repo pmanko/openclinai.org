@@ -37,7 +37,7 @@ def v2_packet(tmp_path: Path, name: str = "external-packet") -> Path:
                 "takeaway": "Med Agent Hub improved accuracy and completeness by 14 points with zero unsafe answers.",
                 "family": "chartsearchai",
                 "featured": True,
-                "date": "10 Nov 2026",
+                "date": "2026-11-10",
             }
         ),
         encoding="utf-8",
@@ -50,7 +50,7 @@ def v2_packet(tmp_path: Path, name: str = "external-packet") -> Path:
                 "slug": "2026-11-10-hiv-chart-grounding-study",
                 "report_family": "chartsearchai",
                 "comparison_set": "recorded-comparison",
-                "date": "10 Nov 2026",
+                "date": "2026-11-10",
                 "cells": 2,
                 "patients": "Fixture Patient",
                 "scout": [
@@ -78,6 +78,7 @@ def v2_packet(tmp_path: Path, name: str = "external-packet") -> Path:
                     {
                         "id": "run-1",
                         "backends": ["arm-a"],
+                        "judge": [{"backend": "arm-a", "n": 2, "benchmark_score": 88.5, "harm_count": 0}],
                         "arm_cards": {"arm-a": {"title": "Med Agent Hub", "short_title": "Med Agent Hub"}},
                         "source_card_pool": {"1": {"id": "1", "kind": "obs", "date": "2026-01-10", "title": "CD4 count", "value": "450"}},
                         "refs_pool": {"r1": [{"id": "1", "label": "[1]"}]},

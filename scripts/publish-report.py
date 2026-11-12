@@ -38,16 +38,165 @@ LEGACY_AUTO_SLUG_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("trailing 8-char hex hash (-<hex8>)", re.compile(r"-[0-9a-f]{8}$", re.IGNORECASE)),
 )
 
-FORBIDDEN_HTML_KEYS = {
-    "answer_html",
-    "conf_html",
-    "chips_html",
-    "blocks_html",
-    "sources_html",
-    "refs_html",
-    "check_precision_html",
-    "body_html",
-}
+ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+ALLOWED_EDITORIAL_KEYS: frozenset[str] = frozenset({
+    "schema",
+    "schema_version",
+    "slug",
+    "title",
+    "summary",
+    "takeaway",
+    "family",
+    "featured",
+    "diagnostic",
+    "date",
+    "arms",
+    "availability",
+    "context",
+    "earlier",
+    "guide",
+    "label",
+    "note",
+    "parent_slug",
+    "evaluation_modality",
+})
+
+ALLOWED_SUMMARY_KEYS: frozenset[str] = frozenset({
+    "schema",
+    "schema_version",
+    "slug",
+    "run_id",
+    "run_dir",
+    "family",
+    "report_family",
+    "component",
+    "comparison_set",
+    "dataset_id",
+    "suite_id",
+    "suite_sha256",
+    "date",
+    "generated_at",
+    "git_sha",
+    "reference_date",
+    "evaluation_modality",
+    "reader_led",
+    "scenarios",
+    "turns",
+    "cells",
+    "backends",
+    "patients",
+    "patients_summary",
+    "scoreline",
+    "scout",
+    "arms",
+    "arm_cards",
+    "calibrated",
+    "judging",
+    "winner",
+    "catalyst",
+    "domain_guardrails",
+    "seed_count",
+    "seeds",
+})
+
+ALLOWED_REPORT_ROOT_KEYS: frozenset[str] = frozenset({
+    "schema",
+    "schema_version",
+    "family",
+    "generated_at",
+    "runs",
+})
+
+ALLOWED_REPORT_RUN_KEYS: frozenset[str] = frozenset({
+    "run_id",
+    "id",
+    "family",
+    "evaluation_modality",
+    "meta",
+    "backends",
+    "labels",
+    "scenarios",
+    "summary",
+    "metrics",
+    "judge",
+    "judge_rows",
+    "judge_actors",
+    "judge_actor_cells",
+    "judging",
+    "judge_passes",
+    "judge_combined",
+    "calibrated",
+    "adjudication_rows",
+    "check_precision",
+    "patients",
+    "context",
+    "arm_cards",
+    "catalog_meta",
+    "hardware",
+    "catalyst",
+    "scoreline",
+    "source_card_pool",
+    "refs_pool",
+    "domain_guardrails",
+    "seeds",
+})
+
+ALLOWED_SCENARIO_KEYS: frozenset[str] = frozenset({"scenario_id", "id", "turns"})
+ALLOWED_TURN_KEYS: frozenset[str] = frozenset({"turn", "question", "cells"})
+ALLOWED_CELL_KEYS: frozenset[str] = frozenset({
+    "status",
+    "answer_text",
+    "answer_md",
+    "claims",
+    "answer_view",
+    "indepth_view",
+    "answer_confidence_display",
+    "indepth_confidence_display",
+    "answer_validation",
+    "answer_validation_display",
+    "answer_validation_status",
+    "indepth_validation_display",
+    "blocks",
+    "catalyst_turn",
+    "custom_chips",
+    "degraded",
+    "error",
+    "http_status",
+    "metrics",
+    "refs",
+    "refs_pool_id",
+    "review_sources",
+    "source_card_refs",
+    "sources",
+    "stage_timings",
+    "temporal_gate",
+    "seed_replicates",
+})
+ALLOWED_CLAIM_KEYS: frozenset[str] = frozenset({
+    "source_ids",
+    "refs_key",
+    "refs_pool_id",
+    "source_card_refs",
+    "text",
+    "verdict",
+    "reason",
+    "cited",
+    "marked",
+    "checks",
+})
+
+ALLOWED_DASHBOARD_ROOT_KEYS: frozenset[str] = frozenset({
+    "schema",
+    "schema_version",
+    "family",
+    "generated_at",
+    "status",
+    "record_pool",
+    "sources_pool",
+    "refs_pool",
+    "details",
+})
 
 FORBIDDEN_TITLE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("auto-generated 'Full evaluation' placeholder", re.compile(r"^\s*Full evaluation\b", re.IGNORECASE)),
@@ -105,12 +254,57 @@ def validate_slug(slug: str, *, allow_legacy_slug: bool = False) -> None:
                 )
 
 
+def _assert_closed_keys(
+    obj: dict[str, Any],
+    allowed: frozenset[str],
+    *,
+    where: str,
+    slug: str,
+) -> None:
+    if not isinstance(obj, dict):
+        raise ValueError(f"{slug}: {where} must be a JSON object")
+    extra = set(obj.keys()) - allowed
+    if extra:
+        raise ValueError(f"{slug}: {where} contains unexpected key(s): {sorted(extra)}")
+
+
+def _validate_iso_date(
+    raw: Any,
+    *,
+    where: str,
+    slug: str,
+    required: bool = True,
+) -> str | None:
+    if raw is None or (isinstance(raw, str) and not raw.strip()):
+        if required:
+            raise ValueError(f"{slug}: {where} requires canonical ISO date 'YYYY-MM-DD'")
+        return None
+    if not isinstance(raw, str) or not ISO_DATE_RE.fullmatch(raw.strip()):
+        raise ValueError(f"{slug}: {where} must be canonical ISO date 'YYYY-MM-DD', got {raw!r}")
+    txt = raw.strip()
+    try:
+        datetime.strptime(txt, "%Y-%m-%d")
+    except ValueError as exc:
+        raise ValueError(f"{slug}: {where} has invalid calendar date {raw!r}") from exc
+    return txt
+
+
 def validate_editorial_payload(ed: dict[str, Any], *, slug: str) -> None:
     if ed.get("schema_version") != 2 or ed.get("schema") != "openclinai.editorial.v2":
         raise ValueError(f"{slug}: editorial.json must declare schema='openclinai.editorial.v2' and schema_version=2")
+    _assert_closed_keys(ed, ALLOWED_EDITORIAL_KEYS, where="editorial.json", slug=slug)
     family = str(ed.get("family") or "")
     if family not in FAMILIES:
         raise ValueError(f"{slug}: unsupported report family in editorial.json: {family!r}")
+    if ed.get("diagnostic") is not None and not isinstance(ed.get("diagnostic"), bool):
+        raise ValueError(f"{slug}: editorial.json.diagnostic must be a boolean when present")
+    is_unavailable = ed.get("availability") == "unavailable"
+    _validate_iso_date(
+        ed.get("date"),
+        where="editorial.json.date",
+        slug=slug,
+        required=not is_unavailable,
+    )
     is_earlier_sub = bool(ed.get("parent_slug")) or ed.get("featured") is False
     if is_earlier_sub:
         label = str(ed.get("label") or "").strip()
@@ -121,6 +315,9 @@ def validate_editorial_payload(ed: dict[str, Any], *, slug: str) -> None:
             for desc, pat in FORBIDDEN_PROSE_PATTERNS:
                 if pat.search(txt):
                     raise ValueError(f"{slug}.{field} rejected ({desc})")
+        return
+
+    if is_unavailable:
         return
 
     title = str(ed.get("title") or "").strip()
@@ -149,6 +346,7 @@ def validate_v2_report_packet(
     run_summary: dict[str, Any],
     *,
     slug: str,
+    editorial: dict[str, Any] | None = None,
 ) -> None:
     if report_data.get("schema_version") != 2 or report_data.get("schema") != "openclinai.report.v2":
         raise ValueError(f"{slug}: report-data.json must have schema='openclinai.report.v2' and schema_version=2")
@@ -157,41 +355,89 @@ def validate_v2_report_packet(
     if run_summary.get("schema_version") != 2 or run_summary.get("schema") != "openclinai.summary.v2":
         raise ValueError(f"{slug}: run-summary.json must have schema='openclinai.summary.v2' and schema_version=2")
 
+    _assert_closed_keys(report_data, ALLOWED_REPORT_ROOT_KEYS, where="report-data.json", slug=slug)
+    _assert_closed_keys(dashboard_data, ALLOWED_DASHBOARD_ROOT_KEYS, where="dashboard-data.json", slug=slug)
+    _assert_closed_keys(run_summary, ALLOWED_SUMMARY_KEYS, where="run-summary.json", slug=slug)
+    _validate_iso_date(run_summary.get("date"), where="run-summary.json.date", slug=slug, required=True)
+
     runs = report_data.get("runs")
     if not isinstance(runs, list) or not runs or not isinstance(runs[0], dict):
         raise ValueError(f"{slug}: report-data.json is missing a non-empty runs[0] object")
-    r0 = runs[0]
-    if "check_precision_html" in r0:
-        raise ValueError(f"{slug}: report-data.json contains forbidden check_precision_html")
-    for pool_name in ("source_card_pool", "refs_pool"):
-        pool = r0.get(pool_name)
-        pool_items = (
-            pool.items()
-            if isinstance(pool, dict)
-            else enumerate(pool)
-            if isinstance(pool, list)
-            else ()
-        )
-        for k, v in pool_items:
-            if isinstance(v, str) and "<" in v:
-                raise ValueError(f"{slug}: report-data.json {pool_name}[{k!r}] contains raw HTML")
-    for sc in r0.get("scenarios") or []:
-        for tn in sc.get("turns") or []:
-            for b_k, cell_v in (tn.get("cells") or {}).items():
-                if not isinstance(cell_v, dict):
-                    continue
-                bad_keys = FORBIDDEN_HTML_KEYS.intersection(cell_v.keys())
-                if bad_keys:
-                    raise ValueError(
-                        f"{slug}: report-data.json cell ({sc.get('scenario_id')}, {b_k}) "
-                        f"contains forbidden HTML keys: {sorted(bad_keys)}"
-                    )
-                for c_obj in (cell_v.get("claims") or {}).values():
-                    if isinstance(c_obj, dict) and ("sources_html" in c_obj or "refs_html" in c_obj):
+    for r_idx, r_obj in enumerate(runs):
+        _assert_closed_keys(r_obj, ALLOWED_REPORT_RUN_KEYS, where=f"report-data.json.runs[{r_idx}]", slug=slug)
+        for pool_name in ("source_card_pool", "refs_pool"):
+            pool = r_obj.get(pool_name)
+            pool_items = (
+                pool.items()
+                if isinstance(pool, dict)
+                else enumerate(pool)
+                if isinstance(pool, list)
+                else ()
+            )
+            for k, v in pool_items:
+                if isinstance(v, str) and "<" in v:
+                    raise ValueError(f"{slug}: report-data.json {pool_name}[{k!r}] contains raw HTML")
+        for sc in r_obj.get("scenarios") or []:
+            _assert_closed_keys(
+                sc,
+                ALLOWED_SCENARIO_KEYS,
+                where=f"report-data.json.scenario[{sc.get('scenario_id')}]",
+                slug=slug,
+            )
+            for tn in sc.get("turns") or []:
+                _assert_closed_keys(
+                    tn,
+                    ALLOWED_TURN_KEYS,
+                    where=f"report-data.json.turn[{sc.get('scenario_id')}:{tn.get('turn')}]",
+                    slug=slug,
+                )
+                for b_k, cell_v in (tn.get("cells") or {}).items():
+                    if not isinstance(cell_v, dict):
                         raise ValueError(
-                            f"{slug}: report-data.json claim ({sc.get('scenario_id')}, {b_k}) "
-                            "contains forbidden sources_html/refs_html"
+                            f"{slug}: report-data.json.cell[{sc.get('scenario_id')},{b_k}] must be an object"
                         )
+                    _assert_closed_keys(
+                        cell_v,
+                        ALLOWED_CELL_KEYS,
+                        where=f"report-data.json.cell[{sc.get('scenario_id')},{b_k}]",
+                        slug=slug,
+                    )
+                    claims = cell_v.get("claims")
+                    if isinstance(claims, dict):
+                        for c_k, c_obj in claims.items():
+                            if isinstance(c_obj, dict):
+                                _assert_closed_keys(
+                                    c_obj,
+                                    ALLOWED_CLAIM_KEYS,
+                                    where=f"report-data.json.claim[{sc.get('scenario_id')},{b_k},{c_k}]",
+                                    slug=slug,
+                                )
+
+    ed = editorial or {}
+    family = str(
+        ed.get("family") or run_summary.get("report_family") or run_summary.get("family") or "chartsearchai"
+    )
+    is_diagnostic = ed.get("diagnostic") is True
+    is_sub = bool(ed.get("parent_slug")) or ed.get("featured") is False
+    is_unavailable = ed.get("availability") == "unavailable"
+    if family != "catalyst" and not is_diagnostic and not is_sub and not is_unavailable:
+        r0 = runs[0]
+        scout_scored = [
+            s
+            for s in (run_summary.get("scout") or [])
+            if isinstance(s, dict) and isinstance(s.get("benchmark_score"), (int, float))
+        ]
+        judge_scored = [
+            j
+            for j in (r0.get("judge") or [])
+            if isinstance(j, dict) and isinstance(j.get("benchmark_score"), (int, float))
+        ]
+        if not scout_scored or not judge_scored:
+            raise ValueError(
+                f"{slug}: standard {family!r} report requires judged Benchmark /100 scores in both "
+                "run-summary.json.scout and report-data.json.runs[0].judge "
+                "(run 'validate judge --blind' first, or pass --diagnostic for engineering/latency-only runs)"
+            )
 
 
 def render_report_shell_html(
@@ -307,6 +553,7 @@ def stage_report(
     title: str = "",
     summary: str = "",
     takeaway: str = "",
+    diagnostic: bool = False,
     allow_legacy_slug: bool = False,
     root: Path = ROOT,
     manifest_path: Path | None = None,
@@ -362,11 +609,13 @@ def stage_report(
         editorial["takeaway"] = takeaway
     if "featured" not in editorial:
         editorial["featured"] = True
+    if diagnostic:
+        editorial["diagnostic"] = True
     if not editorial.get("date") and run_summary.get("date"):
         editorial["date"] = run_summary["date"]
 
     validate_editorial_payload(editorial, slug=slug)
-    validate_v2_report_packet(report_data, dashboard_data, run_summary, slug=slug)
+    validate_v2_report_packet(report_data, dashboard_data, run_summary, slug=slug, editorial=editorial)
 
     # Inject catalog_meta into report_data.runs[0] so viewer shell has immediate access
     r0 = (report_data.get("runs") or [{}])[0]
@@ -550,6 +799,11 @@ def main(argv: list[str] | None = None) -> int:
     p_stage.add_argument("--manifest", type=Path, default=None, help="Manifest path override")
     p_stage.add_argument("--root", type=Path, default=ROOT, help="Repository root")
     p_stage.add_argument(
+        "--diagnostic",
+        action="store_true",
+        help="Explicitly stage an engineering/latency-only diagnostic run without LLM judge Benchmark /100 scores",
+    )
+    p_stage.add_argument(
         "--allow-legacy-slug",
         action="store_true",
         help="Allow historical auto-minted slug patterns when re-staging archived runs",
@@ -578,6 +832,7 @@ def main(argv: list[str] | None = None) -> int:
                 title=args.title,
                 summary=args.summary,
                 takeaway=args.takeaway,
+                diagnostic=args.diagnostic,
                 allow_legacy_slug=args.allow_legacy_slug,
                 root=args.root,
                 manifest_path=args.manifest,

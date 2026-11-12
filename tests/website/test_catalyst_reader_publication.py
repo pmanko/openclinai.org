@@ -43,7 +43,7 @@ def _reader_v2_run(root: Path) -> Path:
             "report_family": "catalyst",
             "suite_id": "reader-suite-v1",
             "suite_sha256": "a" * 64,
-            "date": "26 Aug 2026",
+            "date": "2026-08-26",
             "cells": 1,
             "patients": "",
             "scoreline": "1 model teams · 1 conversations · full-evidence reader review",

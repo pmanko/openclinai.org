@@ -87,7 +87,7 @@ def test_publisher_and_preview_serve_lightweight_shells_with_loadable_resources(
                 "schema_version": 2,
                 "slug": slug,
                 "report_family": "chartsearchai",
-                "date": "10 Nov 2026",
+                "date": "2026-11-10",
                 "cells": 1,
                 "patients": "Fixture Patient",
                 "scout": [{"backend": "arm-a", "n": 1, "benchmark_score": 90.0, "harm_count": 0}],
@@ -105,6 +105,7 @@ def test_publisher_and_preview_serve_lightweight_shells_with_loadable_resources(
                     {
                         "id": slug,
                         "backends": ["arm-a"],
+                        "judge": [{"backend": "arm-a", "n": 1, "benchmark_score": 90.0, "harm_count": 0}],
                         "catalog_meta": {"title": "Shell separation fixture"},
                         "arm_cards": {"arm-a": {"title": "Arm A", "short_title": "Arm A"}},
                         "source_card_pool": {},

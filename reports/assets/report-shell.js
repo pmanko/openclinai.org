@@ -90,6 +90,17 @@ function getEditorial(run){
   return Object.assign({}, r.catalog_meta || {}, r.editorial || {}, (DATA && DATA.editorial) || {}, EDITORIAL || {});
 }
 
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDisplayDate(raw){
+  const s = String(raw || '').trim();
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return s;
+  const mi = parseInt(m[2], 10) - 1;
+  const dy = parseInt(m[3], 10);
+  if (mi < 0 || mi > 11 || !dy) return s;
+  return dy + ' ' + MONTHS_SHORT[mi] + ' ' + m[1];
+}
+
 // A real run identity for the header, built from editorial.json or the embedded run data.
 function buildTitle(run){
   const m = run.meta || {};
@@ -103,7 +114,7 @@ function buildTitle(run){
   if (nQ) parts.push(nQ + ' question' + (nQ === 1 ? '' : 's'));
   if (nP) parts.push(nP + ' patient' + (nP === 1 ? '' : 's'));
   const shape = parts.length ? parts.join(' · ') : 'Validation report';
-  const date = cm.date || (m.generated_at || '').slice(0, 10);
+  const date = fmtDisplayDate(cm.date || (m.generated_at || '').slice(0, 10));
   if (cm.title) {
     return { title: cm.title, shape: shape, dataset: '', date: date, hasCatalogTitle: true };
   }
@@ -207,6 +218,36 @@ function renderDeterministic(run){
     "<th>runtime answer check</th></tr></thead><tbody>" + rows + "</tbody>";
   sec.appendChild(tbl);
   makeSortable(tbl);
+  if (Array.isArray(run.domain_guardrails) && run.domain_guardrails.length){
+    const dgh = el('h3');
+    dgh.textContent = 'Domain safety & verification guardrails';
+    sec.appendChild(dgh);
+    const dgp = el('p', 'intro');
+    dgp.textContent = 'Family-specific deterministic verification checks (privacy holdback, citation entailment, and clinical rubric/conformance gates) computed over all evaluated cells with 95% Wilson score confidence intervals.';
+    sec.appendChild(dgp);
+    const dgRows = run.domain_guardrails.map(g => {
+      const passed = g.passed != null ? g.passed : 0;
+      const total = g.total != null ? g.total : 0;
+      const pct = g.pass_rate != null ? (Number(g.pass_rate) * 100).toFixed(1) + '%' : '—';
+      const ci = (g.ci95_low != null && g.ci95_high != null)
+        ? (' [' + (Number(g.ci95_low) * 100).toFixed(1) + '%, ' + (Number(g.ci95_high) * 100).toFixed(1) + '%]')
+        : '';
+      const st = String(g.status || 'info').toLowerCase();
+      const stCls = st === 'pass' ? 't-ok' : (st === 'fail' ? 't-bad' : (st === 'warn' ? 't-warn' : 't-neutral'));
+      return "<tr><td class='b'>" + htmlEsc(g.label || g.id || '') + "</td>" +
+        "<td>" + htmlEsc(g.scope || 'All setups') + "</td>" +
+        "<td>" + htmlEsc(passed + ' / ' + total) + "</td>" +
+        "<td><b>" + htmlEsc(pct) + "</b><span class='muted'>" + htmlEsc(ci) + "</span></td>" +
+        "<td><span class='schip " + stCls + "'>" + htmlEsc(st) + "</span></td>" +
+        "<td>" + htmlEsc(g.detail || '—') + "</td></tr>";
+    }).join('');
+    const dgTbl = el('table', 'summary');
+    dgTbl.innerHTML =
+      "<thead><tr><th>guardrail</th><th>scope</th><th>passed / total</th>" +
+      "<th>pass rate (95% Wilson CI)</th><th>status</th><th>details</th></tr></thead><tbody>" + dgRows + "</tbody>";
+    sec.appendChild(dgTbl);
+    makeSortable(dgTbl);
+  }
   return sec;
 }
 
@@ -606,9 +647,22 @@ function renderCellBlocksHtml(cell){
   if (!cell) return '';
   return renderBlocksFromData(cell.blocks || [], cell.sources, cell.source_card_refs);
 }
+function renderSeedReplicateChipHtml(cell){
+  var reps = cell && cell.seed_replicates;
+  if (!Array.isArray(reps) || reps.length <= 1) return '';
+  var tip = reps.map(function(r){
+    var s = 's' + (r.seed != null ? r.seed : '?');
+    if (r.benchmark_score != null) s += ': ' + Number(r.benchmark_score).toFixed(1) + '/100';
+    if (r.latency_ms != null) s += ' (' + fmtLatSec(r.latency_ms) + ')';
+    return s;
+  }).join(' · ');
+  var seedsLbl = reps.map(function(r){ return 's' + (r.seed != null ? r.seed : '?'); }).join(', ');
+  return "<span class='chip' title='" + htmlEsc(tip) + "'>" + reps.length + " seeds (" + htmlEsc(seedsLbl) + ")</span>";
+}
 function renderCellChipsHtml(cell){
   if (!cell) return '';
   var chips = [];
+  var seedChip = renderSeedReplicateChipHtml(cell);
   if (Array.isArray(cell.custom_chips) && cell.custom_chips.length){
     cell.custom_chips.forEach(function(c){
       if (c && typeof c === 'object' && c.text){
@@ -616,11 +670,13 @@ function renderCellChipsHtml(cell){
         chips.push("<span class='chip" + tone + "'>" + htmlEsc(c.text) + "</span>");
       }
     });
+    if (seedChip) chips.push(seedChip);
     return chips.join(' ');
   }
   var m = cell.metrics || {};
   chips.push("<span class='chip" + (m.first_turn ? " warm" : "") + "'>⏱ " + htmlEsc(fmtLatSec(m.latency_ms)) + "</span>");
   chips.push("<span class='chip'>" + htmlEsc(m.citation_count != null ? m.citation_count : 0) + " chart refs</span>");
+  if (seedChip) chips.push(seedChip);
   if (m.ttft_ms != null) chips.push("<span class='chip'>TTFT " + htmlEsc(fmtLatSec(m.ttft_ms)) + "</span>");
   if (m.answer_done_ms != null && m.answer_done_ms !== m.latency_ms){
     chips.push("<span class='chip'>answer " + htmlEsc(fmtLatSec(m.answer_done_ms)) + "</span>");
@@ -845,86 +901,6 @@ function renderExecutiveSummary(run){
 
   var sec = el('section', 'exec-summary');
   sec.setAttribute('aria-label', 'Executive summary');
-
-  // Multi-seed statistical benchmark fallback (HealthBench rubric + VeriFact entailment + Wilson/Bootstrap CIs)
-  if(!scored.length && run.statistical_benchmark && run.statistical_benchmark.by_profile){
-    var sb = run.statistical_benchmark;
-    var cmStat = getEditorial(run);
-    var whatStat = String(cmStat.summary || '').trim();
-    var takeStat = String(cmStat.takeaway || '').trim();
-    var guideStat = cmStat.guide || null;
-    var guideStatHtml = (guideStat && guideStat.url)
-      ? (' <a href="' + htmlEsc(guideStat.url) + '" target="_blank" rel="noopener">' + htmlEsc(guideStat.label || 'Read architecture guide →') + '</a>')
-      : '';
-    var profEntries = Object.keys(sb.by_profile || {}).map(function(k){ return [k, sb.by_profile[k]]; })
-      .sort(function(a,b){
-        var dp = (b[1].pass_rate || 0) - (a[1].pass_rate || 0);
-        return Math.abs(dp) > 1e-9 ? dp : ((b[1].mean_case_quality_score || 0) - (a[1].mean_case_quality_score || 0));
-      });
-    var topP = profEntries[0];
-    var stratLabels = {
-      note_rag: 'WAHS Engine · Note-RAG + 4-Layer KB',
-      condensation_kb: 'WAHS Engine · Condensation + 4-Layer KB',
-      dynamic_fhir_tools: 'WAHS Engine · Dynamic FHIR Tools',
-      offline_raw_ablation: 'Offline Raw FHIR Baseline (No Condensation)'
-    };
-    var stratOrder = ['note_rag', 'condensation_kb', 'dynamic_fhir_tools', 'offline_raw_ablation'];
-    var stratRowsHtml = stratOrder.filter(function(sk){ return sb.by_retrieval_strategy && sb.by_retrieval_strategy[sk]; }).map(function(sk){
-      var sv = sb.by_retrieval_strategy[sk];
-      var sw = sv.pass_rate_wilson_ci_95 || {};
-      var sq = sv.quality_score_bootstrap_ci_95 || {};
-      var sl = (sv.latency_stats || {}).total_ms || {};
-      var sprep = (sv.latency_stats || {}).engine_prep_ms || {};
-      var spref = (sv.latency_stats || {}).prefill_prompt_ms || {};
-      var sdec = (sv.latency_stats || {}).decode_predicted_ms || {};
-      return '<tr>'
-        + '<td><b>' + htmlEsc(stratLabels[sk] || sk) + '</b></td>'
-        + '<td>' + (sv.passed || 0) + '/' + (sv.total || 0) + ' (' + ((sv.pass_rate || 0)*100).toFixed(1) + '% · [' + ((sw.ci95_low||0)*100).toFixed(1) + '%, ' + ((sw.ci95_high||0)*100).toFixed(1) + '%])</td>'
-        + '<td>' + (sv.mean_case_quality_score || 0).toFixed(1) + ' [' + (sq.ci95_low || 0).toFixed(1) + ', ' + (sq.ci95_high || 0).toFixed(1) + ']</td>'
-        + '<td>' + ((sv.mean_atomic_entailment_rate || 0)*100).toFixed(1) + '%</td>'
-        + '<td>' + ((sv.abstention_precision || 0)*100).toFixed(1) + '%</td>'
-        + '<td>' + (sv.privacy_leaks || 0) + '</td>'
-        + '<td>' + (sl.p50_ms != null ? (sl.p50_ms/1000).toFixed(2) + 's' : '—') + ' / ' + (sl.p95_ms != null ? (sl.p95_ms/1000).toFixed(2) + 's' : '—')
-        + ' <small style="color:var(--mut)">(prep ' + (sprep.p50_ms != null ? sprep.p50_ms.toFixed(0) + 'ms' : '0ms')
-        + ' · prefill ' + (spref.p50_ms != null ? (spref.p50_ms/1000).toFixed(2) + 's' : '—')
-        + ' · decode ' + (sdec.p50_ms != null ? (sdec.p50_ms/1000).toFixed(2) + 's' : '—') + ')</small></td>'
-        + '</tr>';
-    }).join('');
-    var profRowsHtml = profEntries.map(function(pair){
-      var pid = pair[0], pv = pair[1];
-      var pw = pv.pass_rate_wilson_ci_95 || {};
-      var pq = pv.quality_score_bootstrap_ci_95 || {};
-      var pl = (pv.latency_stats || {}).total_ms || {};
-      return '<tr>'
-        + '<td><b>' + htmlEsc(armShort(pid)) + '</b><div style="font-size:11.5px;color:var(--mut)">' + htmlEsc(pid) + '</div></td>'
-        + '<td>' + (pv.passed || 0) + '/' + (pv.total || 0) + ' (<b>' + ((pv.pass_rate || 0)*100).toFixed(1) + '%</b> · [' + ((pw.ci95_low||0)*100).toFixed(1) + '%, ' + ((pw.ci95_high||0)*100).toFixed(1) + '%])</td>'
-        + '<td>' + (pv.mean_case_quality_score || 0).toFixed(1) + ' [' + (pq.ci95_low || 0).toFixed(1) + ', ' + (pq.ci95_high || 0).toFixed(1) + ']</td>'
-        + '<td>' + ((pv.mean_atomic_entailment_rate || 0)*100).toFixed(1) + '%</td>'
-        + '<td>' + (pv.privacy_leaks || 0) + '</td>'
-        + '<td>' + (pl.p50_ms != null ? (pl.p50_ms/1000).toFixed(2) + 's' : '—') + ' / ' + (pl.p95_ms != null ? (pl.p95_ms/1000).toFixed(2) + 's' : '—') + '</td>'
-        + '</tr>';
-    }).join('');
-    var briefHtml = '';
-    if (whatStat || takeStat) {
-      briefHtml = '<div class="ov-study-brief">'
-        + (whatStat ? '<div class="ov-study-box"><div class="ov-study-kicker">What We Tested</div><div class="ov-study-body">' + htmlEsc(whatStat) + guideStatHtml + '</div></div>' : '')
-        + (takeStat ? '<div class="ov-study-box takeaway"><div class="ov-study-kicker">Key Takeaway · Statistical &amp; Safety Readout</div><div class="ov-study-body">' + htmlEsc(takeStat) + '</div></div>' : '')
-        + '</div>';
-    }
-    var seedsTxt = (sb.seeds && sb.seeds.length) ? ('seeds ' + sb.seeds.join(', ')) : 'multi-seed';
-    sec.innerHTML = '<div class="ov-block ov-banner-card">'
-      + '<div class="ov-kicker">3-Seed Statistical Benchmark · Wilson &amp; Bootstrap 95% CIs (' + htmlEsc(seedsTxt) + ')</div>'
-      + '<h2 class="ov-headline">' + (topP ? (htmlEsc(armShort(topP[0])) + ' leads at ' + ((topP[1].pass_rate||0)*100).toFixed(1) + '% pass rate (' + (topP[1].mean_case_quality_score||0).toFixed(1) + '/100 quality) with 0 privacy leaks across 288 WAHS Engine runs') : (sb.total_cells + ' benchmark runs evaluated')) + '</h2>'
-      + briefHtml
-      + '<h3 style="margin:18px 0 8px;font-size:15px">1 · Pathway Comparison Across All 4 Open-Weight Models (n = 96 runs per pathway)</h3>'
-      + '<div style="overflow-x:auto"><table class="ov-table"><thead><tr><th>Pathway</th><th>Pass Rate (95% Wilson CI)</th><th>Quality /100 (95% Bootstrap CI)</th><th>Atomic Entailment</th><th>Abstention Precision</th><th>Privacy Leaks</th><th>p50 / p95 Total Latency (Stage Breakdown)</th></tr></thead><tbody>'
-      + stratRowsHtml + '</tbody></table></div>'
-      + '<h3 style="margin:18px 0 8px;font-size:15px">2 · Full 16-Setup Multi-Seed Leaderboard (n = 24 runs per setup · 8 scenarios × 3 seeds)</h3>'
-      + '<div style="overflow-x:auto"><table class="ov-table"><thead><tr><th>Setup</th><th>Pass Rate (95% Wilson CI)</th><th>Quality /100 (95% Bootstrap CI)</th><th>Atomic Entailment</th><th>Privacy Leaks</th><th>p50 / p95 Latency</th></tr></thead><tbody>'
-      + profRowsHtml + '</tbody></table></div>'
-      + '</div>';
-    return sec;
-  }
 
   // Unjudged operational run fallback: show clean operational KPI cards.
   if(!scored.length){
@@ -1845,7 +1821,7 @@ function judgeHeatmap(run){
         jLink.onclick=function(ev){
           ev.preventDefault();
           var mEl=document.getElementById('report');
-          if(mEl && mEl.dataset.activeTab && mEl.dataset.activeTab !== 'all' && mEl.dataset.activeTab !== 'questions'){
+          if(mEl && mEl.dataset.activeTab && mEl.dataset.activeTab !== 'questions'){
             switchReportTab('questions');
           }
           var secAns=document.getElementById('sec-answers');
@@ -2601,11 +2577,6 @@ let _spyScroll = null;
 function switchReportTab(tabId, filterCat){
   const main = document.getElementById('report');
   if(!main) return;
-  if(tabId === 'all'){
-    const secAns = document.getElementById('sec-answers');
-    if(secAns && secAns._expandWorkspace) secAns._expandWorkspace();
-    else if(secAns && secAns._ensureRendered) secAns._ensureRendered();
-  }
   main.dataset.activeTab = tabId;
   document.querySelectorAll('#toc .rtab').forEach(btn => {
     const isAct = btn.dataset.tab === tabId;
@@ -2614,7 +2585,7 @@ function switchReportTab(tabId, filterCat){
   });
   const subBar = document.querySelector('#toc .toc-sub');
   if(subBar){
-    subBar.hidden = !(tabId === 'all' || tabId === 'methodology');
+    subBar.hidden = (tabId !== 'methodology');
   }
   if(filterCat && tabId === 'questions'){
     const pill = document.querySelector('.question-explorer .qe-pill[data-qe-filter="cat:' + filterCat + '"]');
@@ -2644,8 +2615,7 @@ function buildNav(run){
     { id: 'overview', label: 'Overview (At a Glance)' },
     { id: 'questions', label: 'Browse All Questions', badge: nScen ? String(nScen) : '' },
     { id: 'speed', label: 'Speed & Multi-User Scaling' },
-    { id: 'methodology', label: 'Methodology & Raw Data' },
-    { id: 'all', label: 'All Sections', cls: 'rtab-all' }
+    { id: 'methodology', label: 'Methodology & Raw Data' }
   ];
   tabDefs.forEach(t => {
     const b = el('button', 'rtab' + (t.cls ? ' ' + t.cls : '') + (t.id === activeTab ? ' active' : ''));
@@ -2659,9 +2629,9 @@ function buildNav(run){
   });
   nav.appendChild(tabsRow);
 
-  // Secondary section-anchor bar (shown when in 'All Sections' or 'Methodology & Raw Data')
+  // Secondary section-anchor bar (shown in 'Methodology & Raw Data')
   const subRow = el('div', 'toc-sub');
-  subRow.hidden = !(activeTab === 'all' || activeTab === 'methodology');
+  subRow.hidden = (activeTab !== 'methodology');
   const byId = new Map();
   secs.forEach(s => {
     const a = el('a', 'toc-link');
@@ -2669,8 +2639,9 @@ function buildNav(run){
     a.textContent = s.dataset.nav;
     a.addEventListener('click', e => {
       e.preventDefault();
-      if(main && main.dataset.activeTab !== 'all' && s.dataset.tabGroup && main.dataset.activeTab !== s.dataset.tabGroup){
-        switchReportTab(s.dataset.tabGroup);
+      const groups = (s.dataset.tabGroup || '').split(/\s+/).filter(Boolean);
+      if(main && groups.length && !groups.includes(main.dataset.activeTab)){
+        switchReportTab(groups[0]);
       }
       s.scrollIntoView({ behavior: 'smooth', block: 'start' });
       history.replaceState(null, '', '#' + s.id);
@@ -2869,8 +2840,7 @@ function renderRun(runId){
   const main = document.getElementById('report');
   main.innerHTML = '';
 
-  const hasJudge = (run.judge || []).some(s => (s.n || 0) > 0 && s.benchmark_score != null);
-  const defaultTab = (hasJudge && (run.scenarios || []).length > 1) ? 'overview' : 'all';
+  const defaultTab = 'overview';
   main.dataset.activeTab = defaultTab;
 
   // Three-layer verification status banner (visible in Overview and Methodology)
