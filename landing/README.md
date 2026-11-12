@@ -67,8 +67,7 @@ explicitly reviewed source revision and record local checks, owner review and
 live verification separately. Generated evidence requires review/redaction
 before public disclosure.
 
-`scripts/publish-landing.sh --landing-only` syncs this directory to the website
-VM and then compares every live page with the checkout. Without the flag it also
-updates the website proxy configuration from `compose/website/` and `.env.website`
-(copy `.env.website.example`); see the
-[website publication spec](../specs/website-publication.md).
+## Publication and branch previews
+
+- **Feature-branch previews (`--preview <slug>`):** From any branch or worktree, run `./scripts/publish-landing.sh --preview <slug>` to sync `landing/` to an isolated preview host at `https://<slug>-preview.openclinai.org/` (and `wahs/demo/` to the disjoint `https://<slug>-preview-demo.openclinai.org/` namespace) with `X-Robots-Tag: noindex, nofollow`. Previews use Caddy on-demand TLS and never modify production directories, `.landing-deploy-receipt.json`, or proxy containers.
+- **Production (`openclinai.org`):** Run `./scripts/publish-landing.sh --landing-only` (content only) or `./scripts/publish-landing.sh` (also updates `compose/website/` and `.env.website`, copied from `.env.website.example`) from a clean `main` checkout at or ahead of `origin/main`. Production deploys acquire a remote deploy lock, verify fast-forward ancestry against the VM's `.landing-deploy-receipt.json`, record the new deployed commit, and compare every live HTML/CSS/sitemap file byte-for-byte with the checkout. Pass `--force` only with explicit owner approval; see the [website publication spec](../specs/website-publication.md).

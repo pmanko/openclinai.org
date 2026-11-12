@@ -40,6 +40,11 @@
 - Keep openclinai.org website content, assets, site configuration, build tooling
   and deployment workflows in this repository. The harness produces validation
   artifacts; the umbrella owns their publication to OpenClinAI web properties.
+  On feature branches, publish isolated previews with
+  `./scripts/publish-landing.sh --preview <slug>` (`https://<slug>-preview.openclinai.org/`)
+  instead of overwriting production. Production `publish-landing.sh` deploys
+  require a clean `main` checkout that fast-forwards `origin/main` and the VM's
+  `.landing-deploy-receipt.json`; pass `--force` only with explicit user approval.
 - The harness is a modular validation runner. It must not require Git, submodules,
   product pins, local product source trees or the umbrella to run experiments.
   It records supplied or observed target provenance; it does not enforce pins.
