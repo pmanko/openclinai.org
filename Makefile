@@ -1,5 +1,4 @@
 UV ?= uv
-DASHBOARD_UP ?= ./scripts/validate-dashboard-up.sh
 HARNESS := targets/validation-harness
 LLAMA_ROUTER_TIER ?= med
 SET ?= demo
@@ -365,11 +364,11 @@ validate-preflight:
 # AND the judge (--reference-date, recorded per row) so model == judge (P0b). Override per dataset/run.
 REFERENCE_DATE ?= 2026-06-20
 RESUME ?=
-# The live dashboard (http://localhost:8099) follows the newest run; every run starts it if needed.
+# The live dashboard (http://localhost:8099) is started automatically by harness-cli on every run.
 validate-dashboard:
-	@UV=$(UV) $(DASHBOARD_UP)
+	$(UV) --directory $(HARNESS) run python scripts/validate-dashboard.py --ensure
 
-validate-run: validate-dashboard
+validate-run:
 	HUB_ANCHOR=$(REFERENCE_DATE) $(MAKE) med-agent-hub-up
 	CHARTSEARCHAI_REFERENCE_DATE=$(REFERENCE_DATE) CHARTSEARCH_HUB_ENDPOINT_URL=$${CHARTSEARCH_HUB_ENDPOINT_URL:-http://med-agent-hub:8080/v1/chat/completions} $(MAKE) chartsearch-configure
 	$(UV) --directory $(HARNESS) run harness-cli validate run $(SET) --reference-date $(REFERENCE_DATE) \

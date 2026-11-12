@@ -541,11 +541,12 @@ function renderCellAnswerHtml(run, cell){
   } else {
     out += renderAnswerBody(ansText);
   }
+  var isWahsRun = Boolean(run && (run.family === 'wahs' || run.report_family === 'wahs'));
   if (iv && typeof iv === 'object' && !(iv.status === 'not_in_profile' && !iv.body_text)){
     var idBody = iv.body_text ? renderMarkdown(iv.body_text) : '';
     var idExtra = renderIndepthClaimsTable(iv) + renderDraftDisclosure(iv, cell.review_sources) + renderRawCheckDisclosure(iv);
     out += renderSectionBlock('In-Depth', idBody, iv, idExtra);
-  } else if (av && iv && iv.status === 'not_in_profile'){
+  } else if (!isWahsRun && av && iv && iv.status === 'not_in_profile'){
     out += renderSectionBlock('In-Depth', '', {status:'not_in_profile', label:iv.label || 'No In-Depth in this profile', tone:'neutral'});
   }
   return out;
