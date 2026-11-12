@@ -45,6 +45,7 @@ def _write_v2_run_dir(
     takeaway: str = "Med Agent Hub improved accuracy and completeness by 14 points with zero unsafe answers.",
     family: str = "chartsearchai",
     availability: str = "available",
+    date: str = "2026-11-10",
 ) -> Path:
     directory.mkdir(parents=True, exist_ok=True)
     ed = {
@@ -56,7 +57,7 @@ def _write_v2_run_dir(
         "takeaway": takeaway,
         "family": family,
         "featured": True,
-        "date": "10 Nov 2026",
+        "date": date,
     }
     if availability == "unavailable":
         ed["availability"] = "unavailable"
@@ -71,7 +72,7 @@ def _write_v2_run_dir(
                 "schema_version": 2,
                 "slug": slug,
                 "report_family": family,
-                "date": "10 Nov 2026",
+                "date": date,
                 "cells": 2,
                 "patients": "Fixture Patient",
                 "scout": [{"backend": "arm-a", "n": 2, "benchmark_score": 88.0, "harm_count": 0}],
@@ -91,6 +92,7 @@ def _write_v2_run_dir(
                     {
                         "id": slug,
                         "backends": ["arm-a"],
+                        "judge": [{"backend": "arm-a", "n": 2, "benchmark_score": 88.0, "harm_count": 0}],
                         "catalog_meta": {"title": title},
                         "arm_cards": {"arm-a": {"title": "Arm A", "short_title": "Arm A"}},
                         "source_card_pool": {},
@@ -151,6 +153,7 @@ def publisher(tmp_path: Path):
         reports / "2026-11-01-archived-study",
         slug="2026-11-01-archived-study",
         title="Live archived report: clinical chart synthesis evaluation",
+        date="2026-11-01",
     )
     (reports / "2026-11-01-archived-study" / "clip.mp4").write_bytes(b"video")
     _write_v2_run_dir(
@@ -158,6 +161,7 @@ def publisher(tmp_path: Path):
         slug="2026-10-01-unavailable-study",
         title="Explicitly unavailable historical evaluation study",
         availability="unavailable",
+        date="2026-10-01",
     )
 
     run_dir = _write_v2_run_dir(

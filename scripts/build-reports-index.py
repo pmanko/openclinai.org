@@ -72,6 +72,186 @@ def theme_toggle_js(storage_key: str) -> str:
 REPORTS = ROOT / "reports"
 MANIFEST = REPORTS / "reports-index.json"
 DATE_FORMAT = "%-d %b %Y"
+ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+ALLOWED_EDITORIAL_KEYS: frozenset[str] = frozenset({
+    "schema",
+    "schema_version",
+    "slug",
+    "title",
+    "summary",
+    "takeaway",
+    "family",
+    "featured",
+    "diagnostic",
+    "date",
+    "arms",
+    "availability",
+    "context",
+    "earlier",
+    "guide",
+    "label",
+    "note",
+    "parent_slug",
+    "evaluation_modality",
+})
+
+ALLOWED_SUMMARY_KEYS: frozenset[str] = frozenset({
+    "schema",
+    "schema_version",
+    "slug",
+    "run_id",
+    "run_dir",
+    "family",
+    "report_family",
+    "component",
+    "comparison_set",
+    "dataset_id",
+    "suite_id",
+    "suite_sha256",
+    "date",
+    "generated_at",
+    "git_sha",
+    "reference_date",
+    "evaluation_modality",
+    "reader_led",
+    "scenarios",
+    "turns",
+    "cells",
+    "backends",
+    "patients",
+    "patients_summary",
+    "scoreline",
+    "scout",
+    "arms",
+    "arm_cards",
+    "calibrated",
+    "judging",
+    "winner",
+    "catalyst",
+    "domain_guardrails",
+    "seed_count",
+    "seeds",
+})
+
+ALLOWED_REPORT_ROOT_KEYS: frozenset[str] = frozenset({
+    "schema",
+    "schema_version",
+    "family",
+    "generated_at",
+    "runs",
+})
+
+ALLOWED_REPORT_RUN_KEYS: frozenset[str] = frozenset({
+    "run_id",
+    "id",
+    "family",
+    "evaluation_modality",
+    "meta",
+    "backends",
+    "labels",
+    "scenarios",
+    "summary",
+    "metrics",
+    "judge",
+    "judge_rows",
+    "judge_actors",
+    "judge_actor_cells",
+    "judging",
+    "judge_passes",
+    "judge_combined",
+    "calibrated",
+    "adjudication_rows",
+    "check_precision",
+    "patients",
+    "context",
+    "arm_cards",
+    "catalog_meta",
+    "hardware",
+    "catalyst",
+    "scoreline",
+    "source_card_pool",
+    "refs_pool",
+    "domain_guardrails",
+    "seeds",
+})
+
+ALLOWED_SCENARIO_KEYS: frozenset[str] = frozenset({"scenario_id", "id", "turns"})
+ALLOWED_TURN_KEYS: frozenset[str] = frozenset({"turn", "question", "cells"})
+ALLOWED_CELL_KEYS: frozenset[str] = frozenset({
+    "status",
+    "answer_text",
+    "answer_md",
+    "claims",
+    "answer_view",
+    "indepth_view",
+    "answer_confidence_display",
+    "indepth_confidence_display",
+    "answer_validation",
+    "answer_validation_display",
+    "answer_validation_status",
+    "indepth_validation_display",
+    "blocks",
+    "catalyst_turn",
+    "custom_chips",
+    "degraded",
+    "error",
+    "http_status",
+    "metrics",
+    "refs",
+    "refs_pool_id",
+    "review_sources",
+    "source_card_refs",
+    "sources",
+    "stage_timings",
+    "temporal_gate",
+    "seed_replicates",
+})
+ALLOWED_CLAIM_KEYS: frozenset[str] = frozenset({
+    "source_ids",
+    "refs_key",
+    "refs_pool_id",
+    "source_card_refs",
+    "text",
+    "verdict",
+    "reason",
+    "cited",
+    "marked",
+    "checks",
+})
+ALLOWED_DASHBOARD_ROOT_KEYS: frozenset[str] = frozenset({
+    "schema",
+    "schema_version",
+    "family",
+    "generated_at",
+    "status",
+    "record_pool",
+    "sources_pool",
+    "refs_pool",
+    "details",
+})
+
+
+def _is_valid_iso_date(raw: object) -> bool:
+    if not isinstance(raw, str):
+        return False
+    txt = raw.strip()
+    if not ISO_DATE_RE.fullmatch(txt):
+        return False
+    try:
+        datetime.strptime(txt, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
+
+
+def _closed_key_issues(obj: object, allowed: frozenset[str], *, where: str) -> list[str]:
+    if not isinstance(obj, dict):
+        return [f"{where} must be a JSON object"]
+    extra = set(obj.keys()) - allowed
+    if extra:
+        return [f"{where} contains unexpected key(s): {sorted(extra)}"]
+    return []
 
 
 FORBIDDEN_TITLE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
@@ -149,6 +329,26 @@ def _check_editorial_entry(
                     if pat.search(val):
                         issues.append(f"{slug}.arms[{arm_k!r}] contains {desc}")
 
+    ed_disk: dict = {}
+    ed_file = root / slug / "editorial.json"
+    if slug != pending_slug and ed_file.is_file():
+        try:
+            ed_disk = json.loads(ed_file.read_text(encoding="utf-8"))
+            if ed_disk.get("schema") != "openclinai.editorial.v2" or ed_disk.get("schema_version") != 2:
+                issues.append(f"{slug}/editorial.json must declare schema='openclinai.editorial.v2' and schema_version=2")
+            issues.extend(_closed_key_issues(ed_disk, ALLOWED_EDITORIAL_KEYS, where=f"{slug}/editorial.json"))
+            if ed_disk.get("availability") != "unavailable":
+                if not _is_valid_iso_date(ed_disk.get("date")):
+                    issues.append(
+                        f"{slug}/editorial.json.date must be canonical ISO 'YYYY-MM-DD', got {ed_disk.get('date')!r}"
+                    )
+            elif ed_disk.get("date") is not None and not _is_valid_iso_date(ed_disk.get("date")):
+                issues.append(
+                    f"{slug}/editorial.json.date must be canonical ISO 'YYYY-MM-DD', got {ed_disk.get('date')!r}"
+                )
+        except Exception as exc:
+            issues.append(f"{slug}/editorial.json could not be parsed: {exc}")
+
     if entry.get("availability") == "unavailable" or slug == pending_slug:
         return issues
 
@@ -193,28 +393,90 @@ def _check_editorial_entry(
                         "(re-run scripts/build-reports-index.py)"
                     )
             if isinstance(payload, dict) and payload.get("schema_version") == 2:
-                forbidden_html_keys = {
-                    "answer_html",
-                    "conf_html",
-                    "chips_html",
-                    "blocks_html",
-                    "sources_html",
-                    "refs_html",
-                    "check_precision_html",
-                    "body_html",
-                }
-                if "check_precision_html" in r0:
-                    issues.append(f"{slug}/report-data.json v2 contains forbidden check_precision_html")
-                for sc in r0.get("scenarios") or []:
-                    for tn in sc.get("turns") or []:
-                        for b_k, cell_v in (tn.get("cells") or {}).items():
-                            if not isinstance(cell_v, dict):
-                                continue
-                            bad_k = forbidden_html_keys.intersection(cell_v.keys())
-                            if bad_k:
-                                issues.append(
-                                    f"{slug}/report-data.json v2 cell ({sc.get('scenario_id')}, {b_k}) contains forbidden HTML keys: {sorted(bad_k)}"
+                if payload.get("schema") != "openclinai.report.v2":
+                    issues.append(f"{slug}/report-data.json must declare schema='openclinai.report.v2'")
+                issues.extend(_closed_key_issues(payload, ALLOWED_REPORT_ROOT_KEYS, where=f"{slug}/report-data.json"))
+                for r_idx, r_obj in enumerate(payload.get("runs") or []):
+                    issues.extend(
+                        _closed_key_issues(
+                            r_obj,
+                            ALLOWED_REPORT_RUN_KEYS,
+                            where=f"{slug}/report-data.json.runs[{r_idx}]",
+                        )
+                    )
+                    for sc in (r_obj or {}).get("scenarios") or []:
+                        issues.extend(
+                            _closed_key_issues(
+                                sc,
+                                ALLOWED_SCENARIO_KEYS,
+                                where=f"{slug}/report-data.json.scenario[{sc.get('scenario_id')}]",
+                            )
+                        )
+                        for tn in sc.get("turns") or []:
+                            issues.extend(
+                                _closed_key_issues(
+                                    tn,
+                                    ALLOWED_TURN_KEYS,
+                                    where=f"{slug}/report-data.json.turn[{sc.get('scenario_id')}:{tn.get('turn')}]",
                                 )
+                            )
+                            for b_k, cell_v in (tn.get("cells") or {}).items():
+                                issues.extend(
+                                    _closed_key_issues(
+                                        cell_v,
+                                        ALLOWED_CELL_KEYS,
+                                        where=f"{slug}/report-data.json.cell[{sc.get('scenario_id')},{b_k}]",
+                                    )
+                                )
+                                if isinstance(cell_v, dict) and isinstance(cell_v.get("claims"), dict):
+                                    for c_k, c_obj in cell_v["claims"].items():
+                                        if isinstance(c_obj, dict):
+                                            issues.extend(
+                                                _closed_key_issues(
+                                                    c_obj,
+                                                    ALLOWED_CLAIM_KEYS,
+                                                    where=f"{slug}/report-data.json.claim[{sc.get('scenario_id')},{b_k},{c_k}]",
+                                                )
+                                            )
+                sum_file = root / slug / "run-summary.json"
+                dash_file = root / slug / "dashboard-data.json"
+                sum_obj: dict = {}
+                if sum_file.is_file():
+                    sum_obj = json.loads(sum_file.read_text(encoding="utf-8"))
+                    if sum_obj.get("schema") != "openclinai.summary.v2" or sum_obj.get("schema_version") != 2:
+                        issues.append(f"{slug}/run-summary.json must declare schema='openclinai.summary.v2' and schema_version=2")
+                    issues.extend(_closed_key_issues(sum_obj, ALLOWED_SUMMARY_KEYS, where=f"{slug}/run-summary.json"))
+                    if not _is_valid_iso_date(sum_obj.get("date")):
+                        issues.append(
+                            f"{slug}/run-summary.json.date must be canonical ISO 'YYYY-MM-DD', got {sum_obj.get('date')!r}"
+                        )
+                if dash_file.is_file():
+                    dash_obj = json.loads(dash_file.read_text(encoding="utf-8"))
+                    if dash_obj.get("schema") != "openclinai.dashboard.v2" or dash_obj.get("schema_version") != 2:
+                        issues.append(f"{slug}/dashboard-data.json must declare schema='openclinai.dashboard.v2' and schema_version=2")
+                    issues.extend(_closed_key_issues(dash_obj, ALLOWED_DASHBOARD_ROOT_KEYS, where=f"{slug}/dashboard-data.json"))
+                fam = str(
+                    entry.get("family")
+                    or ed_disk.get("family")
+                    or sum_obj.get("report_family")
+                    or sum_obj.get("family")
+                    or "chartsearchai"
+                )
+                is_diag = bool(ed_disk.get("diagnostic") is True or entry.get("diagnostic") is True)
+                if ed_file.is_file() and fam != "catalyst" and not is_diag and not is_earlier_sub:
+                    scout_ok = any(
+                        isinstance(s, dict) and isinstance(s.get("benchmark_score"), (int, float))
+                        for s in (sum_obj.get("scout") or [])
+                    )
+                    judge_ok = any(
+                        isinstance(j, dict) and isinstance(j.get("benchmark_score"), (int, float))
+                        for j in (r0.get("judge") or [])
+                    )
+                    if not scout_ok or not judge_ok:
+                        issues.append(
+                            f"{slug} is missing judged Benchmark /100 scores in run-summary.json.scout / "
+                            "report-data.json.runs[0].judge (run 'validate judge --blind' or mark diagnostic=true)"
+                        )
             for b_id, card in (r0.get("arm_cards") or {}).items():
                 if not isinstance(card, dict):
                     continue
@@ -347,6 +609,26 @@ def _run_meta(slug: str) -> dict:
     return {}
 
 
+def _parse_report_date(raw: object) -> datetime | None:
+    txt = str(raw or "").strip()
+    if not txt:
+        return None
+    for fmt in ("%d %b %Y", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(txt, fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def _format_report_date(raw: object) -> str | None:
+    if raw is None:
+        return None
+    parsed = _parse_report_date(raw)
+    if parsed is not None:
+        return parsed.strftime(DATE_FORMAT)
+    txt = str(raw).strip()
+    return txt or None
 def _run_dir_for(slug: str) -> Path | None:
     """Catalogs read the staged packet only, never the source experiment workspace."""
     candidate = (REPORTS / slug).resolve()
@@ -374,22 +656,30 @@ def gather(slug: str) -> dict:
     """Pull the score table + subtitle facts for one curated run from its data."""
     meta = _run_meta(slug)
     family = str(meta.get("report_family") or meta.get("family") or "chartsearchai")
-    scout = list(meta.get("scout") or [])
+    scout = [
+        s for s in (meta.get("scout") or [])
+        if isinstance(s, dict) and (s.get("n") or s.get("benchmark_score") is not None or s.get("accuracy_mean") is not None)
+    ]
     if not scout and isinstance(meta.get("arms"), list):
-        for a in meta["arms"]:
-            if isinstance(a, dict) and a.get("id"):
-                scout.append(
-                    {
-                        "backend": a["id"],
-                        "n": a.get("turns") or 0,
-                        "benchmark_score": a.get("benchmark_score"),
-                        "safety_adjusted_benchmark_score": a.get("safety_adjusted_benchmark_score"),
-                        "accuracy_mean": a.get("accuracy_mean"),
-                        "completeness_mean": a.get("completeness_mean"),
-                        "relevance_mean": a.get("relevance_mean"),
-                        "harm_count": a.get("harm_count") or 0,
-                    }
-                )
+        has_judged_arms = any(
+            isinstance(a, dict) and (a.get("benchmark_score") is not None or a.get("accuracy_mean") is not None)
+            for a in meta["arms"]
+        )
+        if has_judged_arms:
+            for a in meta["arms"]:
+                if isinstance(a, dict) and a.get("id"):
+                    scout.append(
+                        {
+                            "backend": a["id"],
+                            "n": a.get("turns") or 0,
+                            "benchmark_score": a.get("benchmark_score"),
+                            "safety_adjusted_benchmark_score": a.get("safety_adjusted_benchmark_score"),
+                            "accuracy_mean": a.get("accuracy_mean"),
+                            "completeness_mean": a.get("completeness_mean"),
+                            "relevance_mean": a.get("relevance_mean"),
+                            "harm_count": a.get("harm_count") or 0,
+                        }
+                    )
     patients_raw = meta.get("patients")
     if isinstance(patients_raw, list):
         patients_str = " + ".join(str(p) for p in patients_raw if p)
@@ -408,7 +698,9 @@ def gather(slug: str) -> dict:
         # Facts frozen beside a report whose packet no longer carries its results.
         "cells": cells,
         "patients": patients_str,
-        "date": meta.get("date"),
+        "date": _format_report_date(meta.get("date")),
+        "iso_date": str(meta.get("date")).strip() if _is_valid_iso_date(meta.get("date")) else "",
+        "generated_at": str(meta.get("generated_at") or ""),
         "scout": scout,
         "scoreline": str(meta.get("scoreline") or ""),
         # Who judged, frozen with the scores; a run that recorded no judge says so.
@@ -504,18 +796,49 @@ def gather(slug: str) -> dict:
     return out
 
 
-def _newest_first(runs: list[dict]) -> list[dict]:
-    """Order the catalog by each report's recorded date, newest first.
+def _generated_timestamp(raw: object) -> float:
+    txt = str(raw or "").strip()
+    if not txt:
+        return 0.0
+    try:
+        return datetime.fromisoformat(txt.replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        return 0.0
 
-    An undated entry keeps its place beside the entry listed before it, so ties and
-    gaps follow the manifest instead of the editor having to keep the list sorted.
+
+def _newest_first(runs: list[dict], *, strict_dates: bool = False) -> list[dict]:
+    """Order the catalog deterministically by each report's recorded date, newest first.
+
+    In v2 editorial mode (`strict_dates=True`), every available featured report must carry
+    a canonical ISO `YYYY-MM-DD` date, and ties break deterministically by
+    `(-generated_at_ts, slug)` without inheriting a neighbor's date or manual `catalog_order`.
     """
+    if strict_dates:
+        strict_keyed: list[tuple[int, float, str, dict]] = []
+        for entry in runs:
+            slug = str(entry.get("slug") or "")
+            meta = _run_meta(slug)
+            raw_date = entry.get("date") if entry.get("date") is not None else meta.get("date")
+            if entry.get("availability") != "unavailable":
+                if not _is_valid_iso_date(raw_date):
+                    raise ValueError(
+                        f"{slug}: featured report requires canonical ISO date 'YYYY-MM-DD', got {raw_date!r}"
+                    )
+            elif raw_date is not None and not _is_valid_iso_date(raw_date):
+                raise ValueError(
+                    f"{slug}: report date must be canonical ISO 'YYYY-MM-DD', got {raw_date!r}"
+                )
+            parsed = _parse_report_date(raw_date)
+            ord_val = parsed.toordinal() if parsed is not None else datetime.min.toordinal()
+            gen_ts = _generated_timestamp(meta.get("generated_at"))
+            strict_keyed.append((-ord_val, -gen_ts, slug, entry))
+        return [entry for _, _, _, entry in sorted(strict_keyed, key=lambda k: k[:3])]
+
     keyed, last = [], datetime.max
     for position, entry in enumerate(runs):
-        try:
-            last = datetime.strptime(str(gather(entry["slug"]).get("date") or ""), "%d %b %Y")
-        except ValueError:
-            pass
+        parsed = _parse_report_date(gather(entry["slug"]).get("date") or entry.get("date"))
+        if parsed is not None:
+            last = parsed
         keyed.append((-last.toordinal(), position, entry))
     return [entry for _, _, entry in sorted(keyed, key=lambda k: k[:2])]
 
@@ -730,8 +1053,9 @@ def _card(entry: dict) -> str:
         else:
             unit = "graded answers"
         facts.append(f'{g["cells"]} {unit}')
-    if g["date"]:
-        facts.append(esc(g["date"]))
+    disp_date = g["date"] or _format_report_date(entry.get("date"))
+    if disp_date:
+        facts.append(esc(disp_date))
     subtitle = " · ".join(facts)
     family = _family(entry, g)
     modality = str(entry.get("evaluation_modality") or g.get("evaluation_modality") or "")
@@ -759,8 +1083,8 @@ def _card(entry: dict) -> str:
     if unavailable:
         links = ['<span class="unscored">Report unavailable</span>']
     statistics = "" if unavailable else (
-        f'<div class="unscored">{esc(g["scoreline"])}</div>' if g.get("scoreline") and not g["scout"]
-        else _scout_table(g["scout"], entry.get("arms")) if g["scout"]
+        _scout_table(g["scout"], entry.get("arms")) if g["scout"]
+        else f'<div class="unscored">{esc(g["scoreline"])}</div>' if g.get("scoreline")
         else '<div class="unscored">Open the report for its recorded methods and results.</div>'
     )
     if g["scout"] and not unavailable:
@@ -1012,8 +1336,8 @@ def compile_manifest_from_editorial(
     if not ed_files:
         return None
     base = existing_manifest if isinstance(existing_manifest, dict) else {}
-    top_entries: list[tuple[int, str, dict]] = []
-    sub_by_parent: dict[str, list[tuple[int, dict]]] = {}
+    top_entries: list[tuple[int, float, str, dict]] = []
+    sub_by_parent: dict[str, list[tuple[int, str, dict]]] = {}
     for ed_path in ed_files:
         slug = ed_path.parent.name
         ed = json.loads(ed_path.read_text(encoding="utf-8"))
@@ -1021,17 +1345,34 @@ def compile_manifest_from_editorial(
         if stamp_shells and ed.get("availability") != "unavailable":
             stamp_editorial_into_page(ed_path.parent / "index.html", ed)
             stamp_editorial_into_page(ed_path.parent / "dashboard.html", ed)
-        order = int(ed.get("catalog_order") if isinstance(ed.get("catalog_order"), int) else 9999)
+        sum_path = ed_path.parent / "run-summary.json"
+        sum_meta = json.loads(sum_path.read_text(encoding="utf-8")) if sum_path.is_file() else {}
+        raw_date = ed.get("date") if ed.get("date") is not None else sum_meta.get("date")
+        parsed_dt = _parse_report_date(raw_date)
+        ord_val = parsed_dt.toordinal() if parsed_dt is not None else datetime.min.toordinal()
+        gen_ts = _generated_timestamp(sum_meta.get("generated_at"))
         if ed.get("parent_slug") or ed.get("featured") is False:
             parent = str(ed.get("parent_slug") or "")
             if parent:
                 sub_entry = {"slug": slug, "label": str(ed.get("label") or slug)}
                 if ed.get("note"):
                     sub_entry["note"] = str(ed["note"])
-                sub_by_parent.setdefault(parent, []).append((order, sub_entry))
+                sub_by_parent.setdefault(parent, []).append((ord_val, slug, sub_entry))
             continue
         run_item: dict = {"slug": slug, "title": str(ed.get("title") or "").strip()}
-        for k in ("summary", "takeaway", "family", "evaluation_modality", "availability", "guide", "context", "arms", "earlier"):
+        for k in (
+            "summary",
+            "takeaway",
+            "family",
+            "evaluation_modality",
+            "availability",
+            "diagnostic",
+            "date",
+            "guide",
+            "context",
+            "arms",
+            "earlier",
+        ):
             if ed.get(k) is not None:
                 if k == "arms":
                     flat_arms = _arm_labels(ed.get("arms"))
@@ -1039,13 +1380,13 @@ def compile_manifest_from_editorial(
                         run_item["arms"] = flat_arms
                 else:
                     run_item[k] = ed[k]
-        top_entries.append((order, slug, run_item))
+        top_entries.append((-ord_val, -gen_ts, slug, run_item))
 
-    top_entries.sort(key=lambda t: (t[0], t[1]))
+    top_entries.sort(key=lambda t: (t[0], t[1], t[2]))
     runs_out: list[dict] = []
-    for _, slug, item in top_entries:
+    for _, _, slug, item in top_entries:
         if not item.get("earlier") and slug in sub_by_parent:
-            subs = [s for _, s in sorted(sub_by_parent[slug], key=lambda x: x[0])]
+            subs = [s for _, _, s in sorted(sub_by_parent[slug], key=lambda x: (x[0], x[1]))]
             item["earlier"] = subs
         runs_out.append(item)
     return {
@@ -1088,14 +1429,20 @@ def main(
         else compile_manifest_from_editorial(REPORTS, existing_manifest, stamp_shells=False)
     )
     manifest = compiled if compiled is not None else existing_manifest
-    runs = _newest_first(manifest.get("runs", []))
-    earlier = [e for r in runs for e in r.get("earlier") or [] if isinstance(e, dict)]
     validate_archive(
-        runs + earlier,
+        [
+            entry
+            for r in manifest.get("runs", [])
+            for entry in (
+                [r] + [e for e in (r.get("earlier") or []) if isinstance(e, dict)]
+            )
+        ],
         REPORTS,
         pending_slug=pending_slug,
         check_stamped_sync=(check_archive or compiled is None),
     )
+    runs = _newest_first(manifest.get("runs", []), strict_dates=(compiled is not None))
+    earlier = [e for r in runs for e in r.get("earlier") or [] if isinstance(e, dict)]
     if check_archive:
         print("Staged report archive is complete for the curated catalog.")
         return

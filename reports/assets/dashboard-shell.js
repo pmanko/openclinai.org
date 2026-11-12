@@ -489,8 +489,9 @@
     }
   }
 
-  function gridCell(g, oc) {
+  function gridCell(g, oc, family) {
     var st = g.state;
+    var isWahs = family === 'wahs';
     if (!g.answer && !g.indepth) return '<td class=' + cls(st) + oc + '>' + sym(st) + '</td>';
     var conform =
       {
@@ -501,7 +502,7 @@
       }[st] || '';
     var tip = [
       'Answer: ' + (g.answer ? g.answer.label : 'none'),
-      'In-Depth: ' + (g.indepth ? g.indepth.label : 'none') + (g.marked ? ' (' + g.marked + ' marked point' + (g.marked > 1 ? 's' : '') + ')' : ''),
+      isWahs ? '' : ('In-Depth: ' + (g.indepth ? g.indepth.label : 'none') + (g.marked ? ' (' + g.marked + ' marked point' + (g.marked > 1 ? 's' : '') + ')' : '')),
       conform
     ]
       .filter(Boolean)
@@ -513,7 +514,7 @@
     return (
       '<td class=' + klass + oc + ' title="' + esc(tip) + '">' +
       pill('A', g.answer, 0) +
-      pill('ID', g.indepth, g.marked) +
+      (isWahs ? '' : pill('ID', g.indepth, g.marked)) +
       '<span class="gconf' + (st === 'err' ? ' err' : '') + '">' + sym(st) + '</span></td>'
     );
   }
@@ -1025,8 +1026,11 @@
             return '<span class="gpill ' + toneCls(x.tone) + '">' + esc(x.symbol) + '</span> ' + esc(x.label);
           })
           .join(' &nbsp;');
+        var isWahs = d.family === 'wahs';
         lg.innerHTML =
-          'Each cell: <span class="gpill t-neutral">A</span> the Answer and <span class="gpill t-neutral">ID</span> the In-Depth, worst across the cell\'s turns; a number counts marked In-Depth points. ' +
+          (isWahs
+            ? 'Each cell: <span class="gpill t-neutral">A</span> the single-call WAHS Answer; '
+            : 'Each cell: <span class="gpill t-neutral">A</span> the Answer and <span class="gpill t-neutral">ID</span> the In-Depth, worst across the cell\'s turns; a number counts marked In-Depth points. ') +
           L +
           '<br>Corner mark: <span class=gconf>\u2713</span> the run followed an allowed path &nbsp;\u00b7&nbsp; <span class="gconf err">\u00d7</span> the system misbehaved (hover a cell for words).';
       }
@@ -1069,7 +1073,7 @@
             var g = gm[s + '|' + b] || {};
             var st = g.state;
             var oc = st == null || st === 'pending' ? '' : ' onclick="openD(\'' + esc(s) + '\',\'' + esc(b) + '\')"';
-            return gridCell(g, oc);
+            return gridCell(g, oc, d.family);
           })
           .join('') +
         '</tr>';
@@ -1280,7 +1284,8 @@
         } else {
           h += '<div class=csec><div class=ctitle>Answer</div><div class=ans>' + answerBody + '</div></div>';
         }
-        if (iv) {
+        var isWahsModal = typeof LAST_STATUS !== 'undefined' && LAST_STATUS && LAST_STATUS.family === 'wahs';
+        if (iv && !(isWahsModal && iv.status === 'not_in_profile' && !iv.body_text)) {
           var title = 'In-Depth' + (t.indepth_latency_ms ? ' <span class=muted>(separate call, ' + fmtS(t.indepth_latency_ms) + ')</span>' : '');
           var ivBodyHtml = renderMarkdown(iv.body_text || '');
           h += sectionHtml(title, iv, ivBodyHtml, renderClaims(iv) + renderDraft(iv, t.review_sources) + renderRawCheck(iv));

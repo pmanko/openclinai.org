@@ -236,8 +236,8 @@ and a person at a terminal.
   the judge's scores and the captured evidence; the dated record under `reviews/` cites
   the run directory and, when `BASELINE` was given, the earlier report it was compared
   with. The report, not the score, is what publication consumes.
-- Every harness run starts the live dashboard (`make validate-dashboard`,
-  http://localhost:8099), which follows the newest run. Local runs can be previewed via
+- Every `harness-cli` run (`validate run`, `catalyst run`, `wahs run`) automatically ensures the live dashboard is serving at
+  http://localhost:8099 (also reachable on demand via `make validate-dashboard`), which follows the newest run. Local runs can be previewed via
   `python3 scripts/preview-report.py <run_dir>` and explicitly staged and deployed to the
   reports site via `python3 scripts/publish-report.py stage <run_dir> --slug <slug>` and
   `python3 scripts/publish-report.py deploy`; `L5_RESUME=<run dir>` with `PROFILES=` adds

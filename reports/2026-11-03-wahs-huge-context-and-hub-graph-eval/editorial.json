@@ -7,7 +7,6 @@
   "takeaway": "Feeding a bigger chart to an AI backfires if the server's active memory window is smaller than the prompt. Scores peaked at the standard 8k summary, which fit comfortably inside the server's 16k memory limit: Gemma 4 26B with clinical rules led at 88.0/100 (8.75 accuracy, 9.12 completeness, zero unsafe answers), followed by Gemma 4 12B with clinical rules (80.5/100) and chart-only (80.2/100), while Qwen 3 14B scored 67.0/100. On the tight 1k summary, Med Agent Hub's clinical rule safety net beat chart-only by +19 points (43.8 vs. 24.8/100). When we sent 32k to 128k of chart text to that same 16k server, the server silently cut off the beginning of the prompt — erasing active allergies, current medications, and recent hospital stays — so chart-only scores collapsed to 0.0–2.8/100 (with 4/4 unsafe answers). Because Med Agent Hub attaches its pre-computed clinical conflict alerts at the very end of the prompt, those alerts survived the cutoff and rescued the medication conflict portion of the answer (27.0–32.8/100), though top-of-chart allergy checks remained cut off.",
   "family": "wahs",
   "featured": true,
-  "catalog_order": 7,
   "arms": {
     "wahs-26b-kb@8k": "Gemma 4 26B + clinical rules (standard 8k chart)",
     "wahs-qwen3-14b-kb@8k": "Qwen 3 14B + clinical rules (standard 8k chart)",
@@ -26,5 +25,5 @@
     "label": "How Med Agent Hub works",
     "url": "https://openclinai.org/med-agent-hub/wahs-architecture/"
   },
-  "date": "4 Nov 2026"
+  "date": "2026-11-04"
 }

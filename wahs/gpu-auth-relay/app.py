@@ -27,6 +27,7 @@ DEFAULT_GOOGLE_CLIENT_ID = (
 DEFAULT_WHITELIST_EMAILS = (
     "piotr.mankowski@gmail.com,"
     "pmanko@uw.edu,"
+    "daniellrgn@gmail.com,"
     "ivanc@uw.edu,"
     "mcjustin@uw.edu,"
     "jflow2@uw.edu,"

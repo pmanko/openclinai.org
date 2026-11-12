@@ -685,4 +685,102 @@ def test_failed_validation_leaves_manifest_and_shells_untouched(tmp_path, monkey
     assert not (reports / "index.html").exists()
 
 
+def test_v2_editorial_manifest_sorts_strictly_newest_first_by_iso_date_and_rejects_non_iso(tmp_path, monkeypatch):
+    bri = _load()
+    reports = tmp_path / "reports"
+    assets = reports / "assets"
+    assets.mkdir(parents=True)
+    for asset_name in ("report-shell.css", "report-shell.js", "dashboard-shell.css", "dashboard-shell.js"):
+        (assets / asset_name).write_text("/* asset */\n", encoding="utf-8")
+
+    def _seed_v2(slug: str, iso_date: str, gen_at: str, title: str) -> None:
+        pkt = reports / slug
+        pkt.mkdir(parents=True)
+        ed = {
+            "schema": "openclinai.editorial.v2",
+            "schema_version": 2,
+            "slug": slug,
+            "title": title,
+            "summary": "We tested two clinical AI setups across three HIV patient charts and 35 clinical questions.",
+            "takeaway": "Med Agent Hub improved accuracy and completeness by 14 points with zero unsafe answers.",
+            "family": "chartsearchai",
+            "featured": True,
+            "date": iso_date,
+        }
+        (pkt / "editorial.json").write_text(json.dumps(ed), encoding="utf-8")
+        (pkt / "run-summary.json").write_text(
+            json.dumps(
+                {
+                    "schema": "openclinai.summary.v2",
+                    "schema_version": 2,
+                    "slug": slug,
+                    "report_family": "chartsearchai",
+                    "date": iso_date,
+                    "generated_at": gen_at,
+                    "cells": 2,
+                    "patients": "Fixture Patient",
+                    "scout": [{"backend": "arm-a", "n": 2, "benchmark_score": 88.0, "harm_count": 0}],
+                }
+            ),
+            encoding="utf-8",
+        )
+        (pkt / "report-data.json").write_text(
+            json.dumps(
+                {
+                    "schema": "openclinai.report.v2",
+                    "schema_version": 2,
+                    "runs": [
+                        {
+                            "id": slug,
+                            "backends": ["arm-a"],
+                            "judge": [{"backend": "arm-a", "n": 2, "benchmark_score": 88.0, "harm_count": 0}],
+                            "arm_cards": {"arm-a": {"title": "Arm A", "short_title": "Arm A"}},
+                            "scenarios": [{"scenario_id": "s1", "turns": [{"turn": 1, "question": "Q", "cells": {}}]}],
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        (pkt / "dashboard-data.json").write_text(
+            json.dumps({"schema": "openclinai.dashboard.v2", "schema_version": 2, "status": {}}),
+            encoding="utf-8",
+        )
+        (pkt / "index.html").write_text(
+            "<!doctype html><html><head><meta name='viewport' content='width=device-width, initial-scale=1'></head>"
+            f"<body><h1 id='report-title'>{title}</h1>"
+            f"<script type='application/json' id='report-editorial'>{json.dumps(ed)}</script>"
+            "<script type='application/json' id='report-data' data-src='./report-data.json?v=0'></script></body></html>",
+            encoding="utf-8",
+        )
+
+    _seed_v2("2026-11-05-older", "2026-11-05", "2026-11-05T10:00:00Z", "Older November clinical chart evaluation study")
+    _seed_v2("2026-11-11-newer", "2026-11-11", "2026-11-11T08:00:00Z", "Newest WAHS engine clinical retrieval evaluation")
+    _seed_v2("2026-11-10-middle-early", "2026-11-10", "2026-11-10T09:00:00Z", "Earlier same-day clinical chart grounding study")
+    _seed_v2("2026-11-10-middle-late", "2026-11-10", "2026-11-10T18:00:00Z", "Later same-day clinical chart grounding study")
+
+    manifest = reports / "reports-index.json"
+    manifest.write_text('{"runs": []}', encoding="utf-8")
+    bri.main(["--root", str(tmp_path), "--reports-root", str(reports)])
+
+    compiled = json.loads(manifest.read_text(encoding="utf-8"))
+    assert [r["slug"] for r in compiled["runs"]] == [
+        "2026-11-11-newer",
+        "2026-11-10-middle-late",
+        "2026-11-10-middle-early",
+        "2026-11-05-older",
+    ]
+    index_html = (reports / "index.html").read_text(encoding="utf-8")
+    assert "11 Nov 2026" in index_html
+
+    # Corrupting a v2 editorial date to a human string fails loud
+    bad_ed_path = reports / "2026-11-11-newer" / "editorial.json"
+    bad_ed = json.loads(bad_ed_path.read_text(encoding="utf-8"))
+    bad_ed["date"] = "11 Nov 2026"
+    bad_ed_path.write_text(json.dumps(bad_ed), encoding="utf-8")
+    with pytest.raises(ValueError, match="YYYY-MM-DD"):
+        bri.main(["--root", str(tmp_path), "--reports-root", str(reports), "--check-archive"])
+
+
+
 
