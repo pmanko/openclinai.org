@@ -124,7 +124,7 @@
       <div class="flow-diagram" tabindex="0" role="region" aria-label="WAHS Pilot Architecture Flow">[1. Client-Agnostic WAHS Frontends &amp; Server-Side BFF]
    • Unified responsive SvelteKit app (uwcirg/shl-ips) + interoperable mobile-first companion clients
    • Authenticate via Keycloak OIDC; read/write datasets via fhir-auth and share IPS via shl-server
-   • Browser posts chat turn + optional chart filter to app BFF (/api/chat, Vercel AI SDK) — never straight to GPU
+   • Browser posts chat turn + optional chart filter to app BFF (/api/chat, Vercel AI SDK), never straight to GPU
           │
           ▼  Internal network · OpenAI POST /v1/chat/completions (Bearer &lt;keycloak_jwt&gt; + optional wahs.chart_scope)
 [2. Standalone WAHS Engine Middleware (wahs-engine · Zero Med Agent Hub Dependency)]
@@ -155,7 +155,7 @@
           <span class="strategy-badge secondary">Session Isolation &amp; Timeliness</span>
           <h3>Prefix-cached follow-ups with strict HAPI invalidation</h3>
           <ul>
-            <li><strong>Cryptographic tenant boundary:</strong> Raw dataset caches key on <span class="code-inline">(verified_sub, dataset_id, lastUpdated)</span>, and condensed prompt prefixes key on <span class="code-inline">(verified_sub, datasets_fingerprint, scope_hash)</span>—preventing cross-user or cross-filter bleed.</li>
+            <li><strong>Cryptographic tenant boundary:</strong> Raw dataset caches key on <span class="code-inline">(verified_sub, dataset_id, lastUpdated)</span>, and condensed prompt prefixes key on <span class="code-inline">(verified_sub, datasets_fingerprint, scope_hash)</span>, preventing cross-user or cross-filter bleed.</li>
             <li><strong>Immediate record timeliness:</strong> Whenever a patient imports new EHR records, updates a goal, or deletes a dataset in HAPI, <code>meta.lastUpdated</code> shifts and rebuilds the condensed chart automatically.</li>
             <li><strong>Deterministic fallback:</strong> Placing the <span class="code-inline">[1]...[N]</span> condensed ledger first lets the GPU reuse its KV cache (&lt; 0.3s follow-up prefill), while any cache eviction simply recomputes the identical prompt.</li>
           </ul>
@@ -232,7 +232,7 @@
             <tr>
               <td><strong>4. GPU KV-Cache Slots</strong></td>
               <td>Ollama / vLLM VRAM</td>
-              <td>Stateless HTTP calls match the unchanged <span class="code-inline">messages[0]</span> token prefix automatically across <span class="code-inline">OLLAMA_NUM_PARALLEL</span> warm VRAM slots—cutting warm 32k follow-ups on UW CIRG H200 <span class="code-inline">MIG 2g.35gb</span> to <strong>2.5s–4.0s</strong> median latency with zero <span class="code-inline">session_id</span> and zero cross-patient bleed (slots activate only when the caller already sends matching patient tokens).</td>
+              <td>Stateless HTTP calls match the unchanged <span class="code-inline">messages[0]</span> token prefix automatically across <span class="code-inline">OLLAMA_NUM_PARALLEL</span> warm VRAM slots, cutting warm 32k follow-ups on UW CIRG H200 <span class="code-inline">MIG 2g.35gb</span> to <strong>2.5s–4.0s</strong> median latency with zero <span class="code-inline">session_id</span> and zero cross-patient bleed (slots activate only when the caller already sends matching patient tokens).</td>
             </tr>
           </tbody>
         </table>
@@ -266,7 +266,7 @@
             <tr>
               <td><strong>4. Explicit Sharing Posture</strong></td>
               <td><code>sharing_posture</code></td>
-              <td>Separates private patient self-Q&amp;A (<span class="code-inline">patient_self</span>) from explicit external summary/IPS sharing (<span class="code-inline">external_share</span>, 0/288 leaks across 3 seeds).</td>
+              <td>Separates private patient self-Q&amp;A (<span class="code-inline">patient_self</span>) from explicit external summary/IPS sharing (<span class="code-inline">external_share</span>).</td>
             </tr>
           </tbody>
         </table>
@@ -359,8 +359,8 @@ Content-Type: application/json
             <tr>
               <td><strong>4</strong></td>
               <td><strong>Seed Shared Dev Stack &amp; Verify Session Isolation / Cache Timeliness</strong></td>
-              <td>Pre-seed <span class="code-inline">wahs-environments</span> with multi-source personas and historical Connectathon test accounts, and enforce automated gates across three invariants—<strong>Security:</strong> zero cross-user <span class="code-inline">sub</span>, session ID, or KV prefix bleed and 0/288 external-share privacy leaks; <strong>Data timeliness:</strong> immediate cache invalidation whenever HAPI <span class="code-inline">meta.lastUpdated</span> changes; <strong>Reliability:</strong> cache misses or restarts never alter clinical output.</td>
-              <td><span class="safe-pill">Verified</span><br /><a href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">0/288 Leaks Verified ↗</a></td>
+              <td>Pre-seed <span class="code-inline">wahs-environments</span> with multi-source personas and historical Connectathon test accounts, and enforce automated gates across three invariants. <strong>Security:</strong> zero cross-user <span class="code-inline">sub</span>, session ID, or KV prefix bleed, and no external-share privacy leaks; <strong>Data timeliness:</strong> immediate cache invalidation whenever HAPI <span class="code-inline">meta.lastUpdated</span> changes; <strong>Reliability:</strong> cache misses or restarts never alter clinical output.</td>
+              <td><span class="safe-pill">Verified</span><br /><a href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">Verification report ↗</a></td>
             </tr>
             <tr>
               <td><strong>5</strong></td>
@@ -417,13 +417,13 @@ Content-Type: application/json
               <td><span class="code-inline">8k</span> / <span class="code-inline">4k</span></td>
               <td><strong>Recommended Limit sweet spot:</strong> preserves active conditions, active medications, allergies, immunizations, and folded lab trajectories.</td>
               <td><code>0</code> on typical charts; non-zero on multi-decade exports</td>
-              <td><strong>Conditional</strong> — runs only when <code>omitted_clinical_items &gt; 0</code></td>
+              <td><strong>Conditional</strong>: runs only when <code>omitted_clinical_items &gt; 0</code></td>
             </tr>
             <tr>
               <td><span class="code-inline">2k</span> / <span class="code-inline">1k</span></td>
               <td>Strict HL7 IPS Safety Core micro-capsule; older clinical notes and routine historical lab panels overflow the ceiling.</td>
               <td><code>omitted_clinical_items &gt; 0</code></td>
-              <td><strong>Active</strong> — <code>wahs_tools.py</code> recovers question-matched notes and labs with sequential <code>[N]</code> citations</td>
+              <td><strong>Active</strong>: <code>wahs_tools.py</code> recovers question-matched notes and labs with sequential <code>[N]</code> citations</td>
             </tr>
           </tbody>
         </table>
@@ -477,7 +477,7 @@ Content-Type: application/json
 
           <div class="flow-diagram" tabindex="0" role="region" aria-label="Example WAHS Clinical Context Enrichment block">[WAHS CLINICAL CONTEXT ENRICHMENT]
 1. Tier-0 Overflow Recovery (ACTIVE: omitted_clinical_items=6 [clinical_note=2, lab_observation=4]; recovered=3 records via wahs_tools):
-[6] (2026-01-18) Tier-0 Recovered Clinical Note: Outside Urgent Care Walk-In Note — Walk-in visit at UrgentCare Plus Medical Center: Holding spironolactone pending repeat potassium check... [UUID: note-outside-urgentcare-99]
+[6] (2026-01-18) Tier-0 Recovered Clinical Note: Outside Urgent Care Walk-In Note. Walk-in visit at UrgentCare Plus Medical Center: Holding spironolactone pending repeat potassium check... [UUID: note-outside-urgentcare-99]
 2. Patient Clinical Entity Subgraph (8 nodes, 7 edges):
 - [7] Spironolactone 25 MG Oral Tablet --[CONTRAINDICATED_OR_DOSE_ADJUST_IN]--&gt; [10] Potassium (latest 5.6 mEq/L) | RAAS / MRA cardiorenal safety
 - [5] Heart failure --[CONTRADICTED_OR_MODIFIED_BY_NOTE]--&gt; [11] Heart failure (RESOLVED) | Cross-clinic status discrepancy (ACTIVE vs. RESOLVED)
