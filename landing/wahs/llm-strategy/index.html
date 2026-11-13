@@ -462,8 +462,8 @@ Question: What are my diabetes labs?</pre>
               <p>The KV cache is the model’s short-term memory of text it has just read. It is not the knowledge base (KB). The model skips re-reading only when a new request starts with exactly the same text. Every request starts with one patient’s own chart, so another patient’s request cannot match it.</p>
             </article>
             <article class="faq">
-              <h3>The chart is rebuilt only when the record changes</h3>
-              <p>The engine checks the record store on every question. If the patient imported records or edited an entry, only that part is fetched again and the chart is condensed again. This takes about a tenth of a second.</p>
+              <h3>The chart is rebuilt when the record store reports a change</h3>
+              <p>The engine checks the record store on every question. When the store reports that part of the record has changed, only that part is fetched again and the chart is condensed again. This takes about a tenth of a second.</p>
             </article>
             <article class="faq">
               <h3>Chart size is a setting, about 8,000 tokens by default</h3>
@@ -498,7 +498,7 @@ Question: What are my diabetes labs?</pre>
                 <li>The engine runs as its own small service.</li>
                 <li>It reads records only with the patient’s sign-in.</li>
                 <li>The web app and a mobile front end both reach it through their own servers, in the development setup.</li>
-                <li>Checks for cross-patient leaks and stale charts pass.</li>
+                <li>Automated checks for cross-patient leaks and stale charts pass.</li>
                 <li>The three approaches were compared across 384 runs.</li>
               </ul>
             </div>
