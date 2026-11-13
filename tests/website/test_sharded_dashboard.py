@@ -139,7 +139,7 @@ def test_sharded_dashboard_stage_validate_and_preview(tmp_path: Path) -> None:
         takeaway="Only the arm shard requested by a cell click is staged and validated without inline bloat.",
         family="wahs",
         reports_root=reports_out,
-        root=tmp_path,
+        root=ROOT,
     )
     staged_dir = staged_index.parent
     staged_shard = staged_dir / "dashboard-details" / "00-arm-a-12345678.json"
@@ -147,8 +147,9 @@ def test_sharded_dashboard_stage_validate_and_preview(tmp_path: Path) -> None:
     staged_shard_data = json.loads(staged_shard.read_text(encoding="utf-8"))
     assert staged_shard_data["s1|arm-a"]["turns"][0]["answer"] == "Lisinopril 10 mg daily [1]."
 
-    issues = index_mod.validate_archive(reports_out, reports_out / "reports-index.json")
-    assert issues == [], issues
+    manifest = json.loads((reports_out / "reports-index.json").read_text(encoding="utf-8"))
+    runs_list = manifest["runs"] if isinstance(manifest, dict) else manifest
+    index_mod.validate_archive(runs_list, reports_out)
 
     # Preview server serves dashboard-details/*.json with 200 and rejects path traversal.
     srv = preview_mod.create_preview_server(
@@ -168,6 +169,11 @@ def test_sharded_dashboard_stage_validate_and_preview(tmp_path: Path) -> None:
     finally:
         srv.shutdown()
         srv.server_close()
+
+    # Deleting a referenced detail shard causes validate_archive to fail closed.
+    staged_shard.unlink()
+    with pytest.raises(ValueError, match="referenced in detail_shards is missing"):
+        index_mod.validate_archive(runs_list, reports_out)
 
 
 def test_sharded_dashboard_rejects_missing_and_unexpected_keys(tmp_path: Path) -> None:
