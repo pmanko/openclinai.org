@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>WAHS AI Architecture &amp; Model Strategy — OpenClinAI</title>
+  <title>WAHS AI Architecture &amp; Model Strategy · OpenClinAI</title>
   <meta name="description" content="Plain-language guide to how Washington Health Summary (WAHS) answers patient questions with open-weight AI: the system components, a worked example, the three approaches compared, the pilot model, and project status." />
   <link rel="canonical" href="https://openclinai.org/wahs/llm-strategy/" />
   <meta property="og:url" content="https://openclinai.org/wahs/llm-strategy/" />
@@ -98,7 +98,7 @@
           <p class="section-kicker">Washington Health Summary (WAHS) · AI strategy</p>
           <h1>WAHS AI architecture and model strategy.</h1>
           <p class="overview-lead">
-            When a patient asks about their health record, the AI needs the right parts of that record. It must never see another patient’s data, large records still have to fit, and the answer should not take long. This page explains the approach the UW CIRG &amp; WAHS team chose, the evidence behind it, and what is still open.
+            When a patient asks about their health record, the AI needs the right parts of that record. It must never see another patient’s data, large records still have to fit, and the answer should not take long. This page explains the approach the UW CIRG &amp; WAHS team chose and the evidence behind it.
           </p>
           <p class="strategy-meta">
             Updated November 2026 · Written for the whole project team · Developers: <a href="/wahs/engine-reference/index.html">Engine reference <span aria-hidden="true">→</span></a>
@@ -110,7 +110,6 @@
               <li><strong>Condense the record first.</strong> The engine shrinks the patient’s record into a short, numbered summary and sends it to the model with the question, in one call.</li>
               <li><strong>A small middle service does that work.</strong> The WAHS engine sits between the WAHS app and the model server, so the app stays simple and the model can be swapped.</li>
               <li><strong>One model for the pilot: Gemma 4 12B.</strong> It scored within 1.6 points of the largest model tested and gave the fewest unsafe answers.</li>
-              <li><strong>Next:</strong> run it in the team’s shared test environment, then test long clinical notes and very large records.</li>
             </ol>
           </div>
 
@@ -318,6 +317,7 @@ Question: What are my diabetes labs?</pre>
         </section>
 
         <section class="strategy-section" id="test-evidence" aria-labelledby="evidence-title" tabindex="-1">
+          <span id="questions-and-evidence"></span>
           <p class="section-kicker">Test evidence</p>
           <h2 id="evidence-title">Five findings that support the design</h2>
           <p>
@@ -490,11 +490,10 @@ Question: What are my diabetes labs?</pre>
 
         <section class="strategy-section" id="status" aria-labelledby="status-title" tabindex="-1">
           <p class="section-kicker">Project status</p>
-          <h2 id="status-title">The engine is built and verified in development; shared testing is next</h2>
+          <h2 id="status-title">The engine is built and verified in the development setup</h2>
 
           <div class="status-cols">
             <div class="status-col">
-              <h3>Completed</h3>
               <ul>
                 <li>The engine runs as its own small service.</li>
                 <li>It reads records only with the patient’s sign-in.</li>
@@ -503,27 +502,10 @@ Question: What are my diabetes labs?</pre>
                 <li>The three approaches were compared across 384 runs.</li>
               </ul>
             </div>
-            <div class="status-col">
-              <h3>Next steps</h3>
-              <ul>
-                <li>Run the engine in the team’s shared test environment.</li>
-                <li>Set up the shared GPU server for several people at once.</li>
-                <li>Test long notes and records over 100 MB.</li>
-                <li>Prepare for ONC/ASTP EHIgnite Phase 2.</li>
-              </ul>
-            </div>
-            <div class="status-col">
-              <h3>Open decisions</h3>
-              <ul>
-                <li>Whether note search is on for the pilot.</li>
-                <li>The default chart size, currently 8,000 tokens.</li>
-                <li>The shared test accounts and records for the team.</li>
-              </ul>
-            </div>
           </div>
 
           <p class="strategy-note">
-            Each finished item links to its evidence in the <a href="/wahs/engine-reference/index.html#action-plan">build record <span aria-hidden="true">→</span></a>.
+            Each item links to its evidence in the <a href="/wahs/engine-reference/index.html#action-plan">build record <span aria-hidden="true">→</span></a>.
           </p>
         </section>
 
