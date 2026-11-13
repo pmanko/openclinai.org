@@ -1,0 +1,2626 @@
+{
+  "schema": "openclinai.summary.v2",
+  "schema_version": 2,
+  "run_id": "c58762df-9eb5-4489-9251-f5cd788f5ee7",
+  "family": "wahs",
+  "report_family": "wahs",
+  "component": "wahs-evaluation",
+  "dataset_id": "wahs-synthetic-r4",
+  "date": "2026-11-12",
+  "generated_at": "2026-11-13T03:56:05.874219+00:00",
+  "git_sha": "fa53b7e",
+  "reference_date": "2026-11-11",
+  "scenarios": 50,
+  "turns": 50,
+  "cells": 900,
+  "backends": [
+    "wahs-engine-chart:ollama/gemma4:e4b@16k",
+    "wahs-engine-kb:ollama/gemma4:e4b@16k",
+    "wahs-engine-rag:ollama/gemma4:e4b@16k",
+    "wahs-engine-chart:ollama/gemma4:e4b@32k",
+    "wahs-engine-kb:ollama/gemma4:e4b@32k",
+    "wahs-engine-rag:ollama/gemma4:e4b@32k",
+    "wahs-engine-chart:ollama/gemma4:12b@16k",
+    "wahs-engine-kb:ollama/gemma4:12b@16k",
+    "wahs-engine-rag:ollama/gemma4:12b@16k",
+    "wahs-engine-chart:ollama/gemma4:12b@32k",
+    "wahs-engine-kb:ollama/gemma4:12b@32k",
+    "wahs-engine-rag:ollama/gemma4:12b@32k",
+    "wahs-engine-chart:ollama/gemma4:26b@16k",
+    "wahs-engine-kb:ollama/gemma4:26b@16k",
+    "wahs-engine-rag:ollama/gemma4:26b@16k",
+    "wahs-engine-chart:ollama/gemma4:26b@32k",
+    "wahs-engine-kb:ollama/gemma4:26b@32k",
+    "wahs-engine-rag:ollama/gemma4:26b@32k"
+  ],
+  "patients": "2 complex ICU & multi-clinic patients · 50 clinical questions × 18 setups",
+  "scout": [
+    {
+      "backend": "wahs-engine-chart:ollama/gemma4:e4b@16k",
+      "n": 50,
+      "accuracy_mean": 8.12,
+      "completeness_mean": 7.6,
+      "relevance_mean": 7.92,
+      "harm_count": 7,
+      "benchmark_score": 73.4,
+      "benchmark_spread": {
+        "min": 10.0,
+        "max": 100.0
+      },
+      "confabulation_count": 2,
+      "fabricated_citation_count": 2,
+      "abstention": {
+        "n-a": 27,
+        "correct": 18,
+        "over-abstained": 3,
+        "failed-to-abstain": 2
+      },
+      "groundedness": {
+        "partly": 23,
+        "supported": 19,
+        "unsupported": 2,
+        "n-a": 6
+      },
+      "temporal": {
+        "date_wrong": 4,
+        "date_minor": 6,
+        "window_over": 5,
+        "trend_fab": 0
+      },
+      "citation_resolution": {
+        "n_refs": 247,
+        "n_resolved": 247,
+        "n_unresolved": 0,
+        "rate": 1.0
+      },
+      "background": {
+        "n_background": 0,
+        "benchmark_score": null,
+        "benchmark_spread": {
+          "min": null,
+          "max": null
+        },
+        "support_mean": null,
+        "added_value_mean": null,
+        "new_harm_count": 0,
+        "padded_count": 0,
+        "claims_total": 0
+      },
+      "comprehensiveness_mean": 7.6,
+      "missing_context_count": 0,
+      "critical_omission_count": 0,
+      "critical_omission_rate": 0.0,
+      "fabrication_count": 4,
+      "severe_harm_count": 7,
+      "severe_harm_rate": 0.14,
+      "severe_rate": 0.14,
+      "safety_pass_rate": 0.86,
+      "safety_gate_passed": false,
+      "safety_adjusted_benchmark_score": 67.3,
+      "safety_adjusted_benchmark_spread": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "domain_scores": {
+        "accuracy": 77.5,
+        "usefulness": 77.1,
+        "safety": 86.0,
+        "harmonic_mean": 80.0
+      }
+    },
+    {
+      "backend": "wahs-engine-kb:ollama/gemma4:e4b@16k",
+      "n": 50,
+      "accuracy_mean": 8.38,
+      "completeness_mean": 7.8,
+      "relevance_mean": 8.02,
+      "harm_count": 7,
+      "benchmark_score": 74.9,
+      "benchmark_spread": {
+        "min": 9.0,
+        "max": 100.0
+      },
+      "confabulation_count": 1,
+      "fabricated_citation_count": 5,
+      "abstention": {
+        "n-a": 29,
+        "correct": 18,
+        "over-abstained": 2,
+        "failed-to-abstain": 1
+      },
+      "groundedness": {
+        "partly": 17,
+        "unsupported": 5,
+        "supported": 22,
+        "n-a": 6
+      },
+      "temporal": {
+        "date_wrong": 5,
+        "date_minor": 6,
+        "window_over": 9,
+        "trend_fab": 1
+      },
+      "citation_resolution": {
+        "n_refs": 211,
+        "n_resolved": 211,
+        "n_unresolved": 0,
+        "rate": 1.0
+      },
+      "background": {
+        "n_background": 0,
+        "benchmark_score": null,
+        "benchmark_spread": {
+          "min": null,
+          "max": null
+        },
+        "support_mean": null,
+        "added_value_mean": null,
+        "new_harm_count": 0,
+        "padded_count": 0,
+        "claims_total": 0
+      },
+      "comprehensiveness_mean": 7.8,
+      "missing_context_count": 0,
+      "critical_omission_count": 0,
+      "critical_omission_rate": 0.0,
+      "fabrication_count": 7,
+      "severe_harm_count": 7,
+      "severe_harm_rate": 0.14,
+      "severe_rate": 0.14,
+      "safety_pass_rate": 0.86,
+      "safety_gate_passed": false,
+      "safety_adjusted_benchmark_score": 70.1,
+      "safety_adjusted_benchmark_spread": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "domain_scores": {
+        "accuracy": 79.6,
+        "usefulness": 78.7,
+        "safety": 86.0,
+        "harmonic_mean": 81.3
+      }
+    },
+    {
+      "backend": "wahs-engine-rag:ollama/gemma4:e4b@16k",
+      "n": 50,
+      "accuracy_mean": 8.22,
+      "completeness_mean": 7.82,
+      "relevance_mean": 7.4,
+      "harm_count": 4,
+      "benchmark_score": 73.7,
+      "benchmark_spread": {
+        "min": 17.0,
+        "max": 100.0
+      },
+      "confabulation_count": 2,
+      "fabricated_citation_count": 1,
+      "abstention": {
+        "n-a": 30,
+        "correct": 17,
+        "failed-to-abstain": 2,
+        "over-abstained": 1
+      },
+      "groundedness": {
+        "partly": 27,
+        "supported": 19,
+        "n-a": 3,
+        "unsupported": 1
+      },
+      "temporal": {
+        "date_wrong": 3,
+        "date_minor": 7,
+        "window_over": 10,
+        "trend_fab": 3
+      },
+      "citation_resolution": {
+        "n_refs": 397,
+        "n_resolved": 397,
+        "n_unresolved": 0,
+        "rate": 1.0
+      },
+      "background": {
+        "n_background": 0,
+        "benchmark_score": null,
+        "benchmark_spread": {
+          "min": null,
+          "max": null
+        },
+        "support_mean": null,
+        "added_value_mean": null,
+        "new_harm_count": 0,
+        "padded_count": 0,
+        "claims_total": 0
+      },
+      "comprehensiveness_mean": 7.82,
+      "missing_context_count": 0,
+      "critical_omission_count": 0,
+      "critical_omission_rate": 0.0,
+      "fabrication_count": 6,
+      "severe_harm_count": 4,
+      "severe_harm_rate": 0.08,
+      "severe_rate": 0.08,
+      "safety_pass_rate": 0.92,
+      "safety_gate_passed": false,
+      "safety_adjusted_benchmark_score": 69.6,
+      "safety_adjusted_benchmark_spread": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "domain_scores": {
+        "accuracy": 77.9,
+        "usefulness": 76.8,
+        "safety": 92.0,
+        "harmonic_mean": 81.7
+      }
+    },
+    {
+      "backend": "wahs-engine-chart:ollama/gemma4:e4b@32k",
+      "n": 50,
+      "accuracy_mean": 7.92,
+      "completeness_mean": 7.16,
+      "relevance_mean": 7.74,
+      "harm_count": 5,
+      "benchmark_score": 70.5,
+      "benchmark_spread": {
+        "min": 3.0,
+        "max": 100.0
+      },
+      "confabulation_count": 1,
+      "fabricated_citation_count": 4,
+      "abstention": {
+        "n-a": 25,
+        "correct": 19,
+        "over-abstained": 5,
+        "failed-to-abstain": 1
+      },
+      "groundedness": {
+        "partly": 20,
+        "unsupported": 4,
+        "supported": 21,
+        "n-a": 5
+      },
+      "temporal": {
+        "date_wrong": 8,
+        "date_minor": 1,
+        "window_over": 4,
+        "trend_fab": 0
+      },
+      "citation_resolution": {
+        "n_refs": 328,
+        "n_resolved": 328,
+        "n_unresolved": 0,
+        "rate": 1.0
+      },
+      "background": {
+        "n_background": 0,
+        "benchmark_score": null,
+        "benchmark_spread": {
+          "min": null,
+          "max": null
+        },
+        "support_mean": null,
+        "added_value_mean": null,
+        "new_harm_count": 0,
+        "padded_count": 0,
+        "claims_total": 0
+      },
+      "comprehensiveness_mean": 7.16,
+      "missing_context_count": 0,
+      "critical_omission_count": 0,
+      "critical_omission_rate": 0.0,
+      "fabrication_count": 5,
+      "severe_harm_count": 5,
+      "severe_harm_rate": 0.1,
+      "severe_rate": 0.1,
+      "safety_pass_rate": 0.9,
+      "safety_gate_passed": false,
+      "safety_adjusted_benchmark_score": 65.3,
+      "safety_adjusted_benchmark_spread": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "domain_scores": {
+        "accuracy": 75.1,
+        "usefulness": 73.5,
+        "safety": 90.0,
+        "harmonic_mean": 78.9
+      }
+    },
+    {
+      "backend": "wahs-engine-kb:ollama/gemma4:e4b@32k",
+      "n": 50,
+      "accuracy_mean": 8.12,
+      "completeness_mean": 7.4,
+      "relevance_mean": 8.12,
+      "harm_count": 7,
+      "benchmark_score": 72.5,
+      "benchmark_spread": {
+        "min": 9.0,
+        "max": 100.0
+      },
+      "confabulation_count": 1,
+      "fabricated_citation_count": 6,
+      "abstention": {
+        "n-a": 27,
+        "correct": 19,
+        "over-abstained": 3,
+        "failed-to-abstain": 1
+      },
+      "groundedness": {
+        "supported": 23,
+        "partly": 16,
+        "unsupported": 6,
+        "n-a": 5
+      },
+      "temporal": {
+        "date_wrong": 7,
+        "date_minor": 2,
+        "window_over": 6,
+        "trend_fab": 0
+      },
+      "citation_resolution": {
+        "n_refs": 298,
+        "n_resolved": 298,
+        "n_unresolved": 0,
+        "rate": 1.0
+      },
+      "background": {
+        "n_background": 0,
+        "benchmark_score": null,
+        "benchmark_spread": {
+          "min": null,
+          "max": null
+        },
+        "support_mean": null,
+        "added_value_mean": null,
+        "new_harm_count": 0,
+        "padded_count": 0,
+        "claims_total": 0
+      },
+      "comprehensiveness_mean": 7.4,
+      "missing_context_count": 0,
+      "critical_omission_count": 0,
+      "critical_omission_rate": 0.0,
+      "fabrication_count": 7,
+      "severe_harm_count": 7,
+      "severe_harm_rate": 0.14,
+      "severe_rate": 0.14,
+      "safety_pass_rate": 0.86,
+      "safety_gate_passed": false,
+      "safety_adjusted_benchmark_score": 67.4,
+      "safety_adjusted_benchmark_spread": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "domain_scores": {
+        "accuracy": 77.2,
+        "usefulness": 76.4,
+        "safety": 86.0,
+        "harmonic_mean": 79.6
+      }
+    },
+    {
+      "backend": "wahs-engine-rag:ollama/gemma4:e4b@32k",
+      "n": 50,
+      "accuracy_mean": 7.62,
+      "completeness_mean": 7.32,
+      "relevance_mean": 7.38,
+      "harm_count": 8,
+      "benchmark_score": 67.6,
+      "benchmark_spread": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "confabulation_count": 4,
+      "fabricated_citation_count": 3,
+      "abstention": {
+        "n-a": 25,
+        "correct": 20,
+        "failed-to-abstain": 4,
+        "over-abstained": 1
+      },
+      "groundedness": {
+        "partly": 31,
+        "supported": 13,
+        "unsupported": 3,
+        "n-a": 3
+      },
+      "temporal": {
+        "date_wrong": 4,
+        "date_minor": 3,
+        "window_over": 9,
+        "trend_fab": 1
+      },
+      "citation_resolution": {
+        "n_refs": 300,
+        "n_resolved": 300,
+        "n_unresolved": 0,
+        "rate": 1.0
+      },
+      "background": {
+        "n_background": 0,
+        "benchmark_score": null,
+        "benchmark_spread": {
+          "min": null,
+          "max": null
+        },
+        "support_mean": null,
+        "added_value_mean": null,
+        "new_harm_count": 0,
+        "padded_count": 0,
+        "claims_total": 0
+      },
+      "comprehensiveness_mean": 7.32,
+      "missing_context_count": 0,
+      "critical_omission_count": 0,
+      "critical_omission_rate": 0.0,
+      "fabrication_count": 7,
+      "severe_harm_count": 8,
+      "severe_harm_rate": 0.16,
+      "severe_rate": 0.16,
+      "safety_pass_rate": 0.84,
+      "safety_gate_passed": false,
+      "safety_adjusted_benchmark_score": 61.7,
+      "safety_adjusted_benchmark_spread": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "domain_scores": {
+        "accuracy": 71.2,
+        "usefulness": 73.4,
+        "safety": 84.0,
+        "harmonic_mean": 75.8
+      }
+    },
+    {
+      "backend": "wahs-engine-chart:ollama/gemma4:12b@16k",
+      "n": 50,
+      "accuracy_mean": 8.58,
+      "completeness_mean": 7.86,
+      "relevance_mean": 8.36,
+      "harm_count": 5,
+      "benchmark_score": 79.6,
+      "benchmark_spread": {
+        "min": 19.0,
+        "max": 100.0
+      },
+      "confabulation_count": 2,
+      "fabricated_citation_count": 0,
+      "abstention": {
+        "n-a": 30,
+        "correct": 17,
+        "failed-to-abstain": 2,
+        "over-abstained": 1
+      },
+      "groundedness": {
+        "partly": 9,
+        "n-a": 10,
+        "supported": 31
+      },
+      "temporal": {
+        "date_wrong": 2,
+        "date_minor": 4,
+        "window_over": 2,
+        "trend_fab": 0
+      },
+      "citation_resolution": {
+        "n_refs": 275,
+        "n_resolved": 275,
+        "n_unresolved": 0,
+        "rate": 1.0
+      },
+      "background": {
+        "n_background": 0,
+        "benchmark_score": null,
+        "benchmark_spread": {
+          "min": null,
+          "max": null
+        },
+        "support_mean": null,
+        "added_value_mean": null,
+        "new_harm_count": 0,
+        "padded_count": 0,
+        "claims_total": 0
+      },
+      "comprehensiveness_mean": 7.86,
+      "missing_context_count": 0,
+      "critical_omission_count": 0,
+      "critical_omission_rate": 0.0,
+      "fabrication_count": 2,
+      "severe_harm_count": 5,
+      "severe_harm_rate": 0.1,
+      "severe_rate": 0.1,
+      "safety_pass_rate": 0.9,
+      "safety_gate_passed": false,
+      "safety_adjusted_benchmark_score": 74.1,
+      "safety_adjusted_benchmark_spread": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "domain_scores": {
+        "accuracy": 84.1,
+        "usefulness": 80.3,
+        "safety": 90.0,
+        "harmonic_mean": 84.6
+      }
+    },
+    {
+      "backend": "wahs-engine-kb:ollama/gemma4:12b@16k",
+      "n": 50,
+      "accuracy_mean": 8.24,
+      "completeness_mean": 7.92,
+      "relevance_mean": 8.3,
+      "harm_count": 5,
+      "benchmark_score": 78.0,
+      "benchmark_spread": {
+        "min": 15.0,
+        "max": 100.0
+      },
+      "confabulation_count": 2,
+      "fabricated_citation_count": 0,
+      "abstention": {
+        "n-a": 30,
+        "correct": 17,
+        "failed-to-abstain": 2,
+        "over-abstained": 1
+      },
+      "groundedness": {
+        "partly": 11,
+        "supported": 31,
+        "n-a": 8
+      },
+      "temporal": {
+        "date_wrong": 3,
+        "date_minor": 1,
+        "window_over": 5,
+        "trend_fab": 0
+      },
+      "citation_resolution": {
+        "n_refs": 279,
+        "n_resolved": 279,
+        "n_unresolved": 0,
+        "rate": 1.0
+      },
+      "background": {
+        "n_background": 0,
+        "benchmark_score": null,
+        "benchmark_spread": {
+          "min": null,
+          "max": null
+        },
+        "support_mean": null,
+        "added_value_mean": null,
+        "new_harm_count": 0,
+        "padded_count": 0,
+        "claims_total": 0
+      },
+      "comprehensiveness_mean": 7.92,
+      "missing_context_count": 0,
+      "critical_omission_count": 0,
+      "critical_omission_rate": 0.0,
+      "fabrication_count": 2,
+      "severe_harm_count": 5,
+      "severe_harm_rate": 0.1,
+      "severe_rate": 0.1,
+      "safety_pass_rate": 0.9,
+      "safety_gate_passed": false,
+      "safety_adjusted_benchmark_score": 72.8,
+      "safety_adjusted_benchmark_spread": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "domain_scores": {
+        "accuracy": 80.4,
+        "usefulness": 80.5,
+        "safety": 90.0,
+        "harmonic_mean": 83.4
+      }
+    },
+    {
+      "backend": "wahs-engine-rag:ollama/gemma4:12b@16k",
+      "n": 50,
+      "accuracy_mean": 8.18,
+      "completeness_mean": 7.9,
+      "relevance_mean": 8.28,
+      "harm_count": 5,
+      "benchmark_score": 76.9,
+      "benchmark_spread": {
+        "min": 27.0,
+        "max": 100.0
+      },
+      "confabulation_count": 1,
+      "fabricated_citation_count": 0,
+      "abstention": {
+        "n-a": 30,
+        "correct": 19,
+        "failed-to-abstain": 1
+      },
+      "groundedness": {
+        "partly": 21,
+        "supported": 23,
+        "n-a": 6
+      },
+      "temporal": {
+        "date_wrong": 4,
+        "date_minor": 2,
+        "window_over": 7,
+        "trend_fab": 1
+      },
+      "citation_resolution": {
+        "n_refs": 337,
+        "n_resolved": 337,
+        "n_unresolved": 0,
+        "rate": 1.0
+      },
+      "background": {
+        "n_background": 0,
+        "benchmark_score": null,
+        "benchmark_spread": {
+          "min": null,
+          "max": null
+        },
+        "support_mean": null,
+        "added_value_mean": null,
+        "new_harm_count": 0,
+        "padded_count": 0,
+        "claims_total": 0
+      },
+      "comprehensiveness_mean": 7.9,
+      "missing_context_count": 0,
+      "critical_omission_count": 0,
+      "critical_omission_rate": 0.0,
+      "fabrication_count": 2,
+      "severe_harm_count": 5,
+      "severe_harm_rate": 0.1,
+      "severe_rate": 0.1,
+      "safety_pass_rate": 0.9,
+      "safety_gate_passed": false,
+      "safety_adjusted_benchmark_score": 71.3,
+      "safety_adjusted_benchmark_spread": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "domain_scores": {
+        "accuracy": 79.0,
+        "usefulness": 80.3,
+        "safety": 90.0,
+        "harmonic_mean": 82.8
+      }
+    },
+    {
+      "backend": "wahs-engine-chart:ollama/gemma4:12b@32k",
+      "n": 50,
+      "accuracy_mean": 8.36,
+      "completeness_mean": 7.28,
+      "relevance_mean": 8.26,
+      "harm_count": 6,
+      "benchmark_score": 75.7,
+      "benchmark_spread": {
+        "min": 15.0,
+        "max": 100.0
+      },
+      "confabulation_count": 1,
+      "fabricated_citation_count": 1,
+      "abstention": {
+        "n-a": 28,
+        "correct": 18,
+        "failed-to-abstain": 1,
+        "over-abstained": 3
+      },
+      "groundedness": {
+        "supported": 23,
+        "partly": 13,
+        "n-a": 13,
+        "unsupported": 1
+      },
+      "temporal": {
+        "date_wrong": 2,
+        "date_minor": 2,
+        "window_over": 1,
+        "trend_fab": 0
+      },
+      "citation_resolution": {
+        "n_refs": 249,
+        "n_resolved": 249,
+        "n_unresolved": 0,
+        "rate": 1.0
+      },
+      "background": {
+        "n_background": 0,
+        "benchmark_score": null,
+        "benchmark_spread": {
+          "min": null,
+          "max": null
+        },
+        "support_mean": null,
+        "added_value_mean": null,
+        "new_harm_count": 0,
+        "padded_count": 0,
+        "claims_total": 0
+      },
+      "comprehensiveness_mean": 7.28,
+      "missing_context_count": 0,
+      "critical_omission_count": 0,
+      "critical_omission_rate": 0.0,
+      "fabrication_count": 2,
+      "severe_harm_count": 6,
+      "severe_harm_rate": 0.12,
+      "severe_rate": 0.12,
+      "safety_pass_rate": 0.88,
+      "safety_gate_passed": false,
+      "safety_adjusted_benchmark_score": 68.9,
+      "safety_adjusted_benchmark_spread": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "domain_scores": {
+        "accuracy": 81.7,
+        "usefulness": 76.1,
+        "safety": 88.0,
+        "harmonic_mean": 81.6
+      }
+    },
+    {
+      "backend": "wahs-engine-kb:ollama/gemma4:12b@32k",
+      "n": 50,
+      "accuracy_mean": 8.08,
+      "completeness_mean": 7.42,
+      "relevance_mean": 8.2,
+      "harm_count": 5,
+      "benchmark_score": 74.5,
+      "benchmark_spread": {
+        "min": 19.0,
+        "max": 100.0
+      },
+      "confabulation_count": 3,
+      "fabricated_citation_count": 1,
+      "abstention": {
+        "n-a": 28,
+        "correct": 17,
+        "failed-to-abstain": 3,
+        "over-abstained": 2
+      },
+      "groundedness": {
+        "supported": 25,
+        "n-a": 11,
+        "partly": 13,
+        "unsupported": 1
+      },
+      "temporal": {
+        "date_wrong": 4,
+        "date_minor": 3,
+        "window_over": 2,
+        "trend_fab": 0
+      },
+      "citation_resolution": {
+        "n_refs": 274,
+        "n_resolved": 274,
+        "n_unresolved": 0,
+        "rate": 1.0
+      },
+      "background": {
+        "n_background": 0,
+        "benchmark_score": null,
+        "benchmark_spread": {
+          "min": null,
+          "max": null
+        },
+        "support_mean": null,
+        "added_value_mean": null,
+        "new_harm_count": 0,
+        "padded_count": 0,
+        "claims_total": 0
+      },
+      "comprehensiveness_mean": 7.42,
+      "missing_context_count": 0,
+      "critical_omission_count": 0,
+      "critical_omission_rate": 0.0,
+      "fabrication_count": 4,
+      "severe_harm_count": 5,
+      "severe_harm_rate": 0.1,
+      "severe_rate": 0.1,
+      "safety_pass_rate": 0.9,
+      "safety_gate_passed": false,
+      "safety_adjusted_benchmark_score": 68.5,
+      "safety_adjusted_benchmark_spread": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "domain_scores": {
+        "accuracy": 78.2,
+        "usefulness": 76.8,
+        "safety": 90.0,
+        "harmonic_mean": 81.3
+      }
+    },
+    {
+      "backend": "wahs-engine-rag:ollama/gemma4:12b@32k",
+      "n": 50,
+      "accuracy_mean": 8.08,
+      "completeness_mean": 7.6,
+      "relevance_mean": 8.1,
+      "harm_count": 6,
+      "benchmark_score": 74.3,
+      "benchmark_spread": {
+        "min": 15.0,
+        "max": 100.0
+      },
+      "confabulation_count": 2,
+      "fabricated_citation_count": 0,
+      "abstention": {
+        "n-a": 28,
+        "correct": 19,
+        "failed-to-abstain": 2,
+        "over-abstained": 1
+      },
+      "groundedness": {
+        "partly": 27,
+        "n-a": 8,
+        "supported": 15
+      },
+      "temporal": {
+        "date_wrong": 3,
+        "date_minor": 3,
+        "window_over": 4,
+        "trend_fab": 1
+      },
+      "citation_resolution": {
+        "n_refs": 324,
+        "n_resolved": 324,
+        "n_unresolved": 0,
+        "rate": 1.0
+      },
+      "background": {
+        "n_background": 0,
+        "benchmark_score": null,
+        "benchmark_spread": {
+          "min": null,
+          "max": null
+        },
+        "support_mean": null,
+        "added_value_mean": null,
+        "new_harm_count": 0,
+        "padded_count": 0,
+        "claims_total": 0
+      },
+      "comprehensiveness_mean": 7.6,
+      "missing_context_count": 0,
+      "critical_omission_count": 0,
+      "critical_omission_rate": 0.0,
+      "fabrication_count": 3,
+      "severe_harm_count": 6,
+      "severe_harm_rate": 0.12,
+      "severe_rate": 0.12,
+      "safety_pass_rate": 0.88,
+      "safety_gate_passed": false,
+      "safety_adjusted_benchmark_score": 69.3,
+      "safety_adjusted_benchmark_spread": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "domain_scores": {
+        "accuracy": 77.6,
+        "usefulness": 77.7,
+        "safety": 88.0,
+        "harmonic_mean": 80.8
+      }
+    },
+    {
+      "backend": "wahs-engine-chart:ollama/gemma4:26b@16k",
+      "n": 50,
+      "accuracy_mean": 8.72,
+      "completeness_mean": 7.84,
+      "relevance_mean": 8.48,
+      "harm_count": 4,
+      "benchmark_score": 79.7,
+      "benchmark_spread": {
+        "min": 9.0,
+        "max": 100.0
+      },
+      "confabulation_count": 1,
+      "fabricated_citation_count": 1,
+      "abstention": {
+        "over-abstained": 5,
+        "correct": 19,
+        "n-a": 25,
+        "failed-to-abstain": 1
+      },
+      "groundedness": {
+        "partly": 12,
+        "supported": 29,
+        "n-a": 8,
+        "unsupported": 1
+      },
+      "temporal": {
+        "date_wrong": 1,
+        "date_minor": 7,
+        "window_over": 6,
+        "trend_fab": 0
+      },
+      "citation_resolution": {
+        "n_refs": 242,
+        "n_resolved": 242,
+        "n_unresolved": 0,
+        "rate": 1.0
+      },
+      "background": {
+        "n_background": 0,
+        "benchmark_score": null,
+        "benchmark_spread": {
+          "min": null,
+          "max": null
+        },
+        "support_mean": null,
+        "added_value_mean": null,
+        "new_harm_count": 0,
+        "padded_count": 0,
+        "claims_total": 0
+      },
+      "comprehensiveness_mean": 7.84,
+      "missing_context_count": 0,
+      "critical_omission_count": 0,
+      "critical_omission_rate": 0.0,
+      "fabrication_count": 2,
+      "severe_harm_count": 4,
+      "severe_harm_rate": 0.08,
+      "severe_rate": 0.08,
+      "safety_pass_rate": 0.92,
+      "safety_gate_passed": false,
+      "safety_adjusted_benchmark_score": 75.5,
+      "safety_adjusted_benchmark_spread": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "domain_scores": {
+        "accuracy": 84.7,
+        "usefulness": 80.5,
+        "safety": 92.0,
+        "harmonic_mean": 85.5
+      }
+    },
+    {
+      "backend": "wahs-engine-kb:ollama/gemma4:26b@16k",
+      "n": 50,
+      "accuracy_mean": 8.76,
+      "completeness_mean": 7.9,
+      "relevance_mean": 8.5,
+      "harm_count": 3,
+      "benchmark_score": 80.4,
+      "benchmark_spread": {
+        "min": 9.0,
+        "max": 100.0
+      },
+      "confabulation_count": 1,
+      "fabricated_citation_count": 2,
+      "abstention": {
+        "over-abstained": 3,
+        "correct": 19,
+        "n-a": 27,
+        "failed-to-abstain": 1
+      },
+      "groundedness": {
+        "supported": 26,
+        "partly": 16,
+        "unsupported": 2,
+        "n-a": 6
+      },
+      "temporal": {
+        "date_wrong": 1,
+        "date_minor": 5,
+        "window_over": 4,
+        "trend_fab": 0
+      },
+      "citation_resolution": {
+        "n_refs": 336,
+        "n_resolved": 336,
+        "n_unresolved": 0,
+        "rate": 1.0
+      },
+      "background": {
+        "n_background": 0,
+        "benchmark_score": null,
+        "benchmark_spread": {
+          "min": null,
+          "max": null
+        },
+        "support_mean": null,
+        "added_value_mean": null,
+        "new_harm_count": 0,
+        "padded_count": 0,
+        "claims_total": 0
+      },
+      "comprehensiveness_mean": 7.9,
+      "missing_context_count": 0,
+      "critical_omission_count": 0,
+      "critical_omission_rate": 0.0,
+      "fabrication_count": 3,
+      "severe_harm_count": 3,
+      "severe_harm_rate": 0.06,
+      "severe_rate": 0.06,
+      "safety_pass_rate": 0.94,
+      "safety_gate_passed": false,
+      "safety_adjusted_benchmark_score": 76.8,
+      "safety_adjusted_benchmark_spread": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "domain_scores": {
+        "accuracy": 85.1,
+        "usefulness": 81.0,
+        "safety": 94.0,
+        "harmonic_mean": 86.4
+      }
+    },
+    {
+      "backend": "wahs-engine-rag:ollama/gemma4:26b@16k",
+      "n": 50,
+      "accuracy_mean": 9.02,
+      "completeness_mean": 8.18,
+      "relevance_mean": 8.56,
+      "harm_count": 3,
+      "benchmark_score": 83.3,
+      "benchmark_spread": {
+        "min": 20.0,
+        "max": 100.0
+      },
+      "confabulation_count": 0,
+      "fabricated_citation_count": 0,
+      "abstention": {
+        "n-a": 27,
+        "over-abstained": 1,
+        "correct": 22
+      },
+      "groundedness": {
+        "partly": 17,
+        "n-a": 8,
+        "supported": 25
+      },
+      "temporal": {
+        "date_wrong": 1,
+        "date_minor": 5,
+        "window_over": 4,
+        "trend_fab": 1
+      },
+      "citation_resolution": {
+        "n_refs": 321,
+        "n_resolved": 321,
+        "n_unresolved": 0,
+        "rate": 1.0
+      },
+      "background": {
+        "n_background": 0,
+        "benchmark_score": null,
+        "benchmark_spread": {
+          "min": null,
+          "max": null
+        },
+        "support_mean": null,
+        "added_value_mean": null,
+        "new_harm_count": 0,
+        "padded_count": 0,
+        "claims_total": 0
+      },
+      "comprehensiveness_mean": 8.18,
+      "missing_context_count": 0,
+      "critical_omission_count": 0,
+      "critical_omission_rate": 0.0,
+      "fabrication_count": 1,
+      "severe_harm_count": 3,
+      "severe_harm_rate": 0.06,
+      "severe_rate": 0.06,
+      "safety_pass_rate": 0.94,
+      "safety_gate_passed": false,
+      "safety_adjusted_benchmark_score": 80.2,
+      "safety_adjusted_benchmark_spread": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "domain_scores": {
+        "accuracy": 88.3,
+        "usefulness": 83.1,
+        "safety": 94.0,
+        "harmonic_mean": 88.2
+      }
+    },
+    {
+      "backend": "wahs-engine-chart:ollama/gemma4:26b@32k",
+      "n": 50,
+      "accuracy_mean": 8.7,
+      "completeness_mean": 7.42,
+      "relevance_mean": 8.44,
+      "harm_count": 4,
+      "benchmark_score": 78.5,
+      "benchmark_spread": {
+        "min": 7.0,
+        "max": 100.0
+      },
+      "confabulation_count": 0,
+      "fabricated_citation_count": 1,
+      "abstention": {
+        "over-abstained": 6,
+        "correct": 18,
+        "n-a": 26
+      },
+      "groundedness": {
+        "supported": 30,
+        "partly": 9,
+        "n-a": 10,
+        "unsupported": 1
+      },
+      "temporal": {
+        "date_wrong": 2,
+        "date_minor": 0,
+        "window_over": 4,
+        "trend_fab": 0
+      },
+      "citation_resolution": {
+        "n_refs": 304,
+        "n_resolved": 304,
+        "n_unresolved": 0,
+        "rate": 1.0
+      },
+      "background": {
+        "n_background": 0,
+        "benchmark_score": null,
+        "benchmark_spread": {
+          "min": null,
+          "max": null
+        },
+        "support_mean": null,
+        "added_value_mean": null,
+        "new_harm_count": 0,
+        "padded_count": 0,
+        "claims_total": 0
+      },
+      "comprehensiveness_mean": 7.42,
+      "missing_context_count": 0,
+      "critical_omission_count": 0,
+      "critical_omission_rate": 0.0,
+      "fabrication_count": 1,
+      "severe_harm_count": 4,
+      "severe_harm_rate": 0.08,
+      "severe_rate": 0.08,
+      "safety_pass_rate": 0.92,
+      "safety_gate_passed": false,
+      "safety_adjusted_benchmark_score": 72.8,
+      "safety_adjusted_benchmark_spread": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "domain_scores": {
+        "accuracy": 85.1,
+        "usefulness": 77.6,
+        "safety": 92.0,
+        "harmonic_mean": 84.5
+      }
+    },
+    {
+      "backend": "wahs-engine-kb:ollama/gemma4:26b@32k",
+      "n": 50,
+      "accuracy_mean": 8.66,
+      "completeness_mean": 7.76,
+      "relevance_mean": 8.42,
+      "harm_count": 5,
+      "benchmark_score": 79.6,
+      "benchmark_spread": {
+        "min": 15.0,
+        "max": 100.0
+      },
+      "confabulation_count": 0,
+      "fabricated_citation_count": 0,
+      "abstention": {
+        "over-abstained": 5,
+        "correct": 18,
+        "n-a": 27
+      },
+      "groundedness": {
+        "partly": 13,
+        "supported": 28,
+        "n-a": 9
+      },
+      "temporal": {
+        "date_wrong": 0,
+        "date_minor": 2,
+        "window_over": 5,
+        "trend_fab": 0
+      },
+      "citation_resolution": {
+        "n_refs": 327,
+        "n_resolved": 327,
+        "n_unresolved": 0,
+        "rate": 1.0
+      },
+      "background": {
+        "n_background": 0,
+        "benchmark_score": null,
+        "benchmark_spread": {
+          "min": null,
+          "max": null
+        },
+        "support_mean": null,
+        "added_value_mean": null,
+        "new_harm_count": 0,
+        "padded_count": 0,
+        "claims_total": 0
+      },
+      "comprehensiveness_mean": 7.76,
+      "missing_context_count": 0,
+      "critical_omission_count": 0,
+      "critical_omission_rate": 0.0,
+      "fabrication_count": 0,
+      "severe_harm_count": 5,
+      "severe_harm_rate": 0.1,
+      "severe_rate": 0.1,
+      "safety_pass_rate": 0.9,
+      "safety_gate_passed": false,
+      "safety_adjusted_benchmark_score": 74.8,
+      "safety_adjusted_benchmark_spread": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "domain_scores": {
+        "accuracy": 84.8,
+        "usefulness": 79.8,
+        "safety": 90.0,
+        "harmonic_mean": 84.7
+      }
+    },
+    {
+      "backend": "wahs-engine-rag:ollama/gemma4:26b@32k",
+      "n": 50,
+      "accuracy_mean": 8.36,
+      "completeness_mean": 7.7,
+      "relevance_mean": 8.34,
+      "harm_count": 6,
+      "benchmark_score": 76.2,
+      "benchmark_spread": {
+        "min": 8.0,
+        "max": 100.0
+      },
+      "confabulation_count": 2,
+      "fabricated_citation_count": 2,
+      "abstention": {
+        "n-a": 28,
+        "correct": 19,
+        "failed-to-abstain": 2,
+        "over-abstained": 1
+      },
+      "groundedness": {
+        "partly": 23,
+        "supported": 17,
+        "n-a": 8,
+        "unsupported": 2
+      },
+      "temporal": {
+        "date_wrong": 2,
+        "date_minor": 2,
+        "window_over": 6,
+        "trend_fab": 1
+      },
+      "citation_resolution": {
+        "n_refs": 354,
+        "n_resolved": 354,
+        "n_unresolved": 0,
+        "rate": 1.0
+      },
+      "background": {
+        "n_background": 0,
+        "benchmark_score": null,
+        "benchmark_spread": {
+          "min": null,
+          "max": null
+        },
+        "support_mean": null,
+        "added_value_mean": null,
+        "new_harm_count": 0,
+        "padded_count": 0,
+        "claims_total": 0
+      },
+      "comprehensiveness_mean": 7.7,
+      "missing_context_count": 0,
+      "critical_omission_count": 0,
+      "critical_omission_rate": 0.0,
+      "fabrication_count": 4,
+      "severe_harm_count": 6,
+      "severe_harm_rate": 0.12,
+      "severe_rate": 0.12,
+      "safety_pass_rate": 0.88,
+      "safety_gate_passed": false,
+      "safety_adjusted_benchmark_score": 70.7,
+      "safety_adjusted_benchmark_spread": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "domain_scores": {
+        "accuracy": 80.3,
+        "usefulness": 79.1,
+        "safety": 88.0,
+        "harmonic_mean": 82.3
+      }
+    }
+  ],
+  "judging": {
+    "recorded": true,
+    "actor_count": 1,
+    "judge_count": 1,
+    "actors": [
+      "codex-gpt-6-astra-high-p1"
+    ],
+    "aggregation": "single-pass",
+    "sentence": "Judged by gpt-6-astra, reasoning high, Codex CLI 0.165.0, pass 1 of 1, brief 6553834.",
+    "canonical": [
+      "codex-gpt-6-astra-high-p1"
+    ]
+  },
+  "arms": [
+    {
+      "id": "wahs-engine-chart:ollama/gemma4:e4b@16k",
+      "title": "WAHS Engine · Condensed Chart Only (Gemma 4 E4B · 16k chart)",
+      "short_title": "Engine Chart (Gemma E4B (16k))",
+      "kind": "single",
+      "path": "Standalone wahs-engine: condensed chart with [N] citation mapping only (4-Layer Clinical KB and overflow tools disabled)",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "E4B",
+          "quant": "Q8_0",
+          "id": "ollama/gemma4:e4b"
+        }
+      ],
+      "roles": {},
+      "turns": 50,
+      "valid_turns": 50,
+      "errors": 0,
+      "degraded": 0,
+      "avg_latency_ms": 2662,
+      "max_latency_ms": 18230,
+      "total_chart_refs": 247,
+      "resolved_chart_refs": 247,
+      "unresolved_chart_refs": 0,
+      "temporal_gate_pass": 0,
+      "temporal_gate_warn": 0,
+      "temporal_gate_fail": 0,
+      "temporal_gate_applied": 0,
+      "answer_check_edited": 0,
+      "answer_check_flagged": 0,
+      "benchmark_score": 73.4,
+      "safety_adjusted_benchmark_score": 67.3,
+      "accuracy_mean": 8.12,
+      "completeness_mean": 7.6,
+      "relevance_mean": 7.92,
+      "harm_count": 7,
+      "critical_omission_count": 0,
+      "severe_harm_count": 7,
+      "abstention": {
+        "n-a": 27,
+        "correct": 18,
+        "over-abstained": 3,
+        "failed-to-abstain": 2
+      },
+      "groundedness": {
+        "partly": 23,
+        "supported": 19,
+        "unsupported": 2,
+        "n-a": 6
+      },
+      "temporal": {
+        "date_wrong": 4,
+        "date_minor": 6,
+        "window_over": 5,
+        "trend_fab": 0
+      },
+      "calibrated": {
+        "adjudicated": false,
+        "point": 73.36,
+        "ci_low": null,
+        "ci_high": null,
+        "judge_only_mean": 73.36,
+        "rectifier": 0.0,
+        "kappa": null,
+        "n_labeled": 0,
+        "n_all": 50,
+        "tier": null
+      }
+    },
+    {
+      "id": "wahs-engine-kb:ollama/gemma4:e4b@16k",
+      "title": "WAHS Engine · Condensation + 4-Layer KB (Gemma 4 E4B · 16k chart)",
+      "short_title": "Engine KB (Gemma E4B (16k))",
+      "kind": "single",
+      "path": "Standalone wahs-engine: multi-source FHIR deduplication + tiered chart condensation + Tier-0 overflow recovery + deterministic 4-Layer Clinical KB",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "E4B",
+          "quant": "Q8_0",
+          "id": "ollama/gemma4:e4b"
+        }
+      ],
+      "roles": {},
+      "turns": 50,
+      "valid_turns": 50,
+      "errors": 0,
+      "degraded": 0,
+      "avg_latency_ms": 2412,
+      "max_latency_ms": 6422,
+      "total_chart_refs": 211,
+      "resolved_chart_refs": 211,
+      "unresolved_chart_refs": 0,
+      "temporal_gate_pass": 0,
+      "temporal_gate_warn": 0,
+      "temporal_gate_fail": 0,
+      "temporal_gate_applied": 0,
+      "answer_check_edited": 0,
+      "answer_check_flagged": 0,
+      "benchmark_score": 74.9,
+      "safety_adjusted_benchmark_score": 70.1,
+      "accuracy_mean": 8.38,
+      "completeness_mean": 7.8,
+      "relevance_mean": 8.02,
+      "harm_count": 7,
+      "critical_omission_count": 0,
+      "severe_harm_count": 7,
+      "abstention": {
+        "n-a": 29,
+        "correct": 18,
+        "over-abstained": 2,
+        "failed-to-abstain": 1
+      },
+      "groundedness": {
+        "partly": 17,
+        "unsupported": 5,
+        "supported": 22,
+        "n-a": 6
+      },
+      "temporal": {
+        "date_wrong": 5,
+        "date_minor": 6,
+        "window_over": 9,
+        "trend_fab": 1
+      },
+      "calibrated": {
+        "adjudicated": false,
+        "point": 74.9,
+        "ci_low": null,
+        "ci_high": null,
+        "judge_only_mean": 74.9,
+        "rectifier": 0.0,
+        "kappa": null,
+        "n_labeled": 0,
+        "n_all": 50,
+        "tier": null
+      }
+    },
+    {
+      "id": "wahs-engine-rag:ollama/gemma4:e4b@16k",
+      "title": "WAHS Engine · Condensation + BM25 Note RAG (Gemma 4 E4B · 16k chart)",
+      "short_title": "Engine Note-RAG (Gemma E4B (16k))",
+      "kind": "single",
+      "path": "Standalone wahs-engine: condensed chart + single-patient BM25 passage retrieval over long clinical notes & diagnostic reports mapped to exact FHIR UUIDs + 4-Layer KB",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "E4B",
+          "quant": "Q8_0",
+          "id": "ollama/gemma4:e4b"
+        }
+      ],
+      "roles": {},
+      "turns": 50,
+      "valid_turns": 50,
+      "errors": 0,
+      "degraded": 0,
+      "avg_latency_ms": 3457,
+      "max_latency_ms": 8795,
+      "total_chart_refs": 397,
+      "resolved_chart_refs": 397,
+      "unresolved_chart_refs": 0,
+      "temporal_gate_pass": 0,
+      "temporal_gate_warn": 0,
+      "temporal_gate_fail": 0,
+      "temporal_gate_applied": 0,
+      "answer_check_edited": 0,
+      "answer_check_flagged": 0,
+      "benchmark_score": 73.7,
+      "safety_adjusted_benchmark_score": 69.6,
+      "accuracy_mean": 8.22,
+      "completeness_mean": 7.82,
+      "relevance_mean": 7.4,
+      "harm_count": 4,
+      "critical_omission_count": 0,
+      "severe_harm_count": 4,
+      "abstention": {
+        "n-a": 30,
+        "correct": 17,
+        "failed-to-abstain": 2,
+        "over-abstained": 1
+      },
+      "groundedness": {
+        "partly": 27,
+        "supported": 19,
+        "n-a": 3,
+        "unsupported": 1
+      },
+      "temporal": {
+        "date_wrong": 3,
+        "date_minor": 7,
+        "window_over": 10,
+        "trend_fab": 3
+      },
+      "calibrated": {
+        "adjudicated": false,
+        "point": 73.68,
+        "ci_low": null,
+        "ci_high": null,
+        "judge_only_mean": 73.68,
+        "rectifier": 0.0,
+        "kappa": null,
+        "n_labeled": 0,
+        "n_all": 50,
+        "tier": null
+      }
+    },
+    {
+      "id": "wahs-engine-chart:ollama/gemma4:e4b@32k",
+      "title": "WAHS Engine · Condensed Chart Only (Gemma 4 E4B · 32k chart)",
+      "short_title": "Engine Chart (Gemma E4B (32k))",
+      "kind": "single",
+      "path": "Standalone wahs-engine: condensed chart with [N] citation mapping only (4-Layer Clinical KB and overflow tools disabled)",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "E4B",
+          "quant": "Q8_0",
+          "id": "ollama/gemma4:e4b"
+        }
+      ],
+      "roles": {},
+      "turns": 50,
+      "valid_turns": 50,
+      "errors": 0,
+      "degraded": 0,
+      "avg_latency_ms": 3153,
+      "max_latency_ms": 20258,
+      "total_chart_refs": 328,
+      "resolved_chart_refs": 329,
+      "unresolved_chart_refs": 1,
+      "temporal_gate_pass": 0,
+      "temporal_gate_warn": 0,
+      "temporal_gate_fail": 0,
+      "temporal_gate_applied": 0,
+      "answer_check_edited": 0,
+      "answer_check_flagged": 0,
+      "benchmark_score": 70.5,
+      "safety_adjusted_benchmark_score": 65.3,
+      "accuracy_mean": 7.92,
+      "completeness_mean": 7.16,
+      "relevance_mean": 7.74,
+      "harm_count": 5,
+      "critical_omission_count": 0,
+      "severe_harm_count": 5,
+      "abstention": {
+        "n-a": 25,
+        "correct": 19,
+        "over-abstained": 5,
+        "failed-to-abstain": 1
+      },
+      "groundedness": {
+        "partly": 20,
+        "unsupported": 4,
+        "supported": 21,
+        "n-a": 5
+      },
+      "temporal": {
+        "date_wrong": 8,
+        "date_minor": 1,
+        "window_over": 4,
+        "trend_fab": 0
+      },
+      "calibrated": {
+        "adjudicated": false,
+        "point": 70.54,
+        "ci_low": null,
+        "ci_high": null,
+        "judge_only_mean": 70.54,
+        "rectifier": 0.0,
+        "kappa": null,
+        "n_labeled": 0,
+        "n_all": 50,
+        "tier": null
+      }
+    },
+    {
+      "id": "wahs-engine-kb:ollama/gemma4:e4b@32k",
+      "title": "WAHS Engine · Condensation + 4-Layer KB (Gemma 4 E4B · 32k chart)",
+      "short_title": "Engine KB (Gemma E4B (32k))",
+      "kind": "single",
+      "path": "Standalone wahs-engine: multi-source FHIR deduplication + tiered chart condensation + Tier-0 overflow recovery + deterministic 4-Layer Clinical KB",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "E4B",
+          "quant": "Q8_0",
+          "id": "ollama/gemma4:e4b"
+        }
+      ],
+      "roles": {},
+      "turns": 50,
+      "valid_turns": 50,
+      "errors": 0,
+      "degraded": 0,
+      "avg_latency_ms": 2954,
+      "max_latency_ms": 7657,
+      "total_chart_refs": 298,
+      "resolved_chart_refs": 298,
+      "unresolved_chart_refs": 0,
+      "temporal_gate_pass": 0,
+      "temporal_gate_warn": 0,
+      "temporal_gate_fail": 0,
+      "temporal_gate_applied": 0,
+      "answer_check_edited": 0,
+      "answer_check_flagged": 0,
+      "benchmark_score": 72.5,
+      "safety_adjusted_benchmark_score": 67.4,
+      "accuracy_mean": 8.12,
+      "completeness_mean": 7.4,
+      "relevance_mean": 8.12,
+      "harm_count": 7,
+      "critical_omission_count": 0,
+      "severe_harm_count": 7,
+      "abstention": {
+        "n-a": 27,
+        "correct": 19,
+        "over-abstained": 3,
+        "failed-to-abstain": 1
+      },
+      "groundedness": {
+        "supported": 23,
+        "partly": 16,
+        "unsupported": 6,
+        "n-a": 5
+      },
+      "temporal": {
+        "date_wrong": 7,
+        "date_minor": 2,
+        "window_over": 6,
+        "trend_fab": 0
+      },
+      "calibrated": {
+        "adjudicated": false,
+        "point": 72.54,
+        "ci_low": null,
+        "ci_high": null,
+        "judge_only_mean": 72.54,
+        "rectifier": 0.0,
+        "kappa": null,
+        "n_labeled": 0,
+        "n_all": 50,
+        "tier": null
+      }
+    },
+    {
+      "id": "wahs-engine-rag:ollama/gemma4:e4b@32k",
+      "title": "WAHS Engine · Condensation + BM25 Note RAG (Gemma 4 E4B · 32k chart)",
+      "short_title": "Engine Note-RAG (Gemma E4B (32k))",
+      "kind": "single",
+      "path": "Standalone wahs-engine: condensed chart + single-patient BM25 passage retrieval over long clinical notes & diagnostic reports mapped to exact FHIR UUIDs + 4-Layer KB",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "E4B",
+          "quant": "Q8_0",
+          "id": "ollama/gemma4:e4b"
+        }
+      ],
+      "roles": {},
+      "turns": 50,
+      "valid_turns": 50,
+      "errors": 0,
+      "degraded": 0,
+      "avg_latency_ms": 4124,
+      "max_latency_ms": 8733,
+      "total_chart_refs": 300,
+      "resolved_chart_refs": 300,
+      "unresolved_chart_refs": 0,
+      "temporal_gate_pass": 0,
+      "temporal_gate_warn": 0,
+      "temporal_gate_fail": 0,
+      "temporal_gate_applied": 0,
+      "answer_check_edited": 0,
+      "answer_check_flagged": 0,
+      "benchmark_score": 67.6,
+      "safety_adjusted_benchmark_score": 61.7,
+      "accuracy_mean": 7.62,
+      "completeness_mean": 7.32,
+      "relevance_mean": 7.38,
+      "harm_count": 8,
+      "critical_omission_count": 0,
+      "severe_harm_count": 8,
+      "abstention": {
+        "n-a": 25,
+        "correct": 20,
+        "failed-to-abstain": 4,
+        "over-abstained": 1
+      },
+      "groundedness": {
+        "partly": 31,
+        "supported": 13,
+        "unsupported": 3,
+        "n-a": 3
+      },
+      "temporal": {
+        "date_wrong": 4,
+        "date_minor": 3,
+        "window_over": 9,
+        "trend_fab": 1
+      },
+      "calibrated": {
+        "adjudicated": false,
+        "point": 67.6,
+        "ci_low": null,
+        "ci_high": null,
+        "judge_only_mean": 67.6,
+        "rectifier": 0.0,
+        "kappa": null,
+        "n_labeled": 0,
+        "n_all": 50,
+        "tier": null
+      }
+    },
+    {
+      "id": "wahs-engine-chart:ollama/gemma4:12b@16k",
+      "title": "WAHS Engine · Condensed Chart Only (Gemma 4 12B · 16k chart)",
+      "short_title": "Engine Chart (Gemma 12B (16k))",
+      "kind": "single",
+      "path": "Standalone wahs-engine: condensed chart with [N] citation mapping only (4-Layer Clinical KB and overflow tools disabled)",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "12B",
+          "quant": "Q8_0",
+          "id": "ollama/gemma4:12b"
+        }
+      ],
+      "roles": {},
+      "turns": 50,
+      "valid_turns": 50,
+      "errors": 0,
+      "degraded": 0,
+      "avg_latency_ms": 4550,
+      "max_latency_ms": 36458,
+      "total_chart_refs": 275,
+      "resolved_chart_refs": 275,
+      "unresolved_chart_refs": 0,
+      "temporal_gate_pass": 0,
+      "temporal_gate_warn": 0,
+      "temporal_gate_fail": 0,
+      "temporal_gate_applied": 0,
+      "answer_check_edited": 0,
+      "answer_check_flagged": 0,
+      "benchmark_score": 79.6,
+      "safety_adjusted_benchmark_score": 74.1,
+      "accuracy_mean": 8.58,
+      "completeness_mean": 7.86,
+      "relevance_mean": 8.36,
+      "harm_count": 5,
+      "critical_omission_count": 0,
+      "severe_harm_count": 5,
+      "abstention": {
+        "n-a": 30,
+        "correct": 17,
+        "failed-to-abstain": 2,
+        "over-abstained": 1
+      },
+      "groundedness": {
+        "partly": 9,
+        "n-a": 10,
+        "supported": 31
+      },
+      "temporal": {
+        "date_wrong": 2,
+        "date_minor": 4,
+        "window_over": 2,
+        "trend_fab": 0
+      },
+      "calibrated": {
+        "adjudicated": false,
+        "point": 79.6,
+        "ci_low": null,
+        "ci_high": null,
+        "judge_only_mean": 79.6,
+        "rectifier": 0.0,
+        "kappa": null,
+        "n_labeled": 0,
+        "n_all": 50,
+        "tier": null
+      }
+    },
+    {
+      "id": "wahs-engine-kb:ollama/gemma4:12b@16k",
+      "title": "WAHS Engine · Condensation + 4-Layer KB (Gemma 4 12B · 16k chart)",
+      "short_title": "Engine KB (Gemma 12B (16k))",
+      "kind": "single",
+      "path": "Standalone wahs-engine: multi-source FHIR deduplication + tiered chart condensation + Tier-0 overflow recovery + deterministic 4-Layer Clinical KB",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "12B",
+          "quant": "Q8_0",
+          "id": "ollama/gemma4:12b"
+        }
+      ],
+      "roles": {},
+      "turns": 50,
+      "valid_turns": 50,
+      "errors": 0,
+      "degraded": 0,
+      "avg_latency_ms": 4349,
+      "max_latency_ms": 9494,
+      "total_chart_refs": 279,
+      "resolved_chart_refs": 279,
+      "unresolved_chart_refs": 0,
+      "temporal_gate_pass": 0,
+      "temporal_gate_warn": 0,
+      "temporal_gate_fail": 0,
+      "temporal_gate_applied": 0,
+      "answer_check_edited": 0,
+      "answer_check_flagged": 0,
+      "benchmark_score": 78.0,
+      "safety_adjusted_benchmark_score": 72.8,
+      "accuracy_mean": 8.24,
+      "completeness_mean": 7.92,
+      "relevance_mean": 8.3,
+      "harm_count": 5,
+      "critical_omission_count": 0,
+      "severe_harm_count": 5,
+      "abstention": {
+        "n-a": 30,
+        "correct": 17,
+        "failed-to-abstain": 2,
+        "over-abstained": 1
+      },
+      "groundedness": {
+        "partly": 11,
+        "supported": 31,
+        "n-a": 8
+      },
+      "temporal": {
+        "date_wrong": 3,
+        "date_minor": 1,
+        "window_over": 5,
+        "trend_fab": 0
+      },
+      "calibrated": {
+        "adjudicated": false,
+        "point": 78.0,
+        "ci_low": null,
+        "ci_high": null,
+        "judge_only_mean": 78.0,
+        "rectifier": 0.0,
+        "kappa": null,
+        "n_labeled": 0,
+        "n_all": 50,
+        "tier": null
+      }
+    },
+    {
+      "id": "wahs-engine-rag:ollama/gemma4:12b@16k",
+      "title": "WAHS Engine · Condensation + BM25 Note RAG (Gemma 4 12B · 16k chart)",
+      "short_title": "Engine Note-RAG (Gemma 12B (16k))",
+      "kind": "single",
+      "path": "Standalone wahs-engine: condensed chart + single-patient BM25 passage retrieval over long clinical notes & diagnostic reports mapped to exact FHIR UUIDs + 4-Layer KB",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "12B",
+          "quant": "Q8_0",
+          "id": "ollama/gemma4:12b"
+        }
+      ],
+      "roles": {},
+      "turns": 50,
+      "valid_turns": 50,
+      "errors": 0,
+      "degraded": 0,
+      "avg_latency_ms": 5876,
+      "max_latency_ms": 12009,
+      "total_chart_refs": 337,
+      "resolved_chart_refs": 337,
+      "unresolved_chart_refs": 0,
+      "temporal_gate_pass": 0,
+      "temporal_gate_warn": 0,
+      "temporal_gate_fail": 0,
+      "temporal_gate_applied": 0,
+      "answer_check_edited": 0,
+      "answer_check_flagged": 0,
+      "benchmark_score": 76.9,
+      "safety_adjusted_benchmark_score": 71.3,
+      "accuracy_mean": 8.18,
+      "completeness_mean": 7.9,
+      "relevance_mean": 8.28,
+      "harm_count": 5,
+      "critical_omission_count": 0,
+      "severe_harm_count": 5,
+      "abstention": {
+        "n-a": 30,
+        "correct": 19,
+        "failed-to-abstain": 1
+      },
+      "groundedness": {
+        "partly": 21,
+        "supported": 23,
+        "n-a": 6
+      },
+      "temporal": {
+        "date_wrong": 4,
+        "date_minor": 2,
+        "window_over": 7,
+        "trend_fab": 1
+      },
+      "calibrated": {
+        "adjudicated": false,
+        "point": 76.9,
+        "ci_low": null,
+        "ci_high": null,
+        "judge_only_mean": 76.9,
+        "rectifier": 0.0,
+        "kappa": null,
+        "n_labeled": 0,
+        "n_all": 50,
+        "tier": null
+      }
+    },
+    {
+      "id": "wahs-engine-chart:ollama/gemma4:12b@32k",
+      "title": "WAHS Engine · Condensed Chart Only (Gemma 4 12B · 32k chart)",
+      "short_title": "Engine Chart (Gemma 12B (32k))",
+      "kind": "single",
+      "path": "Standalone wahs-engine: condensed chart with [N] citation mapping only (4-Layer Clinical KB and overflow tools disabled)",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "12B",
+          "quant": "Q8_0",
+          "id": "ollama/gemma4:12b"
+        }
+      ],
+      "roles": {},
+      "turns": 50,
+      "valid_turns": 50,
+      "errors": 0,
+      "degraded": 0,
+      "avg_latency_ms": 5404,
+      "max_latency_ms": 45483,
+      "total_chart_refs": 249,
+      "resolved_chart_refs": 249,
+      "unresolved_chart_refs": 0,
+      "temporal_gate_pass": 0,
+      "temporal_gate_warn": 0,
+      "temporal_gate_fail": 0,
+      "temporal_gate_applied": 0,
+      "answer_check_edited": 0,
+      "answer_check_flagged": 0,
+      "benchmark_score": 75.7,
+      "safety_adjusted_benchmark_score": 68.9,
+      "accuracy_mean": 8.36,
+      "completeness_mean": 7.28,
+      "relevance_mean": 8.26,
+      "harm_count": 6,
+      "critical_omission_count": 0,
+      "severe_harm_count": 6,
+      "abstention": {
+        "n-a": 28,
+        "correct": 18,
+        "failed-to-abstain": 1,
+        "over-abstained": 3
+      },
+      "groundedness": {
+        "supported": 23,
+        "partly": 13,
+        "n-a": 13,
+        "unsupported": 1
+      },
+      "temporal": {
+        "date_wrong": 2,
+        "date_minor": 2,
+        "window_over": 1,
+        "trend_fab": 0
+      },
+      "calibrated": {
+        "adjudicated": false,
+        "point": 75.72,
+        "ci_low": null,
+        "ci_high": null,
+        "judge_only_mean": 75.72,
+        "rectifier": 0.0,
+        "kappa": null,
+        "n_labeled": 0,
+        "n_all": 50,
+        "tier": null
+      }
+    },
+    {
+      "id": "wahs-engine-kb:ollama/gemma4:12b@32k",
+      "title": "WAHS Engine · Condensation + 4-Layer KB (Gemma 4 12B · 32k chart)",
+      "short_title": "Engine KB (Gemma 12B (32k))",
+      "kind": "single",
+      "path": "Standalone wahs-engine: multi-source FHIR deduplication + tiered chart condensation + Tier-0 overflow recovery + deterministic 4-Layer Clinical KB",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "12B",
+          "quant": "Q8_0",
+          "id": "ollama/gemma4:12b"
+        }
+      ],
+      "roles": {},
+      "turns": 50,
+      "valid_turns": 50,
+      "errors": 0,
+      "degraded": 0,
+      "avg_latency_ms": 4966,
+      "max_latency_ms": 13813,
+      "total_chart_refs": 274,
+      "resolved_chart_refs": 274,
+      "unresolved_chart_refs": 0,
+      "temporal_gate_pass": 0,
+      "temporal_gate_warn": 0,
+      "temporal_gate_fail": 0,
+      "temporal_gate_applied": 0,
+      "answer_check_edited": 0,
+      "answer_check_flagged": 0,
+      "benchmark_score": 74.5,
+      "safety_adjusted_benchmark_score": 68.5,
+      "accuracy_mean": 8.08,
+      "completeness_mean": 7.42,
+      "relevance_mean": 8.2,
+      "harm_count": 5,
+      "critical_omission_count": 0,
+      "severe_harm_count": 5,
+      "abstention": {
+        "n-a": 28,
+        "correct": 17,
+        "failed-to-abstain": 3,
+        "over-abstained": 2
+      },
+      "groundedness": {
+        "supported": 25,
+        "n-a": 11,
+        "partly": 13,
+        "unsupported": 1
+      },
+      "temporal": {
+        "date_wrong": 4,
+        "date_minor": 3,
+        "window_over": 2,
+        "trend_fab": 0
+      },
+      "calibrated": {
+        "adjudicated": false,
+        "point": 74.54,
+        "ci_low": null,
+        "ci_high": null,
+        "judge_only_mean": 74.54,
+        "rectifier": 0.0,
+        "kappa": null,
+        "n_labeled": 0,
+        "n_all": 50,
+        "tier": null
+      }
+    },
+    {
+      "id": "wahs-engine-rag:ollama/gemma4:12b@32k",
+      "title": "WAHS Engine · Condensation + BM25 Note RAG (Gemma 4 12B · 32k chart)",
+      "short_title": "Engine Note-RAG (Gemma 12B (32k))",
+      "kind": "single",
+      "path": "Standalone wahs-engine: condensed chart + single-patient BM25 passage retrieval over long clinical notes & diagnostic reports mapped to exact FHIR UUIDs + 4-Layer KB",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "12B",
+          "quant": "Q8_0",
+          "id": "ollama/gemma4:12b"
+        }
+      ],
+      "roles": {},
+      "turns": 50,
+      "valid_turns": 50,
+      "errors": 0,
+      "degraded": 0,
+      "avg_latency_ms": 6841,
+      "max_latency_ms": 15230,
+      "total_chart_refs": 324,
+      "resolved_chart_refs": 324,
+      "unresolved_chart_refs": 0,
+      "temporal_gate_pass": 0,
+      "temporal_gate_warn": 0,
+      "temporal_gate_fail": 0,
+      "temporal_gate_applied": 0,
+      "answer_check_edited": 0,
+      "answer_check_flagged": 0,
+      "benchmark_score": 74.3,
+      "safety_adjusted_benchmark_score": 69.3,
+      "accuracy_mean": 8.08,
+      "completeness_mean": 7.6,
+      "relevance_mean": 8.1,
+      "harm_count": 6,
+      "critical_omission_count": 0,
+      "severe_harm_count": 6,
+      "abstention": {
+        "n-a": 28,
+        "correct": 19,
+        "failed-to-abstain": 2,
+        "over-abstained": 1
+      },
+      "groundedness": {
+        "partly": 27,
+        "n-a": 8,
+        "supported": 15
+      },
+      "temporal": {
+        "date_wrong": 3,
+        "date_minor": 3,
+        "window_over": 4,
+        "trend_fab": 1
+      },
+      "calibrated": {
+        "adjudicated": false,
+        "point": 74.32,
+        "ci_low": null,
+        "ci_high": null,
+        "judge_only_mean": 74.32,
+        "rectifier": 0.0,
+        "kappa": null,
+        "n_labeled": 0,
+        "n_all": 50,
+        "tier": null
+      }
+    },
+    {
+      "id": "wahs-engine-chart:ollama/gemma4:26b@16k",
+      "title": "WAHS Engine · Condensed Chart Only (Gemma 4 26B-A4B MoE · 16k chart)",
+      "short_title": "Engine Chart (Gemma 26B (16k))",
+      "kind": "single",
+      "path": "Standalone wahs-engine: condensed chart with [N] citation mapping only (4-Layer Clinical KB and overflow tools disabled)",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "26B-A4B MoE",
+          "quant": "Q4_K_M",
+          "id": "ollama/gemma4:26b"
+        }
+      ],
+      "roles": {},
+      "turns": 50,
+      "valid_turns": 50,
+      "errors": 0,
+      "degraded": 0,
+      "avg_latency_ms": 3265,
+      "max_latency_ms": 47724,
+      "total_chart_refs": 242,
+      "resolved_chart_refs": 242,
+      "unresolved_chart_refs": 0,
+      "temporal_gate_pass": 0,
+      "temporal_gate_warn": 0,
+      "temporal_gate_fail": 0,
+      "temporal_gate_applied": 0,
+      "answer_check_edited": 0,
+      "answer_check_flagged": 0,
+      "benchmark_score": 79.7,
+      "safety_adjusted_benchmark_score": 75.5,
+      "accuracy_mean": 8.72,
+      "completeness_mean": 7.84,
+      "relevance_mean": 8.48,
+      "harm_count": 4,
+      "critical_omission_count": 0,
+      "severe_harm_count": 4,
+      "abstention": {
+        "over-abstained": 5,
+        "correct": 19,
+        "n-a": 25,
+        "failed-to-abstain": 1
+      },
+      "groundedness": {
+        "partly": 12,
+        "supported": 29,
+        "n-a": 8,
+        "unsupported": 1
+      },
+      "temporal": {
+        "date_wrong": 1,
+        "date_minor": 7,
+        "window_over": 6,
+        "trend_fab": 0
+      },
+      "calibrated": {
+        "adjudicated": false,
+        "point": 79.7,
+        "ci_low": null,
+        "ci_high": null,
+        "judge_only_mean": 79.7,
+        "rectifier": 0.0,
+        "kappa": null,
+        "n_labeled": 0,
+        "n_all": 50,
+        "tier": null
+      }
+    },
+    {
+      "id": "wahs-engine-kb:ollama/gemma4:26b@16k",
+      "title": "WAHS Engine · Condensation + 4-Layer KB (Gemma 4 26B-A4B MoE · 16k chart)",
+      "short_title": "Engine KB (Gemma 26B (16k))",
+      "kind": "single",
+      "path": "Standalone wahs-engine: multi-source FHIR deduplication + tiered chart condensation + Tier-0 overflow recovery + deterministic 4-Layer Clinical KB",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "26B-A4B MoE",
+          "quant": "Q4_K_M",
+          "id": "ollama/gemma4:26b"
+        }
+      ],
+      "roles": {},
+      "turns": 50,
+      "valid_turns": 50,
+      "errors": 0,
+      "degraded": 0,
+      "avg_latency_ms": 2696,
+      "max_latency_ms": 6093,
+      "total_chart_refs": 336,
+      "resolved_chart_refs": 336,
+      "unresolved_chart_refs": 0,
+      "temporal_gate_pass": 0,
+      "temporal_gate_warn": 0,
+      "temporal_gate_fail": 0,
+      "temporal_gate_applied": 0,
+      "answer_check_edited": 0,
+      "answer_check_flagged": 0,
+      "benchmark_score": 80.4,
+      "safety_adjusted_benchmark_score": 76.8,
+      "accuracy_mean": 8.76,
+      "completeness_mean": 7.9,
+      "relevance_mean": 8.5,
+      "harm_count": 3,
+      "critical_omission_count": 0,
+      "severe_harm_count": 3,
+      "abstention": {
+        "over-abstained": 3,
+        "correct": 19,
+        "n-a": 27,
+        "failed-to-abstain": 1
+      },
+      "groundedness": {
+        "supported": 26,
+        "partly": 16,
+        "unsupported": 2,
+        "n-a": 6
+      },
+      "temporal": {
+        "date_wrong": 1,
+        "date_minor": 5,
+        "window_over": 4,
+        "trend_fab": 0
+      },
+      "calibrated": {
+        "adjudicated": false,
+        "point": 80.38,
+        "ci_low": null,
+        "ci_high": null,
+        "judge_only_mean": 80.38,
+        "rectifier": 0.0,
+        "kappa": null,
+        "n_labeled": 0,
+        "n_all": 50,
+        "tier": null
+      }
+    },
+    {
+      "id": "wahs-engine-rag:ollama/gemma4:26b@16k",
+      "title": "WAHS Engine · Condensation + BM25 Note RAG (Gemma 4 26B-A4B MoE · 16k chart)",
+      "short_title": "Engine Note-RAG (Gemma 26B (16k))",
+      "kind": "single",
+      "path": "Standalone wahs-engine: condensed chart + single-patient BM25 passage retrieval over long clinical notes & diagnostic reports mapped to exact FHIR UUIDs + 4-Layer KB",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "26B-A4B MoE",
+          "quant": "Q4_K_M",
+          "id": "ollama/gemma4:26b"
+        }
+      ],
+      "roles": {},
+      "turns": 50,
+      "valid_turns": 50,
+      "errors": 0,
+      "degraded": 0,
+      "avg_latency_ms": 3641,
+      "max_latency_ms": 8034,
+      "total_chart_refs": 321,
+      "resolved_chart_refs": 321,
+      "unresolved_chart_refs": 0,
+      "temporal_gate_pass": 0,
+      "temporal_gate_warn": 0,
+      "temporal_gate_fail": 0,
+      "temporal_gate_applied": 0,
+      "answer_check_edited": 0,
+      "answer_check_flagged": 0,
+      "benchmark_score": 83.3,
+      "safety_adjusted_benchmark_score": 80.2,
+      "accuracy_mean": 9.02,
+      "completeness_mean": 8.18,
+      "relevance_mean": 8.56,
+      "harm_count": 3,
+      "critical_omission_count": 0,
+      "severe_harm_count": 3,
+      "abstention": {
+        "n-a": 27,
+        "over-abstained": 1,
+        "correct": 22
+      },
+      "groundedness": {
+        "partly": 17,
+        "n-a": 8,
+        "supported": 25
+      },
+      "temporal": {
+        "date_wrong": 1,
+        "date_minor": 5,
+        "window_over": 4,
+        "trend_fab": 1
+      },
+      "calibrated": {
+        "adjudicated": false,
+        "point": 83.28,
+        "ci_low": null,
+        "ci_high": null,
+        "judge_only_mean": 83.28,
+        "rectifier": 0.0,
+        "kappa": null,
+        "n_labeled": 0,
+        "n_all": 50,
+        "tier": null
+      }
+    },
+    {
+      "id": "wahs-engine-chart:ollama/gemma4:26b@32k",
+      "title": "WAHS Engine · Condensed Chart Only (Gemma 4 26B-A4B MoE · 32k chart)",
+      "short_title": "Engine Chart (Gemma 26B (32k))",
+      "kind": "single",
+      "path": "Standalone wahs-engine: condensed chart with [N] citation mapping only (4-Layer Clinical KB and overflow tools disabled)",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "26B-A4B MoE",
+          "quant": "Q4_K_M",
+          "id": "ollama/gemma4:26b"
+        }
+      ],
+      "roles": {},
+      "turns": 50,
+      "valid_turns": 50,
+      "errors": 0,
+      "degraded": 0,
+      "avg_latency_ms": 3286,
+      "max_latency_ms": 26010,
+      "total_chart_refs": 304,
+      "resolved_chart_refs": 304,
+      "unresolved_chart_refs": 0,
+      "temporal_gate_pass": 0,
+      "temporal_gate_warn": 0,
+      "temporal_gate_fail": 0,
+      "temporal_gate_applied": 0,
+      "answer_check_edited": 0,
+      "answer_check_flagged": 0,
+      "benchmark_score": 78.5,
+      "safety_adjusted_benchmark_score": 72.8,
+      "accuracy_mean": 8.7,
+      "completeness_mean": 7.42,
+      "relevance_mean": 8.44,
+      "harm_count": 4,
+      "critical_omission_count": 0,
+      "severe_harm_count": 4,
+      "abstention": {
+        "over-abstained": 6,
+        "correct": 18,
+        "n-a": 26
+      },
+      "groundedness": {
+        "supported": 30,
+        "partly": 9,
+        "n-a": 10,
+        "unsupported": 1
+      },
+      "temporal": {
+        "date_wrong": 2,
+        "date_minor": 0,
+        "window_over": 4,
+        "trend_fab": 0
+      },
+      "calibrated": {
+        "adjudicated": false,
+        "point": 78.5,
+        "ci_low": null,
+        "ci_high": null,
+        "judge_only_mean": 78.5,
+        "rectifier": 0.0,
+        "kappa": null,
+        "n_labeled": 0,
+        "n_all": 50,
+        "tier": null
+      }
+    },
+    {
+      "id": "wahs-engine-kb:ollama/gemma4:26b@32k",
+      "title": "WAHS Engine · Condensation + 4-Layer KB (Gemma 4 26B-A4B MoE · 32k chart)",
+      "short_title": "Engine KB (Gemma 26B (32k))",
+      "kind": "single",
+      "path": "Standalone wahs-engine: multi-source FHIR deduplication + tiered chart condensation + Tier-0 overflow recovery + deterministic 4-Layer Clinical KB",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "26B-A4B MoE",
+          "quant": "Q4_K_M",
+          "id": "ollama/gemma4:26b"
+        }
+      ],
+      "roles": {},
+      "turns": 50,
+      "valid_turns": 50,
+      "errors": 0,
+      "degraded": 0,
+      "avg_latency_ms": 3249,
+      "max_latency_ms": 7018,
+      "total_chart_refs": 327,
+      "resolved_chart_refs": 327,
+      "unresolved_chart_refs": 0,
+      "temporal_gate_pass": 0,
+      "temporal_gate_warn": 0,
+      "temporal_gate_fail": 0,
+      "temporal_gate_applied": 0,
+      "answer_check_edited": 0,
+      "answer_check_flagged": 0,
+      "benchmark_score": 79.6,
+      "safety_adjusted_benchmark_score": 74.8,
+      "accuracy_mean": 8.66,
+      "completeness_mean": 7.76,
+      "relevance_mean": 8.42,
+      "harm_count": 5,
+      "critical_omission_count": 0,
+      "severe_harm_count": 5,
+      "abstention": {
+        "over-abstained": 5,
+        "correct": 18,
+        "n-a": 27
+      },
+      "groundedness": {
+        "partly": 13,
+        "supported": 28,
+        "n-a": 9
+      },
+      "temporal": {
+        "date_wrong": 0,
+        "date_minor": 2,
+        "window_over": 5,
+        "trend_fab": 0
+      },
+      "calibrated": {
+        "adjudicated": false,
+        "point": 79.56,
+        "ci_low": null,
+        "ci_high": null,
+        "judge_only_mean": 79.56,
+        "rectifier": 0.0,
+        "kappa": null,
+        "n_labeled": 0,
+        "n_all": 50,
+        "tier": null
+      }
+    },
+    {
+      "id": "wahs-engine-rag:ollama/gemma4:26b@32k",
+      "title": "WAHS Engine · Condensation + BM25 Note RAG (Gemma 4 26B-A4B MoE · 32k chart)",
+      "short_title": "Engine Note-RAG (Gemma 26B (32k))",
+      "kind": "single",
+      "path": "Standalone wahs-engine: condensed chart + single-patient BM25 passage retrieval over long clinical notes & diagnostic reports mapped to exact FHIR UUIDs + 4-Layer KB",
+      "models": [
+        {
+          "family": "Gemma 4",
+          "params": "26B-A4B MoE",
+          "quant": "Q4_K_M",
+          "id": "ollama/gemma4:26b"
+        }
+      ],
+      "roles": {},
+      "turns": 50,
+      "valid_turns": 50,
+      "errors": 0,
+      "degraded": 0,
+      "avg_latency_ms": 4306,
+      "max_latency_ms": 8207,
+      "total_chart_refs": 354,
+      "resolved_chart_refs": 354,
+      "unresolved_chart_refs": 0,
+      "temporal_gate_pass": 0,
+      "temporal_gate_warn": 0,
+      "temporal_gate_fail": 0,
+      "temporal_gate_applied": 0,
+      "answer_check_edited": 0,
+      "answer_check_flagged": 0,
+      "benchmark_score": 76.2,
+      "safety_adjusted_benchmark_score": 70.7,
+      "accuracy_mean": 8.36,
+      "completeness_mean": 7.7,
+      "relevance_mean": 8.34,
+      "harm_count": 6,
+      "critical_omission_count": 0,
+      "severe_harm_count": 6,
+      "abstention": {
+        "n-a": 28,
+        "correct": 19,
+        "failed-to-abstain": 2,
+        "over-abstained": 1
+      },
+      "groundedness": {
+        "partly": 23,
+        "supported": 17,
+        "n-a": 8,
+        "unsupported": 2
+      },
+      "temporal": {
+        "date_wrong": 2,
+        "date_minor": 2,
+        "window_over": 6,
+        "trend_fab": 1
+      },
+      "calibrated": {
+        "adjudicated": false,
+        "point": 76.16,
+        "ci_low": null,
+        "ci_high": null,
+        "judge_only_mean": 76.16,
+        "rectifier": 0.0,
+        "kappa": null,
+        "n_labeled": 0,
+        "n_all": 50,
+        "tier": null
+      }
+    }
+  ],
+  "winner": {
+    "id": "wahs-engine-rag:ollama/gemma4:26b@16k",
+    "title": "WAHS Engine · Condensation + BM25 Note RAG (Gemma 4 26B-A4B MoE · 16k chart)",
+    "short_title": "Engine Note-RAG (Gemma 26B (16k))",
+    "benchmark_score": 83.3,
+    "safety_adjusted_benchmark_score": 80.2,
+    "avg_latency_ms": 3641
+  },
+  "evaluation_modality": "live_model_and_team_eval",
+  "domain_guardrails": [
+    {
+      "id": "verifact_atomic_entailment",
+      "label": "VeriFact Atomic Claim-to-UUID Citation Entailment",
+      "scope": "All evaluated setups",
+      "passed": 900,
+      "total": 900,
+      "pass_rate": 1.0,
+      "ci95_low": 0.9957,
+      "ci95_high": 1.0,
+      "status": "pass",
+      "detail": "900/900 responses entailed every required clinical assertion (0 numeric/status distortions)"
+    },
+    {
+      "id": "healthbench_deterministic_rubric",
+      "label": "Deterministic HealthBench Clinical Rubric & Budget Gate",
+      "scope": "All evaluated setups",
+      "passed": 899,
+      "total": 900,
+      "pass_rate": 0.9989,
+      "ci95_low": 0.9937,
+      "ci95_high": 0.9998,
+      "status": "pass",
+      "detail": "899/900 responses satisfied all deterministic clinical checklist, token-budget, and citation rules"
+    }
+  ],
+  "slug": "2026-11-12-wahs-engine-16k-vs-32k-pathway-eval"
+}
