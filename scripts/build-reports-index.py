@@ -229,7 +229,9 @@ ALLOWED_DASHBOARD_ROOT_KEYS: frozenset[str] = frozenset({
     "sources_pool",
     "refs_pool",
     "details",
+    "detail_shards",
 })
+SAFE_SHARD_REL_RE = re.compile(r"^dashboard-details/[A-Za-z0-9._-]+\.json$")
 
 
 def _is_valid_iso_date(raw: object) -> bool:
@@ -455,6 +457,19 @@ def _check_editorial_entry(
                     if dash_obj.get("schema") != "openclinai.dashboard.v2" or dash_obj.get("schema_version") != 2:
                         issues.append(f"{slug}/dashboard-data.json must declare schema='openclinai.dashboard.v2' and schema_version=2")
                     issues.extend(_closed_key_issues(dash_obj, ALLOWED_DASHBOARD_ROOT_KEYS, where=f"{slug}/dashboard-data.json"))
+                    detail_shards = dash_obj.get("detail_shards")
+                    if detail_shards is not None:
+                        if not isinstance(detail_shards, dict):
+                            issues.append(f"{slug}/dashboard-data.json.detail_shards must be an object")
+                        else:
+                            slug_root = (root / slug).resolve()
+                            for bk, rel_shard in detail_shards.items():
+                                if not isinstance(rel_shard, str) or not SAFE_SHARD_REL_RE.fullmatch(rel_shard):
+                                    issues.append(f"{slug}/dashboard-data.json.detail_shards[{bk!r}] has unsafe path {rel_shard!r}")
+                                else:
+                                    sp = (slug_root / rel_shard).resolve()
+                                    if not sp.is_relative_to(slug_root) or not sp.is_file():
+                                        issues.append(f"{slug}/{rel_shard} referenced in detail_shards is missing")
                 fam = str(
                     entry.get("family")
                     or ed_disk.get("family")
@@ -1302,7 +1317,25 @@ def stamp_editorial_into_page(html_path: Path, ed: dict) -> None:
         ("./dashboard-data.json", page_dir / "dashboard-data.json"),
     ):
         if disk_path.is_file():
-            ver = hashlib.sha256(disk_path.read_bytes()).hexdigest()[:10]
+            if disk_path.name == "dashboard-data.json":
+                try:
+                    d_obj = json.loads(disk_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    d_obj = {}
+                d_shards = d_obj.get("detail_shards") if isinstance(d_obj, dict) else None
+                if isinstance(d_shards, dict) and d_shards:
+                    h_dash = hashlib.sha256()
+                    h_dash.update(disk_path.read_bytes())
+                    for rel_shard in sorted({str(v) for v in d_shards.values() if isinstance(v, str)}):
+                        sp = (page_dir / rel_shard).resolve()
+                        if sp.is_relative_to(page_dir.resolve()) and sp.is_file():
+                            h_dash.update(rel_shard.encode("utf-8"))
+                            h_dash.update(sp.read_bytes())
+                    ver = h_dash.hexdigest()[:10]
+                else:
+                    ver = hashlib.sha256(disk_path.read_bytes()).hexdigest()[:10]
+            else:
+                ver = hashlib.sha256(disk_path.read_bytes()).hexdigest()[:10]
             updated = re.sub(
                 re.escape(rel_url) + r"\?v=[A-Za-z0-9_-]+",
                 f"{rel_url}?v={ver}",

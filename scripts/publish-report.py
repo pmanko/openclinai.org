@@ -196,6 +196,17 @@ ALLOWED_DASHBOARD_ROOT_KEYS: frozenset[str] = frozenset({
     "sources_pool",
     "refs_pool",
     "details",
+    "detail_shards",
+})
+
+SAFE_SHARD_REL_RE = re.compile(r"^dashboard-details/[A-Za-z0-9._-]+\.json$")
+ALLOWED_DASHBOARD_DETAIL_CELL_KEYS: frozenset[str] = frozenset({
+    "scenario",
+    "backend",
+    "expectations",
+    "catalystExpected",
+    "turns",
+    "judge",
 })
 
 FORBIDDEN_TITLE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
@@ -347,6 +358,7 @@ def validate_v2_report_packet(
     *,
     slug: str,
     editorial: dict[str, Any] | None = None,
+    run_dir: Path | None = None,
 ) -> None:
     if report_data.get("schema_version") != 2 or report_data.get("schema") != "openclinai.report.v2":
         raise ValueError(f"{slug}: report-data.json must have schema='openclinai.report.v2' and schema_version=2")
@@ -359,6 +371,33 @@ def validate_v2_report_packet(
     _assert_closed_keys(dashboard_data, ALLOWED_DASHBOARD_ROOT_KEYS, where="dashboard-data.json", slug=slug)
     _assert_closed_keys(run_summary, ALLOWED_SUMMARY_KEYS, where="run-summary.json", slug=slug)
     _validate_iso_date(run_summary.get("date"), where="run-summary.json.date", slug=slug, required=True)
+
+    detail_shards = dashboard_data.get("detail_shards")
+    if detail_shards is not None:
+        if not isinstance(detail_shards, dict):
+            raise ValueError(f"{slug}: dashboard-data.json.detail_shards must be a JSON object")
+        resolved_run_dir = run_dir.resolve() if run_dir is not None else None
+        for backend_k, rel_shard in detail_shards.items():
+            if not isinstance(rel_shard, str) or not SAFE_SHARD_REL_RE.fullmatch(rel_shard):
+                raise ValueError(
+                    f"{slug}: dashboard-data.json.detail_shards[{backend_k!r}] has unsafe path {rel_shard!r}"
+                )
+            if resolved_run_dir is not None:
+                shard_path = (resolved_run_dir / rel_shard).resolve()
+                if not shard_path.is_relative_to(resolved_run_dir) or not shard_path.is_file():
+                    raise ValueError(
+                        f"{slug}: missing dashboard detail shard {rel_shard!r} for {backend_k!r}"
+                    )
+                shard_obj = _load_json(shard_path)
+                if not isinstance(shard_obj, dict):
+                    raise ValueError(f"{slug}: {rel_shard} must contain a JSON object")
+                for cell_k, cell_v in shard_obj.items():
+                    _assert_closed_keys(
+                        cell_v,
+                        ALLOWED_DASHBOARD_DETAIL_CELL_KEYS,
+                        where=f"{rel_shard}[{cell_k}]",
+                        slug=slug,
+                    )
 
     runs = report_data.get("runs")
     if not isinstance(runs, list) or not runs or not isinstance(runs[0], dict):
@@ -617,7 +656,14 @@ def stage_report(
     validate_editorial_payload(editorial, slug=slug)
     if editorial.get("date"):
         run_summary["date"] = editorial["date"]
-    validate_v2_report_packet(report_data, dashboard_data, run_summary, slug=slug, editorial=editorial)
+    validate_v2_report_packet(
+        report_data,
+        dashboard_data,
+        run_summary,
+        slug=slug,
+        editorial=editorial,
+        run_dir=run_dir,
+    )
 
     # Inject catalog_meta into report_data.runs[0] so viewer shell has immediate access
     r0 = (report_data.get("runs") or [{}])[0]
@@ -668,6 +714,18 @@ def stage_report(
         (temporary / "dashboard-data.json").write_text(
             json.dumps(dashboard_data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
         )
+        detail_shards = dashboard_data.get("detail_shards")
+        if isinstance(detail_shards, dict) and detail_shards:
+            shards_out = temporary / "dashboard-details"
+            shards_out.mkdir(parents=True, exist_ok=True)
+            resolved_run_dir = run_dir.resolve()
+            for rel_shard in detail_shards.values():
+                shard_src = (resolved_run_dir / rel_shard).resolve()
+                shard_obj = _load_json(shard_src)
+                (temporary / rel_shard).write_text(
+                    json.dumps(shard_obj, ensure_ascii=False, separators=(",", ":")),
+                    encoding="utf-8",
+                )
 
         assets_dir = reports_root / "assets"
         rep_css_v = _sha10(assets_dir / "report-shell.css")
@@ -675,7 +733,15 @@ def stage_report(
         dash_css_v = _sha10(assets_dir / "dashboard-shell.css")
         dash_js_v = _sha10(assets_dir / "dashboard-shell.js")
         rep_data_v = _sha10(temporary / "report-data.json")
-        dash_data_v = _sha10(temporary / "dashboard-data.json")
+        if isinstance(detail_shards, dict) and detail_shards:
+            h_dash = hashlib.sha256()
+            h_dash.update((temporary / "dashboard-data.json").read_bytes())
+            for rel_shard in sorted(set(detail_shards.values())):
+                h_dash.update(rel_shard.encode("utf-8"))
+                h_dash.update((temporary / rel_shard).read_bytes())
+            dash_data_v = h_dash.hexdigest()[:10]
+        else:
+            dash_data_v = _sha10(temporary / "dashboard-data.json")
 
         display_title = str(editorial.get("title") or editorial.get("label") or slug)
         (temporary / "index.html").write_text(
