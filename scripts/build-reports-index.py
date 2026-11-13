@@ -94,6 +94,7 @@ ALLOWED_EDITORIAL_KEYS: frozenset[str] = frozenset({
     "note",
     "parent_slug",
     "evaluation_modality",
+    "hardware",
 })
 
 ALLOWED_SUMMARY_KEYS: frozenset[str] = frozenset({
@@ -132,6 +133,7 @@ ALLOWED_SUMMARY_KEYS: frozenset[str] = frozenset({
     "domain_guardrails",
     "seed_count",
     "seeds",
+    "hardware",
 })
 
 ALLOWED_REPORT_ROOT_KEYS: frozenset[str] = frozenset({
@@ -176,7 +178,7 @@ ALLOWED_REPORT_RUN_KEYS: frozenset[str] = frozenset({
     "seeds",
 })
 
-ALLOWED_SCENARIO_KEYS: frozenset[str] = frozenset({"scenario_id", "id", "turns"})
+ALLOWED_SCENARIO_KEYS: frozenset[str] = frozenset({"scenario_id", "id", "turns", "category"})
 ALLOWED_TURN_KEYS: frozenset[str] = frozenset({"turn", "question", "cells"})
 ALLOWED_CELL_KEYS: frozenset[str] = frozenset({
     "status",
@@ -693,6 +695,8 @@ def gather(slug: str) -> dict:
                             "completeness_mean": a.get("completeness_mean"),
                             "relevance_mean": a.get("relevance_mean"),
                             "harm_count": a.get("harm_count") or 0,
+                            "harm_disputed_count": a.get("harm_disputed_count") or 0,
+                            "privacy_violation_count": a.get("privacy_violation_count") or 0,
                         }
                     )
     patients_raw = meta.get("patients")
@@ -720,6 +724,7 @@ def gather(slug: str) -> dict:
         "scoreline": str(meta.get("scoreline") or ""),
         # Who judged, frozen with the scores; a run that recorded no judge says so.
         "judging": _judging_line(meta.get("judging")),
+        "hardware": meta.get("hardware") if isinstance(meta.get("hardware"), dict) else None,
     }
     rdir = _run_dir_for(slug)
     if not rdir or not ((rdir / "results.json").is_file() if family == "catalyst" else (rdir / "results.jsonl").is_file()):
@@ -912,10 +917,19 @@ def _scout_table(scout: list[dict], labels: dict | None = None) -> str:
             txt = f"{v:.1f}" if isinstance(v, (int, float)) else "—"
             return f"<td{cls}>{txt}</td>"
         harm = s.get("harm_count", 0)
-        flags = (f'harm: {harm} · confabulations: {s.get("confabulation_count", 0)} · '
-                 f'fabricated citations: {s.get("fabricated_citation_count", 0)}')
+        disp = s.get("harm_disputed_count", 0)
+        priv = s.get("privacy_violation_count", 0)
+        flag_parts = [
+            f'confirmed harm: {harm}',
+            f'disputed (1/2): {disp}' if disp else None,
+            f'privacy: {priv}' if priv else None,
+            f'confabulations: {s.get("confabulation_count", 0)}',
+            f'fabricated citations: {s.get("fabricated_citation_count", 0)}',
+        ]
+        flags = " · ".join(p for p in flag_parts if p)
         harm_cls = ' class="harm"' if harm else ""
-        harm_cell = f'<td{harm_cls} title="{esc(flags)}">{harm}</td>'
+        disp_note = f' <span class="harm-disp" title="1 of 2 judges flagged harm">({disp} disp)</span>' if disp else ""
+        harm_cell = f'<td{harm_cls} title="{esc(flags)}">{harm}{disp_note}</td>'
         body.append(
             f'<tr><td class="arm" title="{esc(detail)}">{esc(name)}</td>'
             f'<td>{s["n"]}</td>{cell("benchmark_score") if benchmarked else ""}{cell("accuracy_mean")}'
@@ -1017,7 +1031,7 @@ FILTER_JS = (
 )
 
 
-def _card_highlights(scout: list[dict], labels: dict | None = None) -> str:
+def _card_highlights(scout: list[dict], labels: dict | None = None, hardware: dict | None = None) -> str:
     if not scout:
         return ""
     labels = _arm_labels(labels)
@@ -1040,16 +1054,27 @@ def _card_highlights(scout: list[dict], labels: dict | None = None) -> str:
                 f'({top["accuracy_mean"]:.1f}/10)</span>'
             )
     total_harm = sum(int(s.get("harm_count") or 0) for s in scout)
+    total_disputed = sum(int(s.get("harm_disputed_count") or 0) for s in scout)
     zero_harm = sum(1 for s in scout if not s.get("harm_count"))
     if total_harm == 0:
         pills.append(
             f'<span class="hl-pill hl-safe">✓ 0 unsafe answers across all {len(scout)} setups</span>'
         )
     else:
+        harm_summary = (
+            f'{total_harm} confirmed unsafe; {total_disputed} disputed 1/2'
+            if total_disputed
+            else f'{total_harm} flagged total'
+        )
         pills.append(
             f'<span class="hl-pill hl-warn">{zero_harm} of {len(scout)} setups with 0 unsafe answers '
-            f'({total_harm} flagged total)</span>'
+            f'({harm_summary})</span>'
         )
+    if isinstance(hardware, dict) and hardware:
+        hw_parts = [hardware.get("gpu"), hardware.get("serving_engine")]
+        hw_label = " · ".join(str(x) for x in hw_parts if x)
+        if hw_label:
+            pills.append(f'<span class="hl-pill hl-hw">⚙ {esc(hw_label)}</span>')
     return '<div class="card-highlights">' + "".join(pills) + "</div>"
 
 
@@ -1105,7 +1130,8 @@ def _card(entry: dict) -> str:
     if g["scout"] and not unavailable:
         statistics = '<div class="report-table-scroll" role="region" aria-label="Recorded score tables" tabindex="0">' + statistics + '</div>'
         statistics += ('<p class="judged-by">' + esc(g["judging"] or "Judge not recorded for this run.") + '</p>')
-    highlights = "" if unavailable else _card_highlights(g["scout"], entry.get("arms"))
+    hw_meta = g.get("hardware") if isinstance(g.get("hardware"), dict) else entry.get("hardware")
+    highlights = "" if unavailable else _card_highlights(g["scout"], entry.get("arms"), hardware=hw_meta)
     takeaway = (f'<p class="takeaway"><span class="tk">Takeaway</span>{esc(entry["takeaway"])}</p>'
                 if entry.get("takeaway") else "")
     # Earlier runs of the same comparison stay published but are listed under the
@@ -1201,6 +1227,8 @@ _STYLE_CORE = """
   .hl-pill.hl-win{background:var(--bench-bg);border-color:var(--accent);color:var(--ink);}
   .hl-pill.hl-safe{background:var(--win-bg);color:var(--win-fg);border-color:transparent;font-weight:600;}
   .hl-pill.hl-warn{background:var(--warn-bg);color:var(--warn-fg);border-color:transparent;}
+  .hl-pill.hl-hw{background:rgba(15,118,110,.08);color:var(--accent);border-color:rgba(15,118,110,.25);font-weight:500;}
+  .harm-disp{font-size:11px;color:var(--muted);font-weight:400;}
   .takeaway{font-size:14px;color:var(--text);margin:10px 0 12px;background:var(--takeaway-bg);
     border-left:3px solid var(--accent);padding:10px 14px;border-radius:0 8px 8px 0;line-height:1.55;}
   .takeaway .tk{display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;
@@ -1405,6 +1433,7 @@ def compile_manifest_from_editorial(
             "context",
             "arms",
             "earlier",
+            "hardware",
         ):
             if ed.get(k) is not None:
                 if k == "arms":

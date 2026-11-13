@@ -60,6 +60,7 @@ ALLOWED_EDITORIAL_KEYS: frozenset[str] = frozenset({
     "note",
     "parent_slug",
     "evaluation_modality",
+    "hardware",
 })
 
 ALLOWED_SUMMARY_KEYS: frozenset[str] = frozenset({
@@ -98,6 +99,7 @@ ALLOWED_SUMMARY_KEYS: frozenset[str] = frozenset({
     "domain_guardrails",
     "seed_count",
     "seeds",
+    "hardware",
 })
 
 ALLOWED_REPORT_ROOT_KEYS: frozenset[str] = frozenset({
@@ -142,7 +144,7 @@ ALLOWED_REPORT_RUN_KEYS: frozenset[str] = frozenset({
     "seeds",
 })
 
-ALLOWED_SCENARIO_KEYS: frozenset[str] = frozenset({"scenario_id", "id", "turns"})
+ALLOWED_SCENARIO_KEYS: frozenset[str] = frozenset({"scenario_id", "id", "turns", "category"})
 ALLOWED_TURN_KEYS: frozenset[str] = frozenset({"turn", "question", "cells"})
 ALLOWED_CELL_KEYS: frozenset[str] = frozenset({
     "status",
@@ -667,7 +669,7 @@ def stage_report(
 
     # Inject catalog_meta into report_data.runs[0] so viewer shell has immediate access
     r0 = (report_data.get("runs") or [{}])[0]
-    r0["catalog_meta"] = {
+    catalog_meta = {
         "slug": slug,
         "title": editorial.get("title") or editorial.get("label") or slug,
         "summary": editorial.get("summary") or editorial.get("note") or "",
@@ -675,6 +677,10 @@ def stage_report(
         "family": editorial.get("family") or "chartsearchai",
         "date": editorial.get("date") or run_summary.get("date") or "",
     }
+    hardware_meta = editorial.get("hardware") or run_summary.get("hardware") or r0.get("hardware")
+    if isinstance(hardware_meta, dict) and hardware_meta:
+        catalog_meta["hardware"] = hardware_meta
+    r0["catalog_meta"] = catalog_meta
 
     # Pre-check existing archive before replacing destination
     build_script = root / "scripts" / "build-reports-index.py"
