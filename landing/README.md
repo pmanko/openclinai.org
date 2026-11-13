@@ -23,7 +23,8 @@ contribution resources rather than expanding the homepage.
 | `/validation-harness/` | 4-Layer Clinical Verification Stack, streaming telemetry, and evaluation methodology |
 | `/experiments/` | Post-Training & Decision-Layer Lab: Track A (`Laya` ~0.4B System-1 gate) and Track B (5-Rung Post-Training Ladder) |
 | `/projects/` | Applied Projects & Clinical Collaborations catalog (WA Health Summary, WHO SMART Guidelines L2→L3) |
-| `/wahs/`, `/wahs/llm-strategy/`, `/wahs/walkthrough/` | WA Health Summary project overview, AI strategy & architecture (`#engine-internals`), and Explorer sandbox walkthrough (`wahs.openclinai.org` redirects 308 to `/wahs/*`) |
+| `/wahs/`, `/wahs/llm-strategy/`, `/wahs/walkthrough/` | WA Health Summary project overview, plain-language AI strategy overview for the whole team, and Explorer sandbox walkthrough (`wahs.openclinai.org` redirects 308 to `/wahs/*`) |
+| `/wahs/engine-reference/` | Engine reference for developers: service flow, session and scope layers, wire contract, build record, and engine internals (`#engine-internals`). The strategy page keeps stub anchors for the old `#pilot-architecture`, `#wire-contract-details`, `#action-plan` and `#engine-internals` links. Both pages share `/wahs/strategy.css` and `/wahs/toc.js` |
 | `/docs/openmrs-upstream/` | Dated OpenMRS upstream pull-request stacks and review evidence |
 
 Product-native documentation owns application contracts. The native OpenELIS

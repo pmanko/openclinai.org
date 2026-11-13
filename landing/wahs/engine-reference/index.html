@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WAHS Engine Reference · OpenClinAI</title>
+  <meta name="description" content="Technical reference for the Washington Health Summary (WAHS) engine: service-to-service flow, session and scope layers, the OpenAI-compatible wire contract, the build record, and engine internals." />
+  <link rel="canonical" href="https://openclinai.org/wahs/engine-reference/" />
+  <meta property="og:url" content="https://openclinai.org/wahs/engine-reference/" />
+  <meta property="og:title" content="WAHS Engine Reference · OpenClinAI" />
+  <meta property="og:description" content="How the WAHS engine connects the app, the record store and the model server, with the wire contract, build record and internals." />
+  <meta property="og:image" content="https://openclinai.org/wahs/walkthrough/media/step2-condensation-8k-vs-1k.webp" />
+  <meta name="theme-color" content="#4b2e83" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/projects.css" />
+  <link rel="stylesheet" href="/wahs/strategy.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <header class="site-header project-header">
+    <a class="brand" href="/index.html" aria-label="OpenClinAI home">
+      <span class="brand-mark" aria-hidden="true"><span></span></span>
+      <span class="brand-text">OpenClinAI</span>
+    </a>
+
+    <nav class="primary-nav" aria-label="Primary">
+      <a href="/index.html#project">Client Apps</a>
+      <a href="/med-agent-hub/index.html">AI Engine</a>
+      <a href="/validation-harness/index.html">Evaluation</a>
+      <a href="/experiments/index.html">Experiments</a>
+      <a href="/projects/index.html" aria-current="page">Projects</a>
+      <a href="https://reports.openclinai.org/">Reports <span aria-hidden="true">↗</span></a>
+      <a href="/index.html#about">About</a>
+    </nav>
+
+    <details class="nav-toggle">
+      <summary>Menu</summary>
+      <nav class="mobile-nav" aria-label="Mobile primary">
+        <a href="/index.html#project">Client Apps</a>
+        <a href="/med-agent-hub/index.html">AI Engine</a>
+        <a href="/validation-harness/index.html">Evaluation</a>
+        <a href="/experiments/index.html">Experiments</a>
+        <a href="/projects/index.html" aria-current="page">Projects</a>
+        <a href="https://reports.openclinai.org/">Reports <span aria-hidden="true">↗</span></a>
+        <a href="/index.html#about">About</a>
+      </nav>
+    </details>
+  </header>
+
+  <div class="wahs-subnav-bar">
+    <div class="page-width wahs-subnav-inner">
+      <span class="wahs-subnav-label">WA Health Summary</span>
+      <nav class="wahs-subnav" aria-label="WA Health Summary navigation">
+        <a href="/wahs/index.html">Overview</a>
+        <a href="/wahs/llm-strategy/index.html">AI Strategy &amp; Architecture</a>
+        <a href="/wahs/engine-reference/index.html" aria-current="page">Engine Reference</a>
+        <a href="/wahs/walkthrough/index.html">Sandbox Walkthrough</a>
+        <a href="https://wahs-demo.openclinai.org/">Live Sandbox <span aria-hidden="true">↗</span></a>
+        <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">9-Model Benchmark <span aria-hidden="true">↗</span></a>
+        <a href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">Retrieval &amp; Portability Eval <span aria-hidden="true">↗</span></a>
+      </nav>
+    </div>
+  </div>
+
+  <main id="main-content" tabindex="-1">
+    <div class="doc-layout">
+      <nav class="doc-toc" aria-label="On this page">
+        <p class="doc-toc-title">On this page</p>
+        <ol>
+          <li><a href="#pilot-architecture">Service architecture</a></li>
+          <li><a class="sub" href="#worked-query-example">Worked example</a></li>
+          <li><a class="sub" href="#session-and-scope-model">Sessions and scope</a></li>
+          <li><a class="sub" href="#wire-contract-details">Wire contract</a></li>
+          <li><a href="#action-plan">Build record</a></li>
+          <li><a href="#engine-internals">Engine internals</a></li>
+        </ol>
+        <p class="doc-toc-more">For an introduction, see the <a href="/wahs/llm-strategy/index.html">AI strategy overview</a>.</p>
+      </nav>
+
+      <div class="doc-body">
+        <section class="strategy-intro" id="top">
+          <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <a href="/index.html">OpenClinAI</a>
+            <span aria-hidden="true">/</span>
+            <a href="/projects/index.html">Projects</a>
+            <span aria-hidden="true">/</span>
+            <a href="/wahs/index.html">WA Health Summary (WAHS)</a>
+            <span aria-hidden="true">/</span>
+            <span>Engine Reference</span>
+          </nav>
+
+          <p class="section-kicker">Washington Health Summary (WAHS) · Engine reference</p>
+          <h1>WAHS engine reference.</h1>
+          <p class="overview-lead">
+            Technical detail for people building against or reviewing the WAHS engine: how the services connect, where state lives, the wire contract, the build record and the internals. For the plain-language overview, start with the <a href="/wahs/llm-strategy/index.html">AI strategy page</a>.
+          </p>
+          <p class="strategy-meta">
+            Updated November 2026 · Source: <a href="https://github.com/pmanko/wahs-engine"><code>wahs-engine</code> on GitHub <span aria-hidden="true">↗</span></a>
+          </p>
+
+          <details class="doc-toc-mobile">
+            <summary>On this page</summary>
+            <ol>
+          <li><a href="#pilot-architecture">Service architecture</a></li>
+          <li><a href="#worked-query-example">Worked example</a></li>
+          <li><a href="#session-and-scope-model">Sessions and scope</a></li>
+          <li><a href="#wire-contract-details">Wire contract</a></li>
+          <li><a href="#action-plan">Build record</a></li>
+          <li><a href="#engine-internals">Engine internals</a></li>
+            </ol>
+          </details>
+        </section>
+
+    <section class="strategy-section" id="pilot-architecture" tabindex="-1" aria-labelledby="arch-title">
+      <p class="section-kicker">Service architecture</p>
+      <h2 id="arch-title">Service-to-service flow across WAHS clients, <code>fhir-auth</code>, <code>wahs-engine</code>, and pluggable GPU inference</h2>
+      <p>
+        The target WAHS architecture keeps client frontends lightweight, delegates per-user data access control to WAHS’s existing <code>fhir-auth</code> security proxy, isolates FHIR condensation and clinical reasoning inside a lean standalone <strong><code>wahs-engine</code></strong> middleware service, and speaks standard OpenAI <span class="code-inline">/v1/chat/completions</span> on both sides for plug-and-play model portability.
+      </p>
+
+      <div class="flow-diagram" tabindex="0" role="region" aria-label="WAHS Pilot Architecture Flow">[1. Client-Agnostic WAHS Frontends &amp; Server-Side BFF]
+   • Unified responsive SvelteKit app (uwcirg/shl-ips) + interoperable mobile-first companion clients
+   • Authenticate via Keycloak OIDC; read/write datasets via fhir-auth and share IPS via shl-server
+   • Browser posts chat turn + optional chart filter to app BFF (/api/chat, Vercel AI SDK) — never straight to GPU
+          │
+          ▼  Internal network · OpenAI POST /v1/chat/completions (Bearer &lt;keycloak_jwt&gt; + optional wahs.chart_scope)
+[2. Standalone WAHS Engine Middleware (wahs-engine · Zero Med Agent Hub Dependency)]
+   • Zero HAPI admin credentials: forwards caller's Bearer JWT to fhir-auth (jwt-proxy, meta.security.code == sub)
+   • Bundle Assembler walks masterPatient.link[] → paginated Patient/{datasetId}/$everything (provider imports + My Story/Goals)
+   • Applies optional wahs.chart_scope (source/category/section/IPS filter) + merges unsaved wahs.overlay_resources
+   • Runs wahs_core: 90%–99% condensation (condenser.py) + 4-Layer Clinical KB + ClinicalEntityGraph + Tier-0 lookup
+   • Isolates dataset &amp; KV prefix caches strictly by (verified_sub, datasets_fingerprint, scope_hash)
+          │
+          ▼  Standard OpenAI POST /v1/chat/completions (LLM_BASE_URL · fixed chart prefix + stream=true)
+[3. Pluggable OpenAI-Compatible Inference Backend (UW CIRG GPU / Agency Host)]
+   • Default pilot: LiteLLM / Ollama / vLLM on UW CIRG GPU server (Gemma 4 12B default · 26B · E4B)
+   • Zero-code portability: swap approved open-weight models or local agency GPU hosts via config alone
+   • Streams tokens immediately; wahs-engine appends x_wahs ([N] → FHIR UUID/source map + HL7 AI-Provenance)</div>
+
+      <div class="strategy-grid-3">
+        <article class="strategy-card recommended">
+          <span class="strategy-badge">Zero-Privilege FHIR Assembly</span>
+          <h3>Live star-graph charts, user entries &amp; dynamic scoping</h3>
+          <ul>
+            <li><strong>Zero service credentials:</strong> <code>wahs-engine</code> never connects to raw internal HAPI; forwarding the user’s Keycloak <code>Bearer</code> token through <code>fhir-auth</code> enforces per-user security labels automatically.</li>
+            <li><strong>Provider + patient-authored records:</strong> Walking <code>masterPatient.link[]</code> across paginated <code>Patient/$everything</code> bundles pulls both EHR imports and saved patient-authored forms (<em>My Story</em> notes, <em>Goals</em>, <em>Care Needs</em>, <em>POLST</em>) without losing clinical notes stripped by stock HAPI <code>$summary</code>.</li>
+            <li><strong>Flexible <code>chart_scope</code>:</strong> Conversations can scope context by data source, category, clinical section, date window, or a specific shared IPS summary, and attach unsaved draft notes via <code>overlay_resources</code> without uploading multi-megabyte bundles from the browser.</li>
+          </ul>
+        </article>
+
+        <article class="strategy-card">
+          <span class="strategy-badge secondary">Session Isolation &amp; Timeliness</span>
+          <h3>Prefix-cached follow-ups with strict HAPI invalidation</h3>
+          <ul>
+            <li><strong>Cryptographic tenant boundary:</strong> Raw dataset caches key on <span class="code-inline">(verified_sub, dataset_id, lastUpdated)</span>, and condensed prompt prefixes key on <span class="code-inline">(verified_sub, datasets_fingerprint, scope_hash)</span>—preventing cross-user or cross-filter bleed.</li>
+            <li><strong>Immediate record timeliness:</strong> Whenever a patient imports new EHR records, updates a goal, or deletes a dataset in HAPI, <code>meta.lastUpdated</code> shifts and rebuilds the condensed chart automatically.</li>
+            <li><strong>Deterministic fallback:</strong> Placing the <span class="code-inline">[1]...[N]</span> condensed ledger first lets the GPU reuse its KV cache (&lt; 0.3s follow-up prefill), while any cache eviction simply recomputes the identical prompt.</li>
+          </ul>
+        </article>
+
+        <article class="strategy-card">
+          <span class="strategy-badge future">Portability &amp; Lean Packaging</span>
+          <h3>Decoupled clients, swappable models &amp; zero R&amp;D bloat</h3>
+          <ul>
+            <li><strong>Lean standalone engine vs. R&amp;D workbench:</strong> <code>wahs-engine</code> packages pure-Python <code>wahs_core</code> + a thin FastAPI service (~60 MB image, zero OpenMRS/Catalyst dependencies). <a href="/med-agent-hub/index.html">Med Agent Hub</a> and <a href="/validation-harness/index.html">Validation Harness</a> import <code>wahs_core</code> upstream so benchmarks and production never drift.</li>
+            <li><strong>Frontend independence:</strong> Decoupled <code>Keycloak</code>, <code>fhir-auth</code>, <code>shl-server</code>, and <code>wahs-engine</code> services let both the unified SvelteKit web app and mobile-first companion interfaces operate over the exact same patient record.</li>
+            <li><strong>EHIgnite model agnosticism:</strong> Standard southbound OpenAI <span class="code-inline">/v1</span> lets state public-health agencies swap local open-weight models or inference gateways via environment variables while preserving HL7 <span class="code-inline">AI-Provenance</span> transparency.</li>
+          </ul>
+        </article>
+      </div>
+
+      <h3 id="worked-query-example" style="margin: 34px 0 10px; font-size: 21px; color: var(--purple-ink);">Worked example: tracing <em>“What are my diabetes labs?”</em> through <code>wahs-engine</code></h3>
+      <p style="max-width: 860px; color: var(--muted); font-size: 15.5px; line-height: 1.6; margin: 0;">
+        To keep follow-up questions fast while reflecting live HAPI FHIR updates, <code>wahs-engine</code> splits every GPU request into two prompt regions: a <strong>query-invariant chart prefix</strong> at <span class="code-inline">messages[0]</span> and a <strong>query-conditioned suffix</strong> at <span class="code-inline">messages[-1]</span>.
+      </p>
+
+      <div class="strategy-grid-2">
+        <article class="strategy-card recommended">
+          <span class="strategy-badge">Region 1 · Query-Invariant Prefix (messages[0])</span>
+          <h3>Condensed chart ledger cached across follow-up turns</h3>
+          <ul>
+            <li><strong>Live assembly (~10 ms check):</strong> Calls <span class="code-inline">fhir-auth</span> with the user’s <span class="code-inline">Bearer</span> token, checks <span class="code-inline">MasterPatient</span> + linked <span class="code-inline">Patient.meta.lastUpdated</span>, and re-fetches only newly synced or edited datasets.</li>
+            <li><strong>Deterministic condensation:</strong> Compresses the record into the target token budget (default 8k; configurable 1k–32k+), normalizes RxNorm/LOINC/SNOMED labels, numbers entries <span class="code-inline">[1]...[N]</span>, and writes <span class="code-inline">[2] Completeness Manifest</span>.</li>
+            <li><strong>Constant prefix:</strong> Remains byte-for-byte identical across follow-up questions unless HAPI data changes, <span class="code-inline">chart_scope</span> shifts, or an evaluation explicitly varies the condensation budget.</li>
+          </ul>
+        </article>
+
+        <article class="strategy-card">
+          <span class="strategy-badge secondary">Region 2 · Query-Conditioned Suffix (messages[-1], ≤ 800 tokens)</span>
+          <h3>Targeted diabetes KB, patient graph &amp; <code>[N]</code> source pills</h3>
+          <ul>
+            <li><strong>Clinical concept mapping:</strong> Injects matched LOINC/ADA rules connecting <em>“diabetes labs”</em> to HbA1c, fasting glucose, eGFR, and urine albumin-creatinine ratio so smaller models do not miss differently named labs.</li>
+            <li><strong>Patient relationship subgraph:</strong> Attaches verified edges such as <span class="code-inline">Type 2 diabetes [4] --[MONITORED_BY]--&gt; HbA1c 7.8% [12]</span> plus conditional Tier-0 overflow / Note-RAG excerpts when <span class="code-inline">omitted_clinical_items &gt; 0</span>.</li>
+            <li><strong>Streamed provenance:</strong> Sits after prior chat history so <span class="code-inline">messages[0]</span> hits the GPU’s KV cache while <span class="code-inline">x_wahs</span> maps <span class="code-inline">[12]</span> to the exact FHIR <span class="code-inline">Observation</span> UUID and clinic pill.</li>
+          </ul>
+        </article>
+      </div>
+
+      <h3 id="session-and-scope-model" style="margin: 34px 0 10px; font-size: 21px; color: var(--purple-ink);">Session and scope layers across the stack</h3>
+      <p style="max-width: 860px; color: var(--muted); font-size: 15.5px; line-height: 1.6; margin: 0;">
+        Separating authentication, chat history, chart freshness, and GPU KV caching eliminates any need for a stateful session database on the GPU server or custom session APIs in WAHS client backends.
+      </p>
+
+      <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Table: State / Session Layer">
+        <table class="strategy-table" aria-label="Four state and session layers across WAHS">
+          <thead>
+            <tr>
+              <th style="width: 22%;">State / Session Layer</th>
+              <th style="width: 22%;">Where It Lives</th>
+              <th style="width: 56%;">Wire Contract, Ollama KV Connection &amp; Security Guarantee</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. User Auth Identity</strong></td>
+              <td>Keycloak · <code>shl-ips</code> · <code>fhir-auth</code></td>
+              <td><span class="code-inline">Authorization: Bearer &lt;keycloak_jwt&gt;</span> travels end-to-end from browser BFF to <span class="code-inline">wahs-engine</span> to <span class="code-inline">fhir-auth</span>; <span class="code-inline">wahs-engine</span> holds zero HAPI admin credentials.</td>
+            </tr>
+            <tr>
+              <td><strong>2. Chat Turn History</strong></td>
+              <td>Browser tab RAM (<span class="code-inline">messages[]</span>)</td>
+              <td>Ephemeral conversation array sent over stateless OpenAI <span class="code-inline">/v1/chat/completions</span>. Requires <strong>no</strong> <span class="code-inline">POST /new-chat-session</span> endpoint and intentionally avoids LiteLLM’s Postgres-backed <span class="code-inline">/v1/responses</span> (<span class="code-inline">previous_response_id</span>) so no PHI prompts or chat transcripts persist on the shared GPU server (<span class="code-inline">store_prompts_in_spend_logs: false</span>).</td>
+            </tr>
+            <tr>
+              <td><strong>3. Chart &amp; Prefix Cache</strong></td>
+              <td><code>wahs-engine</code> in-memory LRU</td>
+              <td>Checks live HAPI <span class="code-inline">meta.lastUpdated</span> via <span class="code-inline">fhir-auth</span> on every turn; reuses <span class="code-inline">(verified_sub, datasets_fingerprint, scope_hash)</span> in &lt; 1 ms when unchanged and re-fetches only modified datasets after EHR imports or patient edits.</td>
+            </tr>
+            <tr>
+              <td><strong>4. GPU KV-Cache Slots</strong></td>
+              <td>Ollama / vLLM VRAM</td>
+              <td>Stateless HTTP calls match the unchanged <span class="code-inline">messages[0]</span> token prefix automatically across <span class="code-inline">OLLAMA_NUM_PARALLEL</span> warm VRAM slots—cutting warm 32k follow-ups on UW CIRG H200 <span class="code-inline">MIG 2g.35gb</span> to <strong>2.5s–4.0s</strong> median latency with zero <span class="code-inline">session_id</span> and zero cross-patient bleed (slots activate only when the caller already sends matching patient tokens).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Table: Scope Boundary">
+        <table class="strategy-table" aria-label="Four scope boundaries in WAHS">
+          <thead>
+            <tr>
+              <th style="width: 24%;">Scope Boundary</th>
+              <th style="width: 20%;">Owner</th>
+              <th style="width: 56%;">What It Controls &amp; Why It Stays Separate</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. Security &amp; Ownership Scope</strong></td>
+              <td><code>fhir-auth</code> (<code>jwt-proxy</code>)</td>
+              <td>Hard authorization boundary enforcing <span class="code-inline">meta.security.code == jwt.sub</span> before <span class="code-inline">wahs-engine</span> sees any record.</td>
+            </tr>
+            <tr>
+              <td><strong>2. User View Filter</strong></td>
+              <td><code>wahs.chart_scope</code> + <span class="code-inline">overlay_resources</span></td>
+              <td>Optional patient-chosen UI lens over their <em>own</em> authorized data (clinic sources, resource categories, date window, specific <span class="code-inline">ips_bundle_id</span>, or unsaved drafts).</td>
+            </tr>
+            <tr>
+              <td><strong>3. Token-Budget Priority</strong></td>
+              <td><code>wahs_core</code> (<code>condenser.py</code>)</td>
+              <td>Deterministic 5-tier clinical priority (1k–32k+ tokens) pinning the HL7 IPS safety core first while logging any trimmed items in <span class="code-inline">[2] Completeness Manifest</span>.</td>
+            </tr>
+            <tr>
+              <td><strong>4. Explicit Sharing Posture</strong></td>
+              <td><code>sharing_posture</code></td>
+              <td>Separates private patient self-Q&amp;A (<span class="code-inline">patient_self</span>) from explicit external summary/IPS sharing (<span class="code-inline">external_share</span>, 0/288 leaks across 3 seeds).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <details class="internals-details" id="wire-contract-details">
+        <summary>Inspect OpenAI <code>/v1/chat/completions</code> middleware contract, <code>wahs.chart_scope</code> schema &amp; <code>x_wahs</code> provenance</summary>
+        <div class="internals-details-body">
+          <p>
+            Server-side routes in WAHS (such as SvelteKit <span class="code-inline">/api/chat/+server.ts</span> using the Vercel AI SDK <span class="code-inline">@ai-sdk/openai-compatible</span> provider) call <code>wahs-engine</code> using standard OpenAI chat completion payloads. Vanilla OpenAI requests with no <span class="code-inline">wahs</span> extension field default automatically to the signed-in user’s full <span class="code-inline">fhir-auth</span> record at the model’s recommended budget; optional <span class="code-inline">wahs.chart_scope</span> and <span class="code-inline">wahs.overlay_resources</span> fields control per-turn filtering and unsaved draft notes, while the final streamed chunk attaches <span class="code-inline">x_wahs</span> citation and HL7 AI Transparency metadata.
+          </p>
+
+          <div class="flow-diagram" tabindex="0" role="region" aria-label="WAHS Engine OpenAI Wire Contract">POST /v1/chat/completions
+Authorization: Bearer &lt;keycloak_access_token&gt;
+Content-Type: application/json
+
+{
+  "model": "wahs-12b-kb",
+  "stream": true,
+  "messages": [
+    { "role": "user", "content": "Do any of my heart or kidney medications conflict across clinics?" }
+  ],
+  "wahs": {
+    "target_budget_tokens": 8192,
+    "chart_scope": {
+      "include_sources": ["UW Medicine", "MultiCare", "My Story"],
+      "exclude_categories": [],
+      "include_resource_types": [],
+      "exclude_resource_ids": [],
+      "ips_bundle_id": null,
+      "date_from": null,
+      "date_to": null
+    },
+    "overlay_resources": []
+  }
+}
+
+──► Standard OpenAI SSE token stream (data: {"object":"chat.completion.chunk", ...})
+──► Final chunk attaches x_wahs provenance for clickable [N] source pills &amp; HL7 AI-Provenance:
+{
+  "x_wahs": {
+    "citation_map": {
+      "7": { "resourceType": "MedicationRequest", "id": "med-spiro-01", "date": "2026-01-12", "source": "UW Medicine", "display": "Spironolactone 25 MG Oral Tablet" },
+      "10": { "resourceType": "Observation", "id": "obs-k-56", "date": "2026-01-16", "source": "MultiCare", "display": "Potassium 5.6 mEq/L" }
+    },
+    "condensation": { "budget_tokens": 8192, "actual_tokens": 6410, "datasets_included": 3, "omitted_clinical_items": 0 },
+    "ai_provenance": { "model": "ollama/gemma4:12b", "kb_enabled": true, "human_review_required": true }
+  }
+}</div>
+        </div>
+      </details>
+    </section>
+
+    <section class="strategy-section" id="action-plan" tabindex="-1" aria-labelledby="plan-title">
+      <p class="section-kicker">Build record</p>
+      <h2 id="plan-title">Five of six build milestones are verified</h2>
+      <p>
+        Each verified milestone links to the code or test behind it. The sixth, stress testing with long notes and records over 100 MB, continues toward ONC/ASTP EHIgnite Phase 2.
+      </p>
+
+      <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Table: Step">
+        <table class="strategy-table">
+          <thead>
+            <tr>
+              <th style="width: 8%;">Step</th>
+              <th style="width: 28%;">Workstream</th>
+              <th style="width: 44%;">Concrete Deliverable</th>
+              <th style="width: 20%;">Status / Reference</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1</strong></td>
+              <td><strong>Stand Up Standalone <code>wahs-engine</code> (<code>wahs_core</code> + FastAPI) &amp; Invert Hub Dependency</strong></td>
+              <td>Package the pure-stdlib clinical core (<span class="code-inline">wahs_core</span>: <span class="code-inline">condenser.py</span>, <span class="code-inline">clinical_graph.py</span>, 4-Layer KB, <span class="code-inline">wahs_tools.py</span>) and thin OpenAI-compatible <span class="code-inline">wahs_engine</span> server in a dedicated WAHS repository with zero <span class="code-inline">med-agent-hub</span> dependency, while <span class="code-inline">med-agent-hub</span> imports <span class="code-inline">wahs_core</span> upstream for zero-drift benchmarking.</td>
+              <td><span class="safe-pill">Verified</span><br /><a href="https://github.com/pmanko/wahs-engine"><code>wahs-engine</code> repo ↗</a></td>
+            </tr>
+            <tr>
+              <td><strong>2</strong></td>
+              <td><strong>Implement Zero-Privilege <code>fhir-auth</code> Bundle Assembler &amp; <code>chart_scope</code></strong></td>
+              <td>Build the star-graph HAPI assembler that forwards the caller’s Keycloak <span class="code-inline">Bearer</span> token to <span class="code-inline">fhir-auth</span>, paginates linked <span class="code-inline">Patient/$everything</span> datasets (including patient-authored <em>My Story</em> and <em>Goals</em>), applies <span class="code-inline">chart_scope</span> filters and <span class="code-inline">overlay_resources</span>, and emits <span class="code-inline">x_wahs</span> source-pill mappings.</td>
+              <td><span class="safe-pill">Verified</span><br /><a href="https://github.com/pmanko/wahs-engine/blob/main/src/wahs_engine/assembler.py"><code>assembler.py</code> ↗</a></td>
+            </tr>
+            <tr>
+              <td><strong>3</strong></td>
+              <td><strong>Wire Service-to-Service <code>/api/chat</code> BFF Across WAHS Frontends</strong></td>
+              <td>Connect the SvelteKit server route (<span class="code-inline">Vercel AI SDK</span> <span class="code-inline">@ai-sdk/openai-compatible</span>) in <span class="code-inline">shl-ips</span> and interoperable mobile-first companion views to <span class="code-inline">wahs-engine</span> on the internal Docker network, surfacing clickable <span class="code-inline">[N]</span> FHIR provenance drawers, chart-scope chips, and HL7 <span class="code-inline">AI-Provenance</span> badges across swappable OpenAI <span class="code-inline">/v1</span> inference hosts.</td>
+              <td><span class="safe-pill">Verified</span><br /><a href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">Portability Rehearsal ↗</a></td>
+            </tr>
+            <tr>
+              <td><strong>4</strong></td>
+              <td><strong>Seed Shared Dev Stack &amp; Verify Session Isolation / Cache Timeliness</strong></td>
+              <td>Pre-seed <span class="code-inline">wahs-environments</span> with multi-source personas and historical Connectathon test accounts, and enforce automated gates across three invariants—<strong>Security:</strong> zero cross-user <span class="code-inline">sub</span>, session ID, or KV prefix bleed and 0/288 external-share privacy leaks; <strong>Data timeliness:</strong> immediate cache invalidation whenever HAPI <span class="code-inline">meta.lastUpdated</span> changes; <strong>Reliability:</strong> cache misses or restarts never alter clinical output.</td>
+              <td><span class="safe-pill">Verified</span><br /><a href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">0/288 Leaks Verified ↗</a></td>
+            </tr>
+            <tr>
+              <td><strong>5</strong></td>
+              <td><strong>Benchmark Condensation vs. Note Embeddings &amp; Dynamic FHIR Querying</strong></td>
+              <td>Run 3-seed evaluations (384 runs across Gemma 4 E4B, 12B, 26B and Qwen 3.5 9B) in <span class="code-inline">Validation Harness</span> comparing <span class="code-inline">wahs_core</span> condensation + Tier-0 overflow (64.6% pass), single-patient Note-RAG + condensation (76.0% pass, 99.3% atomic entailment), dynamic FHIR tool querying (61.5% overall; 95.8% on 26B), and offline raw FHIR (18.8% pass, 12/12 leaks).</td>
+              <td><span class="safe-pill">Verified (384 Runs)</span><br /><a href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">3-Seed Report ↗</a></td>
+            </tr>
+            <tr>
+              <td><strong>6</strong></td>
+              <td><strong>Long-Note (4k–14k Tokens) &amp; 100 MB+ Record Stress Testing</strong></td>
+              <td>Verified single-patient BM25 Note-RAG lifting deep inpatient and longitudinal note recall from 0% to 83.3%–100.0% at a compact 4k chart budget; next phase scales shared multi-tenant H200 GPU load testing and 100 MB+ partner exports ahead of ONC/ASTP EHIgnite Phase 2.</td>
+              <td><span class="strategy-badge secondary">EHIgnite Phase 2</span><br /><a href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">Long-Note Readout ↗</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="strategy-section" id="engine-internals" tabindex="-1" aria-labelledby="internals-title">
+      <p class="section-kicker">Engine internals</p>
+      <h2 id="internals-title">Progressive 9-budget condensation, <code>ClinicalEntityGraph</code>, and prompt enrichment</h2>
+      <p>
+        For engineers inspecting the shared <code>wahs_core</code> clinical modules (developed and benchmarked in <a href="/med-agent-hub/index.html">Med Agent Hub</a> <code>server/fhir/</code> and packaged without R&amp;D dependencies in standalone <code>wahs-engine</code>), every condensed chart begins with patient demographics at <code>[1]</code> and a machine-readable <code>Completeness Manifest</code> at <code>[2]</code>. When a KB-guided profile executes (such as <code>wahs-12b-kb</code> or <code>wahs-26b-kb</code>), <code>build_wahs_hub_enrichment_block(...)</code> runs conditional Tier-0 overflow recovery, builds a patient-specific <code>ClinicalEntityGraph</code>, and attaches up to 800 tokens of matched clinical guidelines before calling the model.
+      </p>
+
+      <p class="strategy-note">
+        The engine API accepts a chart size of 512 to 131,072 tokens per request, with a default of 8,192. The 256k row below applies to the Explorer sandbox and the benchmark matrix.
+      </p>
+
+      <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Nine condensation budget tiers">
+        <table class="strategy-table">
+          <thead>
+            <tr>
+              <th scope="col" style="width: 22%;">Budget Window</th>
+              <th scope="col" style="width: 36%;">Condensation Strategy</th>
+              <th scope="col" style="width: 20%;">Omitted Clinical Items</th>
+              <th scope="col" style="width: 22%;">Tier-0 Overflow Recovery</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="code-inline">256k</span> / <span class="code-inline">128k</span></td>
+              <td>Max-window stress-test ceiling expanding multi-decade and ICU charts up to 251,641 extracted clinical tokens.</td>
+              <td><code>omitted_clinical_items = 0</code></td>
+              <td><strong>Skipped</strong> (<code>overflow_triggered: false</code>)</td>
+            </tr>
+            <tr>
+              <td><span class="code-inline">64k</span> / <span class="code-inline">32k</span> / <span class="code-inline">16k</span></td>
+              <td>Full longitudinal clinical ledger preserving complete lab timelines, encounters, and decoded UTF-8 clinical notes.</td>
+              <td><code>omitted_clinical_items = 0</code> on standard charts</td>
+              <td><strong>Skipped</strong> unless massive 7,000-entry export overflows</td>
+            </tr>
+            <tr class="highlight-row">
+              <td><span class="code-inline">8k</span> / <span class="code-inline">4k</span></td>
+              <td><strong>Recommended Limit sweet spot:</strong> preserves active conditions, active medications, allergies, immunizations, and folded lab trajectories.</td>
+              <td><code>0</code> on typical charts; non-zero on multi-decade exports</td>
+              <td><strong>Conditional</strong> — runs only when <code>omitted_clinical_items &gt; 0</code></td>
+            </tr>
+            <tr>
+              <td><span class="code-inline">2k</span> / <span class="code-inline">1k</span></td>
+              <td>Strict HL7 IPS Safety Core micro-capsule; older clinical notes and routine historical lab panels overflow the ceiling.</td>
+              <td><code>omitted_clinical_items &gt; 0</code></td>
+              <td><strong>Active</strong> — <code>wahs_tools.py</code> recovers question-matched notes and labs with sequential <code>[N]</code> citations</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <details class="internals-details" id="clinical-entity-graph-details">
+        <summary>Inspect <code>ClinicalEntityGraph</code> typed relationship edges &amp; orchestration prompt block</summary>
+        <div class="internals-details-body">
+          <p>
+            <code>wahs_core/clinical_graph.py</code> links seven FHIR resource categories (<code>Condition</code>, <code>MedicationRequest</code>, <code>Observation</code>, <code>DocumentReference</code>, <code>AllergyIntolerance</code>, <code>Immunization</code>, and <code>Organization</code>) across five typed clinical edges while preserving original <code>[N]</code> citation numbers so 4B–12B models do not have to infer multi-hop cardiorenal or anticoagulation hazards from raw text alone. Paired <code>wahs-*-raw</code> profiles omit this block for zero-hint baseline ablations.
+          </p>
+
+          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="ClinicalEntityGraph typed relationship edges">
+            <table class="strategy-table">
+              <thead>
+                <tr>
+                  <th scope="col">Graph Edge Type</th>
+                  <th scope="col">Source → Target Nodes</th>
+                  <th scope="col">Clinical Logic &amp; Knowledge Base Grounding</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="code-inline">TREATS</span></td>
+                  <td><code>MedicationRequest</code> → <code>Condition</code></td>
+                  <td>Maps active medications to documented clinical indications via RxNorm class lookup and AHA/ACC/ADA/KDIGO mappings (e.g., <code>Apixaban [6] --[TREATS]--&gt; Atrial fibrillation [5]</code>).</td>
+                </tr>
+                <tr>
+                  <td><span class="code-inline">CONTRAINDICATED_OR_DOSE_ADJUST_IN</span></td>
+                  <td><code>MedicationRequest</code> → <code>Condition</code> / <code>Observation</code> / <code>AllergyIntolerance</code></td>
+                  <td>Flags renal dosing thresholds, hyperkalemia hazards, supratherapeutic INR, NSAID nephrotoxicity/bleeding, and allergy cross-reactivity (e.g., <code>Spironolactone [7] --[CONTRAINDICATED_OR_DOSE_ADJUST_IN]--&gt; Potassium 5.6 mEq/L [10]</code>).</td>
+                </tr>
+                <tr>
+                  <td><span class="code-inline">MONITORED_BY</span></td>
+                  <td><code>Condition</code> / <code>MedicationRequest</code> → <code>Observation</code></td>
+                  <td>Connects chronic diseases and high-alert therapies to their longitudinal LOINC laboratory and vital trajectories (eGFR, Creatinine, Potassium, HbA1c, INR, NT-proBNP, LDL-C, TSH).</td>
+                </tr>
+                <tr>
+                  <td><span class="code-inline">CONTRADICTED_OR_MODIFIED_BY_NOTE</span></td>
+                  <td><code>Condition</code> (Active ↔ Resolved)</td>
+                  <td>Detects structured cross-organization discrepancies where the same condition is marked active at one clinic and resolved at another, while full narrative notes route through Note-RAG / Tier-0 overflow.</td>
+                </tr>
+                <tr>
+                  <td><span class="code-inline">REPORTED_BY_ORG</span></td>
+                  <td>Clinical Node → <code>Organization</code></td>
+                  <td>Preserves multi-facility care provenance (e.g., primary health system vs. outside urgent care or external reference laboratory).</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="flow-diagram" tabindex="0" role="region" aria-label="Example WAHS Clinical Context Enrichment block">[WAHS CLINICAL CONTEXT ENRICHMENT]
+1. Tier-0 Overflow Recovery (ACTIVE: omitted_clinical_items=6 [clinical_note=2, lab_observation=4]; recovered=3 records via wahs_tools):
+[6] (2026-01-18) Tier-0 Recovered Clinical Note: Outside Urgent Care Walk-In Note — Walk-in visit at UrgentCare Plus Medical Center: Holding spironolactone pending repeat potassium check... [UUID: note-outside-urgentcare-99]
+2. Patient Clinical Entity Subgraph (8 nodes, 7 edges):
+- [7] Spironolactone 25 MG Oral Tablet --[CONTRAINDICATED_OR_DOSE_ADJUST_IN]--&gt; [10] Potassium (latest 5.6 mEq/L) | RAAS / MRA cardiorenal safety
+- [5] Heart failure --[CONTRADICTED_OR_MODIFIED_BY_NOTE]--&gt; [11] Heart failure (RESOLVED) | Cross-clinic status discrepancy (ACTIVE vs. RESOLVED)
+3. Question-Conditioned Clinical Knowledge Base (4 matched guidelines):
+- [KB wahs-kb-rx-hyperkalemia-01 | AHA/ACC/HFSA &amp; KDIGO] Spironolactone &amp; Hyperkalemia in Stage 3B/4 CKD: Hold MRA when serum K+ &gt; 5.0–5.5 mEq/L...</div>
+        </div>
+      </details>
+    </section>
+
+        <p class="back-to-top"><a href="#top">Back to top <span aria-hidden="true">↑</span></a></p>
+      </div>
+    </div>
+  </main>
+
+
+  <footer class="site-footer">
+    <div class="page-width footer-grid">
+      <div>
+        <a class="brand footer-brand" href="/index.html">
+          <span class="brand-mark" aria-hidden="true"><span></span></span>
+          <span>OpenClinAI</span>
+        </a>
+        <p>
+          Open-source tools for clinical questions, reporting and reproducible evaluation from the <a href="https://digi.uw.edu/">University of Washington Digital Initiatives Group at I-TECH (DIGI)</a>.
+        </p>
+      </div>
+      <nav aria-label="Project links">
+        <a href="/chartsearchai/index.html">ChartSearchAI</a>
+        <a href="/catalyst/index.html">Catalyst</a>
+        <a href="/med-agent-hub/index.html">Med Agent Hub</a>
+        <a href="/validation-harness/index.html">Validation Harness</a>
+        <a href="/experiments/index.html">Post-Training &amp; Lab</a>
+        <a href="/projects/index.html">Applied Projects</a>
+      </nav>
+      <p class="footer-disclaimer">
+        For research and demonstration. AI output can be inaccurate and requires review.<br />
+        <a href="https://reports.openclinai.org/">Evaluation Reports</a> · <a href="/docs/openmrs-upstream/index.html">OpenMRS Upstream PRs</a>
+      </p>
+    </div>
+  </footer>
+  <script type="module" src="/wahs/toc.js"></script>
+</body>
+</html>
