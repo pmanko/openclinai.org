@@ -94,6 +94,7 @@ ALLOWED_EDITORIAL_KEYS: frozenset[str] = frozenset({
     "note",
     "parent_slug",
     "evaluation_modality",
+    "hardware",
 })
 
 ALLOWED_SUMMARY_KEYS: frozenset[str] = frozenset({
@@ -132,6 +133,7 @@ ALLOWED_SUMMARY_KEYS: frozenset[str] = frozenset({
     "domain_guardrails",
     "seed_count",
     "seeds",
+    "hardware",
 })
 
 ALLOWED_REPORT_ROOT_KEYS: frozenset[str] = frozenset({
@@ -176,7 +178,7 @@ ALLOWED_REPORT_RUN_KEYS: frozenset[str] = frozenset({
     "seeds",
 })
 
-ALLOWED_SCENARIO_KEYS: frozenset[str] = frozenset({"scenario_id", "id", "turns"})
+ALLOWED_SCENARIO_KEYS: frozenset[str] = frozenset({"scenario_id", "id", "turns", "category"})
 ALLOWED_TURN_KEYS: frozenset[str] = frozenset({"turn", "question", "cells"})
 ALLOWED_CELL_KEYS: frozenset[str] = frozenset({
     "status",
@@ -229,6 +231,16 @@ ALLOWED_DASHBOARD_ROOT_KEYS: frozenset[str] = frozenset({
     "sources_pool",
     "refs_pool",
     "details",
+    "detail_shards",
+})
+SAFE_SHARD_REL_RE = re.compile(r"^dashboard-details/[A-Za-z0-9._-]+\.json$")
+ALLOWED_DASHBOARD_DETAIL_CELL_KEYS: frozenset[str] = frozenset({
+    "scenario",
+    "backend",
+    "expectations",
+    "catalystExpected",
+    "turns",
+    "judge",
 })
 
 
@@ -455,6 +467,49 @@ def _check_editorial_entry(
                     if dash_obj.get("schema") != "openclinai.dashboard.v2" or dash_obj.get("schema_version") != 2:
                         issues.append(f"{slug}/dashboard-data.json must declare schema='openclinai.dashboard.v2' and schema_version=2")
                     issues.extend(_closed_key_issues(dash_obj, ALLOWED_DASHBOARD_ROOT_KEYS, where=f"{slug}/dashboard-data.json"))
+                    detail_shards = dash_obj.get("detail_shards")
+                    shard_by_backend: dict[str, dict] = {}
+                    if detail_shards is not None:
+                        if not isinstance(detail_shards, dict):
+                            issues.append(f"{slug}/dashboard-data.json.detail_shards must be an object")
+                        else:
+                            slug_root = (root / slug).resolve()
+                            for bk, rel_shard in detail_shards.items():
+                                if not isinstance(rel_shard, str) or not SAFE_SHARD_REL_RE.fullmatch(rel_shard):
+                                    issues.append(f"{slug}/dashboard-data.json.detail_shards[{bk!r}] has unsafe path {rel_shard!r}")
+                                else:
+                                    sp = (slug_root / rel_shard).resolve()
+                                    if not sp.is_relative_to(slug_root) or not sp.is_file():
+                                        issues.append(f"{slug}/{rel_shard} referenced in detail_shards is missing")
+                                    else:
+                                        shard_obj = json.loads(sp.read_text(encoding="utf-8"))
+                                        if not isinstance(shard_obj, dict):
+                                            issues.append(f"{slug}/{rel_shard} must be a JSON object")
+                                        else:
+                                            shard_by_backend[str(bk)] = shard_obj
+                                            for cell_k, cell_v in shard_obj.items():
+                                                issues.extend(
+                                                    _closed_key_issues(
+                                                        cell_v,
+                                                        ALLOWED_DASHBOARD_DETAIL_CELL_KEYS,
+                                                        where=f"{slug}/{rel_shard}[{cell_k}]",
+                                                    )
+                                                )
+                    status_obj = dash_obj.get("status")
+                    inline_details = dash_obj.get("details") if isinstance(dash_obj.get("details"), dict) else {}
+                    grid = status_obj.get("grid") if isinstance(status_obj, dict) else None
+                    if isinstance(grid, list) and (detail_shards is None or isinstance(detail_shards, dict)):
+                        for cell in grid:
+                            if not isinstance(cell, dict) or cell.get("state") == "pending":
+                                continue
+                            sc_id = cell.get("scenario")
+                            bk_id = cell.get("backend")
+                            if isinstance(sc_id, str) and sc_id and isinstance(bk_id, str) and bk_id:
+                                cell_key = f"{sc_id}|{bk_id}"
+                                if cell_key not in inline_details and cell_key not in shard_by_backend.get(bk_id, {}):
+                                    issues.append(
+                                        f"{slug}/dashboard-data.json: non-pending grid cell {cell_key!r} (state={cell.get('state')!r}) missing from details/detail_shards"
+                                    )
                 fam = str(
                     entry.get("family")
                     or ed_disk.get("family")
@@ -678,6 +733,8 @@ def gather(slug: str) -> dict:
                             "completeness_mean": a.get("completeness_mean"),
                             "relevance_mean": a.get("relevance_mean"),
                             "harm_count": a.get("harm_count") or 0,
+                            "harm_disputed_count": a.get("harm_disputed_count") or 0,
+                            "privacy_violation_count": a.get("privacy_violation_count") or 0,
                         }
                     )
     patients_raw = meta.get("patients")
@@ -705,6 +762,7 @@ def gather(slug: str) -> dict:
         "scoreline": str(meta.get("scoreline") or ""),
         # Who judged, frozen with the scores; a run that recorded no judge says so.
         "judging": _judging_line(meta.get("judging")),
+        "hardware": meta.get("hardware") if isinstance(meta.get("hardware"), dict) else None,
     }
     rdir = _run_dir_for(slug)
     if not rdir or not ((rdir / "results.json").is_file() if family == "catalyst" else (rdir / "results.jsonl").is_file()):
@@ -897,10 +955,19 @@ def _scout_table(scout: list[dict], labels: dict | None = None) -> str:
             txt = f"{v:.1f}" if isinstance(v, (int, float)) else "—"
             return f"<td{cls}>{txt}</td>"
         harm = s.get("harm_count", 0)
-        flags = (f'harm: {harm} · confabulations: {s.get("confabulation_count", 0)} · '
-                 f'fabricated citations: {s.get("fabricated_citation_count", 0)}')
+        disp = s.get("harm_disputed_count", 0)
+        priv = s.get("privacy_violation_count", 0)
+        flag_parts = [
+            f'confirmed harm: {harm}',
+            f'disputed (1/2): {disp}' if disp else None,
+            f'privacy: {priv}' if priv else None,
+            f'confabulations: {s.get("confabulation_count", 0)}',
+            f'fabricated citations: {s.get("fabricated_citation_count", 0)}',
+        ]
+        flags = " · ".join(p for p in flag_parts if p)
         harm_cls = ' class="harm"' if harm else ""
-        harm_cell = f'<td{harm_cls} title="{esc(flags)}">{harm}</td>'
+        disp_note = f' <span class="harm-disp" title="1 of 2 judges flagged harm">({disp} disp)</span>' if disp else ""
+        harm_cell = f'<td{harm_cls} title="{esc(flags)}">{harm}{disp_note}</td>'
         body.append(
             f'<tr><td class="arm" title="{esc(detail)}">{esc(name)}</td>'
             f'<td>{s["n"]}</td>{cell("benchmark_score") if benchmarked else ""}{cell("accuracy_mean")}'
@@ -1002,7 +1069,7 @@ FILTER_JS = (
 )
 
 
-def _card_highlights(scout: list[dict], labels: dict | None = None) -> str:
+def _card_highlights(scout: list[dict], labels: dict | None = None, hardware: dict | None = None) -> str:
     if not scout:
         return ""
     labels = _arm_labels(labels)
@@ -1025,16 +1092,27 @@ def _card_highlights(scout: list[dict], labels: dict | None = None) -> str:
                 f'({top["accuracy_mean"]:.1f}/10)</span>'
             )
     total_harm = sum(int(s.get("harm_count") or 0) for s in scout)
+    total_disputed = sum(int(s.get("harm_disputed_count") or 0) for s in scout)
     zero_harm = sum(1 for s in scout if not s.get("harm_count"))
     if total_harm == 0:
         pills.append(
             f'<span class="hl-pill hl-safe">✓ 0 unsafe answers across all {len(scout)} setups</span>'
         )
     else:
+        harm_summary = (
+            f'{total_harm} confirmed unsafe; {total_disputed} disputed 1/2'
+            if total_disputed
+            else f'{total_harm} flagged total'
+        )
         pills.append(
             f'<span class="hl-pill hl-warn">{zero_harm} of {len(scout)} setups with 0 unsafe answers '
-            f'({total_harm} flagged total)</span>'
+            f'({harm_summary})</span>'
         )
+    if isinstance(hardware, dict) and hardware:
+        hw_parts = [hardware.get("gpu"), hardware.get("serving_engine")]
+        hw_label = " · ".join(str(x) for x in hw_parts if x)
+        if hw_label:
+            pills.append(f'<span class="hl-pill hl-hw">⚙ {esc(hw_label)}</span>')
     return '<div class="card-highlights">' + "".join(pills) + "</div>"
 
 
@@ -1090,7 +1168,8 @@ def _card(entry: dict) -> str:
     if g["scout"] and not unavailable:
         statistics = '<div class="report-table-scroll" role="region" aria-label="Recorded score tables" tabindex="0">' + statistics + '</div>'
         statistics += ('<p class="judged-by">' + esc(g["judging"] or "Judge not recorded for this run.") + '</p>')
-    highlights = "" if unavailable else _card_highlights(g["scout"], entry.get("arms"))
+    hw_meta = g.get("hardware") if isinstance(g.get("hardware"), dict) else entry.get("hardware")
+    highlights = "" if unavailable else _card_highlights(g["scout"], entry.get("arms"), hardware=hw_meta)
     takeaway = (f'<p class="takeaway"><span class="tk">Takeaway</span>{esc(entry["takeaway"])}</p>'
                 if entry.get("takeaway") else "")
     # Earlier runs of the same comparison stay published but are listed under the
@@ -1186,6 +1265,8 @@ _STYLE_CORE = """
   .hl-pill.hl-win{background:var(--bench-bg);border-color:var(--accent);color:var(--ink);}
   .hl-pill.hl-safe{background:var(--win-bg);color:var(--win-fg);border-color:transparent;font-weight:600;}
   .hl-pill.hl-warn{background:var(--warn-bg);color:var(--warn-fg);border-color:transparent;}
+  .hl-pill.hl-hw{background:rgba(15,118,110,.08);color:var(--accent);border-color:rgba(15,118,110,.25);font-weight:500;}
+  .harm-disp{font-size:11px;color:var(--muted);font-weight:400;}
   .takeaway{font-size:14px;color:var(--text);margin:10px 0 12px;background:var(--takeaway-bg);
     border-left:3px solid var(--accent);padding:10px 14px;border-radius:0 8px 8px 0;line-height:1.55;}
   .takeaway .tk{display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;
@@ -1302,7 +1383,25 @@ def stamp_editorial_into_page(html_path: Path, ed: dict) -> None:
         ("./dashboard-data.json", page_dir / "dashboard-data.json"),
     ):
         if disk_path.is_file():
-            ver = hashlib.sha256(disk_path.read_bytes()).hexdigest()[:10]
+            if disk_path.name == "dashboard-data.json":
+                try:
+                    d_obj = json.loads(disk_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    d_obj = {}
+                d_shards = d_obj.get("detail_shards") if isinstance(d_obj, dict) else None
+                if isinstance(d_shards, dict) and d_shards:
+                    h_dash = hashlib.sha256()
+                    h_dash.update(disk_path.read_bytes())
+                    for rel_shard in sorted({str(v) for v in d_shards.values() if isinstance(v, str)}):
+                        sp = (page_dir / rel_shard).resolve()
+                        if sp.is_relative_to(page_dir.resolve()) and sp.is_file():
+                            h_dash.update(rel_shard.encode("utf-8"))
+                            h_dash.update(sp.read_bytes())
+                    ver = h_dash.hexdigest()[:10]
+                else:
+                    ver = hashlib.sha256(disk_path.read_bytes()).hexdigest()[:10]
+            else:
+                ver = hashlib.sha256(disk_path.read_bytes()).hexdigest()[:10]
             updated = re.sub(
                 re.escape(rel_url) + r"\?v=[A-Za-z0-9_-]+",
                 f"{rel_url}?v={ver}",
@@ -1372,6 +1471,7 @@ def compile_manifest_from_editorial(
             "context",
             "arms",
             "earlier",
+            "hardware",
         ):
             if ed.get(k) is not None:
                 if k == "arms":

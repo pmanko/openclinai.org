@@ -129,7 +129,12 @@ def create_preview_server(
             if rel_name == "reports-index.json":
                 self._send(200, b'{"runs":[]}', "application/json; charset=utf-8")
                 return
-            if rel_name in ("report-data.json", "dashboard-data.json", "run-summary.json", "editorial.json"):
+            if rel_name in ("report-data.json", "dashboard-data.json", "run-summary.json", "editorial.json") or (
+                rel_name.startswith("dashboard-details/")
+                and "/" not in rel_name[len("dashboard-details/"):]
+                and rel_name.endswith(".json")
+                and all(ch.isalnum() or ch in "._-/" for ch in rel_name)
+            ):
                 target = (run_dir / rel_name).resolve()
                 if target.is_relative_to(run_dir) and target.is_file():
                     self._send(200, target.read_bytes(), "application/json; charset=utf-8")

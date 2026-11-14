@@ -12,6 +12,22 @@
   var EDITORIAL = null;
   var LAST_STATUS = null;
   var STATIC_DASHBOARD = null;
+  var STATIC_BASE_DIR = './';
+  var STATIC_VER = '';
+  var SHARD_PROMISES = {};
+  var SELECTED_RUN = '';
+  var ACTIVE_SEQ = 0;
+  var LIVE_PAUSED = false;
+  var LIVE_MODE = 'init';
+  var LIVE_ES = null;
+  var POLL_TIMER = null;
+  var POLL_INFLIGHT = false;
+  var RUNS_TIMER = null;
+  var RUNS_LIST = [];
+  var GRID_SIG = '';
+  var GRID_CELLS = {};
+  var DETAIL_SEQ = 0;
+  var DETAIL_ABORT = null;
 
   function loadEditorial() {
     if (EDITORIAL !== null) return EDITORIAL;
@@ -947,29 +963,322 @@
     );
   }
 
-  async function fetchStatus() {
-    if (STATIC_DASHBOARD) return STATIC_DASHBOARD.status;
-    var r = await fetch('/api/status');
-    return await r.json();
+  function runQuerySuffix(prefix) {
+    return SELECTED_RUN ? prefix + 'run=' + encodeURIComponent(SELECTED_RUN) : '';
   }
 
-  async function fetchDetail(s, b) {
-    if (STATIC_DASHBOARD) {
-      var details = STATIC_DASHBOARD.details || {};
-      return details[s + '|' + b] || { scenario: s, backend: b, turns: [] };
+  function resolveStaticAssetUrl(relPath) {
+    var clean = String(relPath || '').replace(/^\.\//, '');
+    var url = STATIC_BASE_DIR + clean;
+    if (STATIC_VER) {
+      url += (url.indexOf('?') >= 0 ? '&' : '?') + 'v=' + encodeURIComponent(STATIC_VER);
     }
-    var r = await fetch('/api/detail?scenario=' + encodeURIComponent(s) + '&backend=' + encodeURIComponent(b));
-    return await r.json();
+    return url;
   }
 
-  async function tick() {
-    var d;
-    try {
-      d = await fetchStatus();
-    } catch (e) {
+  async function ensureArmShardLoaded(backend) {
+    if (!STATIC_DASHBOARD) return;
+    if (!STATIC_DASHBOARD.details) STATIC_DASHBOARD.details = {};
+    var shards = STATIC_DASHBOARD.detail_shards;
+    if (!shards || !shards[backend]) return;
+    if (SHARD_PROMISES[backend]) {
+      await SHARD_PROMISES[backend];
       return;
     }
-    if (!d) return;
+    var shardUrl = resolveStaticAssetUrl(shards[backend]);
+    SHARD_PROMISES[backend] = (async function () {
+      var res = await fetch(shardUrl);
+      if (!res.ok) throw new Error('HTTP ' + res.status + ' loading ' + shards[backend]);
+      var map = await res.json();
+      if (map && typeof map === 'object') {
+        Object.keys(map).forEach(function (k) {
+          STATIC_DASHBOARD.details[k] = map[k];
+        });
+      }
+    })();
+    try {
+      await SHARD_PROMISES[backend];
+    } catch (err) {
+      delete SHARD_PROMISES[backend];
+      throw err;
+    }
+  }
+
+  async function fetchStatus(sinceSeq) {
+    if (STATIC_DASHBOARD) return STATIC_DASHBOARD.status;
+    var params = [];
+    if (SELECTED_RUN) params.push('run=' + encodeURIComponent(SELECTED_RUN));
+    if (sinceSeq != null && sinceSeq > 0) params.push('since_seq=' + encodeURIComponent(sinceSeq));
+    var url = '/api/status' + (params.length ? '?' + params.join('&') : '');
+    var r = await fetch(url, { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+  }
+
+  async function fetchDetail(s, b, signal) {
+    if (STATIC_DASHBOARD) {
+      var details = STATIC_DASHBOARD.details || {};
+      var key = s + '|' + b;
+      if (!details[key] && STATIC_DASHBOARD.detail_shards && STATIC_DASHBOARD.detail_shards[b]) {
+        await ensureArmShardLoaded(b);
+        details = STATIC_DASHBOARD.details || {};
+      }
+      return details[key] || { scenario: s, backend: b, turns: [] };
+    }
+    var url =
+      '/api/detail?scenario=' +
+      encodeURIComponent(s) +
+      '&backend=' +
+      encodeURIComponent(b) +
+      runQuerySuffix('&');
+    var r = await fetch(url, signal ? { signal: signal, cache: 'no-store' } : { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+  }
+
+  function cellDescriptor(g, family) {
+    var st = (g && g.state) || 'pending';
+    var clickable = st !== 'pending';
+    var isWahs = family === 'wahs';
+    if (!g || (!g.answer && !g.indepth)) {
+      return {
+        className: cls(st),
+        title: '',
+        html: sym(st),
+        state: st,
+        clickable: clickable
+      };
+    }
+    var conform =
+      {
+        done: 'followed an allowed path',
+        err: 'the system misbehaved',
+        running: 'running',
+        pending: 'pending'
+      }[st] || '';
+    var tip = [
+      'Answer: ' + (g.answer ? g.answer.label : 'none'),
+      isWahs ? '' : ('In-Depth: ' + (g.indepth ? g.indepth.label : 'none') + (g.marked ? ' (' + g.marked + ' marked point' + (g.marked > 1 ? 's' : '') + ')' : '')),
+      conform
+    ]
+      .filter(Boolean)
+      .join(' \u00b7 ');
+    var pill = function (tag, v, n) {
+      return v ? '<span class="gpill ' + toneCls(v.tone) + '">' + tag + ' ' + (n ? n + '' : '') + esc(v.symbol) + '</span>' : '';
+    };
+    var klass = st === 'done' ? 'cdone' : cls(st);
+    var inner =
+      pill('A', g.answer, 0) +
+      (isWahs ? '' : pill('ID', g.indepth, g.marked)) +
+      '<span class="gconf' + (st === 'err' ? ' err' : '') + '">' + sym(st) + '</span>';
+    return {
+      className: klass,
+      title: tip,
+      html: inner,
+      state: st,
+      clickable: clickable
+    };
+  }
+
+  function applyCellDesc(td, desc) {
+    var snap = desc.className + '\x00' + desc.title + '\x00' + desc.state + '\x00' + desc.html;
+    if (td._cellSnap === snap) return;
+    td._cellSnap = snap;
+    td.className = desc.className;
+    if (desc.title) td.title = desc.title;
+    else td.removeAttribute('title');
+    td.setAttribute('data-state', desc.state);
+    td.innerHTML = desc.html;
+  }
+
+  function syncGrid(d, updatesOnly) {
+    var grid = document.getElementById('grid');
+    if (!grid) return;
+    var gm = d._gridMap || {};
+    var backends = d.backends || [];
+    var scenarios = d.scenarios || [];
+    var sig = [
+      d.run || '',
+      d.family || '',
+      backends.map(function (b) { return b + ':' + armTitle(b); }).join('\x01'),
+      scenarios.join('\x01')
+    ].join('\x00');
+
+    var tbl = grid.querySelector('table.grid');
+    if (sig !== GRID_SIG || !tbl) {
+      GRID_SIG = sig;
+      GRID_CELLS = {};
+      var h =
+        '<table class=grid><tr><th></th>' +
+        backends
+          .map(function (b) {
+            return '<th title="' + esc(b) + '">' + esc(armTitle(b)) + '</th>';
+          })
+          .join('') +
+        '</tr>';
+      scenarios.forEach(function (s) {
+        h +=
+          '<tr><th>' +
+          esc(s) +
+          '</th>' +
+          backends
+            .map(function (b) {
+              var k = s + '|' + b;
+              var g = gm[k] || {};
+              var desc = cellDescriptor(g, d.family);
+              return (
+                '<td class="' + esc(desc.className) + '"' +
+                (desc.title ? ' title="' + esc(desc.title) + '"' : '') +
+                ' data-open-scenario="' + esc(s) + '"' +
+                ' data-open-backend="' + esc(b) + '"' +
+                ' data-state="' + esc(desc.state) + '">' +
+                desc.html +
+                '</td>'
+              );
+            })
+            .join('') +
+          '</tr>';
+      });
+      grid.innerHTML = h + '</table>';
+      grid.querySelectorAll('td[data-open-scenario]').forEach(function (td) {
+        var s = td.getAttribute('data-open-scenario');
+        var b = td.getAttribute('data-open-backend');
+        var key = s + '|' + b;
+        var desc = cellDescriptor(gm[key] || {}, d.family);
+        td._cellSnap = desc.className + '\x00' + desc.title + '\x00' + desc.state + '\x00' + desc.html;
+        GRID_CELLS[key] = td;
+      });
+      return;
+    }
+
+    var list = updatesOnly && updatesOnly.length ? updatesOnly : d.grid || [];
+    list.forEach(function (g) {
+      if (!g) return;
+      var td = GRID_CELLS[g.scenario + '|' + g.backend];
+      if (!td) return;
+      applyCellDesc(td, cellDescriptor(g, d.family));
+    });
+  }
+
+  function renderLiveControls() {
+    var box = document.getElementById('live-controls');
+    if (!box || STATIC_DASHBOARD) return;
+    box.style.display = 'flex';
+    var opts = ['<option value="">Auto (latest active)</option>'];
+    (RUNS_LIST || []).forEach(function (r) {
+      var label =
+        r.run_id.slice(0, 8) +
+        (r.family ? ' \u00b7 ' + r.family : '') +
+        ' \u00b7 ' +
+        (r.completed || 0) +
+        '/' +
+        (r.expected || '?') +
+        (r.active ? ' \u25cf live' : '');
+      var sel = SELECTED_RUN && SELECTED_RUN === r.run_id ? ' selected' : '';
+      opts.push('<option value="' + esc(r.run_id) + '"' + sel + '>' + esc(label) + '</option>');
+    });
+    var modeText = LIVE_PAUSED
+      ? 'Paused'
+      : LIVE_MODE === 'sse'
+      ? 'SSE live'
+      : LIVE_MODE === 'poll'
+      ? 'Polling'
+      : 'Connecting\u2026';
+    var modeCls = LIVE_PAUSED ? 'warn' : LIVE_MODE === 'sse' ? 'ok' : '';
+    var selectEl = document.getElementById('live-run-select');
+    var badgeEl = document.getElementById('live-mode-pill');
+    var btnEl = document.getElementById('live-pause-btn');
+    if (!selectEl || !badgeEl || !btnEl) {
+      box.innerHTML =
+        '<label for="live-run-select">Run:</label>' +
+        '<select id="live-run-select">' + opts.join('') + '</select>' +
+        '<span id="live-mode-pill" class="live-pill ' + modeCls + '">' + esc(modeText) + '</span>' +
+        '<button type="button" id="live-pause-btn" class="btn-ghost">' + (LIVE_PAUSED ? 'Resume' : 'Pause') + '</button>';
+      selectEl = document.getElementById('live-run-select');
+      btnEl = document.getElementById('live-pause-btn');
+      if (selectEl) {
+        selectEl.addEventListener('change', function () {
+          SELECTED_RUN = selectEl.value || '';
+          ACTIVE_SEQ = 0;
+          LAST_STATUS = null;
+          GRID_SIG = '';
+          try {
+            var u = new URL(window.location.href);
+            if (SELECTED_RUN) u.searchParams.set('run', SELECTED_RUN);
+            else u.searchParams.delete('run');
+            window.history.replaceState({}, '', u.toString());
+          } catch (e) {}
+          restartLiveTransport();
+        });
+      }
+      if (btnEl) {
+        btnEl.addEventListener('click', function () {
+          LIVE_PAUSED = !LIVE_PAUSED;
+          renderLiveControls();
+          if (LIVE_PAUSED) {
+            stopLiveTransport();
+          } else {
+            restartLiveTransport();
+          }
+        });
+      }
+      return;
+    }
+    var optsHtml = opts.join('');
+    if (selectEl._optsHtml !== optsHtml) {
+      selectEl._optsHtml = optsHtml;
+      selectEl.innerHTML = optsHtml;
+    }
+    badgeEl.className = 'live-pill ' + modeCls;
+    badgeEl.textContent = modeText;
+    btnEl.textContent = LIVE_PAUSED ? 'Resume' : 'Pause';
+  }
+
+  function mergeStatusDelta(d) {
+    if (!d) return null;
+    if (d.delta && d.unchanged) {
+      if (d.seq != null) ACTIVE_SEQ = d.seq;
+      if (LAST_STATUS) {
+        LAST_STATUS.active = d.active;
+        LAST_STATUS.finished = d.finished;
+      }
+      return { unchanged: true };
+    }
+    if (d.delta && LAST_STATUS && LAST_STATUS.run === d.run) {
+      ['seq', 'active', 'family', 'check_precision', 'done', 'total', 'conformant', 'unexpected',
+        'judged_passed', 'judged_scored', 'arms', 'arm_cards', 'judge', 'judge_actors',
+        'judging', 'judge_combined', 'feed', 'finished'].forEach(function (k) {
+        if (k in d) LAST_STATUS[k] = d[k];
+      });
+      if (!LAST_STATUS._gridMap) LAST_STATUS._gridMap = {};
+      var updates = d.grid_updates || [];
+      updates.forEach(function (g) {
+        if (g) LAST_STATUS._gridMap[g.scenario + '|' + g.backend] = g;
+      });
+      LAST_STATUS.grid = Object.keys(LAST_STATUS._gridMap).map(function (k) {
+        return LAST_STATUS._gridMap[k];
+      });
+      if (d.seq != null) ACTIVE_SEQ = d.seq;
+      return { status: LAST_STATUS, updates: updates };
+    }
+    var gm = {};
+    (d.grid || []).forEach(function (g) {
+      if (g) gm[g.scenario + '|' + g.backend] = g;
+    });
+    d._gridMap = gm;
+    LAST_STATUS = d;
+    if (d.seq != null) ACTIVE_SEQ = d.seq;
+    return { status: d, updates: null };
+  }
+
+  function renderStatusPayload(rawPayload) {
+    var merged = mergeStatusDelta(rawPayload);
+    if (!merged || merged.unchanged) {
+      renderLiveControls();
+      return;
+    }
+    var d = merged.status;
+    var updatesOnly = merged.updates;
     var isCat = d.family === 'catalyst';
     document.querySelectorAll('section').forEach(function (s) {
       var h = s.querySelector('h2');
@@ -982,15 +1291,15 @@
     var models = document.getElementById('models');
     var arms = document.getElementById('arms');
     var judges = document.getElementById('judges');
-    var grid = document.getElementById('grid');
     var feed = document.getElementById('feed');
+
+    renderLiveControls();
 
     if (!d.run) {
       if (hdr) hdr.textContent = 'waiting for a run...';
       return;
     }
     ARM_CARDS = d.arm_cards || {};
-    LAST_STATUS = d;
     ARM_LABELS = {};
     Object.keys(d.arms || {}).forEach(function (b) {
       ARM_LABELS[b] = (d.arms[b] || {}).label;
@@ -1014,10 +1323,11 @@
     }
     var lg = document.getElementById('legend');
     if (lg) {
+      var lgHtml;
       if (isCat) {
         var t = '<b>' + (d.conformant || 0) + '</b> followed an allowed path &nbsp;\u00b7&nbsp; <b>' + (d.unexpected || 0) + '</b> unexpected behaviour';
         if (d.judged_scored) t += ' &nbsp;\u00b7&nbsp; judged <b>' + (d.judged_passed || 0) + '/' + d.judged_scored + '</b> \u2014 see the report';
-        lg.innerHTML =
+        lgHtml =
           t +
           '<br><span class=c200 style="padding:0 4px">\u2713</span> allowed path (a refusal, a question or a wrong answer still counts) &nbsp;\u00b7&nbsp; <span class=cerr style="padding:0 4px">\u00d7</span> the system misbehaved &nbsp;\u00b7&nbsp; <span class=crun style="padding:0 4px">\u25cf</span> running';
       } else {
@@ -1027,65 +1337,54 @@
           })
           .join(' &nbsp;');
         var isWahs = d.family === 'wahs';
-        lg.innerHTML =
+        lgHtml =
           (isWahs
             ? 'Each cell: <span class="gpill t-neutral">A</span> the single-call WAHS Answer; '
             : 'Each cell: <span class="gpill t-neutral">A</span> the Answer and <span class="gpill t-neutral">ID</span> the In-Depth, worst across the cell\'s turns; a number counts marked In-Depth points. ') +
           L +
           '<br>Corner mark: <span class=gconf>\u2713</span> the run followed an allowed path &nbsp;\u00b7&nbsp; <span class="gconf err">\u00d7</span> the system misbehaved (hover a cell for words).';
       }
+      if (lg._rawHtml !== lgHtml) {
+        lg._rawHtml = lgHtml;
+        lg.innerHTML = lgHtml;
+      }
     }
     if (models) {
-      models.innerHTML =
+      var modelsHtml =
         (d.models || [])
           .map(function (m) {
             return '<span class=chip title="' + esc(m.kind || '') + '">' + (m.kind ? '<span class=muted>' + esc(m.kind) + '</span> ' : '') + esc(m.id || m) + '</span>';
           })
           .join('') || '<span class=muted>no models recorded</span>';
+      if (models._rawHtml !== modelsHtml) {
+        models._rawHtml = modelsHtml;
+        models.innerHTML = modelsHtml;
+      }
     }
     if (arms) {
-      arms.innerHTML = renderArmCards(d);
-      restoreOpenDetails(arms);
+      var armsHtml = renderArmCards(d);
+      if (arms._rawHtml !== armsHtml) {
+        arms._rawHtml = armsHtml;
+        arms.innerHTML = armsHtml;
+        restoreOpenDetails(arms);
+      }
     }
     if (judges) {
-      judges.innerHTML = renderJudgeScores(d);
+      var judgesHtml = renderJudgeScores(d);
+      if (judges._rawHtml !== judgesHtml) {
+        judges._rawHtml = judgesHtml;
+        judges.innerHTML = judgesHtml;
+      }
     }
     renderCheckPrecision(d);
-    var gm = {};
-    (d.grid || []).forEach(function (g) {
-      gm[g.scenario + '|' + g.backend] = g;
-    });
-    var h =
-      '<table class=grid><tr><th></th>' +
-      (d.backends || [])
-        .map(function (b) {
-          return '<th title="' + esc(b) + '">' + esc(armTitle(b)) + '</th>';
-        })
-        .join('') +
-      '</tr>';
-    (d.scenarios || []).forEach(function (s) {
-      h +=
-        '<tr><th>' +
-        esc(s) +
-        '</th>' +
-        (d.backends || [])
-          .map(function (b) {
-            var g = gm[s + '|' + b] || {};
-            var st = g.state;
-            var oc = st == null || st === 'pending' ? '' : ' onclick="openD(\'' + esc(s) + '\',\'' + esc(b) + '\')"';
-            return gridCell(g, oc, d.family);
-          })
-          .join('') +
-        '</tr>';
-    });
-    if (grid) grid.innerHTML = h + '</table>';
+    syncGrid(d, updatesOnly);
     if (feed) {
-      feed.innerHTML = (d.feed || [])
+      var feedHtml = (d.feed || [])
         .slice()
         .reverse()
         .map(function (f) {
           return (
-            '<div onclick="openD(\'' + esc(f.scenario) + '\',\'' + esc(f.backend) + '\')"><span class="' +
+            '<div data-open-scenario="' + esc(f.scenario) + '" data-open-backend="' + esc(f.backend) + '" data-state="done"><span class="' +
             (f.status === 200 ? 'ok' : 'err') + '">' + f.status + '</span> ' +
             esc(f.scenario) + '/' + esc(shortB(f.backend)) + ' t' + f.turn +
             ' <span class=muted>' + f.chars + 'c</span>' +
@@ -1096,16 +1395,62 @@
           );
         })
         .join('');
+      if (feed._rawHtml !== feedHtml) {
+        feed._rawHtml = feedHtml;
+        feed.innerHTML = feedHtml;
+      }
     }
   }
 
+  async function tick() {
+    if (POLL_INFLIGHT) return;
+    POLL_INFLIGHT = true;
+    try {
+      var d = await fetchStatus(ACTIVE_SEQ || null);
+      if (d) renderStatusPayload(d);
+    } catch (e) {
+    } finally {
+      POLL_INFLIGHT = false;
+    }
+  }
+
+  document.addEventListener('click', function (ev) {
+    var el = ev.target;
+    if (!el || !el.closest) return;
+    var trigger = el.closest('[data-open-scenario]');
+    if (!trigger) return;
+    var st = trigger.getAttribute('data-state');
+    if (st == null || st === 'pending') return;
+    var s = trigger.getAttribute('data-open-scenario');
+    var b = trigger.getAttribute('data-open-backend');
+    if (s && b) window.openD(s, b);
+  });
+
   window.openD = async function (s, b) {
-    var d = await fetchDetail(s, b);
     var modal = document.getElementById('modal');
     var mbody = document.getElementById('mbody');
     if (!modal || !mbody) return;
+    var reqSeq = ++DETAIL_SEQ;
+    if (DETAIL_ABORT) {
+      try { DETAIL_ABORT.abort(); } catch (e) {}
+    }
+    DETAIL_ABORT = typeof AbortController !== 'undefined' ? new AbortController() : null;
+
+    var headHtml = '<div class=mhead><b>' + esc(s) + '</b> &nbsp;\u00b7&nbsp; ' + esc(armTitle(b)) + ' <span class=muted>(' + esc(b) + ')</span><span class=x onclick="closeD()">\u2715</span></div>';
+    mbody.innerHTML = headHtml + '<div class="muted detail-loading">Loading cell detail\u2026</div>';
+    modal.style.display = 'flex';
+
+    var d;
+    try {
+      d = await fetchDetail(s, b, DETAIL_ABORT ? DETAIL_ABORT.signal : undefined);
+    } catch (err) {
+      if (reqSeq !== DETAIL_SEQ || (err && err.name === 'AbortError')) return;
+      mbody.innerHTML = headHtml + '<div class="caveat red">Failed to load cell detail: ' + esc(err && err.message ? err.message : String(err)) + '</div>';
+      return;
+    }
+    if (reqSeq !== DETAIL_SEQ || !d) return;
     var e = d.expectations || {};
-    var h = '<div class=mhead><b>' + esc(s) + '</b> &nbsp;\u00b7&nbsp; ' + esc(armTitle(b)) + ' <span class=muted>(' + esc(b) + ')</span><span class=x onclick="closeD()">\u2715</span></div>';
+    var h = headHtml;
     var ce = d.catalystExpected;
     if (ce) {
       h += '<div class=exp><b>Question:</b> ' + esc(ce.question || '') + '<br>';
@@ -1301,6 +1646,11 @@
   };
 
   window.closeD = function () {
+    DETAIL_SEQ += 1;
+    if (DETAIL_ABORT) {
+      try { DETAIL_ABORT.abort(); } catch (e) {}
+      DETAIL_ABORT = null;
+    }
     var modal = document.getElementById('modal');
     if (modal) modal.style.display = 'none';
   };
@@ -1340,25 +1690,130 @@
     sync();
   }
 
+  async function refreshRunsList() {
+    if (STATIC_DASHBOARD) return;
+    try {
+      var res = await fetch('/api/runs', { cache: 'no-store' });
+      if (!res.ok) return;
+      var data = await res.json();
+      if (data && Array.isArray(data.runs)) {
+        RUNS_LIST = data.runs;
+        renderLiveControls();
+      }
+    } catch (e) {}
+  }
+
+  function scheduleRunsRefresh() {
+    if (STATIC_DASHBOARD) return;
+    if (RUNS_TIMER) clearTimeout(RUNS_TIMER);
+    RUNS_TIMER = setTimeout(async function () {
+      await refreshRunsList();
+      scheduleRunsRefresh();
+    }, 10000);
+  }
+
+  function stopLiveTransport() {
+    if (LIVE_ES) {
+      try { LIVE_ES.close(); } catch (e) {}
+      LIVE_ES = null;
+    }
+    if (POLL_TIMER) {
+      clearTimeout(POLL_TIMER);
+      POLL_TIMER = null;
+    }
+  }
+
+  function schedulePoll() {
+    if (LIVE_PAUSED || STATIC_DASHBOARD) return;
+    if (POLL_TIMER) clearTimeout(POLL_TIMER);
+    POLL_TIMER = setTimeout(async function () {
+      await tick();
+      schedulePoll();
+    }, 2000);
+  }
+
+  function connectLiveStream() {
+    if (LIVE_PAUSED || STATIC_DASHBOARD) return;
+    stopLiveTransport();
+    if (typeof EventSource === 'undefined') {
+      LIVE_MODE = 'poll';
+      renderLiveControls();
+      tick().then(schedulePoll);
+      return;
+    }
+    var params = [];
+    if (SELECTED_RUN) params.push('run=' + encodeURIComponent(SELECTED_RUN));
+    if (ACTIVE_SEQ > 0) params.push('since_seq=' + encodeURIComponent(ACTIVE_SEQ));
+    var url = '/api/stream' + (params.length ? '?' + params.join('&') : '');
+    var es = new EventSource(url);
+    LIVE_ES = es;
+    LIVE_MODE = 'sse';
+    renderLiveControls();
+    es.addEventListener('status', function (ev) {
+      if (LIVE_PAUSED || LIVE_ES !== es) return;
+      try {
+        var payload = JSON.parse(ev.data);
+        renderStatusPayload(payload);
+      } catch (e) {}
+    });
+    es.onerror = function () {
+      if (LIVE_ES !== es) return;
+      try { es.close(); } catch (e) {}
+      LIVE_ES = null;
+      if (!LIVE_PAUSED) {
+        LIVE_MODE = 'poll';
+        renderLiveControls();
+        tick().then(schedulePoll);
+      }
+    };
+  }
+
+  function restartLiveTransport() {
+    if (STATIC_DASHBOARD || LIVE_PAUSED) return;
+    connectLiveStream();
+  }
+
   async function boot() {
     initThemeToggle();
     var el = document.getElementById('dashboard-data');
     if (el) {
+      LIVE_MODE = 'static';
       var raw = (el.textContent || '').trim();
       if (raw) {
         STATIC_DASHBOARD = JSON.parse(raw);
       } else {
         var src = el.getAttribute('data-src') || './dashboard-data.json';
+        try {
+          var qIdx = src.indexOf('?');
+          var pathPart = qIdx >= 0 ? src.slice(0, qIdx) : src;
+          var qPart = qIdx >= 0 ? src.slice(qIdx + 1) : '';
+          var slashIdx = pathPart.lastIndexOf('/');
+          STATIC_BASE_DIR = slashIdx >= 0 ? pathPart.slice(0, slashIdx + 1) : './';
+          if (qPart) {
+            var sp = new URLSearchParams(qPart);
+            STATIC_VER = sp.get('v') || '';
+          }
+        } catch (e) {
+          STATIC_BASE_DIR = './';
+          STATIC_VER = '';
+        }
         var res = await fetch(src);
         if (res.ok) {
           STATIC_DASHBOARD = await res.json();
         }
       }
-      await tick();
+      if (STATIC_DASHBOARD && STATIC_DASHBOARD.status) {
+        renderStatusPayload(STATIC_DASHBOARD.status);
+      }
       return;
     }
-    await tick();
-    setInterval(tick, 2000);
+    try {
+      var locParams = new URLSearchParams(window.location.search || '');
+      SELECTED_RUN = locParams.get('run') || '';
+    } catch (e) {}
+    await refreshRunsList();
+    scheduleRunsRefresh();
+    connectLiveStream();
   }
 
   if (document.readyState === 'loading') {
