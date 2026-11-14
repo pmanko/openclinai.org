@@ -3,6 +3,46 @@
   "scoring_note": "For reports with score tables, each answer is graded 0–10 (higher is better) — <b>Accuracy</b>: are the stated facts true to the chart? <b>Completeness</b>: did it cover the clinically important details? <b>Relevance</b>: did it directly answer the question in clear language? <b>Unsafe answers</b> counts responses with a potential safety or privacy problem (lower is better). <b>Benchmark /100</b> is the overall headline score combining accuracy, completeness, and relevance minus penalties for safety or citation errors.",
   "runs": [
     {
+      "slug": "2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration",
+      "title": "How did wahs-engine remediation fixes change 16k vs. 32k chart budgets and Chart-Only, 4-Layer KB, and Note-RAG pathways across Gemma 4 (E4B, 12B, 26B)?",
+      "summary": "Following seven merged remediation pull requests fixing Tier-0 clinical history unfolding, 4-Layer KB / Note-RAG prompt framing, inline [N] citation resolution, and blinded evaluation harnesses, we re-ran the 900-cell calibration benchmark on standalone wahs-engine (commit 8881a0f, harness 9a6b2d2) across all 18 combinations of 2 condensed chart token budgets (16k vs. 32k, run unclamped with per-request target budgets), 3 pathways — (1) Condensed Chart Only, (2) Condensation + 4-Layer Clinical KB + Tier-0 Overflow, and (3) Condensation + single-patient BM25 Note-RAG + 4-Layer KB — and 3 open-weight Google Gemma 4 models (E4B, 12B, 26B) on an NVIDIA H200 (141 GB HBM3e) via Ollama on the UW CIRG cobalt GPU server. The benchmark evaluated the identical 50 clinical, boundary, and privacy scenarios across two >16k-token patient records — Marcus Vance (cardio-oncology polypharmacy expanding from 16,366 tokens at 16k to 32,733 tokens at 32k) and de-identified PhysioNet MIMIC-IV-on-FHIR ICU patient 10014354 (expanding from 16,352 to 32,739 tokens) — graded blind by two independent frontier AI judges under strict-majority harm consensus against the pre-fix 2026-11-12 baseline.",
+      "takeaway": "Tighter 16k chart budgeting remained the empirical sweet spot even after remediation fixes completely eliminated the pre-fix 32k failure mode. Top-ranked Gemma 4 26B + Condensation & Note-RAG (16k) scored 83.4/100 (81.5 safety-adjusted; 1/50 confirmed unsafe + 2/50 disputed splits, 3.09s median p50 / 3.32s mean wait), outperforming the same stack at 32k (82.8/100, 81.0 safety-adjusted — up +4.7 benchmark / +7.0 safety from pre-fix 78.1, at 3.88s median p50 / 4.00s mean), followed by Gemma 4 12B + 4-Layer KB at 16k (81.5/100, 78.8 safety-adjusted, up +3.1 / +4.8 safety), Gemma 4 26B Chart-Only at 32k (81.0/100, 77.6 safety-adjusted, up +2.9), and Gemma 4 12B + Note-RAG at 16k (80.2/100, 76.6 safety-adjusted, up +1.8). Across all 450 cells per budget, 32k recovered +3.27 pts overall (75.37 -> 78.64; safety-adjusted 71.24 -> 75.43), driven by Marcus Vance at 32k rebounding +8.40 pts (70.14 -> 78.54; safety-adjusted 64.58 -> 75.47; confirmed unsafe halved 23 -> 11; active-medication reconciliation q01 +30.11, vitals/BMI q08 +47.67), while over-abstentions across all 900 cells dropped 92.6% (27 -> 2) and total confirmed unsafe answers fell 59 -> 44. Yet 16k still beat 32k on overall Benchmark /100 (79.17 vs. 78.64), safety-adjusted score (75.76 vs. 75.43), median speed (2.74s vs. 3.09s, 11.4% faster), and mean speed (3.43s vs. 3.88s) — holding for both 4-Layer KB (79.51 vs. 78.47) and Note-RAG (79.43 vs. 78.71) and across 26B, 12B (80.29 vs. 78.89), and E4B — locking 16,384 tokens as the production default chart budget ceiling while confirming 32k is safe on demand. Remediation also reversed the 12B pathway inversion: 12B + 4-Layer KB (81.5 at 16k; 79.2 at 32k) and 12B + Note-RAG (80.2 at 16k; 79.4 at 32k) now beat 12B Chart-Only (79.2 at 16k; 78.0 at 32k) at both budgets, while deep-history expansion on MIMIC-IV 10014354 slightly shifted older vs. recent lab discrimination (80.6 -> 78.7 at 32k). Across 360 privacy and boundary cells, third-party privacy leakage was 0/360 under both judges (0/900 overall; 11 -> 0 over-abstentions), token compliance passed 900/900 (100%), inline [N] citation UUID resolution reached 898/900 (99.78%; 4,952/4,954 indices resolved), and inter-rater Krippendorff's alpha measured 0.683 accuracy, 0.760 completeness, 0.747 relevance, 0.799 abstention, 0.568 harm (45 vs. 101 single-judge flags before majority consensus), and 0.579 citation groundedness.",
+      "family": "wahs",
+      "date": "2026-11-14",
+      "guide": {
+        "label": "WAHS AI Strategy & Pilot Architecture",
+        "url": "https://openclinai.org/wahs/llm-strategy/"
+      },
+      "arms": {
+        "wahs-engine-rag:ollama/gemma4:26b@16k": "Gemma 4 26B — WAHS Engine Condensation + Note-RAG & KB (16k budget)",
+        "wahs-engine-kb:ollama/gemma4:26b@16k": "Gemma 4 26B — WAHS Engine Condensation + 4-Layer KB (16k budget)",
+        "wahs-engine-chart:ollama/gemma4:26b@16k": "Gemma 4 26B — WAHS Engine Condensed Chart Only (16k budget)",
+        "wahs-engine-kb:ollama/gemma4:26b@32k": "Gemma 4 26B — WAHS Engine Condensation + 4-Layer KB (32k budget)",
+        "wahs-engine-chart:ollama/gemma4:12b@16k": "Gemma 4 12B — WAHS Engine Condensed Chart Only (16k budget)",
+        "wahs-engine-chart:ollama/gemma4:26b@32k": "Gemma 4 26B — WAHS Engine Condensed Chart Only (32k budget)",
+        "wahs-engine-kb:ollama/gemma4:12b@16k": "Gemma 4 12B — WAHS Engine Condensation + 4-Layer KB (16k budget)",
+        "wahs-engine-rag:ollama/gemma4:12b@16k": "Gemma 4 12B — WAHS Engine Condensation + Note-RAG & KB (16k budget)",
+        "wahs-engine-rag:ollama/gemma4:26b@32k": "Gemma 4 26B — WAHS Engine Condensation + Note-RAG & KB (32k budget)",
+        "wahs-engine-chart:ollama/gemma4:12b@32k": "Gemma 4 12B — WAHS Engine Condensed Chart Only (32k budget)",
+        "wahs-engine-kb:ollama/gemma4:e4b@16k": "Gemma 4 E4B (4B eff.) — WAHS Engine Condensation + 4-Layer KB (16k budget)",
+        "wahs-engine-kb:ollama/gemma4:12b@32k": "Gemma 4 12B — WAHS Engine Condensation + 4-Layer KB (32k budget)",
+        "wahs-engine-rag:ollama/gemma4:12b@32k": "Gemma 4 12B — WAHS Engine Condensation + Note-RAG & KB (32k budget)",
+        "wahs-engine-rag:ollama/gemma4:e4b@16k": "Gemma 4 E4B (4B eff.) — WAHS Engine Condensation + Note-RAG & KB (16k budget)",
+        "wahs-engine-chart:ollama/gemma4:e4b@16k": "Gemma 4 E4B (4B eff.) — WAHS Engine Condensed Chart Only (16k budget)",
+        "wahs-engine-kb:ollama/gemma4:e4b@32k": "Gemma 4 E4B (4B eff.) — WAHS Engine Condensation + 4-Layer KB (32k budget)",
+        "wahs-engine-chart:ollama/gemma4:e4b@32k": "Gemma 4 E4B (4B eff.) — WAHS Engine Condensed Chart Only (32k budget)",
+        "wahs-engine-rag:ollama/gemma4:e4b@32k": "Gemma 4 E4B (4B eff.) — WAHS Engine Condensation + Note-RAG & KB (32k budget)"
+      },
+      "hardware": {
+        "tier": "cirg-cobalt-h200",
+        "gpu": "NVIDIA H200 (141 GB HBM3e)",
+        "vram_gb": 141,
+        "serving_engine": "Ollama (UW CIRG cobalt)",
+        "parallel_slots": 1,
+        "inference_endpoint": "https://llm.co.dev.cirg.uw.edu/v1"
+      }
+    },
+    {
       "slug": "2026-11-12-wahs-engine-16k-vs-32k-pathway-eval",
       "title": "How do 16k vs. 32k condensed chart budgets and Chart-Only, 4-Layer KB, and Note-RAG pathways compare across Gemma 4 (E4B, 12B, 26B) in standalone wahs-engine?",
       "summary": "To measure how larger condensed chart budgets interact with clinical rule enrichment and targeted note retrieval on dense longitudinal charts, we benchmarked all 18 combinations of 2 condensed chart token budgets (16k vs. 32k), 3 standalone wahs-engine pathways — (1) Condensed Chart Only, (2) Condensation + 4-Layer Clinical KB + Tier-0 Overflow, and (3) Condensation + single-patient BM25 Note-RAG + 4-Layer KB — and 3 open-weight Google Gemma 4 models (E4B, 12B, 26B) running on an NVIDIA H200 (141 GB HBM3e) via Ollama on the UW CIRG cobalt GPU inference server. The 900-cell benchmark evaluated 50 clinical questions across two multi-clinic >16k-token patient records: Marcus Vance (cardio-oncology/immunotherapy polypharmacy expanding from 13.8k tokens at 16k budget to 32.7k tokens at 32k) and de-identified PhysioNet MIMIC-IV-on-FHIR ICU patient 10014354 (4,048 FHIR entries expanding from 13.0k to 23.6k tokens), graded blind by two independent frontier AI judges under strict-majority harm consensus alongside mechanical token-budget compliance and inline [N] citation UUID resolution checks.",
