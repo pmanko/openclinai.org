@@ -115,7 +115,7 @@
       "completeness_mean": 7.56,
       "relevance_mean": 8.02,
       "harm_count": 4,
-      "benchmark_score": 76.9,
+      "benchmark_score": 77.0,
       "benchmark_spread": {
         "min": 16.0,
         "max": 100.0
@@ -134,7 +134,7 @@
       },
       "temporal": {
         "date_wrong": 2,
-        "date_minor": 3,
+        "date_minor": 2,
         "window_over": 0,
         "trend_fab": 0
       },
@@ -169,7 +169,7 @@
       "severe_rate": 0.08,
       "safety_pass_rate": 0.92,
       "safety_gate_passed": false,
-      "safety_adjusted_benchmark_score": 73.4,
+      "safety_adjusted_benchmark_score": 73.5,
       "safety_adjusted_benchmark_spread": {
         "min": 0.0,
         "max": 100.0
@@ -188,7 +188,7 @@
       "completeness_mean": 7.58,
       "relevance_mean": 7.52,
       "harm_count": 2,
-      "benchmark_score": 75.1,
+      "benchmark_score": 75.2,
       "benchmark_spread": {
         "min": 12.0,
         "max": 100.0
@@ -207,7 +207,7 @@
       },
       "temporal": {
         "date_wrong": 1,
-        "date_minor": 4,
+        "date_minor": 3,
         "window_over": 0,
         "trend_fab": 0
       },
@@ -1478,8 +1478,8 @@
       "temporal_gate_applied": 0,
       "answer_check_edited": 0,
       "answer_check_flagged": 0,
-      "benchmark_score": 76.9,
-      "safety_adjusted_benchmark_score": 73.4,
+      "benchmark_score": 77.0,
+      "safety_adjusted_benchmark_score": 73.5,
       "accuracy_mean": 8.37,
       "completeness_mean": 7.56,
       "relevance_mean": 8.02,
@@ -1500,16 +1500,16 @@
       },
       "temporal": {
         "date_wrong": 2,
-        "date_minor": 3,
+        "date_minor": 2,
         "window_over": 0,
         "trend_fab": 0
       },
       "calibrated": {
         "adjudicated": false,
-        "point": 76.94,
+        "point": 76.98,
         "ci_low": null,
         "ci_high": null,
-        "judge_only_mean": 76.94,
+        "judge_only_mean": 76.98,
         "rectifier": 0.0,
         "kappa": null,
         "n_labeled": 0,
@@ -1549,7 +1549,7 @@
       "temporal_gate_applied": 0,
       "answer_check_edited": 0,
       "answer_check_flagged": 0,
-      "benchmark_score": 75.1,
+      "benchmark_score": 75.2,
       "safety_adjusted_benchmark_score": 72.8,
       "accuracy_mean": 8.08,
       "completeness_mean": 7.58,
@@ -1571,16 +1571,16 @@
       },
       "temporal": {
         "date_wrong": 1,
-        "date_minor": 4,
+        "date_minor": 3,
         "window_over": 0,
         "trend_fab": 0
       },
       "calibrated": {
         "adjudicated": false,
-        "point": 75.12,
+        "point": 75.16,
         "ci_low": null,
         "ci_high": null,
-        "judge_only_mean": 75.12,
+        "judge_only_mean": 75.16,
         "rectifier": 0.0,
         "kappa": null,
         "n_labeled": 0,
@@ -2682,8 +2682,8 @@
   },
   "domain_guardrails": [
     {
-      "id": "verifact_atomic_entailment",
-      "label": "VeriFact Atomic Claim-to-UUID Citation Entailment",
+      "id": "token_budget_compliance",
+      "label": "Token Budget Compliance Gate",
       "scope": "All evaluated setups",
       "passed": 900,
       "total": 900,
@@ -2691,19 +2691,19 @@
       "ci95_low": 0.9957,
       "ci95_high": 1.0,
       "status": "pass",
-      "detail": "900/900 responses entailed every required clinical assertion (0 numeric/status distortions)"
+      "detail": "900/900 cells stayed within their target condensed-chart token budget (0 over-budget)"
     },
     {
-      "id": "healthbench_deterministic_rubric",
-      "label": "Deterministic HealthBench Clinical Rubric & Budget Gate",
+      "id": "citation_uuid_resolution",
+      "label": "Inline [N] Citation UUID Resolution Gate",
       "scope": "All evaluated setups",
       "passed": 899,
       "total": 900,
       "pass_rate": 0.9989,
       "ci95_low": 0.9937,
       "ci95_high": 0.9998,
-      "status": "pass",
-      "detail": "899/900 responses satisfied all deterministic clinical checklist, token-budget, and citation rules"
+      "status": "warn",
+      "detail": "899/900 cells had zero unresolved inline [N] citations (6579/6584 cited indices resolved; 5 unresolved)"
     }
   ],
   "slug": "2026-11-12-wahs-engine-16k-vs-32k-pathway-eval"

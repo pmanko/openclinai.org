@@ -26,7 +26,15 @@ def _load_script(name: str):
     return mod
 
 
-def _make_sharded_packet(run_dir: Path, slug: str, *, include_shard_file: bool = True, extra_cell_key: str | None = None) -> None:
+def _make_sharded_packet(
+    run_dir: Path,
+    slug: str,
+    *,
+    include_shard_file: bool = True,
+    extra_cell_key: str | None = None,
+    grid_state: str = "done",
+    omit_shard_cell: bool = False,
+) -> None:
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "run-summary.json").write_text(
         json.dumps(
@@ -89,7 +97,7 @@ def _make_sharded_packet(run_dir: Path, slug: str, *, include_shard_file: bool =
                     "backends": ["arm-a"],
                     "scenarios": ["s1"],
                     "arms": {"arm-a": {"label": "Arm A"}},
-                    "grid": [{"scenario": "s1", "backend": "arm-a", "state": "done"}],
+                    "grid": [{"scenario": "s1", "backend": "arm-a", "state": grid_state}],
                 },
                 "record_pool": [],
                 "sources_pool": [],
@@ -112,7 +120,8 @@ def _make_sharded_packet(run_dir: Path, slug: str, *, include_shard_file: bool =
         if extra_cell_key:
             cell_obj[extra_cell_key] = "<p>disallowed</p>"
         (run_dir / "dashboard-details").mkdir(parents=True, exist_ok=True)
-        (run_dir / shard_rel).write_text(json.dumps({"s1|arm-a": cell_obj}), encoding="utf-8")
+        shard_payload = {} if omit_shard_cell else {"s1|arm-a": cell_obj}
+        (run_dir / shard_rel).write_text(json.dumps(shard_payload), encoding="utf-8")
 
 
 def test_sharded_dashboard_stage_validate_and_preview(tmp_path: Path) -> None:
@@ -209,3 +218,72 @@ def test_sharded_dashboard_rejects_missing_and_unexpected_keys(tmp_path: Path) -
             reports_root=reports_out,
             root=tmp_path,
         )
+
+    index_mod = _load_script("build-reports-index.py")
+
+    # Non-pending grid cell missing from both details and its declared backend shard fails closed in both validators.
+    missing_cell_dir = tmp_path / "run_missing_cell"
+    _make_sharded_packet(missing_cell_dir, "2026-11-12-missing-cell", omit_shard_cell=True)
+    with pytest.raises(ValueError, match="missing from dashboard details/detail_shards"):
+        publish_mod.stage_report(
+            run_dir=missing_cell_dir,
+            slug="2026-11-12-missing-cell",
+            title="Missing non-pending shard cell fixture",
+            summary="Verifies publish-report rejects non-pending grid cells that lack detail entries in details or detail_shards.",
+            takeaway="Every non-pending grid cell must have a resolvable detail entry.",
+            family="wahs",
+            reports_root=reports_out,
+            root=tmp_path,
+        )
+
+    staged_dir = reports_out / "2026-11-12-missing-cell"
+    staged_dir.mkdir(parents=True, exist_ok=True)
+    for fname in ("run-summary.json", "report-data.json", "dashboard-data.json"):
+        (staged_dir / fname).write_text((missing_cell_dir / fname).read_text(encoding="utf-8"), encoding="utf-8")
+    (staged_dir / "dashboard-details").mkdir(parents=True, exist_ok=True)
+    (staged_dir / "dashboard-details" / "00-arm-a-12345678.json").write_text("{}", encoding="utf-8")
+    (staged_dir / "index.html").write_text("<html></html>", encoding="utf-8")
+    (staged_dir / "dashboard.html").write_text("<html></html>", encoding="utf-8")
+    missing_entry = [
+        {
+            "slug": "2026-11-12-missing-cell",
+            "title": "Missing non-pending shard cell fixture",
+            "summary": "Verifies archive validator catches missing non-pending cell details.",
+            "takeaway": "Non-pending cells must exist in details or detail_shards.",
+            "date": "2026-11-12",
+            "family": "wahs",
+        }
+    ]
+    with pytest.raises(ValueError, match="non-pending grid cell"):
+        index_mod.validate_archive(missing_entry, reports_out)
+
+    # Disallowed key inside shard is also caught by validate_archive.
+    (staged_dir / "dashboard-details" / "00-arm-a-12345678.json").write_text(
+        (bad_key_dir / "dashboard-details" / "00-arm-a-12345678.json").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="unexpected key.*answer_html"):
+        index_mod.validate_archive(missing_entry, reports_out)
+
+    # Pending grid cells do not require a detail entry in details or detail_shards.
+    pending_dir = tmp_path / "run_pending_ok"
+    _make_sharded_packet(pending_dir, "2026-11-12-pending-cell-ok", grid_state="pending", omit_shard_cell=True)
+    pending_reports = tmp_path / "pending_reports"
+    pending_assets = pending_reports / "assets"
+    pending_assets.mkdir(parents=True)
+    for asset in (ROOT / "reports" / "assets").iterdir():
+        if asset.is_file():
+            (pending_assets / asset.name).write_bytes(asset.read_bytes())
+    publish_mod.stage_report(
+        run_dir=pending_dir,
+        slug="2026-11-12-pending-cell-ok",
+        title="Pending cell allowed without detail entry",
+        summary="Verifies pending grid cells are permitted before detail shards populate them.",
+        takeaway="Only non-pending cells must resolve in details or detail_shards.",
+        family="wahs",
+        reports_root=pending_reports,
+        root=ROOT,
+    )
+    pending_manifest = json.loads((pending_reports / "reports-index.json").read_text(encoding="utf-8"))
+    pending_runs = pending_manifest["runs"] if isinstance(pending_manifest, dict) else pending_manifest
+    index_mod.validate_archive(pending_runs, pending_reports)

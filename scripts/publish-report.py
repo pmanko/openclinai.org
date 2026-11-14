@@ -375,6 +375,7 @@ def validate_v2_report_packet(
     _validate_iso_date(run_summary.get("date"), where="run-summary.json.date", slug=slug, required=True)
 
     detail_shards = dashboard_data.get("detail_shards")
+    shard_by_backend: dict[str, dict[str, Any]] = {}
     if detail_shards is not None:
         if not isinstance(detail_shards, dict):
             raise ValueError(f"{slug}: dashboard-data.json.detail_shards must be a JSON object")
@@ -399,6 +400,24 @@ def validate_v2_report_packet(
                         ALLOWED_DASHBOARD_DETAIL_CELL_KEYS,
                         where=f"{rel_shard}[{cell_k}]",
                         slug=slug,
+                    )
+                shard_by_backend[str(backend_k)] = shard_obj
+
+    status_obj = dashboard_data.get("status")
+    details_obj = dashboard_data.get("details")
+    inline_details = details_obj if isinstance(details_obj, dict) else {}
+    grid = status_obj.get("grid") if isinstance(status_obj, dict) else None
+    if isinstance(grid, list) and (run_dir is not None or detail_shards is None):
+        for cell in grid:
+            if not isinstance(cell, dict) or cell.get("state") == "pending":
+                continue
+            scen_id = cell.get("scenario")
+            backend_id = cell.get("backend")
+            if isinstance(scen_id, str) and scen_id and isinstance(backend_id, str) and backend_id:
+                cell_key = f"{scen_id}|{backend_id}"
+                if cell_key not in inline_details and cell_key not in shard_by_backend.get(backend_id, {}):
+                    raise ValueError(
+                        f"{slug}: dashboard cell {cell_key!r} (state={cell.get('state')!r}) is missing from dashboard details/detail_shards"
                     )
 
     runs = report_data.get("runs")

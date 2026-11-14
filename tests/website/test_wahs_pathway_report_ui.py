@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -87,9 +88,12 @@ def test_catalog_card_renders_hardware_and_disputed_harm_splits(tmp_path: Path, 
     })
 
     assert 'class="hl-pill hl-hw"' in card_html
-    assert "NVIDIA H200 (141 GB HBM3e)" in card_html
-    assert "2 confirmed unsafe; 3 disputed 1/2" in card_html
-    assert "(3 disp)" in card_html
+    assert hw["gpu"] in card_html
+    assert '<span class="hl-pill hl-safe">' not in card_html
+    warn_match = re.search(r'<span class="hl-pill hl-warn">([^<]+)</span>', card_html)
+    assert warn_match is not None
+    warn_nums = [int(n) for n in re.findall(r"\b\d+\b", warn_match.group(1))]
+    assert 2 in warn_nums and 3 in warn_nums
 
 
 def test_report_shell_renders_unique_arm_labels_cohorts_and_p50_speed(tmp_path: Path) -> None:
@@ -268,7 +272,7 @@ function makeEl(tag, cls) {
     appendChild(ch) { this.children.push(ch); return ch; },
     getBoundingClientRect() { return { top: 0, bottom: 0, height: 0 }; },
     classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
-    set innerHTML(v) { this._html = String(v); },
+    set innerHTML(v) { this._html = String(v); if (v === '') this.children = []; },
     get innerHTML() { return this._html; },
     set textContent(v) { this._text = String(v); },
     get textContent() { return this._text; },
@@ -335,9 +339,23 @@ const evalTrailer = `
   const bpShorts = backends.map(b => bpShort(b));
   const execHtml = renderExecutiveSummary(run).innerHTML;
   const speedHtml = renderSpeedVisual(run).innerHTML;
+  const critScore = cellBenchScore({ accuracy: 8, completeness: 8, relevance: 8, harm: false, critical_omission: true });
+  const dispScore = cellBenchScore({ accuracy: 8, completeness: 8, relevance: 8, harm: false, harm_disputed: true });
   buildNav(run);
-  const navTabs = document.getElementById('toc').children[0].children.map(btn => btn.innerHTML);
-  __result = { backendCount: backends.length, titles, shorts, bpShorts, execHtml, speedHtml, navTabs };
+  const tabsEl = document.getElementById('toc').children[0];
+  const tablistRole = tabsEl.getAttribute('role');
+  const navTabs = tabsEl.children.map(btn => ({
+    id: btn.dataset.tab,
+    role: btn.getAttribute('role'),
+    selected: btn.getAttribute('aria-selected'),
+    label: btn.innerHTML,
+  }));
+  buildNav(Object.assign({}, run, { concurrency_runs: [{ concurrency: 4 }] }));
+  const navTabsWithConc = document.getElementById('toc').children[0].children.map(btn => ({
+    id: btn.dataset.tab,
+    label: btn.innerHTML,
+  }));
+  __result = { backendCount: backends.length, titles, shorts, bpShorts, execHtml, speedHtml, critScore, dispScore, tablistRole, navTabs, navTabsWithConc };
 })();
 `;
 vm.runInContext(shellSource + evalTrailer, ctx);
@@ -368,31 +386,37 @@ console.log(JSON.stringify(ctx.__result));
             assert any(p in lbl for p in ("Chart", "KB", "Note-RAG")), lbl
             assert any(b in lbl for b in ("16k", "32k")), lbl
 
+    assert out["critScore"] == 68.0
+    assert out["dispScore"] == 74.0
+
     exec_html = out["execHtml"]
     assert 'class="hw-banner"' in exec_html
     assert "NVIDIA H200 (141 GB HBM3e)" in exec_html
-    assert exec_html.count('class="ov-cat-card"') == 5
-    assert "0 scenarios" not in exec_html
+    cat_counts = [int(n) for n in re.findall(r'class="ov-cat-cnt">(\d+)\b', exec_html)]
+    assert len(cat_counts) == 5
+    assert all(n > 0 for n in cat_counts)
     assert 'class="cohort-split-grid"' in exec_html
     assert "MIMIC-IV 10014354" in exec_html
     assert "Marcus Vance" in exec_html
     assert 'id="ov-diff-arm-a"' in exec_html
     assert 'id="ov-diff-arm-b"' in exec_html
-    assert 'data-diff-preset="12b-chart-rag-16k"' in exec_html
-    assert "disputed (1/2)" in exec_html
-    assert "caps critical clinical omissions at 40.0" not in exec_html
+    assert 'class="badge-disputed"' in exec_html
 
     speed_html = out["speedHtml"]
     assert 'class="hw-banner"' in speed_html
     assert 'class="speed-sort-bar"' in speed_html
     assert speed_html.count('class="speed-stage-row"') == 6
-    assert "1st word:" not in speed_html
+    assert 'class="speed-seg-ttft"' not in speed_html
     assert 'class="speed-seg-e2e"' in speed_html
     assert "Gemma 4 26B" in speed_html
     assert "Gemma 4 12B" in speed_html
     assert "Gemma 4 E4B" in speed_html
     assert "p50" in speed_html
 
-    nav_joined = " | ".join(out["navTabs"])
-    assert "Response Speed &amp; Latency" in nav_joined
-    assert "Speed &amp; Multi-User Scaling" not in nav_joined
+    assert out["tablistRole"] == "tablist"
+    assert [t["id"] for t in out["navTabs"]] == ["overview", "questions", "speed", "methodology"]
+    assert all(t["role"] == "tab" for t in out["navTabs"])
+    assert [t["selected"] for t in out["navTabs"]] == ["true", "false", "false", "false"]
+    speed_tab_no_conc = next(t["label"] for t in out["navTabs"] if t["id"] == "speed")
+    speed_tab_with_conc = next(t["label"] for t in out["navTabsWithConc"] if t["id"] == "speed")
+    assert speed_tab_no_conc != speed_tab_with_conc

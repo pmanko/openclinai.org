@@ -234,6 +234,14 @@ ALLOWED_DASHBOARD_ROOT_KEYS: frozenset[str] = frozenset({
     "detail_shards",
 })
 SAFE_SHARD_REL_RE = re.compile(r"^dashboard-details/[A-Za-z0-9._-]+\.json$")
+ALLOWED_DASHBOARD_DETAIL_CELL_KEYS: frozenset[str] = frozenset({
+    "scenario",
+    "backend",
+    "expectations",
+    "catalystExpected",
+    "turns",
+    "judge",
+})
 
 
 def _is_valid_iso_date(raw: object) -> bool:
@@ -460,6 +468,7 @@ def _check_editorial_entry(
                         issues.append(f"{slug}/dashboard-data.json must declare schema='openclinai.dashboard.v2' and schema_version=2")
                     issues.extend(_closed_key_issues(dash_obj, ALLOWED_DASHBOARD_ROOT_KEYS, where=f"{slug}/dashboard-data.json"))
                     detail_shards = dash_obj.get("detail_shards")
+                    shard_by_backend: dict[str, dict] = {}
                     if detail_shards is not None:
                         if not isinstance(detail_shards, dict):
                             issues.append(f"{slug}/dashboard-data.json.detail_shards must be an object")
@@ -472,6 +481,35 @@ def _check_editorial_entry(
                                     sp = (slug_root / rel_shard).resolve()
                                     if not sp.is_relative_to(slug_root) or not sp.is_file():
                                         issues.append(f"{slug}/{rel_shard} referenced in detail_shards is missing")
+                                    else:
+                                        shard_obj = json.loads(sp.read_text(encoding="utf-8"))
+                                        if not isinstance(shard_obj, dict):
+                                            issues.append(f"{slug}/{rel_shard} must be a JSON object")
+                                        else:
+                                            shard_by_backend[str(bk)] = shard_obj
+                                            for cell_k, cell_v in shard_obj.items():
+                                                issues.extend(
+                                                    _closed_key_issues(
+                                                        cell_v,
+                                                        ALLOWED_DASHBOARD_DETAIL_CELL_KEYS,
+                                                        where=f"{slug}/{rel_shard}[{cell_k}]",
+                                                    )
+                                                )
+                    status_obj = dash_obj.get("status")
+                    inline_details = dash_obj.get("details") if isinstance(dash_obj.get("details"), dict) else {}
+                    grid = status_obj.get("grid") if isinstance(status_obj, dict) else None
+                    if isinstance(grid, list) and (detail_shards is None or isinstance(detail_shards, dict)):
+                        for cell in grid:
+                            if not isinstance(cell, dict) or cell.get("state") == "pending":
+                                continue
+                            sc_id = cell.get("scenario")
+                            bk_id = cell.get("backend")
+                            if isinstance(sc_id, str) and sc_id and isinstance(bk_id, str) and bk_id:
+                                cell_key = f"{sc_id}|{bk_id}"
+                                if cell_key not in inline_details and cell_key not in shard_by_backend.get(bk_id, {}):
+                                    issues.append(
+                                        f"{slug}/dashboard-data.json: non-pending grid cell {cell_key!r} (state={cell.get('state')!r}) missing from details/detail_shards"
+                                    )
                 fam = str(
                     entry.get("family")
                     or ed_disk.get("family")
