@@ -55,8 +55,9 @@ def test_router_launcher_forwards_configured_small_model_limit(tmp_path):
     )
 
     args = capture.read_text(encoding="utf-8").splitlines()
-    assert configured == "2"
+    assert configured == "0"
     assert args[args.index("--models-max") + 1] == configured
+    assert args[args.index("--sleep-idle-seconds") + 1] == "600"
     assert args[args.index("--port") + 1] == "8077"
     assert args[args.index("--models-preset") + 1] == str(
         ROOT / "scripts/llama-router.ini"
@@ -180,6 +181,7 @@ def test_local_router_daemon_uses_launchd_on_macos(
     assert f"LLAMA_MODEL_DIR={model_dir}" in args
     assert f"LLAMA_ROUTER_RUNTIME_DIR={runtime_dir}" in args
     assert "LLAMA_ROUTER_MODELS_MAX=2" in args
+    assert "LLAMA_ROUTER_SLEEP_IDLE_SECONDS=600" in args
     assert str(ROOT / "scripts/llama-router-up.sh") in args
     if launchctl_print_fails:
         assert not (runtime_dir / "router.pid").exists()

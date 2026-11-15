@@ -328,13 +328,17 @@ if [ "${DAEMON}" = "1" ]; then
       PATH="${PATH}" \
       LLAMA_MODEL_DIR="${MODEL_DIR}" \
       LLAMA_ROUTER_RUNTIME_DIR="${RUNTIME_DIR}" \
-      LLAMA_ROUTER_MODELS_MAX="${LLAMA_ROUTER_MODELS_MAX:-4}" \
+      LLAMA_ROUTER_PRESET="${LLAMA_ROUTER_PRESET:-${ROOT}/scripts/llama-router.ini}" \
+      LLAMA_ROUTER_MODELS_MAX="${LLAMA_ROUTER_MODELS_MAX:-0}" \
+      LLAMA_ROUTER_SLEEP_IDLE_SECONDS="${LLAMA_ROUTER_SLEEP_IDLE_SECONDS:-600}" \
       "${ROOT}/scripts/llama-router-up.sh"
   else
     nohup env \
       LLAMA_MODEL_DIR="${MODEL_DIR}" \
       LLAMA_ROUTER_RUNTIME_DIR="${RUNTIME_DIR}" \
-      LLAMA_ROUTER_MODELS_MAX="${LLAMA_ROUTER_MODELS_MAX:-4}" \
+      LLAMA_ROUTER_PRESET="${LLAMA_ROUTER_PRESET:-${ROOT}/scripts/llama-router.ini}" \
+      LLAMA_ROUTER_MODELS_MAX="${LLAMA_ROUTER_MODELS_MAX:-0}" \
+      LLAMA_ROUTER_SLEEP_IDLE_SECONDS="${LLAMA_ROUTER_SLEEP_IDLE_SECONDS:-600}" \
       "${ROOT}/scripts/llama-router-up.sh" \
       >"${RUNTIME_DIR}/router.log" 2>&1 &
     echo "$!" >"${RUNTIME_DIR}/router.pid"
@@ -368,23 +372,13 @@ if [ "${DAEMON}" = "1" ]; then
   exit 1
 fi
 
-# LLAMA_ROUTER_MODELS_MAX caps how many model instances stay co-resident, and it MUST be
-# set per-workload — the tiers have wildly different footprints on this 64G host (Metal
-# working-set limit ~48G), and one router can only be tuned for one of them at a time:
-#
-#   LOW / MED (interactive) — DEFAULT 4. Each turn cycles 4 distinct role-models
-#     (orchestrator · expert · synthesizer · validator), all small/mid: LOW ~20G of weights,
-#     MED ~34G — both fit co-resident, so 4 keeps every role-switch AND the next turn warm
-#     (zero reloads). Anything LESS thrashes: with 4 distinct models cycled in order,
-#     max=1/2/3 evicts the very model needed next, so every call reloads from disk (max=1
-#     is why even the LOW team was painfully slow).
-#
-#   HIGH (benchmark) — set LLAMA_ROUTER_MODELS_MAX=1. Its 3 big GGUFs (19G/17G/29G) can't
-#     co-reside: any two (~46-48G weights + KV) blow past the ~48G Metal limit and the
-#     router thrashes (spawn -> child OOM-dies -> 500). One at a time loads each alone.
-#
-# Note: on a 64G host you cannot serve LOW/MED co-resident AND HIGH loaded at once
-# (LOW+MED weights ~41G + one HIGH model ~29G > 64G) — pick the workload, restart to switch.
+# LLAMA_ROUTER_MODELS_MAX=0 removes the static loaded-model count cap so med-agent-hub can
+# manage GPU residency dynamically by total MiB byte budget (LRU eviction via /models/unload)
+# alongside llama.cpp's --fit on auto-fit safety net and --sleep-idle-seconds cleanup.
+# Set LLAMA_ROUTER_MODELS_MAX=1 explicitly when running standalone high-VRAM benchmarks
+# without med-agent-hub's budget manager.
 exec env HF_HOME="${EMPTY_HF}" llama-server \
-  --models-preset "${ROOT}/scripts/llama-router.ini" \
-  --models-max "${LLAMA_ROUTER_MODELS_MAX:-4}" --port "${ROUTER_PORT}" --host 0.0.0.0
+  --models-preset "${LLAMA_ROUTER_PRESET:-${ROOT}/scripts/llama-router.ini}" \
+  --models-max "${LLAMA_ROUTER_MODELS_MAX:-0}" \
+  --sleep-idle-seconds "${LLAMA_ROUTER_SLEEP_IDLE_SECONDS:-600}" \
+  --port "${ROUTER_PORT}" --host 0.0.0.0

@@ -163,7 +163,7 @@ chartsearch-esm-dev:
 LLAMA_ROUTER_TIER ?= med
 llama-router-up:
 	@case "$(LLAMA_ROUTER_TIER)" in \
-	  low|med) MAX=4;; \
+	  low|med) MAX=0;; \
 	  high) MAX=1;; \
 	  *) echo "LLAMA_ROUTER_TIER must be low|med|high (got: $(LLAMA_ROUTER_TIER))"; exit 1;; \
 	esac; \
