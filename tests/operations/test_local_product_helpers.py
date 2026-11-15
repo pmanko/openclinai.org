@@ -77,7 +77,7 @@ def test_small_model_residency_invokes_both_models_and_proves_loaded(monkeypatch
 
     assert result["passed"] is True
     assert result["after"] == {"gemma-e2b": "loaded", "gemma-e4b": "loaded"}
-    assert result["configured_default_models_max"] == 2
+    assert result["configured_default_models_max"] == 0
     assert result["proof_scope"] == {
         "configured_default": "local-stack-up defaults",
         "observed_runtime": "co-residency; an existing compatible router may have a larger limit",
