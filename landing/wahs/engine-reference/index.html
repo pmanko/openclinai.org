@@ -189,7 +189,7 @@
         </article>
 
         <article class="strategy-card">
-          <span class="strategy-badge secondary">Region 2 · Query-Conditioned Suffix (messages[-1], ≤ 800 tokens)</span>
+          <span class="strategy-badge secondary">Region 2 · Query-Conditioned Suffix (messages[-1], Layer-3 enrichment)</span>
           <h3>Targeted diabetes KB, patient graph &amp; <code>[N]</code> source pills</h3>
           <ul>
             <li><strong>Clinical concept mapping:</strong> Injects matched LOINC/ADA rules connecting <em>“diabetes labs”</em> to HbA1c, fasting glucose, eGFR, and urine albumin-creatinine ratio so smaller models do not miss differently named labs.</li>
@@ -261,7 +261,7 @@
             <tr>
               <td><strong>3. Token-Budget Priority</strong></td>
               <td><code>wahs_core</code> (<code>condenser.py</code>)</td>
-              <td>Deterministic 5-tier clinical priority (1k–32k+ tokens) pinning the HL7 IPS safety core first while logging any trimmed items in <span class="code-inline">[2] Completeness Manifest</span>.</td>
+              <td>Deterministic 2-stage monotonic structural condensation (512–131,072 tokens) pinning the HL7 IPS safety core and longitudinal <code>[TEMPORAL DIGEST]</code> first while logging any trimmed items in <span class="code-inline">[2] Completeness Manifest</span>.</td>
             </tr>
             <tr>
               <td><strong>4. Explicit Sharing Posture</strong></td>
@@ -381,9 +381,9 @@ Content-Type: application/json
 
     <section class="strategy-section" id="engine-internals" tabindex="-1" aria-labelledby="internals-title">
       <p class="section-kicker">Engine internals</p>
-      <h2 id="internals-title">Progressive 9-budget condensation, <code>ClinicalEntityGraph</code>, and prompt enrichment</h2>
+      <h2 id="internals-title">Two-stage monotonic condensation, <code>[TEMPORAL DIGEST]</code>, <code>ClinicalEntityGraph</code>, and Layer-3 enrichment</h2>
       <p>
-        For engineers inspecting the shared <code>wahs_core</code> clinical modules (developed and benchmarked in <a href="/med-agent-hub/index.html">Med Agent Hub</a> <code>server/fhir/</code> and packaged without R&amp;D dependencies in standalone <code>wahs-engine</code>), every condensed chart begins with patient demographics at <code>[1]</code> and a machine-readable <code>Completeness Manifest</code> at <code>[2]</code>. When a KB-guided profile executes (such as <code>wahs-12b-kb</code> or <code>wahs-26b-kb</code>), <code>build_wahs_hub_enrichment_block(...)</code> runs conditional Tier-0 overflow recovery, builds a patient-specific <code>ClinicalEntityGraph</code>, and attaches up to 800 tokens of matched clinical guidelines before calling the model.
+        For engineers inspecting the shared <code>wahs_core</code> clinical modules (packaged without R&amp;D dependencies in standalone <code>wahs-engine</code> and imported upstream by <a href="/med-agent-hub/index.html">Med Agent Hub</a>), every condensed chart undergoes 2-stage monotonic structural condensation: Stage A normalizes records and emits patient demographics at <code>[1]</code>, a machine-readable <code>Completeness Manifest</code> at <code>[2]</code>, and a chronological <code>[TEMPORAL DIGEST]</code> for numeric trajectories; Stage B packs the IPS safety core and longitudinal sections under dynamic per-model and tokenizer budget reservations. When a KB-guided profile executes (such as <code>wahs-12b-kb</code> or <code>wahs-26b-kb</code>), Layer-3 enrichment runs conditional Tier-0 / Note-RAG overflow recovery, constructs a typed <code>ClinicalEntityGraph</code>, and attaches matched clinical guidelines without a hardcoded 800-token ceiling before calling the model.
       </p>
 
       <p class="strategy-note">

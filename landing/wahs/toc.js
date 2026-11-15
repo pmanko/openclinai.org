@@ -23,7 +23,8 @@ if (toc) {
     });
   }, { rootMargin: '-50% 0px -50% 0px', threshold: 0 });
 
-  document.querySelectorAll('.doc-body section[id]').forEach((section) => {
-    if (linkById.has(section.id)) observer.observe(section);
-  });
+  for (const id of linkById.keys()) {
+    const target = document.getElementById(id);
+    if (target) observer.observe(target);
+  }
 }
