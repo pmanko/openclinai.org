@@ -112,7 +112,7 @@ def verify_residency(
     observed = {model: after.get(model, "missing") for model in models}
     configured_max = _configured_default_models_max()
     co_resident = all(status == "loaded" for status in observed.values())
-    configured_for_models = configured_max >= len(models)
+    configured_for_models = configured_max == 0 or configured_max >= len(models)
     passed = co_resident and configured_for_models
     failure = None
     if not configured_for_models:
