@@ -20,6 +20,18 @@ from typing import Any
 ROLE_NAME = "Med Agent Hub Patient Reader"
 SERVICE_USERNAME = "med-agent-hub"
 REQUIRED_PRIVILEGE = "Get Patients"
+REQUIRED_PRIVILEGES: tuple[str, ...] = (
+    "Get Patients",
+    "Get Observations",
+    "Get Encounters",
+    "Get Visits",
+    "Get Conditions",
+    "Get Diagnoses",
+    "Get Allergies",
+    "Get Orders",
+    "Get Patient Programs",
+    "Get Medication Dispense",
+)
 
 
 class OpenMrsClient:
@@ -145,20 +157,24 @@ def provision(
     *,
     internal_base_url: str,
     service_username: str = SERVICE_USERNAME,
-) -> dict[str, str]:
+) -> dict[str, Any]:
     saved = _read_env(output)
     username = saved.get("QUERYSTORE_USERNAME") or service_username
     password = saved.get("QUERYSTORE_PASSWORD") or _password()
 
-    privilege = client.exact("privilege", "name", REQUIRED_PRIVILEGE)
-    if privilege is None:
-        raise RuntimeError(f"OpenMRS does not expose required privilege {REQUIRED_PRIVILEGE!r}.")
+    resolved_privileges: list[str] = []
+    for privilege_name in REQUIRED_PRIVILEGES:
+        privilege = client.exact("privilege", "name", privilege_name)
+        if privilege is None:
+            raise RuntimeError(f"OpenMRS does not expose required privilege {privilege_name!r}.")
+        resolved_privileges.append(str(privilege["uuid"]))
 
+    expected_privileges = set(REQUIRED_PRIVILEGES)
     role = client.exact("role", "name", ROLE_NAME)
     role_payload = {
         "name": ROLE_NAME,
         "description": "Read-only patient chart access for the local med-agent-hub service.",
-        "privileges": [privilege["uuid"]],
+        "privileges": resolved_privileges,
         "inheritedRoles": [],
     }
     if role is None:
@@ -166,7 +182,7 @@ def provision(
     else:
         current = {item.get("name") for item in role.get("privileges", [])}
         inherited = {item.get("uuid") for item in role.get("inheritedRoles", [])}
-        if current != {REQUIRED_PRIVILEGE} or inherited:
+        if current != expected_privileges or inherited:
             client.request("POST", f"role/{role['uuid']}", role_payload)
 
     user = client.exact("user", "username", username)
@@ -199,7 +215,7 @@ def provision(
         for item in verified_user.get("roles", [])
         if item.get("uuid")
     }
-    if effective_privileges != {REQUIRED_PRIVILEGE} or assigned_roles != {
+    if effective_privileges != expected_privileges or assigned_roles != {
         str(role["uuid"])
     }:
         raise RuntimeError(
@@ -218,6 +234,7 @@ def provision(
         "username": username,
         "role": ROLE_NAME,
         "privilege": REQUIRED_PRIVILEGE,
+        "privileges": list(REQUIRED_PRIVILEGES),
         "output": str(output),
     }
 
