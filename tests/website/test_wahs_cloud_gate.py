@@ -189,6 +189,9 @@ class WahsCloudGateTests(unittest.TestCase):
         html_text = p_raw.decode("utf-8")
         self.assertIn("https://wahs-web.openclinai.org/", html_text)
         self.assertIn("https://wahs-mobile.openclinai.org/", html_text)
+        self.assertIn("https://wahs-web.openclinai.org/?profile=maurice", html_text)
+        self.assertIn("https://wahs-mobile.openclinai.org/?screen=signin", html_text)
+        self.assertEqual(html_text.count("data-copy='wahs-demo-2026'"), 12)
         self.assertIn("maurice.auer@wahs.local", html_text)
         self.assertNotIn("legacy", html_text.lower())
 

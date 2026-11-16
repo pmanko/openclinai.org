@@ -805,15 +805,28 @@ def render_portal_html(
     logout_url = "https://openclinai.org/wahs/gate/logout"
     switch_url = "https://openclinai.org/wahs/gate/?switch=1"
 
+    web_base = cfg["web_app_url"].rstrip("/")
+    mobile_base = cfg["mobile_app_url"].rstrip("/")
     rows_html = []
     for acct in SEEDED_DEMO_ACCOUNTS:
+        esc_acct_name = html.escape(acct["name"], quote=True)
+        esc_acct_email = html.escape(acct["email"], quote=True)
+        web_profile_url = html.escape(
+            f"{web_base}/?profile={urllib.parse.quote(acct['slug'])}", quote=True
+        )
+        mobile_signin_url = html.escape(f"{mobile_base}/?screen=signin", quote=True)
         rows_html.append(
             "<tr>"
             f"<td><strong>{html.escape(acct['name'])}</strong><br><span class='sub'>{html.escape(acct['cohort'])}</span></td>"
             f"<td><code>{html.escape(acct['email'])}</code> "
-            f"<button type='button' class='copy-btn' data-copy='{html.escape(acct['email'], quote=True)}'>Copy</button></td>"
-            f"<td><code>wahs-demo-2026</code></td>"
+            f"<button type='button' class='copy-btn' data-copy='{esc_acct_email}' aria-label='Copy email for {esc_acct_name}'>Copy</button></td>"
+            f"<td><code>wahs-demo-2026</code> "
+            f"<button type='button' class='copy-btn' data-copy='wahs-demo-2026' aria-label='Copy password for {esc_acct_name}'>Copy</button></td>"
             f"<td>{html.escape(acct['focus'])}</td>"
+            f"<td class='quick-actions'>"
+            f"<a class='quick-link' href='{web_profile_url}'>Web App &rarr;</a> "
+            f"<a class='quick-link mobile' href='{mobile_signin_url}'>Mobile &rarr;</a>"
+            f"</td>"
             "</tr>"
         )
     accounts_tbody = "\n".join(rows_html)
@@ -1017,6 +1030,28 @@ def render_portal_html(
       cursor: pointer;
     }}
     .copy-btn:hover {{ background: #f1f5f9; }}
+    .quick-actions {{
+      white-space: nowrap;
+    }}
+    .quick-link {{
+      display: inline-block;
+      padding: 0.22rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      text-decoration: none;
+      color: var(--primary);
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      margin-right: 0.25rem;
+    }}
+    .quick-link.mobile {{
+      color: var(--teal);
+      background: #f0fdfa;
+      border-color: #99f6e4;
+      margin-right: 0;
+    }}
+    .quick-link:hover {{ opacity: 0.85; }}
   </style>
 </head>
 <body>
@@ -1074,7 +1109,7 @@ def render_portal_html(
     <section class="panel">
       <h3>Seeded Demo Patient Accounts (12 FHIR R4 Personas)</h3>
       <p style="margin:0 0 0.85rem; font-size:0.9rem; color:var(--muted);">
-        Use any username/email below with password <code>wahs-demo-2026</code> on Keycloak sign-in in the Web App, or select any persona in 1 tap from the Mobile Companion sign-in drawer.
+        Both the Web App and Mobile Companion support 1-click sign-in across all 12 real Keycloak accounts (via the profile selector or Account menu), or you can copy any email and password below to sign in manually.
       </p>
       <div style="overflow-x:auto;">
         <table>
@@ -1084,6 +1119,7 @@ def render_portal_html(
               <th>Username / Email</th>
               <th>Password</th>
               <th>Clinical Profile</th>
+              <th>Quick Sign-In</th>
             </tr>
           </thead>
           <tbody>
@@ -1096,14 +1132,38 @@ def render_portal_html(
 
   <script>
     (function () {{
+      async function copyTextWithFallback(val) {{
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {{
+          try {{
+            await navigator.clipboard.writeText(val);
+            return true;
+          }} catch (_) {{}}
+        }}
+        const ta = document.createElement("textarea");
+        ta.value = val;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try {{
+          ok = document.execCommand("copy");
+        }} catch (_) {{
+          ok = false;
+        }}
+        document.body.removeChild(ta);
+        return ok;
+      }}
+
       document.querySelectorAll(".copy-btn").forEach(function (btn) {{
         btn.addEventListener("click", async function () {{
           const val = btn.getAttribute("data-copy") || "";
-          try {{
-            await navigator.clipboard.writeText(val);
+          const ok = await copyTextWithFallback(val);
+          if (ok) {{
             btn.textContent = "Copied";
             setTimeout(function () {{ btn.textContent = "Copy"; }}, 1200);
-          }} catch (_) {{}}
+          }}
         }});
       }});
 
