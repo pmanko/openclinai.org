@@ -15,14 +15,25 @@ services:
       - "${WEBSITE_HTTPS_PORT:-8443}:443/udp"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./gate.d:/etc/caddy/gate.d:ro
+      - ./sites.d:/etc/caddy/sites.d:ro
       - ../../landing:/srv/landing:ro
       - ../../wahs/demo:/srv/wahs-demo:ro
       - ../../artifacts/reports:/srv/reports:ro
       - ../../artifacts/previews:/srv/previews:ro
       - caddy_data:/data
       - caddy_config:/config
+    networks:
+      - default
+      - edge
 
 
 volumes:
   caddy_data:
   caddy_config:
+
+networks:
+  default:
+  edge:
+    external: true
+    name: openclinai-edge
