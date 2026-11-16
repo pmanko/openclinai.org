@@ -79,7 +79,7 @@ services:
     container_name: wahs-cloud-fhir
     restart: unless-stopped
     environment:
-      JAVA_TOOL_OPTIONS: "-Xms512m -Xmx2048m -XX:MaxMetaspaceSize=512m"
+      JAVA_TOOL_OPTIONS: "-Xms1024m -Xmx4096m -XX:MaxMetaspaceSize=512m"
       spring.datasource.url: jdbc:postgresql://wahs-db:5432/hapifhir
       spring.datasource.username: postgres
       spring.datasource.password: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
@@ -226,7 +226,7 @@ services:
       WAHS_CACHE_TTL_SECONDS: ${WAHS_CACHE_TTL_SECONDS:-3600}
       WAHS_FHIR_TIMEOUT_SECONDS: ${WAHS_FHIR_TIMEOUT_SECONDS:-60}
       WAHS_ASSEMBLY_TIMEOUT_SECONDS: ${WAHS_ASSEMBLY_TIMEOUT_SECONDS:-120}
-      WAHS_EVERYTHING_CONCURRENCY: ${WAHS_EVERYTHING_CONCURRENCY:-2}
+      WAHS_EVERYTHING_CONCURRENCY: ${WAHS_EVERYTHING_CONCURRENCY:-4}
       WAHS_MAX_OVERLAY_BYTES: "5120"
     networks:
       wahs-net:
