@@ -189,12 +189,33 @@ echo "==> enabling Caddy edge routes on openclinai-website proxy"
 gcp_ssh "cd ${GCP_REMOTE_REPO} && docker compose --project-name openclinai-website --env-file compose/website/.env.website -f compose/website/services.yml up -d --no-deps --force-recreate proxy"
 
 echo "==> verifying public endpoints & whitelist enforcement"
+wait_http_status() {
+  local target_url="$1"
+  local extra_header="${2:-}"
+  local attempt=0
+  local code="000"
+  while [ "${attempt}" -lt 20 ]; do
+    if [ -n "${extra_header}" ]; then
+      code="$(curl -sS -o /dev/null -w '%{http_code}' -H "${extra_header}" --max-time 20 "${target_url}" 2>/dev/null || echo '000')"
+    else
+      code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "${target_url}" 2>/dev/null || echo '000')"
+    fi
+    if [ "${code}" != "000" ]; then
+      printf '%s\n' "${code}"
+      return 0
+    fi
+    attempt=$((attempt + 1))
+    sleep 2
+  done
+  printf '%s\n' "${code}"
+}
+
 for protected in \
   "https://wahealth.openclinai.org/" \
   "https://wahs-web.openclinai.org/" \
   "https://wahs-mobile.openclinai.org/"
 do
-  code="$(curl -sS -o /dev/null -w '%{http_code}' --retry 10 --retry-connrefused --retry-delay 2 --max-time 20 "${protected}")"
+  code="$(wait_http_status "${protected}")"
   echo "  unauthenticated GET ${protected} -> HTTP ${code}"
   if [ "${code}" != "302" ] && [ "${code}" != "401" ]; then
     echo "error: expected 302/401 on unauthenticated ${protected}, got ${code}" >&2
@@ -202,23 +223,31 @@ do
   fi
 done
 
-api_code="$(curl -sS -o /dev/null -w '%{http_code}' -H 'Accept: application/json' --max-time 20 https://wahs-mobile.openclinai.org/api/chat)"
+api_code="$(wait_http_status "https://wahs-mobile.openclinai.org/api/chat" "Accept: application/json")"
 echo "  unauthenticated JSON GET /api/chat -> HTTP ${api_code}"
 if [ "${api_code}" != "401" ]; then
   echo "error: expected 401 on unauthenticated /api/chat, got ${api_code}" >&2
   exit 1
 fi
 
-gate_code="$(curl -fsS -o /dev/null -w '%{http_code}' --max-time 20 https://openclinai.org/wahs/gate/)"
+gate_code="$(wait_http_status "https://openclinai.org/wahs/gate/")"
 echo "  gate login page GET https://openclinai.org/wahs/gate/ -> HTTP ${gate_code}"
+if [ "${gate_code}" != "200" ]; then
+  echo "error: expected 200 on https://openclinai.org/wahs/gate/, got ${gate_code}" >&2
+  exit 1
+fi
 
 for pub in \
   "https://openclinai.org/" \
   "https://reports.openclinai.org/" \
   "https://wahs-demo.openclinai.org/"
 do
-  pub_code="$(curl -fsS -o /dev/null -w '%{http_code}' --max-time 20 "${pub}")"
+  pub_code="$(wait_http_status "${pub}")"
   echo "  public site GET ${pub} -> HTTP ${pub_code}"
+  if [ "${pub_code}" != "200" ]; then
+    echo "error: expected 200 on ${pub}, got ${pub_code}" >&2
+    exit 1
+  fi
 done
 
 echo "==> WAHS cloud stack deployed and gated cleanly."
