@@ -20,6 +20,7 @@ import http.cookies
 import json
 import os
 import secrets
+import socket
 import time
 import urllib.error
 import urllib.parse
@@ -740,23 +741,42 @@ def render_gate_login_html(
         errBox.style.display = "block";
       }}
 
+      let eagerAuth = null;
+      let eagerProvider = null;
+      function ensureFirebaseReady() {{
+        if (!window.firebase || !window.firebase.auth) {{
+          throw new Error("Firebase Google authentication SDK failed to load.");
+        }}
+        if (!window.firebase.apps.length) {{
+          window.firebase.initializeApp(fbConfig);
+        }}
+        if (!eagerAuth) {{
+          eagerAuth = window.firebase.auth();
+        }}
+        if (!eagerProvider) {{
+          eagerProvider = new window.firebase.auth.GoogleAuthProvider();
+          eagerProvider.addScope("email");
+          eagerProvider.addScope("profile");
+          eagerProvider.setCustomParameters({{ prompt: "select_account" }});
+        }}
+        return {{ auth: eagerAuth, provider: eagerProvider }};
+      }}
+
+      try {{
+        if (window.firebase && window.firebase.auth) {{
+          ensureFirebaseReady();
+        }}
+      }} catch (_) {{}}
+
       btn.addEventListener("click", async function () {{
         errBox.style.display = "none";
         btn.disabled = true;
         const originalLabel = btn.textContent;
         btn.textContent = "Verifying Google account...";
         try {{
-          if (!window.firebase || !window.firebase.auth) {{
-            throw new Error("Firebase Google authentication SDK failed to load.");
-          }}
-          if (!window.firebase.apps.length) {{
-            window.firebase.initializeApp(fbConfig);
-          }}
-          const auth = window.firebase.auth();
-          const provider = new window.firebase.auth.GoogleAuthProvider();
-          provider.addScope("email");
-          provider.addScope("profile");
-          provider.setCustomParameters({{ prompt: "select_account" }});
+          const ready = ensureFirebaseReady();
+          const auth = ready.auth;
+          const provider = ready.provider;
 
           const result = await auth.signInWithPopup(provider);
           const idToken = result.user ? await result.user.getIdToken(true) : "";
@@ -781,7 +801,12 @@ def render_gate_login_html(
           }}
           window.location.assign(data.redirect_to || nextUrl);
         }} catch (err) {{
-          showError((err && err.message) || "Google sign-in was cancelled or failed.");
+          const code = err && err.code;
+          if (code === "auth/popup-blocked") {{
+            showError("Google sign-in popup was blocked by your browser. Please allow pop-ups for openclinai.org (Safari Settings -> Websites -> Pop-up Windows) and click Continue again.");
+          }} else {{
+            showError((err && err.message) || "Google sign-in was cancelled or failed.");
+          }}
           btn.disabled = false;
           btn.textContent = originalLabel;
         }}
@@ -1198,6 +1223,13 @@ def render_portal_html(
 
 class GateRequestHandler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
+    timeout = 30
+
+    def handle(self) -> None:
+        try:
+            super().handle()
+        except (ConnectionResetError, BrokenPipeError, TimeoutError, socket.timeout, OSError):
+            self.close_connection = True
 
     def log_message(self, format: str, *args: Any) -> None:
         return
@@ -1456,8 +1488,14 @@ class GateRequestHandler(BaseHTTPRequestHandler):
         self._send_json(404, {"error": "Not found"})
 
 
+class GateHTTPServer(ThreadingHTTPServer):
+    request_queue_size = 256
+    daemon_threads = True
+    allow_reuse_address = True
+
+
 def create_server(host: str = "0.0.0.0", port: int = 8096) -> ThreadingHTTPServer:
-    return ThreadingHTTPServer((host, port), GateRequestHandler)
+    return GateHTTPServer((host, port), GateRequestHandler)
 
 
 if __name__ == "__main__":

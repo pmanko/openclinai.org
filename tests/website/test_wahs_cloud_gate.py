@@ -8,6 +8,7 @@ import json
 import os
 import threading
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 from unittest.mock import patch
@@ -204,6 +205,72 @@ class WahsCloudGateTests(unittest.TestCase):
         )
         self.assertEqual(l_status, 302)
         self.assertIn("Max-Age=0", l_hdrs.get("set-cookie", ""))
+
+    def test_high_concurrency_parallel_verify_and_keepalive(self) -> None:
+        self.assertGreaterEqual(self.server.request_queue_size, 128)
+        self.assertEqual(self.mod.GateRequestHandler.protocol_version, "HTTP/1.1")
+
+        # Obtain valid signed session cookie
+        _, _, ok_hdrs = _request(
+            self.port,
+            "POST",
+            "/wahs/gate/api/session",
+            payload={
+                "id_token": "test-google-token:pmanko@uw.edu",
+                "next": "https://wahs-web.openclinai.org/",
+            },
+        )
+        cookie_pair = ok_hdrs["set-cookie"].split(";", 1)[0]
+
+        # Persistent HTTP/1.1 keep-alive reuses the same underlying socket across requests
+        conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=5)
+        try:
+            conn.request("GET", "/auth/verify", headers={"Cookie": cookie_pair})
+            r1 = conn.getresponse()
+            r1.read()
+            fd1 = conn.sock.fileno()
+            self.assertEqual(r1.status, 200)
+
+            conn.request("GET", "/auth/verify", headers={"Cookie": cookie_pair})
+            r2 = conn.getresponse()
+            r2.read()
+            fd2 = conn.sock.fileno()
+            self.assertEqual(r2.status, 200)
+            self.assertEqual(fd1, fd2)
+        finally:
+            conn.close()
+
+        # Simulate Safari cold-load 60-way HTTP/2 asset burst hitting /auth/verify simultaneously
+        def one_verify(_idx: int) -> Tuple[int, str]:
+            st, _, hdrs = _request(
+                self.port,
+                "GET",
+                "/auth/verify",
+                headers={"Cookie": cookie_pair},
+            )
+            return st, hdrs.get("x-wahs-auth-email", "")
+
+        with ThreadPoolExecutor(max_workers=60) as pool:
+            results = list(pool.map(one_verify, range(60)))
+
+        self.assertEqual(len(results), 60)
+        self.assertTrue(all(st == 200 and email == "pmanko@uw.edu" for st, email in results))
+
+        # Verify gate login HTML eagerly initializes Firebase outside the click listener
+        login_status, login_raw, _ = _request(
+            self.port,
+            "GET",
+            "/wahs/gate/?next=https%3A%2F%2Fwahs-web.openclinai.org%2F",
+        )
+        self.assertEqual(login_status, 200)
+        login_html = login_raw.decode("utf-8")
+        self.assertIn("ensureFirebaseReady()", login_html)
+        self.assertIn("auth/popup-blocked", login_html)
+        self.assertLess(
+            login_html.index("ensureFirebaseReady();"),
+            login_html.index('btn.addEventListener("click"'),
+        )
+        self.assertNotIn("legacy", login_html.lower())
 
 
 if __name__ == "__main__":
