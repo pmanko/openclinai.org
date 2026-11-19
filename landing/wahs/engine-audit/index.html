@@ -71,7 +71,7 @@
         <p class="doc-toc-title">On this page</p>
         <ol>
           <li><a href="#high-level-architecture">High-level diagram</a></li>
-          <li><a href="#foundational-pillars">Foundational pillars</a></li>
+          <li><a href="#foundational-pillars">Research &amp; standards</a></li>
           <li><a href="#wahs-core-audit">How it works today</a></li>
           <li><a class="sub" href="#fhir-extraction-coverage">Record coverage</a></li>
           <li><a class="sub" href="#wahs-engine-runtime">Caching &amp; streaming</a></li>
@@ -136,7 +136,7 @@
             <summary>On this page</summary>
             <ol>
               <li><a href="#high-level-architecture">High-level diagram</a></li>
-              <li><a href="#foundational-pillars">Foundational pillars</a></li>
+              <li><a href="#foundational-pillars">Research &amp; standards</a></li>
               <li><a href="#wahs-core-audit">How it works today</a></li>
               <li><a href="#fhir-extraction-coverage">Record coverage</a></li>
               <li><a href="#wahs-engine-runtime">Caching &amp; streaming</a></li>
@@ -157,9 +157,9 @@
 
           <figure class="audit-arch-figure">
             <div class="audit-arch-scroll" tabindex="0" role="region" aria-label="High-level architecture diagram of WAHS apps, FHIR store, WAHS Engine, and open-weight model server">
-              <svg class="audit-arch-svg" viewBox="0 0 880 468" role="img" aria-labelledby="wahs-svg-title wahs-svg-desc" xmlns="http://www.w3.org/2000/svg">
+              <svg class="audit-arch-svg" viewBox="0 0 880 456" role="img" aria-labelledby="wahs-svg-title wahs-svg-desc" xmlns="http://www.w3.org/2000/svg">
                 <title id="wahs-svg-title">High-level architecture of the WAHS Engine</title>
-                <desc id="wahs-svg-desc">Left column shows the WAHS Web and Mobile patient apps on top and the Access-Controlled FHIR R4 Record Store below. Center column shows the WAHS Engine running four steps: 1. Fetch and Check Freshness, 2. Condense 90 to 99 percent, 3. Run Clinical and Privacy Rules, and 4. Split Prompt and Verify Citations. Right column shows the Swappable Open-Weight AI Model Server returning a cited draft without receiving user sign-in tokens or storing health records.</desc>
+                <desc id="wahs-svg-desc">Left column shows the WAHS Web and Mobile patient apps on top and the Access-Controlled FHIR R4 Record Store below. Center column shows the WAHS Engine running four steps: 1. Fetch and Check Freshness, 2. Condense Record 90 to 99 percent, 3. Clinical and Privacy Rules, and 4. Split Prompt and Attach Links. Right column shows the Open-Weight AI Model Server returning a cited draft over a standard OpenAI chat API.</desc>
                 <defs>
                   <marker id="arr-purple" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
                     <path d="M0,0.5 L9.5,5 L0,9.5 z" fill="#4b2e83" />
@@ -171,113 +171,110 @@
 
                 <!-- ==================== LEFT COLUMN: APPS & RECORD STORE ==================== -->
                 <!-- Card 1A: Patient Apps -->
-                <rect x="18" y="34" width="204" height="166" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
-                <rect x="18" y="34" width="204" height="32" rx="10" fill="#334155" />
-                <rect x="18" y="54" width="204" height="12" fill="#334155" />
-                <text x="120" y="55" text-anchor="middle" fill="#ffffff" font-size="11.5" font-weight="700" letter-spacing="0.06em">PATIENT APPS</text>
+                <rect x="18" y="30" width="204" height="166" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+                <rect x="18" y="30" width="204" height="32" rx="10" fill="#334155" />
+                <rect x="18" y="50" width="204" height="12" fill="#334155" />
+                <text x="120" y="51" text-anchor="middle" fill="#ffffff" font-size="11.5" font-weight="700" letter-spacing="0.06em">PATIENT APPS</text>
 
-                <text x="120" y="90" text-anchor="middle" fill="#1e293b" font-size="15.5" font-weight="700">WAHS Web &amp; Mobile</text>
-                <text x="120" y="114" text-anchor="middle" fill="#475569" font-size="13">Signs in &amp; chooses clinics</text>
-                <text x="120" y="133" text-anchor="middle" fill="#475569" font-size="13">Asks a health question</text>
+                <text x="120" y="86" text-anchor="middle" fill="#1e293b" font-size="15.5" font-weight="700">WAHS Web &amp; Mobile</text>
+                <text x="120" y="110" text-anchor="middle" fill="#475569" font-size="13">Signs in &amp; chooses clinics</text>
+                <text x="120" y="129" text-anchor="middle" fill="#475569" font-size="13">Asks a health question</text>
 
-                <rect x="32" y="150" width="176" height="34" rx="7" fill="#f5f3ff" stroke="#c4b5fd" />
-                <text x="120" y="171" text-anchor="middle" fill="#4b2e83" font-size="12" font-weight="700">Clickable [1]..[N] citations</text>
+                <rect x="32" y="146" width="176" height="34" rx="7" fill="#f5f3ff" stroke="#c4b5fd" />
+                <text x="120" y="167" text-anchor="middle" fill="#4b2e83" font-size="12" font-weight="700">Clickable [1]..[N] citations</text>
 
                 <!-- Card 1B: FHIR Store & Security Proxy -->
-                <rect x="18" y="252" width="204" height="182" rx="10" fill="#ffffff" stroke="#99f6e4" stroke-width="1.6" />
-                <rect x="18" y="252" width="204" height="32" rx="10" fill="#0f766e" />
-                <rect x="18" y="272" width="204" height="12" fill="#0f766e" />
-                <text x="120" y="273" text-anchor="middle" fill="#ffffff" font-size="11.5" font-weight="700" letter-spacing="0.06em">RECORD STORE</text>
+                <rect x="18" y="244" width="204" height="182" rx="10" fill="#ffffff" stroke="#99f6e4" stroke-width="1.6" />
+                <rect x="18" y="244" width="204" height="32" rx="10" fill="#0f766e" />
+                <rect x="18" y="264" width="204" height="12" fill="#0f766e" />
+                <text x="120" y="265" text-anchor="middle" fill="#ffffff" font-size="11.5" font-weight="700" letter-spacing="0.06em">RECORD STORE</text>
 
-                <text x="120" y="308" text-anchor="middle" fill="#134e4a" font-size="15.5" font-weight="700">FHIR Store + Proxy</text>
-                <text x="120" y="332" text-anchor="middle" fill="#475569" font-size="13">Checks patient sign-in</text>
-                <text x="120" y="351" text-anchor="middle" fill="#475569" font-size="13">Returns only that patient's</text>
-                <text x="120" y="370" text-anchor="middle" fill="#475569" font-size="13">clinic exports &amp; notes</text>
+                <text x="120" y="300" text-anchor="middle" fill="#134e4a" font-size="15.5" font-weight="700">FHIR Store + Proxy</text>
+                <text x="120" y="324" text-anchor="middle" fill="#475569" font-size="13">Checks patient sign-in</text>
+                <text x="120" y="343" text-anchor="middle" fill="#475569" font-size="13">Returns only that patient's</text>
+                <text x="120" y="362" text-anchor="middle" fill="#475569" font-size="13">clinic exports &amp; notes</text>
 
-                <rect x="32" y="386" width="176" height="34" rx="7" fill="#ecfdf5" stroke="#6ee7b7" />
-                <text x="120" y="407" text-anchor="middle" fill="#065f46" font-size="12" font-weight="700">Per-patient access boundary</text>
+                <rect x="32" y="378" width="176" height="34" rx="7" fill="#ecfdf5" stroke="#6ee7b7" />
+                <text x="120" y="399" text-anchor="middle" fill="#065f46" font-size="12" font-weight="700">Per-patient access boundary</text>
 
                 <!-- ==================== CENTER COLUMN: WAHS ENGINE ==================== -->
-                <rect x="302" y="16" width="280" height="436" rx="12" fill="#fcfaff" stroke="#4b2e83" stroke-width="2.2" />
-                <rect x="302" y="16" width="280" height="40" rx="12" fill="#4b2e83" />
-                <rect x="302" y="42" width="280" height="14" fill="#4b2e83" />
-                <text x="442" y="42" text-anchor="middle" fill="#ffffff" font-size="15.5" font-weight="700">WAHS Engine (Middle Service)</text>
+                <rect x="302" y="14" width="280" height="428" rx="12" fill="#fcfaff" stroke="#4b2e83" stroke-width="2.2" />
+                <rect x="302" y="14" width="280" height="40" rx="12" fill="#4b2e83" />
+                <rect x="302" y="40" width="280" height="14" fill="#4b2e83" />
+                <text x="442" y="40" text-anchor="middle" fill="#ffffff" font-size="15.5" font-weight="700">WAHS Engine (Middle Service)</text>
 
                 <!-- Step 1 -->
-                <rect x="320" y="70" width="244" height="86" rx="8" fill="#ffffff" stroke="#d8b4fe" stroke-width="1.3" />
-                <text x="334" y="93" fill="#24133f" font-size="14" font-weight="700">1. Fetch &amp; Check Freshness</text>
-                <text x="334" y="113" fill="#475569" font-size="12.5">Reads updated clinic data; reuses</text>
-                <text x="334" y="129" fill="#475569" font-size="12.5">unchanged charts from memory</text>
-                <text x="334" y="146" fill="#0f766e" font-size="11.5" font-weight="700">Holds zero database admin keys</text>
+                <rect x="320" y="70" width="244" height="76" rx="8" fill="#ffffff" stroke="#d8b4fe" stroke-width="1.3" />
+                <text x="334" y="95" fill="#24133f" font-size="14" font-weight="700">1. Fetch &amp; Check Freshness</text>
+                <text x="334" y="116" fill="#475569" font-size="12.5">Reads updated clinic data;</text>
+                <text x="334" y="133" fill="#475569" font-size="12.5">reuses unchanged charts in memory</text>
 
-                <line x1="442" y1="156" x2="442" y2="168" stroke="#4b2e83" stroke-width="1.6" marker-end="url(#arr-purple)" />
+                <line x1="442" y1="146" x2="442" y2="160" stroke="#4b2e83" stroke-width="1.6" marker-end="url(#arr-purple)" />
 
                 <!-- Step 2 -->
-                <rect x="320" y="170" width="244" height="74" rx="8" fill="#ffffff" stroke="#d8b4fe" stroke-width="1.3" />
-                <text x="334" y="194" fill="#24133f" font-size="14" font-weight="700">2. Condense Record (90&ndash;99%)</text>
-                <text x="334" y="215" fill="#475569" font-size="12.5">Strips billing noise; keeps allergies,</text>
-                <text x="334" y="232" fill="#475569" font-size="12.5">active meds &amp; problems as [1]..[N]</text>
+                <rect x="320" y="162" width="244" height="76" rx="8" fill="#ffffff" stroke="#d8b4fe" stroke-width="1.3" />
+                <text x="334" y="187" fill="#24133f" font-size="14" font-weight="700">2. Condense Record (90&ndash;99%)</text>
+                <text x="334" y="208" fill="#475569" font-size="12.5">Strips billing noise; keeps allergies,</text>
+                <text x="334" y="225" fill="#475569" font-size="12.5">active meds &amp; problems as [1]..[N]</text>
 
-                <line x1="442" y1="244" x2="442" y2="256" stroke="#4b2e83" stroke-width="1.6" marker-end="url(#arr-purple)" />
+                <line x1="442" y1="238" x2="442" y2="252" stroke="#4b2e83" stroke-width="1.6" marker-end="url(#arr-purple)" />
 
                 <!-- Step 3 -->
-                <rect x="320" y="258" width="244" height="74" rx="8" fill="#ffffff" stroke="#d8b4fe" stroke-width="1.3" />
-                <text x="334" y="282" fill="#24133f" font-size="14" font-weight="700">3. Clinical &amp; Privacy Rules</text>
-                <text x="334" y="303" fill="#475569" font-size="12.5">Pre-computes lab trends, cross-clinic</text>
-                <text x="334" y="320" fill="#475569" font-size="12.5">drug conflicts &amp; sharing redactions</text>
+                <rect x="320" y="254" width="244" height="76" rx="8" fill="#ffffff" stroke="#d8b4fe" stroke-width="1.3" />
+                <text x="334" y="279" fill="#24133f" font-size="14" font-weight="700">3. Clinical &amp; Privacy Rules</text>
+                <text x="334" y="300" fill="#475569" font-size="12.5">Pre-computes lab trends, cross-clinic</text>
+                <text x="334" y="317" fill="#475569" font-size="12.5">drug conflicts &amp; sharing redactions</text>
 
-                <line x1="442" y1="332" x2="442" y2="344" stroke="#4b2e83" stroke-width="1.6" marker-end="url(#arr-purple)" />
+                <line x1="442" y1="330" x2="442" y2="344" stroke="#4b2e83" stroke-width="1.6" marker-end="url(#arr-purple)" />
 
                 <!-- Step 4 -->
-                <rect x="320" y="346" width="244" height="88" rx="8" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5" />
-                <text x="334" y="370" fill="#4b2e83" font-size="14" font-weight="700">4. Split Prompt &amp; Attach Links</text>
-                <text x="334" y="390" fill="#475569" font-size="12.5">Sends fixed chart + current question;</text>
-                <text x="334" y="406" fill="#475569" font-size="12.5">maps every [N] tag to its record ID</text>
-                <text x="334" y="423" fill="#5b21b6" font-size="11.5" font-weight="700">Fixed chart prefix speeds up follow-ups</text>
+                <rect x="320" y="346" width="244" height="76" rx="8" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5" />
+                <text x="334" y="371" fill="#4b2e83" font-size="14" font-weight="700">4. Split Prompt &amp; Attach Links</text>
+                <text x="334" y="392" fill="#475569" font-size="12.5">Sends fixed chart + current question;</text>
+                <text x="334" y="409" fill="#475569" font-size="12.5">maps every [N] tag to its record ID</text>
 
                 <!-- ==================== RIGHT COLUMN: MODEL SERVER ==================== -->
-                <rect x="662" y="108" width="200" height="252" rx="10" fill="#ffffff" stroke="#99f6e4" stroke-width="1.6" />
-                <rect x="662" y="108" width="200" height="32" rx="10" fill="#0f766e" />
-                <rect x="662" y="128" width="200" height="12" fill="#0f766e" />
-                <text x="762" y="129" text-anchor="middle" fill="#ffffff" font-size="11.5" font-weight="700" letter-spacing="0.06em">MODEL SERVER</text>
+                <rect x="662" y="110" width="200" height="236" rx="10" fill="#ffffff" stroke="#99f6e4" stroke-width="1.6" />
+                <rect x="662" y="110" width="200" height="32" rx="10" fill="#0f766e" />
+                <rect x="662" y="130" width="200" height="12" fill="#0f766e" />
+                <text x="762" y="131" text-anchor="middle" fill="#ffffff" font-size="11.5" font-weight="700" letter-spacing="0.06em">MODEL SERVER</text>
 
-                <text x="762" y="166" text-anchor="middle" fill="#134e4a" font-size="15.5" font-weight="700">Open-Weight AI</text>
-                <text x="762" y="187" text-anchor="middle" fill="#0f766e" font-size="13" font-weight="700">Gemma 4 (12B or 26B)</text>
+                <text x="762" y="168" text-anchor="middle" fill="#134e4a" font-size="15.5" font-weight="700">Open-Weight AI</text>
+                <text x="762" y="189" text-anchor="middle" fill="#0f766e" font-size="13" font-weight="700">Gemma 4 (12B or 26B)</text>
 
-                <text x="762" y="215" text-anchor="middle" fill="#475569" font-size="13">Reuses cached chart for</text>
-                <text x="762" y="234" text-anchor="middle" fill="#475569" font-size="13">fast follow-up questions</text>
-                <text x="762" y="259" text-anchor="middle" fill="#475569" font-size="13">Streams plain-English</text>
-                <text x="762" y="278" text-anchor="middle" fill="#475569" font-size="13">reply citing [1]..[N]</text>
+                <text x="762" y="217" text-anchor="middle" fill="#475569" font-size="13">Reuses cached chart for</text>
+                <text x="762" y="236" text-anchor="middle" fill="#475569" font-size="13">fast follow-up questions</text>
+                <text x="762" y="261" text-anchor="middle" fill="#475569" font-size="13">Streams plain-English</text>
+                <text x="762" y="280" text-anchor="middle" fill="#475569" font-size="13">reply citing [1]..[N]</text>
 
-                <rect x="676" y="298" width="172" height="46" rx="7" fill="#ecfdf5" stroke="#6ee7b7" />
-                <text x="762" y="317" text-anchor="middle" fill="#065f46" font-size="12" font-weight="700">Sees no patient sign-in</text>
-                <text x="762" y="334" text-anchor="middle" fill="#065f46" font-size="11.5">Stores zero records</text>
+                <rect x="676" y="298" width="172" height="34" rx="7" fill="#ecfdf5" stroke="#6ee7b7" />
+                <text x="762" y="319" text-anchor="middle" fill="#065f46" font-size="12" font-weight="700">Standard OpenAI chat API</text>
 
                 <!-- ==================== ARROWS BETWEEN COLUMNS ==================== -->
                 <!-- 1. App -> Engine (Question) -->
-                <text x="262" y="84" text-anchor="middle" fill="#4b2e83" font-size="12" font-weight="700">1. Question</text>
-                <line x1="222" y1="94" x2="298" y2="94" stroke="#4b2e83" stroke-width="2" marker-end="url(#arr-purple)" />
+                <text x="262" y="80" text-anchor="middle" fill="#4b2e83" font-size="12" font-weight="700">1. Question</text>
+                <line x1="222" y1="90" x2="298" y2="90" stroke="#4b2e83" stroke-width="2" marker-end="url(#arr-purple)" />
 
                 <!-- 5. Engine -> App (Cited Answer) -->
-                <line x1="302" y1="158" x2="226" y2="158" stroke="#4b2e83" stroke-width="1.8" stroke-dasharray="5 3" marker-end="url(#arr-purple)" />
-                <text x="262" y="176" text-anchor="middle" fill="#4b2e83" font-size="12" font-weight="700">5. Answer</text>
+                <line x1="302" y1="154" x2="226" y2="154" stroke="#4b2e83" stroke-width="1.8" stroke-dasharray="5 3" marker-end="url(#arr-purple)" />
+                <text x="262" y="172" text-anchor="middle" fill="#4b2e83" font-size="12" font-weight="700">5. Answer</text>
 
                 <!-- 2. Engine <-> Record Store -->
-                <text x="262" y="328" text-anchor="middle" fill="#0f766e" font-size="12" font-weight="700">2. Records</text>
-                <line x1="302" y1="338" x2="226" y2="338" stroke="#0f766e" stroke-width="1.8" marker-end="url(#arr-teal)" />
-                <line x1="222" y1="354" x2="298" y2="354" stroke="#0f766e" stroke-width="1.8" marker-end="url(#arr-teal)" />
+                <text x="262" y="320" text-anchor="middle" fill="#0f766e" font-size="12" font-weight="700">2. Records</text>
+                <line x1="302" y1="330" x2="226" y2="330" stroke="#0f766e" stroke-width="1.8" marker-end="url(#arr-teal)" />
+                <line x1="222" y1="346" x2="298" y2="346" stroke="#0f766e" stroke-width="1.8" marker-end="url(#arr-teal)" />
 
                 <!-- 3. Engine -> Model Server -->
-                <text x="622" y="184" text-anchor="middle" fill="#0f766e" font-size="12" font-weight="700">3. Prompt</text>
-                <line x1="582" y1="194" x2="658" y2="194" stroke="#0f766e" stroke-width="2" marker-end="url(#arr-teal)" />
+                <text x="622" y="182" text-anchor="middle" fill="#0f766e" font-size="12" font-weight="700">3. Prompt</text>
+                <line x1="582" y1="192" x2="658" y2="192" stroke="#0f766e" stroke-width="2" marker-end="url(#arr-teal)" />
 
                 <!-- 4. Model Server -> Engine -->
-                <line x1="662" y1="274" x2="586" y2="274" stroke="#0f766e" stroke-width="1.8" stroke-dasharray="5 3" marker-end="url(#arr-teal)" />
-                <text x="622" y="292" text-anchor="middle" fill="#0f766e" font-size="12" font-weight="700">4. Draft</text>
+                <line x1="662" y1="270" x2="586" y2="270" stroke="#0f766e" stroke-width="1.8" stroke-dasharray="5 3" marker-end="url(#arr-teal)" />
+                <text x="622" y="288" text-anchor="middle" fill="#0f766e" font-size="12" font-weight="700">4. Draft</text>
               </svg>
             </div>
             <figcaption>
-              <strong>Why this split matters:</strong> The WAHS app never sends raw multi-megabyte charts straight to a model, the WAHS Engine holds no master database password of its own (it can only read what the signed-in patient's token permits), and the GPU server can swap between local or cloud open-weight models via standard OpenAI chat endpoints without storing patient history.
+              <strong>Separation of responsibilities:</strong> The app manages sign-in and displays citations, the FHIR proxy scopes record access to the signed-in patient's token, the WAHS Engine condenses records and runs clinical checks, and any OpenAI-compatible GPU server generates the reply.
             </figcaption>
           </figure>
 
@@ -332,68 +329,78 @@
         </section>
 
         <section class="strategy-section" id="foundational-pillars" tabindex="-1" aria-labelledby="pillars-heading">
-          <p class="section-kicker">Foundational aspects &amp; links</p>
-          <h2 id="pillars-heading">The four pillars we are building on</h2>
+          <p class="section-kicker">Research, standards &amp; best-practice foundations</p>
+          <h2 id="pillars-heading">Why each step in the engine exists, and the sources behind it</h2>
           <p>
-            Every part of the WAHS Engine builds on established healthcare interoperability standards, clinical practice guidelines, federal and Washington privacy protections, and OpenClinAI's shared validation stack.
+            Each of the four steps in the diagram above (plus our evaluation harness) implements established findings from long-context LLM research, healthcare interoperability standards, clinical practice guidelines, and privacy law.
           </p>
 
           <div class="strategy-grid-2">
+            <article class="strategy-card">
+              <span class="strategy-badge">Step 1 &middot; Fetch &amp; Check Freshness</span>
+              <h3>Patient-mediated FHIR APIs and version-stamped caching</h3>
+              <p>
+                Patients gather records across clinics through Cures Act FHIR R4 APIs. Checking lightweight <code>meta.lastUpdated</code> version stamps before pulling full bundles keeps charts fresh in ~10 ms when nothing changed.
+              </p>
+              <ul class="pillar-link-list">
+                <li><a href="https://hl7.org/fhir/us/core/">HL7 US Core (FHIR R4) ↗</a> &amp; <a href="https://www.healthit.gov/topic/oncs-cures-act-final-rule">ONC Cures Act Final Rule ↗</a> &middot; Standard patient-access clinical profiles and <code>Patient/$everything</code> retrieval.</li>
+                <li><a href="https://docs.smarthealthit.org/smart-health-links/">SMART Health Links ↗</a> &amp; <a href="https://hl7.org/fhir/us/security-label-ds4p/">HL7 FHIR DS4P Security Labels ↗</a> &middot; Patient-mediated sharing and <code>meta.security</code> access scoping via <a href="https://github.com/uwcirg/jwt-proxy"><code>uwcirg/jwt-proxy</code> ↗</a>.</li>
+                <li><a href="https://hl7.org/fhir/R4/http.html#concurrency">HL7 FHIR RESTful Versioning (<code>meta.lastUpdated</code>) ↗</a> &middot; Optimistic cache revalidation across multi-clinic datasets (<a href="/wahs/engine-reference/index.html#session-and-scope-model">session &amp; scope design →</a>).</li>
+              </ul>
+            </article>
+
             <article class="strategy-card recommended">
-              <span class="strategy-badge">1 &middot; Health Data &amp; AI Transparency</span>
-              <h3>Standards-based patient summaries and source citations</h3>
+              <span class="strategy-badge">Step 2 &middot; Condense Record (90&ndash;99%)</span>
+              <h3>Long-context attention limits and clinical safety priority</h3>
               <p>
-                WAHS keeps records in standard FHIR R4 format, preserves the International Patient Summary safety core at every token budget, and separates source clinical facts from AI-generated prose.
+                Language models lose recall when key facts sit buried in noisy multi-megabyte JSON. Pinning an international clinical safety core first and explicitly logging omitted counts prevents silent truncation and guessing.
               </p>
               <ul class="pillar-link-list">
-                <li><a href="https://build.fhir.org/ig/HL7/fhir-ips/">HL7 International Patient Summary (IPS) &amp; ISO 27269 ↗</a> &middot; Defines the core safety list (allergies, active meds, active problems, implants) pinned first.</li>
-                <li><a href="https://hl7.org/fhir/us/core/">HL7 US Core (FHIR R4) ↗</a> &amp; <a href="https://docs.smarthealthit.org/smart-health-links/">SMART Health Links ↗</a> &middot; Multi-clinic record retrieval and patient-controlled summary sharing.</li>
-                <li><a href="https://build.fhir.org/ig/HL7/aitransparency-ig/branches/main/en/StructureDefinition-AI-Provenance.html">HL7 AI Transparency on FHIR (<code>AI-Provenance</code>) ↗</a> &middot; Records model identity and <code>human_review_required: true</code> on every response.</li>
-                <li><a href="/wahs/index.html">WAHS Overview →</a> &amp; <a href="https://myhealthsummary.demo.cirg.uw.edu/">UW CIRG &amp; WA DOH Reference App ↗</a> &middot; How the PHR pilot and OpenClinAI sandbox fit together.</li>
+                <li><a href="https://arxiv.org/abs/2307.03172">Liu et al., <em>Lost in the Middle</em> (<em>TACL</em>, 2024) ↗</a> &middot; Demonstrates U-shaped long-context recall degradation, motivating compact <code>16k</code> condensation over raw <code>200k+</code> FHIR dumps.</li>
+                <li><a href="https://build.fhir.org/ig/HL7/fhir-ips/">HL7 International Patient Summary (IPS) &amp; ISO 27269 ↗</a> &middot; Defines the mandatory safety core (allergies, active meds, active problems, implants) preserved first across all budgets.</li>
+                <li><a href="https://doi.org/10.1561/1500000019">Robertson &amp; Zaragoza, <em>Okapi BM25</em> (2009) ↗</a> &middot; Grounds exact clinical-term passage retrieval (<code>note_rag</code>) when long hospital notes exceed budget.</li>
               </ul>
             </article>
 
             <article class="strategy-card">
-              <span class="strategy-badge secondary">2 &middot; Clinical Knowledge &amp; Context</span>
-              <h3>Deterministic medical rules before AI generation</h3>
+              <span class="strategy-badge secondary">Step 3 &middot; Clinical &amp; Privacy Rules</span>
+              <h3>Symbolic clinical reconciliation and data-layer redaction</h3>
               <p>
-                Small and mid-sized open-weight models miss subtle cross-clinic drug overlaps or kidney-dosing cutoffs if handed raw text alone. Deterministic Python rules surface those relationships ahead of generation.
+                Cross-clinic discrepancies (such as an urgent-care note holding an outpatient pill) are safety signals to surface, and sensitive-record exclusions belong in deterministic code before prompt assembly.
               </p>
               <ul class="pillar-link-list">
-                <li><a href="/wahs/llm-strategy/index.html">WAHS AI Strategy →</a> &amp; <a href="/wahs/engine-reference/index.html">WAHS Engine Reference →</a> &middot; Why condense-first was chosen and how the OpenAI wire contract works.</li>
-                <li><a href="/med-agent-hub/index.html">Med Agent Hub →</a> &amp; <a href="https://github.com/pmanko/wahs-engine"><code>pmanko/wahs-engine</code> ↗</a> &middot; Shared pure-Python <code>wahs_core</code> clinical modules with zero R&amp;D bloat.</li>
-                <li><a href="https://kdigo.org/guidelines/ckd-evaluation-and-management/">KDIGO 2024 CKD Guidelines ↗</a> &amp; <a href="https://diabetesjournals.org/care/issue/48/Supplement_1">ADA Diabetes Standards ↗</a> &middot; Renal dosing thresholds, potassium hazards, and stage-conflict checks.</li>
-                <li><a href="https://www.nlm.nih.gov/research/umls/rxnorm/index.html">NLM RxNorm ↗</a>, <a href="https://loinc.org/">LOINC ↗</a> &amp; <a href="https://www.cdc.gov/vaccines/hcp/imz-schedules/index.html">CDC ACIP Schedules ↗</a> &middot; Brand-to-generic ingredient matching, lab trends, and vaccine intervals.</li>
+                <li><a href="https://www.hl7.org/implement/standards/product_brief.cfm?product_id=423">HL7 Clinical Information Reconciliation (CIRI) ↗</a> &amp; <a href="https://www.who.int/teams/digital-health-and-innovation/smart-guidelines">WHO SMART Guidelines ↗</a> &middot; Computable clinical reconciliation ahead of prose generation (<a href="/med-agent-hub/index.html">Med Agent Hub →</a>).</li>
+                <li><a href="https://kdigo.org/guidelines/ckd-evaluation-and-management/">KDIGO 2024 CKD ↗</a>, <a href="https://diabetesjournals.org/care/issue/48/Supplement_1">ADA Diabetes ↗</a>, <a href="https://www.nlm.nih.gov/research/umls/rxnorm/index.html">NLM RxNorm ↗</a>, <a href="https://loinc.org/">LOINC ↗</a> / <a href="https://ucum.org/">UCUM ↗</a> &amp; <a href="https://www.cdc.gov/vaccines/hcp/imz-schedules/index.html">CDC ACIP ↗</a> &middot; Renal/potassium cutoffs, active-ingredient matching, unit conversion, and vaccine intervals.</li>
+                <li><a href="https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2">42 CFR Part 2 ↗</a> &amp; <a href="https://app.leg.wa.gov/RCW/default.aspx?cite=19.373">WA My Health My Data Act (RCW 19.373) ↗</a> &middot; Statutory basis for data-layer <code>external_share</code> redaction and scope-isolated chat sessions.</li>
               </ul>
             </article>
 
             <article class="strategy-card">
-              <span class="strategy-badge secondary">3 &middot; Zero-Privilege Access &amp; Privacy</span>
-              <h3>Per-patient authorization and selective sharing</h3>
+              <span class="strategy-badge secondary">Step 4 &middot; Split Prompt &amp; Attach Links</span>
+              <h3>Prefix KV-cache reuse, inline citations, and human review</h3>
               <p>
-                The engine never connects directly to an unguarded database, and conversation state is partitioned so switching to external-share mode never leaks sensitive history from an earlier self-review chat.
+                Keeping <code>messages[0]</code> identical across questions lets GPU servers reuse cached attention blocks (cutting follow-ups from ~19s to ~3s), while <code>[1]..[N]</code> source links make every claim inspectable.
               </p>
               <ul class="pillar-link-list">
-                <li><a href="https://github.com/uwcirg/jwt-proxy"><code>uwcirg/jwt-proxy</code> (<code>fhir-auth</code>) ↗</a> &middot; Enforces cryptographic user ownership labels before the engine sees any FHIR resource.</li>
-                <li><a href="https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2">42 CFR Part 2 ↗</a>, <a href="https://app.leg.wa.gov/RCW/default.aspx?cite=19.373">WA My Health My Data Act ↗</a> &amp; <a href="https://hl7.org/fhir/us/security-label-ds4p/">HL7 DS4P ↗</a> &middot; Guide sensitivity filtering when preparing external summaries.</li>
-                <li><a href="https://github.com/pmanko/shl-ips"><code>pmanko/shl-ips</code> Web App ↗</a> &amp; <a href="https://github.com/pmanko/wahs-mobile-frontend">Mobile Companion ↗</a> &middot; Isolate chat sessions whenever clinic scope or sharing posture changes.</li>
-              </ul>
-            </article>
-
-            <article class="strategy-card">
-              <span class="strategy-badge future">4 &middot; Blinded Clinical Evaluation</span>
-              <h3>Repeatable benchmarks and interactive chart inspection</h3>
-              <p>
-                Every change to condensation budgets, clinical rules, or open-weight models is tested against multi-clinic synthetic personas and de-identified ICU charts graded blind by two independent AI judges.
-              </p>
-              <ul class="pillar-link-list">
-                <li><a href="/validation-harness/index.html">OpenClinAI Validation Harness →</a> &middot; Runs deterministic token/citation gates and blinded two-judge clinical scoring.</li>
-                <li><a href="https://wahs-demo.openclinai.org/">WAHS Explorer Live Sandbox ↗</a> &amp; <a href="/wahs/walkthrough/index.html">Sandbox Walkthrough →</a> &middot; Browse 10 patient charts and compare condensation budgets interactively.</li>
-                <li><a href="https://reports.openclinai.org/2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration/index.html">16k vs. 32k Calibration Report ↗</a> &amp; <a href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">Retrieval &amp; Portability Eval ↗</a> &middot; Published full-transcript packets.</li>
-                <li><a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">9-Model &times; 3-Pathway Benchmark ↗</a> &amp; <a href="https://reports.openclinai.org/#wahs">All WAHS Reports ↗</a> &middot; Model-family selection evidence.</li>
+                <li><a href="https://arxiv.org/abs/2309.06180">Kwon et al., <em>PagedAttention / vLLM</em> (<em>SOSP</em>, 2023) ↗</a> &amp; <a href="https://arxiv.org/abs/2312.07104">Zheng et al., <em>SGLang / RadixAttention</em> (<em>NeurIPS</em>, 2024) ↗</a> &middot; Prefix KV-cache reuse motivating the invariant <code>messages[0]</code> / turn-local <code>messages[-1]</code> split.</li>
+                <li><a href="https://arxiv.org/abs/2305.14627">Gao et al., <em>ALCE: Generating Text with Citations</em> (<em>EMNLP</em>, 2023) ↗</a> &amp; <a href="https://physionet.org/content/archehr-qa-bionlp-task-2025/">PhysioNet ArchEHR-QA (BioNLP 2025) ↗</a> &middot; Inline bracketed <code>[N]</code> evidence grounding over EHR records.</li>
+                <li><a href="https://build.fhir.org/ig/HL7/aitransparency-ig/branches/main/en/StructureDefinition-AI-Provenance.html">HL7 AI Transparency on FHIR (<code>AI-Provenance</code>) ↗</a> &amp; <a href="https://www.microsoft.com/en-us/haxtoolkit/">Amershi et al. (<em>CHI</em>, 2019) / Microsoft HAX ↗</a> &middot; Progressive source disclosure and explicit human-review signaling.</li>
               </ul>
             </article>
           </div>
+
+          <article class="strategy-card" style="margin-top: 20px;">
+            <span class="strategy-badge future">Cross-Cutting &middot; Blinded Evaluation &amp; Claim Entailment</span>
+            <h3>Why we verify outside the model with physician rubrics, atomic entailment, and two-judge consensus</h3>
+            <p>
+              Recent clinical AI evaluations show that LLM self-verification accepts incorrect medical answers over 60% of the time (<a href="https://arxiv.org/abs/2605.10850" style="color: var(--purple); font-weight: 650;">Jin et al., 2026 ↗</a>). Instead of asking the answering model to grade itself, the <a href="/validation-harness/index.html" style="color: var(--purple); font-weight: 650;">OpenClinAI Validation Harness →</a> combines deterministic budget/citation checks with atomic EHR fact verification and two independent blinded judges:
+            </p>
+            <ul class="pillar-link-list">
+              <li><a href="https://arxiv.org/abs/2505.08775">HealthBench (OpenAI, 2025) ↗</a> &amp; <a href="https://crfm.stanford.edu/helm/medhelm/latest/">Stanford MedHELM ↗</a> &middot; Multi-axis rubric scoring with strict-majority clinical harm consensus across <a href="https://reports.openclinai.org/#wahs">published WAHS benchmark packets ↗</a>.</li>
+              <li><a href="https://arxiv.org/abs/2501.16672">Chung et al., <em>VeriFact</em> (2025) ↗</a> &amp; <a href="https://arxiv.org/abs/2404.10774">Tang et al., <em>MiniCheck</em> (<em>EMNLP</em>, 2024) ↗</a> &middot; Atomic claim-to-EHR entailment checking so cited <code>[N]</code> records genuinely support stated values, dates, and statuses.</li>
+              <li><a href="https://arxiv.org/abs/2301.09633">Angelopoulos et al., <em>Prediction-Powered Inference</em> (<em>Science</em>, 2023) ↗</a> &middot; Statistical framework for calibrating automated judge scores against clinician adjudication, paired with interactive inspection in the <a href="https://wahs-demo.openclinai.org/">WAHS Explorer Sandbox ↗</a>.</li>
+            </ul>
+          </article>
         </section>
 
         <section class="strategy-section" id="wahs-core-audit" tabindex="-1" aria-labelledby="core-audit-heading">
@@ -435,14 +442,14 @@
             </article>
           </div>
 
-          <h3 class="sub-h" id="wahs-engine-runtime">2. Zero-privilege caching, token sizing, and live streaming (<code>wahs_engine</code>)</h3>
+          <h3 class="sub-h" id="wahs-engine-runtime">2. Per-patient caching, token sizing, and live streaming (<code>wahs_engine</code>)</h3>
           <div class="strategy-grid-2">
             <article class="strategy-card recommended">
               <span class="strategy-badge">Solid on main (85fb799)</span>
               <h3>Live freshness checks &amp; exact offline tokenizers</h3>
               <ul>
-                <li><strong>Always checks <code>fhir-auth</code> first:</strong> Every request verifies <code>MasterPatient</code> and linked clinic dataset <code>meta.lastUpdated</code> stamps through <code>fhir-auth</code> before touching in-memory caches, and blocks truncated external shares with HTTP 409.</li>
-                <li><strong>Offline token accuracy:</strong> Bundled Gemma 4 and <code>tiktoken</code> tokenizers match GPU prompt token counts within &lt;0.01% with zero internet access, automatically trimming oldest chat turns when conversations grow long.</li>
+                <li><strong>Checks <code>fhir-auth</code> on every turn:</strong> Verifies <code>MasterPatient</code> and linked clinic dataset <code>meta.lastUpdated</code> stamps before reading in-memory caches, and blocks truncated external shares with HTTP 409.</li>
+                <li><strong>Offline token accuracy:</strong> Bundled Gemma 4 and <code>tiktoken</code> tokenizers match GPU prompt token counts within &lt;0.01% completely offline, trimming oldest chat turns first when conversations grow long.</li>
               </ul>
             </article>
 
