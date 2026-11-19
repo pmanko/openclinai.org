@@ -24,7 +24,7 @@ Allows whitelisted UW CIRG and OpenClinAI researchers to use the shared UW CIRG 
 | --- | --- | --- |
 | `WAHS_GPU_BASE_URL` | Upstream UW CIRG LiteLLM base URL | `https://llm.co.dev.cirg.uw.edu` |
 | `WAHS_GPU_API_KEY` | Upstream LiteLLM bearer key (required in Cloud Run; never committed to git) | *(none)* |
-| `WAHS_AUTH_WHITELIST_EMAILS` | Comma-separated whitelisted Google account emails | `piotr.mankowski@gmail.com,pmanko@uw.edu,ivanc@uw.edu,mcjustin@uw.edu,jflow2@uw.edu,lober@uw.edu,ibacher@uw.edu` |
+| `WAHS_AUTH_WHITELIST_EMAILS` | Comma-separated whitelisted Google account emails | `piotr.mankowski@gmail.com,pmanko@uw.edu,dlorigan@uw.edu,daniellrgn@gmail.com,ivanc@uw.edu,mcjustin@uw.edu,jflow2@uw.edu,lober@uw.edu,ibacher@uw.edu` |
 | `WAHS_GOOGLE_CLIENT_ID` | Google OAuth 2.0 Web Client ID | `1043771833056-41q5npi9me4i390i87b2tha58rt5blb9.apps.googleusercontent.com` |
 | `WAHS_GPU_MODELS` | Comma-separated Ollama models pulled on the UW GPU server | `ollama/gemma4:12b,ollama/gemma4:e4b,ollama/gemma4:e2b,ollama/mistral:7b,ollama/smollm2:latest` |
 
@@ -36,5 +36,5 @@ gcloud run deploy wahs-gpu-auth-relay \
   --region us-west1 \
   --project clinical-ai-harness \
   --allow-unauthenticated \
-  --set-env-vars="^;^WAHS_GPU_BASE_URL=https://llm.co.dev.cirg.uw.edu;WAHS_GPU_API_KEY=${WAHS_GPU_API_KEY};WAHS_AUTH_WHITELIST_EMAILS=piotr.mankowski@gmail.com,pmanko@uw.edu,ivanc@uw.edu,mcjustin@uw.edu,jflow2@uw.edu,lober@uw.edu,ibacher@uw.edu"
+  --set-env-vars="^;^WAHS_GPU_BASE_URL=https://llm.co.dev.cirg.uw.edu;WAHS_GPU_API_KEY=${WAHS_GPU_API_KEY};WAHS_AUTH_WHITELIST_EMAILS=piotr.mankowski@gmail.com,pmanko@uw.edu,dlorigan@uw.edu,daniellrgn@gmail.com,ivanc@uw.edu,mcjustin@uw.edu,jflow2@uw.edu,lober@uw.edu,ibacher@uw.edu"
 ```

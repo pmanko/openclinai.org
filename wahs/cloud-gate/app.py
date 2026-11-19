@@ -37,6 +37,8 @@ DEFAULT_FB_KEY_B64 = "QUl6YVN5RC13RUVLQkJIbEtUdkRhOUdadnBXWnozUUJ2NEMxVGlZ"
 DEFAULT_WHITELIST_EMAILS = (
     "piotr.mankowski@gmail.com,"
     "pmanko@uw.edu,"
+    "dlorigan@uw.edu,"
+    "daniellrgn@gmail.com,"
     "ivanc@uw.edu,"
     "mcjustin@uw.edu,"
     "jflow2@uw.edu,"

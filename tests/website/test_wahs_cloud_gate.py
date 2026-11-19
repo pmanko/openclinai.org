@@ -272,6 +272,13 @@ class WahsCloudGateTests(unittest.TestCase):
         )
         self.assertNotIn("legacy", login_html.lower())
 
+    def test_default_whitelist_includes_expected_users(self) -> None:
+        with patch.dict(os.environ, {"WAHS_AUTH_WHITELIST_EMAILS": ""}, clear=False):
+            whitelist = self.mod.get_config()["whitelist"]
+        self.assertIn("dlorigan@uw.edu", whitelist)
+        self.assertIn("daniellrgn@gmail.com", whitelist)
+        self.assertIn("pmanko@uw.edu", whitelist)
+
 
 if __name__ == "__main__":
     unittest.main()
