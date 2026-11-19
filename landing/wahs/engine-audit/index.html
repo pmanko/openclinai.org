@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WAHS Engine Architectural &amp; Functional Audit · OpenClinAI</title>
+  <meta name="description" content="Architectural and functional audit of the standalone WAHS Engine as of November 2026: high-level system diagram, foundational standards links, what works today, 900-cell benchmark evidence, and prioritized fixes." />
+  <link rel="canonical" href="https://openclinai.org/wahs/engine-audit/" />
+  <meta property="og:url" content="https://openclinai.org/wahs/engine-audit/" />
+  <meta property="og:title" content="WAHS Engine Architectural &amp; Functional Audit · OpenClinAI" />
+  <meta property="og:description" content="How the WAHS Engine works today, the standards and OpenClinAI building blocks behind it, latest H200 benchmark results, and what our code audit found to fix next." />
+  <meta property="og:image" content="https://openclinai.org/wahs/walkthrough/media/step2-condensation-8k-vs-1k.webp" />
+  <meta name="theme-color" content="#4b2e83" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/projects.css" />
+  <link rel="stylesheet" href="/wahs/strategy.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <header class="site-header project-header">
+    <a class="brand" href="/index.html" aria-label="OpenClinAI home">
+      <span class="brand-mark" aria-hidden="true"><span></span></span>
+      <span class="brand-text">OpenClinAI</span>
+    </a>
+
+    <nav class="primary-nav" aria-label="Primary">
+      <a href="/index.html#project">Client Apps</a>
+      <a href="/med-agent-hub/index.html">AI Engine</a>
+      <a href="/validation-harness/index.html">Evaluation</a>
+      <a href="/experiments/index.html">Experiments</a>
+      <a href="/projects/index.html" aria-current="page">Projects</a>
+      <a href="https://reports.openclinai.org/">Reports <span aria-hidden="true">↗</span></a>
+      <a href="/index.html#about">About</a>
+    </nav>
+
+    <details class="nav-toggle">
+      <summary>Menu</summary>
+      <nav class="mobile-nav" aria-label="Mobile primary">
+        <a href="/index.html#project">Client Apps</a>
+        <a href="/med-agent-hub/index.html">AI Engine</a>
+        <a href="/validation-harness/index.html">Evaluation</a>
+        <a href="/experiments/index.html">Experiments</a>
+        <a href="/projects/index.html" aria-current="page">Projects</a>
+        <a href="https://reports.openclinai.org/">Reports <span aria-hidden="true">↗</span></a>
+        <a href="/index.html#about">About</a>
+      </nav>
+    </details>
+  </header>
+
+  <div class="wahs-subnav-bar">
+    <div class="page-width wahs-subnav-inner">
+      <span class="wahs-subnav-label">WA Health Summary</span>
+      <nav class="wahs-subnav" aria-label="WA Health Summary navigation">
+        <a href="/wahs/index.html">Overview</a>
+        <a href="/wahs/llm-strategy/index.html">AI Strategy &amp; Architecture</a>
+        <a href="/wahs/engine-reference/index.html">Engine Reference</a>
+        <a href="/wahs/engine-audit/index.html" aria-current="page">Engine Audit</a>
+        <a href="/wahs/walkthrough/index.html">Sandbox Walkthrough</a>
+        <a href="https://wahs-demo.openclinai.org/">Live Sandbox <span aria-hidden="true">↗</span></a>
+        <a href="https://reports.openclinai.org/2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration/index.html">16k vs. 32k Eval <span aria-hidden="true">↗</span></a>
+      </nav>
+    </div>
+  </div>
+
+  <main id="main-content" tabindex="-1">
+    <div class="doc-layout">
+      <nav class="doc-toc" aria-label="On this page">
+        <p class="doc-toc-title">On this page</p>
+        <ol>
+          <li><a href="#high-level-architecture">High-level diagram</a></li>
+          <li><a href="#foundational-pillars">Research &amp; standards</a></li>
+          <li><a href="#wahs-core-audit">How it works today</a></li>
+          <li><a class="sub" href="#fhir-extraction-coverage">Record coverage</a></li>
+          <li><a class="sub" href="#wahs-engine-runtime">Caching &amp; streaming</a></li>
+          <li><a href="#ecosystem-alignment">Connected apps</a></li>
+          <li><a href="#empirical-benchmarks">Benchmark results</a></li>
+          <li><a href="#audit-findings">What to fix next</a></li>
+          <li><a class="sub" href="#remediation-sequence">4-step roadmap</a></li>
+        </ol>
+        <p class="doc-toc-more">Related: <a href="/wahs/llm-strategy/index.html">AI Strategy</a> &middot; <a href="/wahs/engine-reference/index.html">Engine Reference</a>.</p>
+      </nav>
+
+      <div class="doc-body">
+        <section class="strategy-intro" id="top">
+          <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <a href="/index.html">OpenClinAI</a>
+            <span aria-hidden="true">/</span>
+            <a href="/projects/index.html">Projects</a>
+            <span aria-hidden="true">/</span>
+            <a href="/wahs/index.html">WA Health Summary (WAHS)</a>
+            <span aria-hidden="true">/</span>
+            <span>Engine Audit</span>
+          </nav>
+
+          <p class="section-kicker">Washington Health Summary (WAHS) &middot; Current-State Audit</p>
+          <h1>How the WAHS engine works right now.</h1>
+          <p class="overview-lead">
+            The <strong>WAHS Engine</strong> is a small, standalone service that sits between the WA Health Summary app, the patient's health record store, and an open-weight language model. This report audits how the engine is built today, links the clinical and privacy foundations behind it, and lists what is solid versus what still needs fixing.
+          </p>
+          <p class="strategy-meta">
+            Audited 19 November 2026 &middot; <a href="https://github.com/pmanko/wahs-engine"><code>wahs-engine</code> on GitHub <span aria-hidden="true">↗</span></a> (<code>main</code> at <a href="https://github.com/pmanko/wahs-engine/commit/85fb799"><code>85fb799</code></a> &amp; open <a href="https://github.com/pmanko/wahs-engine/pull/10"><code>PR #10</code></a>) &middot; Automated suites: <code>81</code> / <code>86</code> tests passing
+          </p>
+
+          <div class="decision" role="region" aria-labelledby="audit-verdict-title">
+            <h2 id="audit-verdict-title">Where things stand today</h2>
+            <ol>
+              <li><strong>The core architecture is working and cleanly separated.</strong> The engine shrinks large multi-clinic FHIR records by 90&ndash;99%, checks drug conflicts and lab trends in plain Python before calling AI, and maps every cited claim back to its original record.</li>
+              <li><strong>Condensing first beats iterative AI tool-calling on both quality and safety.</strong> Across 900 graded runs on an NVIDIA H200, <strong>Gemma 4 26B with a 16k condensed chart + clinical rules</strong> scored <strong>85.1 / 100</strong> with <strong>zero confirmed unsafe answers</strong> (3.4s median wait), whereas forcing models to search a 2k summary via tool calls dropped scores to 65.8&ndash;69.4 and produced two-thirds of all unsafe answers.</li>
+              <li><strong>A short, concrete list of edge cases needs fixing before merging the 12-patient demo stack.</strong> Our code audit found 3 runtime bugs on open <code>PR #10</code> (HTTP client lifecycle, uncapped budget suffixes, and manual refresh cache updates) plus targeted gaps in filtering <code>entered-in-error</code> records and uncoded sensitive medications.</li>
+            </ol>
+          </div>
+
+          <div class="stat-row four-up">
+            <div class="stat">
+              <p class="stat-value">90&ndash;99%</p>
+              <p class="stat-label">Chart size reduction while keeping allergies, active meds, and active problems intact.</p>
+            </div>
+            <div class="stat">
+              <p class="stat-value">85.1 / 100</p>
+              <p class="stat-label">Top 900-cell benchmark score (<code>Gemma 4 26B + KB</code>), with 0/75 confirmed unsafe answers.</p>
+            </div>
+            <div class="stat">
+              <p class="stat-value">99.8%</p>
+              <p class="stat-label">Inline <code>[N]</code> citations that resolved cleanly to a real patient FHIR record (5,191 / 5,203).</p>
+            </div>
+            <div class="stat">
+              <p class="stat-value">3.4 s</p>
+              <p class="stat-label">Median wait for an answer on the shared UW CIRG GPU server at a 16k chart budget.</p>
+            </div>
+          </div>
+
+          <details class="doc-toc-mobile">
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#high-level-architecture">High-level diagram</a></li>
+              <li><a href="#foundational-pillars">Research &amp; standards</a></li>
+              <li><a href="#wahs-core-audit">How it works today</a></li>
+              <li><a href="#fhir-extraction-coverage">Record coverage</a></li>
+              <li><a href="#wahs-engine-runtime">Caching &amp; streaming</a></li>
+              <li><a href="#ecosystem-alignment">Connected apps</a></li>
+              <li><a href="#empirical-benchmarks">Benchmark results</a></li>
+              <li><a href="#audit-findings">What to fix next</a></li>
+              <li><a href="#remediation-sequence">4-step roadmap</a></li>
+            </ol>
+          </details>
+        </section>
+
+        <section class="strategy-section" id="high-level-architecture" tabindex="-1" aria-labelledby="arch-diagram-heading">
+          <p class="section-kicker">High-level architecture</p>
+          <h2 id="arch-diagram-heading">How a patient question moves through the system</h2>
+          <p>
+            Three services share the work so each stays simple and replaceable: the <strong>patient app</strong> handles sign-in and conversation UI, the <strong>WAHS Engine</strong> prepares the patient's record and clinical checks, and a <strong>stateless model server</strong> writes the plain-language answer.
+          </p>
+
+          <figure class="audit-arch-figure">
+            <div class="audit-arch-scroll" tabindex="0" role="region" aria-label="High-level architecture diagram of WAHS apps, FHIR store, WAHS Engine, and open-weight model server">
+              <svg class="audit-arch-svg" viewBox="0 0 880 456" role="img" aria-labelledby="wahs-svg-title wahs-svg-desc" xmlns="http://www.w3.org/2000/svg">
+                <title id="wahs-svg-title">High-level architecture of the WAHS Engine</title>
+                <desc id="wahs-svg-desc">Left column shows the WAHS Web and Mobile patient apps on top and the Access-Controlled FHIR R4 Record Store below. Center column shows the WAHS Engine running four steps: 1. Fetch and Check Freshness, 2. Condense Record 90 to 99 percent, 3. Clinical and Privacy Rules, and 4. Split Prompt and Attach Links. Right column shows the Open-Weight AI Model Server returning a cited draft over a standard OpenAI chat API.</desc>
+                <defs>
+                  <marker id="arr-purple" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M0,0.5 L9.5,5 L0,9.5 z" fill="#4b2e83" />
+                  </marker>
+                  <marker id="arr-teal" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M0,0.5 L9.5,5 L0,9.5 z" fill="#0f766e" />
+                  </marker>
+                </defs>
+
+                <!-- ==================== LEFT COLUMN: APPS & RECORD STORE ==================== -->
+                <!-- Card 1A: Patient Apps -->
+                <rect x="18" y="30" width="204" height="166" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+                <rect x="18" y="30" width="204" height="32" rx="10" fill="#334155" />
+                <rect x="18" y="50" width="204" height="12" fill="#334155" />
+                <text x="120" y="51" text-anchor="middle" fill="#ffffff" font-size="11.5" font-weight="700" letter-spacing="0.06em">PATIENT APPS</text>
+
+                <text x="120" y="86" text-anchor="middle" fill="#1e293b" font-size="15.5" font-weight="700">WAHS Web &amp; Mobile</text>
+                <text x="120" y="110" text-anchor="middle" fill="#475569" font-size="13">Signs in &amp; chooses clinics</text>
+                <text x="120" y="129" text-anchor="middle" fill="#475569" font-size="13">Asks a health question</text>
+
+                <rect x="32" y="146" width="176" height="34" rx="7" fill="#f5f3ff" stroke="#c4b5fd" />
+                <text x="120" y="167" text-anchor="middle" fill="#4b2e83" font-size="12" font-weight="700">Clickable [1]..[N] citations</text>
+
+                <!-- Card 1B: FHIR Store & Security Proxy -->
+                <rect x="18" y="244" width="204" height="182" rx="10" fill="#ffffff" stroke="#99f6e4" stroke-width="1.6" />
+                <rect x="18" y="244" width="204" height="32" rx="10" fill="#0f766e" />
+                <rect x="18" y="264" width="204" height="12" fill="#0f766e" />
+                <text x="120" y="265" text-anchor="middle" fill="#ffffff" font-size="11.5" font-weight="700" letter-spacing="0.06em">RECORD STORE</text>
+
+                <text x="120" y="300" text-anchor="middle" fill="#134e4a" font-size="15.5" font-weight="700">FHIR Store + Proxy</text>
+                <text x="120" y="324" text-anchor="middle" fill="#475569" font-size="13">Checks patient sign-in</text>
+                <text x="120" y="343" text-anchor="middle" fill="#475569" font-size="13">Returns only that patient's</text>
+                <text x="120" y="362" text-anchor="middle" fill="#475569" font-size="13">clinic exports &amp; notes</text>
+
+                <rect x="32" y="378" width="176" height="34" rx="7" fill="#ecfdf5" stroke="#6ee7b7" />
+                <text x="120" y="399" text-anchor="middle" fill="#065f46" font-size="12" font-weight="700">Per-patient access boundary</text>
+
+                <!-- ==================== CENTER COLUMN: WAHS ENGINE ==================== -->
+                <rect x="302" y="14" width="280" height="428" rx="12" fill="#fcfaff" stroke="#4b2e83" stroke-width="2.2" />
+                <rect x="302" y="14" width="280" height="40" rx="12" fill="#4b2e83" />
+                <rect x="302" y="40" width="280" height="14" fill="#4b2e83" />
+                <text x="442" y="40" text-anchor="middle" fill="#ffffff" font-size="15.5" font-weight="700">WAHS Engine (Middle Service)</text>
+
+                <!-- Step 1 -->
+                <rect x="320" y="70" width="244" height="76" rx="8" fill="#ffffff" stroke="#d8b4fe" stroke-width="1.3" />
+                <text x="334" y="95" fill="#24133f" font-size="14" font-weight="700">1. Fetch &amp; Check Freshness</text>
+                <text x="334" y="116" fill="#475569" font-size="12.5">Reads updated clinic data;</text>
+                <text x="334" y="133" fill="#475569" font-size="12.5">reuses unchanged charts in memory</text>
+
+                <line x1="442" y1="146" x2="442" y2="160" stroke="#4b2e83" stroke-width="1.6" marker-end="url(#arr-purple)" />
+
+                <!-- Step 2 -->
+                <rect x="320" y="162" width="244" height="76" rx="8" fill="#ffffff" stroke="#d8b4fe" stroke-width="1.3" />
+                <text x="334" y="187" fill="#24133f" font-size="14" font-weight="700">2. Condense Record (90&ndash;99%)</text>
+                <text x="334" y="208" fill="#475569" font-size="12.5">Strips billing noise; keeps allergies,</text>
+                <text x="334" y="225" fill="#475569" font-size="12.5">active meds &amp; problems as [1]..[N]</text>
+
+                <line x1="442" y1="238" x2="442" y2="252" stroke="#4b2e83" stroke-width="1.6" marker-end="url(#arr-purple)" />
+
+                <!-- Step 3 -->
+                <rect x="320" y="254" width="244" height="76" rx="8" fill="#ffffff" stroke="#d8b4fe" stroke-width="1.3" />
+                <text x="334" y="279" fill="#24133f" font-size="14" font-weight="700">3. Clinical &amp; Privacy Rules</text>
+                <text x="334" y="300" fill="#475569" font-size="12.5">Pre-computes lab trends, cross-clinic</text>
+                <text x="334" y="317" fill="#475569" font-size="12.5">drug conflicts &amp; sharing redactions</text>
+
+                <line x1="442" y1="330" x2="442" y2="344" stroke="#4b2e83" stroke-width="1.6" marker-end="url(#arr-purple)" />
+
+                <!-- Step 4 -->
+                <rect x="320" y="346" width="244" height="76" rx="8" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5" />
+                <text x="334" y="371" fill="#4b2e83" font-size="14" font-weight="700">4. Split Prompt &amp; Attach Links</text>
+                <text x="334" y="392" fill="#475569" font-size="12.5">Sends fixed chart + current question;</text>
+                <text x="334" y="409" fill="#475569" font-size="12.5">maps every [N] tag to its record ID</text>
+
+                <!-- ==================== RIGHT COLUMN: MODEL SERVER ==================== -->
+                <rect x="662" y="110" width="200" height="236" rx="10" fill="#ffffff" stroke="#99f6e4" stroke-width="1.6" />
+                <rect x="662" y="110" width="200" height="32" rx="10" fill="#0f766e" />
+                <rect x="662" y="130" width="200" height="12" fill="#0f766e" />
+                <text x="762" y="131" text-anchor="middle" fill="#ffffff" font-size="11.5" font-weight="700" letter-spacing="0.06em">MODEL SERVER</text>
+
+                <text x="762" y="168" text-anchor="middle" fill="#134e4a" font-size="15.5" font-weight="700">Open-Weight AI</text>
+                <text x="762" y="189" text-anchor="middle" fill="#0f766e" font-size="13" font-weight="700">Gemma 4 (12B or 26B)</text>
+
+                <text x="762" y="217" text-anchor="middle" fill="#475569" font-size="13">Reuses cached chart for</text>
+                <text x="762" y="236" text-anchor="middle" fill="#475569" font-size="13">fast follow-up questions</text>
+                <text x="762" y="261" text-anchor="middle" fill="#475569" font-size="13">Streams plain-English</text>
+                <text x="762" y="280" text-anchor="middle" fill="#475569" font-size="13">reply citing [1]..[N]</text>
+
+                <rect x="676" y="298" width="172" height="34" rx="7" fill="#ecfdf5" stroke="#6ee7b7" />
+                <text x="762" y="319" text-anchor="middle" fill="#065f46" font-size="12" font-weight="700">Standard OpenAI chat API</text>
+
+                <!-- ==================== ARROWS BETWEEN COLUMNS ==================== -->
+                <!-- 1. App -> Engine (Question) -->
+                <text x="262" y="80" text-anchor="middle" fill="#4b2e83" font-size="12" font-weight="700">1. Question</text>
+                <line x1="222" y1="90" x2="298" y2="90" stroke="#4b2e83" stroke-width="2" marker-end="url(#arr-purple)" />
+
+                <!-- 5. Engine -> App (Cited Answer) -->
+                <line x1="302" y1="154" x2="226" y2="154" stroke="#4b2e83" stroke-width="1.8" stroke-dasharray="5 3" marker-end="url(#arr-purple)" />
+                <text x="262" y="172" text-anchor="middle" fill="#4b2e83" font-size="12" font-weight="700">5. Answer</text>
+
+                <!-- 2. Engine <-> Record Store -->
+                <text x="262" y="320" text-anchor="middle" fill="#0f766e" font-size="12" font-weight="700">2. Records</text>
+                <line x1="302" y1="330" x2="226" y2="330" stroke="#0f766e" stroke-width="1.8" marker-end="url(#arr-teal)" />
+                <line x1="222" y1="346" x2="298" y2="346" stroke="#0f766e" stroke-width="1.8" marker-end="url(#arr-teal)" />
+
+                <!-- 3. Engine -> Model Server -->
+                <text x="622" y="182" text-anchor="middle" fill="#0f766e" font-size="12" font-weight="700">3. Prompt</text>
+                <line x1="582" y1="192" x2="658" y2="192" stroke="#0f766e" stroke-width="2" marker-end="url(#arr-teal)" />
+
+                <!-- 4. Model Server -> Engine -->
+                <line x1="662" y1="270" x2="586" y2="270" stroke="#0f766e" stroke-width="1.8" stroke-dasharray="5 3" marker-end="url(#arr-teal)" />
+                <text x="622" y="288" text-anchor="middle" fill="#0f766e" font-size="12" font-weight="700">4. Draft</text>
+              </svg>
+            </div>
+            <figcaption>
+              <strong>Separation of responsibilities:</strong> The app manages sign-in and displays citations, the FHIR proxy scopes record access to the signed-in patient's token, the WAHS Engine condenses records and runs clinical checks, and any OpenAI-compatible GPU server generates the reply.
+            </figcaption>
+          </figure>
+
+          <details class="internals-details">
+            <summary>For engineers: map each box in the diagram to its repository and Python modules</summary>
+            <div class="internals-details-body">
+              <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Module mapping for the WAHS Engine diagram">
+                <table class="strategy-table">
+                  <thead>
+                    <tr>
+                      <th scope="col" style="width: 26%;">Diagram Component</th>
+                      <th scope="col" style="width: 30%;">Repository / Service</th>
+                      <th scope="col" style="width: 44%;">Key Files &amp; Wire Interfaces</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>WAHS Web &amp; Mobile</strong></td>
+                      <td><a href="https://github.com/pmanko/shl-ips"><code>pmanko/shl-ips</code> ↗</a> (<code>:4000</code>)<br /><a href="https://github.com/pmanko/wahs-mobile-frontend"><code>wahs-mobile-frontend</code> ↗</a> (<code>:4001</code>)</td>
+                      <td>Server-side <code>/api/chat</code> BFF forwards Keycloak RS256 <code>Bearer</code> JWT + optional <code>wahs.chart_scope</code> to <code>POST /v1/chat/completions</code>; renders <code>x_wahs.citation_map</code> drawers.</td>
+                    </tr>
+                    <tr>
+                      <td><strong>FHIR Store + Proxy</strong></td>
+                      <td><a href="https://github.com/uwcirg/jwt-proxy"><code>uwcirg/jwt-proxy</code> ↗</a> (<code>fhir-auth</code>)<br /><code>hapiproject/hapi:v8.0.0</code></td>
+                      <td>Validates RS256 JWKS against Keycloak 26 and enforces <code>meta.security.code == jwt.sub</code> over star-graph <code>MasterPatient.link[]</code> and <code>Patient/{id}/$everything</code>.</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Engine Step 1 (Fetch)</strong></td>
+                      <td><code>src/wahs_engine/</code></td>
+                      <td><code>app.py</code>, <code>jwt_claims.py</code>, <code>assembler.py</code> (LRU <code>_dataset_cache</code> + <code>_prefix_cache</code>), <code>tokenizers_registry.py</code> (offline Gemma 4 &amp; <code>tiktoken</code> sizing).</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Engine Step 2 (Condense)</strong></td>
+                      <td><code>src/wahs_core/</code> (pure stdlib)</td>
+                      <td><code>extractors.py</code> (16 FHIR R4 types), <code>condenser.py</code> (2-stage monotonic Stage-A RLE + Stage-B binary-searched budget packing), <code>chart_serializer.py</code>.</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Engine Step 3 (Rules)</strong></td>
+                      <td><code>src/wahs_core/</code> + <code>kb_data/</code></td>
+                      <td><code>normalizers.py</code>, <code>kb_lookup.py</code>, <code>clinical_graph.py</code> (7 typed edges), <code>temporal_digest.py</code>, <code>kb.py</code> (SQLite FTS5), <code>wahs_tools.py</code> (BM25 &amp; overflow lookup).</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Engine Step 4 &amp; Model Host</strong></td>
+                      <td><code>src/wahs_engine/upstream.py</code> &rarr; <code>LLM_BASE_URL</code></td>
+                      <td>Places static chart at <code>messages[0]</code> (VRAM KV-cached) and turn rules at <code>messages[-1]</code>; calls UW CIRG <code>cobalt</code> H200 (LiteLLM/Ollama) or local <code>llama-router</code> (<code>:8077</code>).</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <section class="strategy-section" id="foundational-pillars" tabindex="-1" aria-labelledby="pillars-heading">
+          <p class="section-kicker">Research, standards &amp; best-practice foundations</p>
+          <h2 id="pillars-heading">Why each step in the engine exists, and the sources behind it</h2>
+          <p>
+            Each of the four steps in the diagram above (plus our evaluation harness) implements established findings from long-context LLM research, healthcare interoperability standards, clinical practice guidelines, and privacy law.
+          </p>
+
+          <div class="strategy-grid-2">
+            <article class="strategy-card">
+              <span class="strategy-badge">Step 1 &middot; Fetch &amp; Check Freshness</span>
+              <h3>Patient-mediated FHIR APIs and version-stamped caching</h3>
+              <p>
+                Patients gather records across clinics through Cures Act FHIR R4 APIs. Checking lightweight <code>meta.lastUpdated</code> version stamps before pulling full bundles keeps charts fresh in ~10 ms when nothing changed.
+              </p>
+              <ul class="pillar-link-list">
+                <li><a href="https://hl7.org/fhir/us/core/">HL7 US Core (FHIR R4) ↗</a> &amp; <a href="https://www.healthit.gov/topic/oncs-cures-act-final-rule">ONC Cures Act Final Rule ↗</a> &middot; Standard patient-access clinical profiles and <code>Patient/$everything</code> retrieval.</li>
+                <li><a href="https://docs.smarthealthit.org/smart-health-links/">SMART Health Links ↗</a> &amp; <a href="https://hl7.org/fhir/us/security-label-ds4p/">HL7 FHIR DS4P Security Labels ↗</a> &middot; Patient-mediated sharing and <code>meta.security</code> access scoping via <a href="https://github.com/uwcirg/jwt-proxy"><code>uwcirg/jwt-proxy</code> ↗</a>.</li>
+                <li><a href="https://hl7.org/fhir/R4/http.html#concurrency">HL7 FHIR RESTful Versioning (<code>meta.lastUpdated</code>) ↗</a> &middot; Optimistic cache revalidation across multi-clinic datasets (<a href="/wahs/engine-reference/index.html#session-and-scope-model">session &amp; scope design →</a>).</li>
+              </ul>
+            </article>
+
+            <article class="strategy-card recommended">
+              <span class="strategy-badge">Step 2 &middot; Condense Record (90&ndash;99%)</span>
+              <h3>Long-context attention limits and clinical safety priority</h3>
+              <p>
+                Language models lose recall when key facts sit buried in noisy multi-megabyte JSON. Pinning an international clinical safety core first and explicitly logging omitted counts prevents silent truncation and guessing.
+              </p>
+              <ul class="pillar-link-list">
+                <li><a href="https://arxiv.org/abs/2307.03172">Liu et al., <em>Lost in the Middle</em> (<em>TACL</em>, 2024) ↗</a> &middot; Demonstrates U-shaped long-context recall degradation, motivating compact <code>16k</code> condensation over raw <code>200k+</code> FHIR dumps.</li>
+                <li><a href="https://build.fhir.org/ig/HL7/fhir-ips/">HL7 International Patient Summary (IPS) &amp; ISO 27269 ↗</a> &middot; Defines the mandatory safety core (allergies, active meds, active problems, implants) preserved first across all budgets.</li>
+                <li><a href="https://doi.org/10.1561/1500000019">Robertson &amp; Zaragoza, <em>Okapi BM25</em> (2009) ↗</a> &middot; Grounds exact clinical-term passage retrieval (<code>note_rag</code>) when long hospital notes exceed budget.</li>
+              </ul>
+            </article>
+
+            <article class="strategy-card">
+              <span class="strategy-badge secondary">Step 3 &middot; Clinical &amp; Privacy Rules</span>
+              <h3>Symbolic clinical reconciliation and data-layer redaction</h3>
+              <p>
+                Cross-clinic discrepancies (such as an urgent-care note holding an outpatient pill) are safety signals to surface, and sensitive-record exclusions belong in deterministic code before prompt assembly.
+              </p>
+              <ul class="pillar-link-list">
+                <li><a href="https://www.hl7.org/implement/standards/product_brief.cfm?product_id=423">HL7 Clinical Information Reconciliation (CIRI) ↗</a> &amp; <a href="https://www.who.int/teams/digital-health-and-innovation/smart-guidelines">WHO SMART Guidelines ↗</a> &middot; Computable clinical reconciliation ahead of prose generation (<a href="/med-agent-hub/index.html">Med Agent Hub →</a>).</li>
+                <li><a href="https://kdigo.org/guidelines/ckd-evaluation-and-management/">KDIGO 2024 CKD ↗</a>, <a href="https://diabetesjournals.org/care/issue/48/Supplement_1">ADA Diabetes ↗</a>, <a href="https://www.nlm.nih.gov/research/umls/rxnorm/index.html">NLM RxNorm ↗</a>, <a href="https://loinc.org/">LOINC ↗</a> / <a href="https://ucum.org/">UCUM ↗</a> &amp; <a href="https://www.cdc.gov/vaccines/hcp/imz-schedules/index.html">CDC ACIP ↗</a> &middot; Renal/potassium cutoffs, active-ingredient matching, unit conversion, and vaccine intervals.</li>
+                <li><a href="https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2">42 CFR Part 2 ↗</a> &amp; <a href="https://app.leg.wa.gov/RCW/default.aspx?cite=19.373">WA My Health My Data Act (RCW 19.373) ↗</a> &middot; Statutory basis for data-layer <code>external_share</code> redaction and scope-isolated chat sessions.</li>
+              </ul>
+            </article>
+
+            <article class="strategy-card">
+              <span class="strategy-badge secondary">Step 4 &middot; Split Prompt &amp; Attach Links</span>
+              <h3>Prefix KV-cache reuse, inline citations, and human review</h3>
+              <p>
+                Keeping <code>messages[0]</code> identical across questions lets GPU servers reuse cached attention blocks (cutting follow-ups from ~19s to ~3s), while <code>[1]..[N]</code> source links make every claim inspectable.
+              </p>
+              <ul class="pillar-link-list">
+                <li><a href="https://arxiv.org/abs/2309.06180">Kwon et al., <em>PagedAttention / vLLM</em> (<em>SOSP</em>, 2023) ↗</a> &amp; <a href="https://arxiv.org/abs/2312.07104">Zheng et al., <em>SGLang / RadixAttention</em> (<em>NeurIPS</em>, 2024) ↗</a> &middot; Prefix KV-cache reuse motivating the invariant <code>messages[0]</code> / turn-local <code>messages[-1]</code> split.</li>
+                <li><a href="https://arxiv.org/abs/2305.14627">Gao et al., <em>ALCE: Generating Text with Citations</em> (<em>EMNLP</em>, 2023) ↗</a> &amp; <a href="https://physionet.org/content/archehr-qa-bionlp-task-2025/">PhysioNet ArchEHR-QA (BioNLP 2025) ↗</a> &middot; Inline bracketed <code>[N]</code> evidence grounding over EHR records.</li>
+                <li><a href="https://build.fhir.org/ig/HL7/aitransparency-ig/branches/main/en/StructureDefinition-AI-Provenance.html">HL7 AI Transparency on FHIR (<code>AI-Provenance</code>) ↗</a> &amp; <a href="https://www.microsoft.com/en-us/haxtoolkit/">Amershi et al. (<em>CHI</em>, 2019) / Microsoft HAX ↗</a> &middot; Progressive source disclosure and explicit human-review signaling.</li>
+              </ul>
+            </article>
+          </div>
+
+          <article class="strategy-card" style="margin-top: 20px;">
+            <span class="strategy-badge future">Cross-Cutting &middot; Blinded Evaluation &amp; Claim Entailment</span>
+            <h3>Why we verify outside the model with physician rubrics, atomic entailment, and two-judge consensus</h3>
+            <p>
+              Recent clinical AI evaluations show that LLM self-verification accepts incorrect medical answers over 60% of the time (<a href="https://arxiv.org/abs/2605.10850" style="color: var(--purple); font-weight: 650;">Jin et al., 2026 ↗</a>). Instead of asking the answering model to grade itself, the <a href="/validation-harness/index.html" style="color: var(--purple); font-weight: 650;">OpenClinAI Validation Harness →</a> combines deterministic budget/citation checks with atomic EHR fact verification and two independent blinded judges:
+            </p>
+            <ul class="pillar-link-list">
+              <li><a href="https://arxiv.org/abs/2505.08775">HealthBench (OpenAI, 2025) ↗</a> &amp; <a href="https://crfm.stanford.edu/helm/medhelm/latest/">Stanford MedHELM ↗</a> &middot; Multi-axis rubric scoring with strict-majority clinical harm consensus across <a href="https://reports.openclinai.org/#wahs">published WAHS benchmark packets ↗</a>.</li>
+              <li><a href="https://arxiv.org/abs/2501.16672">Chung et al., <em>VeriFact</em> (2025) ↗</a> &amp; <a href="https://arxiv.org/abs/2404.10774">Tang et al., <em>MiniCheck</em> (<em>EMNLP</em>, 2024) ↗</a> &middot; Atomic claim-to-EHR entailment checking so cited <code>[N]</code> records genuinely support stated values, dates, and statuses.</li>
+              <li><a href="https://arxiv.org/abs/2301.09633">Angelopoulos et al., <em>Prediction-Powered Inference</em> (<em>Science</em>, 2023) ↗</a> &middot; Statistical framework for calibrating automated judge scores against clinician adjudication, paired with interactive inspection in the <a href="https://wahs-demo.openclinai.org/">WAHS Explorer Sandbox ↗</a>.</li>
+            </ul>
+          </article>
+        </section>
+
+        <section class="strategy-section" id="wahs-core-audit" tabindex="-1" aria-labelledby="core-audit-heading">
+          <p class="section-kicker">Functional audit</p>
+          <h2 id="core-audit-heading">What works well today vs. where current gaps sit</h2>
+          <p>
+            Inside the repository, a pure-stdlib clinical library (<code>src/wahs_core/</code>, ~8.9k lines of Python + 5 offline rule packs) handles record cleaning and clinical logic, while a thin FastAPI wrapper (<code>src/wahs_engine/</code>, ~4.4k lines) handles authentication, caching, exact token counting, and streaming.
+          </p>
+
+          <h3 class="sub-h" id="fhir-extraction-coverage">1. Record intake, condensation, and pre-generation clinical checks (<code>wahs_core</code>)</h3>
+          <div class="strategy-grid-3">
+            <article class="strategy-card recommended">
+              <span class="strategy-badge">Solid Today</span>
+              <h3>2-stage monotonic condensation</h3>
+              <ul>
+                <li><strong>Predictable shrinking:</strong> Compresses 18 MB / 7,000-entry exports into exact model budgets (<code>512</code> to <code>131,072</code> tokens; <code>16,384</code> ceiling by default) so expanding a budget never drops a record kept at a smaller budget.</li>
+                <li><strong>Anti-starvation quotas:</strong> Reserves primary slots per clinical section so thousands of routine lab rows cannot crowd out discharge notes or care plans.</li>
+                <li><strong>Hold-clause splicing:</strong> Preserves medication-hold instructions buried at the end of long hospital notes even when notes are excerpted.</li>
+              </ul>
+            </article>
+
+            <article class="strategy-card">
+              <span class="strategy-badge secondary">Solid Today</span>
+              <h3>Clinical graph &amp; temporal digest</h3>
+              <ul>
+                <li><strong>7 relationship types:</strong> Connects medications, conditions, labs, allergies, vaccines, notes, and clinics to flag allergy cross-reactivity, renal/potassium hazards (with UCUM unit conversion), duplicate therapies, and note-vs-pill-list holds.</li>
+                <li><strong>Tie-safe timelines:</strong> Computes a clean <code>reference_date</code> from completed visits (ignoring future care-plan end dates) and refuses to guess lab trend directions when same-day timestamps tie.</li>
+              </ul>
+            </article>
+
+            <article class="strategy-card">
+              <span class="strategy-badge future">Gaps Found in Audit</span>
+              <h3>Record statuses &amp; uncoded sensitivity</h3>
+              <ul>
+                <li><strong>Erroneous statuses:</strong> Active conditions filter <code>entered-in-error</code>, but erroneous or <code>not-done</code> allergies, procedures, notes, and cancelled appointments can still appear as clinical or planned events.</li>
+                <li><strong>Dropped fields &amp; types:</strong> <code>DiagnosticReport.conclusion</code> and list-valued <code>MedicationStatement.dosage</code> are skipped; US Core <code>ServiceRequest</code> and <code>QuestionnaireResponse</code> are not yet extracted.</li>
+                <li><strong>Uncoded drugs:</strong> When EHRs omit security tags, lexical fallback misses uncoded buprenorphine/MOUD and HIV antiretrovirals during external sharing.</li>
+              </ul>
+            </article>
+          </div>
+
+          <h3 class="sub-h" id="wahs-engine-runtime">2. Per-patient caching, token sizing, and live streaming (<code>wahs_engine</code>)</h3>
+          <div class="strategy-grid-2">
+            <article class="strategy-card recommended">
+              <span class="strategy-badge">Solid on main (85fb799)</span>
+              <h3>Live freshness checks &amp; exact offline tokenizers</h3>
+              <ul>
+                <li><strong>Checks <code>fhir-auth</code> on every turn:</strong> Verifies <code>MasterPatient</code> and linked clinic dataset <code>meta.lastUpdated</code> stamps before reading in-memory caches, and blocks truncated external shares with HTTP 409.</li>
+                <li><strong>Offline token accuracy:</strong> Bundled Gemma 4 and <code>tiktoken</code> tokenizers match GPU prompt token counts within &lt;0.01% completely offline, trimming oldest chat turns first when conversations grow long.</li>
+              </ul>
+            </article>
+
+            <article class="strategy-card">
+              <span class="strategy-badge future">Runtime Caveats &amp; Open PR #10</span>
+              <h3>Streaming buffering, memory bounds, and proxy reliance</h3>
+              <ul>
+                <li><strong>Tool-mode streaming:</strong> On <code>main</code>, attaching overflow lookup tools buffers the first model pass before streaming tokens; open <code>PR #10</code> upgrades this to live streaming after a 96-character lookahead.</li>
+                <li><strong>Defense in depth:</strong> <code>wahs-engine</code> relies on upstream <code>fhir-auth</code> for RS256 JWT signature verification rather than checking JWKS locally, and runs CPU condensation on the main async loop thread with entry-count (rather than byte-size) cache caps.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="strategy-section" id="ecosystem-alignment" tabindex="-1" aria-labelledby="ecosystem-heading">
+          <p class="section-kicker">Cross-repository status</p>
+          <h2 id="ecosystem-heading">How the four connected applications align with <code>wahs-engine</code> right now</h2>
+          <p>
+            Four codebases call <code>wahs-engine</code> or import <code>wahs_core</code>. Today, the 12-patient full-stack web and mobile branches depend on open <a href="https://github.com/pmanko/wahs-engine/pull/10"><code>wahs-engine#10</code> ↗</a> (which adds 12-persona HAPI/Keycloak seeding, pathway model suffixes like <code>wahs-26b-rag</code>, and <code>@&lt;budget&gt;</code> overrides).
+          </p>
+
+          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Status of the four applications connected to wahs-engine">
+            <table class="strategy-table">
+              <thead>
+                <tr>
+                  <th scope="col" style="width: 24%;">Connected Repo</th>
+                  <th scope="col" style="width: 22%;">Current Branch State</th>
+                  <th scope="col" style="width: 54%;">What Works Today &amp; Any Contract Mismatch</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>WAHS Web App</strong><br /><a href="https://github.com/pmanko/shl-ips"><code>pmanko/shl-ips</code> ↗</a></td>
+                  <td><code>main</code> + <span class="sev-pill pr">Open PR #2</span></td>
+                  <td><code>main</code> isolates chat history by clinic scope and sharing posture; <code>PR #2</code> adds the 12-persona picker and 4-pathway/budget controls (requires <code>wahs-engine#10</code> merged first).</td>
+                </tr>
+                <tr>
+                  <td><strong>Mobile Companion</strong><br /><a href="https://github.com/pmanko/wahs-mobile-frontend"><code>wahs-mobile-frontend</code> ↗</a></td>
+                  <td><code>main</code> + <span class="sev-pill pr">Open PR #2</span></td>
+                  <td>On <code>main</code>, picking a <code>-raw</code> model in the dropdown fails because the BFF strips strategy flags; <code>PR #2</code> fixes strategy forwarding and full-stack Keycloak/SHL flows (requires <code>wahs-engine#10</code>).</td>
+                </tr>
+                <tr>
+                  <td><strong>Med Agent Hub</strong><br /><a href="/med-agent-hub/index.html"><code>med-agent-hub</code> →</a></td>
+                  <td><code>main</code> (<code>532913d</code>)</td>
+                  <td>Pinned to exact <code>wahs-engine</code> <code>main</code> (<code>85fb799</code>) for extractors, normalizers, condenser, and tools, but still carries a local copy of <code>clinical_graph.py</code> and has not yet wired <code>temporal_digest</code>.</td>
+                </tr>
+                <tr>
+                  <td><strong>Validation Harness</strong><br /><a href="/validation-harness/index.html"><code>validation-harness</code> →</a></td>
+                  <td><code>main</code> + <span class="sev-pill pr">Open PR #219</span></td>
+                  <td>Works cleanly against <code>wahs-engine</code> <code>main</code> up to 16k budgets; for 32k runs, the engine container must set <code>WAHS_CHART_BUDGET_CEILING=none</code> because the harness strips <code>@32k</code> client-side.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="strategy-section" id="empirical-benchmarks" tabindex="-1" aria-labelledby="benchmarks-heading">
+          <p class="section-kicker">Benchmark evidence</p>
+          <h2 id="benchmarks-heading">Latest 900-cell H200 evaluation across pathways and Gemma 4 sizes</h2>
+          <p>
+            Two 900-cell studies on UW CIRG's NVIDIA H200 (141 GB) tested the remediated engine with two independent frontier AI judges: the published <a href="https://reports.openclinai.org/2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration/index.html">14 November <code>16k vs. 32k</code> Calibration ↗</a> (confirming a 16k chart budget is both slightly more accurate and 11% faster than 32k) and the <strong>16 November 4-Pathway Benchmark</strong> across 75 clinical and privacy scenarios on three complex multi-clinic and ICU charts (staged in <a href="https://github.com/pmanko/openclinai.org/pull/49"><code>openclinai.org#49</code> ↗</a>).
+          </p>
+
+          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="900-cell 4-pathway WAHS Engine benchmark results">
+            <table class="strategy-table">
+              <thead>
+                <tr>
+                  <th scope="col" style="width: 34%;">Pathway &amp; Open-Weight Model</th>
+                  <th scope="col" style="width: 14%;">Score / 100</th>
+                  <th scope="col" style="width: 16%;">Safety-Adj.</th>
+                  <th scope="col" style="width: 18%;">Confirmed Unsafe</th>
+                  <th scope="col" style="width: 18%;">Median Wait</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="highlight-row">
+                  <td><strong>Gemma 4 26B &middot; 16k Chart + 4-Layer KB</strong> <span class="safe-pill">#1 Overall</span></td>
+                  <td><span class="score-pill">85.1</span></td>
+                  <td><strong>84.1</strong></td>
+                  <td><span class="safe-pill">0 of 75</span></td>
+                  <td><strong>3.4 s</strong></td>
+                </tr>
+                <tr class="highlight-row">
+                  <td><strong>Gemma 4 26B &middot; 16k Chart + Note-RAG &amp; KB</strong></td>
+                  <td><span class="score-pill">83.4</span></td>
+                  <td><strong>82.2</strong></td>
+                  <td>1 of 75</td>
+                  <td>4.9 s</td>
+                </tr>
+                <tr>
+                  <td><strong>Gemma 4 12B &middot; 16k Chart + Note-RAG &amp; KB</strong></td>
+                  <td><span class="score-pill">82.8</span></td>
+                  <td>81.6</td>
+                  <td><span class="safe-pill">0 of 75</span></td>
+                  <td>6.5 s</td>
+                </tr>
+                <tr>
+                  <td><strong>Gemma 4 12B &middot; 16k Chart + 4-Layer KB</strong></td>
+                  <td><span class="score-pill">82.0</span></td>
+                  <td>80.4</td>
+                  <td>2 of 75</td>
+                  <td>5.7 s</td>
+                </tr>
+                <tr>
+                  <td>Gemma 4 12B / 26B &middot; 16k Condensed Chart Only</td>
+                  <td>79.1 / 79.1</td>
+                  <td>77.4 / 77.3</td>
+                  <td>1 / 2 of 75</td>
+                  <td>3.3 s / 2.2 s</td>
+                </tr>
+                <tr>
+                  <td>Gemma 4 E4B (4B) &middot; 16k Chart Only / + KB</td>
+                  <td>76.9 / 73.3</td>
+                  <td>74.8 / 70.3</td>
+                  <td>2 / 3 of 75</td>
+                  <td><strong>1.8 s</strong> / 3.0 s</td>
+                </tr>
+                <tr>
+                  <td><strong>Agentic Tool-Calling Over 2k Summary (26B / 12B / E4B)</strong></td>
+                  <td>69.4 / 66.7 / 65.8</td>
+                  <td>64.4 / 61.8 / 60.4</td>
+                  <td><span class="sev-pill p0">7 / 7 / 10 of 75</span></td>
+                  <td>2.6 s / 4.4 s / 2.1 s</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="strategy-section" id="audit-findings" tabindex="-1" aria-labelledby="findings-heading">
+          <p class="section-kicker">Code audit findings &amp; action plan</p>
+          <h2 id="findings-heading">What our deep audit found to fix next</h2>
+          <p>
+            Reviewing all 18 Python modules and 5 rule packs surfaced 27 concrete engineering items. Rather than a flat bug list, the four steps below sequence them by real-world risk, followed by expandable file-and-line tables for implementers.
+          </p>
+
+          <ol class="steps" id="remediation-sequence">
+            <li>
+              <h3>Fix 3 regressions on <code>wahs-engine</code> PR #10 before merging the 12-patient stack <span class="step-tag">Priority 1 &middot; Blocker</span></h3>
+              <p>Use a shared app-level HTTP client pool so single-flight dataset coalescing cannot close a disconnected request's socket under a concurrent request (<strong>E1</strong>); cap <code>@&lt;budget&gt;</code> model suffixes so a large number cannot allocate unbounded GPU memory (<strong>E2</strong>); and write refreshed datasets back into <code>_dataset_cache</code> on <code>refresh=True</code> (<strong>E3</strong>).</p>
+            </li>
+            <li>
+              <h3>Tighten sensitive-record redaction and invalidated FHIR status filters in <code>wahs_core</code> <span class="step-tag">Priority 2 &middot; Clinical &amp; Privacy</span></h3>
+              <p>Scan medication/procedure/goal reasons and clinic names at extraction time so lookup tools never leak sensitive entries during external sharing (<strong>C1</strong>), expand uncoded MOUD/HIV medication patterns and fail closed on unknown posture strings (<strong>C2</strong>), filter out <code>entered-in-error</code> and <code>not-done</code> allergies, procedures, child panel labs, and appointments (<strong>C3</strong>), and extract <code>DiagnosticReport.conclusion</code> plus list-valued <code>MedicationStatement.dosage</code> (<strong>C4</strong>).</p>
+            </li>
+            <li>
+              <h3>Harden streaming error handling, truncated reasoning stripping, and local JWT defense-in-depth <span class="step-tag">Priority 3 &middot; Runtime</span></h3>
+              <p>Strip unclosed <code>&lt;think&gt;</code> blocks when output hits <code>max_tokens</code> (<strong>E5</strong>), validate prompt budgets before sending HTTP 200 SSE headers (<strong>E6</strong>), add optional local Keycloak JWKS signature verification alongside <code>fhir-auth</code> (<strong>E4</strong>), and move CPU-heavy condensation onto worker threads with byte-bounded caches (<strong>E9</strong>).</p>
+            </li>
+            <li>
+              <h3>Finish aligning downstream callers and reference docs <span class="step-tag">Priority 4 &middot; Cleanup</span></h3>
+              <p>Merge <code>shl-ips#2</code> and <code>wahs-mobile-frontend#2</code> once Step 1 lands, point Med Agent Hub's local <code>clinical_graph.py</code> copy back to shared <code>wahs_core</code>, and sync internal doc files with the current 7-edge graph and tokenizer dependencies.</p>
+            </li>
+          </ol>
+
+          <details class="internals-details">
+            <summary>Inspect full <code>wahs_engine</code> runtime &amp; <code>PR #10</code> code-audit table (<code>E1&ndash;E11</code>, with file &amp; line numbers)</summary>
+            <div class="internals-details-body">
+              <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="wahs_engine runtime and PR 10 audit findings">
+                <table class="strategy-table">
+                  <thead>
+                    <tr>
+                      <th scope="col" style="width: 14%;">ID &amp; Severity</th>
+                      <th scope="col" style="width: 26%;">Location &amp; Scope</th>
+                      <th scope="col" style="width: 60%;">Defect Mechanism &amp; Impact</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>E1</strong><br /><span class="sev-pill p0">P0 Critical</span></td>
+                      <td><code>assembler.py:737, 894&ndash;933, 1034</code><br /><span class="sev-pill pr">PR #10</span></td>
+                      <td><strong>Single-flight coalescing closes request-local <code>httpx.AsyncClient</code>:</strong> Request 1's request-local client is captured inside <code>asyncio.shield(task)</code> in <code>_inflight_datasets</code>. If Request 1 disconnects or times out while concurrent Request 2 awaits pagination, Request 1's <code>finally</code> closes the client and crashes Request 2 with <code>RuntimeError</code>.</td>
+                    </tr>
+                    <tr>
+                      <td><strong>E2</strong><br /><span class="sev-pill p0">P0 High</span></td>
+                      <td><code>config.py:72&ndash;79, 238&ndash;251</code>, <code>upstream.py:462</code><br /><span class="sev-pill pr">PR #10</span></td>
+                      <td><strong>Unbounded <code>@&lt;budget&gt;</code> suffix bypasses ceilings:</strong> Parsing arbitrary integers (e.g. <code>wahs-12b-kb@500000k</code>) sets <code>context_window = req_b * 2</code> and forwards huge <code>num_ctx</code> values to Ollama/LiteLLM, risking GPU VRAM exhaustion.</td>
+                    </tr>
+                    <tr>
+                      <td><strong>E3</strong><br /><span class="sev-pill p0">P0 High</span></td>
+                      <td><code>assembler.py:920&ndash;944</code><br /><span class="sev-pill pr">PR #10</span></td>
+                      <td><strong><code>refresh=True</code> skips <code>_dataset_cache.put()</code>:</strong> Leaves stale resources in <code>_dataset_cache</code> after in-place HAPI edits (where <code>Patient.meta.lastUpdated</code> is unchanged), serving pre-refresh records on subsequent turns with a new budget or scope.</td>
+                    </tr>
+                    <tr>
+                      <td><strong>E4</strong><br /><span class="sev-pill p0">P0 High</span></td>
+                      <td><code>jwt_claims.py:81&ndash;102</code>, <code>config.py:81&ndash;87</code><br /><code>main</code> &amp; <code>PR #10</code></td>
+                      <td><strong>No local RS256 JWKS verification:</strong> Relies 100% on upstream <code>fhir-auth</code> to reject forged tokens while guarding <code>fhir_auth_base_url</code> only via substring check <code>"fhir-internal" not in url</code>; explicit <code>master_patient_id</code> also skips local identifier ownership checks.</td>
+                    </tr>
+                    <tr>
+                      <td><strong>E5</strong><br /><span class="sev-pill p0">P0 High</span></td>
+                      <td><code>upstream.py:149&ndash;155</code><br /><code>main</code> &amp; <code>PR #10</code></td>
+                      <td><strong>Unclosed <code>&lt;think&gt;</code> leak on length truncation:</strong> <code>clean_model_text()</code> requires closing <code>&lt;/think&gt;</code> or <code>&lt;channel|&gt;</code>; if <code>finish_reason == "length"</code> cuts off mid-thought in <code>complete()</code>, raw reasoning is returned verbatim.</td>
+                    </tr>
+                    <tr>
+                      <td><strong>E6</strong><br /><span class="sev-pill p1">P1 Medium</span></td>
+                      <td><code>app.py:168&ndash;177</code>, <code>upstream.py:1281&ndash;1362</code><br /><code>main</code> &amp; <code>PR #10</code></td>
+                      <td><strong><code>stream=True</code> sends HTTP 200 before sizing &amp; upstream connect:</strong> Prompt-window 422 errors or upstream 5xx responses abort the SSE stream mid-flight instead of returning clean HTTP status codes.</td>
+                    </tr>
+                    <tr>
+                      <td><strong>E7&ndash;E11</strong><br /><span class="sev-pill p2">P1 / P2</span></td>
+                      <td><code>upstream.py</code>, <code>assembler.py</code>, <code>config.py</code>, <code>docs/</code></td>
+                      <td>
+                        <strong>E7:</strong> PR #10 <code>reset_content: true</code> duplicates preamble in vanilla OpenAI SDKs, and <code>dynamic_fhir_tools</code> skips <code>x_wahs_stream</code>.<br />
+                        <strong>E8:</strong> Non-dict JSON tool <code>arguments</code> (<code>"null"</code>, <code>"[]"</code>) or non-numeric <code>limit</code> raises 500.<br />
+                        <strong>E9:</strong> Synchronous CPU condensation/BM25 runs on the event loop without <code>asyncio.to_thread()</code>, and per-request HTTP clients skip connection pooling.<br />
+                        <strong>E10:</strong> PR #10 <code>resolve_model_spec</code> omits <code>cross_key</code>, ignores <code>WAHS_DEFAULT_MODEL</code> suffixes when <code>model=None</code>, and maps <code>wahs-qwen3-*</code> to <code>gemma4</code> tokenizer.<br />
+                        <strong>E11:</strong> Drops <code>top_p</code>/<code>stop</code>/<code>user</code> and <code>stream_options.include_usage</code>; Mode-A category scoping no-ops; repo docs omit <code>tokenizers</code>/<code>tiktoken</code>.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </details>
+
+          <details class="internals-details">
+            <summary>Inspect full <code>wahs_core</code> clinical, FHIR status &amp; privacy code-audit table (<code>C1&ndash;C10</code>, with file &amp; line numbers)</summary>
+            <div class="internals-details-body">
+              <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="wahs_core clinical and privacy audit findings">
+                <table class="strategy-table">
+                  <thead>
+                    <tr>
+                      <th scope="col" style="width: 14%;">ID &amp; Severity</th>
+                      <th scope="col" style="width: 26%;">Location (<code>src/wahs_core/</code>)</th>
+                      <th scope="col" style="width: 60%;">Defect Mechanism &amp; Impact</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>C1</strong><br /><span class="sev-pill p0">P0 High</span></td>
+                      <td><code>extractors.py:1062, 1857, 1913, 1958</code> + <code>wahs_tools.py:30&ndash;34</code></td>
+                      <td><strong>Tool privacy bypass via unclassified <code>reasons</code>/<code>source_org</code>/<code>notes</code>:</strong> Sensitivity on meds, procedures, care plans, and goals checks only <code>(code, display)</code> at extraction. Unlike <code>condenser.py</code>, <code>wahs_tools._is_privacy_redacted()</code> checks only <code>item.sensitivity</code>, allowing <code>search_chart_entries</code> to return items with sensitive reasons/orgs under <code>external_share</code>.</td>
+                    </tr>
+                    <tr>
+                      <td><strong>C2</strong><br /><span class="sev-pill p0">P0 High</span></td>
+                      <td><code>wahs_tools.py:30</code>, <code>temporal_digest.py:419</code>, <code>clinical_graph.py:877</code> + <code>kb_data/*</code></td>
+                      <td><strong>Fail-open posture checks &amp; uncoded MOUD/ARV gaps:</strong> Direct calls test <code>sharing_posture == "external_share"</code> without rejecting unknown posture strings, and lexical sensitivity patterns omit uncoded MOUD (<code>buprenorphine</code>, <code>suboxone</code>, <code>naltrexone</code>), HIV antiretrovirals, and WA MHMDA medications when <code>meta.security</code> is absent.</td>
+                    </tr>
+                    <tr>
+                      <td><strong>C3</strong><br /><span class="sev-pill p0">P0 High</span></td>
+                      <td><code>extractors.py:823, 929, 1147, 1227, 1627, 1845, 2189</code></td>
+                      <td><strong>Invalidated FHIR statuses rendered as active/completed:</strong> <code>entered-in-error</code>/<code>refuted</code> allergies stay <code>mandatory=True</code>; <code>Procedure</code> omits <code>not-done</code>/<code>entered-in-error</code> filtering and status text; <code>DiagnosticReport</code> appends invalid child <code>Observation</code> text (<code>L1627</code>); <code>DocumentReference</code> ignores <code>entered-in-error</code>; and <code>cancelled</code>/<code>noshow</code> appointments render as <code>[planned]</code>.</td>
+                    </tr>
+                    <tr>
+                      <td><strong>C4</strong><br /><span class="sev-pill p0">P0 High</span></td>
+                      <td><code>extractors.py:304, 1022, 1262, 1461</code></td>
+                      <td><strong>Dropped conclusions &amp; dosages:</strong> <code>DiagnosticReport.conclusion</code> is never read, reports without <code>result[]</code> or inline base64 attachments are dropped, and <code>MedicationStatement.dosage[]</code> (a JSON list) plus <code>MedicationAdministration.dosage.dose</code> are skipped.</td>
+                    </tr>
+                    <tr>
+                      <td><strong>C5</strong><br /><span class="sev-pill p1">P1 Medium</span></td>
+                      <td><code>normalizers.py:32, 177&ndash;188</code></td>
+                      <td><strong>Electrolyte salt stripping:</strong> <code>_DOSE_NOISE</code> strips <code>potassium</code>, <code>sodium</code>, and <code>calcium</code>, turning <em>Potassium Citrate</em> into <code>"citrate"</code> (missing hyperkalemia rules) and merging <em>Sodium Bicarbonate</em> with <em>Potassium Bicarbonate</em>.</td>
+                    </tr>
+                    <tr>
+                      <td><strong>C6</strong><br /><span class="sev-pill p1">P1 Medium</span></td>
+                      <td><code>clinical_graph_rules.json:439, 661&ndash;690</code>, <code>clinical_graph.py:1584</code></td>
+                      <td><strong>Note-cue punctuation &amp; HbA1c directionality:</strong> Trailing spaces in <code>"resumed "</code> miss sentence-final <code>"Lisinopril was resumed."</code>; <code>"outside"</code> triggers false note alerts on <code>"outside pharmacy"</code>; and elevated HbA1c triggers a false <em>Hypoglycemia risk</em> edge via <code>is_abn</code> fallback.</td>
+                    </tr>
+                    <tr>
+                      <td><strong>C7&ndash;C10</strong><br /><span class="sev-pill p2">P1 / P2</span></td>
+                      <td><code>clinical_graph.py</code>, <code>temporal_digest.py</code>, <code>extractors.py</code>, <code>kb.py</code></td>
+                      <td>
+                        <strong>C7:</strong> Graph groups trajectories without unit; <code>temporal_digest</code> invalidates multi-year trends when any point lacks a timezone, omits comparators, and counts <code>"on-hold"</code> meds as stopped.<br />
+                        <strong>C8:</strong> Unused KB keys in <code>normalizers.py</code> (<code>irule["label"]</code>, <code>heart_failure_stage</code>, 14-day vs. 28-day vaccine duplicate window).<br />
+                        <strong>C9:</strong> <code>_coding_pair()</code> checks only <code>coding[0]</code>, missing SNOMED/LOINC/RxNorm when ICD-10-CM appears first.<br />
+                        <strong>C10:</strong> <code>kb.py</code> shares an unlocked <code>sqlite3.Connection</code> across threads, and <code>__pycache__</code> retains stale <code>.pyc</code> files.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <p class="back-to-top"><a href="#top">Back to top <span aria-hidden="true">↑</span></a></p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="page-width footer-grid">
+      <div>
+        <a class="brand footer-brand" href="/index.html">
+          <span class="brand-mark" aria-hidden="true"><span></span></span>
+          <span>OpenClinAI</span>
+        </a>
+        <p>
+          Open-source tools for clinical questions, reporting and reproducible evaluation from the <a href="https://digi.uw.edu/">University of Washington Digital Initiatives Group at I-TECH (DIGI)</a>.
+        </p>
+      </div>
+      <nav aria-label="Project links">
+        <a href="/chartsearchai/index.html">ChartSearchAI</a>
+        <a href="/catalyst/index.html">Catalyst</a>
+        <a href="/med-agent-hub/index.html">Med Agent Hub</a>
+        <a href="/validation-harness/index.html">Validation Harness</a>
+        <a href="/experiments/index.html">Post-Training &amp; Lab</a>
+        <a href="/projects/index.html">Applied Projects</a>
+      </nav>
+      <p class="footer-disclaimer">
+        For research and demonstration. AI output can be inaccurate and requires review.<br />
+        <a href="https://reports.openclinai.org/">Evaluation Reports</a> &middot; <a href="/docs/openmrs-upstream/index.html">OpenMRS Upstream PRs</a>
+      </p>
+    </div>
+  </footer>
+  <script type="module" src="/wahs/toc.js"></script>
+</body>
+</html>
