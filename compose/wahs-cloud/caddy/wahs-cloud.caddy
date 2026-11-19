@@ -1,0 +1,56 @@
+(wahs_whitelist_gate) {
+	header X-Robots-Tag "noindex, nofollow"
+	forward_auth wahs-auth-gate:8096 {
+		uri /auth/verify
+		copy_headers X-WAHS-Auth-Email X-WAHS-Auth-Name
+	}
+}
+
+wahealth.openclinai.org {
+	import wahs_whitelist_gate
+	reverse_proxy wahs-auth-gate:8096
+}
+
+wahs-web.openclinai.org {
+	import wahs_whitelist_gate
+
+	handle /realms/* {
+		reverse_proxy wahs-keycloak:8080
+	}
+	handle /resources/* {
+		reverse_proxy wahs-keycloak:8080
+	}
+	handle /fhir* {
+		reverse_proxy wahs-fhir-auth:8080
+	}
+	handle_path /shl-server/* {
+		reverse_proxy wahs-shl-server:8000
+	}
+	handle /api/chat* {
+		reverse_proxy wahs-shl-ips:4000 {
+			flush_interval -1
+		}
+	}
+	handle {
+		reverse_proxy wahs-shl-ips:4000
+	}
+}
+
+wahs-mobile.openclinai.org {
+	import wahs_whitelist_gate
+
+	handle /fhir* {
+		reverse_proxy wahs-fhir-auth:8080
+	}
+	handle_path /shl-server/* {
+		reverse_proxy wahs-shl-server:8000
+	}
+	handle /api/chat* {
+		reverse_proxy wahs-mobile-frontend:4001 {
+			flush_interval -1
+		}
+	}
+	handle {
+		reverse_proxy wahs-mobile-frontend:4001
+	}
+}

@@ -195,7 +195,7 @@ fi
 if [ "${PUBLISH_MODE}" = "--landing-only" ]; then
   gcp_ssh "mkdir -p ${GCP_REMOTE_REPO}/landing"
 else
-  gcp_ssh "mkdir -p ${GCP_REMOTE_REPO}/landing ${GCP_REMOTE_REPO}/artifacts/reports ${GCP_REMOTE_REPO}/artifacts/previews ${GCP_REMOTE_REPO}/compose/website"
+  gcp_ssh "mkdir -p ${GCP_REMOTE_REPO}/landing ${GCP_REMOTE_REPO}/artifacts/reports ${GCP_REMOTE_REPO}/artifacts/previews ${GCP_REMOTE_REPO}/compose/website/gate.d ${GCP_REMOTE_REPO}/compose/website/sites.d"
 fi
 
 echo "==> syncing tested landing files only"
@@ -233,7 +233,7 @@ else
   else
     echo "==> proxy config unchanged; ensuring the proxy is running"
   fi
-  gcp_ssh "cd ${GCP_REMOTE_REPO} && chmod 600 compose/website/.env.website && docker compose --project-name openclinai-website --env-file compose/website/.env.website -f compose/website/services.yml up -d --no-deps ${RECREATE}proxy"
+  gcp_ssh "cd ${GCP_REMOTE_REPO} && chmod 600 compose/website/.env.website && (docker network create openclinai-edge >/dev/null 2>&1 || true) && docker compose --project-name openclinai-website --env-file compose/website/.env.website -f compose/website/services.yml up -d --no-deps ${RECREATE}proxy"
 fi
 
 if [ "${PUBLISH_MODE}" = "--landing-only" ]; then
