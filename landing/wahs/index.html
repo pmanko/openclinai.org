@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>WA Health Summary (WAHS) — OpenClinAI</title>
+  <title>WA Health Summary (WAHS) &middot; OpenClinAI</title>
   <meta name="description" content="Patient-mediated health summaries from real-world FHIR R4 records: condense fragmented multi-clinic exports, surface cross-clinic conflicts, share curated IPS summaries, and ask questions backed by source records." />
   <link rel="canonical" href="https://openclinai.org/wahs/" />
   <meta property="og:url" content="https://openclinai.org/wahs/" />
-  <meta property="og:title" content="WA Health Summary (WAHS) — OpenClinAI" />
+  <meta property="og:title" content="WA Health Summary (WAHS) &middot; OpenClinAI" />
   <meta property="og:description" content="Condense fragmented FHIR R4 health records, surface cross-clinic medication and diagnosis conflicts, and ask questions with clickable source citations." />
   <meta property="og:image" content="https://openclinai.org/wahs/walkthrough/media/step3-citation-drawer.webp" />
   <meta name="theme-color" content="#4b2e83" />
@@ -59,7 +59,7 @@
         <a href="/wahs/engine-audit/index.html">Engine Audit</a>
         <a href="/wahs/walkthrough/index.html">Sandbox Walkthrough</a>
         <a href="https://wahs-demo.openclinai.org/">Live Sandbox <span aria-hidden="true">↗</span></a>
-        <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">9-Model Benchmark <span aria-hidden="true">↗</span></a>
+        <a href="https://reports.openclinai.org/2026-11-16-wahs-engine-4pathway-sheet-eval/index.html">4-Pathway H200 Eval <span aria-hidden="true">↗</span></a>
       </nav>
     </div>
   </div>
@@ -84,7 +84,7 @@
           <div class="project-actions">
             <a class="button button-primary" href="https://wahs-demo.openclinai.org/">Open WAHS Explorer Sandbox <span aria-hidden="true">↗</span></a>
             <a class="button button-secondary" href="/wahs/llm-strategy/index.html">AI Strategy &amp; Architecture <span aria-hidden="true">→</span></a>
-            <a class="text-link" href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">Read 9-Model Benchmark <span aria-hidden="true">↗</span></a>
+            <a class="text-link" href="https://reports.openclinai.org/2026-11-16-wahs-engine-4pathway-sheet-eval/index.html">Read 900-Cell H200 Benchmark <span aria-hidden="true">↗</span></a>
           </div>
         </div>
 
@@ -124,14 +124,14 @@
           <span>01 · Non-Destructive Condensation</span>
           <h3>Shrink multi-megabyte charts by 90%–99% without losing clinical facts</h3>
           <p>
-            Multi-year FHIR R4 exports can exceed 18.4 MB and 7,099 entries (~1.35M raw JSON tokens; 251,641 extracted clinical tokens). Our deterministic condenser strips transport boilerplate and duplicate Base64 note wrappers across nine token budgets (<code>256k</code> down to <code>1k</code>) in <em>Lossless Verbatim</em> or <em>Grouped Renewal-Folded</em> mode—prioritizing the HL7 IPS safety core (allergies, active medications, active problems, and implants) and indexing any trimmed history in a <code>Completeness Manifest</code> for on-demand lookup.
+            Multi-year FHIR R4 exports can exceed 18.4 MB and 7,099 entries (~1.35M raw JSON tokens; 251,641 extracted clinical tokens). Our deterministic condenser strips transport boilerplate and duplicate Base64 note wrappers across nine token budgets (<code>256k</code> down to <code>1k</code>) in <em>Lossless Verbatim</em> or <em>Grouped Renewal-Folded</em> mode, prioritizing the HL7 IPS safety core (allergies, active medications, active problems, and implants) and indexing any trimmed history in a <code>Completeness Manifest</code> for on-demand lookup.
           </p>
         </article>
         <article>
           <span>02 · Pre-Generation Clinical Reconciliation</span>
           <h3>Surface cross-clinic duplicates and conflicts as reviewable findings</h3>
           <p>
-            Duplicate prescriptions, brand-versus-generic overlaps, conflicting kidney-disease stages, and hospital discharge notes instructing a patient to hold an active outpatient pill are clinical signals about care fragmentation—never noise to be silently deleted. Deterministic reconciliation skills and a patient <code>ClinicalEntityGraph</code> inspect the full record before generation and highlight <em>Source A vs. Source B</em> discrepancies.
+            Duplicate prescriptions, brand-versus-generic overlaps, conflicting kidney-disease stages, and hospital discharge notes instructing a patient to hold an active outpatient pill are clinical signals about care fragmentation, never noise to be silently deleted. Deterministic reconciliation skills and a patient <code>ClinicalEntityGraph</code> inspect the full record before generation and highlight <em>Source A vs. Source B</em> discrepancies.
           </p>
         </article>
         <article>
@@ -270,27 +270,27 @@
             <h3>Latest WAHS evaluation reports</h3>
             <ul class="resource-links">
               <li>
+                <a href="https://reports.openclinai.org/2026-11-16-wahs-engine-4pathway-sheet-eval/index.html">
+                  <span class="resource-link-title"><span>4-Pathway × Gemma 4 H200 Benchmark (900 Cells)</span><span aria-hidden="true">↗</span></span>
+                  <span class="resource-link-description">900 blinded runs on UW CIRG NVIDIA H200 across 75 clinical and privacy scenarios: Gemma 4 26B + Condensation &amp; 4-Layer KB (16k) leads at 85.1/100 with 0/75 confirmed unsafe answers, 3.4s median wait, and 99.8% resolved <code>[N]</code> citations.</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://reports.openclinai.org/2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration/index.html">
+                  <span class="resource-link-title"><span>16k vs. 32k Chart Budget Calibration (900 Cells)</span><span aria-hidden="true">↗</span></span>
+                  <span class="resource-link-description">Confirms a 16,384-token condensed chart budget outperforms 32k on overall score and is 11% faster across Gemma 4 E4B, 12B, and 26B while verifying 32k safety on dense longitudinal exports.</span>
+                </a>
+              </li>
+              <li>
                 <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">
-                  <span class="resource-link-title"><span>9-Model × 3-Pathway Clinical Synthesis Benchmark</span><span aria-hidden="true">↗</span></span>
-                  <span class="resource-link-description">972 live runs across Gemma 4, Qwen 3, and Llama 3.x / Hermes 3 (graded blind by Claude Opus 4.6 and GPT-5.4): Gemma 4 26B + Hub leads at 82.1/100, and Gemma 4 12B + Hub reaches 80.5/100 with 2/36 unsafe answers and 0 fabricated citations.</span>
-                </a>
-              </li>
-              <li>
-                <a href="https://reports.openclinai.org/2026-11-04-wahs-macbook-direct-vs-hub-multi-scenario-eval/index.html">
-                  <span class="resource-link-title"><span>Compact-Budget Overflow Lookup vs. Direct 96k Context</span><span aria-hidden="true">↗</span></span>
-                  <span class="resource-link-description">Demonstrates how pre-call Tier-0 overflow retrieval recovers +19 to +21 benchmark points when tight 1k budgets omit historical labs or notes.</span>
-                </a>
-              </li>
-              <li>
-                <a href="https://reports.openclinai.org/2026-11-03-wahs-huge-context-and-hub-graph-eval/index.html">
-                  <span class="resource-link-title"><span>1k–128k Context Windows &amp; Clinical Entity Graph</span><span aria-hidden="true">↗</span></span>
-                  <span class="resource-link-description">Evaluates PhysioNet MIMIC-IV-FHIR 2.0 ICU and 53-year longitudinal charts across 1k to 128k budgets, showing why engine-side 8k–16k condensation prevents silent GPU context truncation.</span>
+                  <span class="resource-link-title"><span>9-Model × 3-Pathway Cross-Family Screening</span><span aria-hidden="true">↗</span></span>
+                  <span class="resource-link-description">972 live runs across Gemma 4, Qwen 3, and Llama 3.x / Hermes 3 showing structured clinical enrichment improves 7 of 9 open-weight models and establishes Gemma 4 26B and 12B as the top open-weight tiers.</span>
                 </a>
               </li>
               <li>
                 <a href="https://reports.openclinai.org/#wahs">
                   <span class="resource-link-title"><span>Browse All Published WAHS Reports</span><span aria-hidden="true">↗</span></span>
-                  <span class="resource-link-description">Full archive including the 7-family profile ablation, local GGUF screening funnel, and Phase 2 deterministic pipeline gate.</span>
+                  <span class="resource-link-description">Full archive including the 3-seed Retrieval &amp; Portability study, 1k-128k context spectrum, and deterministic condensation gates.</span>
                 </a>
               </li>
             </ul>
@@ -302,7 +302,7 @@
               <li>
                 <a href="/wahs/engine-audit/index.html">
                   <span class="resource-link-title"><span>WAHS Engine Architectural &amp; Functional Audit</span><span aria-hidden="true">→</span></span>
-                  <span class="resource-link-description">End-to-end architecture diagram, foundational standards links, 4-layer <code>wahs_core</code> and <code>wahs_engine</code> code audit, 900-cell H200 benchmark readout, and prioritized remediation register.</span>
+                  <span class="resource-link-description">End-to-end architecture diagram, explicit scope and non-goals, foundational standards links, 900-cell H200 benchmark readout, and verified 27-item remediation ledger across <code>wahs_core</code> and <code>wahs_engine</code>.</span>
                 </a>
               </li>
               <li>

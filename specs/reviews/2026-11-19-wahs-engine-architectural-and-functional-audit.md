@@ -1,30 +1,28 @@
-# WAHS Engine Architectural & Functional Audit (19 November 2026)
+# WAHS Engine Architectural & Functional Audit (Verified Baseline · 25 November 2026)
 
 Public page: [`landing/wahs/engine-audit/index.html`](../../landing/wahs/engine-audit/index.html) (`https://openclinai.org/wahs/engine-audit/`).
 
-## Audited revisions and test verification
+## Audited and remediated revisions
 
-- **`pmanko/wahs-engine` `main` (`85fb799987ddc3ff5ce89d701f4f468d9921483d`):**
-  - Production footprint: `8,893` LOC in pure-stdlib `src/wahs_core/` (`extractors.py`, `clinical_graph.py`, `condenser.py`, `temporal_digest.py`, `normalizers.py`, `wahs_tools.py`, `kb_lookup.py`, `kb.py`, `chart_serializer.py`) + `2,115` lines across 5 offline clinical KB packs (`src/wahs_core/kb_data/`) + `4,392` LOC in FastAPI runtime `src/wahs_engine/` (`upstream.py`, `assembler.py`, `seeder.py`, `config.py`, `app.py`, `tokenizers_registry.py`, `jwt_claims.py`, `schemas.py`).
-  - Test execution: `81 passed, 2 skipped` (`101.88s`).
-- **`pmanko/wahs-engine` open PR #10 (`s6/seed-all-12-demo-profiles` @ `193cf1a`):**
-  - Delta over `main`: `+1,820 / -80` lines across `src/wahs_engine/` and `tests/` (`0` lines modified in `src/wahs_core/`), adding 12-persona HAPI star-graph seeding + Keycloak 26 user sync, `parse_wahs_profile_spec` (4 pathways + `@<budget>` suffixes), 96-character SSE lookahead streaming (`x_wahs_stream`), and single-flight cold dataset fetch coalescing.
-  - Test execution: `86 passed, 2 skipped` (`103.75s`).
-- **Companion repository state:**
-  - `pmanko/shl-ips`: `main` `@ 63d183d` (PR #1 merged), open PR #2 (`17e4fc9`).
-  - `pmanko/wahs-mobile-frontend`: `main` `@ f536318` (PR #1 merged), open PR #2 (`d70a827`).
-  - `pmanko/med-agent-hub`: `main` `@ 532913d` (pins `wahs-engine` at `85fb799`).
-  - `pmanko/clinical-ai-validation-harness`: `main` `@ 59ad40a` (unified `wahs` runner after PR #218), open PR #219 (`ee01bca`).
+- **`pmanko/wahs-engine` `main` (`808d16ace8898aeef9b72b5c20d3cd40fb949452`, via `PR #10`, `PR #11`, and `PR #12`):**
+  - Production footprint: pure-stdlib `src/wahs_core/` (`extractors.py`, `clinical_graph.py`, `condenser.py`, `temporal_digest.py`, `normalizers.py`, `wahs_tools.py`, `kb_lookup.py`, `kb.py`, `chart_serializer.py`, verified under `python -S`) + 5 offline clinical KB packs (`src/wahs_core/kb_data/`) + FastAPI runtime `src/wahs_engine/` (`upstream.py`, `assembler.py`, `seeder.py`, `config.py`, `app.py`, `tokenizers_registry.py`, `jwt_claims.py`, `schemas.py`).
+  - Test execution: `94 passed, 2 deselected` offline (`pytest -q -k "not live_hapi"`) + all 3 GitHub Actions jobs passing (`unit-and-contract`, `docker-smoke`, `live-hapi-jwt-proxy-integration`, `96/96` total tests).
+- **Companion repository state (all clean and aligned on `main`):**
+  - `pmanko/shl-ips`: `main` `@ cc119af` (`PR #2` and `PR #3` merged).
+  - `pmanko/wahs-mobile-frontend`: `main` `@ a35ac01` (`PR #2` and `PR #3` merged).
+  - `pmanko/med-agent-hub`: `main` `@ 532913d` (imports shared `wahs_core`; optional follow-up pin bump from `85fb799` to `808d16a`).
+  - `pmanko/clinical-ai-validation-harness`: `main` `@ 08f40fc` (`PR #219` merged).
 
-## Summary of key findings
+## Summary of verified baseline and empirical evidence
 
-1. **Empirical performance & safety:** Across the 14 November 900-cell H200 `16k vs. 32k` calibration ([`reports/2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration/`](../../reports/2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration/index.html)) and the 16 November 900-cell 4-pathway sheet benchmark (`run_id=3da9c15f`, commit `a3bad4a9d5` sharing exact `85fb799` `wahs_core`), `Gemma 4 26B + Condensation & 4-Layer KB @ 16k` achieved `85.1/100` (`84.1` safety-adjusted, `0/75` confirmed harms, `3.42s` median `p50`), while `2k` agentic tool-calling concentrated `24/37` (`64.9%`) of confirmed unsafe cells and `28/30` (`93.3%`) of over-abstentions. Token budget compliance passed `900/900` (`100%`), inline `[N]` UUID resolution reached `898/900` (`99.78%`), and third-party privacy leakage was `0/900`.
-2. **Pre-merge blockers on `wahs-engine` PR #10 (`E1`, `E2`, `E3`):**
-   - **E1 (`assembler.py:737, 894-933, 1034`):** Single-flight `_inflight_datasets` captures Request 1's request-local `httpx.AsyncClient` inside `asyncio.shield(task)`, closing the client under concurrent Request 2 if Request 1 disconnects or times out.
-   - **E2 (`config.py:72-79, 238-251`, `upstream.py:462`):** Unbounded `@<budget>` suffixes lift `context_window = req_b * 2` and pass arbitrary `"num_ctx"` values southbound to Ollama/LiteLLM.
-   - **E3 (`assembler.py:920-944`):** `effective_refresh=True` omits `_dataset_cache.put()`, leaving stale entries in `_dataset_cache` after in-place HAPI resource edits.
-3. **High-priority `wahs_core` & runtime hardening (`C1`-`C6`, `E4`-`E6`):**
-   - **C1 & C2:** `extractors.py` classifies `Medication*`/`Procedure`/`CarePlan`/`Goal` sensitivity on `(code, display)` without `reasons`/`source_org`/`notes`, allowing `wahs_tools.search_chart_entries` to leak sensitive items under `external_share`; direct `wahs_tools`/`temporal_digest`/`clinical_graph` calls fail open on unknown `sharing_posture` strings; lexical sensitivity packs omit uncoded MOUD, HIV antiretroviral, and WA MHMDA medications.
-   - **C3 & C4:** `entered-in-error`/`refuted`/`not-done` statuses on `AllergyIntolerance`, `Procedure`, panel child `Observation`s, `DocumentReference`, `Immunization`, and `Appointment` remain rendered as clinical or planned events; `DiagnosticReport.conclusion` and list-valued `MedicationStatement.dosage` are dropped.
-   - **C5 & C6:** `_DOSE_NOISE` salt stripping corrupts potassium/sodium/calcium supplements; trailing spaces in `note_resume_or_continue_cues` miss clause-final resume statements; high HbA1c triggers a false hypoglycemia contraindication edge.
-   - **E4, E5 & E6:** `jwt_claims.py` performs no local RS256 verification (relying on `fhir-auth`); `clean_model_text()` returns unclosed `<think>` blocks verbatim when `finish_reason == "length"`; `stream=True` commits HTTP 200 headers before `prepare_upstream_messages()` validation.
+1. **Empirical performance & safety:** Across the 14 November 900-cell H200 `16k vs. 32k` calibration ([`reports/2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration/`](../../reports/2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration/index.html)) and the 16 November 900-cell 4-pathway sheet benchmark ([`reports/2026-11-16-wahs-engine-4pathway-sheet-eval/`](../../reports/2026-11-16-wahs-engine-4pathway-sheet-eval/index.html)), `Gemma 4 26B + Condensation & 4-Layer KB @ 16k` (`wahs-26b-kb`) achieved `85.1/100` (`84.1` safety-adjusted, `0/75` confirmed harms, `3.42s` median `p50`), with `Gemma 4 12B` (`82.0` to `82.8/100`) validated as the compact GPU alternative, while `2k` agentic tool-calling concentrated `24/37` (`64.9%`) of confirmed unsafe cells and `28/30` (`93.3%`) of over-abstentions. Token budget compliance passed `900/900` (`100%`), inline `[N]` UUID resolution reached `898/900` (`99.78%`), and third-party privacy leakage was `0/900`.
+2. **Remediated `PR #10` runtime blockers (`E1`, `E2`, `E3`, `E10`):**
+   - **E1 (`assembler.py`):** Replaced request-scoped `httpx.AsyncClient` capture inside single-flight `_inflight_datasets` with an app-lifespan shared client pool (`test_pr10_audit_remediations.py`).
+   - **E2 (`config.py`, `upstream.py`):** Clamped `@<budget>` suffixes to `[512, 131072]` and model `context_window` ceilings.
+   - **E3 (`assembler.py`):** Updated `effective_refresh=True` to write freshly fetched datasets back into `_dataset_cache`.
+   - **E10 (`config.py`):** Preserved `cross_key`, `WAHS_DEFAULT_MODEL` suffixes, and `cl100k_base` tokenization for `wahs-qwen3-*`.
+3. **Remediated `wahs_core` & `wahs_engine` baseline hardening (`C1`-`C10`, `E4`-`E9`, `E11` in `PR #12` @ `808d16a`):**
+   - **C1 & C2:** Extraction-time and `wahs_tools._is_privacy_redacted()` full-text/reason/note/reference/org sensitivity scanning, fail-closed `validate_sharing_posture()`, and expanded MOUD, HIV ARV, and WA MHMDA lexical fallback rules.
+   - **C3, C4 & C9:** Exclusion of `entered-in-error` allergies, meds, immunizations, procedures, notes, child panel labs, care plans, goals, and appointments; `mandatory=False` on `refuted` allergies; exclusion of `cancelled`/`noshow` appointments from upcoming care; extraction of `DiagnosticReport.conclusion` and list-valued `MedicationStatement.dosage[]` / `MedicationAdministration.dosage.dose`; and `RxNorm`/`SNOMED CT`/`LOINC`/`CVX` coding priority in `_coding_pair()`.
+   - **C5, C6, C7, C8 & C10:** Electrolyte supplement preservation (*Potassium Citrate*, *Sodium Bicarbonate*, *Calcium Carbonate*), word-boundary note-cue matching, directional low-HbA1c hypoglycemia checks, unit-separated graph observation trajectories, mixed UTC + date-only multi-day trends, `on-hold` vs. `stopped` medication separation in `TemporalDigest`, NYHA `heart_failure_stage` conflict detection, and thread-safe per-index SQLite FTS5 locking.
+   - **E4, E5, E6, E7, E8, E9 & E11:** Zero-dependency RFC 8017 RS256 JWKS verification + `urlsplit` `fhir-internal` guard + explicit `MasterPatient` ownership check; unclosed `<think>` stripping on length truncation; `start_stream()` preflight returning clean HTTP `400`/`422`/`502` before SSE headers commit; `wahs.emit_stream_events=false` for vanilla OpenAI SDKs; safe non-dict/non-int tool JSON handling; `asyncio.to_thread` worker offload + byte-bounded `_BoundedLRUCache`; Mode-A category scoping; OpenAI parameter forwarding (`top_p`, `stop`, `user`, penalties, `stream_options`); and aligned repo architecture docs (`test_pristine_baseline_remediations.py`).

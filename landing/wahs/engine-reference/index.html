@@ -60,8 +60,8 @@
         <a href="/wahs/engine-audit/index.html">Engine Audit</a>
         <a href="/wahs/walkthrough/index.html">Sandbox Walkthrough</a>
         <a href="https://wahs-demo.openclinai.org/">Live Sandbox <span aria-hidden="true">↗</span></a>
-        <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">9-Model Benchmark <span aria-hidden="true">↗</span></a>
-        <a href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">Retrieval &amp; Portability Eval <span aria-hidden="true">↗</span></a>
+        <a href="https://reports.openclinai.org/2026-11-16-wahs-engine-4pathway-sheet-eval/index.html">4-Pathway H200 Eval <span aria-hidden="true">↗</span></a>
+        <a href="https://reports.openclinai.org/2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration/index.html">16k vs. 32k Eval <span aria-hidden="true">↗</span></a>
       </nav>
     </div>
   </div>
@@ -137,9 +137,13 @@
           │
           ▼  Standard OpenAI POST /v1/chat/completions (LLM_BASE_URL · fixed chart prefix + stream=true)
 [3. Pluggable OpenAI-Compatible Inference Backend (UW CIRG GPU / Agency Host)]
-   • Default pilot: LiteLLM / Ollama / vLLM on UW CIRG GPU server (Gemma 4 12B default · 26B · E4B)
+   • Default pilot: LiteLLM / Ollama / vLLM on UW CIRG H200 server (Gemma 4 26B default · 12B · E4B)
    • Zero-code portability: swap approved open-weight models or local agency GPU hosts via config alone
    • Streams tokens immediately; wahs-engine appends x_wahs ([N] → FHIR UUID/source map + HL7 AI-Provenance)</div>
+
+      <div class="strategy-callout" style="margin-bottom: 22px;">
+        <strong>Engine scope &amp; explicit non-goals:</strong> <code>wahs-engine</code> owns only stateless per-turn FHIR bundle assembly via <code>fhir-auth</code> (with optional local RS256 JWKS defense-in-depth), deterministic <code>wahs_core</code> condensation and clinical/privacy rule enrichment, exact offline token sizing, and OpenAI <code>/v1/chat/completions</code> + <code>x_wahs</code> provenance mapping. It intentionally does <strong>not</strong> own OIDC login UI, persistent chat databases, HAPI admin credentials, SMART Health Link issuance (<code>shl-server</code>), upstream EHR <code>meta.security</code> consent authoring, GPU VRAM scheduling, or LLM-as-a-judge evaluation scoring.
+      </div>
 
       <div class="strategy-grid-3">
         <article class="strategy-card recommended">
@@ -184,7 +188,7 @@
           <h3>Condensed chart ledger cached across follow-up turns</h3>
           <ul>
             <li><strong>Live assembly (~10 ms check):</strong> Calls <span class="code-inline">fhir-auth</span> with the user’s <span class="code-inline">Bearer</span> token, checks <span class="code-inline">MasterPatient</span> + linked <span class="code-inline">Patient.meta.lastUpdated</span>, and re-fetches only newly synced or edited datasets.</li>
-            <li><strong>Deterministic condensation:</strong> Compresses the record into the target token budget (default 8k; configurable 1k–32k+), normalizes RxNorm/LOINC/SNOMED labels, numbers entries <span class="code-inline">[1]...[N]</span>, and writes <span class="code-inline">[2] Completeness Manifest</span>.</li>
+            <li><strong>Deterministic condensation:</strong> Compresses the record into the target token budget (default 16k ceiling; configurable 512 to 131,072 tokens), normalizes RxNorm/LOINC/SNOMED labels, numbers entries <span class="code-inline">[1]...[N]</span>, and writes <span class="code-inline">[2] Completeness Manifest</span> plus <span class="code-inline">[TEMPORAL DIGEST]</span>.</li>
             <li><strong>Constant prefix:</strong> Remains byte-for-byte identical across follow-up questions unless HAPI data changes, <span class="code-inline">chart_scope</span> shifts, or an evaluation explicitly varies the condensation budget.</li>
           </ul>
         </article>
@@ -218,7 +222,7 @@
             <tr>
               <td><strong>1. User Auth Identity</strong></td>
               <td>Keycloak · <code>shl-ips</code> · <code>fhir-auth</code></td>
-              <td><span class="code-inline">Authorization: Bearer &lt;keycloak_jwt&gt;</span> travels end-to-end from browser BFF to <span class="code-inline">wahs-engine</span> to <span class="code-inline">fhir-auth</span>; <span class="code-inline">wahs-engine</span> holds zero HAPI admin credentials.</td>
+              <td><span class="code-inline">Authorization: Bearer &lt;keycloak_jwt&gt;</span> travels end-to-end from browser BFF to <span class="code-inline">wahs-engine</span> to <span class="code-inline">fhir-auth</span>; <span class="code-inline">wahs-engine</span> holds zero HAPI admin credentials and supports optional local RS256 JWKS signature, <span class="code-inline">iss</span>, and <span class="code-inline">aud</span> verification (<span class="code-inline">WAHS_JWT_JWKS_URL</span>).</td>
             </tr>
             <tr>
               <td><strong>2. Chat Turn History</strong></td>
@@ -227,8 +231,8 @@
             </tr>
             <tr>
               <td><strong>3. Chart &amp; Prefix Cache</strong></td>
-              <td><code>wahs-engine</code> in-memory LRU</td>
-              <td>Checks live HAPI <span class="code-inline">meta.lastUpdated</span> via <span class="code-inline">fhir-auth</span> on every turn; reuses <span class="code-inline">(verified_sub, datasets_fingerprint, scope_hash)</span> in &lt; 1 ms when unchanged and re-fetches only modified datasets after EHR imports or patient edits.</td>
+              <td><code>wahs-engine</code> byte-bounded LRU</td>
+              <td>Checks live HAPI <span class="code-inline">meta.lastUpdated</span> via <span class="code-inline">fhir-auth</span> on every turn; reuses <span class="code-inline">(verified_sub, datasets_fingerprint, scope_hash)</span> in &lt; 1 ms under entry-count and byte-size caps when unchanged, and re-fetches only modified datasets after EHR imports or patient edits.</td>
             </tr>
             <tr>
               <td><strong>4. GPU KV-Cache Slots</strong></td>
@@ -277,7 +281,7 @@
         <summary>Inspect OpenAI <code>/v1/chat/completions</code> middleware contract, <code>wahs.chart_scope</code> schema &amp; <code>x_wahs</code> provenance</summary>
         <div class="internals-details-body">
           <p>
-            Server-side routes in WAHS (such as SvelteKit <span class="code-inline">/api/chat/+server.ts</span> using the Vercel AI SDK <span class="code-inline">@ai-sdk/openai-compatible</span> provider) call <code>wahs-engine</code> using standard OpenAI chat completion payloads. Vanilla OpenAI requests with no <span class="code-inline">wahs</span> extension field default automatically to the signed-in user’s full <span class="code-inline">fhir-auth</span> record at the model’s recommended budget; optional <span class="code-inline">wahs.chart_scope</span> and <span class="code-inline">wahs.overlay_resources</span> fields control per-turn filtering and unsaved draft notes, while the final streamed chunk attaches <span class="code-inline">x_wahs</span> citation and HL7 AI Transparency metadata.
+            Server-side routes in WAHS (such as SvelteKit <span class="code-inline">/api/chat/+server.ts</span> using the Vercel AI SDK <span class="code-inline">@ai-sdk/openai-compatible</span> provider) call <code>wahs-engine</code> using standard OpenAI chat completion payloads (plus <span class="code-inline">POST /v1/wahs/context/preview</span> for pre-chat inspection). Compact profile IDs encode model tier, pathway (<span class="code-inline">-kb</span>, <span class="code-inline">-rag</span>, <span class="code-inline">-chart</span>, <span class="code-inline">-tools</span>), and optional budget ceiling (<span class="code-inline">@16k</span>, <span class="code-inline">@32k</span>). Prompt sizing and upstream stream connection are validated before committing HTTP 200 SSE headers, and vanilla OpenAI SDK callers can pass <span class="code-inline">wahs.emit_stream_events: false</span> to suppress <span class="code-inline">x_wahs_stream</span> sideband chunks.
           </p>
 
           <div class="flow-diagram" tabindex="0" role="region" aria-label="WAHS Engine OpenAI Wire Contract">POST /v1/chat/completions
@@ -285,13 +289,15 @@ Authorization: Bearer &lt;keycloak_access_token&gt;
 Content-Type: application/json
 
 {
-  "model": "wahs-12b-kb",
+  "model": "wahs-26b-kb",
   "stream": true,
   "messages": [
     { "role": "user", "content": "Do any of my heart or kidney medications conflict across clinics?" }
   ],
   "wahs": {
-    "target_budget_tokens": 8192,
+    "target_budget_tokens": 16384,
+    "sharing_posture": "patient_self",
+    "emit_stream_events": true,
     "chart_scope": {
       "include_sources": ["UW Medicine", "MultiCare", "My Story"],
       "exclude_categories": [],
@@ -313,8 +319,8 @@ Content-Type: application/json
       "7": { "resourceType": "MedicationRequest", "id": "med-spiro-01", "date": "2026-01-12", "source": "UW Medicine", "display": "Spironolactone 25 MG Oral Tablet" },
       "10": { "resourceType": "Observation", "id": "obs-k-56", "date": "2026-01-16", "source": "MultiCare", "display": "Potassium 5.6 mEq/L" }
     },
-    "condensation": { "budget_tokens": 8192, "actual_tokens": 6410, "datasets_included": 3, "omitted_clinical_items": 0 },
-    "ai_provenance": { "model": "ollama/gemma4:12b", "kb_enabled": true, "human_review_required": true }
+    "condensation": { "budget_tokens": 16384, "actual_tokens": 6410, "datasets_included": 3, "omitted_clinical_items": 0 },
+    "ai_provenance": { "model": "ollama/gemma4:26b", "kb_enabled": true, "human_review_required": true }
   }
 }</div>
         </div>
@@ -388,7 +394,7 @@ Content-Type: application/json
       </p>
 
       <p class="strategy-note">
-        The engine API accepts a chart size of 512 to 131,072 tokens per request, with a default of 8,192. The 256k row below applies to the Explorer sandbox and the benchmark matrix.
+        The engine API accepts a chart size of 512 to 131,072 tokens per request, with a default model ceiling of 16,384 tokens (validated in the 900-cell H200 16k vs. 32k calibration). The 256k row below applies to the Explorer sandbox and the benchmark matrix.
       </p>
 
       <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Nine condensation budget tiers">
@@ -434,7 +440,7 @@ Content-Type: application/json
         <summary>Inspect <code>ClinicalEntityGraph</code> typed relationship edges &amp; orchestration prompt block</summary>
         <div class="internals-details-body">
           <p>
-            <code>wahs_core/clinical_graph.py</code> links seven FHIR resource categories (<code>Condition</code>, <code>MedicationRequest</code>, <code>Observation</code>, <code>DocumentReference</code>, <code>AllergyIntolerance</code>, <code>Immunization</code>, and <code>Organization</code>) across five typed clinical edges while preserving original <code>[N]</code> citation numbers so 4B–12B models do not have to infer multi-hop cardiorenal or anticoagulation hazards from raw text alone. Paired <code>wahs-*-raw</code> profiles omit this block for zero-hint baseline ablations.
+            <code>wahs_core/clinical_graph.py</code> links seven FHIR resource categories (<code>Condition</code>, <code>MedicationRequest</code>, <code>Observation</code>, <code>DocumentReference</code>, <code>AllergyIntolerance</code>, <code>Immunization</code>, and <code>Organization</code>) across seven typed clinical edges while preserving original <code>[N]</code> citation numbers so 4B to 26B models do not have to infer multi-hop cardiorenal, allergy, or anticoagulation hazards from raw text alone. Paired <code>wahs-*-chart</code> profiles omit this block for zero-hint baseline ablations.
           </p>
 
           <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="ClinicalEntityGraph typed relationship edges">
@@ -448,24 +454,34 @@ Content-Type: application/json
               </thead>
               <tbody>
                 <tr>
-                  <td><span class="code-inline">TREATS</span></td>
-                  <td><code>MedicationRequest</code> → <code>Condition</code></td>
-                  <td>Maps active medications to documented clinical indications via RxNorm class lookup and AHA/ACC/ADA/KDIGO mappings (e.g., <code>Apixaban [6] --[TREATS]--&gt; Atrial fibrillation [5]</code>).</td>
+                  <td><span class="code-inline">CROSS_REACTS_WITH</span></td>
+                  <td><code>MedicationRequest</code> → <code>AllergyIntolerance</code></td>
+                  <td>Flags documented drug allergies and beta-lactam/sulfonamide/NSAID class cross-reactivity against active prescriptions before generation.</td>
                 </tr>
                 <tr>
                   <td><span class="code-inline">CONTRAINDICATED_OR_DOSE_ADJUST_IN</span></td>
-                  <td><code>MedicationRequest</code> → <code>Condition</code> / <code>Observation</code> / <code>AllergyIntolerance</code></td>
-                  <td>Flags renal dosing thresholds, hyperkalemia hazards, supratherapeutic INR, NSAID nephrotoxicity/bleeding, and allergy cross-reactivity (e.g., <code>Spironolactone [7] --[CONTRAINDICATED_OR_DOSE_ADJUST_IN]--&gt; Potassium 5.6 mEq/L [10]</code>).</td>
+                  <td><code>MedicationRequest</code> → <code>Condition</code> / <code>Observation</code></td>
+                  <td>Flags renal dosing thresholds, hyperkalemia hazards (including potassium salts), supratherapeutic INR, NSAID nephrotoxicity/bleeding, and directional low-HbA1c/glucose hypoglycemia risks (e.g., <code>Spironolactone [7] --[CONTRAINDICATED_OR_DOSE_ADJUST_IN]--&gt; Potassium 5.6 mEq/L [10]</code>).</td>
+                </tr>
+                <tr>
+                  <td><span class="code-inline">CONFLICTS_WITH</span></td>
+                  <td><code>MedicationRequest</code> ↔ <code>MedicationRequest</code> · <code>Condition</code> ↔ <code>Condition</code> · <code>Immunization</code> ↔ <code>Immunization</code></td>
+                  <td>Surfaces brand-versus-generic and same-class duplicate therapies, mutually exclusive CKD or NYHA heart-failure stages, and CDC ACIP vaccine interval anomalies across clinics.</td>
+                </tr>
+                <tr>
+                  <td><span class="code-inline">CONTRADICTED_OR_MODIFIED_BY_NOTE</span></td>
+                  <td><code>MedicationRequest</code> / <code>Condition</code> → <code>DocumentReference</code> / <code>Condition</code></td>
+                  <td>Detects cross-clinic active-versus-resolved condition discrepancies and hospital or walk-in clinical notes instructing a patient to hold or stop an outpatient medication (unless superseded by a later resume note).</td>
                 </tr>
                 <tr>
                   <td><span class="code-inline">MONITORED_BY</span></td>
                   <td><code>Condition</code> / <code>MedicationRequest</code> → <code>Observation</code></td>
-                  <td>Connects chronic diseases and high-alert therapies to their longitudinal LOINC laboratory and vital trajectories (eGFR, Creatinine, Potassium, HbA1c, INR, NT-proBNP, LDL-C, TSH).</td>
+                  <td>Connects chronic diseases and high-alert therapies to unit-separated longitudinal LOINC laboratory and vital trajectories (eGFR, Creatinine, Potassium, HbA1c, INR, NT-proBNP, LDL-C, TSH).</td>
                 </tr>
                 <tr>
-                  <td><span class="code-inline">CONTRADICTED_OR_MODIFIED_BY_NOTE</span></td>
-                  <td><code>Condition</code> (Active ↔ Resolved)</td>
-                  <td>Detects structured cross-organization discrepancies where the same condition is marked active at one clinic and resolved at another, while full narrative notes route through Note-RAG / Tier-0 overflow.</td>
+                  <td><span class="code-inline">TREATS</span></td>
+                  <td><code>MedicationRequest</code> → <code>Condition</code></td>
+                  <td>Maps active medications to documented clinical indications via RxNorm class lookup and AHA/ACC/ADA/KDIGO mappings (e.g., <code>Apixaban [6] --[TREATS]--&gt; Atrial fibrillation [5]</code>).</td>
                 </tr>
                 <tr>
                   <td><span class="code-inline">REPORTED_BY_ORG</span></td>

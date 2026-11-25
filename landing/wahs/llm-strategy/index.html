@@ -8,7 +8,7 @@
   <link rel="canonical" href="https://openclinai.org/wahs/llm-strategy/" />
   <meta property="og:url" content="https://openclinai.org/wahs/llm-strategy/" />
   <meta property="og:title" content="WAHS AI Architecture &amp; Model Strategy · OpenClinAI" />
-  <meta property="og:description" content="How WAHS gives an open-weight model the right parts of a patient record: condensation first, a small middle service, Gemma 4 12B for the pilot, and the evidence behind each choice." />
+  <meta property="og:description" content="How WAHS gives an open-weight model the right parts of a patient record: condensation first, a lean standalone middle service, Gemma 4 26B on H200 (with Gemma 4 12B as the compact option), and the benchmark evidence behind each choice." />
   <meta property="og:image" content="https://openclinai.org/wahs/walkthrough/media/step2-condensation-8k-vs-1k.webp" />
   <meta name="theme-color" content="#4b2e83" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -60,8 +60,8 @@
         <a href="/wahs/engine-audit/index.html">Engine Audit</a>
         <a href="/wahs/walkthrough/index.html">Sandbox Walkthrough</a>
         <a href="https://wahs-demo.openclinai.org/">Live Sandbox <span aria-hidden="true">↗</span></a>
-        <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">9-Model Benchmark <span aria-hidden="true">↗</span></a>
-        <a href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">Retrieval &amp; Portability Eval <span aria-hidden="true">↗</span></a>
+        <a href="https://reports.openclinai.org/2026-11-16-wahs-engine-4pathway-sheet-eval/index.html">4-Pathway H200 Eval <span aria-hidden="true">↗</span></a>
+        <a href="https://reports.openclinai.org/2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration/index.html">16k vs. 32k Eval <span aria-hidden="true">↗</span></a>
       </nav>
     </div>
   </div>
@@ -108,24 +108,24 @@
           <div class="decision" role="region" aria-labelledby="decision-title">
             <h2 id="decision-title">Key decisions</h2>
             <ol>
-              <li><strong>Condense the record first.</strong> The engine shrinks the patient’s record into a short, numbered summary and sends it to the model with the question, in one call.</li>
-              <li><strong>A small middle service does that work.</strong> The WAHS engine sits between the WAHS app and the model server, so the app stays simple and the model can be swapped.</li>
-              <li><strong>One model for the pilot: Gemma 4 12B.</strong> It scored within 1.6 points of the largest model tested and gave the fewest unsafe answers.</li>
+              <li><strong>Condense the record first at a 16k budget.</strong> The engine shrinks the patient’s record into a structured, numbered summary (16,384 tokens by default) and sends it with pre-computed clinical checks in one call, beating both 32k charts and 2k agentic tool-calling.</li>
+              <li><strong>A lean, standalone middle service does that work.</strong> The WAHS engine sits between the WAHS app and the model server with zero database of its own, so the app stays simple, per-patient security stays enforced by <code>fhir-auth</code>, and any OpenAI-compatible model host can be swapped in.</li>
+              <li><strong>Gemma 4 26B on H200 (with Gemma 4 12B for compact slices).</strong> Across 900 H200 benchmark runs, <strong>Gemma 4 26B + 4-Layer KB</strong> led at <strong>85.1 / 100</strong> with <strong>0 of 75 confirmed unsafe answers</strong> (3.4 s median wait), while <strong>Gemma 4 12B</strong> reached <strong>82.0 to 82.8 / 100</strong> when VRAM is constrained.</li>
             </ol>
           </div>
 
           <div class="stat-row">
             <div class="stat">
               <p class="stat-value">90 to 99%</p>
-              <p class="stat-label">Reduction in record size after the engine condenses it.</p>
+              <p class="stat-label">Reduction in record size after the engine condenses it into a 16k budget.</p>
             </div>
             <div class="stat">
-              <p class="stat-value">67.2 → 80.5</p>
-              <p class="stat-label">Gemma 4 12B score out of 100, without and with the engine. Unsafe answers fell from 7 to 2 of 36.</p>
+              <p class="stat-value">85.1 / 100</p>
+              <p class="stat-label">Gemma 4 26B + 4-Layer KB across 900 H200 runs, with 0 of 75 confirmed unsafe answers.</p>
             </div>
             <div class="stat">
-              <p class="stat-value">2.5 to 4 s</p>
-              <p class="stat-label">Median wait for a follow-up answer on the shared GPU server in testing.</p>
+              <p class="stat-value">3.4 s</p>
+              <p class="stat-label">Median wait for an answer on the UW CIRG H200 server at the 16k default budget.</p>
             </div>
           </div>
 
@@ -185,7 +185,7 @@
                 <p class="flow-owner">UW CIRG GPU server · or an agency’s own</p>
                 <h3>Model server</h3>
                 <ul>
-                  <li>Runs the open-weight model, Gemma 4 12B by default.</li>
+                  <li>Runs the open-weight model: Gemma 4 26B by default (or 12B / E4B).</li>
                   <li>Keeps nothing between requests.</li>
                   <li>Can be any server that speaks the standard OpenAI chat format.</li>
                 </ul>
@@ -267,53 +267,53 @@ Question: What are my diabetes labs?</pre>
 
           <div class="strategy-grid-3">
             <article class="strategy-card recommended">
-              <span class="strategy-badge">Pilot default</span>
-              <h3>1. Record condensation</h3>
+              <span class="strategy-badge">Pilot default (wahs-26b-kb)</span>
+              <h3>1. Condensation + 4-Layer KB</h3>
               <dl class="facts">
                 <dt>Method</dt>
-                <dd>Shrink the whole record into a short numbered summary and send it with the question in one call.</dd>
+                <dd>Shrink the record into a 16k numbered summary, attach pre-computed clinical rules and patient graph links, and answer in one call.</dd>
                 <dt>Strengths</dt>
-                <dd>Speed, and a simple privacy boundary: the model only ever sees one patient’s summary.</dd>
+                <dd>Highest overall safety and speed: one stateless model call with strict per-patient scoping.</dd>
                 <dt>Limitations</dt>
-                <dd>At small sizes, older labs and long notes are left out and must be looked up.</dd>
-                <dt>Test result</dt>
-                <dd>Passed 65% of checks.</dd>
+                <dd>Very long hospital notes over 16k rely on automatic Tier-0 overflow recovery.</dd>
+                <dt>900-cell H200 result</dt>
+                <dd>85.1 / 100 on Gemma 4 26B (0 of 75 unsafe, 3.4 s median); 82.0 on 12B.</dd>
               </dl>
             </article>
 
             <article class="strategy-card">
-              <span class="strategy-badge secondary">Tested · best overall</span>
-              <h3>2. Condensation with note search</h3>
+              <span class="strategy-badge secondary">Deep-note option (-rag)</span>
+              <h3>2. Condensation + Note search</h3>
               <dl class="facts">
                 <dt>Method</dt>
-                <dd>Keep the condensed chart. For long notes, find the passages that match the question and add only those.</dd>
+                <dd>Keep the 16k condensed chart and add question-matched BM25 passages from long clinical notes before calling the model.</dd>
                 <dt>Strengths</dt>
-                <dd>Hospital and specialist notes of 4,000 to 14,000 tokens, and very large records.</dd>
+                <dd>Strongest pure clinical note recall on hospital and specialist notes of 4,000 to 14,000 tokens.</dd>
                 <dt>Limitations</dt>
-                <dd>One more step per question, so answers take a little longer.</dd>
-                <dt>Test result</dt>
-                <dd>Passed 76% of checks, the highest of the three.</dd>
+                <dd>Slightly larger turn suffix, adding ~1.5 s to median answer time.</dd>
+                <dt>900-cell H200 result</dt>
+                <dd>83.4 / 100 on Gemma 4 26B (8.94/10 clinical accuracy); 82.8 on 12B (0 of 75 unsafe).</dd>
               </dl>
             </article>
 
             <article class="strategy-card">
-              <span class="strategy-badge future">Tested · needs a large model</span>
-              <h3>3. Model-written record queries</h3>
+              <span class="strategy-badge future">Evaluated · higher risk (-tools)</span>
+              <h3>3. Agentic tool-calling</h3>
               <dl class="facts">
                 <dt>Method</dt>
-                <dd>The model writes its own searches against the record store, then reads what comes back.</dd>
+                <dd>Give the model a small 2k summary and let it run multi-step search tools over the chart before answering.</dd>
                 <dt>Strengths</dt>
-                <dd>Huge records, when the model is strong enough to write correct medical codes.</dd>
+                <dd>Can inspect deeply buried items when a large model chooses the right search terms.</dd>
                 <dt>Limitations</dt>
-                <dd>Smaller models pick wrong codes. It needs guardrails on every search and takes several steps.</dd>
-                <dt>Test result</dt>
-                <dd>Passed 61% overall, but 96% on the largest model.</dd>
+                <dd>Iterative searches frequently miss cross-clinic hold notes or sensitive social context.</dd>
+                <dt>900-cell H200 result</dt>
+                <dd>65.8 to 69.4 / 100, concentrating 24 of 37 confirmed unsafe answers and 93% of over-refusals.</dd>
               </dl>
             </article>
           </div>
 
           <p class="strategy-note">
-            Results are from 384 test runs on four models. An answer passes only if it meets every automated check: the expected clinical facts, the size limit and the citation rules. Sending the raw record with no engine passed 19% and leaked private items in 12 of 12 sharing tests. <a href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">Retrieval and portability report <span aria-hidden="true">↗</span></a>
+            Results combine the <a href="https://reports.openclinai.org/2026-11-16-wahs-engine-4pathway-sheet-eval/index.html">900-cell 4-pathway H200 benchmark <span aria-hidden="true">↗</span></a> (75 clinical and privacy scenarios) and the <a href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">3-seed retrieval and portability report <span aria-hidden="true">↗</span></a> (where sending raw uncondensed FHIR with no engine passed 19% and leaked sensitive items in 12 of 12 sharing tests).
           </p>
         </section>
 
@@ -356,13 +356,13 @@ Question: What are my diabetes labs?</pre>
 
         <section class="strategy-section" id="model-selection" aria-labelledby="model-title" tabindex="-1">
           <p class="section-kicker">Model selection</p>
-          <h2 id="model-title">Gemma 4 12B is the pilot model; the engine improves seven of nine models</h2>
+          <h2 id="model-title">Gemma 4 26B leads on H200 (with Gemma 4 12B as the compact option); the engine improves seven of nine models</h2>
           <p>
-            Nine open-weight models answered the same 36 clinical questions, first with the condensed chart alone and then through the full engine. Two judge models graded the answers without knowing which setup produced them.
+            First, nine open-weight models across Google Gemma 4, Alibaba Qwen 3, and Meta Llama 3.x / Hermes 3 answered the same 36 clinical questions with the condensed chart alone and through the full engine (shown below). Follow-up 900-cell H200 benchmarks then evaluated Gemma 4 26B, 12B, and E4B across 75 clinical and privacy scenarios, confirming <strong>Gemma 4 26B</strong> (<code>wahs-26b-kb</code>, <strong>85.1 / 100</strong>, 0/75 unsafe) as the default H200 configuration and <strong>Gemma 4 12B</strong> (<code>82.0 to 82.8 / 100</code>) as the compact single-slice alternative.
           </p>
 
           <div class="dumbbell" role="group" aria-labelledby="db-title">
-            <h3 class="sub-h" id="db-title">Score out of 100, before and after adding the engine</h3>
+            <h3 class="sub-h" id="db-title">9-model cross-family screening score out of 100, before and after adding the engine</h3>
             <p class="db-legend">
               <span class="db-key"><span class="db-swatch is-before"></span>Condensed chart alone</span>
               <span class="db-key"><span class="db-swatch is-after"></span>Through the full engine</span>
@@ -373,15 +373,15 @@ Question: What are my diabetes labs?</pre>
               <span></span>
             </div>
             <ul class="db-rows">
-              <li class="db-row">
-                <span class="db-name">Gemma 4 26B<small>Google</small></span>
-                <span class="db-track" aria-hidden="true"><span class="db-link" style="left:71.3%;width:10.8%"></span><span class="db-pt is-before" style="left:71.3%" title="Condensed chart alone: 71.3"></span><span class="db-pt is-after" style="left:82.1%" title="Through the full engine: 82.1"></span></span>
-                <span class="db-val">71.3 → 82.1<small>Unsafe: 6 → 3 of 36</small></span>
-              </li>
               <li class="db-row is-pick">
-                <span class="db-name">Gemma 4 12B<small>Google</small><span class="db-pick">Pilot model</span></span>
+                <span class="db-name">Gemma 4 26B<small>Google · MoE (4B active)</small><span class="db-pick">Default H200 model</span></span>
+                <span class="db-track" aria-hidden="true"><span class="db-link" style="left:71.3%;width:10.8%"></span><span class="db-pt is-before" style="left:71.3%" title="Condensed chart alone: 71.3"></span><span class="db-pt is-after" style="left:82.1%" title="Through the full engine: 82.1"></span></span>
+                <span class="db-val">71.3 → 82.1<small>85.1 on 900-cell H200</small></span>
+              </li>
+              <li class="db-row">
+                <span class="db-name">Gemma 4 12B<small>Google · compact GPU option</small></span>
                 <span class="db-track" aria-hidden="true"><span class="db-link" style="left:67.2%;width:13.3%"></span><span class="db-pt is-before" style="left:67.2%" title="Condensed chart alone: 67.2"></span><span class="db-pt is-after" style="left:80.5%" title="Through the full engine: 80.5"></span></span>
-                <span class="db-val">67.2 → 80.5<small>Unsafe: 7 → 2 of 36</small></span>
+                <span class="db-val">67.2 → 80.5<small>82.8 with Note-RAG</small></span>
               </li>
               <li class="db-row">
                 <span class="db-name">Gemma 4 E4B<small>Google · smallest that works</small></span>
@@ -423,8 +423,8 @@ Question: What are my diabetes labs?</pre>
 
           <div class="status-cols">
             <div class="status-col">
-              <h3>Gemma 4 12B fits a one-model pilot</h3>
-              <p class="strategy-note" style="margin-top:0">It is within 1.6 points of the 26B model and gave the fewest unsafe answers of any setup.</p>
+              <h3>Gemma 4 26B &amp; 12B cover H200 and compact GPUs</h3>
+              <p class="strategy-note" style="margin-top:0">Gemma 4 26B (MoE, 4B active parameters) leads at 85.1/100 with 0/75 unsafe answers in 3.4 s on H200; Gemma 4 12B reaches 82.0 to 82.8/100 on tighter VRAM budgets.</p>
             </div>
             <div class="status-col">
               <h3>The engine improves most models</h3>
@@ -437,7 +437,7 @@ Question: What are my diabetes labs?</pre>
           </div>
 
           <p class="strategy-note">
-            The score combines the judges’ grades, weighted toward accuracy and completeness, with points taken off for unsafe answers and citation errors. A middle setup (chart plus clinical rules, without the patient links) and the full table are in the <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">nine-model report <span aria-hidden="true">↗</span></a>.
+            The score combines the judges’ grades, weighted toward accuracy and completeness, with points taken off for unsafe answers and citation errors. Full tables are in the <a href="https://reports.openclinai.org/2026-11-16-wahs-engine-4pathway-sheet-eval/index.html">900-cell 4-pathway H200 report <span aria-hidden="true">↗</span></a>, the <a href="https://reports.openclinai.org/2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration/index.html">16k vs. 32k calibration <span aria-hidden="true">↗</span></a>, and the <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">nine-model screening report <span aria-hidden="true">↗</span></a>.
           </p>
         </section>
 
@@ -467,8 +467,8 @@ Question: What are my diabetes labs?</pre>
               <p>The engine checks the record store on every question. When the store reports that part of the record has changed, only that part is fetched again and the chart is condensed again. This takes about a tenth of a second.</p>
             </article>
             <article class="faq">
-              <h3>Chart size is a setting, about 8,000 tokens by default</h3>
-              <p>The size is a setting called the token budget. A token is about three-quarters of a word. The default is about 8,000 tokens, and the app can request a different size. It does not change with the question. Smaller charts are faster but leave more out.</p>
+              <h3>Chart size is a setting, 16,384 tokens by default</h3>
+              <p>The size is a setting called the token budget. A token is about three-quarters of a word. In a 900-cell H200 calibration, 16,384 tokens outperformed 32,768 tokens on both accuracy and speed (11% faster), while the app can still request any budget from 512 to 131,072 tokens.</p>
             </article>
             <article class="faq">
               <h3>Clinical knowledge is selected for each question</h3>
@@ -483,30 +483,30 @@ Question: What are my diabetes labs?</pre>
               <p>Both sides of the engine use the standard OpenAI chat format. Pointing it at a different model or server is a configuration change, tested with no code edits. An agency that must use its own approved model can do so.</p>
             </article>
             <article class="faq">
-              <h3>The pilot runs on a 35 GB slice of a shared GPU</h3>
-              <p>The GPU is a shared UW CIRG server. How many people can chat at once depends on a server setting that trades speed against memory. That setting is being tuned for the pilot.</p>
+              <h3>The pilot runs on the shared UW CIRG H200 GPU server</h3>
+              <p>The GPU server hosts Gemma 4 26B and 12B behind an OpenAI-compatible gateway without downsizing model capability. Concurrent slot allocation and model residency are managed at the GPU server layer rather than inside the engine.</p>
             </article>
           </div>
         </section>
 
         <section class="strategy-section" id="status" aria-labelledby="status-title" tabindex="-1">
           <p class="section-kicker">Project status</p>
-          <h2 id="status-title">The engine is built and verified in the development setup</h2>
+          <h2 id="status-title">The standalone engine baseline is built, audited, and verified</h2>
 
           <div class="status-cols">
             <div class="status-col">
               <ul>
-                <li>The engine runs as its own small service.</li>
-                <li>It reads records only with the patient’s sign-in.</li>
-                <li>The web app and a mobile front end both reach it through their own servers, in the development setup.</li>
-                <li>Automated checks for cross-patient leaks and stale charts pass.</li>
-                <li>The three approaches were compared across 384 runs.</li>
+                <li>Standalone <code>wahs-engine</code> runs with zero runtime dependency on research services (94 offline tests + live HAPI/Keycloak CI passing).</li>
+                <li>Reads records only with the patient’s sign-in via <code>fhir-auth</code>, with optional local RS256 JWKS verification and byte-bounded in-memory caches.</li>
+                <li>Both the SvelteKit web app (<code>shl-ips</code>) and mobile companion connect over standard OpenAI <code>/v1/chat/completions</code> with 12-persona HAPI seeding.</li>
+                <li>All 27 architectural and clinical code-audit items (<code>C1</code>-<code>C10</code>, <code>E1</code>-<code>E11</code>) are remediated and regression-tested on <code>main</code>.</li>
+                <li>Benchmarked across two 900-cell H200 studies (<code>16k vs. 32k</code> calibration and 4-pathway clinical/privacy evaluation) plus 384 3-seed portability runs.</li>
               </ul>
             </div>
           </div>
 
           <p class="strategy-note">
-            Each item links to its evidence in the <a href="/wahs/engine-reference/index.html#action-plan">build record <span aria-hidden="true">→</span></a>.
+            Each item links to its code and test evidence in the <a href="/wahs/engine-audit/index.html">engine audit <span aria-hidden="true">→</span></a> and <a href="/wahs/engine-reference/index.html#action-plan">build record <span aria-hidden="true">→</span></a>.
           </p>
         </section>
 
@@ -567,7 +567,7 @@ Question: What are my diabetes labs?</pre>
             </article>
             <article class="strategy-card recommended" id="engine-audit-card">
               <h3><a href="/wahs/engine-audit/index.html">Engine architectural &amp; functional audit <span aria-hidden="true">→</span></a></h3>
-              <p>Full system architecture diagram, foundational standards links, 900-cell H200 benchmark readout, and 27 code-level audit findings across <code>wahs_core</code>, <code>wahs_engine</code>, and connected BFFs.</p>
+              <p>Full system architecture diagram, explicit scope and non-goals, foundational standards links, 900-cell H200 benchmark readout, and verified 27-item remediation ledger across <code>wahs_core</code> and <code>wahs_engine</code>.</p>
             </article>
           </div>
 
