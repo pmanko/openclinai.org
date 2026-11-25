@@ -186,6 +186,8 @@ class WahsGpuAuthRelayTests(unittest.TestCase):
             for email in (
                 "piotr.mankowski@gmail.com",
                 "pmanko@uw.edu",
+                "dlorigan@uw.edu",
+                "daniellrgn@gmail.com",
                 "ivanc@uw.edu",
                 "mcjustin@uw.edu",
                 "jflow2@uw.edu",
