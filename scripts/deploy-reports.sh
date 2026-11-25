@@ -175,7 +175,58 @@ if manifest_path == (root_path / "reports" / "reports-index.json").resolve():
 PY
 fi
 
-if [[ -n "${SLUG}" ]]; then
+DEPLOY_TRANSPORT="${DEPLOY_TRANSPORT:-rsync}"
+case "${DEPLOY_TRANSPORT}" in
+  rsync|tar) ;;
+  *)
+    echo "error: unknown DEPLOY_TRANSPORT '${DEPLOY_TRANSPORT}' (expected 'rsync' or 'tar')." >&2
+    exit 1
+    ;;
+esac
+
+if [[ "${DEPLOY_TRANSPORT}" == "tar" ]]; then
+  if [[ -n "${SLUG}" && "${PRUNE}" == "1" ]]; then
+    echo "error: --prune cannot be combined with --slug." >&2
+    exit 1
+  fi
+  if [[ -z "${SLUG}" && "${PRUNE}" == "1" ]]; then
+    echo "error: DEPLOY_TRANSPORT=tar does not support --prune; use rsync when pruning deleted reports." >&2
+    exit 1
+  fi
+  _tar_create_args=()
+  _tar_help="$(tar --help 2>&1 || true)"
+  if [[ "${_tar_help}" == *"--no-mac-metadata"* ]]; then
+    _tar_create_args+=(--no-mac-metadata)
+  fi
+  if [[ "${_tar_help}" == *"--no-xattrs"* ]]; then
+    _tar_create_args+=(--no-xattrs)
+  fi
+  TMP_TAR_DIR="$(mktemp -d)"
+  cleanup_tar_tmp() {
+    local rc=$?
+    rm -rf "${TMP_TAR_DIR:-}"
+    return "${rc}"
+  }
+  trap cleanup_tar_tmp EXIT
+  if [[ -n "${SLUG}" ]]; then
+    COPYFILE_DISABLE=1 tar ${_tar_create_args[@]+"${_tar_create_args[@]}"} -C "${REPORTS_ROOT}/${SLUG}" \
+      --exclude='*.mp4' --exclude='*.webm' --exclude='.DS_Store' --exclude='._*' \
+      -czf "${TMP_TAR_DIR}/slug.tar.gz" .
+    CATALOG_NAMES=("index.html" "reports-index.json")
+    [[ -f "${REPORTS_ROOT}/sitemap.xml" ]] && CATALOG_NAMES+=("sitemap.xml")
+    [[ -d "${REPORTS_ROOT}/assets" ]] && CATALOG_NAMES+=("assets")
+    COPYFILE_DISABLE=1 tar ${_tar_create_args[@]+"${_tar_create_args[@]}"} -C "${REPORTS_ROOT}" \
+      --exclude='.DS_Store' --exclude='._*' \
+      -czf "${TMP_TAR_DIR}/catalog.tar.gz" "${CATALOG_NAMES[@]}"
+    gcp_ssh "rm -rf ${GCP_REMOTE_REPO}/artifacts/reports/${SLUG}.stage && mkdir -p ${GCP_REMOTE_REPO}/artifacts/reports/${SLUG}.stage ${GCP_REMOTE_REPO}/artifacts/reports/${SLUG} && find ${GCP_REMOTE_REPO}/artifacts/reports/${SLUG} -maxdepth 1 -type f \\( -name '*.mp4' -o -name '*.webm' \\) -exec mv -t ${GCP_REMOTE_REPO}/artifacts/reports/${SLUG}.stage {} + && tar --no-same-owner -xzf - -C ${GCP_REMOTE_REPO}/artifacts/reports/${SLUG}.stage && rm -rf ${GCP_REMOTE_REPO}/artifacts/reports/${SLUG} && mv ${GCP_REMOTE_REPO}/artifacts/reports/${SLUG}.stage ${GCP_REMOTE_REPO}/artifacts/reports/${SLUG}" < "${TMP_TAR_DIR}/slug.tar.gz"
+    gcp_ssh "tar --no-same-owner -xzf - -C ${GCP_REMOTE_REPO}/artifacts/reports" < "${TMP_TAR_DIR}/catalog.tar.gz"
+  else
+    COPYFILE_DISABLE=1 tar ${_tar_create_args[@]+"${_tar_create_args[@]}"} -C "${REPORTS_ROOT}" \
+      --exclude='*.mp4' --exclude='*.webm' --exclude='.DS_Store' --exclude='._*' \
+      -czf "${TMP_TAR_DIR}/reports.tar.gz" .
+    gcp_ssh "tar --no-same-owner -xzf - -C ${GCP_REMOTE_REPO}/artifacts/reports" < "${TMP_TAR_DIR}/reports.tar.gz"
+  fi
+elif [[ -n "${SLUG}" ]]; then
   gcp_ssh "mkdir -p ${GCP_REMOTE_REPO}/artifacts/reports/${SLUG}"
   rsync -az --delete --exclude='*.mp4' --exclude='*.webm' --exclude='.DS_Store' \
     -e "ssh -i ${GCP_SSH_KEY} -o StrictHostKeyChecking=accept-new" \
