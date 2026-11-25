@@ -206,7 +206,7 @@ esac
     git(tmp_path, "add", "--", "reports", "scripts", ".gitignore")
     git(tmp_path, "commit", "-q", "-m", "Archive")
 
-    def run(*, action="stage", extra_args=(), publish_exit=0):
+    def run(*, action="stage", extra_args=(), publish_exit=0, extra_env=None):
         if action == "stage":
             argv = [
                 sys.executable,
@@ -250,6 +250,7 @@ esac
                 "GCP_SSH_KEY": str(tmp_path / "unused-test-key"),
                 "PUBLISH_EXIT_CODE": str(publish_exit),
                 "CADDY_SITE_REPORTS": "reports.example.invalid",
+                **(extra_env or {}),
             },
         )
 
@@ -330,3 +331,16 @@ def test_stage_restores_previous_packet_when_archive_validation_fails(publisher,
     assert after_files == before_files
     assert (tmp_path / "reports/reports-index.json").read_bytes() == before_manifest
     assert (tmp_path / "reports/index.html").read_bytes() == before_index
+
+
+def test_per_slug_tar_transport_deploys_without_rsync(publisher, tmp_path: Path):
+    git(tmp_path, "checkout", "-q", "-b", "feature/tar-transport-test")
+    result = publisher(
+        action="deploy",
+        extra_args=("--slug", "2026-11-10-example-study"),
+        extra_env={"DEPLOY_TRANSPORT": "tar"},
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert not (tmp_path / "rsync-calls").exists()
+    assert "deployed report 2026-11-10-example-study additively" in result.stdout
+
