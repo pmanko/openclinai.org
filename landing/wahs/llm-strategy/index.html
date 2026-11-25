@@ -108,9 +108,9 @@
           <div class="decision" role="region" aria-labelledby="decision-title">
             <h2 id="decision-title">Key decisions</h2>
             <ol>
-              <li><strong>Condense the record first at a 16k budget.</strong> The engine shrinks the patient’s record into a structured, numbered summary (16,384 tokens by default) and sends it with pre-computed clinical checks in one call, beating both 32k charts and 2k agentic tool-calling.</li>
-              <li><strong>A lean, standalone middle service does that work.</strong> The WAHS engine sits between the WAHS app and the model server with zero database of its own, so the app stays simple, per-patient security stays enforced by <code>fhir-auth</code>, and any OpenAI-compatible model host can be swapped in.</li>
-              <li><strong>Gemma 4 26B on H200 (with Gemma 4 12B for compact slices).</strong> Across 900 H200 benchmark runs, <strong>Gemma 4 26B + 4-Layer KB</strong> led at <strong>85.1 / 100</strong> with <strong>0 of 75 confirmed unsafe answers</strong> (3.4 s median wait), while <strong>Gemma 4 12B</strong> reached <strong>82.0 to 82.8 / 100</strong> when VRAM is constrained.</li>
+              <li><strong>Condense the record first at a 16k verbatim-first budget.</strong> The engine emits the entire extracted record and full notes verbatim when they fit inside the <code>16,384</code>-token ceiling (<code>Tier 0</code>), and applies ontology-free run-length folding (<code>Tier 1</code>) and budget packing (<code>Tier 2</code>) only when a longitudinal record exceeds budget.</li>
+              <li><strong>A lean, domain-neutral middle service does that work.</strong> The WAHS engine sits between the WAHS app and the model server with zero database and zero hardcoded clinical heuristics or premature privacy regexes, while reusable R&amp;D enrichers (<code>note_rag</code>, <code>overflow_lookup</code>, <code>temporal_trends</code>) live isolated in <code>wahs_extensions/</code> (unplugged by default).</li>
+              <li><strong>Clean model IDs backed by H200 benchmarks.</strong> Production profiles use clean aliases (<code>wahs-26b</code> default, <code>wahs-12b</code>, <code>wahs-e4b</code>). In our earlier November 900-cell H200 benchmarks across frozen 4-pathway variants, <strong>Gemma 4 26B</strong> led at <strong>85.1 / 100</strong> with <strong>0 of 75 confirmed unsafe answers</strong> (3.4 s median wait), while <strong>Gemma 4 12B</strong> reached <strong>82.0 to 82.8 / 100</strong> when VRAM is constrained.</li>
             </ol>
           </div>
 
@@ -171,9 +171,10 @@
                 <p class="flow-owner">This project · middle service</p>
                 <h3>WAHS engine</h3>
                 <ul>
-                  <li>Fetches the signed-in patient’s current record.</li>
-                  <li>Condenses it and adds clinical knowledge for the question.</li>
-                  <li>Returns the answer with links to source records.</li>
+                  <li>Fetches the signed-in patient’s current record via <code>fhir-auth</code>.</li>
+                  <li>Runs pure-stdlib 3-tier verbatim-first condensation (<code>wahs_core</code>).</li>
+                  <li>Optionally loads opt-in <code>wahs_extensions/</code> enrichers (disabled by default).</li>
+                  <li>Returns the answer with clickable <code>[N]</code> source provenance.</li>
                 </ul>
                 <p class="flow-side"><strong>Reads from the record store</strong> using the patient’s own sign-in. The engine has no access of its own, so it can only ever receive that patient’s records.</p>
               </li>
@@ -267,26 +268,26 @@ Question: What are my diabetes labs?</pre>
 
           <div class="strategy-grid-3">
             <article class="strategy-card recommended">
-              <span class="strategy-badge">Pilot default (wahs-26b-kb)</span>
+              <span class="strategy-badge">Evaluated default · 26B @ 16k</span>
               <h3>1. Condensation + 4-Layer KB</h3>
               <dl class="facts">
                 <dt>Method</dt>
                 <dd>Shrink the record into a 16k numbered summary, attach pre-computed clinical rules and patient graph links, and answer in one call.</dd>
                 <dt>Strengths</dt>
                 <dd>Highest overall safety and speed: one stateless model call with strict per-patient scoping.</dd>
-                <dt>Limitations</dt>
-                <dd>Very long hospital notes over 16k rely on automatic Tier-0 overflow recovery.</dd>
+                <dt>Production mapping</dt>
+                <dd>Clean baseline engine serves <code>wahs-26b</code> by default; KB graph components are isolated in <code>wahs_extensions/experimental/</code> until opted in.</dd>
                 <dt>900-cell H200 result</dt>
                 <dd>85.1 / 100 on Gemma 4 26B (0 of 75 unsafe, 3.4 s median); 82.0 on 12B.</dd>
               </dl>
             </article>
 
             <article class="strategy-card">
-              <span class="strategy-badge secondary">Deep-note option (-rag)</span>
+              <span class="strategy-badge secondary">Deep-note extension (note_rag)</span>
               <h3>2. Condensation + Note search</h3>
               <dl class="facts">
                 <dt>Method</dt>
-                <dd>Keep the 16k condensed chart and add question-matched BM25 passages from long clinical notes before calling the model.</dd>
+                <dd>Keep the 16k condensed chart and add question-matched BM25 passages from long clinical notes when enabled via <code>WAHS_ENABLED_ENRICHERS=note_rag</code>.</dd>
                 <dt>Strengths</dt>
                 <dd>Strongest pure clinical note recall on hospital and specialist notes of 4,000 to 14,000 tokens.</dd>
                 <dt>Limitations</dt>
@@ -358,7 +359,7 @@ Question: What are my diabetes labs?</pre>
           <p class="section-kicker">Model selection</p>
           <h2 id="model-title">Gemma 4 26B leads on H200 (with Gemma 4 12B as the compact option); the engine improves seven of nine models</h2>
           <p>
-            First, nine open-weight models across Google Gemma 4, Alibaba Qwen 3, and Meta Llama 3.x / Hermes 3 answered the same 36 clinical questions with the condensed chart alone and through the full engine (shown below). Follow-up 900-cell H200 benchmarks then evaluated Gemma 4 26B, 12B, and E4B across 75 clinical and privacy scenarios, confirming <strong>Gemma 4 26B</strong> (<code>wahs-26b-kb</code>, <strong>85.1 / 100</strong>, 0/75 unsafe) as the default H200 configuration and <strong>Gemma 4 12B</strong> (<code>82.0 to 82.8 / 100</code>) as the compact single-slice alternative.
+            First, nine open-weight models across Google Gemma 4, Alibaba Qwen 3, and Meta Llama 3.x / Hermes 3 answered the same 36 clinical questions with the condensed chart alone and through the full engine (shown below). Follow-up 900-cell H200 benchmarks evaluated Gemma 4 26B, 12B, and E4B across 75 clinical and privacy scenarios, confirming <strong>Gemma 4 26B</strong> (production alias <code>wahs-26b</code>, <strong>85.1 / 100</strong> with KB in the Nov 2026 matrix, 0/75 unsafe) as the default H200 configuration and <strong>Gemma 4 12B</strong> (<code>wahs-12b</code>, <code>82.0 to 82.8 / 100</code>) as the compact alternative.
           </p>
 
           <div class="dumbbell" role="group" aria-labelledby="db-title">
@@ -496,11 +497,11 @@ Question: What are my diabetes labs?</pre>
           <div class="status-cols">
             <div class="status-col">
               <ul>
-                <li>Standalone <code>wahs-engine</code> runs with zero runtime dependency on research services (94 offline tests + live HAPI/Keycloak CI passing).</li>
-                <li>Reads records only with the patient’s sign-in via <code>fhir-auth</code>, with optional local RS256 JWKS verification and byte-bounded in-memory caches.</li>
-                <li>Both the SvelteKit web app (<code>shl-ips</code>) and mobile companion connect over standard OpenAI <code>/v1/chat/completions</code> with 12-persona HAPI seeding.</li>
-                <li>All 27 architectural and clinical code-audit items (<code>C1</code>-<code>C10</code>, <code>E1</code>-<code>E11</code>) are remediated and regression-tested on <code>main</code>.</li>
-                <li>Benchmarked across two 900-cell H200 studies (<code>16k vs. 32k</code> calibration and 4-pathway clinical/privacy evaluation) plus 384 3-seed portability runs.</li>
+                <li>Standalone <code>wahs-engine</code> runs a clean pure-stdlib core (<code>wahs_core</code>, 1,776 LOC) + thin FastAPI runtime (<code>wahs_engine</code>, 1,871 LOC) with zero R&amp;D bloat and unplugged <code>wahs_extensions/</code> by default.</li>
+                <li>Reads records only with the patient’s sign-in via <code>fhir-auth</code>, with optional local RS256 JWKS verification and byte-bounded in-memory caches; patient-facing selective-disclosure privacy policies remain unbuilt pending team design.</li>
+                <li>Both the SvelteKit web app (<code>shl-ips</code>) and mobile companion connect over standard OpenAI <code>/v1/chat/completions</code> with clean model aliases (<code>wahs-26b</code>, <code>wahs-12b</code>, <code>wahs-e4b</code>) and <code>wahs-seed-hapi</code> devtools.</li>
+                <li>Remediated runtime pooling, RS256 JWKS, SSE preflight, and FHIR R4 status invariants remain regression-tested on <code>main</code> (<code>3b9dcc0</code>) alongside clean 3-tier verbatim-first condensation tests.</li>
+                <li>Benchmarked across two 900-cell H200 studies (<code>16k vs. 32k</code> calibration and 4-pathway evaluation) plus 384 3-seed portability runs, with R&amp;D enrichers cleanly isolated for opt-in re-enablement.</li>
               </ul>
             </div>
           </div>

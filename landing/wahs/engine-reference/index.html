@@ -132,17 +132,18 @@
    • Zero HAPI admin credentials: forwards caller's Bearer JWT to fhir-auth (jwt-proxy, meta.security.code == sub)
    • Bundle Assembler walks masterPatient.link[] → paginated Patient/{datasetId}/$everything (provider imports + My Story/Goals)
    • Applies optional wahs.chart_scope (source/category/section/IPS filter) + merges unsaved wahs.overlay_resources
-   • Runs wahs_core: 90%–99% condensation (condenser.py) + 4-Layer Clinical KB + ClinicalEntityGraph + Tier-0 lookup
+   • Runs wahs_core: 3-tier verbatim-first condensation (Tier 0 verbatim <=16k, Tier 1 RLE, Tier 2 packed)
+   • Optional wahs_extensions/ shelf (unplugged by default when WAHS_ENABLED_ENRICHERS=""): note_rag, overflow_lookup, temporal_trends
    • Isolates dataset &amp; KV prefix caches strictly by (verified_sub, datasets_fingerprint, scope_hash)
           │
           ▼  Standard OpenAI POST /v1/chat/completions (LLM_BASE_URL · fixed chart prefix + stream=true)
 [3. Pluggable OpenAI-Compatible Inference Backend (UW CIRG GPU / Agency Host)]
-   • Default pilot: LiteLLM / Ollama / vLLM on UW CIRG H200 server (Gemma 4 26B default · 12B · E4B)
+   • Clean production model aliases: wahs-26b (default), wahs-12b, wahs-e4b (Ollama/LiteLLM on UW CIRG H200 or llama-router)
    • Zero-code portability: swap approved open-weight models or local agency GPU hosts via config alone
    • Streams tokens immediately; wahs-engine appends x_wahs ([N] → FHIR UUID/source map + HL7 AI-Provenance)</div>
 
       <div class="strategy-callout" style="margin-bottom: 22px;">
-        <strong>Engine scope &amp; explicit non-goals:</strong> <code>wahs-engine</code> owns only stateless per-turn FHIR bundle assembly via <code>fhir-auth</code> (with optional local RS256 JWKS defense-in-depth), deterministic <code>wahs_core</code> condensation and clinical/privacy rule enrichment, exact offline token sizing, and OpenAI <code>/v1/chat/completions</code> + <code>x_wahs</code> provenance mapping. It intentionally does <strong>not</strong> own OIDC login UI, persistent chat databases, HAPI admin credentials, SMART Health Link issuance (<code>shl-server</code>), upstream EHR <code>meta.security</code> consent authoring, GPU VRAM scheduling, or LLM-as-a-judge evaluation scoring.
+        <strong>Engine scope &amp; explicit non-goals:</strong> <code>wahs-engine</code> owns only stateless per-turn FHIR bundle assembly via <code>fhir-auth</code> (with optional local RS256 JWKS defense-in-depth), domain-neutral <code>wahs_core</code> 3-tier condensation, optional operator-configured <code>wahs_extensions</code> plugins, exact offline token sizing, and OpenAI <code>/v1/chat/completions</code> + <code>x_wahs</code> provenance mapping. It intentionally does <strong>not</strong> own OIDC login UI, persistent chat databases, HAPI admin credentials, SMART Health Link issuance (<code>shl-server</code>), unbuilt patient-facing selective-disclosure privacy policies (<code>W9</code> deferred pending team design), GPU VRAM scheduling, or LLM-as-a-judge evaluation scoring.
       </div>
 
       <div class="strategy-grid-3">
@@ -188,18 +189,18 @@
           <h3>Condensed chart ledger cached across follow-up turns</h3>
           <ul>
             <li><strong>Live assembly (~10 ms check):</strong> Calls <span class="code-inline">fhir-auth</span> with the user’s <span class="code-inline">Bearer</span> token, checks <span class="code-inline">MasterPatient</span> + linked <span class="code-inline">Patient.meta.lastUpdated</span>, and re-fetches only newly synced or edited datasets.</li>
-            <li><strong>Deterministic condensation:</strong> Compresses the record into the target token budget (default 16k ceiling; configurable 512 to 131,072 tokens), normalizes RxNorm/LOINC/SNOMED labels, numbers entries <span class="code-inline">[1]...[N]</span>, and writes <span class="code-inline">[2] Completeness Manifest</span> plus <span class="code-inline">[TEMPORAL DIGEST]</span>.</li>
+            <li><strong>Deterministic condensation:</strong> Compresses the record only when needed (Tier 0 verbatim at &lt;= 16k default; Tier 1 ontology-free RLE folding and Tier 2 packed above budget), normalizes dates cleanly without heuristic clinical mutations, numbers entries <span class="code-inline">[1]...[N]</span>, and writes <span class="code-inline">[2] Completeness Manifest</span>.</li>
             <li><strong>Constant prefix:</strong> Remains byte-for-byte identical across follow-up questions unless HAPI data changes, <span class="code-inline">chart_scope</span> shifts, or an evaluation explicitly varies the condensation budget.</li>
           </ul>
         </article>
 
         <article class="strategy-card">
-          <span class="strategy-badge secondary">Region 2 · Query-Conditioned Suffix (messages[-1], Layer-3 enrichment)</span>
-          <h3>Targeted diabetes KB, patient graph &amp; <code>[N]</code> source pills</h3>
+          <span class="strategy-badge secondary">Region 2 · Turn Suffix &amp; Optional Enrichers (messages[-1])</span>
+          <h3>Clean user question + opt-in <code>wahs_extensions/</code></h3>
           <ul>
-            <li><strong>Clinical concept mapping:</strong> Injects matched LOINC/ADA rules connecting <em>“diabetes labs”</em> to HbA1c, fasting glucose, eGFR, and urine albumin-creatinine ratio so smaller models do not miss differently named labs.</li>
-            <li><strong>Patient relationship subgraph:</strong> Attaches verified edges such as <span class="code-inline">Type 2 diabetes [4] --[MONITORED_BY]--&gt; HbA1c 7.8% [12]</span> plus conditional Tier-0 overflow / Note-RAG excerpts when <span class="code-inline">omitted_clinical_items &gt; 0</span>.</li>
-            <li><strong>Streamed provenance:</strong> Sits after prior chat history so <span class="code-inline">messages[0]</span> hits the GPU’s KV cache while <span class="code-inline">x_wahs</span> maps <span class="code-inline">[12]</span> to the exact FHIR <span class="code-inline">Observation</span> UUID and clinic pill.</li>
+            <li><strong>Zero-mutation pass-through by default:</strong> When <span class="code-inline">WAHS_ENABLED_ENRICHERS=""</span>, <span class="code-inline">messages[-1]</span> forwards the caller's exact question verbatim without importing <span class="code-inline">wahs_extensions</span> or running LLM tool loops.</li>
+            <li><strong>Opt-in enricher shelf:</strong> When operators explicitly enable modules via <span class="code-inline">WAHS_ENABLED_ENRICHERS</span> (<span class="code-inline">note_rag</span>, <span class="code-inline">overflow_lookup</span>, <span class="code-inline">temporal_trends</span>, <span class="code-inline">experimental.clinical_reconciliation</span>), bounded blocks and disclosures attach cleanly inside <span class="code-inline">x_wahs.enrichers</span>.</li>
+            <li><strong>Streamed provenance:</strong> Sits after prior chat history so <span class="code-inline">messages[0]</span> hits the GPU’s KV cache while <span class="code-inline">x_wahs</span> maps <span class="code-inline">[N]</span> citations to exact FHIR resource UUIDs and clinics.</li>
           </ul>
         </article>
       </div>
@@ -266,12 +267,12 @@
             <tr>
               <td><strong>3. Token-Budget Priority</strong></td>
               <td><code>wahs_core</code> (<code>condenser.py</code>)</td>
-              <td>Deterministic 2-stage monotonic structural condensation (512–131,072 tokens) pinning the HL7 IPS safety core and longitudinal <code>[TEMPORAL DIGEST]</code> first while logging any trimmed items in <span class="code-inline">[2] Completeness Manifest</span>.</td>
+              <td>Deterministic 3-tier verbatim-first structural condensation (512–131,072 tokens) keeping everything verbatim under 16,384 tokens, folding repeated items cleanly only over budget, and logging omitted items in <span class="code-inline">[2] Completeness Manifest</span>.</td>
             </tr>
             <tr>
-              <td><strong>4. Explicit Sharing Posture</strong></td>
-              <td><code>sharing_posture</code></td>
-              <td>Separates private patient self-Q&amp;A (<span class="code-inline">patient_self</span>) from explicit external summary/IPS sharing (<span class="code-inline">external_share</span>).</td>
+              <td><strong>4. Patient Privacy / Selective Disclosure</strong></td>
+              <td>Unbuilt (Deferred Pending Team Design)</td>
+              <td>No premature regex redaction or <code>sharing_posture</code> runs in core extraction/runtime; future DS4P/SD-JWT selective disclosure belongs in a dedicated, explicitly consented privacy layer.</td>
             </tr>
           </tbody>
         </table>
@@ -281,7 +282,7 @@
         <summary>Inspect OpenAI <code>/v1/chat/completions</code> middleware contract, <code>wahs.chart_scope</code> schema &amp; <code>x_wahs</code> provenance</summary>
         <div class="internals-details-body">
           <p>
-            Server-side routes in WAHS (such as SvelteKit <span class="code-inline">/api/chat/+server.ts</span> using the Vercel AI SDK <span class="code-inline">@ai-sdk/openai-compatible</span> provider) call <code>wahs-engine</code> using standard OpenAI chat completion payloads (plus <span class="code-inline">POST /v1/wahs/context/preview</span> for pre-chat inspection). Compact profile IDs encode model tier, pathway (<span class="code-inline">-kb</span>, <span class="code-inline">-rag</span>, <span class="code-inline">-chart</span>, <span class="code-inline">-tools</span>), and optional budget ceiling (<span class="code-inline">@16k</span>, <span class="code-inline">@32k</span>). Prompt sizing and upstream stream connection are validated before committing HTTP 200 SSE headers, and vanilla OpenAI SDK callers can pass <span class="code-inline">wahs.emit_stream_events: false</span> to suppress <span class="code-inline">x_wahs_stream</span> sideband chunks.
+            Server-side routes in WAHS (such as SvelteKit <span class="code-inline">/api/chat/+server.ts</span>) call <code>wahs-engine</code> using clean model aliases (<span class="code-inline">wahs-26b</span> default, <span class="code-inline">wahs-12b</span>, <span class="code-inline">wahs-e4b</span>) and standard OpenAI chat completion payloads (plus <span class="code-inline">POST /v1/wahs/context/preview</span> for pre-chat inspection). Prompt sizing and upstream stream connection are validated before committing HTTP 200 SSE headers, and vanilla OpenAI SDK callers can pass <span class="code-inline">wahs.emit_stream_events: false</span> to suppress <span class="code-inline">x_wahs_stream</span> sideband chunks.
           </p>
 
           <div class="flow-diagram" tabindex="0" role="region" aria-label="WAHS Engine OpenAI Wire Contract">POST /v1/chat/completions
@@ -289,14 +290,13 @@ Authorization: Bearer &lt;keycloak_access_token&gt;
 Content-Type: application/json
 
 {
-  "model": "wahs-26b-kb",
+  "model": "wahs-26b",
   "stream": true,
   "messages": [
     { "role": "user", "content": "Do any of my heart or kidney medications conflict across clinics?" }
   ],
   "wahs": {
     "target_budget_tokens": 16384,
-    "sharing_posture": "patient_self",
     "emit_stream_events": true,
     "chart_scope": {
       "include_sources": ["UW Medicine", "MultiCare", "My Story"],
@@ -319,8 +319,9 @@ Content-Type: application/json
       "7": { "resourceType": "MedicationRequest", "id": "med-spiro-01", "date": "2026-01-12", "source": "UW Medicine", "display": "Spironolactone 25 MG Oral Tablet" },
       "10": { "resourceType": "Observation", "id": "obs-k-56", "date": "2026-01-16", "source": "MultiCare", "display": "Potassium 5.6 mEq/L" }
     },
-    "condensation": { "budget_tokens": 16384, "actual_tokens": 6410, "datasets_included": 3, "omitted_clinical_items": 0 },
-    "ai_provenance": { "model": "ollama/gemma4:26b", "kb_enabled": true, "human_review_required": true }
+    "condensation": { "tier": 0, "budget_tokens": 16384, "actual_tokens": 6410, "datasets_included": 3, "omitted_clinical_items": 0 },
+    "enrichers": [],
+    "ai_provenance": { "recorded_model": "ollama/gemma4:26b", "requested_model": "wahs-26b", "engine": "wahs-engine/0.2.0", "enrichers": [], "human_review_required": true }
   }
 }</div>
         </div>
@@ -388,9 +389,9 @@ Content-Type: application/json
 
     <section class="strategy-section" id="engine-internals" tabindex="-1" aria-labelledby="internals-title">
       <p class="section-kicker">Engine internals</p>
-      <h2 id="internals-title">Two-stage monotonic condensation, <code>[TEMPORAL DIGEST]</code>, <code>ClinicalEntityGraph</code>, and Layer-3 enrichment</h2>
+      <h2 id="internals-title">3-tier verbatim-first condensation (`wahs_core`) and opt-in `wahs_extensions/` shelf</h2>
       <p>
-        For engineers inspecting the shared <code>wahs_core</code> clinical modules (packaged without R&amp;D dependencies in standalone <code>wahs-engine</code> and imported upstream by <a href="/med-agent-hub/index.html">Med Agent Hub</a>), every condensed chart undergoes 2-stage monotonic structural condensation: Stage A normalizes records and emits patient demographics at <code>[1]</code>, a machine-readable <code>Completeness Manifest</code> at <code>[2]</code>, and a chronological <code>[TEMPORAL DIGEST]</code> for numeric trajectories; Stage B packs the IPS safety core and longitudinal sections under dynamic per-model and tokenizer budget reservations. When a KB-guided profile executes (such as <code>wahs-12b-kb</code> or <code>wahs-26b-kb</code>), Layer-3 enrichment runs conditional Tier-0 / Note-RAG overflow recovery, constructs a typed <code>ClinicalEntityGraph</code>, and attaches matched clinical guidelines without a hardcoded 800-token ceiling before calling the model.
+        Inside standalone <code>wahs-engine</code>, <code>wahs_core</code> (1,776 LOC, 100% Python stdlib verified via <code>python -S</code>) implements pure structural FHIR R4 extraction, SHA-256 note deduplication, and 3-tier verbatim-first condensation: Tier 0 keeps the complete record and notes verbatim whenever they fit within budget (default 16,384 tokens); Tier 1 applies ontology-free run-length folding strictly when over budget; Tier 2 packs mandatory IPS safety records plus recency-balanced history. Reusable enrichment modules (<code>note_rag</code>, <code>overflow_lookup</code>, <code>temporal_trends</code>, and <code>experimental.clinical_reconciliation</code>) live cleanly isolated in <code>src/wahs_extensions/</code> behind <code>wahs_core.ports.ContextEnricher</code> and are unplugged by default (<code>WAHS_ENABLED_ENRICHERS=""</code>). Upstream <a href="/med-agent-hub/index.html">Med Agent Hub</a> pins the earlier R&amp;D snapshot (<code>85fb799</code>) cleanly so experimental evaluations remain decoupled.
       </p>
 
       <p class="strategy-note">

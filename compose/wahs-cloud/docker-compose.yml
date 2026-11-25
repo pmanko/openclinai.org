@@ -217,10 +217,11 @@ services:
       WAHS_ALLOW_LOCAL_BUNDLE_MODE: "false"
       LLM_BASE_URL: ${LLM_BASE_URL:-https://llm.co.dev.cirg.uw.edu/v1}
       LLM_API_KEY: ${LLM_API_KEY:?LLM_API_KEY is required}
-      WAHS_DEFAULT_MODEL: ${WAHS_DEFAULT_MODEL:-wahs-26b-kb}
+      WAHS_DEFAULT_MODEL: ${WAHS_DEFAULT_MODEL:-wahs-26b}
       WAHS_PROVIDER_FLAVOR: ${WAHS_PROVIDER_FLAVOR:-litellm}
       WAHS_LLM_TIMEOUT_SECONDS: ${WAHS_LLM_TIMEOUT_SECONDS:-180}
-      WAHS_MODEL_MAP_JSON: ${WAHS_MODEL_MAP_JSON:-{"wahs-26b-kb":"ollama/gemma4:26b","wahs-26b-raw":"ollama/gemma4:26b","wahs-12b-kb":"ollama/gemma4:12b","wahs-12b-raw":"ollama/gemma4:12b","wahs-e4b-kb":"ollama/gemma4:e4b","wahs-e4b-raw":"ollama/gemma4:e4b","wahs-qwen3-14b-kb":"ollama/qwen3:14b","wahs-qwen3-8b-kb":"ollama/qwen3:8b","wahs-llama31-8b-kb":"ollama/llama3.1:8b","gemma-4-e4b":"ollama/gemma4:e4b","gemma4:26b":"ollama/gemma4:26b","gemma4:12b":"ollama/gemma4:12b","gemma4:e4b":"ollama/gemma4:e4b","qwen3-14b":"ollama/qwen3:14b","qwen3.5-9b":"ollama/qwen3:8b","llama-3.1-8b":"ollama/llama3.1:8b"}}
+      WAHS_MODEL_MAP_JSON: ${WAHS_MODEL_MAP_JSON:-{"wahs-26b":"ollama/gemma4:26b","wahs-12b":"ollama/gemma4:12b","wahs-e4b":"ollama/gemma4:e4b"}}
+      WAHS_ENABLED_ENRICHERS: ${WAHS_ENABLED_ENRICHERS:-}
       WAHS_CONTEXT_WINDOW: ${WAHS_CONTEXT_WINDOW:-32768}
       WAHS_CHART_BUDGET_CEILING: ${WAHS_CHART_BUDGET_CEILING:-16384}
       WAHS_CACHE_TTL_SECONDS: ${WAHS_CACHE_TTL_SECONDS:-3600}
@@ -249,9 +250,7 @@ services:
     volumes:
       - ./bundles:/bundles:ro
     command:
-      - python
-      - -m
-      - wahs_engine.seeder
+      - wahs-seed-hapi
       - --fhir-url
       - http://fhir-internal:8080/fhir
       - --persona
@@ -306,7 +305,7 @@ services:
       VITE_VIEWER_BASE: https://wahs-web.openclinai.org/ips#
       VITE_SYSTEM_URL: https://wahs-web.openclinai.org
       WAHS_ENGINE_URL: http://wahs-engine:8080/v1
-      WAHS_DEFAULT_MODEL: ${WAHS_DEFAULT_MODEL:-wahs-26b-kb}
+      WAHS_DEFAULT_MODEL: ${WAHS_DEFAULT_MODEL:-wahs-26b}
       SHC_PRIVATE_JWK: ""
       SHC_PUBLIC_JWK_STORE: '{"keys":[]}'
     networks:
@@ -341,7 +340,7 @@ services:
       HOST: 0.0.0.0
       LOCAL_DEMO_MODE: "false"
       WAHS_ENGINE_URL: http://wahs-engine:8080/v1
-      WAHS_DEFAULT_MODEL: ${WAHS_DEFAULT_MODEL:-wahs-26b-kb}
+      WAHS_DEFAULT_MODEL: ${WAHS_DEFAULT_MODEL:-wahs-26b}
       FHIR_AUTH_BASE_URL: https://wahs-mobile.openclinai.org/fhir
       SHL_SERVER_API_BASE: https://wahs-mobile.openclinai.org/shl-server/api
       SHL_VIEWER_BASE_URL: https://wahs-web.openclinai.org/ips#
