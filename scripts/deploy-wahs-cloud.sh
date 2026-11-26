@@ -8,9 +8,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck disable=SC1091
 . "${ROOT}/scripts/cloud-lib.sh"
 
-WAHS_ENGINE_SRC="${WAHS_ENGINE_SRC:-/Users/pmanko/code/worktrees/wahs-engine-s6-12-profiles}"
-SHL_IPS_SRC="${SHL_IPS_SRC:-/Users/pmanko/code/worktrees/shl-ips-s6-fullstack-fixes}"
-WAHS_MOBILE_SRC="${WAHS_MOBILE_SRC:-/Users/pmanko/code/worktrees/wahs-mobile-s6-fullstack}"
+WAHS_ENGINE_SRC="${WAHS_ENGINE_SRC:-/Users/pmanko/code/wahs-engine}"
+SHL_IPS_SRC="${SHL_IPS_SRC:-/Users/pmanko/code/shl-ips}"
+WAHS_MOBILE_SRC="${WAHS_MOBILE_SRC:-/Users/pmanko/code/wahs-mobile-frontend}"
 WAHS_BUNDLES_DIR="${WAHS_BUNDLES_DIR:-/Users/pmanko/code/hq/wahs/bundles}"
 WAHS_KEYCLOAK_THEMES_DIR="${WAHS_KEYCLOAK_THEMES_DIR:-/Users/pmanko/code/hq/wahs/wahs-environments/base/config/keycloak/themes}"
 LOCAL_WAHS_ENV="${LOCAL_WAHS_ENV:-/Users/pmanko/code/hq/wahs/.env}"
@@ -150,10 +150,9 @@ values = {
     "LLM_BASE_URL": "https://llm.co.dev.cirg.uw.edu/v1",
     "LLM_API_KEY": llm_key,
     "WAHS_PROVIDER_FLAVOR": "litellm",
-    "WAHS_DEFAULT_MODEL": "wahs-26b-kb",
+    "WAHS_DEFAULT_MODEL": "wahs-26b",
     "WAHS_LLM_TIMEOUT_SECONDS": "180",
     "WAHS_CONTEXT_WINDOW": "32768",
-    "WAHS_CHART_BUDGET_CEILING": "16384",
     "WAHS_CACHE_TTL_SECONDS": "1800",
 }
 
@@ -182,8 +181,14 @@ gcp_ssh "docker network create openclinai-edge >/dev/null 2>&1 || true"
 echo "==> building and starting wahs-cloud backend, frontends, and auth-gate"
 gcp_ssh "cd ${REMOTE_BASE} && docker compose --project-name wahs-cloud --env-file .env up -d --build"
 
-echo "==> seeding 12 WAHS demo patients and FHIR/Keycloak records"
-gcp_ssh "cd ${REMOTE_BASE} && docker compose --project-name wahs-cloud --env-file .env run --rm wahs-seeder"
+echo "==> checking cloud HAPI seed state (seed only if < 12 patients or FORCE_WAHS_SEED=1)"
+remote_patient_count="$(gcp_ssh "docker exec wahs-cloud-engine python -c \"import json, urllib.request; print(json.loads(urllib.request.urlopen('http://fhir-internal:8080/fhir/Patient?_summary=count', timeout=5).read()).get('total', 0))\" 2>/dev/null || echo 0")"
+if [ "${FORCE_WAHS_SEED:-0}" = "1" ] || [ "${remote_patient_count:-0}" -lt 12 ]; then
+  echo "==> seeding 12 WAHS demo patients and FHIR/Keycloak records (found ${remote_patient_count})"
+  gcp_ssh "cd ${REMOTE_BASE} && docker compose --project-name wahs-cloud --env-file .env run --rm wahs-seeder"
+else
+  echo "==> cloud HAPI already seeded (${remote_patient_count} patients); skipping wahs-seeder"
+fi
 
 echo "==> enabling Caddy edge routes on openclinai-website proxy"
 gcp_ssh "cd ${GCP_REMOTE_REPO} && docker compose --project-name openclinai-website --env-file compose/website/.env.website -f compose/website/services.yml up -d --no-deps --force-recreate proxy"
