@@ -178,8 +178,18 @@ rsync -az -e "${SSH_TRANSPORT}" \
 
 gcp_ssh "docker network create openclinai-edge >/dev/null 2>&1 || true"
 
-echo "==> building and starting wahs-cloud backend, frontends, and auth-gate"
-gcp_ssh "cd ${REMOTE_BASE} && docker compose --project-name wahs-cloud --env-file .env up -d --build"
+echo "==> pruning stale Docker BuildKit cache before sequential image builds"
+gcp_ssh "docker builder prune -af >/dev/null 2>&1 || true; docker image prune -f >/dev/null 2>&1 || true"
+
+echo "==> building wahs-cloud images sequentially to avoid ext4/memory spikes on shared VM"
+for svc in wahs-auth-gate wahs-engine wahs-mobile-frontend wahs-shl-ips; do
+  echo "  -> building ${svc}"
+  gcp_ssh "cd ${REMOTE_BASE} && COMPOSE_PARALLEL_LIMIT=1 docker compose --project-name wahs-cloud --env-file .env build ${svc}"
+done
+
+echo "==> starting wahs-cloud backend, frontends, and auth-gate"
+gcp_ssh "cd ${REMOTE_BASE} && docker compose --project-name wahs-cloud --env-file .env up -d --no-build"
+gcp_ssh "docker builder prune -af >/dev/null 2>&1 || true; docker image prune -f >/dev/null 2>&1 || true"
 
 echo "==> checking cloud HAPI seed state (seed only if < 12 patients or FORCE_WAHS_SEED=1)"
 remote_patient_count="$(gcp_ssh "docker exec wahs-cloud-engine python -c \"import json, urllib.request; print(json.loads(urllib.request.urlopen('http://fhir-internal:8080/fhir/Patient?_summary=count', timeout=5).read()).get('total', 0))\" 2>/dev/null || echo 0")"
