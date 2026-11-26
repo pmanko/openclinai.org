@@ -99,7 +99,7 @@
           <p class="section-kicker">Washington Health Summary (WAHS) &middot; Pristine Baseline Audit</p>
           <h1>How the WAHS engine works and why its baseline is simple.</h1>
           <p class="overview-lead">
-            The <strong>WAHS Engine</strong> is a lean, standalone service that sits between the WA Health Summary app, the patient's health record store, and an open-weight language model. Following our November slim-down refactor, the default runtime is domain-neutral: pure-stdlib 3-tier verbatim-first condensation in <code>wahs_core</code> (1,776 LOC) + stateless OpenAI routing in <code>wahs_engine</code> (1,871 LOC), with experimental clinical enrichers cleanly isolated in <code>wahs_extensions/</code> (unplugged by default) and patient-facing privacy/selective-disclosure policies deferred as unbuilt pending team design.
+            The <strong>WAHS Engine</strong> is a lean, standalone service that sits between the WA Health Summary app, the patient's health record store, and an open-weight language model. Following our November slim-down and dynamic-budget refactors, the core runtime is domain-neutral and free of static token prescriptions: pure-stdlib 3-tier verbatim-first condensation in <code>wahs_core</code> + stateless OpenAI routing and exact turn-measured sizing in <code>wahs_engine</code>, with experimental clinical enrichers cleanly isolated in <code>wahs_extensions/</code> (unplugged by default) and patient-facing privacy/selective-disclosure policies deferred as unbuilt pending team design.
           </p>
           <p class="strategy-meta">
             Updated 25 November 2026 &middot; <a href="https://github.com/pmanko/wahs-engine"><code>wahs-engine</code> on GitHub <span aria-hidden="true">↗</span></a> (<code>main</code> at <a href="https://github.com/pmanko/wahs-engine/commit/3b9dcc0f712a28bdcbd4458287f319e0f1764ddd"><code>3b9dcc0</code></a> via <a href="https://github.com/pmanko/wahs-engine/pull/13"><code>PR #13</code></a>) &middot; Suites: <code>13</code> unit/extension tests + <code>2</code> live HAPI/Keycloak integration checks + Docker smoke CI passing
@@ -108,9 +108,9 @@
           <div class="decision" role="region" aria-labelledby="audit-verdict-title">
             <h2 id="audit-verdict-title">Pristine baseline summary</h2>
             <ol>
-              <li><strong>Domain-neutral core, unplugged extensions, and explicit privacy boundary.</strong> <code>wahs_core</code> (1,776 LOC pure Python stdlib verified under <code>python -S</code>) runs 3-tier verbatim-first condensation (Tier 0 verbatim &le; 16,384 tokens; Tier 1 ontology-free RLE folding and Tier 2 packed only over budget). Optional enrichers (<code>note_rag</code>, <code>overflow_lookup</code>, <code>temporal_trends</code>, <code>experimental.clinical_reconciliation</code>) live unplugged in <code>src/wahs_extensions/</code> behind <code>wahs_core.ports.ContextEnricher</code>, and premature regex privacy redaction (<code>sharing_posture</code>) was removed completely pending team design.</li>
-              <li><strong>Stateless runtime &amp; clean wire IDs.</strong> <code>wahs_engine</code> (1,871 LOC) provides zero-privilege <code>fhir-auth</code> star-graph assembly, optional local RS256 JWKS verification, exact offline Gemma 4 / <code>tiktoken</code> budgeting, SSE <code>&lt;think&gt;</code> stripping, and clean model aliases (<code>wahs-26b</code> default, <code>wahs-12b</code>, <code>wahs-e4b</code>) aligned across <code>shl-ips</code> and <code>wahs-mobile-frontend</code>.</li>
-              <li><strong>Grounded in 1,800 H200 benchmark runs &amp; hardened runtime invariants.</strong> November H200 evaluations showed condensing first to 16k beat 32k charts and 2k tool loops (Gemma 4 26B scored 85.1/100 with 0/75 unsafe); all hardened pooling, JWKS, SSE preflight, and FHIR R4 status invariants remain regression-tested on <code>main</code> (<code>3b9dcc0</code>).</li>
+              <li><strong>Domain-neutral core, unplugged extensions, and explicit privacy boundary.</strong> <code>wahs_core</code> (pure Python stdlib verified under <code>python -S</code>) runs 3-tier verbatim-first condensation (Tier 0 verbatim when chart fits available tokens or when unbounded; Tier 1 uniform ontology-free RLE folding and Tier 2 monotonic packed + water-filled notes only when constrained). Optional enrichers (<code>note_rag</code>, <code>overflow_lookup</code>, <code>temporal_trends</code>, <code>experimental.clinical_reconciliation</code>) live unplugged in <code>src/wahs_extensions/</code> behind <code>wahs_core.ports.ContextEnricher</code>, and premature regex privacy redaction (<code>sharing_posture</code>) was removed completely pending team design.</li>
+              <li><strong>Stateless runtime &amp; dynamic per-turn sizing.</strong> <code>wahs_engine</code> provides zero-privilege <code>fhir-auth</code> star-graph assembly, optional local RS256 JWKS verification, exact offline Gemma 4 / <code>tiktoken</code> budgeting measured directly against <code>context_window</code> and actual turn tokens (no hardcoded <code>16k</code> ceiling; optional per-model <code>WAHS_PREFERRED_CHART_TOKENS</code> only for <code>Auto</code> tuning), SSE <code>&lt;think&gt;</code> stripping, and clean model aliases (<code>wahs-26b</code> default, <code>wahs-12b</code>, <code>wahs-e4b</code>) aligned across <code>shl-ips</code> and <code>wahs-mobile-frontend</code>.</li>
+              <li><strong>Grounded in 1,800 H200 benchmark runs &amp; hardened runtime invariants.</strong> Historical November H200 evaluations showed condensing first to a <code>16k</code> calibration point beat uncondensed 32k charts and 2k tool loops on that server setup (Gemma 4 26B scored 85.1/100 with 0/75 unsafe); all hardened pooling, JWKS, SSE preflight, and FHIR R4 status invariants remain regression-tested on <code>main</code>.</li>
             </ol>
           </div>
 
@@ -129,7 +129,7 @@
             </div>
             <div class="stat">
               <p class="stat-value">3.4 s</p>
-              <p class="stat-label">Median wait for an answer on the shared UW CIRG GPU server at a 16k chart budget.</p>
+              <p class="stat-label">Median wait for an answer on the shared UW CIRG GPU server at the calibrated 16k benchmark budget.</p>
             </div>
           </div>
 
@@ -200,7 +200,7 @@
                 <rect x="296" y="14" width="292" height="378" rx="12" fill="#fcfaff" stroke="#4b2e83" stroke-width="2.2" />
                 <rect x="296" y="14" width="292" height="40" rx="12" fill="#4b2e83" />
                 <rect x="296" y="40" width="292" height="14" fill="#4b2e83" />
-                <text x="442" y="40" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">Core Baseline: wahs-engine (3,647 LOC)</text>
+                <text x="442" y="40" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">Core Baseline: wahs-engine</text>
 
                 <!-- Core Step 1 -->
                 <rect x="314" y="70" width="256" height="84" rx="8" fill="#ffffff" stroke="#d8b4fe" stroke-width="1.3" />
@@ -213,9 +213,9 @@
                 <!-- Core Step 2 -->
                 <rect x="314" y="172" width="256" height="94" rx="8" fill="#ffffff" stroke="#d8b4fe" stroke-width="1.3" />
                 <text x="328" y="196" fill="#24133f" font-size="14" font-weight="700">2. 3-Tier Condensation (wahs_core)</text>
-                <text x="328" y="216" fill="#475569" font-size="12.2">Tier 0 verbatim (&le; 16k default) | Tier 1 RLE</text>
-                <text x="328" y="234" fill="#475569" font-size="12.2">| Tier 2 packed; emits [2] Manifest &amp; [1..N]</text>
-                <text x="328" y="252" fill="#4b2e83" font-size="11.5" font-weight="600">Pure stdlib (1,776 LOC); zero KB/privacy regexes</text>
+                <text x="328" y="216" fill="#475569" font-size="12.2">Tier 0 verbatim | Tier 1 uniform RLE</text>
+                <text x="328" y="234" fill="#475569" font-size="12.2">| Tier 2 water-filled; [2] Manifest &amp; [1..N]</text>
+                <text x="328" y="252" fill="#4b2e83" font-size="11.5" font-weight="600">Pure stdlib; zero static limits or regexes</text>
 
                 <line x1="442" y1="266" x2="442" y2="282" stroke="#4b2e83" stroke-width="1.6" marker-end="url(#arr-purple)" />
 
@@ -302,13 +302,13 @@
                     </tr>
                     <tr>
                       <td><strong>Core Step 1 &amp; 3 (Runtime)</strong></td>
-                      <td><code>src/wahs_engine/</code> (1,871 LOC)</td>
-                      <td><code>app.py</code>, <code>config.py</code>, <code>schemas.py</code>, <code>jwt_claims.py</code>, <code>assembler.py</code>, <code>tokenizers_registry.py</code>, <code>pipeline.py</code>, <code>upstream.py</code> (single stateless <code>/v1</code> pass + <code>x_wahs</code>).</td>
+                      <td><code>src/wahs_engine/</code></td>
+                      <td><code>app.py</code>, <code>config.py</code>, <code>schemas.py</code>, <code>jwt_claims.py</code>, <code>assembler.py</code>, <code>tokenizers_registry.py</code>, <code>pipeline.py</code>, <code>upstream.py</code> (dynamic turn sizing + stateless <code>/v1</code> pass + <code>x_wahs</code>).</td>
                     </tr>
                     <tr>
                       <td><strong>Core Step 2 (Pure Stdlib)</strong></td>
-                      <td><code>src/wahs_core/</code> (1,776 LOC)</td>
-                      <td><code>extractors.py</code> (pure FHIR R4 + SHA-256 note dedup), <code>condenser.py</code> (Tier 0 verbatim &le;16k, Tier 1 ontology-free RLE, Tier 2 packed), <code>chart_serializer.py</code>, <code>ports.py</code> (<code>ContextEnricher</code> Protocol).</td>
+                      <td><code>src/wahs_core/</code></td>
+                      <td><code>extractors.py</code> (pure FHIR R4 + SHA-256 note dedup), <code>condenser.py</code> (Tier 0 verbatim, Tier 1 uniform RLE, Tier 2 water-filled), <code>chart_serializer.py</code>, <code>ports.py</code> (<code>ContextEnricher</code> Protocol).</td>
                     </tr>
                     <tr>
                       <td><strong>Unplugged Shelf + Devtools</strong></td>
@@ -350,7 +350,7 @@
                 Language models lose recall when key facts sit buried in noisy multi-megabyte JSON. Pinning an international clinical safety core first and explicitly logging omitted counts prevents silent truncation and guessing.
               </p>
               <ul class="pillar-link-list">
-                <li><a href="https://arxiv.org/abs/2307.03172">Liu et al., <em>Lost in the Middle</em> (<em>TACL</em>, 2024) ↗</a> &middot; Demonstrates U-shaped long-context recall degradation, motivating compact <code>16k</code> condensation over raw <code>200k+</code> FHIR dumps.</li>
+                <li><a href="https://arxiv.org/abs/2307.03172">Liu et al., <em>Lost in the Middle</em> (<em>TACL</em>, 2024) ↗</a> &middot; Demonstrates U-shaped long-context recall degradation, motivating compact verbatim-first condensation (with optional per-model <code>preferred_chart_tokens</code> sweet spots) over raw <code>200k+</code> FHIR dumps.</li>
                 <li><a href="https://build.fhir.org/ig/HL7/fhir-ips/">HL7 International Patient Summary (IPS) &amp; ISO 27269 ↗</a> &middot; Defines the mandatory safety core (allergies, active meds, active problems, implants) preserved first across all budgets.</li>
                 <li><a href="https://doi.org/10.1561/1500000019">Robertson &amp; Zaragoza, <em>Okapi BM25</em> (2009) ↗</a> &middot; Grounds exact clinical-term passage retrieval (<code>note_rag</code>) when long hospital notes exceed budget.</li>
               </ul>
@@ -400,18 +400,18 @@
           <p class="section-kicker">Functional audit</p>
           <h2 id="core-audit-heading">Verified subsystem guarantees across <code>wahs_core</code> and <code>wahs_engine</code></h2>
           <p>
-            Inside the slimmed repository, the pure-stdlib core library (<code>src/wahs_core/</code>, 1,776 LOC) handles verbatim-first structural extraction and condensation with zero domain heuristics, while the thin FastAPI runtime (<code>src/wahs_engine/</code>, 1,871 LOC) handles authentication, byte-bounded caching, exact token counting, and SSE streaming. Research enrichers live unplugged in <code>src/wahs_extensions/</code> (1,152 LOC Python + 4 sample rule packs), and persona seeding lives in <code>src/wahs_devtools/</code>.
+            Inside the slimmed repository, the pure-stdlib core library (<code>src/wahs_core/</code>) handles verbatim-first structural extraction and continuous condensation with zero domain heuristics or hardcoded sizes, while the thin FastAPI runtime (<code>src/wahs_engine/</code>) handles authentication, byte-bounded caching, exact per-turn token measurement, and SSE streaming. Research enrichers live unplugged in <code>src/wahs_extensions/</code>, and persona seeding lives in <code>src/wahs_devtools/</code>.
           </p>
 
           <h3 class="sub-h" id="fhir-extraction-coverage">1. Record intake, 3-tier condensation, and unplugged extensions (<code>wahs_core</code> &amp; <code>wahs_extensions</code>)</h3>
           <div class="strategy-grid-3">
             <article class="strategy-card recommended">
-              <span class="strategy-badge">Verified on main (3b9dcc0)</span>
+              <span class="strategy-badge">Verified on main</span>
               <h3>3-tier verbatim-first condensation</h3>
               <ul>
-                <li><strong>Verbatim by default (Tier 0):</strong> When the complete extracted record and full decoded clinical notes fit inside budget (default <code>16,384</code> tokens), emits every item verbatim (<code>folded_items_count = 0</code>).</li>
-                <li><strong>Ontology-free RLE &amp; packing (Tier 1 / 2):</strong> Only over budget, folds identical repeated labs/renewals strictly by FHIR code/unit and binary-searches a monotonic recency prefix around the HL7 IPS safety core.</li>
-                <li><strong>No note splicing:</strong> Long notes over budget use clean 400-char head previews without heuristic medication-hold regex splicing.</li>
+                <li><strong>Verbatim by default (Tier 0):</strong> When <code>target_tokens</code> is unset or the complete extracted record and full decoded clinical notes fit available capacity, emits every item verbatim (<code>folded_items_count = 0</code>).</li>
+                <li><strong>Uniform RLE &amp; packing (Tier 1 / 2):</strong> Only over budget, uniformly folds repeated identical items by FHIR code/unit (zero section keep-quotas) and binary-searches a monotonic recency prefix around the HL7 IPS safety core.</li>
+                <li><strong>Water-filled notes (zero 400-char cutoff):</strong> Included clinical notes dynamically expand via continuous character-horizon binary search to fill remaining budget without heuristic medication-hold regex splicing.</li>
               </ul>
             </article>
 
@@ -573,15 +573,19 @@
 
         <section class="strategy-section" id="audit-findings" tabindex="-1" aria-labelledby="findings-heading">
           <p class="section-kicker">Code audit &amp; slim baseline ledger</p>
-          <h2 id="findings-heading">Hardened runtime invariants &amp; November slim baseline refactor (<code>3b9dcc0</code>)</h2>
+          <h2 id="findings-heading">Hardened runtime invariants &amp; zero-static-prescription baseline</h2>
           <p>
-            Earlier audits surfaced 27 runtime and clinical findings across <code>wahs_engine</code> (<code>E1&ndash;E11</code>) and <code>wahs_core</code> (<code>C1&ndash;C10</code>). After merging those fixes at <code>808d16a</code>, <a href="https://github.com/pmanko/wahs-engine/pull/13"><code>PR #13</code></a> (<code>3b9dcc0</code>) slimmed the default engine from 17,325 LOC to a 3,647-LOC domain-neutral core + runtime, moved research enrichers into the unplugged <code>wahs_extensions/</code> catalog, and deleted premature privacy regexes and Synthea/MIMIC hacks while retaining all hardened pooling, JWKS, SSE preflight, and FHIR R4 status invariants.
+            Earlier audits surfaced 27 runtime and clinical findings across <code>wahs_engine</code> (<code>E1&ndash;E11</code>) and <code>wahs_core</code> (<code>C1&ndash;C10</code>). After merging those fixes at <code>808d16a</code>, <a href="https://github.com/pmanko/wahs-engine/pull/13"><code>PR #13</code></a> slimmed the engine to a domain-neutral core + runtime with unplugged <code>wahs_extensions/</code>, and the follow-up dynamic-condensation PR removed all leftover static token ceilings (<code>16384</code>), <code>400</code>-char note cutoffs, and fixed aspect reservations so budgets resolve dynamically against each model’s actual turn capacity.
           </p>
 
           <ol class="steps" id="remediation-sequence">
             <li>
-              <h3>Slimmed core baseline &amp; isolated extension shelf on <code>wahs-engine#13</code> <span class="step-tag">Merged &middot; PR #13 (3b9dcc0)</span></h3>
-              <p>Distilled <code>src/wahs_core/</code> to 1,776 LOC pure stdlib (verified via <code>python3 -S</code>), slimmed <code>src/wahs_engine/</code> to 1,871 LOC with clean model IDs (<code>wahs-26b</code>, <code>wahs-12b</code>, <code>wahs-e4b</code>) and clean <code>WahsRequestOptions</code>, isolated <code>note_rag</code> / <code>overflow_lookup</code> / <code>temporal_trends</code> / <code>experimental.clinical_reconciliation</code> behind <code>wahs_core.ports.ContextEnricher</code> (<code>WAHS_ENABLED_ENRICHERS=""</code> default), moved persona seeding to <code>src/wahs_devtools/seeder.py</code> (<code>wahs-seed-hapi</code>), and removed premature <code>sharing_posture</code> privacy heuristics and 2k LLM tool loops.</p>
+              <h3>Zero-static-prescription condensation &amp; dynamic turn sizing <span class="step-tag">Verified &middot; PR #14</span></h3>
+              <p>Removed hardcoded <code>16,384</code> ceilings, static <code>400</code>-char note cutoffs, per-section <code>keep_latest</code> quotas, and pre-carved slice math across <code>wahs_core</code> and <code>wahs_engine</code>. <code>condense_bundle_to_budget()</code> now defaults to unbounded verbatim Tier 0, folds repeated items uniformly in Tier 1, water-fills clinical notes dynamically across remaining Tier 2 capacity, honors explicit caller <code>target_budget_tokens</code> up to <code>context_window - exact_turn_overhead</code>, and isolates optional <code>WAHS_PREFERRED_CHART_TOKENS</code> to <code>Auto</code> tuning only.</p>
+            </li>
+            <li>
+              <h3>Slimmed core baseline &amp; isolated extension shelf on <code>wahs-engine#13</code> <span class="step-tag">Merged &middot; PR #13</span></h3>
+              <p>Distilled <code>src/wahs_core/</code> to pure stdlib (verified via <code>python3 -S</code>), slimmed <code>src/wahs_engine/</code> with clean model IDs (<code>wahs-26b</code>, <code>wahs-12b</code>, <code>wahs-e4b</code>) and clean <code>WahsRequestOptions</code>, isolated <code>note_rag</code> / <code>overflow_lookup</code> / <code>temporal_trends</code> / <code>experimental.clinical_reconciliation</code> behind <code>wahs_core.ports.ContextEnricher</code> (<code>WAHS_ENABLED_ENRICHERS=""</code> default), moved persona seeding to <code>src/wahs_devtools/seeder.py</code> (<code>wahs-seed-hapi</code>), and removed premature <code>sharing_posture</code> privacy heuristics and 2k LLM tool loops.</p>
             </li>
             <li>
               <h3>Merged 12-persona stack &amp; runtime pooling fixes on <code>wahs-engine#10</code> <span class="step-tag">Verified &middot; PR #10</span></h3>

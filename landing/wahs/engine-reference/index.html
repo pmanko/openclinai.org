@@ -132,7 +132,7 @@
    • Zero HAPI admin credentials: forwards caller's Bearer JWT to fhir-auth (jwt-proxy, meta.security.code == sub)
    • Bundle Assembler walks masterPatient.link[] → paginated Patient/{datasetId}/$everything (provider imports + My Story/Goals)
    • Applies optional wahs.chart_scope (source/category/section/IPS filter) + merges unsaved wahs.overlay_resources
-   • Runs wahs_core: 3-tier verbatim-first condensation (Tier 0 verbatim <=16k, Tier 1 RLE, Tier 2 packed)
+   • Runs wahs_core: 3-tier verbatim-first condensation (Tier 0 verbatim when <= available tokens, Tier 1 uniform RLE, Tier 2 water-filled)
    • Optional wahs_extensions/ shelf (unplugged by default when WAHS_ENABLED_ENRICHERS=""): note_rag, overflow_lookup, temporal_trends
    • Isolates dataset &amp; KV prefix caches strictly by (verified_sub, datasets_fingerprint, scope_hash)
           │
@@ -189,7 +189,7 @@
           <h3>Condensed chart ledger cached across follow-up turns</h3>
           <ul>
             <li><strong>Live assembly (~10 ms check):</strong> Calls <span class="code-inline">fhir-auth</span> with the user’s <span class="code-inline">Bearer</span> token, checks <span class="code-inline">MasterPatient</span> + linked <span class="code-inline">Patient.meta.lastUpdated</span>, and re-fetches only newly synced or edited datasets.</li>
-            <li><strong>Deterministic condensation:</strong> Compresses the record only when needed (Tier 0 verbatim at &lt;= 16k default; Tier 1 ontology-free RLE folding and Tier 2 packed above budget), normalizes dates cleanly without heuristic clinical mutations, numbers entries <span class="code-inline">[1]...[N]</span>, and writes <span class="code-inline">[2] Completeness Manifest</span>.</li>
+            <li><strong>Deterministic condensation:</strong> Keeps everything verbatim unless a chart exceeds available tokens (Tier 0 verbatim when <code>target_tokens</code> is unset or fits; Tier 1 uniform ontology-free RLE folding and Tier 2 monotonic packed + water-filled notes only when constrained), normalizes dates cleanly without heuristic clinical mutations, numbers entries <span class="code-inline">[1]...[N]</span>, and writes <span class="code-inline">[2] Completeness Manifest</span>.</li>
             <li><strong>Constant prefix:</strong> Remains byte-for-byte identical across follow-up questions unless HAPI data changes, <span class="code-inline">chart_scope</span> shifts, or an evaluation explicitly varies the condensation budget.</li>
           </ul>
         </article>
@@ -266,8 +266,8 @@
             </tr>
             <tr>
               <td><strong>3. Token-Budget Priority</strong></td>
-              <td><code>wahs_core</code> (<code>condenser.py</code>)</td>
-              <td>Deterministic 3-tier verbatim-first structural condensation (512–131,072 tokens) keeping everything verbatim under 16,384 tokens, folding repeated items cleanly only over budget, and logging omitted items in <span class="code-inline">[2] Completeness Manifest</span>.</td>
+              <td><code>wahs_core</code> &amp; per-turn budget resolver</td>
+              <td>Zero static token ceilings in core: resolves available capacity dynamically from <span class="code-inline">context_window - exact_turn_overhead</span> (with optional per-model <span class="code-inline">WAHS_PREFERRED_CHART_TOKENS</span> in Auto mode and un-clamped <span class="code-inline">target_budget_tokens</span> overrides), uniformly folds repeated series only over budget, water-fills notes dynamically, and logs omitted items in <span class="code-inline">[2] Completeness Manifest</span>.</td>
             </tr>
             <tr>
               <td><strong>4. Patient Privacy / Selective Disclosure</strong></td>
@@ -391,11 +391,11 @@ Content-Type: application/json
       <p class="section-kicker">Engine internals</p>
       <h2 id="internals-title">3-tier verbatim-first condensation (`wahs_core`) and opt-in `wahs_extensions/` shelf</h2>
       <p>
-        Inside standalone <code>wahs-engine</code>, <code>wahs_core</code> (1,776 LOC, 100% Python stdlib verified via <code>python -S</code>) implements pure structural FHIR R4 extraction, SHA-256 note deduplication, and 3-tier verbatim-first condensation: Tier 0 keeps the complete record and notes verbatim whenever they fit within budget (default 16,384 tokens); Tier 1 applies ontology-free run-length folding strictly when over budget; Tier 2 packs mandatory IPS safety records plus recency-balanced history. Reusable enrichment modules (<code>note_rag</code>, <code>overflow_lookup</code>, <code>temporal_trends</code>, and <code>experimental.clinical_reconciliation</code>) live cleanly isolated in <code>src/wahs_extensions/</code> behind <code>wahs_core.ports.ContextEnricher</code> and are unplugged by default (<code>WAHS_ENABLED_ENRICHERS=""</code>). Upstream <a href="/med-agent-hub/index.html">Med Agent Hub</a> pins the earlier R&amp;D snapshot (<code>85fb799</code>) cleanly so experimental evaluations remain decoupled.
+        Inside standalone <code>wahs-engine</code>, <code>wahs_core</code> (100% Python stdlib verified via <code>python -S</code>) implements pure structural FHIR R4 extraction, SHA-256 note deduplication, and continuous 3-tier verbatim-first condensation: Tier 0 keeps the complete record and notes verbatim whenever <code>target_tokens</code> is unset or fits available window capacity; Tier 1 uniformly run-length folds repeated historical series strictly by FHIR code/unit; Tier 2 preserves the mandatory IPS safety core, packs monotonic recency items, and dynamically water-fills included clinical notes across remaining capacity (zero hardcoded 400-char caps or section quotas). Reusable enrichment modules (<code>note_rag</code>, <code>overflow_lookup</code>, <code>temporal_trends</code>, and <code>experimental.clinical_reconciliation</code>) live cleanly isolated in <code>src/wahs_extensions/</code> behind <code>wahs_core.ports.ContextEnricher</code> and are unplugged by default (<code>WAHS_ENABLED_ENRICHERS=""</code>). Upstream <a href="/med-agent-hub/index.html">Med Agent Hub</a> pins the earlier R&amp;D snapshot (<code>85fb799</code>) cleanly so experimental evaluations remain decoupled.
       </p>
 
       <p class="strategy-note">
-        The engine API accepts a chart size of 512 to 131,072 tokens per request, with a default model ceiling of 16,384 tokens (validated in the 900-cell H200 16k vs. 32k calibration). The 256k row below applies to the Explorer sandbox and the benchmark matrix.
+        The engine computes physical chart capacity dynamically per request from the model’s <code>context_window</code> minus exact non-chart turn and output tokens (no hardcoded 16k cap). Operators can configure optional per-model <code>preferred_chart_tokens</code> for <code>Auto</code> sweet-spot tuning (informed by our historical H200 16k vs. 32k calibration), while callers and UI budget levers can request any positive <code>target_budget_tokens</code> up to physical window capacity. The 256k row below applies to the Explorer sandbox and benchmark matrices.
       </p>
 
       <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Nine condensation budget tiers">
