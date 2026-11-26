@@ -31,7 +31,7 @@ Public page: [`landing/wahs/engine-audit/index.html`](../../landing/wahs/engine-
 ## Follow-up: Pristine Slim Baseline & `wahs_extensions` Isolation (25 November 2026)
 
 - **`pmanko/wahs-engine` `main` (`3b9dcc0f712a28bdcbd4458287f319e0f1764ddd`, `PR #13`):**
-  - Slimmed default codebase from `17,325` LOC to a domain-neutral baseline: `src/wahs_core/` (`1,776` LOC pure Python stdlib verified under `python3 -S`; 3-tier verbatim-first condensation with `Tier 0` verbatim `<= 16,384` tokens, `Tier 1` ontology-free RLE folding, `Tier 2` packed) + `src/wahs_engine/` (`1,871` LOC stateless OpenAI `/v1` proxy + `fhir-auth` bundle assembly, keeping E1/E3/E4/E5/E6/E9/E11 runtime hardenings).
+  - Slimmed default codebase from `17,325` LOC to a domain-neutral baseline: `src/wahs_core/` (`1,776` LOC pure Python stdlib verified under `python3 -S`; 3-tier verbatim-first condensation: `Tier 0` verbatim, `Tier 1` ontology-free RLE folding, `Tier 2` packed) + `src/wahs_engine/` (`1,871` LOC stateless OpenAI `/v1` proxy + `fhir-auth` bundle assembly, keeping E1/E3/E4/E5/E6/E9/E11 runtime hardenings).
   - Isolated reusable R&D enrichers (`note_rag`, `overflow_lookup`, `temporal_trends`, `experimental.clinical_reconciliation`) under `src/wahs_extensions/` behind `wahs_core.ports.ContextEnricher` (`WAHS_ENABLED_ENRICHERS=""` default, zero imports in standard baseline) and moved persona seeding to `src/wahs_devtools/seeder.py` (`wahs-seed-hapi`).
   - Removed premature privacy regex redactions (`sharing_posture`, `classify_sensitivity*`, Rule 5), heuristic note-hold splicing (`_HOLD_CLAUSE_RE`), `1k` `_build_ultra`, Synthea/MIMIC hacks, and multi-round LLM tool loops; patient selective disclosure stays unbuilt pending dedicated `W9` design.
 - **Zero-Static-Prescription Remediation (`pmanko/wahs-engine` `PR #14` -> `666a9be`):**
@@ -41,3 +41,5 @@ Public page: [`landing/wahs/engine-audit/index.html`](../../landing/wahs/engine-
   - `pmanko/shl-ips`: `PR #4` (`f8d94a6`) + `PR #5` (`77e9f22`, `2k`–`64k` budget testing selector).
   - `pmanko/wahs-mobile-frontend`: `PR #4` (`08e660b`) + `PR #5` (`925dd95`, `2k`–`64k` budget pills).
   - `pmanko/med-agent-hub` remains pinned at `85fb799` intentionally for R&D benchmark continuity.
+- **Public Documentation & Cloud Portal Sync (`W38`):**
+  - Updated public `landing/wahs/*` pages and `wahs/cloud-gate/app.py` to present durable architecture, methods, boundaries, and standards/report links without internal commit SHAs, LOC counts, internal symbols, or ticket tables.
