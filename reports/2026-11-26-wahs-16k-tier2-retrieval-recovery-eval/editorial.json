@@ -1,0 +1,37 @@
+{
+  "schema": "openclinai.editorial.v2",
+  "schema_version": 2,
+  "slug": "2026-11-26-wahs-16k-tier2-retrieval-recovery-eval",
+  "title": "Can unseen-span Note RAG, Overflow Recovery, and Core Enrichers at a tight 16k chart budget match or beat 32k condensation across Gemma 4 (26B, 12B, E4B)?",
+  "summary": "At a tight 16k target chart budget, dense longitudinal records enter Tier-2 water-fill condensation: Marcus Vance retains all 63 clinical notes with character-horizon previews while Maurice Auer excerpts 27 recent notes and omits 102 older notes into the Completeness Manifest. Across 6 retrieval-sensitive clinical scenarios spanning active medications, class duplication, documented drug holds, critical lab ranges, vaccine series history, and cross-facility care coordination (Q01, Q03, Q04, Q10, Q12, Q14; 12 cases x 12 arms = 144 total cells), we tested whether deterministic unseen-span BM25 Note RAG + Overflow Item Recovery (~870 mean enrichment tokens, ~54 ms median prep) and full Core Enrichers (adding Temporal Anchors and offline CIEL + RxNorm/ATC/CVX/LOINC Terminology KB; ~1,747 mean enrichment tokens) at 16k recover or surpass unenriched 32k condensation across Gemma 4 (26B, 12B, E4B) on an NVIDIA H200 (141 GB HBM3e) via Ollama on UW CIRG cobalt, graded blind by GPT-6.2 Sol (Codex CLI, reasoning high) and Claude Opus 5.5 (Claude Code CLI, reasoning high).",
+  "takeaway": "Targeted Tier-2 retrieval at a 16k chart budget not only recovered the note-truncation completeness gap across all three Gemma 4 sizes (+0.83 to +1.88 completeness points over unenriched 16k), it surpassed unenriched 32k charts on every model size at roughly half the condensed chart budget. Gemma 4 26B + Tier-2 Note RAG & Overflow Recovery @ 16k ranked #1 overall at 85.2/100 (84.6 safety-adjusted; 8.58 accuracy, 8.50 completeness, 8.75 relevance; 0 confirmed harms, 0 disputed; 3.48s median / 3.55s mean latency), outperforming 26B Verbatim Baseline @ 16k (77.2 Benchmark, 75.1 safety-adjusted, 7.00 completeness) by +8.0 Benchmark points (+9.5 safety-adjusted, +1.50 completeness) and beating 26B Verbatim Reference @ 32k (76.3 Benchmark, 74.6 safety-adjusted, 7.50 completeness, 5.57s mean) by +8.9 Benchmark points (+10.0 safety-adjusted) with 1.57x faster mean latency; 26B + Core Enrichers @ 16k also beat both baselines at 80.2/100 (79.2 safety-adjusted, 8.38 completeness, 0 harms). On Gemma 4 12B, pairing retrieval with structured terminology and temporal grounding proved essential: 12B + Core Enrichers @ 16k ranked #2 overall at 82.7/100 (82.0 safety-adjusted; 8.50 accuracy, 8.00 completeness, 8.58 relevance; 0 confirmed harms, 0 disputed; 6.50s mean latency), beating both 12B @ 16k (79.7 Benchmark, 7.17 completeness) and 12B @ 32k (78.0 Benchmark, 76.3 safety-adjusted, 9.31s mean) by +4.7 Benchmark points (+5.7 safety-adjusted) at 1.43x faster mean latency, whereas ungrounded Note RAG & Overflow alone dipped on polypharmacy disambiguation (70.2). On 4B-effective Gemma 4 E4B, both +Note RAG & Overflow @ 16k (72.7 Benchmark, 69.3 safety-adjusted, 7.08 completeness, 2.89s median) and +Core Enrichers @ 16k (72.2 Benchmark, 68.4 safety-adjusted, 7.71 completeness) gained +7.5 to +8.0 Benchmark points (+9.3 to +10.2 safety-adjusted) over E4B @ 16k (64.7, 5.83 completeness) and surpassed E4B @ 32k (69.9, 6.25 completeness). Across all 144 cells, token-budget compliance was 144/144 (100%), inline citation resolution was 1,076/1,081 (99.5%, with 96/96 cells clean on 26B and 12B), and blinded dual-judge Krippendorff's alpha reached 0.741 completeness, 0.641 accuracy, 0.623 citation groundedness, and 0.591 abstention outcome.",
+  "hardware": {
+    "tier": "cirg-cobalt-h200",
+    "gpu": "NVIDIA H200 (141 GB HBM3e)",
+    "vram_gb": 141,
+    "serving_engine": "Ollama (UW CIRG cobalt)",
+    "parallel_slots": 1,
+    "inference_endpoint": "https://llm.co.dev.cirg.uw.edu/v1"
+  },
+  "family": "wahs",
+  "featured": true,
+  "date": "2026-11-26",
+  "guide": {
+    "label": "WAHS AI Strategy & Architecture",
+    "url": "https://openclinai.org/wahs/llm-strategy/"
+  },
+  "arms": {
+    "wahs:baseline:ollama/gemma4:26b@16k": "Gemma 4 26B: 16k Verbatim Condensation Baseline",
+    "wahs:rag-overflow:ollama/gemma4:26b@16k": "Gemma 4 26B: 16k + Tier-2 Note RAG & Overflow Recovery",
+    "wahs:core-enriched:ollama/gemma4:26b@16k": "Gemma 4 26B: 16k + Core Enrichers (Temporal, Terminology, RAG, Overflow)",
+    "wahs:baseline:ollama/gemma4:26b@32k": "Gemma 4 26B: 32k Verbatim Condensation Reference",
+    "wahs:baseline:ollama/gemma4:12b@16k": "Gemma 4 12B: 16k Verbatim Condensation Baseline",
+    "wahs:rag-overflow:ollama/gemma4:12b@16k": "Gemma 4 12B: 16k + Tier-2 Note RAG & Overflow Recovery",
+    "wahs:core-enriched:ollama/gemma4:12b@16k": "Gemma 4 12B: 16k + Core Enrichers (Temporal, Terminology, RAG, Overflow)",
+    "wahs:baseline:ollama/gemma4:12b@32k": "Gemma 4 12B: 32k Verbatim Condensation Reference",
+    "wahs:baseline:ollama/gemma4:e4b@16k": "Gemma 4 E4B: 16k Verbatim Condensation Baseline",
+    "wahs:rag-overflow:ollama/gemma4:e4b@16k": "Gemma 4 E4B: 16k + Tier-2 Note RAG & Overflow Recovery",
+    "wahs:core-enriched:ollama/gemma4:e4b@16k": "Gemma 4 E4B: 16k + Core Enrichers (Temporal, Terminology, RAG, Overflow)",
+    "wahs:baseline:ollama/gemma4:e4b@32k": "Gemma 4 E4B: 32k Verbatim Condensation Reference"
+  }
+}
