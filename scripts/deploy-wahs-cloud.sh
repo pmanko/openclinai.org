@@ -214,11 +214,12 @@ wait_http_status() {
   local code="000"
   while [ "${attempt}" -lt 20 ]; do
     if [ -n "${extra_header}" ]; then
-      code="$(curl -sS -o /dev/null -w '%{http_code}' -H "${extra_header}" --max-time 20 "${target_url}" 2>/dev/null || echo '000')"
+      code="$(curl -sS -o /dev/null -w '%{http_code}' -H "${extra_header}" --max-time 20 "${target_url}" 2>/dev/null || true)"
     else
-      code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "${target_url}" 2>/dev/null || echo '000')"
+      code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "${target_url}" 2>/dev/null || true)"
     fi
-    if [ "${code}" != "000" ]; then
+    code="${code:-000}"
+    if [ "${code}" != "000" ] && [ "${code}" != "502" ] && [ "${code}" != "503" ]; then
       printf '%s\n' "${code}"
       return 0
     fi
