@@ -607,7 +607,7 @@ def render_gate_login_html(
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>WA Health Summary — Authorized Sign-In</title>
+  <title>WA Health Summary &middot; Authorized Sign-In</title>
   <style>
     :root {{
       --bg: #f8fafc;
@@ -864,7 +864,7 @@ def render_portal_html(
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>WA Health Summary — Cloud Workspace</title>
+  <title>WA Health Summary &middot; Cloud Workspace</title>
   <style>
     :root {{
       --bg: #f8fafc;
@@ -1098,7 +1098,7 @@ def render_portal_html(
 
   <main>
     <section class="hero">
-      <h1>WA Health Summary — Cloud Frontends &amp; Live FHIR AI Stack</h1>
+      <h1>WA Health Summary: Cloud Frontends &amp; Live FHIR AI Stack</h1>
       <p>Both applications below are backed by a live HAPI FHIR R4 store seeded with 12 patient records, Keycloak OIDC authentication, SMART Health Links server, and <code>wahs-engine</code> running on the UW CIRG H200 GPU cluster.</p>
     </section>
 
@@ -1106,8 +1106,8 @@ def render_portal_html(
       <article class="app-card">
         <div>
           <span class="tag tag-web">SvelteKit · IPS &amp; SHL Portal</span>
-          <h2>WA Health Summary — Web App</h2>
-          <p>Full patient-facing International Patient Summary (IPS) builder, SMART Health Link management, Keycloak OIDC sign-in, and Ask WAHS multi-pathway AI workspace.</p>
+          <h2>WA Health Summary: Web App</h2>
+          <p>Full patient-facing International Patient Summary (IPS) builder, SMART Health Link management, Keycloak OIDC sign-in, and Ask WAHS source-cited clinical record Q&amp;A.</p>
         </div>
         <a class="launch-btn" href="{esc_web_url}">Open Web App &rarr;</a>
       </article>
@@ -1115,7 +1115,7 @@ def render_portal_html(
       <article class="app-card">
         <div>
           <span class="tag tag-mobile">Mobile-First Companion</span>
-          <h2>WA Health Summary — Mobile Companion</h2>
+          <h2>WA Health Summary: Mobile Companion</h2>
           <p>Phone-sized companion UI with 1-tap switching across all 12 seeded patient personas, Patient Story updates to FHIR R4, QR Health Links, and streaming Ask WAHS chat.</p>
         </div>
         <a class="launch-btn mobile" href="{esc_mobile_url}">Open Mobile Companion &rarr;</a>
@@ -1128,8 +1128,10 @@ def render_portal_html(
         <span class="status-pill">Checking live stack...</span>
       </div>
       <p style="margin:0.75rem 0 0; font-size:0.86rem; color:var(--muted);">
-        Default model: <code>wahs-26b-kb</code> (<code>ollama/gemma4:26b</code> via <code>https://llm.co.dev.cirg.uw.edu/v1</code>) ·
-        Switchable in Ask WAHS across <strong>Note-RAG</strong>, <strong>4-Layer KB</strong>, <strong>Dynamic FHIR Tools</strong>, and <strong>Chart-Only</strong> pathways and <strong>Auto / 4k / 8k / 16k / 32k</strong> chart budgets.
+        Default model: <code>wahs-26b</code> (Google Gemma 4 26B on the UW CIRG GPU server, with <code>wahs-12b</code> and <code>wahs-e4b</code> selectable) &middot;
+        Continuous verbatim-first record condensation (<code>Auto</code> dynamic context sizing plus <code>2k</code> to <code>64k</code> test presets) &middot;
+        <a href="https://openclinai.org/wahs/">Project Overview</a> &middot;
+        <a href="https://openclinai.org/wahs/llm-strategy/">AI Strategy &amp; Architecture</a>
       </p>
     </section>
 

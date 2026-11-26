@@ -194,6 +194,8 @@ class WahsCloudGateTests(unittest.TestCase):
         self.assertIn("https://wahs-mobile.openclinai.org/?screen=signin", html_text)
         self.assertEqual(html_text.count("data-copy='wahs-demo-2026'"), 12)
         self.assertIn("maurice.auer@wahs.local", html_text)
+        self.assertIn("wahs-26b", html_text)
+        self.assertNotIn("wahs-26b-kb", html_text)
         self.assertNotIn("legacy", html_text.lower())
 
         # Sign-out clears cookie

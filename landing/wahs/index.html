@@ -56,7 +56,7 @@
         <a href="/wahs/index.html" aria-current="page">Overview</a>
         <a href="/wahs/llm-strategy/index.html">AI Strategy &amp; Architecture</a>
         <a href="/wahs/engine-reference/index.html">Engine Reference</a>
-        <a href="/wahs/engine-audit/index.html">Engine Audit</a>
+        <a href="/wahs/engine-audit/index.html">Design &amp; Rationale</a>
         <a href="/wahs/walkthrough/index.html">Sandbox Walkthrough</a>
         <a href="https://wahs-demo.openclinai.org/">Live Sandbox <span aria-hidden="true">↗</span></a>
         <a href="https://reports.openclinai.org/2026-11-16-wahs-engine-4pathway-sheet-eval/index.html">4-Pathway H200 Eval <span aria-hidden="true">↗</span></a>
@@ -110,7 +110,7 @@
           <span class="pill-badge teal">R&amp;D Workbench · OpenClinAI</span>
           <h2>WAHS Explorer (OpenClinAI Sandbox)</h2>
           <p>
-            Interactive research workbench (<a href="https://wahs-demo.openclinai.org/">wahs-demo.openclinai.org ↗</a>) evaluating the shared <code>wahs_core</code> non-destructive FHIR R4 condenser across 9 token budgets (<code>256k</code>–<code>1k</code>), pre-generation clinical graphs, open-weight models, and experimental sensitivity filters across 10 synthetic and de-identified ICU/multi-clinic charts (18 FHIR R4 bundles).
+            Interactive research workbench (<a href="https://wahs-demo.openclinai.org/">wahs-demo.openclinai.org ↗</a>) evaluating non-destructive FHIR R4 condensation across 9 budget settings (<code>256k</code> to <code>1k</code>), clinical knowledge graphs, open-weight models, and experimental sensitivity filters across 10 synthetic and de-identified ICU/multi-clinic charts (18 FHIR R4 bundles).
           </p>
         </div>
       </div>
@@ -121,31 +121,31 @@
       <h2>Four steps from a fragmented FHIR export to verifiable answers</h2>
       <div class="workflow-grid four-up">
         <article>
-          <span>01 · Non-Destructive Condensation</span>
-          <h3>Shrink multi-megabyte charts by 90%–99% without losing clinical facts</h3>
+          <span>01 · Verbatim-First Condensation</span>
+          <h3>Shrink multi-megabyte charts without losing the clinical safety core</h3>
           <p>
-            Multi-year FHIR R4 exports can exceed 18.4 MB and 7,099 entries (~1.35M raw JSON tokens; 251,641 extracted clinical tokens). Our deterministic condenser strips transport boilerplate and duplicate Base64 note wrappers across nine token budgets (<code>256k</code> down to <code>1k</code>) in <em>Lossless Verbatim</em> or <em>Grouped Renewal-Folded</em> mode, prioritizing the HL7 IPS safety core (allergies, active medications, active problems, and implants) and indexing any trimmed history in a <code>Completeness Manifest</code> for on-demand lookup.
+            Multi-year FHIR R4 exports can exceed 18.4 MB and 7,000 entries. Deterministic preprocessing strips transport boilerplate and duplicate Base64 notes, keeps the full record verbatim whenever it fits the model's context window, and when constrained folds repeated historical series uniformly while preserving the <a href="https://build.fhir.org/ig/HL7/fhir-ips/">HL7 IPS safety core</a> (allergies, active medications, active problems, and implants) with explicit completeness accounting.
           </p>
         </article>
         <article>
-          <span>02 · Pre-Generation Clinical Reconciliation</span>
-          <h3>Surface cross-clinic duplicates and conflicts as reviewable findings</h3>
+          <span>02 · Non-Destructive Fidelity &amp; Modular Extensions</span>
+          <h3>Preserve conflicting clinical records without implicit mutation</h3>
           <p>
-            Duplicate prescriptions, brand-versus-generic overlaps, conflicting kidney-disease stages, and hospital discharge notes instructing a patient to hold an active outpatient pill are clinical signals about care fragmentation, never noise to be silently deleted. Deterministic reconciliation skills and a patient <code>ClinicalEntityGraph</code> inspect the full record before generation and highlight <em>Source A vs. Source B</em> discrepancies.
+            Duplicate prescriptions, brand-versus-generic overlaps, conflicting kidney-disease stages, and hospital discharge notes instructing a patient to hold an active outpatient pill are preserved faithfully in the core record rather than silently reconciled away. Optional <a href="/med-agent-hub/index.html">OpenClinAI research modules</a> for note retrieval, longitudinal trends, and cross-clinic reconciliation attach modularly through an opt-in extension boundary for comparative evaluation.
           </p>
         </article>
         <article>
           <span>03 · Patient-Controlled Sharing</span>
           <h3>Share curated IPS summaries via SMART Health Links</h3>
           <p>
-            Authentication proxies scope every session strictly to the signed-in patient's own records before any AI processing. In WA Health Summary, patients choose what to share by generating an International Patient Summary (IPS) and issuing a SMART Health Link; in the OpenClinAI sandbox, an experimental pre-condensation toggle also tests sensitivity filtering for substance-use and behavioral-health records.
+            Authentication proxies scope every session strictly to the signed-in patient's own records before any AI processing. In WA Health Summary, patients choose what to share by curating an <a href="https://build.fhir.org/ig/HL7/fhir-ips/">International Patient Summary (IPS)</a> and issuing a <a href="https://docs.smarthealthit.org/smart-health-links/">SMART Health Link</a>; patient-facing selective disclosure stays cleanly outside the core condensation path under dedicated standards-based privacy design, while optional sensitivity filters are explored separately in the sandbox.
           </p>
         </article>
         <article>
           <span>04 · Citation-Grounded Q&amp;A &amp; Abstention</span>
           <h3>Verify every statement against its source record</h3>
           <p>
-            Every summary bullet, conflict alert, and chat response cites numbered <code>[N]</code> source tags mapped directly to FHIR resource UUIDs and clinical dates. When asked about undocumented procedures, allergies, or external pressures to guess, the engine explicitly abstains rather than fabricating clinical details.
+            Every summary bullet and chat response cites numbered <code>[N]</code> source tags mapped directly to FHIR resource UUIDs, clinical dates, and source clinics. When asked about undocumented procedures, allergies, or external pressures to guess, the engine explicitly abstains rather than fabricating clinical details.
           </p>
         </article>
       </div>
@@ -301,20 +301,20 @@
             <ul class="resource-links">
               <li>
                 <a href="/wahs/engine-audit/index.html">
-                  <span class="resource-link-title"><span>WAHS Engine Architectural &amp; Functional Audit</span><span aria-hidden="true">→</span></span>
-                  <span class="resource-link-description">3-step Core Baseline diagram, unplugged <code>wahs_extensions/</code> catalog, explicit scope boundaries (including unbuilt patient privacy), and verified test suite on <code>wahs_core</code> and <code>wahs_engine</code>.</span>
+                  <span class="resource-link-title"><span>WAHS Engine Design &amp; Rationale</span><span aria-hidden="true">→</span></span>
+                  <span class="resource-link-description">System diagram, responsibility and privacy boundaries, research and clinical standards foundations, and benchmark evidence behind the standalone engine.</span>
                 </a>
               </li>
               <li>
                 <a href="/wahs/llm-strategy/index.html">
-                  <span class="resource-link-title"><span>AI Strategy, Middleware Contract &amp; Engine Internals</span><span aria-hidden="true">→</span></span>
-                  <span class="resource-link-description">Comparing full-chart condensation, note RAG, and dynamic FHIR querying, with zero-privilege <code>fhir-auth</code> bundle assembly, OpenAI <code>chart_scope</code> wire contracts, and <code>ClinicalEntityGraph</code> internals.</span>
+                  <span class="resource-link-title"><span>AI Strategy, Middleware Contract &amp; Engine Reference</span><span aria-hidden="true">→</span></span>
+                  <span class="resource-link-description">Comparing full-chart condensation, note retrieval, and dynamic querying alongside zero-privilege record scoping, OpenAI wire contracts, and modular extension design.</span>
                 </a>
               </li>
               <li>
                 <a href="/med-agent-hub/index.html">
                   <span class="resource-link-title"><span>Med Agent Hub</span><span aria-hidden="true">→</span></span>
-                  <span class="resource-link-description">OpenClinAI multi-workflow R&amp;D and evaluation workbench consuming shared <code>wahs_core</code> clinical modules to benchmark model families, verification stages, and retrieval pathways.</span>
+                  <span class="resource-link-description">OpenClinAI multi-workflow R&amp;D and evaluation workbench used to benchmark clinical retrieval, guideline enrichment, and verification pathways.</span>
                 </a>
               </li>
               <li>

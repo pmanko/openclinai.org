@@ -57,7 +57,7 @@
         <a href="/wahs/index.html">Overview</a>
         <a href="/wahs/llm-strategy/index.html" aria-current="page">AI Strategy &amp; Architecture</a>
         <a href="/wahs/engine-reference/index.html">Engine Reference</a>
-        <a href="/wahs/engine-audit/index.html">Engine Audit</a>
+        <a href="/wahs/engine-audit/index.html">Design &amp; Rationale</a>
         <a href="/wahs/walkthrough/index.html">Sandbox Walkthrough</a>
         <a href="https://wahs-demo.openclinai.org/">Live Sandbox <span aria-hidden="true">↗</span></a>
         <a href="https://reports.openclinai.org/2026-11-16-wahs-engine-4pathway-sheet-eval/index.html">4-Pathway H200 Eval <span aria-hidden="true">↗</span></a>
@@ -108,9 +108,9 @@
           <div class="decision" role="region" aria-labelledby="decision-title">
             <h2 id="decision-title">Key decisions</h2>
             <ol>
-              <li><strong>Condense only when a record exceeds the available context budget.</strong> <code>wahs_core</code> emits the complete extracted record and full decoded notes verbatim (<code>Tier 0</code>) whenever they fit within the model’s dynamic per-turn capacity (or an explicit test budget), applying uniform run-length folding (<code>Tier 1</code>) and water-filled budget packing (<code>Tier 2</code>) only when constrained.</li>
-              <li><strong>A lean, domain-neutral middle service does that work.</strong> The WAHS engine sits between the WAHS app and the model server with zero database and zero hardcoded clinical heuristics or premature privacy regexes, while reusable R&amp;D enrichers (<code>note_rag</code>, <code>overflow_lookup</code>, <code>temporal_trends</code>) live isolated in <code>wahs_extensions/</code> (unplugged by default).</li>
-              <li><strong>Clean model IDs backed by H200 benchmarks.</strong> Production profiles use clean aliases (<code>wahs-26b</code> default, <code>wahs-12b</code>, <code>wahs-e4b</code>). In our historical November 900-cell H200 benchmarks (evaluated at a fixed <code>16k</code> calibration setting on that server setup), <strong>Gemma 4 26B</strong> led at <strong>85.1 / 100</strong> with <strong>0 of 75 confirmed unsafe answers</strong> (3.4 s median wait), while <strong>Gemma 4 12B</strong> reached <strong>82.0 to 82.8 / 100</strong> when VRAM is constrained.</li>
+              <li><strong>Condense only when a record exceeds the available context budget.</strong> Continuous verbatim-first preprocessing keeps the full extracted record and clinical notes intact whenever they fit the model’s dynamic per-turn capacity (or an explicit test budget), applying uniform series folding and safety-core packing only when constrained.</li>
+              <li><strong>A lean, domain-neutral middle service does that work.</strong> The <a href="https://github.com/pmanko/wahs-engine">WAHS engine</a> sits between the WAHS app and the model server with zero database and zero hardcoded clinical heuristics or ad-hoc privacy rules, while optional research modules (note passage search, overflow lookup, longitudinal trends, and clinical reconciliation) sit behind a clean extension interface disabled by default.</li>
+              <li><strong>Open-weight model tiers backed by H200 benchmarks.</strong> Pilot deployments default to <code>wahs-26b</code> (<strong>Gemma 4 26B</strong>, with <code>wahs-12b</code> and <code>wahs-e4b</code> selectable). In our November 900-cell H200 benchmarks (evaluated at a fixed 16k calibration setting), <strong>Gemma 4 26B</strong> led at <strong>85.1 / 100</strong> with <strong>0 of 75 confirmed unsafe answers</strong> (3.4 s median wait), while <strong>Gemma 4 12B</strong> reached <strong>82.0 to 82.8 / 100</strong> on tighter GPU VRAM budgets.</li>
             </ol>
           </div>
 
@@ -171,9 +171,9 @@
                 <p class="flow-owner">This project · middle service</p>
                 <h3>WAHS engine</h3>
                 <ul>
-                  <li>Fetches the signed-in patient’s current record via <code>fhir-auth</code>.</li>
-                  <li>Runs pure-stdlib 3-tier verbatim-first condensation (<code>wahs_core</code>).</li>
-                  <li>Optionally loads opt-in <code>wahs_extensions/</code> enrichers (disabled by default).</li>
+                  <li>Fetches the signed-in patient’s current record via the <code>fhir-auth</code> proxy.</li>
+                  <li>Runs continuous 3-tier verbatim-first FHIR R4 condensation.</li>
+                  <li>Supports optional modular research extensions (disabled in baseline).</li>
                   <li>Returns the answer with clickable <code>[N]</code> source provenance.</li>
                 </ul>
                 <p class="flow-side"><strong>Reads from the record store</strong> using the patient’s own sign-in. The engine has no access of its own, so it can only ever receive that patient’s records.</p>
@@ -201,60 +201,49 @@
 
         <section class="strategy-section" id="worked-example" aria-labelledby="example-title" tabindex="-1">
           <p class="section-kicker">Worked example</p>
-          <h2 id="example-title">Tracing “What are my diabetes labs?” through six steps</h2>
+          <h2 id="example-title">Tracing “What are my diabetes labs?” through four steps</h2>
           <p>
-            Steps 2 to 5 happen inside the engine and take about a tenth of a second. Almost all of the wait is the model writing its answer.
+            Record checking and condensation run inside the engine in about a tenth of a second. Almost all of the wait is the language model streaming its answer. Optional research modules (such as BM25 note search or clinical guideline rules) attach modularly during comparative benchmarks without complicating this baseline path.
           </p>
 
           <ol class="steps">
             <li>
-              <h3>The app sends the question.</h3>
-              <p>It goes with the conversation so far and the patient’s sign-in token. The app does not send the record itself.</p>
+              <h3>The app sends the question and sign-in token.</h3>
+              <p>It sends the conversation so far alongside the patient’s sign-in token. The browser never uploads raw record bundles or opens a direct connection to the GPU server.</p>
             </li>
             <li>
-              <h3>The engine fetches the patient’s current record. <span class="step-tag">Checked every question</span></h3>
-              <p>It asks the record store with the patient’s own token and checks whether anything changed. Unchanged data is reused from memory.</p>
+              <h3>The engine verifies freshness and retrieves scoped records. <span class="step-tag">Checked every turn</span></h3>
+              <p>It queries the FHIR authorization proxy using the caller’s own token and checks record modification stamps. Unchanged datasets reuse in-memory cache; newly imported or edited clinic records re-fetch automatically.</p>
             </li>
             <li>
-              <h3>The engine condenses the record. <span class="step-tag">Same for every question</span></h3>
-              <p>The record shrinks by 90 to 99% into a numbered list. Allergies, active medications and active problems are kept first. Anything left out is counted in a note at the top, so nothing disappears silently.</p>
+              <h3>The engine runs continuous verbatim-first condensation. <span class="step-tag">Query-invariant prefix</span></h3>
+              <p>Transport boilerplate and duplicate clinical note copies are stripped cleanly. When the chart fits the turn’s context budget, every item and decoded note stays verbatim; when constrained, repeated historical series fold uniformly while preserving the <a href="https://build.fhir.org/ig/HL7/fhir-ips/">HL7 IPS safety core</a>, numbering entries <span class="cite-pill">[1]…[N]</span> and reporting any omissions in a completeness manifest.</p>
             </li>
             <li>
-              <h3>The engine adds clinical knowledge for this question. <span class="step-tag">Changes with the question</span></h3>
-              <p>A short block is picked to match the question: which tests count as diabetes labs, and how this patient’s conditions, medications and labs connect.</p>
-            </li>
-            <li>
-              <h3>The engine looks up relevant items that were left out. <span class="step-tag">Only when needed</span></h3>
-              <p>When the condensed chart had to drop items, the engine searches the full record for matches to the question and attaches the closest ones.</p>
-            </li>
-            <li>
-              <h3>The model answers, and the answer streams back.</h3>
-              <p>Each claim carries a number such as <span class="cite-pill">[12]</span> that opens the exact source record in the app. If the record does not hold the answer, the model is told to say so.</p>
+              <h3>The model streams a citation-grounded reply.</h3>
+              <p>Because the condensed chart sits first and stays identical across follow-up turns, the model server reuses its cached prefix and responds quickly. Each clinical claim carries <span class="cite-pill">[N]</span> badges linked to the exact source FHIR record, and undocumented requests trigger an explicit abstention.</p>
             </li>
           </ol>
 
           <figure class="prompt-fig" aria-labelledby="prompt-fig-title">
-            <h3 class="sub-h" id="prompt-fig-title">The three parts of the model input</h3>
+            <h3 class="sub-h" id="prompt-fig-title">The two parts of the baseline model input</h3>
             <div class="prompt-part is-same">
-              <p class="prompt-label">Part 1 · The condensed chart · same for every question</p>
+              <p class="prompt-label">Part 1 · The condensed chart prefix · identical across follow-up questions</p>
               <pre>[1] Patient summary
-[2] Completeness note: what, if anything, was left out
+[2] Completeness Manifest: explicit count of any omitted historical items
 [4] Type 2 diabetes (active)
-[12] HbA1c 7.8%
-[14] eGFR 44
-… more numbered entries</pre>
-            </div>
-            <div class="prompt-part">
-              <p class="prompt-label">Part 2 · The conversation so far</p>
+[12] HbA1c 7.8% (2026-01-19)
+[14] eGFR 44 mL/min/1.73m2 (2026-01-19)
+… numbered clinical entries</pre>
             </div>
             <div class="prompt-part is-changing">
-              <p class="prompt-label">Part 3 · For this question · changes each time</p>
-              <pre>Diabetes labs include HbA1c, fasting glucose, eGFR and urine albumin.
-Type 2 diabetes [4] is monitored by HbA1c 7.8% [12] and eGFR 44 [14].
-Question: What are my diabetes labs?</pre>
+              <p class="prompt-label">Part 2 · Conversation history and current question</p>
+              <pre>Prior turns kept ephemerally in the browser + verbatim caller question:
+“What are my diabetes labs?”
+(Optional research extensions attach grounded excerpts only when explicitly enabled.)</pre>
             </div>
             <figcaption>
-              Illustration only, not a patient record. Because Part 1 does not change between questions, the model server can reuse its work on it. That is why follow-up answers are faster than the first one.
+              Illustration only, not a patient record. Because Part 1 remains identical between questions for a patient’s current record, the inference server can reuse its attention KV cache, making follow-up answers substantially faster than the first turn.
             </figcaption>
           </figure>
         </section>
@@ -268,28 +257,28 @@ Question: What are my diabetes labs?</pre>
 
           <div class="strategy-grid-3">
             <article class="strategy-card recommended">
-              <span class="strategy-badge">Evaluated default · 26B @ 16k</span>
-              <h3>1. Condensation + 4-Layer KB</h3>
+              <span class="strategy-badge">Evaluated benchmark · 26B @ 16k</span>
+              <h3>1. Condensation + Clinical Rule Extensions</h3>
               <dl class="facts">
                 <dt>Method</dt>
-                <dd>Shrink the record into a 16k numbered summary, attach pre-computed clinical rules and patient graph links, and answer in one call.</dd>
+                <dd>Condense the FHIR R4 chart into a numbered summary, optionally attach clinical guidelines and entity links via the extension interface, and answer in one call.</dd>
                 <dt>Strengths</dt>
-                <dd>Highest overall safety and speed: one stateless model call with strict per-patient scoping.</dd>
-                <dt>Production mapping</dt>
-                <dd>Clean baseline engine serves <code>wahs-26b</code> by default; KB graph components are isolated in <code>wahs_extensions/experimental/</code> until opted in.</dd>
+                <dd>Highest evaluated safety and speed: single stateless model call with strict per-patient scoping.</dd>
+                <dt>Architecture mapping</dt>
+                <dd>Standalone baseline serves pure verbatim-first condensation (<code>wahs-26b</code> default), while clinical reconciliation and guideline modules stay isolated as opt-in research extensions.</dd>
                 <dt>900-cell H200 result</dt>
                 <dd>85.1 / 100 on Gemma 4 26B (0 of 75 unsafe, 3.4 s median); 82.0 on 12B.</dd>
               </dl>
             </article>
 
             <article class="strategy-card">
-              <span class="strategy-badge secondary">Deep-note extension (note_rag)</span>
-              <h3>2. Condensation + Note search</h3>
+              <span class="strategy-badge secondary">Deep-note extension</span>
+              <h3>2. Condensation + Note passage search</h3>
               <dl class="facts">
                 <dt>Method</dt>
-                <dd>Keep the 16k condensed chart and add question-matched BM25 passages from long clinical notes when enabled via <code>WAHS_ENABLED_ENRICHERS=note_rag</code>.</dd>
+                <dd>Pair the condensed chart with question-matched Okapi BM25 passages from long clinical notes when enabled as an operator-configured extension.</dd>
                 <dt>Strengths</dt>
-                <dd>Strongest pure clinical note recall on hospital and specialist notes of 4,000 to 14,000 tokens.</dd>
+                <dd>Strongest pure clinical note recall on hospital and specialist narratives of 4,000 to 14,000 tokens.</dd>
                 <dt>Limitations</dt>
                 <dd>Slightly larger turn suffix, adding ~1.5 s to median answer time.</dd>
                 <dt>900-cell H200 result</dt>
@@ -298,15 +287,15 @@ Question: What are my diabetes labs?</pre>
             </article>
 
             <article class="strategy-card">
-              <span class="strategy-badge future">Evaluated · higher risk (-tools)</span>
+              <span class="strategy-badge future">Evaluated · higher risk</span>
               <h3>3. Agentic tool-calling</h3>
               <dl class="facts">
                 <dt>Method</dt>
-                <dd>Give the model a small 2k summary and let it run multi-step search tools over the chart before answering.</dd>
+                <dd>Give the model a compact 2k summary and let it invoke multi-step search tools over the full record before answering.</dd>
                 <dt>Strengths</dt>
-                <dd>Can inspect deeply buried items when a large model chooses the right search terms.</dd>
+                <dd>Can inspect deeply buried historical items when a large model chooses effective search terms.</dd>
                 <dt>Limitations</dt>
-                <dd>Iterative searches frequently miss cross-clinic hold notes or sensitive social context.</dd>
+                <dd>Iterative searches frequently miss cross-clinic hold notes or clinical context across fragmented entries.</dd>
                 <dt>900-cell H200 result</dt>
                 <dd>65.8 to 69.4 / 100, concentrating 24 of 37 confirmed unsafe answers and 93% of over-refusals.</dd>
               </dl>
@@ -469,15 +458,15 @@ Question: What are my diabetes labs?</pre>
             </article>
             <article class="faq">
               <h3>Chart size adapts dynamically to the model and turn</h3>
-              <p>The engine imposes zero hardcoded 16k ceiling: on every turn it measures actual non-chart prompt and output tokens against the model’s <code>context_window</code>, honors optional per-model <code>preferred_chart_tokens</code> only in <code>Auto</code> mode (for example when calibrated against long-context degradation as in our November H200 16k vs. 32k study), and lets the UI or harness override cleanly with any positive <code>target_budget_tokens</code>.</p>
+              <p>The engine imposes no fixed 16k cap: on every turn it measures actual conversation and response overhead against the model’s context window, supports optional <code>Auto</code> sweet-spot calibration informed by long-context evaluations (such as our <a href="https://reports.openclinai.org/2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration/index.html">16k vs. 32k H200 calibration study ↗</a>), and lets clients pass explicit budget presets (such as <code>2k</code> to <code>64k</code>) for controlled testing.</p>
             </article>
             <article class="faq">
-              <h3>Clinical knowledge is selected for each question</h3>
-              <p>The engine selects clinical guidelines and patient graph links that match the question in the Layer-3 suffix without a hardcoded 800-token cap. When tests compared chart sizes, the questions and the knowledge base were held fixed so that size was the only thing changing.</p>
+              <h3>Optional clinical extensions stay modular</h3>
+              <p>Baseline prompt assembly forwards the patient’s question verbatim without ad-hoc rule injection. Specialized research modules, including BM25 note passage search, omitted-record overflow lookup, longitudinal trend summaries, and experimental clinical reconciliation, live behind an opt-in extension boundary so each method can be evaluated independently.</p>
             </article>
             <article class="faq">
-              <h3>Med Agent Hub and the WAHS engine share the same core code</h3>
-              <p><a href="/med-agent-hub/index.html">Med Agent Hub</a> is the research workbench where approaches are built and benchmarked. The WAHS engine is a small service holding only what WAHS needs to run. Both use the same core code, so a result measured in the Hub applies to the engine.</p>
+              <h3>Standalone pilot engine vs. OpenClinAI R&amp;D workbench</h3>
+              <p><a href="/med-agent-hub/index.html">Med Agent Hub</a> and the <a href="https://wahs-demo.openclinai.org/">WAHS Explorer Sandbox ↗</a> form OpenClinAI’s interactive R&amp;D workbench for multi-budget and knowledge-guided experiments, whereas standalone <a href="https://github.com/pmanko/wahs-engine"><code>wahs-engine</code> ↗</a> packages a lean, domain-neutral runtime for the WA Health Summary pilot. Both are evaluated through the <a href="/validation-harness/index.html">Validation Harness</a>.</p>
             </article>
             <article class="faq">
               <h3>The model and the front end can be replaced</h3>
@@ -492,22 +481,21 @@ Question: What are my diabetes labs?</pre>
 
         <section class="strategy-section" id="status" aria-labelledby="status-title" tabindex="-1">
           <p class="section-kicker">Project status</p>
-          <h2 id="status-title">The standalone engine baseline is built, audited, and verified</h2>
+          <h2 id="status-title">The standalone engine baseline is designed, integrated, and benchmarked</h2>
 
           <div class="status-cols">
             <div class="status-col">
               <ul>
-                <li>Standalone <code>wahs-engine</code> runs a clean pure-stdlib core (<code>wahs_core</code>, 1,776 LOC) + thin FastAPI runtime (<code>wahs_engine</code>, 1,871 LOC) with zero R&amp;D bloat and unplugged <code>wahs_extensions/</code> by default.</li>
-                <li>Reads records only with the patient’s sign-in via <code>fhir-auth</code>, with optional local RS256 JWKS verification and byte-bounded in-memory caches; patient-facing selective-disclosure privacy policies remain unbuilt pending team design.</li>
-                <li>Both the SvelteKit web app (<code>shl-ips</code>) and mobile companion connect over standard OpenAI <code>/v1/chat/completions</code> with clean model aliases (<code>wahs-26b</code>, <code>wahs-12b</code>, <code>wahs-e4b</code>) and <code>wahs-seed-hapi</code> devtools.</li>
-                <li>Remediated runtime pooling, RS256 JWKS, SSE preflight, and FHIR R4 status invariants remain regression-tested on <code>main</code> (<code>3b9dcc0</code>) alongside clean 3-tier verbatim-first condensation tests.</li>
-                <li>Benchmarked across two 900-cell H200 studies (<code>16k vs. 32k</code> calibration and 4-pathway evaluation) plus 384 3-seed portability runs, with R&amp;D enrichers cleanly isolated for opt-in re-enablement.</li>
+                <li>Standalone <a href="https://github.com/pmanko/wahs-engine"><code>wahs-engine</code> ↗</a> combines a pure-standard-library FHIR R4 condensation core with a stateless OpenAI-compatible runtime, keeping optional retrieval and clinical-rule enrichers disabled behind a clean extension boundary.</li>
+                <li>Reads patient records strictly with the caller’s own sign-in token via the <code>fhir-auth</code> security proxy, using version-stamped in-memory caches; patient-facing selective-disclosure privacy policies remain intentionally separated into a dedicated standards-based sharing layer pending team design.</li>
+                <li>Connected across both the WA Health Summary SvelteKit web app (<a href="https://github.com/pmanko/shl-ips"><code>shl-ips</code> ↗</a>) and mobile companion (<a href="https://github.com/pmanko/wahs-mobile-frontend"><code>wahs-mobile-frontend</code> ↗</a>) with clean model tiers (<code>wahs-26b</code>, <code>wahs-12b</code>, <code>wahs-e4b</code>) and dynamic <code>Auto</code> plus <code>2k</code> to <code>64k</code> test presets.</li>
+                <li>Benchmarked across two 900-cell H200 studies (<a href="https://reports.openclinai.org/2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration/index.html">16k vs. 32k calibration ↗</a> and <a href="https://reports.openclinai.org/2026-11-16-wahs-engine-4pathway-sheet-eval/index.html">4-pathway evaluation ↗</a>) plus 384 3-seed portability runs, with published transcripts and scores on <a href="https://reports.openclinai.org/#wahs"><code>reports.openclinai.org</code> ↗</a>.</li>
               </ul>
             </div>
           </div>
 
           <p class="strategy-note">
-            Each item links to its code and test evidence in the <a href="/wahs/engine-audit/index.html">engine audit <span aria-hidden="true">→</span></a> and <a href="/wahs/engine-reference/index.html#action-plan">build record <span aria-hidden="true">→</span></a>.
+            Architecture rationale, boundaries, and benchmark evidence are documented in <a href="/wahs/engine-audit/index.html">design &amp; rationale <span aria-hidden="true">→</span></a> and the <a href="/wahs/engine-reference/index.html">engine reference <span aria-hidden="true">→</span></a>.
           </p>
         </section>
 
@@ -527,15 +515,15 @@ Question: What are my diabetes labs?</pre>
             <dt>Citation <span class="cite-pill">[N]</span></dt>
             <dd>A number in the answer that opens the source record it came from.</dd>
             <dt>Knowledge base (KB)</dt>
-            <dd>Clinical reference rules the engine can add to a question, such as which labs relate to diabetes.</dd>
+            <dd>Clinical reference rules an optional extension can attach alongside a question, such as which labs relate to diabetes.</dd>
             <dt>Overflow lookup</dt>
-            <dd>A search of the full record for items the condensed chart left out. It runs only when something was left out. The reference calls it Tier-0.</dd>
+            <dd>An optional extension search of the full record for historical items omitted from a tightly condensed chart.</dd>
             <dt>Note search</dt>
-            <dd>Finding the passages in long clinical notes that match the question and adding only those. Engineers call this retrieval, or RAG.</dd>
+            <dd>Finding the passages in long clinical notes that match the question and adding only those (Okapi BM25 passage retrieval).</dd>
             <dt>KV cache</dt>
             <dd>The model’s short-term memory of text it has just read. A speed feature, and not the knowledge base.</dd>
             <dt>WAHS engine</dt>
-            <dd>The middle service this page describes. In code it is <code>wahs-engine</code>, built on a shared core called <code>wahs_core</code>.</dd>
+            <dd>The middle service this page describes, pairing a pure-standard-library FHIR condensation core with a stateless OpenAI-compatible runtime.</dd>
             <dt>Record store</dt>
             <dd>Where patient records live: a FHIR server behind a gatekeeper (<code>fhir-auth</code>) that returns only the signed-in patient’s records.</dd>
             <dt>Open-weight model</dt>
@@ -558,17 +546,17 @@ Question: What are my diabetes labs?</pre>
               <p>The request and response format between the app’s server and the engine.</p>
             </article>
             <article class="strategy-card" id="action-plan">
-              <h3><a href="/wahs/engine-reference/index.html#action-plan">Build record <span aria-hidden="true">→</span></a></h3>
-              <p>Each milestone with its status and a link to the code or test that backs it.</p>
+              <h3><a href="/wahs/engine-reference/index.html#action-plan">Build milestones <span aria-hidden="true">→</span></a></h3>
+              <p>Architectural milestones with links to published benchmark packets and repositories.</p>
             </article>
             <article class="strategy-card" id="engine-internals">
               <span id="clinical-entity-graph-details"></span>
               <h3><a href="/wahs/engine-reference/index.html#engine-internals">Engine internals <span aria-hidden="true">→</span></a></h3>
-              <p>Two-stage monotonic condensation, longitudinal <code>[TEMPORAL DIGEST]</code> synthesis, the <a href="/wahs/engine-reference/index.html#clinical-entity-graph-details">patient relationship graph</a>, and how the Layer-3 question block is built.</p>
+              <p>Continuous verbatim-first condensation, dynamic per-turn window sizing, <code>[N]</code> provenance mapping, and the <a href="/wahs/engine-reference/index.html#clinical-entity-graph-details">modular research extension shelf</a>.</p>
             </article>
             <article class="strategy-card recommended" id="engine-audit-card">
-              <h3><a href="/wahs/engine-audit/index.html">Engine architectural &amp; functional audit <span aria-hidden="true">→</span></a></h3>
-              <p>Full system architecture diagram, explicit scope and non-goals, foundational standards links, 900-cell H200 benchmark readout, and verified 27-item remediation ledger across <code>wahs_core</code> and <code>wahs_engine</code>.</p>
+              <h3><a href="/wahs/engine-audit/index.html">Engine design &amp; rationale <span aria-hidden="true">→</span></a></h3>
+              <p>Full system architecture diagram, explicit scope and privacy boundaries, foundational standards links, 900-cell H200 benchmark readout, and five core design principles.</p>
             </article>
           </div>
 

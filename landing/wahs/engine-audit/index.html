@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>WAHS Engine Architectural &amp; Functional Audit · OpenClinAI</title>
-  <meta name="description" content="Architectural and functional audit of the standalone WAHS Engine: high-level system diagram, explicit scope boundaries, foundational standards links, 900-cell H200 benchmark evidence, and verified 27-item remediation ledger." />
+  <title>WAHS Engine Design &amp; Rationale &middot; OpenClinAI</title>
+  <meta name="description" content="System design and rationale for the standalone WAHS Engine: architecture diagram, explicit scope and privacy boundaries, standards and research foundations, benchmark evidence, and five core design principles." />
   <link rel="canonical" href="https://openclinai.org/wahs/engine-audit/" />
   <meta property="og:url" content="https://openclinai.org/wahs/engine-audit/" />
-  <meta property="og:title" content="WAHS Engine Architectural &amp; Functional Audit · OpenClinAI" />
-  <meta property="og:description" content="How the standalone WAHS Engine works, its explicit scope boundaries, the clinical and research standards behind it, 900-cell H200 benchmark results, and the verified 27-item remediation ledger." />
+  <meta property="og:title" content="WAHS Engine Design &amp; Rationale &middot; OpenClinAI" />
+  <meta property="og:description" content="How the standalone WAHS Engine works, its explicit responsibility and privacy boundaries, the clinical and research standards behind it, and 900-cell H200 benchmark evidence." />
   <meta property="og:image" content="https://openclinai.org/wahs/walkthrough/media/step2-condensation-8k-vs-1k.webp" />
   <meta name="theme-color" content="#4b2e83" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -57,7 +57,7 @@
         <a href="/wahs/index.html">Overview</a>
         <a href="/wahs/llm-strategy/index.html">AI Strategy &amp; Architecture</a>
         <a href="/wahs/engine-reference/index.html">Engine Reference</a>
-        <a href="/wahs/engine-audit/index.html" aria-current="page">Engine Audit</a>
+        <a href="/wahs/engine-audit/index.html" aria-current="page">Design &amp; Rationale</a>
         <a href="/wahs/walkthrough/index.html">Sandbox Walkthrough</a>
         <a href="https://wahs-demo.openclinai.org/">Live Sandbox <span aria-hidden="true">↗</span></a>
         <a href="https://reports.openclinai.org/2026-11-16-wahs-engine-4pathway-sheet-eval/index.html">4-Pathway H200 Eval <span aria-hidden="true">↗</span></a>
@@ -73,13 +73,13 @@
         <ol>
           <li><a href="#high-level-architecture">High-level diagram</a></li>
           <li><a href="#foundational-pillars">Research &amp; standards</a></li>
-          <li><a href="#wahs-core-audit">How it works today</a></li>
-          <li><a class="sub" href="#fhir-extraction-coverage">Record coverage</a></li>
+          <li><a href="#wahs-core-audit">Methods &amp; mechanisms</a></li>
+          <li><a class="sub" href="#fhir-extraction-coverage">Condensation &amp; extensions</a></li>
           <li><a class="sub" href="#wahs-engine-runtime">Caching &amp; streaming</a></li>
           <li><a href="#ecosystem-alignment">Connected apps</a></li>
           <li><a href="#empirical-benchmarks">Benchmark results</a></li>
-          <li><a href="#audit-findings">Remediation ledger</a></li>
-          <li><a class="sub" href="#remediation-sequence">4-step verification</a></li>
+          <li><a href="#audit-findings">Design principles</a></li>
+          <li><a class="sub" href="#remediation-sequence">5 core principles</a></li>
         </ol>
         <p class="doc-toc-more">Related: <a href="/wahs/llm-strategy/index.html">AI Strategy</a> &middot; <a href="/wahs/engine-reference/index.html">Engine Reference</a>.</p>
       </nav>
@@ -93,24 +93,24 @@
             <span aria-hidden="true">/</span>
             <a href="/wahs/index.html">WA Health Summary (WAHS)</a>
             <span aria-hidden="true">/</span>
-            <span>Engine Audit</span>
+            <span>Design &amp; Rationale</span>
           </nav>
 
-          <p class="section-kicker">Washington Health Summary (WAHS) &middot; Pristine Baseline Audit</p>
-          <h1>How the WAHS engine works and why its baseline is simple.</h1>
+          <p class="section-kicker">Washington Health Summary (WAHS) &middot; Design &amp; Rationale</p>
+          <h1>How the WAHS engine works and why its architecture stays focused.</h1>
           <p class="overview-lead">
-            The <strong>WAHS Engine</strong> is a lean, standalone service that sits between the WA Health Summary app, the patient's health record store, and an open-weight language model. Following our November slim-down and dynamic-budget refactors, the core runtime is domain-neutral and free of static token prescriptions: pure-stdlib 3-tier verbatim-first condensation in <code>wahs_core</code> + stateless OpenAI routing and exact turn-measured sizing in <code>wahs_engine</code>, with experimental clinical enrichers cleanly isolated in <code>wahs_extensions/</code> (unplugged by default) and patient-facing privacy/selective-disclosure policies deferred as unbuilt pending team design.
+            The <strong>WAHS Engine</strong> is a lean, standalone middleware service sitting between the WA Health Summary applications, the patient's FHIR R4 record store, and an open-weight language model. Its core pipeline focuses on deterministic, domain-neutral record preparation and source provenance: continuous 3-tier verbatim-first condensation paired with stateless OpenAI-compatible routing and dynamic per-turn context sizing, while optional retrieval and clinical-rule enrichers stay modular and patient-facing selective-disclosure policies remain in a separate standards-based sharing layer.
           </p>
           <p class="strategy-meta">
-            Updated 25 November 2026 &middot; <a href="https://github.com/pmanko/wahs-engine"><code>wahs-engine</code> on GitHub <span aria-hidden="true">↗</span></a> (<code>main</code> at <a href="https://github.com/pmanko/wahs-engine/commit/666a9be442175bbce04662d98582b526c4f06889"><code>666a9be</code></a> via <a href="https://github.com/pmanko/wahs-engine/pull/14"><code>PR #14</code></a>) &middot; Suites: unit, core, extension, Docker smoke &amp; live HAPI/Keycloak CI passing
+            Implementation: <a href="https://github.com/pmanko/wahs-engine"><code>wahs-engine</code> on GitHub <span aria-hidden="true">↗</span></a> &middot; Technical specification: <a href="/wahs/engine-reference/index.html">Engine Reference <span aria-hidden="true">→</span></a> &middot; Evidence: <a href="https://reports.openclinai.org/#wahs">Published WAHS Benchmarks <span aria-hidden="true">↗</span></a>
           </p>
 
           <div class="decision" role="region" aria-labelledby="audit-verdict-title">
-            <h2 id="audit-verdict-title">Pristine baseline summary</h2>
+            <h2 id="audit-verdict-title">Architectural highlights</h2>
             <ol>
-              <li><strong>Domain-neutral core, unplugged extensions, and explicit privacy boundary.</strong> <code>wahs_core</code> (pure Python stdlib verified under <code>python -S</code>) runs 3-tier verbatim-first condensation (Tier 0 verbatim when chart fits available tokens or when unbounded; Tier 1 uniform ontology-free RLE folding and Tier 2 monotonic packed + water-filled notes only when constrained). Optional enrichers (<code>note_rag</code>, <code>overflow_lookup</code>, <code>temporal_trends</code>, <code>experimental.clinical_reconciliation</code>) live unplugged in <code>src/wahs_extensions/</code> behind <code>wahs_core.ports.ContextEnricher</code>, and premature regex privacy redaction (<code>sharing_posture</code>) was removed completely pending team design.</li>
-              <li><strong>Stateless runtime &amp; dynamic per-turn sizing.</strong> <code>wahs_engine</code> provides zero-privilege <code>fhir-auth</code> star-graph assembly, optional local RS256 JWKS verification, exact offline Gemma 4 / <code>tiktoken</code> budgeting measured directly against <code>context_window</code> and actual turn tokens (no hardcoded <code>16k</code> ceiling; optional per-model <code>WAHS_PREFERRED_CHART_TOKENS</code> only for <code>Auto</code> tuning), SSE <code>&lt;think&gt;</code> stripping, and clean model aliases (<code>wahs-26b</code> default, <code>wahs-12b</code>, <code>wahs-e4b</code>) aligned across <code>shl-ips</code> and <code>wahs-mobile-frontend</code>.</li>
-              <li><strong>Grounded in 1,800 H200 benchmark runs &amp; hardened runtime invariants.</strong> Historical November H200 evaluations showed condensing first to a <code>16k</code> calibration point beat uncondensed 32k charts and 2k tool loops on that server setup (Gemma 4 26B scored 85.1/100 with 0/75 unsafe); all hardened pooling, JWKS, SSE preflight, and FHIR R4 status invariants remain regression-tested on <code>main</code>.</li>
+              <li><strong>Domain-neutral condensation core and modular research extensions.</strong> Continuous 3-tier verbatim-first condensation keeps the full record intact whenever it fits the active turn budget, applying uniform series folding and <a href="https://build.fhir.org/ig/HL7/fhir-ips/">HL7 IPS</a> safety-core packing only when constrained. Optional research extensions (Okapi BM25 note search, omitted-record lookup, longitudinal trend math, and clinical reconciliation) sit behind a clean extension boundary disabled in the baseline runtime.</li>
+              <li><strong>Stateless runtime &amp; dynamic per-turn sizing.</strong> The runtime forwards the caller's token through the <code>fhir-auth</code> security proxy, measures exact conversation and response overhead against the model's context window on every turn (supporting automatic window utilization, calibrated <code>Auto</code> targets, or explicit <code>2k</code>&ndash;<code>64k</code> test budgets), and serves clean OpenAI-compatible models (<code>wahs-26b</code> default, <code>wahs-12b</code>, <code>wahs-e4b</code>).</li>
+              <li><strong>Grounded in 1,800 H200 benchmark runs &amp; open standards.</strong> Large-scale H200 evaluations showed structured condensation paired with open-weight Gemma 4 models substantially outperforms raw uncondensed FHIR dumps and brittle multi-step tool loops while preserving inline <code>[N]</code> provenance to source records.</li>
             </ol>
           </div>
 
@@ -121,15 +121,15 @@
             </div>
             <div class="stat">
               <p class="stat-value">85.1 / 100</p>
-              <p class="stat-label">Top 900-cell benchmark score (<code>Gemma 4 26B + KB</code>), with 0/75 confirmed unsafe answers.</p>
+              <p class="stat-label">Top 900-cell H200 benchmark score (Gemma 4 26B + KB extension), with 0/75 confirmed unsafe answers.</p>
             </div>
             <div class="stat">
               <p class="stat-value">99.8%</p>
-              <p class="stat-label">Inline <code>[N]</code> citations that resolved cleanly to a real patient FHIR record (5,191 / 5,203).</p>
+              <p class="stat-label">Inline <code>[N]</code> citations resolved cleanly to real patient FHIR records (5,191 / 5,203).</p>
             </div>
             <div class="stat">
               <p class="stat-value">3.4 s</p>
-              <p class="stat-label">Median wait for an answer on the shared UW CIRG GPU server at the calibrated 16k benchmark budget.</p>
+              <p class="stat-label">Median wait for an answer on the shared UW CIRG GPU server at the calibrated 16k benchmark setting.</p>
             </div>
           </div>
 
@@ -138,13 +138,13 @@
             <ol>
               <li><a href="#high-level-architecture">High-level diagram</a></li>
               <li><a href="#foundational-pillars">Research &amp; standards</a></li>
-              <li><a href="#wahs-core-audit">How it works today</a></li>
-              <li><a href="#fhir-extraction-coverage">Record coverage</a></li>
+              <li><a href="#wahs-core-audit">Methods &amp; mechanisms</a></li>
+              <li><a href="#fhir-extraction-coverage">Condensation &amp; extensions</a></li>
               <li><a href="#wahs-engine-runtime">Caching &amp; streaming</a></li>
               <li><a href="#ecosystem-alignment">Connected apps</a></li>
               <li><a href="#empirical-benchmarks">Benchmark results</a></li>
-              <li><a href="#audit-findings">Remediation ledger</a></li>
-              <li><a href="#remediation-sequence">4-step verification</a></li>
+              <li><a href="#audit-findings">Design principles</a></li>
+              <li><a href="#remediation-sequence">5 core principles</a></li>
             </ol>
           </details>
         </section>
@@ -153,14 +153,14 @@
           <p class="section-kicker">High-level architecture</p>
           <h2 id="arch-diagram-heading">How a patient question moves through the system</h2>
           <p>
-            Three core components do the work in a straight line: the <strong>patient app</strong> handles sign-in and displays citations, the <strong>WAHS Engine</strong> fetches scoped records and runs 3-tier verbatim-first condensation, and a <strong>stateless model server</strong> writes the cited reply. Optional clinical enrichers live in an unplugged shelf (<code>wahs_extensions/</code>) disabled by default.
+            Three core components do the work in a straight line: the <strong>patient app</strong> handles sign-in and displays citations, the <strong>WAHS Engine</strong> retrieves scoped records and runs 3-tier verbatim-first condensation, and a <strong>stateless model server</strong> writes the cited reply. Optional research modules live behind an extension boundary disabled by default.
           </p>
 
           <figure class="audit-arch-figure">
-            <div class="audit-arch-scroll" tabindex="0" role="region" aria-label="3-step Core Baseline architecture diagram of WAHS apps, fhir-auth, WAHS Engine, unplugged wahs_extensions shelf, and model server">
+            <div class="audit-arch-scroll" tabindex="0" role="region" aria-label="3-step Core Baseline architecture diagram of WAHS apps, fhir-auth, WAHS Engine, optional extension interface, and model server">
               <svg class="audit-arch-svg" viewBox="0 0 880 512" role="img" aria-labelledby="wahs-svg-title wahs-svg-desc" xmlns="http://www.w3.org/2000/svg">
-                <title id="wahs-svg-title">3-step Core Baseline architecture of the WAHS Engine</title>
-                <desc id="wahs-svg-desc">Left column shows WAHS Web and Mobile apps calling OpenAI /v1/chat/completions above fhir-auth JWT proxy and HAPI FHIR store below. Center column shows the WAHS Engine Core Baseline with 3 clean steps: 1. Auth, Fetch and Scope; 2. 3-Tier Verbatim Condensation; 3. Stateless Prompt and Citations, plus a dashed unplugged optional wahs_extensions catalog shelf at the bottom. Right column shows any OpenAI-compatible Model Server running Gemma 4 26B, 12B, or E4B.</desc>
+                <title id="wahs-svg-title">Core Baseline Architecture of the WAHS Engine</title>
+                <desc id="wahs-svg-desc">Left column shows WAHS Web and Mobile apps calling OpenAI /v1/chat/completions above the FHIR Auth Proxy and HAPI R4 record store below. Center column shows the WAHS Context Engine Core Baseline with 3 steps: 1. Scoped Retrieval and Freshness; 2. Verbatim-First Condensation; 3. Stateless Prompt and Provenance, plus a dashed Optional Research Extension Interface below. Right column shows any OpenAI-compatible Model Server running Gemma 4 26B, 12B, or E4B.</desc>
                 <defs>
                   <marker id="arr-purple" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
                     <path d="M0,0.5 L9.5,5 L0,9.5 z" fill="#4b2e83" />
@@ -177,8 +177,8 @@
                 <text x="120" y="45" text-anchor="middle" fill="#ffffff" font-size="11.5" font-weight="700" letter-spacing="0.06em">PATIENT APPS</text>
 
                 <text x="120" y="80" text-anchor="middle" fill="#1e293b" font-size="15.5" font-weight="700">WAHS Web &amp; Mobile</text>
-                <text x="120" y="104" text-anchor="middle" fill="#475569" font-size="13">Keycloak OIDC + chart_scope</text>
-                <text x="120" y="123" text-anchor="middle" fill="#475569" font-size="13">Selects wahs-26b / 12b / e4b</text>
+                <text x="120" y="104" text-anchor="middle" fill="#475569" font-size="13">OIDC sign-in + record scope</text>
+                <text x="120" y="123" text-anchor="middle" fill="#475569" font-size="13">Selects 26B / 12B / E4B tier</text>
 
                 <rect x="32" y="140" width="176" height="34" rx="7" fill="#f5f3ff" stroke="#c4b5fd" />
                 <text x="120" y="161" text-anchor="middle" fill="#4b2e83" font-size="12" font-weight="700">Clickable [1]..[N] provenance</text>
@@ -189,49 +189,49 @@
                 <text x="120" y="239" text-anchor="middle" fill="#ffffff" font-size="11.5" font-weight="700" letter-spacing="0.06em">RECORD STORE</text>
 
                 <text x="120" y="274" text-anchor="middle" fill="#134e4a" font-size="15.5" font-weight="700">fhir-auth + HAPI R4</text>
-                <text x="120" y="298" text-anchor="middle" fill="#475569" font-size="13">Checks caller Bearer JWT</text>
+                <text x="120" y="298" text-anchor="middle" fill="#475569" font-size="13">Verifies caller Bearer token</text>
                 <text x="120" y="317" text-anchor="middle" fill="#475569" font-size="13">Returns only that patient's</text>
-                <text x="120" y="336" text-anchor="middle" fill="#475569" font-size="13">star-graph FHIR bundles</text>
+                <text x="120" y="336" text-anchor="middle" fill="#475569" font-size="13">linked FHIR R4 datasets</text>
 
                 <rect x="32" y="348" width="176" height="30" rx="7" fill="#ecfdf5" stroke="#6ee7b7" />
-                <text x="120" y="367" text-anchor="middle" fill="#065f46" font-size="11.5" font-weight="700">Zero HAPI creds in engine</text>
+                <text x="120" y="367" text-anchor="middle" fill="#065f46" font-size="11.5" font-weight="700">Zero DB creds in engine</text>
 
-                <!-- ==================== CENTER COLUMN: CORE BASELINE + UNPLUGGED SHELF ==================== -->
+                <!-- ==================== CENTER COLUMN: CORE BASELINE + OPTIONAL EXTENSION INTERFACE ==================== -->
                 <rect x="296" y="14" width="292" height="378" rx="12" fill="#fcfaff" stroke="#4b2e83" stroke-width="2.2" />
                 <rect x="296" y="14" width="292" height="40" rx="12" fill="#4b2e83" />
                 <rect x="296" y="40" width="292" height="14" fill="#4b2e83" />
-                <text x="442" y="40" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">Core Baseline: wahs-engine</text>
+                <text x="442" y="40" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">WAHS Context Engine</text>
 
                 <!-- Core Step 1 -->
                 <rect x="314" y="70" width="256" height="84" rx="8" fill="#ffffff" stroke="#d8b4fe" stroke-width="1.3" />
-                <text x="328" y="94" fill="#24133f" font-size="14" font-weight="700">1. Fetch &amp; Scope via fhir-auth</text>
-                <text x="328" y="114" fill="#475569" font-size="12.2">Optional RS256 JWKS, lastUpdated cache,</text>
-                <text x="328" y="132" fill="#475569" font-size="12.2">chart_scope &amp; overlay_resources merge</text>
+                <text x="328" y="94" fill="#24133f" font-size="14" font-weight="700">1. Scoped Retrieval &amp; Freshness</text>
+                <text x="328" y="114" fill="#475569" font-size="12.2">Per-user token forwarding, version-stamped</text>
+                <text x="328" y="132" fill="#475569" font-size="12.2">caching, source scope &amp; draft overlay</text>
 
                 <line x1="442" y1="154" x2="442" y2="170" stroke="#4b2e83" stroke-width="1.6" marker-end="url(#arr-purple)" />
 
                 <!-- Core Step 2 -->
                 <rect x="314" y="172" width="256" height="94" rx="8" fill="#ffffff" stroke="#d8b4fe" stroke-width="1.3" />
-                <text x="328" y="196" fill="#24133f" font-size="14" font-weight="700">2. 3-Tier Condensation (wahs_core)</text>
-                <text x="328" y="216" fill="#475569" font-size="12.2">Tier 0 verbatim | Tier 1 uniform RLE</text>
-                <text x="328" y="234" fill="#475569" font-size="12.2">| Tier 2 water-filled; [2] Manifest &amp; [1..N]</text>
-                <text x="328" y="252" fill="#4b2e83" font-size="11.5" font-weight="600">Pure stdlib; zero static limits or regexes</text>
+                <text x="328" y="196" fill="#24133f" font-size="14" font-weight="700">2. Verbatim-First Condensation</text>
+                <text x="328" y="216" fill="#475569" font-size="12.2">Full record verbatim when it fits;</text>
+                <text x="328" y="234" fill="#475569" font-size="12.2">uniform series folding &amp; IPS core when tight</text>
+                <text x="328" y="252" fill="#4b2e83" font-size="11.5" font-weight="600">Dynamic turn sizing &amp; [2] Manifest</text>
 
                 <line x1="442" y1="266" x2="442" y2="282" stroke="#4b2e83" stroke-width="1.6" marker-end="url(#arr-purple)" />
 
                 <!-- Core Step 3 -->
                 <rect x="314" y="284" width="256" height="90" rx="8" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5" />
                 <text x="328" y="308" fill="#4b2e83" font-size="14" font-weight="700">3. Stateless Prompt &amp; Provenance</text>
-                <text x="328" y="328" fill="#475569" font-size="12.2">Sends chart at messages[0] + verbatim prompt;</text>
-                <text x="328" y="346" fill="#475569" font-size="12.2">strips &lt;think&gt; &amp; returns x_wahs [N] map</text>
-                <text x="328" y="363" fill="#4b2e83" font-size="11.5" font-weight="600">SSE preflight &amp; HL7 AI-Provenance</text>
+                <text x="328" y="328" fill="#475569" font-size="12.2">Invariant chart prefix + verbatim prompt;</text>
+                <text x="328" y="346" fill="#475569" font-size="12.2">streams [N] FHIR UUID citation map</text>
+                <text x="328" y="363" fill="#4b2e83" font-size="11.5" font-weight="600">Preflight validation &amp; HL7 AI-Provenance</text>
 
-                <!-- Unplugged Shelf -->
+                <!-- Optional Extension Interface -->
                 <rect x="296" y="408" width="292" height="90" rx="10" fill="#f8fafc" stroke="#64748b" stroke-width="1.6" stroke-dasharray="6 4" />
-                <text x="442" y="431" text-anchor="middle" fill="#334155" font-size="12.5" font-weight="700">UNPLUGGED SHELF: wahs_extensions/</text>
-                <text x="442" y="451" text-anchor="middle" fill="#475569" font-size="11.8">Default WAHS_ENABLED_ENRICHERS="" (never imported)</text>
-                <text x="442" y="469" text-anchor="middle" fill="#475569" font-size="11.5">Opt-in: note_rag | overflow_lookup | temporal_trends</text>
-                <text x="442" y="486" text-anchor="middle" fill="#64748b" font-size="11">Experimental: clinical_reconciliation (privacy unbuilt)</text>
+                <text x="442" y="431" text-anchor="middle" fill="#334155" font-size="12" font-weight="700">OPTIONAL RESEARCH EXTENSION INTERFACE</text>
+                <text x="442" y="451" text-anchor="middle" fill="#475569" font-size="11.8">Disabled by default in clean baseline</text>
+                <text x="442" y="469" text-anchor="middle" fill="#475569" font-size="11.3">BM25 Note Search | Omitted-Record Lookup</text>
+                <text x="442" y="486" text-anchor="middle" fill="#64748b" font-size="11">Longitudinal Trends | Clinical Reconciliation</text>
 
                 <!-- ==================== RIGHT COLUMN: MODEL SERVER ==================== -->
                 <rect x="662" y="96" width="200" height="236" rx="10" fill="#ffffff" stroke="#99f6e4" stroke-width="1.6" />
@@ -269,114 +269,70 @@
               </svg>
             </div>
             <figcaption>
-              <strong>Separation of responsibilities:</strong> The Core Baseline stays clean, stateless, and domain-neutral; <code>wahs_extensions/</code> holds optional research enrichers unplugged by default; and patient-facing privacy/redaction rules stay unbuilt until designed with the clinical team.
+              <strong>Separation of responsibilities:</strong> The core runtime stays stateless, portable, and domain-neutral; optional retrieval and clinical-rule modules attach through a separate extension boundary; and patient-facing selective-disclosure rules belong in dedicated consent-driven FHIR sharing layers.
             </figcaption>
           </figure>
 
           <div class="strategy-callout" style="margin-bottom: 20px;">
-            <strong>Explicit scope &amp; unbuilt privacy boundary:</strong> <code>wahs-engine</code> owns stateless per-turn FHIR bundle assembly via <code>fhir-auth</code>, 3-tier verbatim-first structural condensation, optional operator-configured <code>wahs_extensions/</code> plugins, exact offline token budgeting, and <code>x_wahs</code> source-citation mapping. <strong>Patient privacy / selective-disclosure redaction policies are intentionally unbuilt in this baseline pending team design</strong> (premature regex heuristics and <code>sharing_posture</code> flags were removed so <code>wahs_core</code> never alters or hides clinical content implicitly). It also does not own OIDC login UI, persistent conversation databases, HAPI admin credentials, SMART Health Link cryptography (<code>shl-server</code>), GPU multi-model scheduling, or automated evaluation judging (<code>validation-harness</code>).
+            <strong>Explicit scope &amp; privacy boundary:</strong> <code>wahs-engine</code> owns stateless per-turn FHIR bundle retrieval via <code>fhir-auth</code>, continuous 3-tier verbatim-first structural condensation, optional modular research extensions, dynamic per-turn context sizing, and <code>x_wahs</code> citation mapping. <strong>Patient selective-disclosure and redaction policies are intentionally kept outside this core runtime</strong> so clinical records are never altered or omitted implicitly without standards-based sharing controls. The engine also does not own OIDC login UI, persistent conversation databases, HAPI admin credentials, SMART Health Link cryptography, GPU VRAM scheduling, or evaluation judging (<a href="/validation-harness/index.html">Validation Harness</a>).
           </div>
-
-          <details class="internals-details">
-            <summary>For engineers: map each box in the diagram to its repository and Python modules</summary>
-            <div class="internals-details-body">
-              <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Module mapping for the WAHS Engine diagram">
-                <table class="strategy-table">
-                  <thead>
-                    <tr>
-                      <th scope="col" style="width: 26%;">Diagram Component</th>
-                      <th scope="col" style="width: 30%;">Repository / Package</th>
-                      <th scope="col" style="width: 44%;">Key Files &amp; Wire Interfaces</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><strong>WAHS Web &amp; Mobile</strong></td>
-                      <td><a href="https://github.com/pmanko/shl-ips"><code>pmanko/shl-ips</code> ↗</a> (<code>:4000</code>)<br /><a href="https://github.com/pmanko/wahs-mobile-frontend"><code>wahs-mobile-frontend</code> ↗</a> (<code>:4001</code>)</td>
-                      <td>Server-side <code>/api/chat</code> BFF forwards Keycloak RS256 <code>Bearer</code> JWT + optional <code>wahs.chart_scope</code> to <code>POST /v1/chat/completions</code>; exposes clean <code>wahs-26b</code>, <code>wahs-12b</code>, <code>wahs-e4b</code> models and renders <code>x_wahs.citation_map</code> drawers.</td>
-                    </tr>
-                    <tr>
-                      <td><strong>FHIR Store + Proxy</strong></td>
-                      <td><a href="https://github.com/uwcirg/jwt-proxy"><code>uwcirg/jwt-proxy</code> ↗</a> (<code>fhir-auth</code>)<br /><code>hapiproject/hapi:v8.0.0</code></td>
-                      <td>Validates RS256 JWKS against Keycloak 26 and enforces <code>meta.security.code == jwt.sub</code> over star-graph <code>MasterPatient.link[]</code> and <code>Patient/{id}/$everything</code>.</td>
-                    </tr>
-                    <tr>
-                      <td><strong>Core Step 1 &amp; 3 (Runtime)</strong></td>
-                      <td><code>src/wahs_engine/</code></td>
-                      <td><code>app.py</code>, <code>config.py</code>, <code>schemas.py</code>, <code>jwt_claims.py</code>, <code>assembler.py</code>, <code>tokenizers_registry.py</code>, <code>pipeline.py</code>, <code>upstream.py</code> (dynamic turn sizing + stateless <code>/v1</code> pass + <code>x_wahs</code>).</td>
-                    </tr>
-                    <tr>
-                      <td><strong>Core Step 2 (Pure Stdlib)</strong></td>
-                      <td><code>src/wahs_core/</code></td>
-                      <td><code>extractors.py</code> (pure FHIR R4 + SHA-256 note dedup), <code>condenser.py</code> (Tier 0 verbatim, Tier 1 uniform RLE, Tier 2 water-filled), <code>chart_serializer.py</code>, <code>ports.py</code> (<code>ContextEnricher</code> Protocol).</td>
-                    </tr>
-                    <tr>
-                      <td><strong>Unplugged Shelf + Devtools</strong></td>
-                      <td><code>src/wahs_extensions/</code> &amp; <code>src/wahs_devtools/</code></td>
-                      <td>Opt-in enrichers (<code>note_rag</code>, <code>overflow_lookup</code>, <code>temporal_trends</code>, <code>experimental.clinical_reconciliation</code>) behind <code>WAHS_ENABLED_ENRICHERS=""</code>; CLI seeder isolated in <code>wahs_devtools.seeder</code> (<code>wahs-seed-hapi</code>).</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </details>
         </section>
 
         <section class="strategy-section" id="foundational-pillars" tabindex="-1" aria-labelledby="pillars-heading">
           <p class="section-kicker">Research, standards &amp; best-practice foundations</p>
-          <h2 id="pillars-heading">Why each step in the engine exists, and the sources behind it</h2>
+          <h2 id="pillars-heading">Why each component exists, and the sources behind it</h2>
           <p>
-            Each of the four steps in the diagram above (plus our evaluation harness) implements established findings from long-context LLM research, healthcare interoperability standards, clinical practice guidelines, and privacy law.
+            Each stage of the system and its evaluation harness implements peer-reviewed findings from long-context language model research, healthcare interoperability specifications, clinical guidelines, and privacy law.
           </p>
 
           <div class="strategy-grid-2">
             <article class="strategy-card">
-              <span class="strategy-badge">Step 1 &middot; Fetch &amp; Check Freshness</span>
+              <span class="strategy-badge">Step 1 &middot; Retrieve &amp; Verify Freshness</span>
               <h3>Patient-mediated FHIR APIs and version-stamped caching</h3>
               <p>
-                Patients gather records across clinics through Cures Act FHIR R4 APIs. Checking lightweight <code>meta.lastUpdated</code> version stamps before pulling full bundles keeps charts fresh in ~10 ms when nothing changed.
+                Patients aggregate records across clinics through Cures Act FHIR R4 APIs. Checking lightweight <code>meta.lastUpdated</code> version stamps before pulling full bundles keeps charts current in ~10 ms when nothing changed.
               </p>
               <ul class="pillar-link-list">
-                <li><a href="https://hl7.org/fhir/us/core/">HL7 US Core (FHIR R4) ↗</a> &amp; <a href="https://www.healthit.gov/topic/oncs-cures-act-final-rule">ONC Cures Act Final Rule ↗</a> &middot; Standard patient-access clinical profiles and <code>Patient/$everything</code> retrieval.</li>
-                <li><a href="https://docs.smarthealthit.org/smart-health-links/">SMART Health Links ↗</a> &amp; <a href="https://hl7.org/fhir/us/security-label-ds4p/">HL7 FHIR DS4P Security Labels ↗</a> &middot; Patient-mediated sharing and <code>meta.security</code> access scoping via <a href="https://github.com/uwcirg/jwt-proxy"><code>uwcirg/jwt-proxy</code> ↗</a>.</li>
+                <li><a href="https://hl7.org/fhir/us/core/">HL7 US Core (FHIR R4) ↗</a> &amp; <a href="https://www.healthit.gov/topic/oncs-cures-act-final-rule">ONC Cures Act Final Rule ↗</a> &middot; Standard patient-access clinical profiles and longitudinal record retrieval.</li>
+                <li><a href="https://docs.smarthealthit.org/smart-health-links/">SMART Health Links ↗</a> &amp; <a href="https://hl7.org/fhir/us/security-label-ds4p/">HL7 FHIR DS4P Security Labels ↗</a> &middot; Patient-mediated sharing and per-user access scoping via <a href="https://github.com/uwcirg/jwt-proxy"><code>uwcirg/jwt-proxy</code> ↗</a>.</li>
                 <li><a href="https://hl7.org/fhir/R4/http.html#concurrency">HL7 FHIR RESTful Versioning (<code>meta.lastUpdated</code>) ↗</a> &middot; Optimistic cache revalidation across multi-clinic datasets (<a href="/wahs/engine-reference/index.html#session-and-scope-model">session &amp; scope design →</a>).</li>
               </ul>
             </article>
 
             <article class="strategy-card recommended">
-              <span class="strategy-badge">Step 2 &middot; Condense Record (90&ndash;99%)</span>
+              <span class="strategy-badge">Step 2 &middot; Verbatim-First Condensation</span>
               <h3>Long-context attention limits and clinical safety priority</h3>
               <p>
-                Language models lose recall when key facts sit buried in noisy multi-megabyte JSON. Pinning an international clinical safety core first and explicitly logging omitted counts prevents silent truncation and guessing.
+                Language models lose recall when key facts sit buried in verbose multi-megabyte JSON exports. Keeping records verbatim whenever capacity allows, and otherwise prioritizing the international clinical safety core while logging exact omissions, prevents silent truncation and fabrication.
               </p>
               <ul class="pillar-link-list">
-                <li><a href="https://arxiv.org/abs/2307.03172">Liu et al., <em>Lost in the Middle</em> (<em>TACL</em>, 2024) ↗</a> &middot; Demonstrates U-shaped long-context recall degradation, motivating compact verbatim-first condensation (with optional per-model <code>preferred_chart_tokens</code> sweet spots) over raw <code>200k+</code> FHIR dumps.</li>
-                <li><a href="https://build.fhir.org/ig/HL7/fhir-ips/">HL7 International Patient Summary (IPS) &amp; ISO 27269 ↗</a> &middot; Defines the mandatory safety core (allergies, active meds, active problems, implants) preserved first across all budgets.</li>
-                <li><a href="https://doi.org/10.1561/1500000019">Robertson &amp; Zaragoza, <em>Okapi BM25</em> (2009) ↗</a> &middot; Grounds exact clinical-term passage retrieval (<code>note_rag</code>) when long hospital notes exceed budget.</li>
+                <li><a href="https://arxiv.org/abs/2307.03172">Liu et al., <em>Lost in the Middle</em> (<em>TACL</em>, 2024) ↗</a> &middot; Demonstrates U-shaped long-context recall degradation, motivating concise clinical context over raw <code>200k+</code> FHIR JSON dumps.</li>
+                <li><a href="https://build.fhir.org/ig/HL7/fhir-ips/">HL7 International Patient Summary (IPS) &amp; ISO 27269 ↗</a> &middot; Defines the mandatory safety core (allergies, active meds, active problems, implants) preserved first under tight budgets.</li>
+                <li><a href="https://doi.org/10.1561/1500000019">Robertson &amp; Zaragoza, <em>Okapi BM25</em> (2009) ↗</a> &middot; Grounds exact clinical-term passage retrieval when long hospital notes exceed budget in opt-in extension evaluations.</li>
               </ul>
             </article>
 
             <article class="strategy-card">
-              <span class="strategy-badge secondary">Optional Shelf &middot; wahs_extensions/ (Unplugged)</span>
-              <h3>Isolated R&amp;D enrichers &amp; unbuilt privacy boundary</h3>
+              <span class="strategy-badge secondary">Modular Extensions &amp; Privacy Boundary</span>
+              <h3>Isolated R&amp;D enrichers &amp; standards-based disclosure scope</h3>
               <p>
-                Domain-specific reconciliation and retrieval helpers sit cleanly behind the <code>ContextEnricher</code> port (unplugged unless enabled by the operator), while patient-facing selective-disclosure rules wait for dedicated team privacy design rather than living inside core regexes.
+                Domain-specific clinical reconciliation and retrieval helpers sit cleanly behind a modular extension interface (disabled by default in baseline runs), while patient selective-disclosure rules remain scoped to dedicated consent and DS4P workflows.
               </p>
               <ul class="pillar-link-list">
-                <li><a href="https://www.hl7.org/implement/standards/product_brief.cfm?product_id=423">HL7 Clinical Information Reconciliation (CIRI) ↗</a> &amp; <a href="https://www.who.int/teams/digital-health-and-innovation/smart-guidelines">WHO SMART Guidelines ↗</a> &middot; Experimental graph/guideline rules preserved under <code>wahs_extensions/experimental/</code> (<a href="/med-agent-hub/index.html">Med Agent Hub →</a>).</li>
-                <li><a href="https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2">42 CFR Part 2 ↗</a> &amp; <a href="https://app.leg.wa.gov/RCW/default.aspx?cite=19.373">WA My Health My Data Act (RCW 19.373) ↗</a> &middot; Regulatory requirements preserved for future <code>W9</code> DS4P / SD-JWT design; zero premature regexes live in <code>wahs_core</code>.</li>
+                <li><a href="https://www.hl7.org/implement/standards/product_brief.cfm?product_id=423">HL7 Clinical Information Reconciliation (CIRI) ↗</a> &amp; <a href="https://www.who.int/teams/digital-health-and-innovation/smart-guidelines">WHO SMART Guidelines ↗</a> &middot; Experimental clinical graph and guideline rules evaluated alongside condensation in <a href="/med-agent-hub/index.html">Med Agent Hub →</a>.</li>
+                <li><a href="https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2">42 CFR Part 2 ↗</a> &amp; <a href="https://app.leg.wa.gov/RCW/default.aspx?cite=19.373">WA My Health My Data Act (RCW 19.373) ↗</a> &middot; Federal and Washington privacy frameworks guiding future standards-based selective disclosure.</li>
               </ul>
             </article>
 
             <article class="strategy-card">
-              <span class="strategy-badge secondary">Step 3 &middot; Stateless Prompt &amp; [N] Links</span>
+              <span class="strategy-badge secondary">Step 3 &middot; Stateless Prompt &amp; Citations</span>
               <h3>Prefix KV-cache reuse, inline citations, and human review</h3>
               <p>
-                Keeping <code>messages[0]</code> identical across questions lets GPU servers reuse cached attention blocks (cutting follow-ups from ~19s to ~3s), while <code>[1]..[N]</code> source links make every claim inspectable.
+                Placing the stable chart ledger first lets GPU inference servers reuse cached attention states across follow-up turns, while inline <code>[1]..[N]</code> source tags make every clinical statement inspectable against its original record.
               </p>
               <ul class="pillar-link-list">
-                <li><a href="https://arxiv.org/abs/2309.06180">Kwon et al., <em>PagedAttention / vLLM</em> (<em>SOSP</em>, 2023) ↗</a> &amp; <a href="https://arxiv.org/abs/2312.07104">Zheng et al., <em>SGLang / RadixAttention</em> (<em>NeurIPS</em>, 2024) ↗</a> &middot; Prefix KV-cache reuse motivating the invariant <code>messages[0]</code> / turn-local <code>messages[-1]</code> split.</li>
-                <li><a href="https://arxiv.org/abs/2305.14627">Gao et al., <em>ALCE: Generating Text with Citations</em> (<em>EMNLP</em>, 2023) ↗</a> &amp; <a href="https://physionet.org/content/archehr-qa-bionlp-task-2025/">PhysioNet ArchEHR-QA (BioNLP 2025) ↗</a> &middot; Inline bracketed <code>[N]</code> evidence grounding over EHR records.</li>
+                <li><a href="https://arxiv.org/abs/2309.06180">Kwon et al., <em>PagedAttention / vLLM</em> (<em>SOSP</em>, 2023) ↗</a> &amp; <a href="https://arxiv.org/abs/2312.07104">Zheng et al., <em>SGLang / RadixAttention</em> (<em>NeurIPS</em>, 2024) ↗</a> &middot; Prefix KV-cache reuse motivating the invariant chart prefix / turn-local suffix split.</li>
+                <li><a href="https://arxiv.org/abs/2305.14627">Gao et al., <em>ALCE: Generating Text with Citations</em> (<em>EMNLP</em>, 2023) ↗</a> &amp; <a href="https://physionet.org/content/archehr-qa-bionlp-task-2025/">PhysioNet ArchEHR-QA (BioNLP 2025) ↗</a> &middot; Inline bracketed <code>[N]</code> evidence grounding over longitudinal EHR records.</li>
                 <li><a href="https://build.fhir.org/ig/HL7/aitransparency-ig/branches/main/en/StructureDefinition-AI-Provenance.html">HL7 AI Transparency on FHIR (<code>AI-Provenance</code>) ↗</a> &amp; <a href="https://www.microsoft.com/en-us/haxtoolkit/">Amershi et al. (<em>CHI</em>, 2019) / Microsoft HAX ↗</a> &middot; Progressive source disclosure and explicit human-review signaling.</li>
               </ul>
             </article>
@@ -386,112 +342,111 @@
             <span class="strategy-badge future">Cross-Cutting &middot; Blinded Evaluation &amp; Claim Entailment</span>
             <h3>Why we verify outside the model with physician rubrics, atomic entailment, and two-judge consensus</h3>
             <p>
-              Recent clinical AI evaluations show that LLM self-verification accepts incorrect medical answers over 60% of the time (<a href="https://arxiv.org/abs/2605.10850" style="color: var(--purple); font-weight: 650;">Jin et al., 2026 ↗</a>). Instead of asking the answering model to grade itself, the <a href="/validation-harness/index.html" style="color: var(--purple); font-weight: 650;">OpenClinAI Validation Harness →</a> combines deterministic budget/citation checks with atomic EHR fact verification and two independent blinded judges:
+              Clinical AI evaluations show that LLM self-verification accepts incorrect medical answers over 60% of the time (<a href="https://arxiv.org/abs/2605.10850" style="color: var(--purple); font-weight: 650;">Jin et al., 2026 ↗</a>). Instead of asking the answering model to grade itself, the <a href="/validation-harness/index.html" style="color: var(--purple); font-weight: 650;">OpenClinAI Validation Harness →</a> combines deterministic budget and citation checks with atomic EHR fact verification and two independent blinded judges:
             </p>
             <ul class="pillar-link-list">
               <li><a href="https://arxiv.org/abs/2505.08775">HealthBench (OpenAI, 2025) ↗</a> &amp; <a href="https://crfm.stanford.edu/helm/medhelm/latest/">Stanford MedHELM ↗</a> &middot; Multi-axis rubric scoring with strict-majority clinical harm consensus across <a href="https://reports.openclinai.org/#wahs">published WAHS benchmark packets ↗</a>.</li>
               <li><a href="https://arxiv.org/abs/2501.16672">Chung et al., <em>VeriFact</em> (2025) ↗</a> &amp; <a href="https://arxiv.org/abs/2404.10774">Tang et al., <em>MiniCheck</em> (<em>EMNLP</em>, 2024) ↗</a> &middot; Atomic claim-to-EHR entailment checking so cited <code>[N]</code> records genuinely support stated values, dates, and statuses.</li>
-              <li><a href="https://arxiv.org/abs/2301.09633">Angelopoulos et al., <em>Prediction-Powered Inference</em> (<em>Science</em>, 2023) ↗</a> &middot; Statistical framework for calibrating automated judge scores against clinician adjudication, paired with interactive inspection in the <a href="https://wahs-demo.openclinai.org/">WAHS Explorer Sandbox ↗</a>.</li>
+              <li><a href="https://arxiv.org/abs/2301.09633">Angelopoulos et al., <em>Prediction-Powered Inference</em> (<em>Science</em>, 2023) ↗</a> &middot; Statistical framework for calibrating automated judge scores against clinician adjudication, paired with interactive exploration in the <a href="https://wahs-demo.openclinai.org/">WAHS Explorer Sandbox ↗</a>.</li>
             </ul>
           </article>
         </section>
 
         <section class="strategy-section" id="wahs-core-audit" tabindex="-1" aria-labelledby="core-audit-heading">
-          <p class="section-kicker">Functional audit</p>
-          <h2 id="core-audit-heading">Verified subsystem guarantees across <code>wahs_core</code> and <code>wahs_engine</code></h2>
+          <p class="section-kicker">Methods &amp; mechanisms</p>
+          <h2 id="core-audit-heading">Core condensation guarantees and runtime behavior</h2>
           <p>
-            Inside the slimmed repository, the pure-stdlib core library (<code>src/wahs_core/</code>) handles verbatim-first structural extraction and continuous condensation with zero domain heuristics or hardcoded sizes, while the thin FastAPI runtime (<code>src/wahs_engine/</code>) handles authentication, byte-bounded caching, exact per-turn token measurement, and SSE streaming. Research enrichers live unplugged in <code>src/wahs_extensions/</code>, and persona seeding lives in <code>src/wahs_devtools/</code>.
+            The <a href="https://github.com/pmanko/wahs-engine">standalone engine ↗</a> pairs a pure-standard-library FHIR R4 preparation and condensation core with a stateless OpenAI-compatible runtime that handles caller authentication, version-stamped caching, exact turn budgeting, and streamed citation mapping.
           </p>
 
-          <h3 class="sub-h" id="fhir-extraction-coverage">1. Record intake, 3-tier condensation, and unplugged extensions (<code>wahs_core</code> &amp; <code>wahs_extensions</code>)</h3>
+          <h3 class="sub-h" id="fhir-extraction-coverage">1. Continuous verbatim-first condensation &amp; modular extensions</h3>
           <div class="strategy-grid-3">
             <article class="strategy-card recommended">
-              <span class="strategy-badge">Verified on main</span>
+              <span class="strategy-badge">Core Mechanism</span>
               <h3>3-tier verbatim-first condensation</h3>
               <ul>
-                <li><strong>Verbatim by default (Tier 0):</strong> When <code>target_tokens</code> is unset or the complete extracted record and full decoded clinical notes fit available capacity, emits every item verbatim (<code>folded_items_count = 0</code>).</li>
-                <li><strong>Uniform RLE &amp; packing (Tier 1 / 2):</strong> Only over budget, uniformly folds repeated identical items by FHIR code/unit (zero section keep-quotas) and binary-searches a monotonic recency prefix around the HL7 IPS safety core.</li>
-                <li><strong>Water-filled notes (zero 400-char cutoff):</strong> Included clinical notes dynamically expand via continuous character-horizon binary search to fill remaining budget without heuristic medication-hold regex splicing.</li>
+                <li><strong>Verbatim when it fits (Tier 0):</strong> When unbordered or within available turn tokens, emits the entire extracted clinical record and all decoded notes verbatim.</li>
+                <li><strong>Uniform folding &amp; packing (Tier 1 / 2):</strong> Only over budget, uniformly folds repeated identical series by FHIR code and unit, anchors the HL7 IPS safety core, and dynamically water-fills clinical notes across all remaining tokens.</li>
               </ul>
             </article>
 
             <article class="strategy-card">
-              <span class="strategy-badge secondary">Unplugged by default</span>
-              <h3><code>wahs_extensions/</code> &amp; <code>ContextEnricher</code></h3>
+              <span class="strategy-badge secondary">Modular Boundary</span>
+              <h3>Opt-in research extensions</h3>
               <ul>
-                <li><strong>Strict isolation:</strong> <code>WAHS_ENABLED_ENRICHERS=""</code> by default ensures <code>wahs_extensions</code> is never even imported into <code>sys.modules</code> in standard baseline deployments.</li>
-                <li><strong>Opt-in enrichers:</strong> Operators can explicitly enable <code>note_rag</code> (single-patient Okapi BM25), <code>overflow_lookup</code> (Tier-0 note recovery), <code>temporal_trends</code> (slope math), or <code>experimental.clinical_reconciliation</code>, attaching provenance under <code>x_wahs.enrichers</code>.</li>
+                <li><strong>Clean baseline isolation:</strong> Baseline prompt construction passes caller questions verbatim without loading retrieval or guideline modules.</li>
+                <li><strong>Selectable research plug-ins:</strong> Operators can enable Okapi BM25 note search, omitted-record lookup, longitudinal trend summaries, or clinical reconciliation behind a uniform extension interface.</li>
               </ul>
             </article>
 
             <article class="strategy-card">
-              <span class="strategy-badge secondary">Clean R4 &amp; Privacy Boundary</span>
-              <h3>FHIR R4 statuses &amp; unbuilt privacy</h3>
+              <span class="strategy-badge secondary">Clinical Fidelity</span>
+              <h3>FHIR R4 status &amp; privacy scope</h3>
               <ul>
-                <li><strong>Invalidated status filtering:</strong> Excludes <code>entered-in-error</code> and <code>not-done</code> entries across FHIR R4 clinical resources, demotes <code>refuted</code> allergies, and deduplicates notes via SHA-256 while preserving multi-coded <code>RxNorm</code>/<code>SNOMED CT</code>/<code>LOINC</code>/<code>CVX</code> labels.</li>
-                <li><strong>Privacy explicitly unbuilt:</strong> All premature regex redaction rules (<code>sharing_posture</code>, <code>classify_sensitivity*</code>) were removed; patient selective disclosure remains a separate, future design milestone.</li>
+                <li><strong>Invalidated status hygiene:</strong> Excludes <code>entered-in-error</code> and <code>not-done</code> entries, demotes refuted allergies, and deduplicates exact duplicate notes while preserving <a href="https://www.nlm.nih.gov/research/umls/rxnorm/index.html">RxNorm</a>, <a href="https://www.snomed.org/">SNOMED CT</a>, <a href="https://loinc.org/">LOINC</a>, and CVX codings.</li>
+                <li><strong>Explicit sharing boundary:</strong> Patient-controlled disclosure policies belong in dedicated SMART Health Link and DS4P workflows rather than implicit lexical heuristics.</li>
               </ul>
             </article>
           </div>
 
-          <h3 class="sub-h" id="wahs-engine-runtime">2. Per-patient caching, token sizing, and live streaming (<code>wahs_engine</code>)</h3>
+          <h3 class="sub-h" id="wahs-engine-runtime">2. Per-patient caching, dynamic sizing &amp; live streaming</h3>
           <div class="strategy-grid-2">
             <article class="strategy-card recommended">
-              <span class="strategy-badge">Verified on main (3b9dcc0)</span>
-              <h3>Live freshness, JWKS defense-in-depth &amp; exact tokenizers</h3>
+              <span class="strategy-badge">Freshness &amp; Tenant Isolation</span>
+              <h3>Live verification &amp; exact tokenizers</h3>
               <ul>
-                <li><strong>Checks <code>fhir-auth</code> on every turn:</strong> Verifies <code>MasterPatient</code> ownership and linked clinic dataset <code>meta.lastUpdated</code> stamps before reading byte-bounded LRU caches, blocks internal HAPI bypass URLs via parsed hostname checks, and supports optional local pure-stdlib RS256 JWKS verification.</li>
-                <li><strong>Offline token accuracy:</strong> Bundled Gemma 4 and <code>tiktoken</code> tokenizers match GPU prompt token counts within &lt;0.01% completely offline, trimming oldest chat turns cleanly and forwarding caller prompts verbatim when extensions are off.</li>
+                <li><strong>Checks <code>fhir-auth</code> every turn:</strong> Validates linked patient record modification stamps before reading memory-bounded caches, supports optional local RS256 JWKS defense-in-depth, and isolates caches strictly per user identity and record scope.</li>
+                <li><strong>Exact offline sizing:</strong> Uses bundled model tokenizers to measure conversation and response overhead directly against the model's context window, ensuring prompts fit without silent truncation.</li>
               </ul>
             </article>
 
             <article class="strategy-card">
               <span class="strategy-badge secondary">Single-Turn Clean Runtime</span>
-              <h3>Streaming preflight, worker threads &amp; SDK compatibility</h3>
+              <h3>Preflight guarantees &amp; OpenAI parity</h3>
               <ul>
-                <li><strong>Preflight status guarantees:</strong> Validates prompt budgets and opens the upstream LLM stream before committing HTTP 200 SSE headers so invalid turns or upstream outages return clean HTTP <code>400</code>, <code>422</code>, or <code>502</code> responses, stripping unclosed <code>&lt;think&gt;</code> blocks on truncation.</li>
-                <li><strong>Vanilla OpenAI mode:</strong> Streams tokens cleanly in a single southbound pass (zero multi-round LLM tool loops or <code>reset_content</code> rewinds), supports <code>wahs.emit_stream_events: false</code>, and offloads CPU condensation via <code>asyncio.to_thread</code>.</li>
+                <li><strong>Preflight status guarantees:</strong> Validates prompt capacity and establishes the upstream inference stream before committing HTTP 200 SSE headers, stripping unclosed reasoning tags cleanly on length limits.</li>
+                <li><strong>Portable OpenAI contract:</strong> Forwards standard sampling and streaming options, offloads CPU-bound condensation off the async event loop, and returns inline <code>[N]</code> source provenance plus HL7 <code>AI-Provenance</code> metadata.</li>
               </ul>
             </article>
           </div>
         </section>
 
         <section class="strategy-section" id="ecosystem-alignment" tabindex="-1" aria-labelledby="ecosystem-heading">
-          <p class="section-kicker">Cross-repository status</p>
-          <h2 id="ecosystem-heading">How the four connected applications align with <code>wahs-engine</code> on <code>main</code></h2>
+          <p class="section-kicker">Connected ecosystem</p>
+          <h2 id="ecosystem-heading">How applications, sandbox, and evaluation fit together</h2>
           <p>
-            All four companion repositories are cleanly synchronized with the slimmed <code>wahs-engine</code> baseline (<a href="https://github.com/pmanko/wahs-engine/commit/3b9dcc0f712a28bdcbd4458287f319e0f1764ddd"><code>3b9dcc0</code> ↗</a>), with zero open PR queues across the WAHS stack.
+            Every client frontend and evaluation workflow interacts with the engine through standard OpenAI-compatible contracts and explicit provenance metadata.
           </p>
 
-          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Status of the four applications connected to wahs-engine">
+          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Status of connected WAHS applications and tooling">
             <table class="strategy-table">
               <thead>
                 <tr>
-                  <th scope="col" style="width: 24%;">Connected Repo</th>
-                  <th scope="col" style="width: 22%;">Current Branch State</th>
-                  <th scope="col" style="width: 54%;">Verified Integration Contract</th>
+                  <th scope="col" style="width: 26%;">Component</th>
+                  <th scope="col" style="width: 24%;">Role in Stack</th>
+                  <th scope="col" style="width: 50%;">Integration Contract</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td><strong>WAHS Web App</strong><br /><a href="https://github.com/pmanko/shl-ips"><code>pmanko/shl-ips</code> ↗</a></td>
-                  <td><code>main</code> (<a href="https://github.com/pmanko/shl-ips/commit/f8d94a6d709e981063af47d67fcc648ff1a1fa4e"><code>f8d94a6</code> ↗</a>) <span class="safe-pill">Aligned</span></td>
-                  <td>Isolates chat history by chart source scope; exposes clean model IDs (<code>wahs-26b</code> default, <code>wahs-12b</code>, <code>wahs-e4b</code>) and clickable <code>x_wahs.citation_map</code> drawers without legacy pathway groups or <code>sharing_posture</code>.</td>
+                  <td>Patient IPS &amp; SMART Health Link portal</td>
+                  <td>Server-side chat route forwards Keycloak tokens, optional <code>chart_scope</code>, clean model tiers (<code>wahs-26b</code> default, <code>wahs-12b</code>, <code>wahs-e4b</code>), and optional <code>Auto</code> / <code>2k</code>&ndash;<code>64k</code> budget controls, rendering clickable <code>[N]</code> record drawers.</td>
                 </tr>
                 <tr>
-                  <td><strong>Mobile Companion</strong><br /><a href="https://github.com/pmanko/wahs-mobile-frontend"><code>wahs-mobile-frontend</code> ↗</a></td>
-                  <td><code>main</code> (<a href="https://github.com/pmanko/wahs-mobile-frontend/commit/08e660b635a02cef755116363eca5adf8fc5e040"><code>08e660b</code> ↗</a>) <span class="safe-pill">Aligned</span></td>
-                  <td>Forwards clean model IDs (<code>wahs-26b</code> default), <code>chart_scope</code>, and budget tokens through its server BFF with full Keycloak OIDC, <code>fhir-auth</code> dataset scoping, and <code>shl-server</code> interoperability (<code>15/15</code> BFF tests passing).</td>
+                  <td><strong>WAHS Mobile Companion</strong><br /><a href="https://github.com/pmanko/wahs-mobile-frontend"><code>wahs-mobile-frontend</code> ↗</a></td>
+                  <td>Mobile-first companion UI</td>
+                  <td>Speaks the identical OpenAI chat contract, model tiers, record-scope filters, and <code>Auto</code> / <code>2k</code>&ndash;<code>64k</code> budget selectors alongside Keycloak OIDC, <code>fhir-auth</code> reads/writes, and QR Health Links.</td>
                 </tr>
                 <tr>
-                  <td><strong>Med Agent Hub</strong><br /><a href="/med-agent-hub/index.html"><code>med-agent-hub</code> →</a></td>
-                  <td><code>main</code> (<code>532913d</code>) <span class="safe-pill">Pinned</span></td>
-                  <td>Pins the earlier <code>wahs-engine</code> R&amp;D commit (<code>85fb799</code>) intentionally so standalone Hub / WAHS Explorer experiments remain completely unaffected and decoupled from slim baseline deployment.</td>
+                  <td><strong>Med Agent Hub &amp; Sandbox</strong><br /><a href="/med-agent-hub/index.html"><code>med-agent-hub</code> →</a></td>
+                  <td>Interactive R&amp;D workbench</td>
+                  <td>Powers the <a href="https://wahs-demo.openclinai.org/">WAHS Explorer Sandbox ↗</a> to test multi-budget condensation, knowledge graphs, and experimental reconciliation rules without disturbing the lean pilot engine.</td>
                 </tr>
                 <tr>
                   <td><strong>Validation Harness</strong><br /><a href="/validation-harness/index.html"><code>validation-harness</code> →</a></td>
-                  <td><code>main</code> (<code>08f40fc</code>) <span class="safe-pill">Aligned</span></td>
-                  <td>Unified <code>wahs</code> runner evaluates <code>wahs-engine</code> over <code>/v1/chat/completions</code> across <code>1k</code> to <code>32k+</code> budgets with deterministic budget, citation, and blinded 2-judge scoring.</td>
+                  <td>Automated &amp; blinded evaluation</td>
+                  <td>Runs deterministic budget/citation checks, atomic claim verification, and blinded multi-judge clinical evaluations over identical OpenAI endpoints, publishing full packets to <a href="https://reports.openclinai.org/#wahs"><code>reports.openclinai.org</code> ↗</a>.</td>
                 </tr>
               </tbody>
             </table>
@@ -502,7 +457,7 @@
           <p class="section-kicker">Benchmark evidence</p>
           <h2 id="benchmarks-heading">Latest 900-cell H200 evaluations across pathways and Gemma 4 sizes</h2>
           <p>
-            Two published 900-cell studies on UW CIRG's NVIDIA H200 (141 GB) evaluated the standalone engine with two independent blinded frontier AI judges: the <a href="https://reports.openclinai.org/2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration/index.html">14 November <code>16k vs. 32k</code> Calibration ↗</a> (confirming a 16k chart budget is both slightly more accurate and 11% faster than 32k) and the <a href="https://reports.openclinai.org/2026-11-16-wahs-engine-4pathway-sheet-eval/index.html">16 November 4-Pathway H200 Benchmark ↗</a> across 75 clinical and privacy scenarios on three complex multi-clinic and ICU charts.
+            Two published 900-cell studies on UW CIRG's NVIDIA H200 (141 GB) evaluated condensation, note retrieval, clinical rules, and tool-calling with two independent blinded frontier AI judges: the <a href="https://reports.openclinai.org/2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration/index.html">14 November <code>16k vs. 32k</code> Calibration ↗</a> (showing a calibrated 16k chart budget outperformed 32k and ran 11% faster on that setup) and the <a href="https://reports.openclinai.org/2026-11-16-wahs-engine-4pathway-sheet-eval/index.html">16 November 4-Pathway H200 Benchmark ↗</a> across 75 clinical and privacy scenarios.
           </p>
 
           <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="900-cell 4-pathway WAHS Engine benchmark results">
@@ -572,157 +527,34 @@
         </section>
 
         <section class="strategy-section" id="audit-findings" tabindex="-1" aria-labelledby="findings-heading">
-          <p class="section-kicker">Code audit &amp; slim baseline ledger</p>
-          <h2 id="findings-heading">Hardened runtime invariants &amp; zero-static-prescription baseline</h2>
+          <p class="section-kicker">Design principles</p>
+          <h2 id="findings-heading">Five architectural principles guiding the engine</h2>
           <p>
-            Earlier audits surfaced 27 runtime and clinical findings across <code>wahs_engine</code> (<code>E1&ndash;E11</code>) and <code>wahs_core</code> (<code>C1&ndash;C10</code>). After merging those fixes at <code>808d16a</code>, <a href="https://github.com/pmanko/wahs-engine/pull/13"><code>PR #13</code></a> slimmed the engine to a domain-neutral core + runtime with unplugged <code>wahs_extensions/</code>, and the follow-up dynamic-condensation PR removed all leftover static token ceilings (<code>16384</code>), <code>400</code>-char note cutoffs, and fixed aspect reservations so budgets resolve dynamically against each model’s actual turn capacity.
+            Every design choice in <a href="https://github.com/pmanko/wahs-engine"><code>wahs-engine</code> ↗</a> optimizes for clinical fidelity, predictable behavior under tight context limits, strict tenant isolation, and transparent external evaluation.
           </p>
 
           <ol class="steps" id="remediation-sequence">
             <li>
-              <h3>Zero-static-prescription condensation &amp; dynamic turn sizing <span class="step-tag">Merged &middot; PR #14 (666a9be)</span></h3>
-              <p>Removed hardcoded <code>16,384</code> ceilings, static <code>400</code>-char note cutoffs, per-section <code>keep_latest</code> quotas, and pre-carved slice math across <code>wahs_core</code> and <code>wahs_engine</code>. <code>condense_bundle_to_budget()</code> now defaults to unbounded verbatim Tier 0, folds repeated items uniformly in Tier 1, water-fills clinical notes dynamically across remaining Tier 2 capacity, honors explicit caller <code>target_budget_tokens</code> up to <code>context_window - exact_turn_overhead</code>, and isolates optional <code>WAHS_PREFERRED_CHART_TOKENS</code> to <code>Auto</code> tuning only.</p>
+              <h3>Separate condensation mechanism from context-sizing policy.</h3>
+              <p>The condensation core has no hardcoded token cap or static section quotas: it emits records verbatim whenever capacity allows and otherwise compresses uniformly, while the runtime measures each turn's real prompt and output overhead directly against the model's context window (supporting calibrated <code>Auto</code> sweet-spot targets or explicit <code>2k</code>&ndash;<code>64k</code> test presets).</p>
             </li>
             <li>
-              <h3>Slimmed core baseline &amp; isolated extension shelf on <code>wahs-engine#13</code> <span class="step-tag">Merged &middot; PR #13</span></h3>
-              <p>Distilled <code>src/wahs_core/</code> to pure stdlib (verified via <code>python3 -S</code>), slimmed <code>src/wahs_engine/</code> with clean model IDs (<code>wahs-26b</code>, <code>wahs-12b</code>, <code>wahs-e4b</code>) and clean <code>WahsRequestOptions</code>, isolated <code>note_rag</code> / <code>overflow_lookup</code> / <code>temporal_trends</code> / <code>experimental.clinical_reconciliation</code> behind <code>wahs_core.ports.ContextEnricher</code> (<code>WAHS_ENABLED_ENRICHERS=""</code> default), moved persona seeding to <code>src/wahs_devtools/seeder.py</code> (<code>wahs-seed-hapi</code>), and removed premature <code>sharing_posture</code> privacy heuristics and 2k LLM tool loops.</p>
+              <h3>Never grant the AI middleware elevated record-store privileges.</h3>
+              <p>Because the engine holds zero FHIR administrative credentials and forwards only the caller's own signed bearer token through <code>fhir-auth</code>, per-user authorization and tenant boundaries are enforced before any health record enters memory or reaches an inference server.</p>
             </li>
             <li>
-              <h3>Merged 12-persona stack &amp; runtime pooling fixes on <code>wahs-engine#10</code> <span class="step-tag">Verified &middot; PR #10</span></h3>
-              <p>Shared an app-level <code>httpx.AsyncClient</code> pool so single-flight dataset coalescing never closes a disconnected request's socket under a concurrent caller (<strong>E1</strong>), capped <code>@&lt;budget&gt;</code> suffixes at <code>131,072</code> tokens / model context windows (<strong>E2</strong>), wrote refreshed datasets back into <code>_dataset_cache</code> on <code>refresh=True</code> (<strong>E3</strong>), and resolved cross-key model aliases and Qwen tokenizers (<strong>E10</strong>).</p>
+              <h3>Preserve clinical meaning without silent deletion or mutation.</h3>
+              <p>Invalidated statuses (such as entered-in-error records) are excluded cleanly, multi-source conflicting entries remain intact rather than silently merged, and any items trimmed under tight budgets are explicitly counted in the top-level Completeness Manifest.</p>
             </li>
             <li>
-              <h3>Hardened <code>wahs_core</code> clinical, FHIR R4 status, and privacy invariants <span class="step-tag">Verified &middot; PR #12</span></h3>
-              <p>Scanned reasons, referenced conditions, notes, and clinic names at extraction and tool-lookup time (<strong>C1</strong>), enforced fail-closed <code>validate_sharing_posture()</code> with expanded MOUD/ARV/WA MHMDA lexical terms (<strong>C2</strong>), filtered <code>entered-in-error</code> and <code>not-done</code> statuses across allergies, procedures, child panel labs, notes, and appointments (<strong>C3</strong>), extracted <code>DiagnosticReport.conclusion</code> and list-valued dosages (<strong>C4</strong>), preserved electrolyte salts (<strong>C5</strong>), hardened word-boundary note cues and directional low-HbA1c rules (<strong>C6</strong>), separated trajectory units and <code>on-hold</code> meds (<strong>C7&ndash;C9</strong>), and locked concurrent FTS5 queries (<strong>C10</strong>).</p>
+              <h3>Keep research enrichers and selective-disclosure privacy modular.</h3>
+              <p>BM25 note search, omitted-record lookup, longitudinal trend math, and clinical reconciliation attach only through an explicit extension interface, while patient-controlled privacy and redaction remain decoupled for dedicated <a href="https://hl7.org/fhir/us/security-label-ds4p/">HL7 FHIR DS4P ↗</a> and SMART Health Link sharing workflows.</p>
             </li>
             <li>
-              <h3>Hardened streaming preflight, JWKS defense-in-depth, and worker offload <span class="step-tag">Verified &middot; PR #12</span></h3>
-              <p>Added zero-dependency RFC 8017 RS256 JWKS verification, <code>urlsplit</code> internal-HAPI hostname blocking, and explicit <code>MasterPatient</code> ownership checks (<strong>E4</strong>), stripped unclosed <code>&lt;think&gt;</code> blocks on length cutoffs (<strong>E5</strong>), validated prompt budgets and Round-0 upstream streams before committing HTTP 200 SSE headers (<strong>E6</strong>), added <code>wahs.emit_stream_events: false</code> for vanilla OpenAI SDKs and guarded malformed tool JSON (<strong>E7&ndash;E8</strong>), and offloaded CPU condensation/BM25 via <code>asyncio.to_thread</code> with byte-bounded LRU caches and full OpenAI parameter forwarding (<strong>E9, E11</strong>).</p>
-            </li>
-            <li>
-              <h3>Synchronized connected frontends, harness, and reference docs <span class="step-tag">Verified &middot; All Merged</span></h3>
-              <p>Merged <code>shl-ips#2</code>/<code>#3</code>, <code>wahs-mobile-frontend#2</code>/<code>#3</code>, <code>validation-harness#219</code>, and <code>openclinai.org</code> documentation so repository docs, API contracts, and public architecture pages reflect the exact verified baseline ahead of UW CIRG team strategy sync and EHIgnite Phase 2 partner stress testing.</p>
+              <h3>Bind every answer to inspectable sources and evaluate externally.</h3>
+              <p>Stateless OpenAI-compatible streaming attaches numbered <code>[N]</code> FHIR resource citations and HL7 <code>AI-Provenance</code> metadata on every turn, backed by independent blinded multi-judge benchmarks on <a href="https://reports.openclinai.org/#wahs"><code>reports.openclinai.org</code> ↗</a>.</p>
             </li>
           </ol>
-
-          <details class="internals-details">
-            <summary>Inspect verified <code>wahs_engine</code> runtime remediation ledger (<code>E1&ndash;E11</code>)</summary>
-            <div class="internals-details-body">
-              <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="wahs_engine runtime and PR 10 audit findings">
-                <table class="strategy-table">
-                  <thead>
-                    <tr>
-                      <th scope="col" style="width: 14%;">ID &amp; Status</th>
-                      <th scope="col" style="width: 26%;">Module &amp; PR</th>
-                      <th scope="col" style="width: 60%;">Original Finding &amp; Verified Resolution</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><strong>E1</strong><br /><span class="safe-pill">Fixed (#10)</span></td>
-                      <td><code>assembler.py</code><br /><code>test_pr10_audit_remediations.py</code></td>
-                      <td><strong>Single-flight HTTP client lifecycle:</strong> Replaced request-scoped client capture inside <code>_inflight_datasets</code> with a shared app-lifespan <code>httpx.AsyncClient</code> pool so disconnecting Request 1 never aborts concurrent Request 2.</td>
-                    </tr>
-                    <tr>
-                      <td><strong>E2</strong><br /><span class="safe-pill">Fixed (#10)</span></td>
-                      <td><code>config.py</code>, <code>upstream.py</code><br /><code>test_pr10_audit_remediations.py</code></td>
-                      <td><strong>Bounded <code>@&lt;budget&gt;</code> suffixes:</strong> Clamped requested budget suffixes to <code>[512, 131072]</code> and model <code>context_window</code> ceilings so oversized suffixes cannot exhaust GPU VRAM.</td>
-                    </tr>
-                    <tr>
-                      <td><strong>E3</strong><br /><span class="safe-pill">Fixed (#10)</span></td>
-                      <td><code>assembler.py</code><br /><code>test_pr10_audit_remediations.py</code></td>
-                      <td><strong>Cache write-back on <code>refresh=True</code>:</strong> Writes freshly fetched datasets back into <code>_dataset_cache</code> during manual refresh so subsequent turns never read pre-refresh records.</td>
-                    </tr>
-                    <tr>
-                      <td><strong>E4</strong><br /><span class="safe-pill">Fixed (#12)</span></td>
-                      <td><code>jwt_claims.py</code>, <code>config.py</code>, <code>assembler.py</code></td>
-                      <td><strong>Local RS256 JWKS + hostname &amp; ownership guards:</strong> Added pure-stdlib RFC 8017 RS256 JWKS signature, <code>iss</code>, <code>aud</code>, and <code>nbf</code> verification (<code>WAHS_JWT_JWKS_URL</code> / <code>WAHS_JWT_JWKS_JSON</code>), <code>urlsplit</code> hostname blocking of <code>fhir-internal</code>, and explicit <code>MasterPatient</code> ownership verification.</td>
-                    </tr>
-                    <tr>
-                      <td><strong>E5</strong><br /><span class="safe-pill">Fixed (#12)</span></td>
-                      <td><code>upstream.py</code><br /><code>test_pristine_baseline_remediations.py</code></td>
-                      <td><strong>Unclosed <code>&lt;think&gt;</code> stripping:</strong> Updated <code>clean_model_text()</code> to strip unclosed <code>&lt;think&gt;</code> and <code>&lt;|channel&gt;thought</code> tails when generation stops at <code>finish_reason == "length"</code>.</td>
-                    </tr>
-                    <tr>
-                      <td><strong>E6</strong><br /><span class="safe-pill">Fixed (#12)</span></td>
-                      <td><code>app.py</code>, <code>upstream.py</code><br /><code>start_stream()</code></td>
-                      <td><strong>SSE preflight status codes:</strong> Validates prompt sizing and opens the Round-0 upstream HTTP stream inside <code>start_stream()</code> before committing HTTP 200 SSE headers, returning clean HTTP <code>400</code>, <code>422</code>, or <code>502</code> responses on preflight errors.</td>
-                    </tr>
-                    <tr>
-                      <td><strong>E7&ndash;E11</strong><br /><span class="safe-pill">Fixed (#10/#12)</span></td>
-                      <td><code>upstream.py</code>, <code>assembler.py</code>, <code>schemas.py</code>, <code>docs/</code></td>
-                      <td>
-                        <strong>E7:</strong> Added <code>wahs.emit_stream_events: false</code> for vanilla OpenAI SDKs and emitted <code>x_wahs_stream</code> on <code>dynamic_fhir_tools</code>.<br />
-                        <strong>E8:</strong> Coerced non-dict JSON tool <code>arguments</code> (<code>"null"</code>, <code>"[]"</code>) and non-numeric <code>limit</code>/<code>offset</code>/<code>max_chars</code> safely without HTTP 500 crashes.<br />
-                        <strong>E9:</strong> Offloaded CPU condensation/BM25 via <code>asyncio.to_thread()</code>, pooled southbound HTTP clients, and added <code>max_bytes</code> eviction to <code>_BoundedLRUCache</code>.<br />
-                        <strong>E10:</strong> Preserved <code>cross_key</code>, <code>WAHS_DEFAULT_MODEL</code> suffixes, and <code>cl100k_base</code> tokenization for <code>wahs-qwen3-*</code>.<br />
-                        <strong>E11:</strong> Forwarded <code>top_p</code>, <code>stop</code>, <code>user</code>, penalties, and <code>stream_options</code>; applied Mode-A category scoping; and aligned repo docs.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </details>
-
-          <details class="internals-details">
-            <summary>Inspect verified <code>wahs_core</code> clinical, FHIR status &amp; privacy remediation ledger (<code>C1&ndash;C10</code>)</summary>
-            <div class="internals-details-body">
-              <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="wahs_core clinical and privacy audit findings">
-                <table class="strategy-table">
-                  <thead>
-                    <tr>
-                      <th scope="col" style="width: 14%;">ID &amp; Status</th>
-                      <th scope="col" style="width: 26%;">Location (<code>src/wahs_core/</code>)</th>
-                      <th scope="col" style="width: 60%;">Original Finding &amp; Verified Resolution</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><strong>C1</strong><br /><span class="safe-pill">Fixed (#12)</span></td>
-                      <td><code>extractors.py</code>, <code>wahs_tools.py</code></td>
-                      <td><strong>Full-context sensitivity scanning:</strong> Includes <code>reasons</code>, referenced <code>Condition</code> sensitivity, <code>notes</code>, and <code>source_org</code> during extraction and re-verifies full text/source sensitivity inside <code>wahs_tools._is_privacy_redacted()</code>.</td>
-                    </tr>
-                    <tr>
-                      <td><strong>C2</strong><br /><span class="safe-pill">Fixed (#12)</span></td>
-                      <td><code>normalizers.py</code>, <code>wahs_tools.py</code>, <code>kb_data/*</code></td>
-                      <td><strong>Fail-closed <code>sharing_posture</code> &amp; lexical coverage:</strong> Enforces <code>validate_sharing_posture()</code> (<code>patient_self</code> or <code>external_share</code> only) across all entry points and expands uncoded MOUD, HIV antiretroviral, and WA MHMDA lexical rules.</td>
-                    </tr>
-                    <tr>
-                      <td><strong>C3</strong><br /><span class="safe-pill">Fixed (#12)</span></td>
-                      <td><code>extractors.py</code>, <code>condenser.py</code>, <code>wahs_tools.py</code></td>
-                      <td><strong>Invalidated FHIR R4 status filtering:</strong> Excludes <code>entered-in-error</code> allergies, meds, immunizations, procedures, notes, care plans, goals, child panel labs, and appointments; marks <code>refuted</code> allergies <code>mandatory=False</code>; and excludes <code>cancelled</code>/<code>noshow</code> visits from upcoming care.</td>
-                    </tr>
-                    <tr>
-                      <td><strong>C4</strong><br /><span class="safe-pill">Fixed (#12)</span></td>
-                      <td><code>extractors.py</code></td>
-                      <td><strong>Conclusions &amp; structured dosages:</strong> Extracts <code>DiagnosticReport.conclusion</code> / <code>conclusionCode</code> (even when <code>result[]</code> is empty) plus list-valued <code>MedicationStatement.dosage[]</code> and <code>MedicationAdministration.dosage.dose</code>.</td>
-                    </tr>
-                    <tr>
-                      <td><strong>C5</strong><br /><span class="safe-pill">Fixed (#12)</span></td>
-                      <td><code>normalizers.py</code></td>
-                      <td><strong>Electrolyte supplement preservation:</strong> Preserves <em>Potassium Citrate</em>, <em>Potassium Bicarbonate</em>, <em>Sodium Bicarbonate</em>, and <em>Calcium Carbonate</em> full salt names while normalizing counter-ion salts (<em>Losartan Potassium</em> &rarr; <code>losartan</code>).</td>
-                    </tr>
-                    <tr>
-                      <td><strong>C6</strong><br /><span class="safe-pill">Fixed (#12)</span></td>
-                      <td><code>clinical_graph.py</code>, <code>clinical_graph_rules.json</code></td>
-                      <td><strong>Word-boundary cues &amp; directional HbA1c:</strong> Matches clause-final punctuation (<code>"resumed."</code>), scopes outside-care cues to clinical facilities (ignoring <code>"outside pharmacy"</code>), and restricts HbA1c hypoglycemia edges to low HbA1c (<code>&lt; 6.0%</code> / <code>42 mmol/mol</code>).</td>
-                    </tr>
-                    <tr>
-                      <td><strong>C7&ndash;C10</strong><br /><span class="safe-pill">Fixed (#12)</span></td>
-                      <td><code>clinical_graph.py</code>, <code>temporal_digest.py</code>, <code>extractors.py</code>, <code>kb.py</code></td>
-                      <td>
-                        <strong>C7:</strong> Separates graph observation trajectories by unit, supports mixed UTC + date-only trends across multi-day spans, and separates <code>on-hold</code> from stopped meds in <code>TemporalDigest</code>.<br />
-                        <strong>C8:</strong> Detects NYHA <code>heart_failure_stage</code> and general KB exclusivity stage conflicts.<br />
-                        <strong>C9:</strong> Prioritizes <code>RxNorm</code>, <code>SNOMED CT</code>, <code>LOINC</code>, and <code>CVX</code> across <code>coding[]</code> in <code>_coding_pair()</code>.<br />
-                        <strong>C10:</strong> Guards shared SQLite FTS5 connections with per-index <code>threading.Lock()</code> for thread-pool concurrency.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </details>
         </section>
 
         <p class="back-to-top"><a href="#top">Back to top <span aria-hidden="true">↑</span></a></p>
