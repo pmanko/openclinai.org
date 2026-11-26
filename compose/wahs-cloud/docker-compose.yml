@@ -218,11 +218,13 @@ services:
       LLM_BASE_URL: ${LLM_BASE_URL:-https://llm.co.dev.cirg.uw.edu/v1}
       LLM_API_KEY: ${LLM_API_KEY:?LLM_API_KEY is required}
       WAHS_DEFAULT_MODEL: ${WAHS_DEFAULT_MODEL:-wahs-26b}
+      WAHS_DEFAULT_PROFILE: ${WAHS_DEFAULT_PROFILE:-core-enriched}
+      WAHS_PREFERRED_CHART_TOKENS: ${WAHS_PREFERRED_CHART_TOKENS:-16384}
       WAHS_PROVIDER_FLAVOR: ${WAHS_PROVIDER_FLAVOR:-litellm}
       WAHS_LLM_TIMEOUT_SECONDS: ${WAHS_LLM_TIMEOUT_SECONDS:-180}
       WAHS_MODEL_MAP_JSON: ${WAHS_MODEL_MAP_JSON:-{"wahs-26b":"ollama/gemma4:26b","wahs-12b":"ollama/gemma4:12b","wahs-e4b":"ollama/gemma4:e4b"}}
       WAHS_ENABLED_ENRICHERS: ${WAHS_ENABLED_ENRICHERS:-}
-      WAHS_CONTEXT_WINDOW: ${WAHS_CONTEXT_WINDOW:-32768}
+      WAHS_CONTEXT_WINDOW: ${WAHS_CONTEXT_WINDOW:-131072}
       WAHS_CACHE_TTL_SECONDS: ${WAHS_CACHE_TTL_SECONDS:-3600}
       WAHS_FHIR_TIMEOUT_SECONDS: ${WAHS_FHIR_TIMEOUT_SECONDS:-60}
       WAHS_ASSEMBLY_TIMEOUT_SECONDS: ${WAHS_ASSEMBLY_TIMEOUT_SECONDS:-120}
@@ -305,6 +307,8 @@ services:
       VITE_SYSTEM_URL: https://wahs-web.openclinai.org
       WAHS_ENGINE_URL: http://wahs-engine:8080/v1
       WAHS_DEFAULT_MODEL: ${WAHS_DEFAULT_MODEL:-wahs-26b}
+      WAHS_DEFAULT_PROFILE: ${WAHS_DEFAULT_PROFILE:-core-enriched}
+      WAHS_DEFAULT_TARGET_BUDGET_TOKENS: ${WAHS_DEFAULT_TARGET_BUDGET_TOKENS:-16384}
       SHC_PRIVATE_JWK: ""
       SHC_PUBLIC_JWK_STORE: '{"keys":[]}'
     networks:
@@ -340,6 +344,8 @@ services:
       LOCAL_DEMO_MODE: "false"
       WAHS_ENGINE_URL: http://wahs-engine:8080/v1
       WAHS_DEFAULT_MODEL: ${WAHS_DEFAULT_MODEL:-wahs-26b}
+      WAHS_DEFAULT_PROFILE: ${WAHS_DEFAULT_PROFILE:-core-enriched}
+      WAHS_DEFAULT_TARGET_BUDGET_TOKENS: ${WAHS_DEFAULT_TARGET_BUDGET_TOKENS:-16384}
       FHIR_AUTH_BASE_URL: https://wahs-mobile.openclinai.org/fhir
       SHL_SERVER_API_BASE: https://wahs-mobile.openclinai.org/shl-server/api
       SHL_VIEWER_BASE_URL: https://wahs-web.openclinai.org/ips#
