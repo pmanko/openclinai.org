@@ -102,7 +102,7 @@
             The <strong>WAHS Engine</strong> is a lean, standalone service that sits between the WA Health Summary app, the patient's health record store, and an open-weight language model. Following our November slim-down and dynamic-budget refactors, the core runtime is domain-neutral and free of static token prescriptions: pure-stdlib 3-tier verbatim-first condensation in <code>wahs_core</code> + stateless OpenAI routing and exact turn-measured sizing in <code>wahs_engine</code>, with experimental clinical enrichers cleanly isolated in <code>wahs_extensions/</code> (unplugged by default) and patient-facing privacy/selective-disclosure policies deferred as unbuilt pending team design.
           </p>
           <p class="strategy-meta">
-            Updated 25 November 2026 &middot; <a href="https://github.com/pmanko/wahs-engine"><code>wahs-engine</code> on GitHub <span aria-hidden="true">↗</span></a> (<code>main</code> at <a href="https://github.com/pmanko/wahs-engine/commit/3b9dcc0f712a28bdcbd4458287f319e0f1764ddd"><code>3b9dcc0</code></a> via <a href="https://github.com/pmanko/wahs-engine/pull/13"><code>PR #13</code></a>) &middot; Suites: <code>13</code> unit/extension tests + <code>2</code> live HAPI/Keycloak integration checks + Docker smoke CI passing
+            Updated 25 November 2026 &middot; <a href="https://github.com/pmanko/wahs-engine"><code>wahs-engine</code> on GitHub <span aria-hidden="true">↗</span></a> (<code>main</code> at <a href="https://github.com/pmanko/wahs-engine/commit/666a9be442175bbce04662d98582b526c4f06889"><code>666a9be</code></a> via <a href="https://github.com/pmanko/wahs-engine/pull/14"><code>PR #14</code></a>) &middot; Suites: unit, core, extension, Docker smoke &amp; live HAPI/Keycloak CI passing
           </p>
 
           <div class="decision" role="region" aria-labelledby="audit-verdict-title">
@@ -580,7 +580,7 @@
 
           <ol class="steps" id="remediation-sequence">
             <li>
-              <h3>Zero-static-prescription condensation &amp; dynamic turn sizing <span class="step-tag">Verified &middot; PR #14</span></h3>
+              <h3>Zero-static-prescription condensation &amp; dynamic turn sizing <span class="step-tag">Merged &middot; PR #14 (666a9be)</span></h3>
               <p>Removed hardcoded <code>16,384</code> ceilings, static <code>400</code>-char note cutoffs, per-section <code>keep_latest</code> quotas, and pre-carved slice math across <code>wahs_core</code> and <code>wahs_engine</code>. <code>condense_bundle_to_budget()</code> now defaults to unbounded verbatim Tier 0, folds repeated items uniformly in Tier 1, water-fills clinical notes dynamically across remaining Tier 2 capacity, honors explicit caller <code>target_budget_tokens</code> up to <code>context_window - exact_turn_overhead</code>, and isolates optional <code>WAHS_PREFERRED_CHART_TOKENS</code> to <code>Auto</code> tuning only.</p>
             </li>
             <li>
