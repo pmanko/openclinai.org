@@ -39,12 +39,16 @@ SSH_TRANSPORT="ssh -i ${GCP_SSH_KEY} -o StrictHostKeyChecking=accept-new"
 
 REMOTE_BASE="${GCP_REMOTE_REPO}/compose/wahs-cloud"
 echo "==> preparing remote workspace under ${REMOTE_BASE} on ${IP}"
-gcp_ssh "mkdir -p ${GCP_REMOTE_REPO}/wahs/cloud-gate ${GCP_REMOTE_REPO}/compose/website/gate.d ${GCP_REMOTE_REPO}/compose/website/sites.d ${REMOTE_BASE}/src/wahs-engine ${REMOTE_BASE}/src/shl-ips ${REMOTE_BASE}/src/wahs-mobile-frontend ${REMOTE_BASE}/bundles ${REMOTE_BASE}/config/keycloak/themes"
+gcp_ssh "mkdir -p ${GCP_REMOTE_REPO}/wahs/cloud-gate ${GCP_REMOTE_REPO}/wahs/demo ${GCP_REMOTE_REPO}/compose/website/gate.d ${GCP_REMOTE_REPO}/compose/website/sites.d ${GCP_REMOTE_REPO}/compose/website/demo.d ${REMOTE_BASE}/src/wahs-engine ${REMOTE_BASE}/src/shl-ips ${REMOTE_BASE}/src/wahs-mobile-frontend ${REMOTE_BASE}/bundles ${REMOTE_BASE}/config/keycloak/themes"
 
-echo "==> syncing cloud-gate, compose configuration, bundles, themes, and app sources"
+echo "==> syncing cloud-gate, sandbox UI, compose configuration, bundles, themes, and app sources"
 rsync -avz --delete -e "${SSH_TRANSPORT}" \
   "${ROOT}/wahs/cloud-gate/" \
   "${GCP_SSH_USER}@${IP}:${GCP_REMOTE_REPO}/wahs/cloud-gate/"
+
+rsync -avz --delete -e "${SSH_TRANSPORT}" \
+  "${ROOT}/wahs/demo/" \
+  "${GCP_SSH_USER}@${IP}:${GCP_REMOTE_REPO}/wahs/demo/"
 
 rsync -avz --delete \
   --exclude '.env' \
@@ -180,6 +184,10 @@ rsync -az -e "${SSH_TRANSPORT}" \
   "${ROOT}/compose/wahs-cloud/caddy/wahs-cloud.caddy" \
   "${GCP_SSH_USER}@${IP}:${GCP_REMOTE_REPO}/compose/website/sites.d/wahs-cloud.caddy"
 
+rsync -az -e "${SSH_TRANSPORT}" \
+  "${ROOT}/compose/wahs-cloud/caddy/wahs-demo-api.caddy" \
+  "${GCP_SSH_USER}@${IP}:${GCP_REMOTE_REPO}/compose/website/demo.d/wahs-demo-api.caddy"
+
 gcp_ssh "docker network create openclinai-edge >/dev/null 2>&1 || true"
 
 echo "==> pruning stale Docker BuildKit cache before sequential image builds"
@@ -270,4 +278,88 @@ do
   fi
 done
 
-echo "==> WAHS cloud stack deployed and gated cleanly."
+echo "==> verifying sandbox engine split-auth contract & live 64k streaming smoke"
+demo_bundles_code="$(wait_http_status "https://wahs-demo.openclinai.org/api/engine/v1/wahs/demo-bundles")"
+echo "  public GET wahs-demo /api/engine/v1/wahs/demo-bundles -> HTTP ${demo_bundles_code}"
+if [ "${demo_bundles_code}" != "200" ]; then
+  echo "error: expected 200 on public demo-bundles endpoint, got ${demo_bundles_code}" >&2
+  exit 1
+fi
+
+demo_chat_unauth="$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
+  -H 'Content-Type: application/json' -H 'Accept: application/json' \
+  -d '{"model":"wahs-26b","messages":[{"role":"user","content":"ping"}],"wahs":{"bundle_id":"margaret-chen-polypharmacy"}}' \
+  --max-time 20 "https://wahs-demo.openclinai.org/api/engine/v1/chat/completions" 2>/dev/null || echo 000)"
+echo "  unauthenticated POST wahs-demo /api/engine/v1/chat/completions -> HTTP ${demo_chat_unauth}"
+if [ "${demo_chat_unauth}" != "401" ]; then
+  echo "error: expected 401 on unauthenticated sandbox chat/completions, got ${demo_chat_unauth}" >&2
+  exit 1
+fi
+
+gcp_ssh "docker exec wahs-cloud-sandbox-engine python -c \"
+import json, urllib.request
+
+# 1. Verify mounted demo bundles + preview system_prompt
+b_resp = json.loads(urllib.request.urlopen('http://127.0.0.1:8080/v1/wahs/demo-bundles', timeout=10).read())
+assert b_resp.get('count', 0) >= 10, f'expected >=10 demo bundles, got {b_resp.get(\\\"count\\\")}'
+
+p_req = urllib.request.Request(
+    'http://127.0.0.1:8080/v1/wahs/context/preview',
+    data=json.dumps({
+        'model': 'wahs-26b',
+        'messages': [{'role': 'user', 'content': 'What active medications are on my record?'}],
+        'wahs': {'bundle_id': 'margaret-chen-polypharmacy', 'target_budget_tokens': 16384, 'profile': 'core-enriched'},
+    }).encode('utf-8'),
+    headers={'Content-Type': 'application/json'},
+)
+p_data = json.loads(urllib.request.urlopen(p_req, timeout=30).read())
+assert '=== CONDENSED CLINICAL RECORD' in (p_data.get('system_prompt') or ''), 'missing system_prompt in preview'
+assert p_data['x_wahs']['condensation']['context_window'] == 65536, 'expected 64k context_window'
+
+# 2. Live streaming smoke turn against UW GPU wahs-26b @ 64k
+s_req = urllib.request.Request(
+    'http://127.0.0.1:8080/v1/chat/completions',
+    data=json.dumps({
+        'model': 'wahs-26b',
+        'stream': True,
+        'max_tokens': 160,
+        'messages': [{'role': 'user', 'content': 'List two active medications on my record with citations.'}],
+        'wahs': {'bundle_id': 'margaret-chen-polypharmacy', 'target_budget_tokens': 16384, 'profile': 'core-enriched'},
+    }).encode('utf-8'),
+    headers={'Content-Type': 'application/json'},
+)
+saw_ctx = False
+saw_done = False
+content_parts = []
+num_ctx = None
+with urllib.request.urlopen(s_req, timeout=90) as resp:
+    for raw_line in resp:
+        line = raw_line.decode('utf-8', errors='replace').strip()
+        if not line.startswith('data:'):
+            continue
+        payload = line[5:].strip()
+        if payload == '[DONE]':
+            saw_done = True
+            break
+        obj = json.loads(payload)
+        if obj.get('error'):
+            raise AssertionError(f'SSE error chunk: {obj}')
+        xw = obj.get('x_wahs') or {}
+        if xw.get('event') == 'context_ready':
+            saw_ctx = True
+        cond = xw.get('condensation') or {}
+        if cond.get('upstream_num_ctx') is not None:
+            num_ctx = cond['upstream_num_ctx']
+        for ch in obj.get('choices') or []:
+            delta = (ch.get('delta') or {}).get('content')
+            if delta:
+                content_parts.append(delta)
+text = ''.join(content_parts).strip()
+assert saw_ctx, 'missing context_ready SSE frame'
+assert saw_done, 'missing [DONE] SSE sentinel'
+assert len(text) > 15, f'empty/short streamed reply: {text!r}'
+assert num_ctx == 65536, f'expected upstream_num_ctx=65536, got {num_ctx}'
+print(f'LIVE STREAM SMOKE OK: num_ctx={num_ctx} chars={len(text)} sample={text[:100]!r}')
+\""
+
+echo "==> WAHS cloud stack deployed, gated, and live-stream verified cleanly."

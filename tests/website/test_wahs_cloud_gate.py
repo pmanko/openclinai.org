@@ -120,6 +120,10 @@ class WahsCloudGateTests(unittest.TestCase):
             self.mod.validate_next_url("https://wahs-mobile.openclinai.org/"),
             "https://wahs-mobile.openclinai.org/",
         )
+        self.assertEqual(
+            self.mod.validate_next_url("https://wahs-demo.openclinai.org/"),
+            "https://wahs-demo.openclinai.org/",
+        )
 
     def test_session_exchange_whitelist_and_portal_rendering(self) -> None:
         # Non-whitelisted Google account gets 403 and NO Set-Cookie

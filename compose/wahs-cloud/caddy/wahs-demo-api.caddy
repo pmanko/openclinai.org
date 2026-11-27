@@ -1,0 +1,41 @@
+request_body {
+	max_size 25MB
+}
+
+handle /api/engine/auth-check {
+	header X-Robots-Tag "noindex, nofollow"
+	forward_auth wahs-auth-gate:8096 {
+		uri /auth/verify
+		copy_headers X-WAHS-Auth-Email X-WAHS-Auth-Name
+	}
+	header Content-Type "application/json"
+	respond `{"authenticated":true}` 200
+}
+
+handle /api/engine/v1/chat/completions {
+	header X-Robots-Tag "noindex, nofollow"
+	forward_auth wahs-auth-gate:8096 {
+		uri /auth/verify
+		copy_headers X-WAHS-Auth-Email X-WAHS-Auth-Name
+	}
+	uri strip_prefix /api/engine
+	reverse_proxy wahs-sandbox-engine:8080 {
+		flush_interval -1
+	}
+}
+
+handle /api/engine/v1/wahs/chat/completions {
+	header X-Robots-Tag "noindex, nofollow"
+	forward_auth wahs-auth-gate:8096 {
+		uri /auth/verify
+		copy_headers X-WAHS-Auth-Email X-WAHS-Auth-Name
+	}
+	uri strip_prefix /api/engine
+	reverse_proxy wahs-sandbox-engine:8080 {
+		flush_interval -1
+	}
+}
+
+handle_path /api/engine/* {
+	reverse_proxy wahs-sandbox-engine:8080
+}
