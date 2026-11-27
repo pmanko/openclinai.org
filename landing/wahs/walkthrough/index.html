@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>WAHS Explorer Sandbox Walkthrough — OpenClinAI</title>
-  <meta name="description" content="How to connect a model, browse 10 FHIR R4 patient charts, condense charts from 256k to 1k tokens, and verify citations in the WAHS Explorer (OpenClinAI Sandbox)." />
+  <title>WAHS 3-Surface Walkthrough &amp; Experiments &middot; OpenClinAI</title>
+  <meta name="description" content="Hands-on walkthrough covering all three WA Health Summary surfaces: the live engine-backed Sandbox (wahs-demo), the Web App (shl-ips), and the Mobile Companion, plus reproducible budget, enricher, and abstention experiments." />
   <link rel="canonical" href="https://openclinai.org/wahs/walkthrough/" />
   <meta property="og:url" content="https://openclinai.org/wahs/walkthrough/" />
-  <meta property="og:title" content="WAHS Explorer Sandbox: Walkthrough and Experiments — OpenClinAI" />
-  <meta property="og:description" content="Connect to Cloud Med Agent Hub or a local model server, condense multi-year FHIR R4 charts from 256k to 1k tokens, compare + 4-Layer KB with Raw Chart Only, and verify source citations." />
-  <meta property="og:image" content="https://openclinai.org/wahs/walkthrough/media/step1-patient-browser.webp" />
+  <meta property="og:title" content="WAHS 3-Surface Walkthrough &amp; Experiments &middot; OpenClinAI" />
+  <meta property="og:description" content="Try WA Health Summary across the Live Sandbox, Web App, and Mobile Companion with step-by-step condensation, enricher, and citation verification experiments." />
+  <meta property="og:image" content="https://storage.googleapis.com/openclinai-media/wahs/wahs-web-app-demo-20261126.webp" />
   <meta name="theme-color" content="#4b2e83" />
   <meta name="twitter:card" content="summary_large_image" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -17,48 +17,34 @@
   <link rel="stylesheet" href="/projects.css" />
   <style>
     .walkthrough-intro { padding: 30px 0 32px; }
-    .walkthrough-intro h1 { margin: 0; max-width: 840px; color: var(--purple-ink); font: 700 clamp(34px, 4.2vw, 52px)/1.12 Georgia, serif; letter-spacing: -0.02em; }
+    .walkthrough-intro h1 { margin: 0; max-width: 860px; color: var(--purple-ink); font: 700 clamp(34px, 4.2vw, 50px)/1.12 Georgia, serif; letter-spacing: -0.02em; }
     .walkthrough-nav { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 6px; }
     .walkthrough-nav a { display: inline-block; padding: 7px 13px; border-radius: 999px; background: var(--soft); border: 1px solid var(--line); font-size: 13.5px; font-weight: 650; color: var(--ink); text-decoration: none; }
     .walkthrough-nav a:hover { border-color: var(--purple); color: var(--purple); }
     .walkthrough-section { padding: 38px 0 42px; border-top: 1px solid var(--line); scroll-margin-top: 24px; }
     .walkthrough-section > h2 { margin: 0 0 14px; color: var(--purple-ink); font: 700 clamp(26px, 3vw, 34px)/1.2 Georgia, serif; }
-    .walkthrough-section > p { max-width: 840px; color: var(--muted); font-size: 16.5px; line-height: 1.6; margin: 0 0 18px; }
-    .connect-box { padding: 22px 24px; background: #ffffff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04); max-width: 880px; }
-    .connect-box ol { margin: 10px 0 14px; padding-left: 20px; font-size: 15px; line-height: 1.65; color: var(--ink); }
-    .connect-box li { margin-bottom: 6px; }
-    .connect-note { margin: 0; font-size: 14.5px; color: var(--muted); line-height: 1.55; }
-    .collapsible-panel { margin-top: 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--soft); padding: 12px 16px; max-width: 880px; }
-    .collapsible-panel summary { cursor: pointer; font-weight: 700; font-size: 15px; color: var(--purple-ink); }
-    .collapsible-panel-body { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 14.5px; line-height: 1.6; color: var(--ink); }
-    .collapsible-panel-body h4 { margin: 14px 0 4px; font-size: 15px; }
-    .collapsible-panel-body h4:first-child { margin-top: 0; }
-    .collapsible-panel-body p, .collapsible-panel-body ul { margin: 4px 0 10px; }
-    .collapsible-panel-body ul { padding-left: 20px; }
-    .scene-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; margin-top: 22px; }
-    .scene-card { margin: 0; padding: 24px; background: #ffffff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04); scroll-margin-top: 24px; }
-    .scene-step-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; background: #ede9fe; color: #4b2e83; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px; }
-    .scene-card h3 { margin: 4px 0 8px; font-size: 21px; line-height: 1.3; font-weight: 700; color: var(--ink); }
-    .scene-card p { margin: 0 0 12px; max-width: 840px; color: var(--muted); font-size: 15.5px; line-height: 1.55; }
-    .scene-bullets { margin: 0 0 18px; padding-left: 20px; max-width: 840px; font-size: 15px; line-height: 1.6; color: var(--ink); }
-    .scene-bullets li { margin-bottom: 6px; }
-    .scene-image-link { display: block; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--soft); }
-    .scene-image-link img { display: block; width: 100%; height: auto; }
-    .recipe-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-top: 20px; }
+    .walkthrough-section > p { max-width: 860px; color: var(--muted); font-size: 16px; line-height: 1.6; margin: 0 0 18px; }
+    .surface-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 20px; margin-top: 20px; }
+    .surface-card { padding: 22px 24px; background: #ffffff; border: 1px solid var(--line); border-radius: 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04); }
+    .surface-card.featured { border: 2px solid #4b2e83; background: #fcfaff; }
+    .surface-card h3 { margin: 0; font-size: 19px; color: var(--ink); }
+    .surface-card p { margin: 0; font-size: 14.5px; color: var(--muted); line-height: 1.55; }
+    .surface-card ul { margin: 4px 0 8px; padding-left: 18px; font-size: 14px; line-height: 1.58; color: var(--ink); }
+    .surface-card li + li { margin-top: 4px; }
+    .recipe-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 20px; margin-top: 20px; }
     .recipe-card { padding: 22px 24px; background: #ffffff; border: 1px solid var(--line); border-radius: 12px; display: flex; flex-direction: column; gap: 12px; }
     .recipe-card h3 { margin: 0; font-size: 18.5px; line-height: 1.32; color: var(--ink); }
     .recipe-card p { margin: 0; font-size: 14.5px; color: var(--muted); line-height: 1.55; }
     .recipe-steps { margin: 0; padding-left: 20px; font-size: 14.5px; line-height: 1.6; color: var(--ink); }
     .recipe-steps li { margin-bottom: 6px; }
     .recipe-expected { margin-top: auto; padding: 12px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13.5px; line-height: 1.5; }
-    .profile-table-wrap { overflow-x: auto; margin-top: 12px; border: 1px solid var(--line); border-radius: 10px; background: #ffffff; }
-    .profile-table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
-    .profile-table th, .profile-table td { padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
-    .profile-table th { background: var(--soft); font-weight: 700; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
-    .profile-table tr:last-child td { border-bottom: none; }
+    .scene-step-badge { display: inline-block; align-self: flex-start; padding: 3px 10px; border-radius: 999px; background: #ede9fe; color: #4b2e83; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+    .scene-step-badge.teal { background: #ccfbf1; color: #115e59; }
+    .connect-box { padding: 20px 24px; background: #ffffff; border: 1px solid var(--line); border-radius: 12px; max-width: 900px; }
+    .connect-box ol { margin: 10px 0 12px; padding-left: 20px; font-size: 15px; line-height: 1.62; color: var(--ink); }
     .code-pill { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #0f172a; }
     @media (max-width: 720px) {
-      .recipe-grid { grid-template-columns: 1fr; }
+      .recipe-grid, .surface-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -100,12 +86,11 @@
       <span class="wahs-subnav-label">WA Health Summary</span>
       <nav class="wahs-subnav" aria-label="WA Health Summary navigation">
         <a href="/wahs/index.html">Overview</a>
-        <a href="/wahs/llm-strategy/index.html">AI Strategy &amp; Architecture</a>
-        <a href="/wahs/engine-reference/index.html">Engine Reference</a>
-        <a href="/wahs/engine-audit/index.html">Design &amp; Rationale</a>
-        <a href="/wahs/walkthrough/index.html" aria-current="page">Sandbox Walkthrough</a>
+        <a href="/wahs/architecture/index.html">Architecture</a>
+        <a href="/wahs/llm-strategy/index.html">LLM Strategy</a>
+        <a href="/wahs/walkthrough/index.html" aria-current="page">Walkthrough</a>
         <a href="https://wahs-demo.openclinai.org/">Live Sandbox <span aria-hidden="true">↗</span></a>
-        <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">9-Model Benchmark <span aria-hidden="true">↗</span></a>
+        <a href="https://reports.openclinai.org/#wahs">Reports <span aria-hidden="true">↗</span></a>
       </nav>
     </div>
   </div>
@@ -119,297 +104,172 @@
         <span aria-hidden="true">/</span>
         <a href="/wahs/index.html">WA Health Summary (WAHS)</a>
         <span aria-hidden="true">/</span>
-        <span>Sandbox Walkthrough</span>
+        <span>Walkthrough</span>
       </nav>
 
-      <p class="section-kicker">WAHS Explorer · OpenClinAI Research Sandbox</p>
-      <h1>WAHS Explorer Sandbox Walkthrough</h1>
+      <p class="section-kicker">Three Live Surfaces &middot; One Shared <code>wahs-engine</code></p>
+      <h1>Try WA Health Summary across Sandbox, Web App, and Mobile Companion.</h1>
       <p class="overview-lead">
-        The <a href="https://wahs-demo.openclinai.org/">WAHS Explorer sandbox</a> has three steps: browse a multi-clinic FHIR R4 patient chart, condense it to a token budget between <code>256k</code> and <code>1k</code>, and run clinical tasks or questions against a connected model with citations that link back to the source records. Every setting is reflected in the page URL so configurations can be bookmarked or shared.
+        All three WAHS interfaces share the exact same 3-part AI selector (<strong>Model</strong>: <code>wahs-26b</code> / <code>12b</code> / <code>e4b</code>; <strong>Context</strong>: <code>Auto (16k)</code> or <code>2k</code>&ndash;<code>64k</code>; <strong>Enrichers</strong>: <code>4/5 (Core)</code> multi-select checkbox menu with <code>Core</code> / <code>All</code> / <code>Clear</code>) and stream from <code>wahs-engine</code> pinned at <code>64k</code> <code>num_ctx</code>.
       </p>
       <div class="project-actions">
-        <a class="button button-primary" href="https://wahs-demo.openclinai.org/">Open WAHS Explorer Sandbox <span aria-hidden="true">↗</span></a>
-        <a class="button button-secondary" href="/wahs/llm-strategy/index.html">AI Strategy &amp; Architecture <span aria-hidden="true">→</span></a>
-        <a class="button button-secondary" href="/wahs/index.html">WAHS Overview <span aria-hidden="true">→</span></a>
+        <a class="button button-primary" href="https://wahs-demo.openclinai.org/">Open Live Sandbox <span aria-hidden="true">↗</span></a>
+        <a class="button button-secondary" href="https://wahealth.openclinai.org/">Open Cloud Portal (Web &amp; Mobile) <span aria-hidden="true">↗</span></a>
+        <a class="text-link" href="/wahs/architecture/index.html">Inspect Engine Architecture <span aria-hidden="true">→</span></a>
       </div>
       <nav class="walkthrough-nav" aria-label="Walkthrough sections">
-        <a href="#local-setup-and-connections">1. Connect a Model</a>
-        <a href="#visual-tour">2. The Three Steps</a>
+        <a href="#three-surfaces">1. The Three Surfaces</a>
+        <a href="#sandbox-guide">2. Using the Sandbox (Public + BYO-Model)</a>
         <a href="#experimentation-recipes">3. Guided Experiments</a>
-        <a href="#hub-profiles-reference">4. Reference &amp; Reports</a>
+        <a href="#local-stack">4. Running Locally</a>
       </nav>
     </section>
 
-    <section class="walkthrough-section page-width" id="local-setup-and-connections" aria-labelledby="local-setup-title">
-      <p class="section-kicker">Section 1 · Connect a Model</p>
-      <h2 id="local-setup-title">Sign in to Cloud Med Agent Hub, or connect your own model server</h2>
-      <p>Steps 1 and 2 run entirely in the browser without an account: all 10 patient charts, custom FHIR R4 bundle upload, and all 9 condensation budgets are available immediately. Step 3 generates summaries and answers questions against a connected model.</p>
+    <!-- SECTION 1: THREE SURFACES -->
+    <section class="walkthrough-section page-width" id="three-surfaces" aria-labelledby="surfaces-heading">
+      <p class="section-kicker">Section 1 &middot; Live Applications</p>
+      <h2 id="surfaces-heading">Choose the right WAHS surface for your task</h2>
+      <p>
+        Every surface delegates 100% of FHIR extraction, condensation, enricher execution, and provenance mapping to <code>wahs-engine</code>.
+      </p>
+
+      <div class="surface-grid">
+        <article class="surface-card featured" id="scene-step1">
+          <span class="scene-step-badge">Surface 1 &middot; Public Inspection</span>
+          <h3>WAHS Explorer Sandbox</h3>
+          <p><strong>URL:</strong> <a href="https://wahs-demo.openclinai.org/"><code>wahs-demo.openclinai.org</code> ↗</a></p>
+          <p>Zero-business-logic thin UI connected to an isolated <code>wahs-sandbox-engine</code> (no HAPI/Keycloak access).</p>
+          <ul>
+            <li><strong>Step 1 (Public):</strong> Browse all 10 mounted real FHIR R4 bundles (Synthea, US Core, and MIMIC-IV-FHIR up to 22 MB) or upload any custom FHIR R4 JSON bundle.</li>
+            <li><strong>Step 2 (Public):</strong> Call live <code>POST /v1/wahs/context/preview</code> to inspect exact Tier 0/1/2 condensation, <code>chart_text</code>, enricher suffix, <code>system_prompt</code>, and <code>X-WAHS-Prefix-Hash</code>.</li>
+            <li><strong>Step 3 (UW GPU or Local BYO):</strong> Stream via your shared OpenClinAI Google session or forward the exact Step 2 engine prompt to LM Studio, Ollama, or <code>llama-router</code> with zero sign-in.</li>
+          </ul>
+          <a class="button button-primary" href="https://wahs-demo.openclinai.org/" style="margin-top:auto;">Launch Sandbox ↗</a>
+        </article>
+
+        <article class="surface-card" id="scene-step2">
+          <span class="scene-step-badge">Surface 2 &middot; Full PHR Web App</span>
+          <h3>WAHS Web App (<code>shl-ips</code>)</h3>
+          <p><strong>URL:</strong> <a href="https://wahs-web.openclinai.org/"><code>wahs-web.openclinai.org</code> ↗</a> (whitelisted Google session)</p>
+          <p>Full SvelteKit International Patient Summary (IPS) portal backed by live HAPI FHIR, Keycloak OIDC, <code>fhir-auth</code>, and SMART Health Links.</p>
+          <ul>
+            <li>Switch across 12 seeded real Keycloak accounts via the profile menu or <code>?profile=margaret</code>.</li>
+            <li>Curate IPS summaries, issue SMART Health Links, and filter Ask WAHS by clinic source or resource category.</li>
+            <li>Click any inline <code>[N]</code> citation pill to open the FHIR Provenance Inspector drawer (<a href="/wahs/index.html#app-demos">watch live recording →</a>).</li>
+          </ul>
+          <a class="button button-secondary" href="https://wahealth.openclinai.org/" style="margin-top:auto;">Open via Cloud Portal ↗</a>
+        </article>
+
+        <article class="surface-card" id="scene-step3">
+          <span class="scene-step-badge teal">Surface 3 &middot; Mobile Companion</span>
+          <h3>WAHS Mobile Companion</h3>
+          <p><strong>URL:</strong> <a href="https://wahs-mobile.openclinai.org/"><code>wahs-mobile.openclinai.org</code> ↗</a> (whitelisted Google session)</p>
+          <p>Phone-sized companion UI sharing the identical HAPI FHIR store, Keycloak realm, and <code>wahs-engine</code> backend.</p>
+          <ul>
+            <li>1-tap sign-in across all 12 seeded patient personas right from the Sign-In screen.</li>
+            <li>Add or update patient-authored <em>My Story</em> notes directly in FHIR R4 and watch <code>wahs-engine</code> pick up the change on the very next turn via <code>meta.lastUpdated</code>.</li>
+            <li>Expand <strong>Scope &amp; AI Config</strong> inside Ask WAHS to adjust Model, Context, and <code>Enrichers: 4/5 (Core)</code> (<a href="/wahs/index.html#app-demos">watch live recording →</a>).</li>
+          </ul>
+          <a class="button button-secondary" href="https://wahealth.openclinai.org/" style="margin-top:auto;">Open via Cloud Portal ↗</a>
+        </article>
+      </div>
+    </section>
+
+    <!-- SECTION 2: SANDBOX SIGN-IN & LOCAL BYO-MODEL -->
+    <section class="walkthrough-section page-width" id="sandbox-guide" aria-labelledby="sandbox-heading">
+      <p class="section-kicker">Section 2 &middot; Sandbox Modes</p>
+      <h2 id="sandbox-heading">Two ways to run Step 3 generation in the Explorer Sandbox</h2>
+      <p>
+        Steps 1 (FHIR resource browsing) and 2 (live <code>wahs-sandbox-engine</code> condensation &amp; enricher preview) work immediately for every visitor with zero sign-in. For Step 3 live streaming, choose either option under <strong>Connection</strong> in the top bar:
+      </p>
 
       <div class="connect-box">
-        <strong>Default hosted connection: Cloud Med Agent Hub.</strong> No local installation is required.
+        <strong>Option A: Hosted UW CIRG GPU (Unified OpenClinAI Google Session)</strong>
         <ol>
-          <li>Open <a href="https://wahs-demo.openclinai.org/">wahs-demo.openclinai.org</a>.</li>
-          <li>Open <strong>Settings</strong> (the gear icon in the top bar). <strong>Cloud Med Agent Hub</strong> is selected by default on the hosted site.</li>
-          <li>Select <strong>Sign in with Google</strong> and sign in with an approved Google account.</li>
+          <li>Open <a href="https://wahs-demo.openclinai.org/"><code>wahs-demo.openclinai.org</code> ↗</a> and click <strong>Sign in for UW GPU</strong> (or sign in once at <a href="https://openclinai.org/wahs/gate/"><code>openclinai.org/wahs/gate/</code> ↗</a>).</li>
+          <li>The same HttpOnly session cookie authorizes <code>wahealth.openclinai.org</code>, <code>wahs-web.openclinai.org</code>, <code>wahs-mobile.openclinai.org</code>, and Step 3 streaming on <code>wahs-demo.openclinai.org</code>.</li>
+          <li>Select <code>wahs-26b</code> (default), <code>wahs-12b</code>, or <code>wahs-e4b</code> and ask any clinical question.</li>
         </ol>
-        <p class="connect-note">To query the 13 models on the shared UW CIRG GPU server directly, without Med Agent Hub's clinical entity graph and overflow recovery, select <strong>UW GPU Server</strong> in Settings. The same Google sign-in applies.</p>
-      </div>
-
-      <details class="collapsible-panel">
-        <summary>Use a local model server or OpenRouter</summary>
-        <div class="collapsible-panel-body">
-          <p>Settings can also point the explorer at a model server on your own workstation or at OpenRouter. With every backend, each model appears once in the model selector, and the <strong>+ 4-Layer KB</strong> / <strong>Raw Chart Only</strong> toggle in the top bar selects the prompt variant.</p>
-          <p>The commands below are run from a local checkout of the <a href="https://github.com/pmanko/med-agent-hub">Med Agent Hub</a> and OpenClinAI workspace.</p>
-
-          <h4>Local Med Agent Hub with llama-router (ports 18081 and 8077)</h4>
-          <p>This option runs the full Med Agent Hub stack locally. Model files are downloaded on demand to <code>~/.cache/llama-router-models</code>.</p>
-          <ul>
-            <li>Start the router: <span class="code-pill">./scripts/llama-router-up.sh</span></li>
-            <li>Start Med Agent Hub: <span class="code-pill">docker compose -f compose/openmrs-2.8-refapp.yml up -d med-agent-hub</span></li>
-            <li>In Settings, select <strong>Local Med Agent Hub (:18081)</strong>, or open <code>http://localhost:18081/wahs/demo</code>.</li>
-          </ul>
-
-          <h4>LM Studio (port 1235 or 1234)</h4>
-          <ul>
-            <li>Start the server with CORS enabled, <span class="code-pill">~/.lmstudio/bin/lms server start --port 1235 --cors</span>, and set the context length to at least <code>16384</code>.</li>
-            <li>To reuse a model file that llama-router has already downloaded, import it without copying: <span class="code-pill">~/.lmstudio/bin/lms import -y -L --user-repo unsloth/gemma-4-12B-it-GGUF ~/.cache/llama-router-models/gemma-4-12b.gguf</span></li>
-            <li>In Settings, select <strong>LM Studio</strong>.</li>
-          </ul>
-
-          <h4>llama-router (port 8077), Ollama (port 11434), or OpenRouter</h4>
-          <ul>
-            <li><strong>llama-router:</strong> run <span class="code-pill">./scripts/llama-router-up.sh</span> and select <strong>llama-router (:8077)</strong> in Settings.</li>
-            <li><strong>Ollama:</strong> run <span class="code-pill">OLLAMA_ORIGINS="*" OLLAMA_CONTEXT_LENGTH=16384 ollama serve</span> and select <strong>Ollama (:11434)</strong> in Settings.</li>
-            <li><strong>OpenRouter:</strong> select <strong>OpenRouter</strong> in Settings, enter your <code>sk-or-v1-...</code> key in the API key field, and select <strong>Apply</strong>.</li>
-            <li>When the hosted page at <code>https://wahs-demo.openclinai.org</code> connects to a local port, Chrome and Brave require the <em>Local network access</em> site permission, available from the address bar.</li>
-          </ul>
-        </div>
-      </details>
-    </section>
-
-    <section class="walkthrough-section page-width" id="visual-tour" aria-labelledby="visual-tour-title">
-      <p class="section-kicker">Section 2 · The Three Steps</p>
-      <h2 id="visual-tour-title">Browse the chart, condense it, and generate with citations</h2>
-
-      <div class="scene-list">
-        <figure class="scene-card" id="scene-step1">
-          <span class="scene-step-badge">Step 1</span>
-          <h3>Browse the original FHIR R4 patient chart</h3>
-          <p>Select one of the 10 preloaded patient charts, or upload a FHIR R4 JSON bundle, to inspect the multi-clinic records before condensation.</p>
-          <ul class="scene-bullets">
-            <li>The 10 charts (18 FHIR R4 bundles across dataset variants) comprise five multi-year US Core care-transition cases (Elena Rostova, Arthur Pendelton, Margaret Chen, Sofia Alvarez, Marcus Vance), three Synthea charts of up to 7,099 entries / 18.4 MB (Maurice Auer, Lamar Beer, Byron Emard), and two de-identified PhysioNet MIMIC-IV-FHIR Demo 2.0 hospital and ICU charts (Julian Mercer, Clara Hollis).</li>
-            <li>Resources can be filtered by category (Conditions, Medications, Allergies, Labs &amp; Vitals, Clinical Notes, Immunizations, Visits &amp; Procedures, Devices, Claims &amp; Billing) and searched by text.</li>
-            <li>Selecting an entry shows a readable summary next to the original FHIR R4 JSON. Base64-encoded discharge summaries and progress notes are decoded automatically.</li>
-          </ul>
-          <a class="scene-image-link" href="media/step1-patient-browser.webp" aria-label="Open full-size screenshot of Step 1">
-            <img src="media/step1-patient-browser.webp" alt="Step 1 showing the 10 patient chart cards, the category filters, and the two-pane FHIR R4 resource view." width="1440" height="940" loading="lazy" />
-          </a>
-        </figure>
-
-        <figure class="scene-card" id="scene-step2">
-          <span class="scene-step-badge">Step 2</span>
-          <h3>Condense the chart and check the context gauge</h3>
-          <p>Choose how the chart is condensed into the text sent to the model, and see how much of the active model's context window that text uses.</p>
-          <ul class="scene-bullets">
-            <li>The context gauge shows the active model's maximum context window and its <strong>Recommended Limit</strong>. Both values come from the model profile; the scale is fixed for a given model so bar lengths can be compared across budgets.</li>
-            <li>Nine token budgets, from <code>256k</code> down to <code>1k</code>, are available in two condensation modes: <strong>Lossless (Verbatim)</strong> and <strong>Grouped (Fold Renewals)</strong>. Both modes report the token reduction relative to the extracted clinical content and list any clinical items trimmed to fit the budget.</li>
-            <li>The <strong>+ 4-Layer KB</strong> / <strong>Raw Chart Only</strong> toggle selects the knowledge mode. Optional sandbox filters in the Explorer remove non-clinical room equipment and preview experimental sensitivity redaction (<code>42 CFR Part 2</code> / <code>WA My Health My Data Act</code>).</li>
-          </ul>
-          <a class="scene-image-link" href="media/step2-condensation-8k-vs-1k.webp" aria-label="Open full-size screenshot of Step 2">
-            <img src="media/step2-condensation-8k-vs-1k.webp" alt="Step 2 showing the Active Model Context Budget gauge with its Recommended Limit marker, the condensation settings, and the condensed chart." width="1440" height="940" loading="lazy" />
-          </a>
-        </figure>
-
-        <figure class="scene-card" id="scene-step3">
-          <span class="scene-step-badge">Step 3</span>
-          <h3>Run clinical tasks, ask questions, and verify citations</h3>
-          <p>Send the condensed chart and knowledge configuration from Step 2 to the connected model, then check each claim against its FHIR R4 source record.</p>
-          <ul class="scene-bullets">
-            <li>Select one of the nine clinical tasks from the task menu, or select the question box to browse and filter suggested questions or type your own. Then select <strong>Generate Live</strong>.</li>
-            <li>Each <code>[N]</code> citation in the output opens the source panel, which shows the cited observation, medication order, or decoded clinical note with its FHIR R4 JSON.</li>
-            <li><strong>Run History</strong> lists earlier outputs from the session and can restore the Step 2 settings used for any of them. <strong>Advanced View</strong>, below the output, shows the prompt that was sent to the model.</li>
-          </ul>
-          <a class="scene-image-link" href="media/step3-citation-drawer.webp" aria-label="Open full-size screenshot of Step 3 with the source panel open">
-            <img src="media/step3-citation-drawer.webp" alt="Step 3 showing the compact context gauge, the task selector, a generated summary with citations, and the open FHIR R4 source panel." width="1440" height="940" loading="lazy" />
-          </a>
-        </figure>
+        <strong style="display:block; margin-top:16px;">Option B: Local BYO-Model (Zero Sign-In Required)</strong>
+        <ol>
+          <li>Start any CORS-enabled local OpenAI-compatible server: <span class="code-pill">llama-router (:8077)</span>, <span class="code-pill">LM Studio (:1234)</span>, or <span class="code-pill">Ollama (:11434)</span>.</li>
+          <li>In the Sandbox top bar, click <strong>Connection</strong>, select <strong>Local BYO-Model</strong>, pick your local URL, and click <strong>Apply Connection</strong>.</li>
+          <li>When you send a question, the Sandbox fetches the exact engine-assembled <code>system_prompt</code> and <code>enrichment_text</code> from Step 2 (<code>/api/engine/v1/wahs/context/preview</code>) and streams straight to your local model while preserving clickable <code>[N]</code> provenance drawers.</li>
+        </ol>
       </div>
     </section>
 
+    <!-- SECTION 3: GUIDED EXPERIMENTS -->
     <section class="walkthrough-section page-width" id="experimentation-recipes" aria-labelledby="recipes-title">
-      <p class="section-kicker">Section 3 · Guided Experiments</p>
-      <h2 id="recipes-title">Token budget, knowledge mode, and abstention</h2>
-      <p>Each experiment requires a connected model (Section 1). The expected results below were recorded with the default <code>wahs-12b-kb</code> profile (Google Gemma 4 12B).</p>
+      <p class="section-kicker">Section 3 &middot; Reproducible Experiments</p>
+      <h2 id="recipes-title">Three hands-on experiments to run in the Sandbox or Apps</h2>
+      <p>
+        Each experiment takes under two minutes and directly reproduces the behaviors measured in our November 26 H200 benchmark reports.
+      </p>
 
       <div class="recipe-grid">
         <article class="recipe-card" id="recipe-budget-ablation">
-          <span class="scene-step-badge">Experiment 1 · Token Budget</span>
-          <h3>Compare an 8k budget with a 1k budget</h3>
-          <p>Smaller budgets reduce prefill time at the cost of historical completeness. This experiment shows what the 1k budget removes from a 7,099-entry chart.</p>
+          <span class="scene-step-badge">Experiment 1 &middot; Budget &amp; Tiers</span>
+          <h3>Watch Tier 0 vs. Tier 2 on a 7,099-resource chart</h3>
+          <p>See how <code>wahs_core</code> preserves the HL7 IPS safety core while logging exact omissions as budget shrinks.</p>
           <ol class="recipe-steps">
-            <li>In Step 1, select <strong>Maurice Auer (7,099 items)</strong>.</li>
-            <li>In Step 2, select <strong>64k</strong>, <strong>8k</strong>, and <strong>1k</strong> in turn and compare the condensed-chart bar in the context gauge with the 24k Recommended Limit marker of the default profile.</li>
-            <li>With <strong>8k</strong> selected, go to Step 3, keep <strong>Prepare My Next Doctor Visit Summary</strong> selected, and select <strong>Generate Live</strong>. Note the input token and line counts on the result card.</li>
-            <li>Return to Step 2, select <strong>1k</strong>, and generate again in Step 3.</li>
+            <li>In Sandbox Step 1, select <strong>Maurice742 Auer97</strong> (7,099 entries, 22 MB raw FHIR JSON).</li>
+            <li>Open Step 2 and toggle the Context Budget across <strong>64k</strong>, <strong>16k</strong>, and <strong>2k</strong>.</li>
+            <li>Inspect <strong>Condensation Tier</strong>, <strong>Omitted Items</strong>, and <strong>Prefix Cache Hash</strong> in the metrics strip, then toggle back to <strong>16k</strong> to observe an instant <strong>LRU prefix cache HIT</strong>.</li>
           </ol>
           <div class="recipe-expected">
-            <strong>Expected result:</strong> At 1k, the chart is reduced from 251,641 extracted clinical tokens to about 902 tokens (15 lines). Over 2,400 items are trimmed, including 9 active conditions and 8 active medications. The trimmed-items panel in Step 2, and Advanced View in Step 3, list the omitted counts by category. Med Agent Hub uses these counts to retrieve question-relevant trimmed items on demand (Tier-0 overflow recovery).
+            <strong>What to observe:</strong> Under tight budgets (<code>16k</code> and <code>2k</code>), Tier 2 folds repeated historical series and protects active allergies, meds, and conditions while recording exact omitted counts in <code>[2] Completeness Manifest</code> so <code>note_rag</code> and <code>overflow_lookup</code> can recover question-specific dropped facts.
           </div>
         </article>
 
-        <article class="recipe-card" id="recipe-hub-profiles">
-          <span class="scene-step-badge">Experiment 2 · Knowledge Mode</span>
-          <h3>Compare + 4-Layer KB with Raw Chart Only</h3>
-          <p>This experiment shows how deterministic clinical rules and the patient entity graph affect cross-clinic conflict detection with the same model.</p>
+        <article class="recipe-card" id="recipe-enricher-ablation">
+          <span class="scene-step-badge">Experiment 2 &middot; Enrichers</span>
+          <h3>Compare <code>0/5 (None)</code> vs. <code>4/5 (Core)</code> vs. <code>5/5 (All)</code></h3>
+          <p>Reproduce Run 3A live by toggling individual modules in the multi-select Enrichers menu.</p>
           <ol class="recipe-steps">
-            <li>Select <strong>Elena Rostova (454 items)</strong> in Step 1 and <strong>8k</strong> in Step 2.</li>
-            <li>In Step 3, select the task <strong>Check Medication Conflicts, Duplicate Pills &amp; Note Mismatches</strong>.</li>
-            <li>With <strong>+ 4-Layer KB</strong> selected in the top bar, select <strong>Generate Live</strong>.</li>
-            <li>Switch the top-bar toggle to <strong>Raw Chart Only</strong> and generate again. Use <strong>Run History</strong> to switch between the two outputs.</li>
+            <li>Select <strong>Margaret Chen</strong> (geriatrics polypharmacy) or <strong>Elena Rostova</strong> (cardiorenal HFrEF + CKD3b).</li>
+            <li>In Step 2, open the <strong>Enrichers</strong> checkbox menu and click <strong>Clear</strong> (<code>0/5 None</code>), then click <strong>Enricher Appendix</strong>.</li>
+            <li>Click <strong>Core</strong> (<code>4/5 Core</code>) and then <strong>All</strong> (<code>5/5 All</code>) and compare the appended suffix tokens and disclosures.</li>
           </ol>
           <div class="recipe-expected">
-            <strong>Expected result:</strong> With <strong>Raw Chart Only</strong>, the model must identify on its own that the hospital discharge summary instructed holding the outpatient spironolactone and potassium chloride orders because of a potassium result of 5.7 mmol/L. With <strong>+ 4-Layer KB</strong>, the reconciliation finding and the connected clinical subgraph are included in the prompt. Citation numbers follow the current condensed chart, so they differ between budgets and modes.
+            <strong>What to observe:</strong> Notice that <code>X-WAHS-Prefix-Hash</code> stays completely unchanged when toggling enrichers because enrichers append strictly to Region 2 (turn suffix). With <code>4/5 Core</code>, <code>temporal</code> and <code>terminology_kb</code> attach concise trend and drug-class facts; <code>5/5 All</code> adds <code>[K1]</code> guideline snippets.
           </div>
         </article>
 
         <article class="recipe-card" id="recipe-citations-and-abstention">
-          <span class="scene-step-badge">Experiment 3 · Citations &amp; Abstention</span>
-          <h3>Verify source citations and ask an unanswerable question</h3>
-          <p>This experiment confirms that each clinical claim links to a FHIR resource, and that the model declines to answer when the chart does not contain the requested information.</p>
+          <span class="scene-step-badge teal">Experiment 3 &middot; Grounding</span>
+          <h3>Verify clickable <code>[N]</code> provenance &amp; grounded abstention</h3>
+          <p>Confirm every claim links to a real FHIR resource and that undocumented procedures trigger clean abstention.</p>
           <ol class="recipe-steps">
-            <li>Continue with <strong>Elena Rostova</strong> and one of the outputs from Experiment 2. Select any <code>[N]</code> citation to open the source panel and compare the claim with the resource JSON.</li>
-            <li>Select the question box in Step 3, type <code>colonoscopy</code> to filter the suggested questions, select <em>Does this patient have a documented Penicillin allergy or recent colonoscopy?</em>, and select <strong>Generate Live</strong>.</li>
+            <li>In Step 3 (or Web/Mobile Ask WAHS) on <strong>Margaret Chen</strong>, ask: <em>"What active medications am I taking, and are there any fall or sedation risks?"</em></li>
+            <li>Click any inline <code>[N]</code> pill in the streamed answer to inspect the exact FHIR R4 JSON resource and source clinic.</li>
+            <li>Next, toggle <strong>Show suggested questions</strong> and ask: <em>"Are there any records of a colonoscopy or cardiac stress test in my chart?"</em></li>
           </ol>
           <div class="recipe-expected">
-            <strong>Expected result:</strong> Elena Rostova's chart contains no penicillin allergy and no colonoscopy. The response begins with an <code>ABSTAIN:</code> statement that the record was searched and no matching allergy or procedure exists. Arthur Pendelton and Lamar Beer do have colonoscopy entries, so the same question on those charts is answered with citations.
+            <strong>What to observe:</strong> Medication claims cite only numeric <code>[N]</code> tags mapped to real FHIR UUIDs (zero fabricated pseudo-citation brackets). When asked about undocumented procedures, the model explicitly states no matching record exists rather than guessing.
           </div>
         </article>
       </div>
     </section>
 
-    <section class="walkthrough-section page-width" id="hub-profiles-reference" aria-labelledby="profiles-title">
-      <p class="section-kicker">Section 4 · Reference &amp; Reports</p>
-      <h2 id="profiles-title">Evaluated model families and published evidence</h2>
-      <p>Each model profile in <a href="/med-agent-hub/index.html">Med Agent Hub</a> carries its maximum context window and its Recommended Limit (<code>GET /v1/models?workflow=wahs</code>). The Explorer reads both values from the profile and shows them in the context gauge, while the top-bar toggle switches any model between <strong>+ 4-Layer KB</strong> and <strong>Raw Chart Only</strong>.</p>
-
-      <details class="collapsible-panel" id="related-reports">
-        <summary>Open-weight model families available in WAHS profiles</summary>
-        <div class="collapsible-panel-body">
-          <div class="profile-table-wrap" tabindex="0" role="region" aria-label="Med Agent Hub WAHS model families">
-            <table class="profile-table">
-              <thead>
-                <tr>
-                  <th scope="col">Model family</th>
-                  <th scope="col">Sizes</th>
-                  <th scope="col">Role in WAHS evaluations</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><strong>Google Gemma 4</strong></td>
-                  <td>12B (default), 26B-A4B MoE, 31B, E4B, E2B</td>
-                  <td>Top-performing family in the 972-run 3-pathway benchmark (Gemma 4 26B + Hub: 82.1/100; Gemma 4 12B + Hub: 80.5/100, 2/36 unsafe, 0 fabricated citations)</td>
-                </tr>
-                <tr>
-                  <td><strong>Google MedGemma</strong></td>
-                  <td>27B, 1.5 4B</td>
-                  <td>Medical domain-tuned comparison at 4B and 27B</td>
-                </tr>
-                <tr>
-                  <td><strong>Alibaba Qwen</strong></td>
-                  <td>Qwen 3 14B, Qwen 2.5 14B, Qwen 3.5 9B, Qwen 3.6 35B-A3B MoE, Qwen 3 4B</td>
-                  <td>Dense models at 4B, 9B, and 14B (+12.0 point Hub gain on Qwen 3 14B) plus 35B MoE comparison</td>
-                </tr>
-                <tr>
-                  <td><strong>Meta Llama &amp; Nous Hermes</strong></td>
-                  <td>Llama 3.1 8B, Hermes 3 8B, Llama 3.2 3B</td>
-                  <td>8B baseline (−43% unsafe answers with Hub) and 3.2B capability-floor characterization</td>
-                </tr>
-                <tr>
-                  <td><strong>Mistral AI, IBM Granite &amp; Liquid AI LFM2</strong></td>
-                  <td>Mistral Nemo 12B, Mistral 7B, Granite 3.3 8B, LFM2 8B-A1B MoE</td>
-                  <td>7B–12B architectural diversity and low-latency MoE screening comparisons</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </details>
-
-      <div class="resource-groups" style="margin-top: 24px;">
-        <section class="resource-group">
-          <h3>Application &amp; architecture</h3>
-          <ul class="resource-links">
-            <li>
-              <a href="https://wahs-demo.openclinai.org/">
-                <span class="resource-link-title"><span>WAHS Explorer · OpenClinAI Sandbox</span><span aria-hidden="true">↗</span></span>
-                <span class="resource-link-description">The live interactive workbench used in this walkthrough.</span>
-              </a>
-            </li>
-            <li>
-              <a href="/wahs/engine-reference/index.html#engine-internals">
-                <span class="resource-link-title"><span>AI Strategy &amp; Engine Internals</span><span aria-hidden="true">→</span></span>
-                <span class="resource-link-description">Pilot security boundaries, 9-model selection results, Tier-0 overflow recovery, and <code>ClinicalEntityGraph</code> edge specifications.</span>
-              </a>
-            </li>
-            <li>
-              <a href="/wahs/index.html">
-                <span class="resource-link-title"><span>WA Health Summary Overview</span><span aria-hidden="true">→</span></span>
-                <span class="resource-link-description">Project scope and clinical standards backing (HL7 IPS, US Core, SMART Health Links, KDIGO, RxNorm, CDC ACIP).</span>
-              </a>
-            </li>
-          </ul>
-        </section>
-
-        <section class="resource-group">
-          <h3>Published evaluation reports</h3>
-          <ul class="resource-links">
-            <li>
-              <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">
-                <span class="resource-link-title"><span>9-Model × 3-Pathway Clinical Synthesis Benchmark</span><span aria-hidden="true">↗</span></span>
-                <span class="resource-link-description">972 live answers comparing Direct AI, Direct + KB Rules, and Full Med Agent Hub across Gemma 4, Qwen 3, and Llama 3.x / Hermes 3.</span>
-              </a>
-            </li>
-            <li>
-              <a href="https://reports.openclinai.org/2026-11-04-wahs-macbook-direct-vs-hub-multi-scenario-eval/index.html">
-                <span class="resource-link-title"><span>MacBook 96k Direct vs. Hub Overflow Lookup</span><span aria-hidden="true">↗</span></span>
-                <span class="resource-link-description">Pre-call Tier-0 overflow retrieval recovering +19 to +21 benchmark points on compact 1k summaries.</span>
-              </a>
-            </li>
-            <li>
-              <a href="https://reports.openclinai.org/2026-11-03-wahs-huge-context-and-hub-graph-eval/index.html">
-                <span class="resource-link-title"><span>1k–128k Context Windows &amp; Clinical Entity Subgraph</span><span aria-hidden="true">↗</span></span>
-                <span class="resource-link-description">Evaluating MIMIC-IV-FHIR 2.0 ICU and 53-year longitudinal records across 1k to 128k budgets on the shared UW GPU.</span>
-              </a>
-            </li>
-            <li>
-              <a href="https://reports.openclinai.org/#wahs">
-                <span class="resource-link-title"><span>All WAHS Evaluation Reports</span><span aria-hidden="true">↗</span></span>
-                <span class="resource-link-description">Browse the complete WAHS report archive on <code>reports.openclinai.org</code>.</span>
-              </a>
-            </li>
-          </ul>
-        </section>
-
-        <section class="resource-group">
-          <h3>Shared OpenClinAI platform</h3>
-          <ul class="resource-links">
-            <li>
-              <a href="/med-agent-hub/index.html">
-                <span class="resource-link-title"><span>Med Agent Hub</span><span aria-hidden="true">→</span></span>
-                <span class="resource-link-description">Shared clinical AI runtime managing FHIR condensation, pre-generation clinical graphs, and model routing.</span>
-              </a>
-            </li>
-            <li>
-              <a href="/validation-harness/index.html">
-                <span class="resource-link-title"><span>Validation Harness</span><span aria-hidden="true">→</span></span>
-                <span class="resource-link-description">4-layer clinical verification stack for deterministic provenance gates and blinded multi-model judging.</span>
-              </a>
-            </li>
-          </ul>
-        </section>
+    <!-- SECTION 4: RUNNING LOCALLY -->
+    <section class="walkthrough-section page-width" id="local-stack" aria-labelledby="local-heading">
+      <p class="section-kicker">Section 4 &middot; Developer Setup</p>
+      <h2 id="local-heading">Run the complete local WAHS stack</h2>
+      <p>
+        Developers with access to the WAHS repositories can run HAPI FHIR, Keycloak, <code>fhir-auth</code>, SMART Health Links, <code>wahs-engine</code>, <code>shl-ips</code> (<code>:4000</code>), and <code>wahs-mobile-frontend</code> (<code>:4001</code>) locally via Docker Compose:
+      </p>
+      <div class="connect-box">
+        <ul style="margin:0; padding-left:20px; font-size:14.5px; line-height:1.7;">
+          <li><strong>Standalone Engine:</strong> <a href="https://github.com/pmanko/wahs-engine"><code>pmanko/wahs-engine</code> ↗</a> (<code>uvicorn wahs_engine.app:app --port 8080</code>)</li>
+          <li><strong>Web App:</strong> <a href="https://github.com/pmanko/shl-ips"><code>pmanko/shl-ips</code> ↗</a> (<code>http://localhost:4000</code>)</li>
+          <li><strong>Mobile Companion:</strong> <a href="https://github.com/pmanko/wahs-mobile-frontend"><code>pmanko/wahs-mobile-frontend</code> ↗</a> (<code>http://localhost:4001</code>)</li>
+          <li><strong>Architecture &amp; API Contract:</strong> <a href="/wahs/architecture/index.html">WAHS Architecture &amp; Builder Reference →</a></li>
+        </ul>
       </div>
-      <p class="scope-note" style="margin-top: 24px;">Experimental research and demonstration software using synthetic and de-identified patient records. AI outputs and automated checks require human review and do not establish clinical safety or effectiveness.</p>
+      <p class="scope-note" style="margin-top:24px;">
+        Experimental research and demonstration software using synthetic and de-identified patient records. AI outputs and automated checks require human review and do not establish clinical safety or effectiveness.
+      </p>
     </section>
   </main>
 
@@ -434,7 +294,7 @@
       </nav>
       <p class="footer-disclaimer">
         For research and demonstration. AI output can be inaccurate and requires review.<br />
-        <a href="https://reports.openclinai.org/">Evaluation Reports</a> · <a href="/docs/openmrs-upstream/index.html">OpenMRS Upstream PRs</a>
+        <a href="https://reports.openclinai.org/">Evaluation Reports</a> &middot; <a href="/docs/openmrs-upstream/index.html">OpenMRS Upstream PRs</a>
       </p>
     </div>
   </footer>

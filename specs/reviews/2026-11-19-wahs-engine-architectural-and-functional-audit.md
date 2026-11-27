@@ -1,6 +1,6 @@
 # WAHS Engine Architectural & Functional Audit (Verified Baseline · 25 November 2026)
 
-Public page: [`landing/wahs/engine-audit/index.html`](../../landing/wahs/engine-audit/index.html) (`https://openclinai.org/wahs/engine-audit/`).
+Public page: [`landing/wahs/architecture/index.html`](../../landing/wahs/architecture/index.html) (`https://openclinai.org/wahs/architecture/`, consolidated from `/wahs/engine-audit/`).
 
 ## Audited and remediated revisions
 

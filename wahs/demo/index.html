@@ -1500,6 +1500,16 @@
             if (obj.error) {
               throw new Error(obj.error.message || JSON.stringify(obj.error));
             }
+            if (obj.x_wahs_stream) {
+              if (obj.x_wahs_stream.citation_map) {
+                assistantMsg.citationMap = obj.x_wahs_stream.citation_map;
+                state.latestCitationMap = obj.x_wahs_stream.citation_map;
+              }
+              if (obj.x_wahs_stream.event === "context_ready") {
+                assistantMsg.statusText = "Context assembled. Waiting for first token...";
+                renderChatLog();
+              }
+            }
             if (obj.x_wahs) {
               lastXwahs = obj.x_wahs;
               if (obj.x_wahs.citation_map) {
