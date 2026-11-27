@@ -64,19 +64,23 @@ class _StubSandboxEngineHandler(BaseHTTPRequestHandler):
             self._json(
                 200,
                 {
+                    "default_model": "wahs-26b",
                     "default_profile": "core-enriched",
-                    "profiles": [
-                        {
+                    "default_target_budget_tokens": 16384,
+                    "context_window": 65536,
+                    "profiles": {
+                        "core-enriched": {
                             "id": "core-enriched",
-                            "enrichers": ["temporal_delta", "terminology_kb", "completeness_guard", "overflow_retrieval"],
+                            "label": "WAHS + Core Enrichers",
+                            "enrichers": ["temporal", "terminology_kb", "note_rag", "overflow_lookup"],
                         }
-                    ],
-                    "enrichers": [
-                        {"id": "temporal_delta", "label": "Temporal Delta", "description": "Lab trends and recency.", "experimental": False},
-                        {"id": "terminology_kb", "label": "Terminology KB", "description": "CIEL/RxNorm class flags.", "experimental": False},
-                        {"id": "completeness_guard", "label": "Completeness Guard", "description": "Abstention on missing items.", "experimental": False},
-                        {"id": "overflow_retrieval", "label": "Overflow Retrieval", "description": "Tier-0 dropped item recovery.", "experimental": False},
-                        {"id": "clinical_graph", "label": "Clinical Graph", "description": "Experimental entity graph.", "experimental": True},
+                    },
+                    "available_enrichers": [
+                        {"id": "temporal", "label": "Temporal Anchor & Lab Trends", "short_label": "Temporal"},
+                        {"id": "terminology_kb", "label": "CIEL & Public Standards Terminology KB", "short_label": "CIEL/Standards KB"},
+                        {"id": "note_rag", "label": "Tier-2 Unseen-Span Note RAG", "short_label": "Note RAG"},
+                        {"id": "overflow_lookup", "label": "Tier-2 Overflow Item Recovery", "short_label": "Overflow"},
+                        {"id": "guideline_kb", "label": "Public Clinical Guideline Snippets [K1]", "short_label": "Guidelines [K1]"},
                     ],
                 },
             )

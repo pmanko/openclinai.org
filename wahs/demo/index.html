@@ -928,10 +928,17 @@
         { label: "64k", value: 65536 },
       ];
       const CORE_ENRICHERS_FALLBACK = [
-        "temporal_delta",
+        "temporal",
         "terminology_kb",
-        "completeness_guard",
-        "overflow_retrieval",
+        "note_rag",
+        "overflow_lookup",
+      ];
+      const ENRICHER_CATALOG_FALLBACK = [
+        { id: "temporal", label: "Temporal Anchor & Lab Trends", short_label: "Temporal" },
+        { id: "terminology_kb", label: "CIEL & Public Standards Terminology KB", short_label: "CIEL/Standards KB" },
+        { id: "note_rag", label: "Tier-2 Unseen-Span Note RAG", short_label: "Note RAG" },
+        { id: "overflow_lookup", label: "Tier-2 Overflow Item Recovery", short_label: "Overflow" },
+        { id: "guideline_kb", label: "Public Clinical Guideline Snippets [K1]", short_label: "Guidelines [K1]" },
       ];
 
       const state = {
@@ -946,7 +953,7 @@
         models: ["wahs-26b", "wahs-12b", "wahs-e4b"],
         selectedModel: "wahs-26b",
         targetBudgetTokens: null,
-        enricherCatalog: [],
+        enricherCatalog: ENRICHER_CATALOG_FALLBACK.slice(),
         coreEnricherIds: CORE_ENRICHERS_FALLBACK.slice(),
         selectedEnrichers: CORE_ENRICHERS_FALLBACK.slice(),
         previewData: null,
@@ -1530,8 +1537,12 @@
 
         if (profilesRes.status === "fulfilled" && profilesRes.value) {
           const p = profilesRes.value;
-          state.enricherCatalog = Array.isArray(p.enrichers) ? p.enrichers : [];
-          const coreProf = (p.profiles || []).find((pr) => pr.id === "core-enriched");
+          const cat = Array.isArray(p.available_enrichers) ? p.available_enrichers : (Array.isArray(p.enrichers) ? p.enrichers : []);
+          if (cat.length) state.enricherCatalog = cat;
+          const profMap = p.profiles && !Array.isArray(p.profiles) ? p.profiles : null;
+          const coreProf = profMap
+            ? profMap["core-enriched"]
+            : (Array.isArray(p.profiles) ? p.profiles.find((pr) => pr.id === "core-enriched") : null);
           if (coreProf && Array.isArray(coreProf.enrichers) && coreProf.enrichers.length) {
             state.coreEnricherIds = coreProf.enrichers.slice();
             state.selectedEnrichers = coreProf.enrichers.slice();
