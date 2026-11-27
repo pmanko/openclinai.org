@@ -4,11 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>WA Health Summary (WAHS) &middot; OpenClinAI</title>
-  <meta name="description" content="Patient-mediated longitudinal health summaries from real-world FHIR R4 records: zero-privilege fhir-auth, verbatim-first condensation, 5 modular enrichers, 64k warm open-weight streaming, and clickable FHIR provenance." />
+  <meta name="description" content="Overview of exploratory clinical AI research on WA Health Summary (WAHS) at the University of Washington: patient-controlled multi-provider health summaries and source-linked question answering." />
   <link rel="canonical" href="https://openclinai.org/wahs/" />
   <meta property="og:url" content="https://openclinai.org/wahs/" />
   <meta property="og:title" content="WA Health Summary (WAHS) &middot; OpenClinAI" />
-  <meta property="og:description" content="Zero-privilege FHIR R4 condensation, modular clinical enrichers, live Web and Mobile app demos, and blinded H200 evaluation readouts." />
+  <meta property="og:description" content="Overview of WA Health Summary (WAHS): bringing multi-provider health records together for patient review, summary sharing, and source-linked question answering." />
   <meta property="og:image" content="https://storage.googleapis.com/openclinai-media/wahs/wahs-web-app-demo-20261126.webp" />
   <meta name="theme-color" content="#4b2e83" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -16,86 +16,45 @@
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/projects.css" />
   <style>
-    .demo-video-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.85fr);
-      gap: 24px;
-      align-items: start;
-      margin-top: 22px;
-    }
-    .demo-video-card {
-      background: #ffffff;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 18px 20px;
-      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
-    }
-    .demo-video-card h3 {
-      margin: 8px 0 6px;
-      font-size: 19px;
-      color: var(--ink);
-    }
-    .demo-video-card p {
-      margin: 0 0 14px;
-      color: var(--muted);
-      font-size: 14.5px;
-      line-height: 1.55;
-    }
-    .demo-video-card video {
-      display: block;
-      width: 100%;
-      height: auto;
-      border-radius: 10px;
-      border: 1px solid var(--line);
-      background: #0f172a;
-    }
-    .demo-video-card.mobile-card video {
-      max-height: 540px;
-      width: auto;
-      max-width: 100%;
-      margin: 0 auto;
-    }
-    .eval-headline-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 18px;
-      margin-top: 22px;
-    }
-    .eval-headline-card {
-      background: #ffffff;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 20px 22px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .eval-headline-card.featured {
-      border: 2px solid #4b2e83;
-      background: #fcfaff;
-    }
-    .eval-big-stat {
-      font: 700 30px/1.15 Georgia, serif;
-      color: var(--purple-ink);
-      margin: 2px 0;
-    }
-    .eval-headline-card p {
-      margin: 0;
-      font-size: 14.5px;
-      color: var(--muted);
-      line-height: 1.55;
-    }
-    .eval-headline-card a {
-      margin-top: auto;
-      padding-top: 6px;
-      color: var(--purple);
-      font-weight: 650;
-      font-size: 14px;
-      text-decoration: none;
-    }
-    .eval-headline-card a:hover { text-decoration: underline; }
-    @media (max-width: 880px) {
-      .demo-video-grid { grid-template-columns: 1fr; }
+    .wahs-landing-section { padding: 44px 0; border-top: 1px solid var(--line); }
+    .wahs-landing-section > h2 { margin: 0 0 14px; max-width: 840px; color: var(--purple-ink); font: 700 clamp(26px, 3vw, 34px)/1.2 Georgia, serif; }
+    .wahs-landing-section > p { max-width: 800px; margin: 0 0 16px; color: var(--muted); font-size: 17px; line-height: 1.65; }
+    .wahs-status-note { display: inline-block; margin: 4px 0 22px; padding: 9px 15px; border-radius: 8px; background: var(--soft); border: 1px solid var(--line); color: var(--ink); font-size: 14.5px; line-height: 1.5; max-width: 780px; }
+    .wahs-story { max-width: 840px; margin: 24px 0 0; padding: 24px 28px; background: #fcfaff; border: 1px solid var(--line); border-left: 4px solid var(--purple); border-radius: 10px; }
+    .wahs-story h3 { margin: 0 0 10px; font-size: 19px; color: var(--ink); }
+    .wahs-story p { margin: 0 0 12px; color: var(--ink); font-size: 16px; line-height: 1.65; }
+    .wahs-story p:last-child { margin-bottom: 0; }
+    .wahs-story .wahs-story-label { display: block; margin-bottom: 8px; color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+    .wahs-app-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; margin-top: 24px; }
+    .wahs-app-card { padding: 24px 26px; background: #ffffff; border: 1px solid var(--line); border-radius: 12px; }
+    .wahs-app-card h3 { margin: 8px 0 8px; font-size: 20px; color: var(--ink); }
+    .wahs-app-card p { margin: 0 0 12px; color: var(--muted); font-size: 15.5px; line-height: 1.6; }
+    .wahs-app-card ul { margin: 0; padding-left: 20px; color: var(--ink); font-size: 15px; line-height: 1.65; }
+    .wahs-app-card li + li { margin-top: 5px; }
+    .wahs-video-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.85fr); gap: 24px; align-items: start; margin-top: 24px; }
+    .wahs-video-card { padding: 18px 20px; background: #ffffff; border: 1px solid var(--line); border-radius: 12px; }
+    .wahs-video-card h3 { margin: 0 0 6px; font-size: 18px; color: var(--ink); }
+    .wahs-video-card p { margin: 0 0 14px; color: var(--muted); font-size: 15px; line-height: 1.55; }
+    .wahs-video-card video { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); background: #0f172a; }
+    .wahs-video-card.phone video { width: auto; max-width: 100%; max-height: 560px; margin: 0 auto; }
+    .wahs-steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin: 24px 0 0; padding: 0; list-style: none; counter-reset: wahs-step; }
+    .wahs-steps li { position: relative; padding: 24px 26px 24px 72px; background: #ffffff; border: 1px solid var(--line); border-radius: 12px; counter-increment: wahs-step; }
+    .wahs-steps li::before { content: counter(wahs-step); position: absolute; left: 22px; top: 24px; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 999px; background: var(--purple); color: #ffffff; font-weight: 700; font-size: 15px; }
+    .wahs-steps h3 { margin: 0 0 8px; font-size: 18.5px; color: var(--ink); }
+    .wahs-steps p { margin: 0; color: var(--muted); font-size: 15.5px; line-height: 1.62; }
+    .wahs-pillar-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; margin-top: 24px; }
+    .wahs-pillar-grid article { padding: 24px 26px; background: #ffffff; border: 1px solid var(--line); border-radius: 12px; }
+    .wahs-pillar-grid h3 { margin: 8px 0 10px; font-size: 19px; color: var(--ink); }
+    .wahs-pillar-grid p { margin: 0; color: var(--muted); font-size: 15.5px; line-height: 1.62; }
+    .wahs-eval-panel { margin-top: 22px; padding: 24px 28px; background: var(--paper); border: 1px solid var(--line); border-left: 4px solid var(--teal); border-radius: 12px; max-width: 100%; }
+    .wahs-eval-panel h3 { margin: 0 0 10px; font-size: 19px; color: var(--ink); }
+    .wahs-eval-panel p { margin: 0 0 12px; color: var(--muted); font-size: 15.5px; line-height: 1.64; max-width: 880px; }
+    .wahs-eval-panel p:last-child { margin-bottom: 0; }
+    .wahs-eval-links { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 14px; font-size: 15px; }
+    .wahs-eval-links a { color: var(--purple); font-weight: 650; text-decoration: none; }
+    .wahs-eval-links a:hover { text-decoration: underline; }
+    @media (max-width: 860px) {
+      .wahs-app-grid, .wahs-video-grid, .wahs-steps, .wahs-pillar-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -147,6 +106,7 @@
   </div>
 
   <main id="main-content" tabindex="-1">
+    <!-- INTRO -->
     <section class="project-intro page-width">
       <nav class="breadcrumbs" aria-label="Breadcrumb">
         <a href="/index.html">OpenClinAI</a>
@@ -158,265 +118,268 @@
 
       <div class="overview-grid">
         <div>
-          <p class="section-kicker">UW CIRG &amp; WA Department of Health Collaboration</p>
-          <h1>Patient-mediated health summaries from real-world FHIR R4 records.</h1>
+          <p class="section-kicker">Exploratory Applied Research &middot; University of Washington</p>
+          <h1>Patient-controlled health summaries and source-linked question answering.</h1>
           <p class="overview-lead">
-            People receiving care across multiple clinics, hospitals, and pharmacies accumulate fragmented multi-megabyte FHIR R4 exports filled with repeated lab panels, duplicate notes, and conflicting medication orders. <strong><code>wahs-engine</code></strong> is our standalone, zero-privilege middleware that pools a signed-in patient's records via <code>fhir-auth</code>, condenses them verbatim-first, layers five modular clinical enrichers, and streams source-cited answers from open-weight models pinned at <code>64k</code> context.
+            WA Health Summary (WAHS) is a patient-controlled health summary platform developed at the University of Washington Clinical Informatics Research Group. This exploratory project studies how individuals can bring together clinical records across separate clinics, hospitals, and laboratories, curate and share a concise summary with their care team, and ask plain-language questions about their own medical history with every statement linked to its originating record.
+          </p>
+          <p class="wahs-status-note">
+            <strong>Project status:</strong> WAHS is an active research and development prototype. All patient records shown across this site and in recorded demonstrations are synthetic or de-identified examples.
           </p>
           <div class="project-actions">
-            <a class="button button-primary" href="/wahs/architecture/index.html">Explore Engine Architecture <span aria-hidden="true">→</span></a>
-            <a class="button button-secondary" href="https://wahs-demo.openclinai.org/">Open Live Engine Sandbox <span aria-hidden="true">↗</span></a>
-            <a class="text-link" href="/wahs/llm-strategy/index.html">Read LLM Strategy &amp; Nov 26 Benchmarks <span aria-hidden="true">→</span></a>
+            <a class="button button-primary" href="#app-demos">View recorded demonstrations <span aria-hidden="true">↓</span></a>
+            <a class="button button-secondary" href="#how-it-works">How Ask WAHS works <span aria-hidden="true">↓</span></a>
+            <a class="text-link" href="#our-work">Research &amp; engineering focus <span aria-hidden="true">↓</span></a>
           </div>
         </div>
       </div>
-
-      <div class="wahs-boundary-grid" role="region" aria-label="Live WAHS surfaces">
-        <div class="wahs-boundary-card">
-          <span class="pill-badge">Full FHIR R4 Stack &middot; UW CIRG &amp; WA DOH</span>
-          <h2>WAHS Web App &amp; Mobile Companion</h2>
-          <p>
-            Two interoperable patient applications (<a href="https://github.com/pmanko/shl-ips"><code>shl-ips</code> ↗</a> and <a href="https://github.com/pmanko/wahs-mobile-frontend"><code>wahs-mobile-frontend</code> ↗</a>) backed by HAPI FHIR, Keycloak OIDC, <code>fhir-auth</code>, SMART Health Links, and <code>wahs-engine</code> running <strong>Gemma 4 26B</strong> (<code>wahs-26b</code> + <code>16k</code> + <code>core-enriched</code>) on UW CIRG H200 GPUs.
-          </p>
-        </div>
-        <div class="wahs-boundary-card sandbox">
-          <span class="pill-badge teal">Zero-Logic Thin Shell &middot; OpenClinAI</span>
-          <h2>WAHS Explorer Sandbox</h2>
-          <p>
-            Interactive public workbench (<a href="https://wahs-demo.openclinai.org/"><code>wahs-demo.openclinai.org</code> ↗</a>) backed by an isolated <code>wahs-sandbox-engine</code>. Browse 10 real FHIR R4 bundles (up to 22 MB) or upload your own, inspect live engine condensation and enrichers with zero sign-in, and stream via UW GPU or a local BYO-model.
-          </p>
-        </div>
-      </div>
     </section>
 
-    <!-- LIVE APP DEMO VIDEOS -->
-    <section class="pillar-section alt-bg" id="app-demos" aria-labelledby="demos-heading">
-      <div class="page-width">
-        <p class="section-kicker">Live Applications in Action</p>
-        <h2 id="demos-heading">Watch the Web App and Mobile Companion stream live from <code>wahs-engine</code></h2>
-        <p style="max-width:860px; color:var(--muted); font-size:16px; line-height:1.6;">
-          Both recordings were captured live against the local full-stack WAHS environment (HAPI FHIR R4, Keycloak OIDC, <code>fhir-auth</code>, and <code>wahs-engine</code> streaming <code>wahs-26b</code> at <code>16k</code> chart budget with <code>Enrichers: 4/5 (Core)</code> pinned to a warm <code>64k</code> KV cache).
-        </p>
-
-        <div class="demo-video-grid">
-          <article class="demo-video-card">
-            <span class="pill-badge">Web App &middot; <code>shl-ips</code></span>
-            <h3>Multi-source IPS chart, 4/5 Core Enrichers &amp; FHIR Provenance Drawer</h3>
-            <p>
-              Margaret Chen's 448-resource geriatrics record: inspect pooled clinic sources, open the compact <code>Enrichers: 4/5 (Core)</code> menu, stream a medication-safety reply, and click inline <code>[1]</code> to inspect the raw FHIR R4 record.
-            </p>
-            <video controls playsinline preload="metadata"
-              poster="https://storage.googleapis.com/openclinai-media/wahs/wahs-web-app-demo-20261126.webp"
-              aria-label="Live recording of WA Health Summary Web App streaming Ask WAHS with 4 of 5 core enrichers and opening the FHIR provenance drawer for Margaret Chen.">
-              <source src="https://storage.googleapis.com/openclinai-media/wahs/wahs-web-app-demo-20261126.mp4" type="video/mp4" />
-            </video>
-          </article>
-
-          <article class="demo-video-card mobile-card">
-            <span class="pill-badge teal">Mobile Companion &middot; <code>wahs-mobile-frontend</code></span>
-            <h3>1-tap Keycloak sign-in, Scope &amp; AI Config, and mobile citations</h3>
-            <p>
-              Phone-sized companion flow: sign into Margaret Chen's Keycloak account, review Health Summary cards, inspect <code>Scope &amp; AI Config</code>, stream an answer, and tap a citation badge.
-            </p>
-            <video controls playsinline preload="metadata"
-              poster="https://storage.googleapis.com/openclinai-media/wahs/wahs-mobile-app-demo-20261126.webp"
-              aria-label="Live recording of WA Health Summary Mobile Companion signing in as Margaret Chen, inspecting Scope and AI Config, streaming Ask WAHS, and opening a mobile citation sheet.">
-              <source src="https://storage.googleapis.com/openclinai-media/wahs/wahs-mobile-app-demo-20261126.mp4" type="video/mp4" />
-            </video>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- 5-STAGE SUMMARY -->
-    <section class="page-width project-workflow" id="how-it-works">
-      <p class="section-kicker">End-to-End Pipeline</p>
-      <h2>Five stages from fragmented FHIR exports to verifiable answers</h2>
-      <div class="workflow-grid four-up">
-        <article>
-          <span>01 &middot; FHIR Sources &amp; Zero-Privilege Auth</span>
-          <h3>Forward caller JWTs through <code>fhir-auth</code></h3>
-          <p>
-            <code>wahs-engine</code> holds zero HAPI admin credentials. It forwards the patient's Keycloak token to <code>fhir-auth</code>, pools linked clinic datasets plus patient-authored <em>My Story</em> entries, and checks <code>meta.lastUpdated</code> stamps in ~10 ms.
-          </p>
-        </article>
-        <article>
-          <span>02 &middot; Verbatim-First Condensation</span>
-          <h3>Keep charts verbatim when they fit; fold smoothly when tight</h3>
-          <p>
-            <code>wahs_core</code> strips FHIR JSON overhead and duplicate notes via SHA-256, keeping records verbatim at Tier 0 whenever capacity allows, and otherwise folding repeated series (Tier 1) and protecting the <a href="https://build.fhir.org/ig/HL7/fhir-ips/">HL7 IPS safety core ↗</a> (Tier 2) with explicit omission accounting.
-          </p>
-        </article>
-        <article>
-          <span>03 &middot; Modular Enricher Suffix</span>
-          <h3>Five generalizable enrichers with prefix KV-cache stability</h3>
-          <p>
-            <code>core-enriched</code> activates four generalizable modules (<code>temporal</code>, <code>terminology_kb</code>, <code>note_rag</code>, <code>overflow_lookup</code>, plus optional <code>guideline_kb</code>) strictly in the turn suffix so the leading chart prefix stays warm in GPU VRAM.
-          </p>
-        </article>
-        <article>
-          <span>04 &middot; 64k Streaming &amp; Provenance</span>
-          <h3>Verify every claim against its FHIR R4 source</h3>
-          <p>
-            OpenAI <code>/v1</code> streaming runs against <code>wahs-26b</code>, <code>12b</code>, or <code>e4b</code> pinned to a warm <code>64k</code> <code>num_ctx</code>, emitting immediate <code>context_ready</code> metadata, 15s keepalives, clickable <code>[N]</code> source drawers, and HL7 <code>AI-Provenance</code>.
-          </p>
-        </article>
-      </div>
-      <p style="margin-top:16px;">
-        <a class="text-link" href="/wahs/architecture/index.html">Inspect the full 5-stage diagram, worked Margaret Chen trace, and API contract <span aria-hidden="true">→</span></a>
+    <!-- CLINICAL CONTEXT -->
+    <section class="wahs-landing-section page-width" id="why-it-matters" aria-labelledby="why-heading">
+      <p class="section-kicker">Clinical Context</p>
+      <h2 id="why-heading">Why fragmented records make clinical connections difficult to see</h2>
+      <p>
+        Individuals managing ongoing health conditions routinely receive care across multiple organizations: primary care clinics, specialty practices, urgent care centers, independent laboratories, and inpatient hospitals. Each organization maintains its own documentation. When a patient retrieves and combines those records, the resulting file often spans hundreds or thousands of entries containing repeated laboratory panels, lengthy progress notes, and medication lists that do not fully agree across sites.
       </p>
+      <p>
+        Individual records can be accurate in isolation while cross-clinic risks remain difficult to spot. Identifying those connections normally requires reviewing separate timelines and clinical notes side by side, a demanding task for patients, caregivers, and clinicians working within brief appointment windows.
+      </p>
+
+      <div class="wahs-story">
+        <span class="wahs-story-label">Illustrative Scenario &middot; Synthetic Patient</span>
+        <h3>Reviewing Margaret's medications across clinics</h3>
+        <p>
+          Margaret is an older adult in her early eighties who receives care across several clinics, including a geriatrics practice and a sleep medicine clinic. Over time, two separate providers independently prescribed sedating medications, while another clinic continued two cholesterol medications from the same drug class. Her chart also documents a recent emergency department visit following a fall.
+        </p>
+        <p>
+          Every piece of that history is present in her combined record, distributed across different clinic exports and dates. When Margaret asks WAHS, <em>"What active medications am I taking, and are there any fall or sedation risks I should ask my doctor about?"</em>, the system brings those entries together, explains the overlapping prescriptions and recent fall history in clear language, suggests specific questions for her care team, and links each statement directly to the underlying clinic record and date.
+        </p>
+      </div>
     </section>
 
-    <!-- LATEST NOV 26 BENCHMARK HEADLINES -->
-    <section class="pillar-section alt-bg" id="latest-evidence" aria-labelledby="evidence-heading">
-      <div class="page-width">
-        <p class="section-kicker">Published November 26, 2026 Evaluations</p>
-        <h2 id="evidence-heading">Blinded two-judge H200 readouts backing our shipped defaults</h2>
-        <p style="max-width:860px; color:var(--muted); font-size:16px; line-height:1.6;">
-          Every configuration default in <code>wahs-engine</code> (<code>wahs-26b</code>, <code>16k</code> chart budget, <code>core-enriched</code> 4/5 enrichers, and <code>64k</code> warm <code>num_ctx</code>) is grounded in blinded two-judge evaluations published on <code>reports.openclinai.org</code>.
+    <!-- USER-FACING APPLICATIONS -->
+    <section class="wahs-landing-section page-width" id="apps" aria-labelledby="apps-heading">
+      <p class="section-kicker">User-Facing Applications</p>
+      <h2 id="apps-heading">The WAHS web application and mobile companion</h2>
+      <p>
+        WA Health Summary provides two patient-facing interfaces connected to the same underlying health record and interoperability standards. Updates made in one interface are immediately available in the other.
+      </p>
+
+      <div class="wahs-app-grid">
+        <article class="wahs-app-card">
+          <span class="pill-badge">Web Application</span>
+          <h3>WAHS web app</h3>
+          <p>A comprehensive browser workspace for organizing multi-provider records and preparing clinical summaries.</p>
+          <ul>
+            <li>Aggregate clinical records from multiple health systems and review conditions, medications, allergies, immunizations, and lab results in one view</li>
+            <li>Author personal health context, including personal health history, care goals, and care preferences</li>
+            <li>Curate an International Patient Summary and share it with clinicians or family members via secure link or QR code</li>
+            <li>Ask questions across the combined record using <strong>Ask WAHS</strong> and inspect the full clinical record behind any cited claim</li>
+          </ul>
+        </article>
+
+        <article class="wahs-app-card">
+          <span class="pill-badge teal">Mobile Companion</span>
+          <h3>WAHS mobile companion</h3>
+          <p>A streamlined phone interface designed for everyday reference and point-of-care appointments.</p>
+          <ul>
+            <li>Review a clear summary of active conditions, medications, allergies, and recent clinical updates</li>
+            <li>Record or update personal health notes from a phone so new context is reflected immediately</li>
+            <li>Present a shareable QR health summary during clinic, urgent care, or emergency visits</li>
+            <li>Use <strong>Ask WAHS</strong> to prepare for appointments and tap any numbered reference to inspect its source record</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <!-- DEMO VIDEOS -->
+    <section class="wahs-landing-section page-width" id="app-demos" aria-labelledby="demos-heading">
+      <p class="section-kicker">Recorded Demonstrations</p>
+      <h2 id="demos-heading">Ask WAHS in the web application and mobile companion</h2>
+      <p>
+        Both recordings below use Margaret's synthetic multi-clinic record. Each clinical statement in the response carries a numbered source badge; selecting any badge opens the originating medication order, laboratory result, or clinical note for verification.
+      </p>
+
+      <div class="wahs-video-grid">
+        <article class="wahs-video-card">
+          <h3>WAHS web app</h3>
+          <p>Reviewing Margaret's combined multi-clinic chart, asking about active medications and fall risks, and inspecting the source record behind a cited finding.</p>
+          <video controls playsinline preload="metadata"
+            poster="https://storage.googleapis.com/openclinai-media/wahs/wahs-web-app-demo-20261126.webp"
+            aria-label="Screen recording of the WA Health Summary web application answering a question about Margaret's medications and fall risks, then opening the underlying clinical record for a cited point.">
+            <source src="https://storage.googleapis.com/openclinai-media/wahs/wahs-web-app-demo-20261126.mp4" type="video/mp4" />
+          </video>
+        </article>
+
+        <article class="wahs-video-card phone">
+          <h3>WAHS mobile companion</h3>
+          <p>Signing into Margaret's account on mobile, reviewing her health summary, asking about medication safety, and inspecting cited clinical records.</p>
+          <video controls playsinline preload="metadata"
+            poster="https://storage.googleapis.com/openclinai-media/wahs/wahs-mobile-app-demo-20261126.webp"
+            aria-label="Screen recording of the WA Health Summary mobile companion signing into a synthetic patient account, viewing her health summary, asking about medications, and opening a cited source record.">
+            <source src="https://storage.googleapis.com/openclinai-media/wahs/wahs-mobile-app-demo-20261126.mp4" type="video/mp4" />
+          </video>
+        </article>
+      </div>
+    </section>
+
+    <!-- HOW ASK WAHS WORKS -->
+    <section class="wahs-landing-section page-width" id="how-it-works" aria-labelledby="how-heading">
+      <p class="section-kicker">End-to-End Request Flow</p>
+      <h2 id="how-heading">What happens when a question is asked</h2>
+      <p>
+        Behind the Ask WAHS interface in both applications, the WAHS AI engine prepares the patient's record and coordinates with an open-weight language model through four structured stages.
+      </p>
+
+      <ol class="wahs-steps">
+        <li>
+          <h3>Authorized record retrieval</h3>
+          <p>
+            Retrieval runs strictly under the signed-in user's own session credentials rather than administrative database keys. The system gathers clinical records imported from external clinics, hospitals, and laboratories alongside patient-authored notes and care goals, checking modification timestamps so newly added records or personal updates are reflected immediately.
+          </p>
+        </li>
+        <li>
+          <h3>Record cleaning and prioritization</h3>
+          <p>
+            Raw multi-provider exports contain formatting clutter, invalidated entries, and exact duplicate notes that make key clinical details harder to locate. Before an AI model reads the chart, duplicates and boilerplate are removed and entries are organized chronologically. Complete records are kept verbatim whenever space allows; on very large multi-year histories, routine repeat series are condensed while core safety items (allergies, active medications, active conditions, and implanted devices) are always preserved and any omitted sections are logged explicitly.
+          </p>
+        </li>
+        <li>
+          <h3>Question-relevant clinical context</h3>
+          <p>
+            Depending on what is asked, optional preparation modules attach structured clinical background alongside the organized chart without altering the original entries. These steps can highlight timeline intervals and laboratory trends, group medications by shared active ingredient or therapeutic class so cross-clinic duplications stand out, retrieve relevant passages from lengthy hospital or specialist notes, and attach public clinical guideline references.
+          </p>
+        </li>
+        <li>
+          <h3>Source-linked synthesis and explicit abstention</h3>
+          <p>
+            An open-weight language model generates a plain-language response in which every clinical claim carries a numbered reference tied to the specific medication order, laboratory result, or clinical note behind it, including its date and originating facility. Users can open any reference to inspect the source record directly. When a record does not contain the requested information, the system states what is absent rather than speculating.
+          </p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- RESEARCH & ENGINEERING FOCUS -->
+    <section class="wahs-landing-section page-width" id="our-work" aria-labelledby="work-heading">
+      <p class="section-kicker">Research &amp; Engineering Focus</p>
+      <h2 id="work-heading">Context engineering, model orchestration, infrastructure, and guardrails</h2>
+      <p>
+        Answering questions reliably over real-world clinical records requires substantially more than connecting a chat interface to a general-purpose language model. Multi-clinic exports vary widely in size and structure, models lose focus when given noisy raw files, and patient-facing health tools require strict boundaries around data access, provenance, and clinical safety. Our work on WAHS centers on four connected areas, guided by systematic evaluation.
+      </p>
+
+      <div class="wahs-pillar-grid">
+        <article>
+          <span class="pill-badge">01 &middot; Context Engineering</span>
+          <h3>Structuring and enriching the clinical record</h3>
+          <p>
+            We study how longitudinal clinical records should be cleaned, sized, and supplemented before a model reads them. In WAHS, that includes determining how much history an AI model can attend to reliably at once, preserving safety-critical lists when multi-year exports must be condensed, and testing which supporting context modules (such as laboratory trends, standardized drug-class mappings, or targeted note passages) genuinely improve comprehension rather than adding distracting detail.
+          </p>
+        </article>
+
+        <article>
+          <span class="pill-badge">02 &middot; Model Orchestration</span>
+          <h3>Coordinating preparation, retrieval, and generation</h3>
+          <p>
+            Rather than relying on unpredictable multi-step loops in which a model decides on its own whether and how to search a patient's chart, WAHS coordinates deterministic record preparation, question-aware recovery of passages from long or condensed notes, and single-pass open-weight model generation. Because each supporting step is modular, the system can run as a minimal baseline over the organized chart alone or incorporate richer clinical context where needed.
+          </p>
+        </article>
+
+        <article>
+          <span class="pill-badge teal">03 &middot; Serving Infrastructure</span>
+          <h3>Responsive, portable open-weight deployment</h3>
+          <p>
+            Both patient-facing applications stay lightweight by delegating record preparation and model communication to a shared, stateless service. We run open-weight language models on dedicated university GPU servers and local workstations, structure prompts so follow-up questions reuse the already-prepared chart without reprocessing delays, and use standard interfaces so public-health or health-system partners can swap models or hosting environments without rewriting applications.
+          </p>
+        </article>
+
+        <article id="privacy-safety">
+          <span class="pill-badge gold">04 &middot; Guardrails &amp; Governance</span>
+          <h3>Enforcing privacy, provenance, and clinical boundaries</h3>
+          <p>
+            Safety and privacy controls are built into the request path rather than left to prompt wording alone. Every query is restricted to the signed-in person's authorized records with no server database storing chat conversations; inline references are validated against real chart entries so every statement can be verified; undocumented procedures or conditions trigger explicit abstention instead of guesses; and outputs are framed to help individuals prepare for, never replace, discussions with a clinician.
+          </p>
+        </article>
+      </div>
+
+      <div class="wahs-eval-panel">
+        <h3>Evaluating approaches from simple baselines to richer pipelines</h3>
+        <p>
+          Because record condensation, context modules, and model selection in WAHS are modular, we evaluate configurations side by side on shared multi-clinic and hospital test cases rather than assuming that added complexity always helps. Our evaluation harness compares raw unorganized records, clean condensed records on their own, and progressive combinations of timeline, medication-class, note-retrieval, and guideline context across multiple open-weight model sizes.
         </p>
-
-        <div class="eval-headline-grid">
-          <article class="eval-headline-card featured">
-            <span class="pill-badge">Run 3A &middot; n = 225 Cells</span>
-            <div class="eval-big-stat">+7.5 to +7.6 pts</div>
-            <p>
-              <strong>32k Modular Enrichers Ablation:</strong> <code>core-enriched</code> (4/5 modules) lifted Gemma 4 26B from <code>72.3</code> to <strong><code>79.8 / 100</code></strong> (<code>0</code> confirmed unsafe) and Gemma 4 12B from <code>76.5</code> to <strong><code>84.1 / 100</code></strong> (<code>0</code> confirmed unsafe).
-            </p>
-            <a href="https://reports.openclinai.org/2026-11-26-wahs-32k-modular-enrichers-ablation-eval/index.html">Open Run 3A Report &amp; Transcripts ↗</a>
-          </article>
-
-          <article class="eval-headline-card featured">
-            <span class="pill-badge teal">Run 3B &middot; n = 144 Cells</span>
-            <div class="eval-big-stat">85.2 / 100 @ 16k</div>
-            <p>
-              <strong>16k Tier-2 Retrieval Recovery:</strong> On dense longitudinal charts with excerpted/omitted notes, <code>rag-overflow</code> lifted Gemma 4 26B at <code>16k</code> by <strong><code>+8.0 pts</code></strong> (<code>77.2 &rarr; 85.2</code>, <code>0</code> unsafe), beating un-enriched <code>32k</code> (<code>76.3</code>) at half the token budget.
-            </p>
-            <a href="https://reports.openclinai.org/2026-11-26-wahs-16k-tier2-retrieval-recovery-eval/index.html">Open Run 3B Report &amp; Transcripts ↗</a>
-          </article>
-
-          <article class="eval-headline-card">
-            <span class="pill-badge">Budget Sweep &middot; n = 192 Cells</span>
-            <div class="eval-big-stat">+8.1 to +10.6 pts</div>
-            <p>
-              <strong>16k to 128k Budget Sweep:</strong> Condensing multi-year records into <code>16k</code>&ndash;<code>32k</code> outperformed unbounded <code>128k</code> stuffing across every Gemma 4 tier (26B: <code>74.1 &rarr; 82.2</code>; 12B: <code>71.1 &rarr; 81.7</code>) while reducing confirmed unsafe answers.
-            </p>
-            <a href="https://reports.openclinai.org/2026-11-26-wahs-condensation-budget-sweep-eval/index.html">Open Budget Sweep Report ↗</a>
-          </article>
-
-          <article class="eval-headline-card">
-            <span class="pill-badge">Baseline vs Raw &middot; n = 450 Cells</span>
-            <div class="eval-big-stat">+30.5 to +33.8 pts</div>
-            <p>
-              <strong>Engine Baseline vs. Raw FHIR JSON:</strong> Even without enrichers, verbatim-first condensation lifted Gemma 4 26B from <code>45.1</code> to <strong><code>78.9 / 100</code></strong> (<code>+33.8</code>) and 12B from <code>47.1</code> to <strong><code>77.9 / 100</code></strong> (<code>+30.8</code>).
-            </p>
-            <a href="https://reports.openclinai.org/2026-11-26-wahs-baseline-engine-vs-direct-eval/index.html">Open Engine vs. Raw FHIR Report ↗</a>
-          </article>
+        <p>
+          Generated answers are assessed against the underlying clinical records for factual accuracy, completeness, source-citation fidelity, response latency, and clinical safety, allowing architectural defaults to follow measured performance improvements.
+        </p>
+        <div class="wahs-eval-links">
+          <a href="/wahs/llm-strategy/index.html">Read our AI strategy and design rationale <span aria-hidden="true">→</span></a>
+          <a href="https://reports.openclinai.org/#wahs">Browse published evaluation reports <span aria-hidden="true">↗</span></a>
         </div>
       </div>
     </section>
 
-    <!-- STANDARDS & RESOURCES -->
-    <section class="pillar-section" id="research-foundation" aria-labelledby="foundation-title">
-      <div class="page-width resource-section">
-        <p class="section-kicker">Standards &amp; Further Reading</p>
-        <h2 id="foundation-title">Grounded in health data standards and reproducible benchmarks</h2>
-        <div class="resource-groups">
-          <section class="resource-group">
-            <h3>WAHS Documentation &amp; Sandbox</h3>
-            <ul class="resource-links">
-              <li>
-                <a href="/wahs/architecture/index.html">
-                  <span class="resource-link-title"><span>Engine Architecture &amp; Builder Reference</span><span aria-hidden="true">→</span></span>
-                  <span class="resource-link-description">5-stage visual pipeline, Margaret Chen trace, OpenAI /v1 + SSE wire contract, <code>profiles.yaml</code>, 5 enrichers, and 64k <code>num_ctx</code> rules.</span>
-                </a>
-              </li>
-              <li>
-                <a href="/wahs/llm-strategy/index.html">
-                  <span class="resource-link-title"><span>LLM Strategy &amp; Design Rationale</span><span aria-hidden="true">→</span></span>
-                  <span class="resource-link-description">Plain-language team guide: what we tried, kept, and retired, Nov 26 evaluation findings, hardware sizing, and glossary.</span>
-                </a>
-              </li>
-              <li>
-                <a href="/wahs/walkthrough/index.html">
-                  <span class="resource-link-title"><span>3-Surface Walkthrough &amp; Experiments</span><span aria-hidden="true">→</span></span>
-                  <span class="resource-link-description">Hands-on guide across the Live Sandbox, Web App, and Mobile Companion with reproducible budget, enricher, and abstention experiments.</span>
-                </a>
-              </li>
-              <li>
-                <a href="https://wahs-demo.openclinai.org/">
-                  <span class="resource-link-title"><span>WAHS Explorer Sandbox</span><span aria-hidden="true">↗</span></span>
-                  <span class="resource-link-description">Zero-logic thin UI connected to isolated <code>wahs-sandbox-engine</code> with 10 mounted FHIR R4 bundles and custom JSON upload.</span>
-                </a>
-              </li>
-            </ul>
-          </section>
+    <!-- DOCUMENTATION & RESOURCES -->
+    <section class="wahs-landing-section page-width" id="learn-more" aria-labelledby="learn-heading">
+      <p class="section-kicker">Documentation &amp; Resources</p>
+      <h2 id="learn-heading">Explore WA Health Summary further</h2>
+      <div class="resource-groups">
+        <section class="resource-group">
+          <h3>Interactive tools &amp; guides</h3>
+          <ul class="resource-links">
+            <li>
+              <a href="https://wahs-demo.openclinai.org/">
+                <span class="resource-link-title"><span>WAHS Explorer</span><span aria-hidden="true">↗</span></span>
+                <span class="resource-link-description">Public interactive sandbox with ten synthetic and de-identified example records for browsing clinical entries, inspecting record preparation, and testing questions.</span>
+              </a>
+            </li>
+            <li>
+              <a href="/wahs/walkthrough/index.html">
+                <span class="resource-link-title"><span>Walkthrough</span><span aria-hidden="true">→</span></span>
+                <span class="resource-link-description">Step-by-step guide covering the web application, mobile companion, and public Explorer, with reproducible exercises.</span>
+              </a>
+            </li>
+          </ul>
+        </section>
 
-          <section class="resource-group">
-            <h3>Health Data &amp; AI Transparency Standards</h3>
-            <ul class="resource-links">
-              <li>
-                <a href="https://build.fhir.org/ig/HL7/fhir-ips/">
-                  <span class="resource-link-title"><span>HL7 International Patient Summary (IPS) &amp; ISO 27269</span><span aria-hidden="true">↗</span></span>
-                  <span class="resource-link-description">Defines the mandatory safety core (allergies, active medications, active problems, implants) preserved first under Tier 2 budgets.</span>
-                </a>
-              </li>
-              <li>
-                <a href="https://hl7.org/fhir/us/core/">
-                  <span class="resource-link-title"><span>HL7 US Core (FHIR R4) &amp; SMART Health Links</span><span aria-hidden="true">↗</span></span>
-                  <span class="resource-link-description">Longitudinal record retrieval and patient-mediated sharing specifications implemented by WA Health Summary.</span>
-                </a>
-              </li>
-              <li>
-                <a href="https://build.fhir.org/ig/HL7/aitransparency-ig/branches/main/en/StructureDefinition-AI-Provenance.html">
-                  <span class="resource-link-title"><span>HL7 AI Transparency on FHIR (AI-Provenance)</span><span aria-hidden="true">↗</span></span>
-                  <span class="resource-link-description">Emitted on every response to separate supporting FHIR records, recorded model identity, active enrichers, and human review requirements.</span>
-                </a>
-              </li>
-              <li>
-                <a href="https://www.nlm.nih.gov/research/umls/rxnorm/index.html">
-                  <span class="resource-link-title"><span>CIEL, NLM RxNorm, LOINC &amp; CDC ACIP</span><span aria-hidden="true">↗</span></span>
-                  <span class="resource-link-description">Open public standards powering the deterministic <code>terminology_kb</code> enricher without vendor-proprietary black boxes.</span>
-                </a>
-              </li>
-            </ul>
-          </section>
+        <section class="resource-group">
+          <h3>System design &amp; strategy</h3>
+          <ul class="resource-links">
+            <li>
+              <a href="/wahs/architecture/index.html">
+                <span class="resource-link-title"><span>Architecture</span><span aria-hidden="true">→</span></span>
+                <span class="resource-link-description">End-to-end technical design and builder reference covering data flow, security boundaries, context preparation, and service interfaces.</span>
+              </a>
+            </li>
+            <li>
+              <a href="/wahs/llm-strategy/index.html">
+                <span class="resource-link-title"><span>LLM Strategy</span><span aria-hidden="true">→</span></span>
+                <span class="resource-link-description">Design rationale, approaches evaluated and retired, open-weight model selection, and benchmark findings.</span>
+              </a>
+            </li>
+          </ul>
+        </section>
 
-          <section class="resource-group" id="earlier-studies">
-            <h3>Earlier Benchmark Studies (Archive)</h3>
-            <ul class="resource-links">
-              <li>
-                <a href="https://reports.openclinai.org/2026-11-26-wahs-128k-decoded-raw-vs-condensed-eval/index.html">
-                  <span class="resource-link-title"><span>Nov 26 &middot; 128k Decoded Raw vs. Condensed (n = 300)</span><span aria-hidden="true">↗</span></span>
-                  <span class="resource-link-description">Even when full records fit at 128k, condensed charts outperformed raw decoded FHIR by +5.7 to +7.9 points across Gemma 4 tiers.</span>
-                </a>
-              </li>
-              <li>
-                <a href="https://reports.openclinai.org/2026-11-16-wahs-engine-4pathway-sheet-eval/index.html">
-                  <span class="resource-link-title"><span>Nov 16 &middot; 4-Pathway H200 Study (n = 900)</span><span aria-hidden="true">↗</span></span>
-                  <span class="resource-link-description">Established 99.8% resolved <code>[N]</code> citations and showed condensation + enrichment outperforms brittle 2k agentic tool loops.</span>
-                </a>
-              </li>
-              <li>
-                <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">
-                  <span class="resource-link-title"><span>Nov 5 &middot; 9-Model Cross-Family Screening (n = 972)</span><span aria-hidden="true">↗</span></span>
-                  <span class="resource-link-description">Evaluated Gemma 4, Qwen 3, and Llama 3.x / Hermes 3, establishing Gemma 4 26B and 12B as the lead open-weight tiers.</span>
-                </a>
-              </li>
-              <li>
-                <a href="https://reports.openclinai.org/#wahs">
-                  <span class="resource-link-title"><span>Browse All Published WAHS Reports</span><span aria-hidden="true">↗</span></span>
-                  <span class="resource-link-description">Complete archive of deterministic gates, condensation ablations, and live multi-judge packets.</span>
-                </a>
-              </li>
-            </ul>
-          </section>
-        </div>
-
-        <p class="scope-note">
-          Experimental research and demonstration software using synthetic and de-identified patient records. AI outputs and automated checks require human review and do not establish clinical safety or effectiveness.
-        </p>
+        <section class="resource-group">
+          <h3>Project background &amp; evidence</h3>
+          <ul class="resource-links">
+            <li>
+              <a href="https://myhealthsummary.demo.cirg.uw.edu/">
+                <span class="resource-link-title"><span>WA Health Summary reference application</span><span aria-hidden="true">↗</span></span>
+                <span class="resource-link-description">Reference patient health summary application developed by the University of Washington Clinical Informatics Research Group.</span>
+              </a>
+            </li>
+            <li>
+              <a href="https://reports.openclinai.org/#wahs">
+                <span class="resource-link-title"><span>Evaluation reports</span><span aria-hidden="true">↗</span></span>
+                <span class="resource-link-description">Published side-by-side evaluation packets, methodology notes, and full question-level transcripts.</span>
+              </a>
+            </li>
+          </ul>
+        </section>
       </div>
+
+      <p class="scope-note">
+        WA Health Summary is an experimental research and demonstration project using synthetic and de-identified records. AI-generated outputs can contain errors and do not constitute medical advice or replace clinical review.
+      </p>
     </section>
   </main>
 
