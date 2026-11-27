@@ -1,12 +1,9 @@
-"""Check the shareable report's navigation, assets and optional host wiring."""
+"""Check the shareable WAHS report navigation, sandbox ARIA invariants, and thin-shell contract."""
 
 from html.parser import HTMLParser
-import json
 from pathlib import Path
 from urllib.parse import urlparse
 from zipfile import ZipFile
-
-
 
 ROOT = Path(__file__).resolve().parents[2]
 REPORT = ROOT / "landing" / "wahs"
@@ -79,34 +76,20 @@ def test_wahs_demo_accessibility_and_aria_tabpanel_wiring():
             assert inp.get("aria-label") or inp.get("id"), f"Unlabeled input: {inp}"
 
 
-def test_wahs_demo_executable_data_integrity():
-    """Integrity of executable data: demo app references immutable media bundle and local artifact parses cleanly when present."""
+def test_wahs_demo_is_zero_business_logic_thin_shell():
+    """Invariant: wahs/demo/index.html delegates all FHIR condensation, enrichers, and prompts to wahs-sandbox-engine."""
     demo_html = (DEMO / "index.html").read_text(encoding="utf-8")
-    assert "https://storage.googleapis.com/openclinai-media/wahs/wahs_demo_data-20261109.js" in demo_html
-    data_path = ARTIFACTS_WAHS / "wahs_demo_data.js"
-    if not data_path.is_file():
-        return
-    raw_js = data_path.read_text(encoding="utf-8")
-    prefix = "window.WAHS_DEMO_DATA = "
-    idx = raw_js.find(prefix)
-    assert idx != -1
-    payload = json.loads(raw_js[idx + len(prefix) :].rstrip().rstrip(";"))
-    persona_ids = payload.get("primary_persona_ids") or []
-    patients = payload.get("patients") or {}
-    assert len(persona_ids) >= 10
-    assert "MIMIC_10014354_ICU_Heme_Cardiorenal_set_b" in persona_ids
-    assert "MIMIC_10019003_ICU_Hepatopulmonary_set_b" in persona_ids
-    high_volume_count = 0
-    for pid in persona_ids:
-        assert pid in patients
-        p = patients[pid]
-        assert p["fhir_browser"]["total_bundle_entries"] > 0
-        assert len(p["fhir_browser"]["resources"]) > 0
-        for mode in ("lossless_structural", "hierarchical"):
-            for budget in ("262144", "131072", "65536", "32768", "16384", "8192", "4096", "2048", "1024"):
-                cell = p["condensation_matrix"][mode][budget]
-                assert cell["actual_tokens"] <= int(budget)
-        if p["condensation_matrix"]["lossless_structural"]["262144"]["actual_tokens"] > 65536:
-            high_volume_count += 1
-        assert len(p["skills"]) >= 9
-    assert high_volume_count >= 4
+    assert "/v1/wahs/demo-bundles" in demo_html
+    assert "/v1/wahs/context/preview" in demo_html
+    assert "/v1/chat/completions" in demo_html
+    assert "/v1/wahs/profiles" in demo_html
+    # Retired browser-side business logic, precomputed blob, and Cloud Run relay must stay removed
+    for forbidden in (
+        "wahs_demo_data-20261109.js",
+        "wahs-gpu-auth-relay",
+        "buildClientHubEnrichment",
+        "buildActivePromptPayload",
+        "SENSITIVE_SDOH_REGEX",
+        "med-agent-hub",
+    ):
+        assert forbidden not in demo_html, f"Retired logic still referenced in wahs/demo/index.html: {forbidden}"

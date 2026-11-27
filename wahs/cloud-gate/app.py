@@ -48,7 +48,8 @@ DEFAULT_WHITELIST_EMAILS = (
 DEFAULT_ALLOWED_HOSTS = (
     "wahealth.openclinai.org,"
     "wahs-web.openclinai.org,"
-    "wahs-mobile.openclinai.org"
+    "wahs-mobile.openclinai.org,"
+    "wahs-demo.openclinai.org"
 )
 DEFAULT_PORTAL_URL = "https://wahealth.openclinai.org/"
 DEFAULT_WEB_APP_URL = "https://wahs-web.openclinai.org/"
