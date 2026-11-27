@@ -345,7 +345,8 @@ with urllib.request.urlopen(s_req, timeout=90) as resp:
         if obj.get('error'):
             raise AssertionError(f'SSE error chunk: {obj}')
         xw = obj.get('x_wahs') or {}
-        if xw.get('event') == 'context_ready':
+        xws = obj.get('x_wahs_stream') or {}
+        if xws.get('event') == 'context_ready' or xw.get('event') == 'context_ready':
             saw_ctx = True
         cond = xw.get('condensation') or {}
         if cond.get('upstream_num_ctx') is not None:

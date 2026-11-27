@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>WAHS AI Architecture &amp; Model Strategy · OpenClinAI</title>
-  <meta name="description" content="Plain-language guide to how Washington Health Summary (WAHS) answers patient questions with open-weight AI: the system components, a worked example, the three approaches compared, the pilot model, and project status." />
+  <title>WAHS LLM Strategy &amp; Design Rationale &middot; OpenClinAI</title>
+  <meta name="description" content="Plain-language guide for the UW CIRG and WA DOH team: why WAHS uses verbatim-first condensation, 5 modular enrichers, Gemma 4 26B pinned at 64k context, what we tried and retired, and November 26 H200 benchmark evidence." />
   <link rel="canonical" href="https://openclinai.org/wahs/llm-strategy/" />
   <meta property="og:url" content="https://openclinai.org/wahs/llm-strategy/" />
-  <meta property="og:title" content="WAHS AI Architecture &amp; Model Strategy · OpenClinAI" />
-  <meta property="og:description" content="How WAHS gives an open-weight model the right parts of a patient record: condensation first, a lean standalone middle service, Gemma 4 26B on H200 (with Gemma 4 12B as the compact option), and the benchmark evidence behind each choice." />
-  <meta property="og:image" content="https://openclinai.org/wahs/walkthrough/media/step2-condensation-8k-vs-1k.webp" />
+  <meta property="og:title" content="WAHS LLM Strategy &amp; Design Rationale &middot; OpenClinAI" />
+  <meta property="og:description" content="Team strategy and evidence behind wahs-engine: November 26 Run 3A and Run 3B findings, what we retired and why, model tiers, and plain-English glossary." />
+  <meta property="og:image" content="https://storage.googleapis.com/openclinai-media/wahs/wahs-web-app-demo-20261126.webp" />
   <meta name="theme-color" content="#4b2e83" />
   <meta name="twitter:card" content="summary_large_image" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -55,13 +55,11 @@
       <span class="wahs-subnav-label">WA Health Summary</span>
       <nav class="wahs-subnav" aria-label="WA Health Summary navigation">
         <a href="/wahs/index.html">Overview</a>
-        <a href="/wahs/llm-strategy/index.html" aria-current="page">AI Strategy &amp; Architecture</a>
-        <a href="/wahs/engine-reference/index.html">Engine Reference</a>
-        <a href="/wahs/engine-audit/index.html">Design &amp; Rationale</a>
-        <a href="/wahs/walkthrough/index.html">Sandbox Walkthrough</a>
+        <a href="/wahs/architecture/index.html">Architecture</a>
+        <a href="/wahs/llm-strategy/index.html" aria-current="page">LLM Strategy</a>
+        <a href="/wahs/walkthrough/index.html">Walkthrough</a>
         <a href="https://wahs-demo.openclinai.org/">Live Sandbox <span aria-hidden="true">↗</span></a>
-        <a href="https://reports.openclinai.org/2026-11-16-wahs-engine-4pathway-sheet-eval/index.html">4-Pathway H200 Eval <span aria-hidden="true">↗</span></a>
-        <a href="https://reports.openclinai.org/2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration/index.html">16k vs. 32k Eval <span aria-hidden="true">↗</span></a>
+        <a href="https://reports.openclinai.org/#wahs">Reports <span aria-hidden="true">↗</span></a>
       </nav>
     </div>
   </div>
@@ -71,17 +69,14 @@
       <nav class="doc-toc" aria-label="On this page">
         <p class="doc-toc-title">On this page</p>
         <ol>
-          <li><a href="#system-components">System components</a></li>
-          <li><a href="#worked-example">Worked example</a></li>
-          <li><a href="#three-approaches">Approaches compared</a></li>
-          <li><a href="#test-evidence">Test evidence</a></li>
-          <li><a href="#model-selection">Model selection</a></li>
-          <li><a href="#design-clarifications">Design clarifications</a></li>
-          <li><a href="#status">Project status</a></li>
+          <li><a href="#patient-workflows">Why this design</a></li>
+          <li><a href="#what-we-retired">What we retired</a></li>
+          <li><a href="#test-evidence">Nov 26 benchmarks</a></li>
+          <li><a href="#model-selection">Models &amp; hardware</a></li>
+          <li><a href="#security-governance">Security &amp; governance</a></li>
           <li><a href="#glossary">Glossary</a></li>
-          <li><a href="#technical-reference">Technical reference</a></li>
         </ol>
-        <p class="doc-toc-more">For developers: the <a href="/wahs/engine-reference/index.html">Engine reference</a>.</p>
+        <p class="doc-toc-more">Technical spec: <a href="/wahs/architecture/index.html">Architecture &amp; Reference</a></p>
       </nav>
 
       <div class="doc-body">
@@ -93,482 +88,259 @@
             <span aria-hidden="true">/</span>
             <a href="/wahs/index.html">WA Health Summary (WAHS)</a>
             <span aria-hidden="true">/</span>
-            <span>AI Strategy &amp; Architecture</span>
+            <span>LLM Strategy</span>
           </nav>
 
-          <p class="section-kicker">Washington Health Summary (WAHS) · AI strategy</p>
-          <h1>WAHS AI architecture and model strategy.</h1>
+          <p class="section-kicker">Washington Health Summary (WAHS) &middot; Team Strategy &amp; Design Rationale</p>
+          <h1>Why WAHS pairs verbatim-first condensation with modular enrichers and Gemma 4.</h1>
           <p class="overview-lead">
-            When a patient asks about their health record, the AI needs the right parts of that record. It must never see another patient’s data, large records still have to fit, and the answer should not take long. This page explains the approach the UW CIRG &amp; WAHS team chose and the evidence behind it.
+            When a patient asks a question about a multi-clinic health record, an AI system must never see another patient's data, must keep large multi-year exports within reliable attention limits, must answer quickly, and must link every claim back to its source FHIR record. This guide explains the strategy the UW CIRG &amp; WAHS team converged on, what we tested and retired along the way, and the November 26 benchmark evidence behind our shipped defaults.
           </p>
           <p class="strategy-meta">
-            Updated November 2026 · Written for the whole project team · Developers: <a href="/wahs/engine-reference/index.html">Engine reference <span aria-hidden="true">→</span></a>
+            Updated November 26, 2026 &middot; Written for clinical, product, and engineering reviewers &middot; Developers: <a href="/wahs/architecture/index.html">Architecture &amp; Builder Reference <span aria-hidden="true">→</span></a>
           </p>
 
-          <div class="decision" role="region" aria-labelledby="decision-title">
-            <h2 id="decision-title">Key decisions</h2>
+          <div class="decision" role="region" aria-labelledby="strategy-decisions-title">
+            <h2 id="strategy-decisions-title">Shipped defaults (November 26, 2026)</h2>
             <ol>
-              <li><strong>Condense only when a record exceeds the available context budget.</strong> Continuous verbatim-first preprocessing keeps the full extracted record and clinical notes intact whenever they fit the model’s dynamic per-turn capacity (or an explicit test budget), applying uniform series folding and safety-core packing only when constrained.</li>
-              <li><strong>A lean, domain-neutral middle service does that work.</strong> The <a href="https://github.com/pmanko/wahs-engine">WAHS engine</a> sits between the WAHS app and the model server with zero database and zero hardcoded clinical heuristics or ad-hoc privacy rules, while optional research modules (note passage search, overflow lookup, longitudinal trends, and clinical reconciliation) sit behind a clean extension interface disabled by default.</li>
-              <li><strong>Open-weight model tiers backed by H200 benchmarks.</strong> Pilot deployments default to <code>wahs-26b</code> (<strong>Gemma 4 26B</strong>, with <code>wahs-12b</code> and <code>wahs-e4b</code> selectable). In our November 900-cell H200 benchmarks (evaluated at a fixed 16k calibration setting), <strong>Gemma 4 26B</strong> led at <strong>85.1 / 100</strong> with <strong>0 of 75 confirmed unsafe answers</strong> (3.4 s median wait), while <strong>Gemma 4 12B</strong> reached <strong>82.0 to 82.8 / 100</strong> on tighter GPU VRAM budgets.</li>
+              <li><strong>Default model &amp; context pin:</strong> <code>wahs-26b</code> (<strong>Gemma 4 26B</strong> on UW CIRG H200, with <code>wahs-12b</code> and <code>wahs-e4b</code> selectable) pinned at <code>64k</code> <code>num_ctx</code> for zero model reloads and sub-second warm prefill across every UI budget preset.</li>
+              <li><strong>Default chart budget &amp; enrichers:</strong> <code>16k</code> Auto chart budget with <strong><code>core-enriched</code> (4 of 5 generalizable modules)</strong>: <code>temporal</code>, <code>terminology_kb</code>, <code>note_rag</code>, and <code>overflow_lookup</code>, plus opt-in <code>guideline_kb</code> (5/5).</li>
+              <li><strong>Zero duplicated clinical logic across surfaces:</strong> The Web App (<code>shl-ips</code>), Mobile Companion, and Explorer Sandbox (<code>wahs-demo.openclinai.org</code>) are thin presentation clients over <code>wahs-engine</code>.</li>
             </ol>
           </div>
 
           <div class="stat-row">
             <div class="stat">
-              <p class="stat-value">90 to 99%</p>
-              <p class="stat-label">Reduction in record size when large longitudinal charts are condensed into budget.</p>
+              <p class="stat-value">+33.8 pts</p>
+              <p class="stat-label">Verbatim-first condensation lift on Gemma 4 26B over raw FHIR JSON (<code>45.1 &rarr; 78.9</code>, n = 450).</p>
             </div>
             <div class="stat">
-              <p class="stat-value">85.1 / 100</p>
-              <p class="stat-label">Gemma 4 26B + 4-Layer KB across 900 H200 runs, with 0 of 75 confirmed unsafe answers.</p>
+              <p class="stat-value">+7.5 pts</p>
+              <p class="stat-label">Additional Run 3A lift from <code>core-enriched</code> (4/5 modules) at 32k (<code>72.3 &rarr; 79.8</code>, <code>0</code> unsafe).</p>
             </div>
             <div class="stat">
-              <p class="stat-value">3.4 s</p>
-              <p class="stat-label">Median wait for an answer in the November UW CIRG H200 16k benchmark run.</p>
+              <p class="stat-value">85.2 / 100</p>
+              <p class="stat-label">Run 3B 16k Tier-2 retrieval recovery on Gemma 4 26B (<code>+8.0 pts</code>, <code>0</code> unsafe), beating 32k baseline.</p>
             </div>
           </div>
 
           <details class="doc-toc-mobile">
             <summary>On this page</summary>
             <ol>
-              <li><a href="#system-components">System components</a></li>
-              <li><a href="#worked-example">Worked example</a></li>
-              <li><a href="#three-approaches">Approaches compared</a></li>
-              <li><a href="#test-evidence">Test evidence</a></li>
-              <li><a href="#model-selection">Model selection</a></li>
-              <li><a href="#design-clarifications">Design clarifications</a></li>
-              <li><a href="#status">Project status</a></li>
+              <li><a href="#patient-workflows">Why this design</a></li>
+              <li><a href="#what-we-retired">What we retired</a></li>
+              <li><a href="#test-evidence">Nov 26 benchmarks</a></li>
+              <li><a href="#model-selection">Models &amp; hardware</a></li>
+              <li><a href="#security-governance">Security &amp; governance</a></li>
               <li><a href="#glossary">Glossary</a></li>
-              <li><a href="#technical-reference">Technical reference</a></li>
             </ol>
           </details>
         </section>
 
-        <section class="strategy-section" id="system-components" aria-labelledby="who-title" tabindex="-1">
-          <p class="section-kicker">System components</p>
-          <h2 id="who-title">Three components with separate responsibilities</h2>
-          <p>
-            A question passes through three components. Each can change without touching the other two.
-          </p>
-
-          <div class="flow-wrap">
-            <ol class="flow" aria-label="Path of a question through the system">
-              <li class="flow-box">
-                <p class="flow-owner">CIRG · patient-facing app</p>
-                <h3>WAHS app</h3>
-                <ul>
-                  <li>Shows the chat and the record.</li>
-                  <li>Keeps the conversation in the browser.</li>
-                  <li>Sends each question through its own server, never straight to the model.</li>
-                </ul>
-              </li>
-              <li class="flow-arrow" aria-hidden="true">
-                <span class="arrow arrow-h">→</span><span class="arrow arrow-v">↓</span>
-                question and sign-in
-              </li>
-              <li class="flow-box is-focus">
-                <p class="flow-owner">This project · middle service</p>
-                <h3>WAHS engine</h3>
-                <ul>
-                  <li>Fetches the signed-in patient’s current record via the <code>fhir-auth</code> proxy.</li>
-                  <li>Runs continuous 3-tier verbatim-first FHIR R4 condensation.</li>
-                  <li>Supports optional modular research extensions (disabled in baseline).</li>
-                  <li>Returns the answer with clickable <code>[N]</code> source provenance.</li>
-                </ul>
-                <p class="flow-side"><strong>Reads from the record store</strong> using the patient’s own sign-in. The engine has no access of its own, so it can only ever receive that patient’s records.</p>
-              </li>
-              <li class="flow-arrow" aria-hidden="true">
-                <span class="arrow arrow-h">→</span><span class="arrow arrow-v">↓</span>
-                condensed chart and question
-              </li>
-              <li class="flow-box">
-                <p class="flow-owner">UW CIRG GPU server · or an agency’s own</p>
-                <h3>Model server</h3>
-                <ul>
-                  <li>Runs the open-weight model: Gemma 4 26B by default (or 12B / E4B).</li>
-                  <li>Keeps nothing between requests.</li>
-                  <li>Can be any server that speaks the standard OpenAI chat format.</li>
-                </ul>
-              </li>
-            </ol>
-          </div>
-
-          <div class="strategy-callout">
-            <strong>The app does not call the model directly, for three reasons.</strong> The model server cannot check who is asking. A raw record is too large: on big charts the start of the record was cut off and answers scored 0 to 2.8 out of 100. And the answer would carry no links back to source records.
+        <!-- SECTION 1: WHY THIS DESIGN -->
+        <section class="strategy-section" id="patient-workflows" tabindex="-1" aria-labelledby="why-heading">
+          <p class="section-kicker">Design Rationale</p>
+          <h2 id="why-heading">Four lessons from building patient-mediated clinical Q&amp;A</h2>
+          <div class="strategy-grid-2">
+            <article class="strategy-card recommended">
+              <span class="strategy-badge">1. Raw FHIR Is Not LLM-Ready</span>
+              <h3>Structure beats brute-force context length</h3>
+              <p>
+                A single multi-year FHIR R4 export reaches 7,099 entries and 22 MB of nested JSON, repeated vitals, and Base64-encoded notes. Even when a full record fits inside a <code>128k</code> window, stuffing raw FHIR loses <code>30+</code> benchmark points compared with structured condensation, and stuffing <code>128k</code> condensed tokens still underperforms focused <code>16k</code>&ndash;<code>32k</code> windows by <code>8</code>&ndash;<code>10</code> points due to long-context attention dilution.
+              </p>
+            </article>
+            <article class="strategy-card">
+              <span class="strategy-badge secondary">2. Keep the Prefix Clean; Enrich in the Suffix</span>
+              <h3>Fast follow-ups require two prompt regions</h3>
+              <p>
+                Early prototypes injected question-specific hints inside the chart ledger, invalidating the GPU's KV cache on every turn and mutating clinical records before the model saw them. Separating an immutable <code>[1]..[N]</code> chart prefix from an append-only enricher suffix preserves sub-second warm follow-up prefill and lets evaluators ablate every module cleanly.
+              </p>
+            </article>
+            <article class="strategy-card">
+              <span class="strategy-badge secondary">3. Modular Retrieval Beats Agentic Tool Loops</span>
+              <h3>Single-pass retrieval recovery beats multi-step tool calling</h3>
+              <p>
+                In our November 16 H200 benchmark, multi-step agentic tool loops over <code>2k</code> summaries scored <code>65.8</code>&ndash;<code>69.4 / 100</code> with <code>7</code>&ndash;<code>10</code> confirmed unsafe answers out of 75 cases because models skipped tool calls or missed subtle cross-clinic risks. Deterministic pre-turn <code>note_rag</code> + <code>overflow_lookup</code> at <code>16k</code> achieved <code>85.2 / 100</code> with <code>0</code> unsafe answers in one single fast pass.
+              </p>
+            </article>
+            <article class="strategy-card">
+              <span class="strategy-badge">4. One Warm 64k KV Slot</span>
+              <h3>Match KV-cache allocation to real clinical ceilings</h3>
+              <p>
+                Dynamically resizing Ollama's <code>num_ctx</code> per prompt forced 30-second model reloads whenever a user switched budgets, while requesting <code>128k</code> caused GPU memory spills and timeouts. Pinning <code>WAHS_OLLAMA_NUM_CTX=65536</code> costs zero extra cold-load time vs <code>32k</code> (29.3s vs 30.2s) and gives instant warm reuse across every preset from <code>2k</code> to <code>64k</code>.
+              </p>
+            </article>
           </div>
         </section>
 
-        <section class="strategy-section" id="worked-example" aria-labelledby="example-title" tabindex="-1">
-          <p class="section-kicker">Worked example</p>
-          <h2 id="example-title">Tracing “What are my diabetes labs?” through four steps</h2>
+        <!-- SECTION 2: WHAT WE TRIED AND RETIRED -->
+        <section class="strategy-section" id="what-we-retired" tabindex="-1" aria-labelledby="retired-heading">
+          <p class="section-kicker">Iteration Discipline</p>
+          <h2 id="retired-heading">What we tried, what we retired, and why</h2>
           <p>
-            Record checking and condensation run inside the engine in about a tenth of a second. Almost all of the wait is the language model streaming its answer. Optional research modules (such as BM25 note search or clinical guideline rules) attach modularly during comparative benchmarks without complicating this baseline path.
+            Keeping the architecture lean meant actively deleting prototypes and workarounds once standalone <code>wahs-engine</code> proved cleaner and stronger.
           </p>
 
-          <ol class="steps">
-            <li>
-              <h3>The app sends the question and sign-in token.</h3>
-              <p>It sends the conversation so far alongside the patient’s sign-in token. The browser never uploads raw record bundles or opens a direct connection to the GPU server.</p>
-            </li>
-            <li>
-              <h3>The engine verifies freshness and retrieves scoped records. <span class="step-tag">Checked every turn</span></h3>
-              <p>It queries the FHIR authorization proxy using the caller’s own token and checks record modification stamps. Unchanged datasets reuse in-memory cache; newly imported or edited clinic records re-fetch automatically.</p>
-            </li>
-            <li>
-              <h3>The engine runs continuous verbatim-first condensation. <span class="step-tag">Query-invariant prefix</span></h3>
-              <p>Transport boilerplate and duplicate clinical note copies are stripped cleanly. When the chart fits the turn’s context budget, every item and decoded note stays verbatim; when constrained, repeated historical series fold uniformly while preserving the <a href="https://build.fhir.org/ig/HL7/fhir-ips/">HL7 IPS safety core</a>, numbering entries <span class="cite-pill">[1]…[N]</span> and reporting any omissions in a completeness manifest.</p>
-            </li>
-            <li>
-              <h3>The model streams a citation-grounded reply.</h3>
-              <p>Because the condensed chart sits first and stays identical across follow-up turns, the model server reuses its cached prefix and responds quickly. Each clinical claim carries <span class="cite-pill">[N]</span> badges linked to the exact source FHIR record, and undocumented requests trigger an explicit abstention.</p>
-            </li>
-          </ol>
-
-          <figure class="prompt-fig" aria-labelledby="prompt-fig-title">
-            <h3 class="sub-h" id="prompt-fig-title">The two parts of the baseline model input</h3>
-            <div class="prompt-part is-same">
-              <p class="prompt-label">Part 1 · The condensed chart prefix · identical across follow-up questions</p>
-              <pre>[1] Patient summary
-[2] Completeness Manifest: explicit count of any omitted historical items
-[4] Type 2 diabetes (active)
-[12] HbA1c 7.8% (2026-01-19)
-[14] eGFR 44 mL/min/1.73m2 (2026-01-19)
-… numbered clinical entries</pre>
-            </div>
-            <div class="prompt-part is-changing">
-              <p class="prompt-label">Part 2 · Conversation history and current question</p>
-              <pre>Prior turns kept ephemerally in the browser + verbatim caller question:
-“What are my diabetes labs?”
-(Optional research extensions attach grounded excerpts only when explicitly enabled.)</pre>
-            </div>
-            <figcaption>
-              Illustration only, not a patient record. Because Part 1 remains identical between questions for a patient’s current record, the inference server can reuse its attention KV cache, making follow-up answers substantially faster than the first turn.
-            </figcaption>
-          </figure>
+          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Retired prototypes and replacements">
+            <table class="strategy-table">
+              <thead>
+                <tr>
+                  <th style="width:26%;">Earlier Prototype</th>
+                  <th style="width:18%;">Disposition</th>
+                  <th style="width:56%;">Why We Retired or Quarantined It &amp; What Replaced It</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong><code>med-agent-hub</code> <code>wahs-*</code> profiles</strong></td>
+                  <td><span class="pill-badge">Retired</span></td>
+                  <td>Bundling WAHS inside the multi-EHR Hub created cross-project dependency drift and duplicated condensation code. Replaced by standalone <a href="https://github.com/pmanko/wahs-engine"><code>wahs-engine</code> ↗</a> with zero EHR or SQL dependencies.</td>
+                </tr>
+                <tr>
+                  <td><strong>Browser-side JS condensation &amp; KB in <code>wahs-demo</code></strong></td>
+                  <td><span class="pill-badge">Retired</span></td>
+                  <td><code>wahs/demo/index.html</code> previously carried ~7,000 lines of client-side KB rules, precomputed Oct 31 JS snapshots, and regex redaction that drifted from the real engine. Replaced by a zero-business-logic thin UI calling isolated <code>wahs-sandbox-engine</code>.</td>
+                </tr>
+                <tr>
+                  <td><strong>Cloud Run <code>wahs-gpu-auth-relay</code></strong></td>
+                  <td><span class="pill-badge">Retired</span></td>
+                  <td>A separate Cloud Run OAuth proxy fragmented sign-in between the sandbox and the Web/Mobile apps. Replaced by the unified VM <code>wahs-auth-gate</code> Google whitelist cookie shared across <code>wahealth</code>, <code>wahs-web</code>, <code>wahs-mobile</code>, and <code>wahs-demo</code>.</td>
+                </tr>
+                <tr>
+                  <td><strong>Heuristic <code>graph.py</code> reconciliation</strong></td>
+                  <td><span class="strategy-badge future">Quarantined</span></td>
+                  <td>Regex-heavy cross-clinic graph rules risked overfitting synthetic fixtures and produced bracketed pseudo-citations. Quarantined behind <code>WAHS_ALLOW_EXPERIMENTAL_ENRICHERS=true</code>; replaced by standards-based <code>terminology_kb</code> (CIEL/RxNorm/LOINC/ACIP) + numeric-only citation rules.</td>
+                </tr>
+                <tr>
+                  <td><strong>2k Agentic Tool-Calling Loops</strong></td>
+                  <td><span class="pill-badge">Retired</span></td>
+                  <td>Multi-step tool loops over tiny <code>2k</code> charts scored <code>65.8</code>&ndash;<code>69.4 / 100</code> with <code>7</code>&ndash;<code>10/75</code> unsafe answers. Replaced by <code>16k</code> verbatim-first condensation + single-pass <code>note_rag</code> and <code>overflow_lookup</code>.</td>
+                </tr>
+                <tr>
+                  <td><strong>Dynamic <code>128k</code> Ollama <code>num_ctx</code></strong></td>
+                  <td><span class="pill-badge">Retired</span></td>
+                  <td>Triggered &gt;120s KV-cache overallocation stalls and browser timeouts. Replaced by warm <code>64k</code> pin (<code>WAHS_OLLAMA_NUM_CTX=65536</code>) plus immediate <code>context_ready</code> and 15s SSE keepalives.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </section>
 
-        <section class="strategy-section" id="three-approaches" aria-labelledby="approaches-title" tabindex="-1">
-          <p class="section-kicker">Approaches compared</p>
-          <h2 id="approaches-title">Condensation is the pilot default; note search and model queries build on it</h2>
+        <!-- SECTION 3: NOV 26 BENCHMARK EVIDENCE -->
+        <section class="strategy-section" id="test-evidence" tabindex="-1" aria-labelledby="evidence-title">
+          <p class="section-kicker">Published Evidence &middot; November 26, 2026</p>
+          <h2 id="evidence-title">Two-judge blinded H200 evaluation results</h2>
           <p>
-            A raw health record is far too large to hand to a small model. One multi-year test record is 18.4 MB, and real exports can reach 100 to 200 MB. The team compared three ways to give the model what it needs. They are not rivals: the second and third still need condensation.
+            All November 26 studies were judged blindly across two independent frontier evaluator passes (<code>gpt-6.2-sol</code> and <code>claude-opus-5-5</code>, median axis score with strict-majority consensus for confirmed unsafe answers).
           </p>
 
+          <h3 style="margin:26px 0 10px; font-size:19px; color:var(--purple-ink);">1. Run 3A: 32k Modular Enrichers Ablation (<code>n = 225</code> cells)</h3>
+          <p style="max-width:860px; color:var(--muted); font-size:15px;">
+            Tested across Margaret Chen (Tier 0), Marcus Vance (Tier 1), and Maurice Auer (Tier 2) &times; 5 clinical scenarios &times; 15 modular arms (<a href="https://reports.openclinai.org/2026-11-26-wahs-32k-modular-enrichers-ablation-eval/index.html">full report ↗</a>):
+          </p>
+          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Run 3A 32k modular enrichers ablation scores">
+            <table class="strategy-table">
+              <thead>
+                <tr>
+                  <th>Profile Arm (32k Budget)</th>
+                  <th>Gemma 4 26B (Harm)</th>
+                  <th>Gemma 4 12B (Harm)</th>
+                  <th>Gemma 4 E4B (Harm)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><code>baseline</code> (0 enrichers)</td><td>72.3 (1)</td><td>76.5 (1)</td><td>59.3 (3)</td></tr>
+                <tr><td><code>temporal</code> (1/5)</td><td>68.5 (0)</td><td>68.3 (1)</td><td>60.7 (1)</td></tr>
+                <tr><td><code>terminology</code> (1/5)</td><td>75.9 (1)</td><td>82.1 (1)</td><td>74.4 (0)</td></tr>
+                <tr class="highlight-row"><td><strong><code>core-enriched</code> (4/5, Default)</strong></td><td><span class="score-pill">79.8</span> <span class="safe-pill">0 harm</span></td><td><span class="score-pill">84.1</span> <span class="safe-pill">0 harm</span></td><td>67.5 (1)</td></tr>
+                <tr><td><code>full-enriched</code> (5/5, + Guidelines)</td><td>79.3 <span class="safe-pill">0 harm</span></td><td>81.7 (1)</td><td><span class="score-pill">76.2</span> <span class="safe-pill">0 harm</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 style="margin:28px 0 10px; font-size:19px; color:var(--purple-ink);">2. Run 3B: 16k Tier-2 Retrieval Recovery (<code>n = 144</code> cells)</h3>
+          <p style="max-width:860px; color:var(--muted); font-size:15px;">
+            Tested on dense longitudinal charts where <code>16k</code> activates Tier 2 note excerption/omission (Marcus Vance: 63 excerpted notes; Maurice Auer: 27 excerpted + 102 omitted notes) (<a href="https://reports.openclinai.org/2026-11-26-wahs-16k-tier2-retrieval-recovery-eval/index.html">full report ↗</a>):
+          </p>
+          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Run 3B 16k Tier-2 retrieval recovery scores">
+            <table class="strategy-table">
+              <thead>
+                <tr>
+                  <th>Profile &amp; Budget Arm</th>
+                  <th>Gemma 4 26B (Harm)</th>
+                  <th>Gemma 4 12B (Harm)</th>
+                  <th>Gemma 4 E4B (Harm)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><code>baseline @ 16k</code></td><td>77.2 (0)</td><td>79.7 (0)</td><td>64.7 (1)</td></tr>
+                <tr><td><code>baseline @ 32k</code> (2&times; chart tokens)</td><td>76.3 (0)</td><td>78.0 (0)</td><td>69.9 (1)</td></tr>
+                <tr class="highlight-row"><td><strong><code>rag-overflow @ 16k</code></strong></td><td><span class="score-pill">85.2</span> <span class="safe-pill">0 harm</span></td><td>70.2 (0)</td><td><span class="score-pill">72.7</span> (1)</td></tr>
+                <tr class="highlight-row"><td><strong><code>core-enriched @ 16k</code> (Default)</strong></td><td><span class="score-pill">80.2</span> <span class="safe-pill">0 harm</span></td><td><span class="score-pill">82.7</span> <span class="safe-pill">0 harm</span></td><td>72.2 (1)</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 style="margin:28px 0 10px; font-size:19px; color:var(--purple-ink);">3. Budget Sweep (<code>n = 192</code>) &amp; Engine vs. Raw FHIR (<code>n = 450</code>)</h3>
+          <p style="max-width:860px; color:var(--muted); font-size:15px;">
+            Across dense longitudinal patients (<a href="https://reports.openclinai.org/2026-11-26-wahs-condensation-budget-sweep-eval/index.html">Budget Sweep ↗</a>), condensing into <code>32k</code>/<code>16k</code> consistently beat unbounded <code>128k</code> stuffing (26B: <code>82.2</code> at 32k / <code>79.1</code> at 16k vs <code>74.1</code> at 128k; 12B: <code>81.7</code> vs <code>71.1</code>). Against raw FHIR JSON (<a href="https://reports.openclinai.org/2026-11-26-wahs-baseline-engine-vs-direct-eval/index.html">Engine vs Raw FHIR ↗</a>), even un-enriched <code>wahs-engine</code> baseline gained <strong>+33.8 pts on 26B</strong> (<code>45.1 &rarr; 78.9</code>), <strong>+30.8 pts on 12B</strong> (<code>47.1 &rarr; 77.9</code>), and <strong>+30.5 pts on E4B</strong> (<code>43.3 &rarr; 73.8</code>).
+          </p>
+        </section>
+
+        <!-- SECTION 4: MODELS & HARDWARE -->
+        <section class="strategy-section" id="model-selection" tabindex="-1" aria-labelledby="models-heading">
+          <p class="section-kicker">Model Selection &amp; Deployment Tiers</p>
+          <h2 id="models-heading">Three swappable Gemma 4 tiers on UW CIRG H200 or local hardware</h2>
           <div class="strategy-grid-3">
             <article class="strategy-card recommended">
-              <span class="strategy-badge">Evaluated benchmark · 26B @ 16k</span>
-              <h3>1. Condensation + Clinical Rule Extensions</h3>
-              <dl class="facts">
-                <dt>Method</dt>
-                <dd>Condense the FHIR R4 chart into a numbered summary, optionally attach clinical guidelines and entity links via the extension interface, and answer in one call.</dd>
-                <dt>Strengths</dt>
-                <dd>Highest evaluated safety and speed: single stateless model call with strict per-patient scoping.</dd>
-                <dt>Architecture mapping</dt>
-                <dd>Standalone baseline serves pure verbatim-first condensation (<code>wahs-26b</code> default), while clinical reconciliation and guideline modules stay isolated as opt-in research extensions.</dd>
-                <dt>900-cell H200 result</dt>
-                <dd>85.1 / 100 on Gemma 4 26B (0 of 75 unsafe, 3.4 s median); 82.0 on 12B.</dd>
-              </dl>
+              <span class="strategy-badge">Primary Default</span>
+              <h3><code>wahs-26b</code> (Gemma 4 26B-A4B MoE)</h3>
+              <p>Sparse mixture-of-experts model activating ~4B parameters per token. Delivers the best synthesis depth, retrieval recovery (<code>85.2</code> at 16k), and sub-second warm TTFT on UW CIRG H200 at <code>64k</code> <code>num_ctx</code>.</p>
             </article>
-
             <article class="strategy-card">
-              <span class="strategy-badge secondary">Deep-note extension</span>
-              <h3>2. Condensation + Note passage search</h3>
-              <dl class="facts">
-                <dt>Method</dt>
-                <dd>Pair the condensed chart with question-matched Okapi BM25 passages from long clinical notes when enabled as an operator-configured extension.</dd>
-                <dt>Strengths</dt>
-                <dd>Strongest pure clinical note recall on hospital and specialist narratives of 4,000 to 14,000 tokens.</dd>
-                <dt>Limitations</dt>
-                <dd>Slightly larger turn suffix, adding ~1.5 s to median answer time.</dd>
-                <dt>900-cell H200 result</dt>
-                <dd>83.4 / 100 on Gemma 4 26B (8.94/10 clinical accuracy); 82.8 on 12B (0 of 75 unsafe).</dd>
-              </dl>
+              <span class="strategy-badge secondary">Compact Workhorse</span>
+              <h3><code>wahs-12b</code> (Gemma 4 12B)</h3>
+              <p>Dense 12B model that reached <strong><code>84.1 / 100</code> (0 unsafe)</strong> with <code>core-enriched</code> in Run 3A and runs cleanly on a single 24 GB GPU or 32&ndash;64 GB Apple Silicon workstation.</p>
             </article>
-
             <article class="strategy-card">
-              <span class="strategy-badge future">Evaluated · higher risk</span>
-              <h3>3. Agentic tool-calling</h3>
-              <dl class="facts">
-                <dt>Method</dt>
-                <dd>Give the model a compact 2k summary and let it invoke multi-step search tools over the full record before answering.</dd>
-                <dt>Strengths</dt>
-                <dd>Can inspect deeply buried historical items when a large model chooses effective search terms.</dd>
-                <dt>Limitations</dt>
-                <dd>Iterative searches frequently miss cross-clinic hold notes or clinical context across fragmented entries.</dd>
-                <dt>900-cell H200 result</dt>
-                <dd>65.8 to 69.4 / 100, concentrating 24 of 37 confirmed unsafe answers and 93% of over-refusals.</dd>
-              </dl>
+              <span class="strategy-badge future">Edge / Low-VRAM</span>
+              <h3><code>wahs-e4b</code> (Gemma 4 E4B)</h3>
+              <p>Ultra-fast 4B tier for laptops and rapid triage. Benefits strongly from <code>full-enriched</code> (<code>59.3 &rarr; 76.2</code>, <code>0</code> unsafe in Run 3A), closing much of the gap with larger models.</p>
             </article>
           </div>
-
-          <p class="strategy-note">
-            Results combine the <a href="https://reports.openclinai.org/2026-11-16-wahs-engine-4pathway-sheet-eval/index.html">900-cell 4-pathway H200 benchmark <span aria-hidden="true">↗</span></a> (75 clinical and privacy scenarios) and the <a href="https://reports.openclinai.org/2026-11-11-wahs-engine-retrieval-and-portability-eval/index.html">3-seed retrieval and portability report <span aria-hidden="true">↗</span></a> (where sending raw uncondensed FHIR with no engine passed 19% and leaked sensitive items in 12 of 12 sharing tests).
-          </p>
         </section>
 
-        <section class="strategy-section" id="test-evidence" aria-labelledby="evidence-title" tabindex="-1">
-          <span id="questions-and-evidence"></span>
-          <p class="section-kicker">Test evidence</p>
-          <h2 id="evidence-title">Five findings that support the design</h2>
+        <!-- SECTION 5: SECURITY & GOVERNANCE -->
+        <section class="strategy-section" id="security-governance" tabindex="-1" aria-labelledby="security-heading">
+          <p class="section-kicker">Security &amp; Privacy Boundaries</p>
+          <h2 id="security-heading">Zero-privilege data access and decoupled selective disclosure</h2>
           <p>
-            Tested on 18 record bundles from 10 patients, including synthetic multi-clinic records and real de-identified hospital records.
-          </p>
-
-          <div class="qa-list">
-            <article class="qa">
-              <h3>Condensing removes 90 to 99% of a record and keeps the safety core</h3>
-              <p>Condensing removed 90 to 99.4% of the size and kept the full safety core: allergies, active medications, active problems and implants. An 18.4 MB record fits in 8,000 tokens, and every omitted item is counted.</p>
-              <p class="qa-links"><a href="https://reports.openclinai.org/2026-10-30-wahs-phase2-eval/index.html">Condensation report <span aria-hidden="true">↗</span></a></p>
-            </article>
-            <article class="qa">
-              <h3>The engine looks up omitted items before calling the model</h3>
-              <p>This covers the case where the answer sits in a part of the record that was left out. On very small summaries, the lookup raised Gemma 4 12B from 47.0 to 68.2 out of 100, with no unsafe answers.</p>
-              <p class="qa-links"><a href="https://reports.openclinai.org/2026-11-04-wahs-macbook-direct-vs-hub-multi-scenario-eval/index.html">Overflow lookup report <span aria-hidden="true">↗</span></a></p>
-            </article>
-            <article class="qa">
-              <h3>Added clinical knowledge helps models of 4B and larger</h3>
-              <p>Small models do not know lab codes or drug interactions. Adding clinical rules improved accuracy. Adding the patient’s own links between conditions, medications and labs cut unsafe answers by 43 to 71%.</p>
-              <p class="qa-links"><a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">Nine-model report <span aria-hidden="true">↗</span></a></p>
-            </article>
-            <article class="qa">
-              <h3>An overfull model silently drops the start of the chart</h3>
-              <p>This is why the engine condenses the record instead of sending a very large chart. On a shared GPU with a 16k limit, sending 32k to 128k of chart text erased allergies and medications, and scores fell to 0 to 2.8 out of 100.</p>
-              <p class="qa-links"><a href="https://reports.openclinai.org/2026-11-03-wahs-huge-context-and-hub-graph-eval/index.html">Chart size report <span aria-hidden="true">↗</span></a></p>
-            </article>
-            <article class="qa">
-              <h3>Citation rules limit guessing by the model</h3>
-              <p>Every claim must cite a source record, and the model must say when the record has no answer. In tests built to pressure it into guessing, Gemma 4 12B gave 2 unsafe answers in 36 and no made-up citations.</p>
-              <p class="qa-links"><a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">Nine-model report <span aria-hidden="true">↗</span></a></p>
-            </article>
-          </div>
-        </section>
-
-        <section class="strategy-section" id="model-selection" aria-labelledby="model-title" tabindex="-1">
-          <p class="section-kicker">Model selection</p>
-          <h2 id="model-title">Gemma 4 26B leads on H200 (with Gemma 4 12B as the compact option); the engine improves seven of nine models</h2>
-          <p>
-            First, nine open-weight models across Google Gemma 4, Alibaba Qwen 3, and Meta Llama 3.x / Hermes 3 answered the same 36 clinical questions with the condensed chart alone and through the full engine (shown below). Follow-up 900-cell H200 benchmarks evaluated Gemma 4 26B, 12B, and E4B across 75 clinical and privacy scenarios, confirming <strong>Gemma 4 26B</strong> (production alias <code>wahs-26b</code>, <strong>85.1 / 100</strong> with KB in the Nov 2026 matrix, 0/75 unsafe) as the default H200 configuration and <strong>Gemma 4 12B</strong> (<code>wahs-12b</code>, <code>82.0 to 82.8 / 100</code>) as the compact alternative.
-          </p>
-
-          <div class="dumbbell" role="group" aria-labelledby="db-title">
-            <h3 class="sub-h" id="db-title">9-model cross-family screening score out of 100, before and after adding the engine</h3>
-            <p class="db-legend">
-              <span class="db-key"><span class="db-swatch is-before"></span>Condensed chart alone</span>
-              <span class="db-key"><span class="db-swatch is-after"></span>Through the full engine</span>
-            </p>
-            <div class="db-axis" aria-hidden="true">
-              <span></span>
-              <span class="db-axis-scale"><span style="left:0">0</span><span style="left:25%">25</span><span style="left:50%">50</span><span style="left:75%">75</span><span style="left:100%">100</span></span>
-              <span></span>
-            </div>
-            <ul class="db-rows">
-              <li class="db-row is-pick">
-                <span class="db-name">Gemma 4 26B<small>Google · MoE (4B active)</small><span class="db-pick">Default H200 model</span></span>
-                <span class="db-track" aria-hidden="true"><span class="db-link" style="left:71.3%;width:10.8%"></span><span class="db-pt is-before" style="left:71.3%" title="Condensed chart alone: 71.3"></span><span class="db-pt is-after" style="left:82.1%" title="Through the full engine: 82.1"></span></span>
-                <span class="db-val">71.3 → 82.1<small>85.1 on 900-cell H200</small></span>
-              </li>
-              <li class="db-row">
-                <span class="db-name">Gemma 4 12B<small>Google · compact GPU option</small></span>
-                <span class="db-track" aria-hidden="true"><span class="db-link" style="left:67.2%;width:13.3%"></span><span class="db-pt is-before" style="left:67.2%" title="Condensed chart alone: 67.2"></span><span class="db-pt is-after" style="left:80.5%" title="Through the full engine: 80.5"></span></span>
-                <span class="db-val">67.2 → 80.5<small>82.8 with Note-RAG</small></span>
-              </li>
-              <li class="db-row">
-                <span class="db-name">Gemma 4 E4B<small>Google · smallest that works</small></span>
-                <span class="db-track" aria-hidden="true"><span class="db-link" style="left:62.8%;width:7.6%"></span><span class="db-pt is-before" style="left:62.8%" title="Condensed chart alone: 62.8"></span><span class="db-pt is-after" style="left:70.4%" title="Through the full engine: 70.4"></span></span>
-                <span class="db-val">62.8 → 70.4<small>Unsafe: 8 → 4 of 36</small></span>
-              </li>
-              <li class="db-row">
-                <span class="db-name">Qwen 3 14B<small>Alibaba</small></span>
-                <span class="db-track" aria-hidden="true"><span class="db-link" style="left:53.4%;width:12%"></span><span class="db-pt is-before" style="left:53.4%" title="Condensed chart alone: 53.4"></span><span class="db-pt is-after" style="left:65.4%" title="Through the full engine: 65.4"></span></span>
-                <span class="db-val">53.4 → 65.4<small>Unsafe: 13 → 5 of 36</small></span>
-              </li>
-              <li class="db-row">
-                <span class="db-name">Qwen 3.5 9B<small>Alibaba</small></span>
-                <span class="db-track" aria-hidden="true"><span class="db-link" style="left:49.4%;width:7.7%"></span><span class="db-pt is-before" style="left:49.4%" title="Condensed chart alone: 49.4"></span><span class="db-pt is-after" style="left:57.1%" title="Through the full engine: 57.1"></span></span>
-                <span class="db-val">49.4 → 57.1<small>Unsafe: 12 → 10 of 36</small></span>
-              </li>
-              <li class="db-row">
-                <span class="db-name">Llama 3.1 8B<small>Meta</small></span>
-                <span class="db-track" aria-hidden="true"><span class="db-link" style="left:50.6%;width:4.7%"></span><span class="db-pt is-before" style="left:50.6%" title="Condensed chart alone: 50.6"></span><span class="db-pt is-after" style="left:55.3%" title="Through the full engine: 55.3"></span></span>
-                <span class="db-val">50.6 → 55.3<small>Unsafe: 14 → 8 of 36</small></span>
-              </li>
-              <li class="db-row">
-                <span class="db-name">Qwen 3 4B<small>Alibaba</small></span>
-                <span class="db-track" aria-hidden="true"><span class="db-link" style="left:34.7%;width:8.8%"></span><span class="db-pt is-before" style="left:34.7%" title="Condensed chart alone: 34.7"></span><span class="db-pt is-after" style="left:43.5%" title="Through the full engine: 43.5"></span></span>
-                <span class="db-val">34.7 → 43.5<small>Unsafe: 12 → 8 of 36</small></span>
-              </li>
-              <li class="db-row">
-                <span class="db-name">Hermes 3 8B<small>Nous · no gain</small></span>
-                <span class="db-track" aria-hidden="true"><span class="db-link is-down" style="left:43%;width:0.3%"></span><span class="db-pt is-before" style="left:43.3%" title="Condensed chart alone: 43.3"></span><span class="db-pt is-after" style="left:43%" title="Through the full engine: 43.0"></span></span>
-                <span class="db-val">43.3 → 43.0<small>Unsafe: 11 → 8 of 36</small></span>
-              </li>
-              <li class="db-row">
-                <span class="db-name">Llama 3.2 3B<small>Meta · got worse</small></span>
-                <span class="db-track" aria-hidden="true"><span class="db-link is-down" style="left:33.8%;width:10.4%"></span><span class="db-pt is-before" style="left:44.2%" title="Condensed chart alone: 44.2"></span><span class="db-pt is-after" style="left:33.8%" title="Through the full engine: 33.8"></span></span>
-                <span class="db-val">44.2 → 33.8<small>Unsafe: 9 → 15 of 36</small></span>
-              </li>
-            </ul>
-          </div>
-
-          <div class="status-cols">
-            <div class="status-col">
-              <h3>Gemma 4 26B &amp; 12B cover H200 and compact GPUs</h3>
-              <p class="strategy-note" style="margin-top:0">Gemma 4 26B (MoE, 4B active parameters) leads at 85.1/100 with 0/75 unsafe answers in 3.4 s on H200; Gemma 4 12B reaches 82.0 to 82.8/100 on tighter VRAM budgets.</p>
-            </div>
-            <div class="status-col">
-              <h3>The engine improves most models</h3>
-              <p class="strategy-note" style="margin-top:0">Seven of nine scored higher through the engine, and eight of nine gave fewer unsafe answers.</p>
-            </div>
-            <div class="status-col">
-              <h3>Models below 4B are not sufficient</h3>
-              <p class="strategy-note" style="margin-top:0">The 3B model got worse with more to read. Treat 4B (Gemma 4 E4B) as the minimum.</p>
-            </div>
-          </div>
-
-          <p class="strategy-note">
-            The score combines the judges’ grades, weighted toward accuracy and completeness, with points taken off for unsafe answers and citation errors. Full tables are in the <a href="https://reports.openclinai.org/2026-11-16-wahs-engine-4pathway-sheet-eval/index.html">900-cell 4-pathway H200 report <span aria-hidden="true">↗</span></a>, the <a href="https://reports.openclinai.org/2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration/index.html">16k vs. 32k calibration <span aria-hidden="true">↗</span></a>, and the <a href="https://reports.openclinai.org/2026-11-05-wahs-multi-family-3-pathway-eval/index.html">nine-model screening report <span aria-hidden="true">↗</span></a>.
+            <code>wahs-engine</code> enforces per-user isolation by construction: production deployments hold zero HAPI admin credentials, refuse to start if pointed at <code>fhir-internal</code>, forward the patient's Keycloak JWT through <code>fhir-auth</code> on every turn, strip any foreign <code>Patient/</code> references before extraction, and keep conversation history out of server databases. Patient-controlled selective disclosure (SMART Health Links &amp; HL7 DS4P) remains cleanly in the WAHS sharing layer rather than relying on implicit prompt regexes.
           </p>
         </section>
 
-        <section class="strategy-section" id="design-clarifications" aria-labelledby="faq-title" tabindex="-1">
-          <p class="section-kicker">Design clarifications</p>
-          <h2 id="faq-title">Nine points on sessions, data handling and deployment</h2>
-          <p>
-            These points were raised in project meetings. Full detail is in the <a href="/wahs/engine-reference/index.html">Engine reference</a>.
-          </p>
-
-          <div class="faq-grid">
-            <article class="faq">
-              <h3>The chat session is kept in the patient’s browser</h3>
-              <p>On each turn the app sends the conversation so far. Neither the engine nor the model server keeps a copy, and there is no session ID. Starting a new chat clears the browser’s copy.</p>
-              <p><a href="/wahs/engine-reference/index.html#session-and-scope-model">Sessions and scope <span aria-hidden="true">→</span></a></p>
-            </article>
-            <article class="faq">
-              <h3>No new database holds patient data</h3>
-              <p>The engine holds the condensed chart in memory to save time, tied to the signed-in patient, and loses it on restart. Before real records are used, prompt logging on the model server is turned off.</p>
-            </article>
-            <article class="faq">
-              <h3>The KV cache is a speed feature and cannot cross patients</h3>
-              <p>The KV cache is the model’s short-term memory of text it has just read. It is not the knowledge base (KB). The model skips re-reading only when a new request starts with exactly the same text. Every request starts with one patient’s own chart, so another patient’s request cannot match it.</p>
-            </article>
-            <article class="faq">
-              <h3>The chart is rebuilt when the record store reports a change</h3>
-              <p>The engine checks the record store on every question. When the store reports that part of the record has changed, only that part is fetched again and the chart is condensed again. This takes about a tenth of a second.</p>
-            </article>
-            <article class="faq">
-              <h3>Chart size adapts dynamically to the model and turn</h3>
-              <p>The engine imposes no fixed 16k cap: on every turn it measures actual conversation and response overhead against the model’s context window, supports optional <code>Auto</code> sweet-spot calibration informed by long-context evaluations (such as our <a href="https://reports.openclinai.org/2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration/index.html">16k vs. 32k H200 calibration study ↗</a>), and lets clients pass explicit budget presets (such as <code>2k</code> to <code>64k</code>) for controlled testing.</p>
-            </article>
-            <article class="faq">
-              <h3>Optional clinical extensions stay modular</h3>
-              <p>Baseline prompt assembly forwards the patient’s question verbatim without ad-hoc rule injection. Specialized research modules, including BM25 note passage search, omitted-record overflow lookup, longitudinal trend summaries, and experimental clinical reconciliation, live behind an opt-in extension boundary so each method can be evaluated independently.</p>
-            </article>
-            <article class="faq">
-              <h3>Standalone pilot engine vs. OpenClinAI R&amp;D workbench</h3>
-              <p><a href="/med-agent-hub/index.html">Med Agent Hub</a> and the <a href="https://wahs-demo.openclinai.org/">WAHS Explorer Sandbox ↗</a> form OpenClinAI’s interactive R&amp;D workbench for multi-budget and knowledge-guided experiments, whereas standalone <a href="https://github.com/pmanko/wahs-engine"><code>wahs-engine</code> ↗</a> packages a lean, domain-neutral runtime for the WA Health Summary pilot. Both are evaluated through the <a href="/validation-harness/index.html">Validation Harness</a>.</p>
-            </article>
-            <article class="faq">
-              <h3>The model and the front end can be replaced</h3>
-              <p>Both sides of the engine use the standard OpenAI chat format. Pointing it at a different model or server is a configuration change, tested with no code edits. An agency that must use its own approved model can do so.</p>
-            </article>
-            <article class="faq">
-              <h3>The pilot runs on the shared UW CIRG H200 GPU server</h3>
-              <p>The GPU server hosts Gemma 4 26B and 12B behind an OpenAI-compatible gateway without downsizing model capability. Concurrent slot allocation and model residency are managed at the GPU server layer rather than inside the engine.</p>
-            </article>
+        <!-- SECTION 6: GLOSSARY -->
+        <section class="strategy-section" id="glossary" tabindex="-1" aria-labelledby="glossary-heading">
+          <p class="section-kicker">Shared Vocabulary</p>
+          <h2 id="glossary-heading">Plain-English glossary</h2>
+          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="WAHS plain-English glossary">
+            <table class="strategy-table">
+              <tbody>
+                <tr><td style="width:26%;"><strong><code>wahs-engine</code></strong></td><td>Standalone OpenAI-compatible Python middleware that fetches scoped FHIR R4 records via <code>fhir-auth</code>, condenses them verbatim-first, runs modular enrichers, and attaches <code>x_wahs</code> citations.</td></tr>
+                <tr><td><strong>Verbatim-First Condensation</strong></td><td>3-tier deterministic compression (<code>Tier 0</code> verbatim, <code>Tier 1</code> uniform series folding, <code>Tier 2</code> IPS safety core + note water-filling) that never mutates clinical facts and logs every omission in <code>[2] Completeness Manifest</code>.</td></tr>
+                <tr><td><strong><code>core-enriched</code> (4/5)</strong></td><td>Default enricher profile combining <code>temporal</code>, <code>terminology_kb</code>, <code>note_rag</code>, and <code>overflow_lookup</code> in the append-only turn suffix (with <code>guideline_kb</code> opt-in for 5/5).</td></tr>
+                <tr><td><strong><code>X-WAHS-Prefix-Hash</code></strong></td><td>Short SHA-256 fingerprint of the query-invariant system prompt + condensed chart prefix used for LRU reuse and GPU KV-cache verification.</td></tr>
+                <tr><td><strong><code>num_ctx</code> (64k Pin)</strong></td><td>Ollama KV-cache context size pinned at <code>65,536</code> tokens so toggling chart budgets from <code>2k</code> to <code>64k</code> never triggers cold model reloads or <code>128k</code> VRAM spills.</td></tr>
+                <tr><td><strong><code>[N]</code> / <code>[P]</code> / <code>[K]</code> Citations</strong></td><td>Inline source markers mapped in <code>x_wahs.citation_map</code> to FHIR chart entries (<code>[N]</code>), retrieved clinical note passages (<code>[P]</code>), and public guideline snippets (<code>[K]</code>).</td></tr>
+              </tbody>
+            </table>
           </div>
         </section>
 
-        <section class="strategy-section" id="status" aria-labelledby="status-title" tabindex="-1">
-          <p class="section-kicker">Project status</p>
-          <h2 id="status-title">The standalone engine baseline is designed, integrated, and benchmarked</h2>
-
-          <div class="status-cols">
-            <div class="status-col">
-              <ul>
-                <li>Standalone <a href="https://github.com/pmanko/wahs-engine"><code>wahs-engine</code> ↗</a> combines a pure-standard-library FHIR R4 condensation core with a stateless OpenAI-compatible runtime, keeping optional retrieval and clinical-rule enrichers disabled behind a clean extension boundary.</li>
-                <li>Reads patient records strictly with the caller’s own sign-in token via the <code>fhir-auth</code> security proxy, using version-stamped in-memory caches; patient-facing selective-disclosure privacy policies remain intentionally separated into a dedicated standards-based sharing layer pending team design.</li>
-                <li>Connected across both the WA Health Summary SvelteKit web app (<a href="https://github.com/pmanko/shl-ips"><code>shl-ips</code> ↗</a>) and mobile companion (<a href="https://github.com/pmanko/wahs-mobile-frontend"><code>wahs-mobile-frontend</code> ↗</a>) with clean model tiers (<code>wahs-26b</code>, <code>wahs-12b</code>, <code>wahs-e4b</code>) and dynamic <code>Auto</code> plus <code>2k</code> to <code>64k</code> test presets.</li>
-                <li>Benchmarked across two 900-cell H200 studies (<a href="https://reports.openclinai.org/2026-11-14-wahs-engine-post-fix-16k-vs-32k-calibration/index.html">16k vs. 32k calibration ↗</a> and <a href="https://reports.openclinai.org/2026-11-16-wahs-engine-4pathway-sheet-eval/index.html">4-pathway evaluation ↗</a>) plus 384 3-seed portability runs, with published transcripts and scores on <a href="https://reports.openclinai.org/#wahs"><code>reports.openclinai.org</code> ↗</a>.</li>
-              </ul>
-            </div>
-          </div>
-
-          <p class="strategy-note">
-            Architecture rationale, boundaries, and benchmark evidence are documented in <a href="/wahs/engine-audit/index.html">design &amp; rationale <span aria-hidden="true">→</span></a> and the <a href="/wahs/engine-reference/index.html">engine reference <span aria-hidden="true">→</span></a>.
-          </p>
-        </section>
-
-        <section class="strategy-section" id="glossary" aria-labelledby="terms-title" tabindex="-1">
-          <p class="section-kicker">Glossary</p>
-          <h2 id="terms-title">Terms used on this page</h2>
-
-          <dl class="glossary">
-            <dt>FHIR</dt>
-            <dd>The standard format health systems use to exchange records. It is detailed and very wordy, which is why records need condensing.</dd>
-            <dt>Condensed chart</dt>
-            <dd>The short, numbered summary of a patient’s record that the engine builds for the model.</dd>
-            <dt>Token, token budget</dt>
-            <dd>Models measure text in tokens, each about three-quarters of a word. The token budget is the size limit for the condensed chart.</dd>
-            <dt>Safety core</dt>
-            <dd>Allergies, active medications, active problems and implants. These are kept first at every chart size.</dd>
-            <dt>Citation <span class="cite-pill">[N]</span></dt>
-            <dd>A number in the answer that opens the source record it came from.</dd>
-            <dt>Knowledge base (KB)</dt>
-            <dd>Clinical reference rules an optional extension can attach alongside a question, such as which labs relate to diabetes.</dd>
-            <dt>Overflow lookup</dt>
-            <dd>An optional extension search of the full record for historical items omitted from a tightly condensed chart.</dd>
-            <dt>Note search</dt>
-            <dd>Finding the passages in long clinical notes that match the question and adding only those (Okapi BM25 passage retrieval).</dd>
-            <dt>KV cache</dt>
-            <dd>The model’s short-term memory of text it has just read. A speed feature, and not the knowledge base.</dd>
-            <dt>WAHS engine</dt>
-            <dd>The middle service this page describes, pairing a pure-standard-library FHIR condensation core with a stateless OpenAI-compatible runtime.</dd>
-            <dt>Record store</dt>
-            <dd>Where patient records live: a FHIR server behind a gatekeeper (<code>fhir-auth</code>) that returns only the signed-in patient’s records.</dd>
-            <dt>Open-weight model</dt>
-            <dd>A model whose files can be downloaded and run on servers the team controls.</dd>
-          </dl>
-        </section>
-
-        <section class="strategy-section" id="technical-reference" aria-labelledby="deeper-title" tabindex="-1">
-          <p class="section-kicker">Technical reference</p>
-          <h2 id="deeper-title">Engine documentation for builders and reviewers</h2>
-
-          <div class="strategy-grid-2">
-            <article class="strategy-card" id="pilot-architecture">
-              <span id="worked-query-example"></span><span id="session-and-scope-model"></span>
-              <h3><a href="/wahs/engine-reference/index.html#pilot-architecture">Architecture, sessions and scope <span aria-hidden="true">→</span></a></h3>
-              <p>How the services connect, where each kind of state lives, and who enforces each boundary. Also see the <a href="/wahs/engine-reference/index.html#worked-query-example">worked query trace</a> and <a href="/wahs/engine-reference/index.html#session-and-scope-model">session &amp; scope tables</a>.</p>
-            </article>
-            <article class="strategy-card" id="wire-contract-details">
-              <h3><a href="/wahs/engine-reference/index.html#wire-contract-details">Wire contract <span aria-hidden="true">→</span></a></h3>
-              <p>The request and response format between the app’s server and the engine.</p>
-            </article>
-            <article class="strategy-card" id="action-plan">
-              <h3><a href="/wahs/engine-reference/index.html#action-plan">Build milestones <span aria-hidden="true">→</span></a></h3>
-              <p>Architectural milestones with links to published benchmark packets and repositories.</p>
-            </article>
-            <article class="strategy-card" id="engine-internals">
-              <span id="clinical-entity-graph-details"></span>
-              <h3><a href="/wahs/engine-reference/index.html#engine-internals">Engine internals <span aria-hidden="true">→</span></a></h3>
-              <p>Continuous verbatim-first condensation, dynamic per-turn window sizing, <code>[N]</code> provenance mapping, and the <a href="/wahs/engine-reference/index.html#clinical-entity-graph-details">modular research extension shelf</a>.</p>
-            </article>
-            <article class="strategy-card recommended" id="engine-audit-card">
-              <h3><a href="/wahs/engine-audit/index.html">Engine design &amp; rationale <span aria-hidden="true">→</span></a></h3>
-              <p>Full system architecture diagram, explicit scope and privacy boundaries, foundational standards links, 900-cell H200 benchmark readout, and five core design principles.</p>
-            </article>
-          </div>
-
-          <p class="strategy-note">
-            Also: <a href="/wahs/walkthrough/index.html">sandbox walkthrough <span aria-hidden="true">→</span></a> · <a href="https://wahs-demo.openclinai.org/">live sandbox <span aria-hidden="true">↗</span></a> · <a href="https://github.com/pmanko/wahs-engine">engine source code <span aria-hidden="true">↗</span></a> · <a href="https://reports.openclinai.org/">all evaluation reports <span aria-hidden="true">↗</span></a>
-          </p>
-          <p class="back-to-top"><a href="#top">Back to top <span aria-hidden="true">↑</span></a></p>
-        </section>
+        <p class="back-to-top"><a href="#top">Back to top <span aria-hidden="true">↑</span></a></p>
       </div>
     </div>
   </main>
-
 
   <footer class="site-footer">
     <div class="page-width footer-grid">
@@ -591,7 +363,7 @@
       </nav>
       <p class="footer-disclaimer">
         For research and demonstration. AI output can be inaccurate and requires review.<br />
-        <a href="https://reports.openclinai.org/">Evaluation Reports</a> · <a href="/docs/openmrs-upstream/index.html">OpenMRS Upstream PRs</a>
+        <a href="https://reports.openclinai.org/">Evaluation Reports</a> &middot; <a href="/docs/openmrs-upstream/index.html">OpenMRS Upstream PRs</a>
       </p>
     </div>
   </footer>
