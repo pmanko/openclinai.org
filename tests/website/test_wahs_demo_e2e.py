@@ -279,7 +279,7 @@ class TestWahsSandboxThinShellE2E(unittest.TestCase):
                 self.assertEqual(page.locator("#persona-grid .persona-card").count(), 2)
                 page.locator("#resource-table-body tr").first.click()
                 self.assertTrue(page.locator("#inspector-backdrop").evaluate("el => el.classList.contains('open')"))
-                self.assertIn("Apixaban 5 mg oral tablet", page.locator("#inspector-json").inner_text())
+                page.wait_for_function("() => document.getElementById('inspector-json').textContent.includes('Apixaban 5 mg oral tablet')")
                 page.click("#close-inspector-btn")
 
                 # Step 2: Live engine preview + budget toggle + enricher Clear/Core shortcuts + system_prompt tab
@@ -315,7 +315,7 @@ class TestWahsSandboxThinShellE2E(unittest.TestCase):
 
                 page.locator("#chat-log .cite-btn[data-cite-key='1']").click()
                 self.assertTrue(page.locator("#inspector-backdrop").evaluate("el => el.classList.contains('open')"))
-                self.assertIn("Apixaban 5 mg oral tablet", page.locator("#inspector-json").inner_text())
+                page.wait_for_function("() => document.getElementById('inspector-json').textContent.includes('Apixaban 5 mg oral tablet')")
                 page.click("#close-inspector-btn")
 
                 browser.close()
