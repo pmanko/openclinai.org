@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>WAHS LLM Strategy &amp; Design Rationale &middot; OpenClinAI</title>
-  <meta name="description" content="Plain-language guide for the UW CIRG and WA DOH team: why WAHS uses verbatim-first condensation, 5 modular enrichers, Gemma 4 26B pinned at 64k context, what we tried and retired, and November 26 H200 benchmark evidence." />
+  <title>WAHS LLM Strategy &middot; OpenClinAI</title>
+  <meta name="description" content="How WA Health Summary approaches context engineering, verbatim-first condensation, context enrichment, model orchestration, model selection, and context sizing for question answering over patient-controlled FHIR records." />
   <link rel="canonical" href="https://openclinai.org/wahs/llm-strategy/" />
   <meta property="og:url" content="https://openclinai.org/wahs/llm-strategy/" />
-  <meta property="og:title" content="WAHS LLM Strategy &amp; Design Rationale &middot; OpenClinAI" />
-  <meta property="og:description" content="Team strategy and evidence behind wahs-engine: November 26 Run 3A and Run 3B findings, what we retired and why, model tiers, and plain-English glossary." />
+  <meta property="og:title" content="WAHS LLM Strategy &middot; OpenClinAI" />
+  <meta property="og:description" content="Context engineering, condensation, orchestration, and model selection choices behind the WAHS AI engine, and the reasoning for each." />
   <meta property="og:image" content="https://storage.googleapis.com/openclinai-media/wahs/wahs-web-app-demo-20261126.webp" />
   <meta name="theme-color" content="#4b2e83" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -69,14 +69,19 @@
       <nav class="doc-toc" aria-label="On this page">
         <p class="doc-toc-title">On this page</p>
         <ol>
-          <li><a href="#patient-workflows">Why this design</a></li>
-          <li><a href="#what-we-retired">What we retired</a></li>
-          <li><a href="#test-evidence">Nov 26 benchmarks</a></li>
-          <li><a href="#model-selection">Models &amp; hardware</a></li>
-          <li><a href="#security-governance">Security &amp; governance</a></li>
-          <li><a href="#glossary">Glossary</a></li>
+          <li><a href="#patient-workflows">Problem &amp; constraints</a></li>
+          <li><a href="#context-engineering">Context engineering</a></li>
+          <li><a href="#condensation">Condensation</a></li>
+          <li><a href="#enrichment">Context enrichment</a></li>
+          <li><a href="#inference-strategy">Model orchestration</a></li>
+          <li><a href="#model-selection">Model selection</a></li>
+          <li><a href="#context-sizing">Context sizing</a></li>
+          <li><a href="#what-we-retired">Approaches we moved away from</a></li>
+          <li><a href="#security-governance">Privacy &amp; governance</a></li>
+          <li><a href="#evaluation">How approaches are compared</a></li>
+          <li><a href="#limitations">Limitations &amp; open questions</a></li>
         </ol>
-        <p class="doc-toc-more">Technical spec: <a href="/wahs/architecture/index.html">Architecture &amp; Reference</a></p>
+        <p class="doc-toc-more">System details: <a href="/wahs/architecture/index.html">Architecture</a></p>
       </nav>
 
       <div class="doc-body">
@@ -91,250 +96,309 @@
             <span>LLM Strategy</span>
           </nav>
 
-          <p class="section-kicker">Washington Health Summary (WAHS) &middot; Team Strategy &amp; Design Rationale</p>
-          <h1>Why WAHS pairs verbatim-first condensation with modular enrichers and Gemma 4.</h1>
+          <p class="section-kicker">WA Health Summary &middot; LLM Strategy</p>
+          <h1>Context engineering, condensation, and model selection for patient record questions</h1>
           <p class="overview-lead">
-            When a patient asks a question about a multi-clinic health record, an AI system must never see another patient's data, must keep large multi-year exports within reliable attention limits, must answer quickly, and must link every claim back to its source FHIR record. This guide explains the strategy the UW CIRG &amp; WAHS team converged on, what we tested and retired along the way, and the November 26 benchmark evidence behind our shipped defaults.
+            This page explains how the WAHS AI engine prepares a patient's record for a language model, how it adds question-specific context, how model calls are orchestrated, and how models and context sizes are chosen. It covers the reasoning behind each choice. How the system is built is on the <a href="/wahs/architecture/index.html">Architecture</a> page, and comparative results are published as <a href="https://reports.openclinai.org/#wahs">evaluation reports</a>.
           </p>
           <p class="strategy-meta">
-            Updated November 26, 2026 &middot; Written for clinical, product, and engineering reviewers &middot; Developers: <a href="/wahs/architecture/index.html">Architecture &amp; Builder Reference <span aria-hidden="true">→</span></a>
+            Exploratory applied research, University of Washington Clinical Informatics Research Group &middot; Written for informatics, engineering, and research reviewers
           </p>
 
-          <div class="decision" role="region" aria-labelledby="strategy-decisions-title">
-            <h2 id="strategy-decisions-title">Shipped defaults (November 26, 2026)</h2>
+          <div class="decision" role="region" aria-labelledby="approach-title">
+            <h2 id="approach-title">The approach in brief</h2>
             <ol>
-              <li><strong>Default model &amp; context pin:</strong> <code>wahs-26b</code> (<strong>Gemma 4 26B</strong> on UW CIRG H200, with <code>wahs-12b</code> and <code>wahs-e4b</code> selectable) pinned at <code>64k</code> <code>num_ctx</code> for zero model reloads and sub-second warm prefill across every UI budget preset.</li>
-              <li><strong>Default chart budget &amp; enrichers:</strong> <code>16k</code> Auto chart budget with <strong><code>core-enriched</code> (4 of 5 generalizable modules)</strong>: <code>temporal</code>, <code>terminology_kb</code>, <code>note_rag</code>, and <code>overflow_lookup</code>, plus opt-in <code>guideline_kb</code> (5/5).</li>
-              <li><strong>Zero duplicated clinical logic across surfaces:</strong> The Web App (<code>shl-ips</code>), Mobile Companion, and Explorer Sandbox (<code>wahs-demo.openclinai.org</code>) are thin presentation clients over <code>wahs-engine</code>.</li>
+              <li><strong>Prepare the record in code, not in the model.</strong> Extraction, deduplication, condensation, and retrieval are deterministic and auditable. The model sees a clean, numbered chart instead of raw FHIR JSON.</li>
+              <li><strong>Keep the record verbatim whenever it fits.</strong> Condensation only starts when a chart exceeds its budget, protects the safety-critical core first, and states exactly what was left out.</li>
+              <li><strong>Separate the stable chart from question-specific context.</strong> The chart forms a fixed prompt prefix; optional enrichers append bounded context after it. This keeps follow-up turns fast and makes every module independently testable.</li>
+              <li><strong>One model call per turn.</strong> Retrieval happens before the call, so answer quality does not depend on the model deciding to use tools.</li>
+              <li><strong>Open-weight models behind a standard interface.</strong> Three model sizes cover GPU servers through laptops, and any OpenAI-compatible host can be substituted.</li>
             </ol>
-          </div>
-
-          <div class="stat-row">
-            <div class="stat">
-              <p class="stat-value">+33.8 pts</p>
-              <p class="stat-label">Verbatim-first condensation lift on Gemma 4 26B over raw FHIR JSON (<code>45.1 &rarr; 78.9</code>, n = 450).</p>
-            </div>
-            <div class="stat">
-              <p class="stat-value">+7.5 pts</p>
-              <p class="stat-label">Additional Run 3A lift from <code>core-enriched</code> (4/5 modules) at 32k (<code>72.3 &rarr; 79.8</code>, <code>0</code> unsafe).</p>
-            </div>
-            <div class="stat">
-              <p class="stat-value">85.2 / 100</p>
-              <p class="stat-label">Run 3B 16k Tier-2 retrieval recovery on Gemma 4 26B (<code>+8.0 pts</code>, <code>0</code> unsafe), beating 32k baseline.</p>
-            </div>
           </div>
 
           <details class="doc-toc-mobile">
             <summary>On this page</summary>
             <ol>
-              <li><a href="#patient-workflows">Why this design</a></li>
-              <li><a href="#what-we-retired">What we retired</a></li>
-              <li><a href="#test-evidence">Nov 26 benchmarks</a></li>
-              <li><a href="#model-selection">Models &amp; hardware</a></li>
-              <li><a href="#security-governance">Security &amp; governance</a></li>
-              <li><a href="#glossary">Glossary</a></li>
+              <li><a href="#patient-workflows">Problem &amp; constraints</a></li>
+              <li><a href="#context-engineering">Context engineering</a></li>
+              <li><a href="#condensation">Condensation</a></li>
+              <li><a href="#enrichment">Context enrichment</a></li>
+              <li><a href="#inference-strategy">Model orchestration</a></li>
+              <li><a href="#model-selection">Model selection</a></li>
+              <li><a href="#context-sizing">Context sizing</a></li>
+              <li><a href="#what-we-retired">Approaches we moved away from</a></li>
+              <li><a href="#security-governance">Privacy &amp; governance</a></li>
+              <li><a href="#evaluation">How approaches are compared</a></li>
+              <li><a href="#limitations">Limitations &amp; open questions</a></li>
             </ol>
           </details>
         </section>
 
-        <!-- SECTION 1: WHY THIS DESIGN -->
-        <section class="strategy-section" id="patient-workflows" tabindex="-1" aria-labelledby="why-heading">
-          <p class="section-kicker">Design Rationale</p>
-          <h2 id="why-heading">Four lessons from building patient-mediated clinical Q&amp;A</h2>
+        <!-- PROBLEM & CONSTRAINTS -->
+        <section class="strategy-section" id="patient-workflows" tabindex="-1" aria-labelledby="problem-heading">
+          <p class="section-kicker">Problem &amp; Constraints</p>
+          <h2 id="problem-heading">What the strategy has to handle</h2>
+          <div class="strategy-grid-2">
+            <article class="strategy-card">
+              <h3>Heterogeneous, noisy records</h3>
+              <p>A combined record can hold a few hundred entries or several thousand, spread across clinics with repeated lab panels, duplicated notes, Base64-encoded documents, and medication lists that disagree. Raw FHIR JSON spends most of its tokens on structure rather than clinical content.</p>
+            </article>
+            <article class="strategy-card">
+              <h3>Patient-facing questions</h3>
+              <p>Questions come from patients and caregivers, not clinicians. Answers have to use plain language, separate active from historical items, avoid treatment instructions, and say clearly when the record does not contain something.</p>
+            </article>
+            <article class="strategy-card">
+              <h3>Verifiability</h3>
+              <p>Every clinical statement must trace to a specific record entry so the patient or their clinician can check it. That rules out approaches where the model paraphrases the record before answering.</p>
+            </article>
+            <article class="strategy-card">
+              <h3>Privacy and hosting</h3>
+              <p>Records must stay within university or local infrastructure, which favors open-weight models on UW GPUs or personal hardware, and per-user access enforced outside the model.</p>
+            </article>
+          </div>
+        </section>
+
+        <!-- CONTEXT ENGINEERING -->
+        <section class="strategy-section" id="context-engineering" tabindex="-1" aria-labelledby="context-heading">
+          <p class="section-kicker">Context Engineering</p>
+          <h2 id="context-heading">How the prompt is structured</h2>
+          <p>
+            Each request is built from two regions with different jobs.
+          </p>
           <div class="strategy-grid-2">
             <article class="strategy-card recommended">
-              <span class="strategy-badge">1. Raw FHIR Is Not LLM-Ready</span>
-              <h3>Structure beats brute-force context length</h3>
-              <p>
-                A single multi-year FHIR R4 export reaches 7,099 entries and 22 MB of nested JSON, repeated vitals, and Base64-encoded notes. Even when a full record fits inside a <code>128k</code> window, stuffing raw FHIR loses <code>30+</code> benchmark points compared with structured condensation, and stuffing <code>128k</code> condensed tokens still underperforms focused <code>16k</code>&ndash;<code>32k</code> windows by <code>8</code>&ndash;<code>10</code> points due to long-context attention dilution.
-              </p>
+              <span class="strategy-badge">Region 1 &middot; Stable prefix</span>
+              <h3>System instructions and the condensed chart</h3>
+              <ul>
+                <li>The chart is rendered as numbered lines <code>[1]..[N]</code>, each with its date and source, preceded by a Completeness Manifest at <code>[2]</code> that lists anything omitted.</li>
+                <li>The prefix depends only on the patient's data, scope, model, and budget, never on the question. Identical prefixes let the model host reuse cached attention state across turns.</li>
+              </ul>
             </article>
             <article class="strategy-card">
-              <span class="strategy-badge secondary">2. Keep the Prefix Clean; Enrich in the Suffix</span>
-              <h3>Fast follow-ups require two prompt regions</h3>
-              <p>
-                Early prototypes injected question-specific hints inside the chart ledger, invalidating the GPU's KV cache on every turn and mutating clinical records before the model saw them. Separating an immutable <code>[1]..[N]</code> chart prefix from an append-only enricher suffix preserves sub-second warm follow-up prefill and lets evaluators ablate every module cleanly.
-              </p>
+              <span class="strategy-badge secondary">Region 2 &middot; Turn suffix</span>
+              <h3>Question-specific context and the conversation</h3>
+              <ul>
+                <li>Enricher output (trends, terminology, retrieved passages, reference snippets) and patient-authored drafts are appended here with hard token caps.</li>
+                <li>Putting variable content after the chart means enrichment never alters or reorders the record itself, and each module can be switched on or off without changing anything else.</li>
+              </ul>
             </article>
-            <article class="strategy-card">
-              <span class="strategy-badge secondary">3. Modular Retrieval Beats Agentic Tool Loops</span>
-              <h3>Single-pass retrieval recovery beats multi-step tool calling</h3>
-              <p>
-                In our November 16 H200 benchmark, multi-step agentic tool loops over <code>2k</code> summaries scored <code>65.8</code>&ndash;<code>69.4 / 100</code> with <code>7</code>&ndash;<code>10</code> confirmed unsafe answers out of 75 cases because models skipped tool calls or missed subtle cross-clinic risks. Deterministic pre-turn <code>note_rag</code> + <code>overflow_lookup</code> at <code>16k</code> achieved <code>85.2 / 100</code> with <code>0</code> unsafe answers in one single fast pass.
-              </p>
-            </article>
-            <article class="strategy-card">
-              <span class="strategy-badge">4. One Warm 64k KV Slot</span>
-              <h3>Match KV-cache allocation to real clinical ceilings</h3>
-              <p>
-                Dynamically resizing Ollama's <code>num_ctx</code> per prompt forced 30-second model reloads whenever a user switched budgets, while requesting <code>128k</code> caused GPU memory spills and timeouts. Pinning <code>WAHS_OLLAMA_NUM_CTX=65536</code> costs zero extra cold-load time vs <code>32k</code> (29.3s vs 30.2s) and gives instant warm reuse across every preset from <code>2k</code> to <code>64k</code>.
-              </p>
-            </article>
+          </div>
+
+          <h3 style="margin:26px 0 10px; font-size:19px; color:var(--purple-ink);">Instruction rules</h3>
+          <p>The default system prompt encodes four rules that the rest of the pipeline is designed to support:</p>
+          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="System prompt rules">
+            <table class="strategy-table">
+              <thead>
+                <tr>
+                  <th style="width:28%;">Rule</th>
+                  <th style="width:72%;">Why it matters</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>Cite with tags only</strong></td><td>Answers use <code>[N]</code> for chart entries, <code>[P]</code> for patient drafts, and <code>[K]</code> for public reference snippets. Restricting brackets to these tags lets clients turn every citation into a link and lets evaluators check citation validity mechanically.</td></tr>
+                <tr><td><strong>Check completeness before saying "not found"</strong></td><td>The model consults the Completeness Manifest. If nothing was omitted, it can state that an item is not documented; if history was condensed or scoped, it says what is and is not visible.</td></tr>
+                <tr><td><strong>Copy values and dates exactly</strong></td><td>Numbers, units, reference ranges, and ISO dates are reproduced verbatim. Trends are not inferred from a single measurement, and relative time is anchored to the chart's latest clinical date.</td></tr>
+                <tr><td><strong>Supportive, non-prescriptive framing</strong></td><td>Answers distinguish active from stopped items, never tell the patient to change medications, and suggest questions to bring to their care team.</td></tr>
+              </tbody>
+            </table>
           </div>
         </section>
 
-        <!-- SECTION 2: WHAT WE TRIED AND RETIRED -->
-        <section class="strategy-section" id="what-we-retired" tabindex="-1" aria-labelledby="retired-heading">
-          <p class="section-kicker">Iteration Discipline</p>
-          <h2 id="retired-heading">What we tried, what we retired, and why</h2>
+        <!-- CONDENSATION -->
+        <section class="strategy-section" id="condensation" tabindex="-1" aria-labelledby="condensation-heading">
+          <p class="section-kicker">Condensation</p>
+          <h2 id="condensation-heading">Verbatim first, then structured reduction</h2>
           <p>
-            Keeping the architecture lean meant actively deleting prototypes and workarounds once standalone <code>wahs-engine</code> proved cleaner and stronger.
+            The condenser works on extracted clinical items, not on text. It always tries to show the full record first and only reduces it as far as needed to fit the chart budget.
           </p>
-
-          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Retired prototypes and replacements">
+          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Condensation tiers and rationale">
             <table class="strategy-table">
               <thead>
                 <tr>
-                  <th style="width:26%;">Earlier Prototype</th>
-                  <th style="width:18%;">Disposition</th>
-                  <th style="width:56%;">Why We Retired or Quarantined It &amp; What Replaced It</th>
+                  <th style="width:24%;">Tier</th>
+                  <th style="width:38%;">What it does</th>
+                  <th style="width:38%;">Design reason</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td><strong><code>med-agent-hub</code> <code>wahs-*</code> profiles</strong></td>
-                  <td><span class="pill-badge">Retired</span></td>
-                  <td>Bundling WAHS inside the multi-EHR Hub created cross-project dependency drift and duplicated condensation code. Replaced by standalone <a href="https://github.com/pmanko/wahs-engine"><code>wahs-engine</code> ↗</a> with zero EHR or SQL dependencies.</td>
-                </tr>
-                <tr>
-                  <td><strong>Browser-side JS condensation &amp; KB in <code>wahs-demo</code></strong></td>
-                  <td><span class="pill-badge">Retired</span></td>
-                  <td><code>wahs/demo/index.html</code> previously carried ~7,000 lines of client-side KB rules, precomputed Oct 31 JS snapshots, and regex redaction that drifted from the real engine. Replaced by a zero-business-logic thin UI calling isolated <code>wahs-sandbox-engine</code>.</td>
-                </tr>
-                <tr>
-                  <td><strong>Cloud Run <code>wahs-gpu-auth-relay</code></strong></td>
-                  <td><span class="pill-badge">Retired</span></td>
-                  <td>A separate Cloud Run OAuth proxy fragmented sign-in between the sandbox and the Web/Mobile apps. Replaced by the unified VM <code>wahs-auth-gate</code> Google whitelist cookie shared across <code>wahealth</code>, <code>wahs-web</code>, <code>wahs-mobile</code>, and <code>wahs-demo</code>.</td>
-                </tr>
-                <tr>
-                  <td><strong>Heuristic <code>graph.py</code> reconciliation</strong></td>
-                  <td><span class="strategy-badge future">Quarantined</span></td>
-                  <td>Regex-heavy cross-clinic graph rules risked overfitting synthetic fixtures and produced bracketed pseudo-citations. Quarantined behind <code>WAHS_ALLOW_EXPERIMENTAL_ENRICHERS=true</code>; replaced by standards-based <code>terminology_kb</code> (CIEL/RxNorm/LOINC/ACIP) + numeric-only citation rules.</td>
-                </tr>
-                <tr>
-                  <td><strong>2k Agentic Tool-Calling Loops</strong></td>
-                  <td><span class="pill-badge">Retired</span></td>
-                  <td>Multi-step tool loops over tiny <code>2k</code> charts scored <code>65.8</code>&ndash;<code>69.4 / 100</code> with <code>7</code>&ndash;<code>10/75</code> unsafe answers. Replaced by <code>16k</code> verbatim-first condensation + single-pass <code>note_rag</code> and <code>overflow_lookup</code>.</td>
-                </tr>
-                <tr>
-                  <td><strong>Dynamic <code>128k</code> Ollama <code>num_ctx</code></strong></td>
-                  <td><span class="pill-badge">Retired</span></td>
-                  <td>Triggered &gt;120s KV-cache overallocation stalls and browser timeouts. Replaced by warm <code>64k</code> pin (<code>WAHS_OLLAMA_NUM_CTX=65536</code>) plus immediate <code>context_ready</code> and 15s SSE keepalives.</td>
-                </tr>
+                <tr><td><strong>Tier 0 &middot; Verbatim</strong></td><td>Removes FHIR wrapper overhead, invalidated entries, and duplicate notes, then renders every item.</td><td>Most single-clinic and many multi-clinic records fit once transport noise is removed. Nothing clinical is lost, so nothing needs to be disclosed.</td></tr>
+                <tr><td><strong>Tier 1 &middot; Series folding</strong></td><td>Folds repeated lab and vital series by code and unit into earliest, extremes, and latest values.</td><td>Repeated measurements dominate large records. Folding keeps the trajectory and outliers while removing redundancy, without choosing which clinical facts matter.</td></tr>
+                <tr><td><strong>Tier 2 &middot; Safety core &amp; note packing</strong></td><td>Reserves allergies, active medications, active problems, and implanted devices; fills remaining space by recency; spreads what is left across notes.</td><td>Follows the HL7 International Patient Summary idea of a minimum safe dataset. Everything omitted is counted in the manifest so the model and the reader know the chart is partial.</td></tr>
               </tbody>
             </table>
           </div>
+          <div class="strategy-callout">
+            <strong>Why not have a model summarize the record?</strong> A model-written summary would be faster to build, but it introduces a second place where facts can be dropped or altered, its errors are hard to detect, and its output cannot be cited back to individual entries. Deterministic condensation is reproducible, testable, and keeps every line traceable.
+          </div>
         </section>
 
-        <!-- SECTION 3: NOV 26 BENCHMARK EVIDENCE -->
-        <section class="strategy-section" id="test-evidence" tabindex="-1" aria-labelledby="evidence-title">
-          <p class="section-kicker">Published Evidence &middot; November 26, 2026</p>
-          <h2 id="evidence-title">Two-judge blinded H200 evaluation results</h2>
+        <!-- CONTEXT ENRICHMENT -->
+        <section class="strategy-section" id="enrichment" tabindex="-1" aria-labelledby="enrichment-heading">
+          <p class="section-kicker">Context Enrichment</p>
+          <h2 id="enrichment-heading">Small, deterministic modules that add what the chart lacks</h2>
           <p>
-            All November 26 studies were judged blindly across two independent frontier evaluator passes (<code>gpt-6.2-sol</code> and <code>claude-opus-5-5</code>, median axis score with strict-majority consensus for confirmed unsafe answers).
+            Enrichers address specific, recurring failure modes rather than general capability. Each one follows the same rules: deterministic logic, a hard token cap, output only in the turn suffix, a disclosure describing what it added, and no effect on the chart prefix. That makes each module easy to turn off and compare.
           </p>
-
-          <h3 style="margin:26px 0 10px; font-size:19px; color:var(--purple-ink);">1. Run 3A: 32k Modular Enrichers Ablation (<code>n = 225</code> cells)</h3>
-          <p style="max-width:860px; color:var(--muted); font-size:15px;">
-            Tested across Margaret Chen (Tier 0), Marcus Vance (Tier 1), and Maurice Auer (Tier 2) &times; 5 clinical scenarios &times; 15 modular arms (<a href="https://reports.openclinai.org/2026-11-26-wahs-32k-modular-enrichers-ablation-eval/index.html">full report ↗</a>):
-          </p>
-          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Run 3A 32k modular enrichers ablation scores">
+          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Enrichers and the problems they address">
             <table class="strategy-table">
               <thead>
                 <tr>
-                  <th>Profile Arm (32k Budget)</th>
-                  <th>Gemma 4 26B (Harm)</th>
-                  <th>Gemma 4 12B (Harm)</th>
-                  <th>Gemma 4 E4B (Harm)</th>
+                  <th style="width:20%;">Module</th>
+                  <th style="width:40%;">Problem it targets</th>
+                  <th style="width:40%;">Approach</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td><code>baseline</code> (0 enrichers)</td><td>72.3 (1)</td><td>76.5 (1)</td><td>59.3 (3)</td></tr>
-                <tr><td><code>temporal</code> (1/5)</td><td>68.5 (0)</td><td>68.3 (1)</td><td>60.7 (1)</td></tr>
-                <tr><td><code>terminology</code> (1/5)</td><td>75.9 (1)</td><td>82.1 (1)</td><td>74.4 (0)</td></tr>
-                <tr class="highlight-row"><td><strong><code>core-enriched</code> (4/5, Default)</strong></td><td><span class="score-pill">79.8</span> <span class="safe-pill">0 harm</span></td><td><span class="score-pill">84.1</span> <span class="safe-pill">0 harm</span></td><td>67.5 (1)</td></tr>
-                <tr><td><code>full-enriched</code> (5/5, + Guidelines)</td><td>79.3 <span class="safe-pill">0 harm</span></td><td>81.7 (1)</td><td><span class="score-pill">76.2</span> <span class="safe-pill">0 harm</span></td></tr>
+                <tr><td><code>temporal</code></td><td>Models confuse old and recent results and miscount elapsed time.</td><td>States the chart's anchor date, lookback cutoffs, vaccine intervals, and computed lab changes over time.</td></tr>
+                <tr><td><code>terminology_kb</code></td><td>Brand and generic names hide duplicate therapy; drug classes and missing reference ranges are left to model memory.</td><td>Looks up ingredients, drug classes, vaccine schedules, and standard ranges in CIEL, RxNorm/ATC, CDC CVX/ACIP, and LOINC.</td></tr>
+                <tr><td><code>note_rag</code></td><td>Condensation excerpts long notes, so relevant passages can fall outside the chart.</td><td>Ranks unseen note passages against the question with BM25 and appends the best ones. Runs only when notes were excerpted.</td></tr>
+                <tr><td><code>overflow_lookup</code></td><td>Tight budgets omit structured items that a specific question needs.</td><td>Retrieves omitted items matching the question and adds them back with citation numbers. Runs only when items were omitted.</td></tr>
+                <tr><td><code>guideline_kb</code></td><td>Smaller models have less built-in clinical background.</td><td>Adds short public reference snippets related to the chart's codes, cited as <code>[K]</code>. Off by default so its effect can be studied separately.</td></tr>
               </tbody>
             </table>
           </div>
-
-          <h3 style="margin:28px 0 10px; font-size:19px; color:var(--purple-ink);">2. Run 3B: 16k Tier-2 Retrieval Recovery (<code>n = 144</code> cells)</h3>
-          <p style="max-width:860px; color:var(--muted); font-size:15px;">
-            Tested on dense longitudinal charts where <code>16k</code> activates Tier 2 note excerption/omission (Marcus Vance: 63 excerpted notes; Maurice Auer: 27 excerpted + 102 omitted notes) (<a href="https://reports.openclinai.org/2026-11-26-wahs-16k-tier2-retrieval-recovery-eval/index.html">full report ↗</a>):
-          </p>
-          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Run 3B 16k Tier-2 retrieval recovery scores">
-            <table class="strategy-table">
-              <thead>
-                <tr>
-                  <th>Profile &amp; Budget Arm</th>
-                  <th>Gemma 4 26B (Harm)</th>
-                  <th>Gemma 4 12B (Harm)</th>
-                  <th>Gemma 4 E4B (Harm)</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td><code>baseline @ 16k</code></td><td>77.2 (0)</td><td>79.7 (0)</td><td>64.7 (1)</td></tr>
-                <tr><td><code>baseline @ 32k</code> (2&times; chart tokens)</td><td>76.3 (0)</td><td>78.0 (0)</td><td>69.9 (1)</td></tr>
-                <tr class="highlight-row"><td><strong><code>rag-overflow @ 16k</code></strong></td><td><span class="score-pill">85.2</span> <span class="safe-pill">0 harm</span></td><td>70.2 (0)</td><td><span class="score-pill">72.7</span> (1)</td></tr>
-                <tr class="highlight-row"><td><strong><code>core-enriched @ 16k</code> (Default)</strong></td><td><span class="score-pill">80.2</span> <span class="safe-pill">0 harm</span></td><td><span class="score-pill">82.7</span> <span class="safe-pill">0 harm</span></td><td>72.2 (1)</td></tr>
-              </tbody>
-            </table>
-          </div>
-
-          <h3 style="margin:28px 0 10px; font-size:19px; color:var(--purple-ink);">3. Budget Sweep (<code>n = 192</code>) &amp; Engine vs. Raw FHIR (<code>n = 450</code>)</h3>
-          <p style="max-width:860px; color:var(--muted); font-size:15px;">
-            Across dense longitudinal patients (<a href="https://reports.openclinai.org/2026-11-26-wahs-condensation-budget-sweep-eval/index.html">Budget Sweep ↗</a>), condensing into <code>32k</code>/<code>16k</code> consistently beat unbounded <code>128k</code> stuffing (26B: <code>82.2</code> at 32k / <code>79.1</code> at 16k vs <code>74.1</code> at 128k; 12B: <code>81.7</code> vs <code>71.1</code>). Against raw FHIR JSON (<a href="https://reports.openclinai.org/2026-11-26-wahs-baseline-engine-vs-direct-eval/index.html">Engine vs Raw FHIR ↗</a>), even un-enriched <code>wahs-engine</code> baseline gained <strong>+33.8 pts on 26B</strong> (<code>45.1 &rarr; 78.9</code>), <strong>+30.8 pts on 12B</strong> (<code>47.1 &rarr; 77.9</code>), and <strong>+30.5 pts on E4B</strong> (<code>43.3 &rarr; 73.8</code>).
+          <p>
+            The hosted default, <code>core-enriched</code>, enables the first four. Because <code>note_rag</code> and <code>overflow_lookup</code> are self-gating, they add nothing when a chart fits verbatim, so small records pay no retrieval cost.
           </p>
         </section>
 
-        <!-- SECTION 4: MODELS & HARDWARE -->
+        <!-- MODEL ORCHESTRATION -->
+        <section class="strategy-section" id="inference-strategy" tabindex="-1" aria-labelledby="orchestration-heading">
+          <p class="section-kicker">Model Orchestration</p>
+          <h2 id="orchestration-heading">Deterministic preparation, then a single model call</h2>
+          <p>
+            Several orchestration patterns are common for question answering over long records. WAHS uses the simplest one that meets the constraints above.
+          </p>
+          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Orchestration patterns considered">
+            <table class="strategy-table">
+              <thead>
+                <tr>
+                  <th style="width:24%;">Pattern</th>
+                  <th style="width:38%;">Trade-off</th>
+                  <th style="width:38%;">Position in WAHS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>Raw record in a long context</strong></td><td>Simple, but wastes tokens on JSON structure and relies on the model to find relevant facts across a very long input.</td><td>Used only as a comparison baseline.</td></tr>
+                <tr><td><strong>Agentic tool calling</strong></td><td>Flexible, but the model may skip a lookup, issue the wrong query, or stop early. Each step adds latency and failure points.</td><td>Not used. Retrieval runs before the call instead.</td></tr>
+                <tr><td><strong>Multi-model pipelines</strong> (summarize, then answer; or answer, then verify)</td><td>Can catch some errors, but multiplies cost and latency, and intermediate outputs are harder to cite.</td><td>Not used in the patient-facing path. Verification is handled in offline evaluation.</td></tr>
+                <tr class="highlight-row"><td><strong>Deterministic preparation + single call</strong></td><td>Predictable latency, one place for the model to fail, every input inspectable through context preview.</td><td>Default for all clients.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            The engine exposes the same OpenAI-compatible interface it consumes, so clients, evaluation tools, and alternative model hosts are interchangeable. The Research Sandbox can send the engine-prepared prompt to a model on the user's own machine, which makes side-by-side comparisons on identical context straightforward.
+          </p>
+        </section>
+
+        <!-- MODEL SELECTION -->
         <section class="strategy-section" id="model-selection" tabindex="-1" aria-labelledby="models-heading">
-          <p class="section-kicker">Model Selection &amp; Deployment Tiers</p>
-          <h2 id="models-heading">Three swappable Gemma 4 tiers on UW CIRG H200 or local hardware</h2>
-          <div class="strategy-grid-3">
-            <article class="strategy-card recommended">
-              <span class="strategy-badge">Primary Default</span>
-              <h3><code>wahs-26b</code> (Gemma 4 26B-A4B MoE)</h3>
-              <p>Sparse mixture-of-experts model activating ~4B parameters per token. Delivers the best synthesis depth, retrieval recovery (<code>85.2</code> at 16k), and sub-second warm TTFT on UW CIRG H200 at <code>64k</code> <code>num_ctx</code>.</p>
-            </article>
-            <article class="strategy-card">
-              <span class="strategy-badge secondary">Compact Workhorse</span>
-              <h3><code>wahs-12b</code> (Gemma 4 12B)</h3>
-              <p>Dense 12B model that reached <strong><code>84.1 / 100</code> (0 unsafe)</strong> with <code>core-enriched</code> in Run 3A and runs cleanly on a single 24 GB GPU or 32&ndash;64 GB Apple Silicon workstation.</p>
-            </article>
-            <article class="strategy-card">
-              <span class="strategy-badge future">Edge / Low-VRAM</span>
-              <h3><code>wahs-e4b</code> (Gemma 4 E4B)</h3>
-              <p>Ultra-fast 4B tier for laptops and rapid triage. Benefits strongly from <code>full-enriched</code> (<code>59.3 &rarr; 76.2</code>, <code>0</code> unsafe in Run 3A), closing much of the gap with larger models.</p>
-            </article>
-          </div>
-        </section>
-
-        <!-- SECTION 5: SECURITY & GOVERNANCE -->
-        <section class="strategy-section" id="security-governance" tabindex="-1" aria-labelledby="security-heading">
-          <p class="section-kicker">Security &amp; Privacy Boundaries</p>
-          <h2 id="security-heading">Zero-privilege data access and decoupled selective disclosure</h2>
+          <p class="section-kicker">Model Selection</p>
+          <h2 id="models-heading">Three open-weight tiers from one model family</h2>
           <p>
-            <code>wahs-engine</code> enforces per-user isolation by construction: production deployments hold zero HAPI admin credentials, refuse to start if pointed at <code>fhir-internal</code>, forward the patient's Keycloak JWT through <code>fhir-auth</code> on every turn, strip any foreign <code>Patient/</code> references before extraction, and keep conversation history out of server databases. Patient-controlled selective disclosure (SMART Health Links &amp; HL7 DS4P) remains cleanly in the WAHS sharing layer rather than relying on implicit prompt regexes.
+            WAHS uses open-weight models so records never leave university or user-controlled hardware. Using three sizes from one family (Gemma 4) keeps the chat template, tokenizer, and instruction-following behavior consistent, so prompts and condensation budgets transfer across tiers.
           </p>
-        </section>
-
-        <!-- SECTION 6: GLOSSARY -->
-        <section class="strategy-section" id="glossary" tabindex="-1" aria-labelledby="glossary-heading">
-          <p class="section-kicker">Shared Vocabulary</p>
-          <h2 id="glossary-heading">Plain-English glossary</h2>
-          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="WAHS plain-English glossary">
+          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Model tiers">
             <table class="strategy-table">
+              <thead>
+                <tr>
+                  <th style="width:18%;">Alias</th>
+                  <th style="width:26%;">Model</th>
+                  <th style="width:28%;">Typical hardware</th>
+                  <th style="width:28%;">When to use</th>
+                </tr>
+              </thead>
               <tbody>
-                <tr><td style="width:26%;"><strong><code>wahs-engine</code></strong></td><td>Standalone OpenAI-compatible Python middleware that fetches scoped FHIR R4 records via <code>fhir-auth</code>, condenses them verbatim-first, runs modular enrichers, and attaches <code>x_wahs</code> citations.</td></tr>
-                <tr><td><strong>Verbatim-First Condensation</strong></td><td>3-tier deterministic compression (<code>Tier 0</code> verbatim, <code>Tier 1</code> uniform series folding, <code>Tier 2</code> IPS safety core + note water-filling) that never mutates clinical facts and logs every omission in <code>[2] Completeness Manifest</code>.</td></tr>
-                <tr><td><strong><code>core-enriched</code> (4/5)</strong></td><td>Default enricher profile combining <code>temporal</code>, <code>terminology_kb</code>, <code>note_rag</code>, and <code>overflow_lookup</code> in the append-only turn suffix (with <code>guideline_kb</code> opt-in for 5/5).</td></tr>
-                <tr><td><strong><code>X-WAHS-Prefix-Hash</code></strong></td><td>Short SHA-256 fingerprint of the query-invariant system prompt + condensed chart prefix used for LRU reuse and GPU KV-cache verification.</td></tr>
-                <tr><td><strong><code>num_ctx</code> (64k Pin)</strong></td><td>Ollama KV-cache context size pinned at <code>65,536</code> tokens so toggling chart budgets from <code>2k</code> to <code>64k</code> never triggers cold model reloads or <code>128k</code> VRAM spills.</td></tr>
-                <tr><td><strong><code>[N]</code> / <code>[P]</code> / <code>[K]</code> Citations</strong></td><td>Inline source markers mapped in <code>x_wahs.citation_map</code> to FHIR chart entries (<code>[N]</code>), retrieved clinical note passages (<code>[P]</code>), and public guideline snippets (<code>[K]</code>).</td></tr>
+                <tr class="highlight-row"><td><code>wahs-26b</code> (default)</td><td>Gemma 4 26B-A4B, mixture of experts with about 4B active parameters per token</td><td>Shared GPU server (UW CIRG)</td><td>Hosted default; deepest synthesis across long, multi-source records.</td></tr>
+                <tr><td><code>wahs-12b</code></td><td>Gemma 4 12B, dense</td><td>Single workstation GPU or Apple Silicon machine</td><td>Local or partner deployments that need strong quality on modest hardware.</td></tr>
+                <tr><td><code>wahs-e4b</code></td><td>Gemma 4 E4B</td><td>Laptops and edge devices</td><td>Fast, low-resource use; benefits most from enrichers that supply background knowledge.</td></tr>
               </tbody>
             </table>
           </div>
+          <p>
+            Selection criteria for adding or replacing a model: open weights with a license that allows research deployment, reliable instruction following for citation and abstention rules, a tokenizer the engine can run offline for exact budgeting, and acceptable latency on the target hardware. Model aliases decouple clients from upstream model IDs, so a replacement only changes server configuration.
+          </p>
+        </section>
+
+        <!-- CONTEXT SIZING -->
+        <section class="strategy-section" id="context-sizing" tabindex="-1" aria-labelledby="sizing-heading">
+          <p class="section-kicker">Context Sizing</p>
+          <h2 id="sizing-heading">Focused chart budgets inside one fixed allocation</h2>
+          <div class="strategy-grid-2">
+            <article class="strategy-card recommended">
+              <span class="strategy-badge">Chart budget</span>
+              <h3>Smaller and focused over larger and diluted</h3>
+              <p>Filling a very long context does not guarantee the model uses it well; attention spreads thin over long inputs. WAHS defaults to a 16k-token chart budget with retrieval enrichers to recover what condensation set aside, and lets users and evaluators choose from 2k to 64k.</p>
+            </article>
+            <article class="strategy-card">
+              <span class="strategy-badge secondary">Model-host allocation</span>
+              <h3>One fixed context size per model</h3>
+              <p>Resizing the model host's context on every request forces a model reload whenever the size changes. WAHS requests one fixed 64k allocation, large enough for every supported budget plus conversation and output, so switching budgets never reloads the model and the cached chart prefix stays usable. Larger allocations were avoided because they strain memory on shared GPUs.</p>
+            </article>
+          </div>
+          <p>
+            Implementation details, including how budgets are resolved and clamped, are under <a href="/wahs/architecture/index.html#budget-and-num-ctx">Budgets &amp; context allocation</a>.
+          </p>
+        </section>
+
+        <!-- APPROACHES WE MOVED AWAY FROM -->
+        <section class="strategy-section" id="what-we-retired" tabindex="-1" aria-labelledby="retired-heading">
+          <p class="section-kicker">Approaches We Moved Away From</p>
+          <h2 id="retired-heading">What we tried and why we changed course</h2>
+          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Approaches retired or quarantined">
+            <table class="strategy-table">
+              <thead>
+                <tr>
+                  <th style="width:28%;">Earlier approach</th>
+                  <th style="width:72%;">Why we moved away and what replaced it</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>WAHS profiles inside a shared multi-EHR hub</strong></td><td>Coupling WAHS to a general hub duplicated condensation code and tied release cycles together. Replaced by the standalone <code>wahs-engine</code> with no EHR or SQL dependencies.</td></tr>
+                <tr><td><strong>Condensation and clinical rules in the browser</strong></td><td>The earlier sandbox reimplemented engine logic in JavaScript and drifted from the real engine. Replaced by a sandbox page that calls an isolated engine instance and contains no clinical logic.</td></tr>
+                <tr><td><strong>Rule-based cross-clinic reconciliation graph</strong></td><td>Hand-written rules fit synthetic examples but did not generalize and produced bracketed text the model echoed as false citations. Quarantined behind an experimental flag; standards-based terminology lookup covers the general case.</td></tr>
+                <tr><td><strong>Agentic tool loops over small summaries</strong></td><td>Models skipped needed lookups and missed cross-clinic connections. Replaced by larger verbatim-first charts plus retrieval run before the model call.</td></tr>
+                <tr><td><strong>Per-request context resizing and very large allocations</strong></td><td>Caused model reloads and memory pressure on shared GPUs. Replaced by one fixed allocation and early streaming frames that keep connections alive.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- PRIVACY & GOVERNANCE -->
+        <section class="strategy-section" id="security-governance" tabindex="-1" aria-labelledby="security-heading">
+          <p class="section-kicker">Privacy &amp; Governance</p>
+          <h2 id="security-heading">Keep access control and disclosure outside the model</h2>
+          <p>
+            Prompts are not a security boundary. WAHS enforces per-user access in the authorization proxy and in the engine's scope checks, before any text reaches a model, and keeps conversation history out of server storage. Choices about what a patient shares with others belong in the sharing layer (SMART Health Links, with HL7 data segmentation as a future direction), not in prompt-level redaction. Every response carries an HL7 AI-Provenance record that names the model, prompt, and enrichers used and marks the output as requiring human review. Enforcement details are under <a href="/wahs/architecture/index.html#session-and-scope-model">Identity, state &amp; caching</a>.
+          </p>
+        </section>
+
+        <!-- HOW APPROACHES ARE COMPARED -->
+        <section class="strategy-section" id="evaluation" tabindex="-1" aria-labelledby="evaluation-heading">
+          <p class="section-kicker">How Approaches Are Compared</p>
+          <h2 id="evaluation-heading">Every component can be switched off and measured</h2>
+          <p>
+            The two-region prompt, declarative profiles, and per-module toggles exist partly so that each design choice can be tested against simpler alternatives on the same cases. Evaluations run through the <a href="/validation-harness/index.html">clinical AI validation harness</a> on synthetic multi-clinic records and de-identified hospital records, comparing raw records, condensation alone, and combinations of enrichers across model sizes and chart budgets. Answers are judged blind against the source records for accuracy, completeness, citation quality, and safety, and defaults change only when results support it.
+          </p>
+          <p>
+            Study designs, results, and transcripts are published separately: <a href="https://reports.openclinai.org/#wahs">WAHS evaluation reports <span aria-hidden="true">↗</span></a>.
+          </p>
+        </section>
+
+        <!-- LIMITATIONS -->
+        <section class="strategy-section" id="limitations" tabindex="-1" aria-labelledby="limitations-heading">
+          <p class="section-kicker">Limitations &amp; Open Questions</p>
+          <h2 id="limitations-heading">What this approach does not yet address</h2>
+          <ul style="max-width:860px; color:var(--ink); font-size:15.5px; line-height:1.7;">
+            <li><strong>Evaluation scope.</strong> Testing so far uses synthetic and de-identified records with blinded automated judges. Clinician-graded review and studies with real patients are still ahead.</li>
+            <li><strong>Record quality.</strong> Condensation and retrieval depend on how sources code their data. Free-text-only results, inconsistent units, and missing dates limit what deterministic steps can recover.</li>
+            <li><strong>Multi-step reasoning.</strong> Single-pass answering handles most lookup and synthesis questions, but questions that require reconciling long timelines across many documents remain difficult.</li>
+            <li><strong>Client parity.</strong> The web app's upstream health record chat uses the engine but does not yet render interactive citations or apply per-resource selections.</li>
+            <li><strong>Intended use.</strong> Answers help patients prepare for conversations with clinicians. They are not validated for clinical decision support.</li>
+          </ul>
+          <p class="scope-note" style="margin-top:24px;">
+            WA Health Summary is an exploratory research and demonstration project using synthetic and de-identified records. AI outputs can contain errors and do not constitute medical advice or replace clinical review.
+          </p>
         </section>
 
         <p class="back-to-top"><a href="#top">Back to top <span aria-hidden="true">↑</span></a></p>
