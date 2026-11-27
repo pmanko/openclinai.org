@@ -182,12 +182,22 @@ def test_querystore_test_entrypoint_rejects_unknown_mode_before_maven():
 
 class FakeOpenMrs:
     def __init__(self, *, privilege: bool = True) -> None:
+        self.privilege_uuids = {
+            name: (
+                "privilege-uuid"
+                if name == provisioner.REQUIRED_PRIVILEGE
+                else f"privilege-uuid-{i}"
+            )
+            for i, name in enumerate(provisioner.REQUIRED_PRIVILEGES)
+        }
+        self.uuid_to_privilege = {uuid: name for name, uuid in self.privilege_uuids.items()}
         self.objects = {
-            ("privilege", "name", provisioner.REQUIRED_PRIVILEGE): (
-                {"uuid": "privilege-uuid", "name": provisioner.REQUIRED_PRIVILEGE}
-                if privilege
-                else None
-            ),
+            **{
+                ("privilege", "name", name): (
+                    {"uuid": uuid, "name": name} if privilege else None
+                )
+                for name, uuid in self.privilege_uuids.items()
+            },
             ("role", "name", provisioner.ROLE_NAME): None,
             ("user", "username", provisioner.SERVICE_USERNAME): None,
         }
@@ -212,22 +222,21 @@ class FakeOpenMrs:
                 for (resource, _field, _key), value in self.objects.items()
                 if resource == "user" and value and value.get("uuid") == uuid
             )
-        if path == "role":
-            role = {"uuid": "role-uuid", **payload, "privileges": [{"name": provisioner.REQUIRED_PRIVILEGE}]}
+        if path in {"role", "role/role-uuid"}:
+            role = {
+                "uuid": "role-uuid",
+                **payload,
+                "privileges": [
+                    {"name": self.uuid_to_privilege[uuid]}
+                    for uuid in payload.get("privileges", [])
+                ],
+            }
             self.objects[("role", "name", provisioner.ROLE_NAME)] = role
             return role
         if path == "user":
             user = {"uuid": "user-uuid", "username": payload["username"], "roles": [{"uuid": "role-uuid"}]}
             self.objects[("user", "username", provisioner.SERVICE_USERNAME)] = user
             return user
-        if path == "role/role-uuid":
-            role = {
-                "uuid": "role-uuid",
-                **payload,
-                "privileges": [{"name": provisioner.REQUIRED_PRIVILEGE}],
-            }
-            self.objects[("role", "name", provisioner.ROLE_NAME)] = role
-            return role
         if path == "user/user-uuid":
             user = {
                 "uuid": "user-uuid",
@@ -250,10 +259,13 @@ def test_provisioner_creates_only_patient_reader_and_protects_secret_file(tmp_pa
     )
 
     role_request = next(item for item in client.requests if item[1] == "role")
-    assert role_request[2]["privileges"] == ["privilege-uuid"]
+    assert role_request[2]["privileges"] == [
+        client.privilege_uuids[name] for name in provisioner.REQUIRED_PRIVILEGES
+    ]
     assert role_request[2]["inheritedRoles"] == []
     assert next(item for item in client.requests if item[1] == "user")[2]["roles"] == ["role-uuid"]
     assert result["privilege"] == "Get Patients"
+    assert result["privileges"] == list(provisioner.REQUIRED_PRIVILEGES)
     assert stat.S_IMODE(output.stat().st_mode) == 0o600
     values = provisioner._read_env(output)
     assert values["QUERYSTORE_BASE_URL"] == "http://backend:8080/openmrs"
@@ -273,7 +285,7 @@ def test_provisioner_reuses_saved_account_without_rotating_it(tmp_path):
     client.objects[("role", "name", provisioner.ROLE_NAME)] = {
         "uuid": "role-uuid",
         "name": provisioner.ROLE_NAME,
-        "privileges": [{"name": provisioner.REQUIRED_PRIVILEGE}],
+        "privileges": [{"name": name} for name in provisioner.REQUIRED_PRIVILEGES],
     }
     client.objects[("user", "username", provisioner.SERVICE_USERNAME)] = {
         "uuid": "user-uuid",
@@ -299,7 +311,7 @@ def test_provisioner_removes_extra_inherited_and_user_roles(tmp_path):
     client.objects[("role", "name", provisioner.ROLE_NAME)] = {
         "uuid": "role-uuid",
         "name": provisioner.ROLE_NAME,
-        "privileges": [{"name": provisioner.REQUIRED_PRIVILEGE}],
+        "privileges": [{"name": name} for name in provisioner.REQUIRED_PRIVILEGES],
         "inheritedRoles": [{"uuid": "superuser-role"}],
     }
     client.objects[("user", "username", provisioner.SERVICE_USERNAME)] = {
@@ -330,7 +342,7 @@ def test_provisioner_fails_closed_when_server_retains_excess_privilege(tmp_path)
     client.objects[("role", "name", provisioner.ROLE_NAME)] = {
         "uuid": "role-uuid",
         "name": provisioner.ROLE_NAME,
-        "privileges": [{"name": provisioner.REQUIRED_PRIVILEGE}],
+        "privileges": [{"name": name} for name in provisioner.REQUIRED_PRIVILEGES],
         "inheritedRoles": [{"uuid": "superuser-role"}],
     }
     client.objects[("role", "name", "Superuser")] = {
