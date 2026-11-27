@@ -4,11 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>WAHS Architecture &amp; Builder Reference &middot; OpenClinAI</title>
-  <meta name="description" content="Technical architecture of WA Health Summary: services and networks, the per-request pipeline in wahs-engine, the FHIR data model, identity and caching boundaries, the HTTP and SSE contract, enricher runtime, sharing, edge access control, and runtime configuration." />
+  <meta name="description" content="Technical architecture of WA Health Summary: Docker services and network boundaries, the five-stage pipeline in wahs-engine, FHIR dataset layout, identity and caching, HTTP and SSE contracts, enricher runtime, SMART Health Links sharing, edge routing, and configuration." />
   <link rel="canonical" href="https://openclinai.org/wahs/architecture/" />
   <meta property="og:url" content="https://openclinai.org/wahs/architecture/" />
   <meta property="og:title" content="WAHS Architecture &amp; Builder Reference &middot; OpenClinAI" />
-  <meta property="og:description" content="How WA Health Summary connects patient-controlled FHIR records, the WAHS AI engine, open-weight models, and the web, mobile, and sandbox clients." />
+  <meta property="og:description" content="System components, data model, request pipeline, security boundaries, wire contracts, and configuration for WA Health Summary and wahs-engine." />
   <meta property="og:image" content="https://storage.googleapis.com/openclinai-media/wahs/wahs-web-app-demo-20261126.webp" />
   <meta name="theme-color" content="#4b2e83" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -71,19 +71,19 @@
         <ol>
           <li><a href="#system-topology">Services &amp; networks</a></li>
           <li><a href="#pilot-architecture">Request pipeline</a></li>
-          <li><a href="#worked-query-example">Request lifecycle</a></li>
+          <li><a href="#worked-query-example">Request trace</a></li>
           <li><a href="#client-integrations">Client integrations</a></li>
-          <li><a href="#data-model">FHIR data model</a></li>
+          <li><a href="#data-model">FHIR dataset layout</a></li>
           <li><a href="#session-and-scope-model">Identity, state &amp; caching</a></li>
           <li><a href="#engine-internals">Engine internals</a></li>
         </ol>
         <p class="doc-toc-title" style="margin-top:16px;">Builder Reference</p>
         <ol>
           <li><a href="#wire-contract-details">HTTP &amp; SSE contract</a></li>
-          <li><a href="#profiles-and-enrichers">Enricher runtime</a></li>
-          <li><a href="#budget-and-num-ctx">Budgets &amp; context allocation</a></li>
-          <li><a href="#sharing">Sharing</a></li>
-          <li><a href="#edge-access">Edge &amp; access control</a></li>
+          <li><a href="#profiles-and-enrichers">Enrichers &amp; profiles</a></li>
+          <li><a href="#budget-and-num-ctx">Token accounting</a></li>
+          <li><a href="#sharing">SMART Health Links</a></li>
+          <li><a href="#edge-access">Edge routing &amp; gate</a></li>
           <li><a href="#env-config">Configuration &amp; local stack</a></li>
         </ol>
         <p class="doc-toc-more">Design rationale: <a href="/wahs/llm-strategy/index.html">LLM Strategy</a></p>
@@ -102,21 +102,21 @@
           </nav>
 
           <p class="section-kicker">WA Health Summary &middot; Architecture &amp; Builder Reference</p>
-          <h1>System architecture: from patient-controlled FHIR records to cited answers</h1>
+          <h1>WA Health Summary system architecture</h1>
           <p class="overview-lead">
-            WA Health Summary stores each patient's records in HAPI FHIR R4, gates every read through a per-user authorization proxy, and answers questions through <code>wahs-engine</code>, a stateless OpenAI-compatible service that assembles, condenses, and cites the record before calling an open-weight model. This page describes the services, data model, request pipeline, security boundaries, and interfaces. The reasoning behind the condensation, context, and model choices is on the <a href="/wahs/llm-strategy/index.html">LLM Strategy</a> page.
+            WA Health Summary stores patient records in HAPI FHIR R4, authorizes every read through a per-user proxy (<code>fhir-auth</code>), and routes question answering through <code>wahs-engine</code>, a stateless OpenAI-compatible Python service. Client applications (the web app, mobile companion, and public Research Sandbox) handle presentation and session state while delegating FHIR extraction, condensation, enrichment, prompt assembly, and citation mapping to the engine. Design rationale for condensation, context engineering, and model selection is covered under <a href="/wahs/llm-strategy/index.html">LLM Strategy</a>.
           </p>
           <p class="strategy-meta">
-            Source: <a href="https://github.com/pmanko/wahs-engine"><code>pmanko/wahs-engine</code> ↗</a> &middot; <a href="https://github.com/pmanko/shl-ips"><code>pmanko/shl-ips</code> ↗</a> &middot; <a href="https://github.com/pmanko/wahs-mobile-frontend"><code>pmanko/wahs-mobile-frontend</code> ↗</a> &middot; Deployment: <a href="https://github.com/pmanko/openclinai.org"><code>pmanko/openclinai.org</code> ↗</a>
+            Repositories: <a href="https://github.com/pmanko/wahs-engine"><code>pmanko/wahs-engine</code> ↗</a> &middot; <a href="https://github.com/pmanko/shl-ips"><code>pmanko/shl-ips</code> ↗</a> &middot; <a href="https://github.com/pmanko/wahs-mobile-frontend"><code>pmanko/wahs-mobile-frontend</code> ↗</a> &middot; <a href="https://github.com/pmanko/openclinai.org"><code>pmanko/openclinai.org</code> ↗</a>
           </p>
 
           <div class="decision" role="region" aria-labelledby="arch-invariants-title">
-            <h2 id="arch-invariants-title">Architectural invariants</h2>
+            <h2 id="arch-invariants-title">Core system properties</h2>
             <ol>
-              <li><strong>No database credentials in the AI layer.</strong> <code>wahs-engine</code> never reads HAPI FHIR directly. It forwards the caller's Keycloak bearer token through <code>fhir-auth</code> (<code>uwcirg/jwt-proxy</code>) on every turn, refuses to start if pointed at the internal FHIR server, and strips any resource that references a different patient.</li>
-              <li><strong>Stateless service, explicit scope.</strong> Conversation history lives in the client and is sent as an OpenAI <code>messages[]</code> array each turn. The engine keeps only bounded, per-user in-memory caches keyed by identity, dataset fingerprints, and scope.</li>
-              <li><strong>Deterministic preparation, single model call.</strong> Record assembly, condensation, and optional enrichment are deterministic code paths. The model is called once per turn with a stable chart prefix and a question-specific suffix.</li>
-              <li><strong>Every claim is addressable.</strong> Answers cite numbered tags that resolve through <code>x_wahs.citation_map</code> to a FHIR resource, a patient-authored draft, or a public reference snippet. The final frame carries an HL7 AI-Provenance record with <code>human_review_required: true</code>.</li>
+              <li><strong>Per-user FHIR authorization.</strong> <code>wahs-engine</code> holds no HAPI database or administrative credentials. It forwards the caller's Keycloak bearer token to <code>fhir-auth</code> (<code>uwcirg/jwt-proxy</code>) on every request, aborts startup if configured against <code>fhir-internal</code>, and strips any resource whose subject does not match the authorized patient.</li>
+              <li><strong>Stateless request handling.</strong> Conversation history stays in the client and is passed as an OpenAI <code>messages[]</code> array on each turn. The engine writes no chat transcripts to disk or database; in-memory dataset and prefix caches are partitioned by verified user subject, dataset timestamps, and request scope.</li>
+              <li><strong>Deterministic context preparation.</strong> FHIR extraction, three-tier structural condensation, and optional enrichment modules execute in deterministic Python before a single southbound <code>/v1/chat/completions</code> call.</li>
+              <li><strong>Structured citation provenance.</strong> Inline <code>[N]</code>, <code>[P]</code>, and <code>[K]</code> tags map through <code>x_wahs.citation_map</code> to source FHIR resources, unsaved client overlays, and public reference snippets. The final response carries an HL7 <code>AI-Provenance</code> record with <code>human_review_required: true</code>.</li>
             </ol>
           </div>
 
@@ -125,16 +125,16 @@
             <ol>
               <li><a href="#system-topology">Services &amp; networks</a></li>
               <li><a href="#pilot-architecture">Request pipeline</a></li>
-              <li><a href="#worked-query-example">Request lifecycle</a></li>
+              <li><a href="#worked-query-example">Request trace</a></li>
               <li><a href="#client-integrations">Client integrations</a></li>
-              <li><a href="#data-model">FHIR data model</a></li>
+              <li><a href="#data-model">FHIR dataset layout</a></li>
               <li><a href="#session-and-scope-model">Identity, state &amp; caching</a></li>
               <li><a href="#engine-internals">Engine internals</a></li>
               <li><a href="#wire-contract-details">HTTP &amp; SSE contract</a></li>
-              <li><a href="#profiles-and-enrichers">Enricher runtime</a></li>
-              <li><a href="#budget-and-num-ctx">Budgets &amp; context allocation</a></li>
-              <li><a href="#sharing">Sharing</a></li>
-              <li><a href="#edge-access">Edge &amp; access control</a></li>
+              <li><a href="#profiles-and-enrichers">Enrichers &amp; profiles</a></li>
+              <li><a href="#budget-and-num-ctx">Token accounting</a></li>
+              <li><a href="#sharing">SMART Health Links</a></li>
+              <li><a href="#edge-access">Edge routing &amp; gate</a></li>
               <li><a href="#env-config">Configuration &amp; local stack</a></li>
             </ol>
           </details>
@@ -143,9 +143,9 @@
         <!-- SERVICES & NETWORKS -->
         <section class="strategy-section" id="system-topology" tabindex="-1" aria-labelledby="topology-heading">
           <p class="section-kicker">Part 1 &middot; System</p>
-          <h2 id="topology-heading">Services and networks</h2>
+          <h2 id="topology-heading">Services and network boundaries</h2>
           <p>
-            The hosted stack runs as one Docker Compose project behind a shared Caddy edge proxy. Two networks separate concerns: <code>wahs-net</code> is private and carries all patient data traffic, while <code>openclinai-edge</code> connects services that Caddy exposes publicly. The Research Sandbox engine sits only on the edge network and has no route to patient data.
+            The hosted stack runs under Docker Compose behind a Caddy reverse proxy with two Docker networks: <code>wahs-net</code> (internal, carrying all patient FHIR and database traffic) and <code>openclinai-edge</code> (connecting services reachable from Caddy). <code>wahs-sandbox-engine</code> attaches only to <code>openclinai-edge</code> and has no route to HAPI FHIR, Keycloak, or PostgreSQL.
           </p>
 
           <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="WAHS services, roles, and networks">
@@ -159,17 +159,17 @@
                 </tr>
               </thead>
               <tbody>
-                <tr><td><code>wahs-shl-ips</code></td><td>SvelteKit web app (<code>shl-ips</code>)</td><td>WAHS web app and server-side BFF for Ask WAHS and the health record chat.</td><td>private, edge</td></tr>
-                <tr><td><code>wahs-mobile-frontend</code></td><td>Mobile companion + Node BFF</td><td>Phone-sized client; BFF proxies chat and preview calls to the engine.</td><td>private, edge</td></tr>
-                <tr><td><code>wahs-engine</code></td><td>FastAPI (<code>wahs-engine</code>)</td><td>Record assembly, condensation, enrichment, prompt framing, model routing, provenance.</td><td>private</td></tr>
-                <tr><td><code>wahs-sandbox-engine</code></td><td>Same image, sandbox config</td><td>Serves read-only example bundles and uploads for the Research Sandbox.</td><td>edge only</td></tr>
-                <tr><td><code>wahs-fhir-auth</code> / <code>wahs-fhir-auth-proxy</code></td><td>nginx + <code>uwcirg/jwt-proxy</code></td><td>Per-user FHIR authorization: validates the bearer token and applies ownership policy on every request.</td><td>private (nginx also edge)</td></tr>
-                <tr><td><code>wahs-fhir</code></td><td>HAPI FHIR R4</td><td>System of record for all patient datasets.</td><td>private</td></tr>
-                <tr><td><code>wahs-keycloak</code></td><td>Keycloak (<code>wahs</code> realm)</td><td>OIDC identity for patients; issues the tokens forwarded to <code>fhir-auth</code>.</td><td>private, edge</td></tr>
-                <tr><td><code>wahs-shl-server</code></td><td>SMART Health Links server</td><td>Stores encrypted shared summaries and serves <code>shlink:/</code> manifests.</td><td>private, edge</td></tr>
-                <tr><td><code>wahs-db</code></td><td>PostgreSQL</td><td>Storage for HAPI FHIR and Keycloak.</td><td>private</td></tr>
-                <tr><td><code>wahs-auth-gate</code></td><td>Python gate service</td><td>Project-level Google allowlist and signed session cookie for the hosted demo.</td><td>private, edge</td></tr>
-                <tr><td>LLM gateway</td><td>OpenAI-compatible endpoint</td><td>External southbound model host (Ollama behind LiteLLM on UW CIRG GPUs, or any compatible server).</td><td>outbound</td></tr>
+                <tr><td><code>wahs-shl-ips</code></td><td>SvelteKit app (<code>shl-ips</code>)</td><td>WAHS web app and server routes for Ask WAHS (<code>/api/chat</code>) and health record chat (<code>/api/health-chat</code>).</td><td><code>wahs-net</code>, <code>edge</code></td></tr>
+                <tr><td><code>wahs-mobile-frontend</code></td><td>React UI + Node BFF</td><td>Mobile companion; BFF proxies <code>/api/chat</code> and preview requests to <code>wahs-engine</code>.</td><td><code>wahs-net</code>, <code>edge</code></td></tr>
+                <tr><td><code>wahs-engine</code></td><td>FastAPI (<code>wahs-engine</code>)</td><td>Record assembly, condensation, enrichment, prompt framing, model routing, and provenance.</td><td><code>wahs-net</code> only</td></tr>
+                <tr><td><code>wahs-sandbox-engine</code></td><td>Same image, sandbox env</td><td>Serves mounted example bundles and user uploads for the Research Sandbox.</td><td><code>edge</code> only</td></tr>
+                <tr><td><code>wahs-fhir-auth</code> / <code>wahs-fhir-auth-proxy</code></td><td>nginx + <code>uwcirg/jwt-proxy</code></td><td>Validates Keycloak bearer tokens, stamps security labels on writes, and enforces per-user read access.</td><td><code>wahs-net</code> (nginx also <code>edge</code>)</td></tr>
+                <tr><td><code>wahs-fhir</code></td><td>HAPI FHIR R4 (<code>v8.0.0</code>)</td><td>FHIR R4 repository for patient datasets.</td><td><code>wahs-net</code> only</td></tr>
+                <tr><td><code>wahs-keycloak</code></td><td>Keycloak 26 (<code>wahs</code> realm)</td><td>OIDC identity provider issuing patient access tokens.</td><td><code>wahs-net</code>, <code>edge</code></td></tr>
+                <tr><td><code>wahs-shl-server</code></td><td><code>smart.health.links-server</code></td><td>Stores JWE-encrypted health summaries and serves <code>shlink:/</code> manifests.</td><td><code>wahs-net</code>, <code>edge</code></td></tr>
+                <tr><td><code>wahs-db</code></td><td>PostgreSQL 14</td><td>Relational storage for HAPI FHIR and Keycloak.</td><td><code>wahs-net</code> only</td></tr>
+                <tr><td><code>wahs-auth-gate</code></td><td>Python gate service</td><td>Google OAuth allowlist check and HMAC-SHA256 session cookie for hosted demo subdomains.</td><td><code>wahs-net</code>, <code>edge</code></td></tr>
+                <tr><td>Southbound LLM host</td><td>OpenAI <code>/v1</code> endpoint</td><td>Ollama behind LiteLLM on UW CIRG GPUs, or any OpenAI-compatible server.</td><td>outbound HTTPS</td></tr>
               </tbody>
             </table>
           </div>
@@ -178,16 +178,16 @@
         <!-- REQUEST PIPELINE -->
         <section class="strategy-section" id="pilot-architecture" tabindex="-1" aria-labelledby="pipeline-heading">
           <p class="section-kicker">Request Pipeline</p>
-          <h2 id="pipeline-heading">Five stages inside <code>wahs-engine</code></h2>
+          <h2 id="pipeline-heading">Five-stage pipeline in <code>wahs-engine</code></h2>
           <p>
-            Every chat turn and every context preview runs the same five stages. Clients only render the result; they hold no condensation, prompt, or citation logic.
+            Both <code>POST /v1/chat/completions</code> and <code>POST /v1/wahs/context/preview</code> run Stages 1 through 4; chat completions then execute Stage 5.
           </p>
 
           <figure class="audit-arch-figure">
             <div class="audit-arch-scroll" tabindex="0" role="region" aria-label="Five-stage wahs-engine request pipeline diagram">
               <svg class="audit-arch-svg" viewBox="0 0 960 360" role="img" aria-labelledby="wahs-5stage-title wahs-5stage-desc" xmlns="http://www.w3.org/2000/svg">
                 <title id="wahs-5stage-title">wahs-engine five-stage request pipeline</title>
-                <desc id="wahs-5stage-desc">Stage 1 FHIR sources: HAPI FHIR datasets linked from a MasterPatient, patient-authored data, or sandbox bundles. Stage 2 authorization and scope: bearer token forwarded through fhir-auth, freshness check, chart scope and draft overlays applied. Stage 3 condensation: extraction and three-tier verbatim-first condensation into a stable chart prefix with a completeness manifest. Stage 4 prompt and enrichment: profile and prompt resolution plus optional enrichers appended to the turn suffix. Stage 5 model and provenance: single OpenAI-compatible streaming call, citation map, and HL7 AI-Provenance.</desc>
+                <desc id="wahs-5stage-desc">Stage 1 FHIR sources: HAPI FHIR datasets linked from MasterPatient, patient-authored data, or sandbox bundles. Stage 2 authorization and scope: bearer token forwarded through fhir-auth, meta.lastUpdated check, chart_scope and draft overlays applied. Stage 3 condensation: extraction and three-tier condensation into a stable system prefix with Completeness Manifest at [2]. Stage 4 prompt and enrichment: profile and prompt resolution plus optional enrichers appended to the turn suffix. Stage 5 model and provenance: single OpenAI-compatible streaming call, citation_map, and HL7 AI-Provenance.</desc>
                 <defs>
                   <marker id="arr-main" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
                     <path d="M0,0.5 L9.5,5 L0,9.5 z" fill="#4b2e83" />
@@ -222,7 +222,7 @@
                 <text x="290" y="179" text-anchor="middle" fill="#1e293b" font-size="10.8" font-weight="700">Freshness check:</text>
                 <text x="290" y="193" text-anchor="middle" fill="#475569" font-size="10.5">meta.lastUpdated</text>
                 <text x="290" y="222" text-anchor="middle" fill="#64748b" font-size="10.5">Applies chart_scope</text>
-                <text x="290" y="238" text-anchor="middle" fill="#64748b" font-size="10.5">&amp; draft overlays</text>
+                <text x="290" y="238" text-anchor="middle" fill="#64748b" font-size="10.5">&amp; [P] draft overlays</text>
 
                 <line x1="376" y1="140" x2="394" y2="140" stroke="#4b2e83" stroke-width="2" marker-end="url(#arr-main)" />
 
@@ -232,13 +232,13 @@
                 <text x="482" y="47" text-anchor="middle" fill="#ffffff" font-size="11.5" font-weight="700">3. CONDENSE</text>
                 <text x="482" y="82" text-anchor="middle" fill="#24133f" font-size="13.5" font-weight="700">wahs_core</text>
                 <text x="482" y="104" text-anchor="middle" fill="#475569" font-size="11.5">Tier 0: verbatim</text>
-                <text x="482" y="122" text-anchor="middle" fill="#475569" font-size="11.5">Tier 1: series folding</text>
-                <text x="482" y="140" text-anchor="middle" fill="#475569" font-size="11.5">Tier 2: safety core + notes</text>
+                <text x="482" y="122" text-anchor="middle" fill="#475569" font-size="11.5">Tier 1: RLE folding</text>
+                <text x="482" y="140" text-anchor="middle" fill="#475569" font-size="11.5">Tier 2: IPS core + notes</text>
                 <rect x="408" y="162" width="148" height="38" rx="6" fill="#f5f3ff" stroke="#c4b5fd" />
-                <text x="482" y="179" text-anchor="middle" fill="#4b2e83" font-size="10.8" font-weight="700">Region 1: stable prefix</text>
-                <text x="482" y="193" text-anchor="middle" fill="#4b2e83" font-size="10.5">[1]..[N] + [2] manifest</text>
-                <text x="482" y="222" text-anchor="middle" fill="#64748b" font-size="10.5">Model-specific tokenizer</text>
-                <text x="482" y="238" text-anchor="middle" fill="#64748b" font-size="10.5">Prefix cache key</text>
+                <text x="482" y="179" text-anchor="middle" fill="#4b2e83" font-size="10.8" font-weight="700">Region 1: system prefix</text>
+                <text x="482" y="193" text-anchor="middle" fill="#4b2e83" font-size="10.5">[1]..[N], [2] manifest, [P]</text>
+                <text x="482" y="222" text-anchor="middle" fill="#64748b" font-size="10.5">Offline exact tokenizer</text>
+                <text x="482" y="238" text-anchor="middle" fill="#64748b" font-size="10.5">X-WAHS-Prefix-Hash</text>
 
                 <line x1="568" y1="140" x2="586" y2="140" stroke="#4b2e83" stroke-width="2" marker-end="url(#arr-main)" />
 
@@ -252,7 +252,7 @@
                 <text x="674" y="140" text-anchor="middle" fill="#475569" font-size="11.5">guideline_kb (opt-in)</text>
                 <rect x="600" y="162" width="148" height="38" rx="6" fill="#f5f3ff" stroke="#c4b5fd" />
                 <text x="674" y="179" text-anchor="middle" fill="#4b2e83" font-size="10.8" font-weight="700">Region 2: turn suffix</text>
-                <text x="674" y="193" text-anchor="middle" fill="#4b2e83" font-size="10.5">Append-only, capped</text>
+                <text x="674" y="193" text-anchor="middle" fill="#4b2e83" font-size="10.5">Append-only (&le; 2,048 tok)</text>
                 <text x="674" y="222" text-anchor="middle" fill="#64748b" font-size="10.5">Lazy-loaded modules</text>
                 <text x="674" y="238" text-anchor="middle" fill="#64748b" font-size="10.5">Disclosed in x_wahs</text>
 
@@ -264,21 +264,21 @@
                 <text x="864" y="47" text-anchor="middle" fill="#ffffff" font-size="11.5" font-weight="700">5. MODEL &amp; PROVENANCE</text>
                 <text x="864" y="82" text-anchor="middle" fill="#0f172a" font-size="13.5" font-weight="700">OpenAI /v1 stream</text>
                 <text x="864" y="104" text-anchor="middle" fill="#0f766e" font-size="11.5" font-weight="700">wahs-26b | 12b | e4b</text>
-                <text x="864" y="122" text-anchor="middle" fill="#475569" font-size="11.5">Fixed context allocation</text>
-                <text x="864" y="140" text-anchor="middle" fill="#475569" font-size="11.5">SSE keepalives</text>
+                <text x="864" y="122" text-anchor="middle" fill="#475569" font-size="11.5">Fixed num_ctx=65536</text>
+                <text x="864" y="140" text-anchor="middle" fill="#475569" font-size="11.5">15s SSE keepalives</text>
                 <rect x="792" y="162" width="144" height="38" rx="6" fill="#ecfdf5" stroke="#6ee7b7" />
                 <text x="864" y="179" text-anchor="middle" fill="#065f46" font-size="10.8" font-weight="700">x_wahs envelope</text>
                 <text x="864" y="193" text-anchor="middle" fill="#065f46" font-size="10.5">[N] [P] [K] citation_map</text>
                 <text x="864" y="222" text-anchor="middle" fill="#64748b" font-size="10.5">HL7 AI-Provenance</text>
-                <text x="864" y="238" text-anchor="middle" fill="#64748b" font-size="10.5">human review required</text>
+                <text x="864" y="238" text-anchor="middle" fill="#64748b" font-size="10.5">human_review_required</text>
 
                 <rect x="12" y="282" width="936" height="58" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4" />
-                <text x="480" y="306" text-anchor="middle" fill="#1e293b" font-size="12.5" font-weight="700">Client applications (presentation only)</text>
+                <text x="480" y="306" text-anchor="middle" fill="#1e293b" font-size="12.5" font-weight="700">Client applications (UI and session state)</text>
                 <text x="480" y="326" text-anchor="middle" fill="#475569" font-size="11.5">WAHS web app (shl-ips) &middot; WAHS mobile companion &middot; Research Sandbox (wahs-demo.openclinai.org)</text>
               </svg>
             </div>
             <figcaption>
-              <strong>Two-region prompt:</strong> Stage 3 produces a chart prefix that does not depend on the question, so the model host can reuse its cached attention state across follow-up turns. Stage 4 appends question-specific context to the turn suffix, which never invalidates that prefix.
+              <strong>Two-region prompt split:</strong> Stage 3 builds a system message (<code>Region 1</code>) containing instructions, the condensed chart (<code>[1]..[N]</code>), and any unsaved draft overlays (<code>[P1]..[PM]</code>). Because Region 1 does not depend on the question text, the model host can reuse its KV cache across follow-up turns. Stage 4 appends question-aware enricher blocks to the user turn suffix (<code>Region 2</code>).
             </figcaption>
           </figure>
 
@@ -287,70 +287,70 @@
               <span class="strategy-badge">Patient-data runtime</span>
               <h3><code>wahs-engine</code></h3>
               <ul>
-                <li>Private network only; reads FHIR through <code>http://fhir-auth:8080/fhir</code> with the caller's token.</li>
-                <li><code>WAHS_ALLOW_LOCAL_BUNDLE_MODE=false</code> and no demo bundle directory, so inline bundles are rejected and demo endpoints return <code>404</code>.</li>
-                <li>Called only by the web and mobile BFFs over internal Docker DNS.</li>
+                <li>Attached only to <code>wahs-net</code>; reads FHIR via <code>http://fhir-auth:8080/fhir</code> using the caller's bearer token.</li>
+                <li><code>WAHS_ALLOW_LOCAL_BUNDLE_MODE=false</code> and <code>WAHS_DEMO_BUNDLES_DIR</code> unset; inline bundles are rejected and demo routes return <code>404</code>.</li>
+                <li>Reachable only from the web and mobile BFFs over internal Docker DNS.</li>
               </ul>
             </article>
             <article class="strategy-card">
               <span class="strategy-badge secondary">Sandbox runtime</span>
               <h3><code>wahs-sandbox-engine</code></h3>
               <ul>
-                <li>Same container image, attached only to the edge network, with its FHIR URL pointed at an unroutable host.</li>
-                <li>Mounts ten synthetic and de-identified bundles read-only at <code>/bundles</code> and accepts uploaded bundles (request bodies capped at 25 MB at the edge).</li>
-                <li>Bundle browsing and context preview are public; chat completion requires the project session cookie, or the browser can forward the prepared prompt to a local model.</li>
+                <li>Same container image on <code>openclinai-edge</code> only, with <code>WAHS_FHIR_AUTH_BASE_URL</code> set to an unroutable placeholder.</li>
+                <li>Mounts ten synthetic and de-identified FHIR R4 bundles read-only at <code>/bundles</code> and accepts JSON bundle uploads (Caddy caps request bodies at <code>25 MB</code>).</li>
+                <li>Bundle listing and <code>/v1/wahs/context/preview</code> are public; <code>/v1/chat/completions</code> requires the project allowlist cookie (unless the user connects a local model from the browser).</li>
               </ul>
             </article>
           </div>
         </section>
 
-        <!-- REQUEST LIFECYCLE -->
+        <!-- REQUEST TRACE -->
         <section class="strategy-section" id="worked-query-example" tabindex="-1" aria-labelledby="trace-heading">
-          <p class="section-kicker">Request Lifecycle</p>
-          <h2 id="trace-heading">One question, end to end</h2>
+          <p class="section-kicker">Request Trace</p>
+          <h2 id="trace-heading">End-to-end request trace</h2>
           <p>
-            Example: Margaret, a synthetic patient with records from a geriatrics clinic, a sleep clinic, a pharmacy, and the state immunization registry, asks in the mobile companion: <em>"What active medications am I taking, and are there any fall or sedation risks I should ask my doctor about?"</em>
+            Trace for synthetic patient Margaret Chen (records from Pacific Northwest Geriatrics, Overlake Sleep &amp; Behavioral Clinic, Community Pharmacy, and the WA State immunization registry) asking in the mobile companion: <em>"What active medications am I taking, and are there any fall or sedation risks I should ask my doctor about?"</em>
           </p>
 
-          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Request lifecycle for one question">
+          <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Step-by-step request trace">
             <table class="strategy-table">
               <thead>
                 <tr>
                   <th style="width:18%;">Step</th>
-                  <th style="width:52%;">What happens</th>
-                  <th style="width:30%;">Observable artifact</th>
+                  <th style="width:52%;">Execution</th>
+                  <th style="width:30%;">Output / header</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td><strong>1. Client &amp; BFF</strong></td>
-                  <td>The mobile BFF forwards <code>Authorization: Bearer &lt;keycloak_jwt&gt;</code>, the turn history, and <code>wahs</code> options (model, budget, enrichers, source scope, unsaved draft overlays) to <code>POST /v1/chat/completions</code>. It strips any browser-supplied FHIR bundle.</td>
-                  <td>OpenAI request with a <code>wahs</code> block.</td>
+                  <td>The mobile app posts to its BFF (<code>POST /api/chat</code>). The BFF strips any browser-supplied <code>fhir_bundle</code> and forwards <code>Authorization: Bearer &lt;keycloak_jwt&gt;</code>, <code>messages[]</code>, and <code>wahs</code> options to <code>POST /v1/chat/completions</code> on <code>wahs-engine</code>.</td>
+                  <td>OpenAI chat request with <code>wahs</code> options.</td>
                 </tr>
                 <tr>
                   <td><strong>2. Assembly</strong></td>
-                  <td>The engine resolves the MasterPatient by the token's subject, reads each linked dataset with paged <code>$everything</code>, reuses cached datasets whose <code>meta.lastUpdated</code> has not changed, applies <code>chart_scope</code>, and drops foreign-patient references.</td>
-                  <td><code>x_wahs.scope_applied</code>, dataset cache hits and fetches.</td>
+                  <td><code>assembler.py</code> resolves <code>MasterPatient</code> by JWT <code>sub</code>, reads linked datasets via paged <code>Patient/{id}/$everything</code>, skips re-fetching datasets whose <code>meta.lastUpdated</code> matches cache, applies <code>chart_scope</code>, and runs <code>enforce_single_patient_scope</code>.</td>
+                  <td><code>x_wahs.scope_applied</code>, dataset cache counters.</td>
                 </tr>
                 <tr>
                   <td><strong>3. Condensation</strong></td>
-                  <td><code>wahs_core</code> extracts clinical items and notes, drops invalidated entries, deduplicates identical notes, and selects the lowest tier that fits the chart budget. Margaret's record fits verbatim.</td>
-                  <td><code>tier: 0</code>, <code>omitted_clinical_items: 0</code>, <code>X-WAHS-Prefix-Hash</code> header.</td>
+                  <td><code>wahs_core</code> parses FHIR resources, drops <code>entered-in-error</code> and <code>cancelled</code> entries, SHA-256 deduplicates identical notes, and checks token count against the <code>16,384</code>-token chart budget. Margaret's chart fits at Tier 0.</td>
+                  <td><code>tier: 0</code>, <code>omitted_clinical_items: 0</code>, <code>X-WAHS-Prefix-Hash</code>.</td>
                 </tr>
                 <tr>
                   <td><strong>4. Enrichment</strong></td>
-                  <td>With <code>core-enriched</code>, <code>temporal</code> adds date anchors and lab trends and <code>terminology_kb</code> adds drug-class groupings. <code>note_rag</code> and <code>overflow_lookup</code> stay inactive because nothing was excerpted or omitted.</td>
-                  <td><code>x_wahs.enrichers</code> with per-module token counts and disclosures.</td>
+                  <td>Under <code>core-enriched</code>, <code>temporal</code> adds date anchors and lab deltas and <code>terminology_kb</code> resolves RxNorm/ATC drug classes (including overlapping sedatives and statins). <code>note_rag</code> and <code>overflow_lookup</code> return empty because Tier 0 excerpted and omitted nothing.</td>
+                  <td><code>x_wahs.enrichers</code> disclosures and token counts.</td>
                 </tr>
                 <tr>
                   <td><strong>5. Generation</strong></td>
-                  <td>The engine emits a <code>context_ready</code> SSE frame with the citation map, calls the model once, sends keepalive comments while the host queues or prefills, and strips any reasoning blocks from the streamed text.</td>
-                  <td>Streamed deltas; structured error frame on upstream failure.</td>
+                  <td><code>upstream.py</code> yields an initial <code>context_ready</code> SSE chunk carrying <code>citation_map</code>, posts to the southbound model with <code>num_ctx=65536</code>, emits <code>: keepalive</code> comments every 15s while waiting on prefill, and strips <code>&lt;think&gt;</code> blocks from streamed deltas.</td>
+                  <td>OpenAI SSE delta chunks (or structured 502 error frame).</td>
                 </tr>
                 <tr>
-                  <td><strong>6. Rendering</strong></td>
-                  <td>The client renders the answer and turns each <code>[N]</code> or <code>[P]</code> tag into a link. Selecting one opens the cited resource, its date, and its source.</td>
-                  <td>Final frame with <code>x_wahs</code> and <code>ai_provenance</code>.</td>
+                  <td><strong>6. Provenance</strong></td>
+                  <td>The final SSE chunk attaches <code>x_wahs</code> and <code>ai_provenance</code>. The client renders inline <code>[N]</code>, <code>[P]</code>, and <code>[K]</code> tags as buttons that open the cited entry's resource type, date, and source organization.</td>
+                  <td><code>x_wahs.citation_map</code> and <code>x_wahs.ai_provenance</code>.</td>
                 </tr>
               </tbody>
             </table>
@@ -360,9 +360,9 @@
         <!-- CLIENT INTEGRATIONS -->
         <section class="strategy-section" id="client-integrations" tabindex="-1" aria-labelledby="clients-heading">
           <p class="section-kicker">Client Integrations</p>
-          <h2 id="clients-heading">Four callers, one engine contract</h2>
+          <h2 id="clients-heading">Client integration paths</h2>
           <p>
-            All clients use the same OpenAI-compatible endpoints. They differ in how much of the <code>wahs</code> option block and the <code>x_wahs</code> response they use.
+            Four client paths call the engine over the same HTTP contract.
           </p>
 
           <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Client integrations with wahs-engine">
@@ -370,30 +370,30 @@
               <thead>
                 <tr>
                   <th style="width:24%;">Caller</th>
-                  <th style="width:30%;">Path to the engine</th>
-                  <th style="width:46%;">What it uses</th>
+                  <th style="width:30%;">Route</th>
+                  <th style="width:46%;">Scope and provenance support</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td><strong>Web app: Ask WAHS</strong></td>
-                  <td><code>shl-ips</code> server route &rarr; <code>wahs-engine</code></td>
-                  <td>Full option block (model, budget, enrichers, source and category scope, overlays), streamed <code>x_wahs</code> provenance, and the citation inspector.</td>
+                  <td><code>shl-ips</code> <code>/api/chat</code> &rarr; <code>wahs-engine</code></td>
+                  <td>Full <code>wahs</code> option block (model, budget, enrichers, source/category scope, overlays), streamed <code>x_wahs</code> envelope, and interactive citation drawer.</td>
                 </tr>
                 <tr>
-                  <td><strong>Web app: health record chat</strong></td>
-                  <td><code>/api/health-chat</code> with <code>HEALTH_CHAT_BACKEND=wahs-engine</code></td>
-                  <td>The upstream "Ask About My Data" tab. Sends the user's question with their own bearer token and the default model. The engine builds the chart from FHIR, so browser-side record toggles and tool definitions are not applied, and citations render as plain text.</td>
+                  <td><strong>Web app: Ask About My Data</strong></td>
+                  <td><code>shl-ips</code> <code>/api/health-chat</code> (<code>HEALTH_CHAT_BACKEND=wahs-engine</code>)</td>
+                  <td>Upstream health-record chat tab routed to <code>wahs-engine</code> with the caller's bearer token and markdown answer rendering. The engine assembles the chart from FHIR directly, so browser-side per-resource toggles and tool definitions are ignored and <code>[N]</code> tags render as plain text.</td>
                 </tr>
                 <tr>
                   <td><strong>Mobile companion</strong></td>
-                  <td>Node BFF (<code>/api/chat</code>) &rarr; <code>wahs-engine</code></td>
-                  <td>Chat with full provenance, a context preview call right after sign-in to warm the caches, source scoping, and patient-authored overlays cited as <code>[P]</code>.</td>
+                  <td>Node BFF <code>/api/chat</code> &rarr; <code>wahs-engine</code></td>
+                  <td>Full <code>x_wahs</code> provenance, non-blocking <code>?mode=preview</code> cache warm-up after sign-in, clinic source filtering, saved <code>patient-story</code> resources in <code>[1]..[N]</code>, and flagged discrepancies passed in <code>overlay_resources</code> (<code>[P1]..[PM]</code>).</td>
                 </tr>
                 <tr>
                   <td><strong>Research Sandbox</strong></td>
-                  <td>Static page &rarr; Caddy &rarr; <code>wahs-sandbox-engine</code></td>
-                  <td>Demo bundle listing, <code>wahs.bundle_id</code> lookups, context preview (chart, enricher appendix, system prompt), and gated chat or local-model forwarding.</td>
+                  <td>Caddy <code>/api/engine/*</code> &rarr; <code>wahs-sandbox-engine</code></td>
+                  <td>Public bundle catalog, <code>wahs.bundle_id</code> or inline JSON preview (condensed chart, enricher suffix, system prompt), and gated chat streaming or direct browser forwarding to a local OpenAI-compatible server.</td>
                 </tr>
               </tbody>
             </table>
@@ -402,71 +402,68 @@
 
         <!-- DATA MODEL -->
         <section class="strategy-section" id="data-model" tabindex="-1" aria-labelledby="data-heading">
-          <p class="section-kicker">FHIR Data Model</p>
-          <h2 id="data-heading">A star graph of datasets per patient</h2>
+          <p class="section-kicker">Data Model</p>
+          <h2 id="data-heading">FHIR dataset layout</h2>
           <p>
-            Each person has one <code>MasterPatient</code> resource identified by their Keycloak subject (<code>identifier.system = http://keycloak.cirg.uw.edu</code>). Every imported source becomes its own dataset: a <code>Patient</code> resource plus its clinical resources, linked from <code>MasterPatient.link[]</code>. Dataset tags record provenance, so the engine can label and scope each source.
+            Each account has one <code>MasterPatient</code> resource keyed by Keycloak subject (<code>identifier.system = http://keycloak.cirg.uw.edu</code>). Imported clinical sources and patient-authored records are stored as separate linked datasets: each dataset has its own <code>Patient</code> resource referenced from <code>MasterPatient.link[]</code>, tagged with category, method, and display name metadata.
           </p>
 
           <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="WAHS dataset categories">
             <table class="strategy-table">
               <thead>
                 <tr>
-                  <th style="width:28%;">Dataset category</th>
-                  <th style="width:36%;">Contents</th>
-                  <th style="width:36%;">Written by</th>
+                  <th style="width:28%;">Category tag</th>
+                  <th style="width:38%;">Resources stored</th>
+                  <th style="width:34%;">Write path</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td><code>provider-health-record</code></td><td>Clinic, hospital, pharmacy, and registry imports.</td><td>Import flows in the web app (for example SMART on FHIR) and the demo seeder.</td></tr>
-                <tr><td><code>patient-story</code></td><td>Journal entries (<code>Observation</code>, LOINC 51855-5), goals (<code>Goal</code>), care needs (<code>Condition</code>), and flags (<code>Flag</code>).</td><td>Web app and mobile companion. Each save writes a new dataset in one transaction and replaces the previous story link.</td></tr>
-                <tr><td><code>about-me</code> and patient-reported history</td><td>Demographics, occupation, self-reported conditions and medications.</td><td>Setup and Add Info flows in both apps.</td></tr>
+                <tr><td><code>provider-health-record</code></td><td>Imported clinic, hospital, pharmacy, and immunization registry bundles.</td><td>Web import flows (such as SMART on FHIR) and the synthetic persona seeder.</td></tr>
+                <tr><td><code>patient-story</code></td><td>Journal notes (<code>Observation</code>, LOINC <code>51855-5</code>), goals (<code>Goal</code>), care needs (<code>Condition</code>), and discrepancy flags (<code>Flag</code>) with ISO-8601 dates.</td><td>Web app and mobile companion; each save posts a replacement transaction bundle and updates <code>MasterPatient.link[]</code>.</td></tr>
+                <tr><td><code>about-me</code> / <code>patient-medical-history</code></td><td>Demographics, occupation (LOINC <code>11341-5</code>), self-reported conditions, medications, and advance directives.</td><td>Onboarding and Add Info forms in both apps.</td></tr>
               </tbody>
             </table>
           </div>
 
           <p>
-            Because every write updates <code>meta.lastUpdated</code> on the affected dataset, the engine's freshness check picks up new or edited data on the next turn without any notification channel between the apps and the engine.
+            Replacing or updating a dataset advances its <code>Patient.meta.lastUpdated</code> timestamp, which invalidates only that dataset's entry in <code>wahs-engine</code> on the next request.
           </p>
         </section>
 
         <!-- IDENTITY, STATE & CACHING -->
         <section class="strategy-section" id="session-and-scope-model" tabindex="-1" aria-labelledby="isolation-heading">
-          <p class="section-kicker">Identity, State &amp; Caching</p>
-          <h2 id="isolation-heading">Four independent state layers</h2>
-          <p>
-            Identity, conversation history, extracted chart data, and model-host attention state are owned by different components. None of them requires a conversation database on the server.
-          </p>
+          <p class="section-kicker">State &amp; Caching</p>
+          <h2 id="isolation-heading">Identity, session state, and caching</h2>
 
           <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="State layers across WAHS">
             <table class="strategy-table">
               <thead>
                 <tr>
-                  <th style="width:22%;">State layer</th>
+                  <th style="width:22%;">Layer</th>
                   <th style="width:20%;">Owner</th>
-                  <th style="width:58%;">Contract</th>
+                  <th style="width:58%;">Scope and eviction</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td><strong>Identity &amp; ownership</strong></td>
+                  <td><strong>Identity &amp; authorization</strong></td>
                   <td>Keycloak, <code>fhir-auth</code></td>
-                  <td>The bearer token travels from the client BFF to the engine to <code>fhir-auth</code>. The engine derives the verified subject from it and enforces a single-patient scope before extraction.</td>
+                  <td>Bearer JWT passed from client BFF to <code>wahs-engine</code> to <code>fhir-auth</code>. <code>enforce_single_patient_scope</code> strips any resource referencing a patient outside the authorized <code>MasterPatient</code> and its linked dataset IDs.</td>
                 </tr>
                 <tr>
-                  <td><strong>Conversation history</strong></td>
-                  <td>Client session</td>
-                  <td>Sent as <code>messages[]</code> on each turn. If history no longer fits the context window, the oldest turns are trimmed and the count is reported as <code>history_trimmed_turns</code>.</td>
+                  <td><strong>Conversation turns</strong></td>
+                  <td>Browser memory</td>
+                  <td>Passed in <code>messages[]</code> on every request. When prior turns would push the prompt past <code>WAHS_CONTEXT_WINDOW</code> minus reserved output tokens, the oldest turns are dropped and counted in <code>history_trimmed_turns</code>.</td>
                 </tr>
                 <tr>
                   <td><strong>Dataset &amp; prefix caches</strong></td>
-                  <td><code>wahs-engine</code> memory</td>
-                  <td>Keyed by verified subject, dataset fingerprints, scope, tokenizer family, prompt hash, and budget. Bounded by entry and byte caps (package defaults: 256 datasets / 256 MB and 128 prefixes / 128 MB) with TTL eviction.</td>
+                  <td><code>wahs-engine</code> RAM</td>
+                  <td>Dataset cache keyed by <code>(verified_sub, dataset_id, lastUpdated)</code> (default cap: 256 entries / 256 MB). Prefix cache keyed by <code>(verified_sub, datasets_fingerprint, scope_hash, tokenizer_family, prompt_sha256, budget)</code> (default cap: 128 entries / 128 MB), plus TTL eviction.</td>
                 </tr>
                 <tr>
-                  <td><strong>Model-host attention cache</strong></td>
-                  <td>Ollama on UW CIRG GPUs</td>
-                  <td>One fixed context allocation per model, so a repeated chart prefix can be reused across turns and budget changes without reloading the model.</td>
+                  <td><strong>Model KV cache</strong></td>
+                  <td>Southbound GPU host</td>
+                  <td>Fixed <code>num_ctx</code> keeps one KV-cache allocation warm across budget presets so unchanged system prefixes avoid full prefill recomputation on follow-up turns.</td>
                 </tr>
               </tbody>
             </table>
@@ -483,65 +480,65 @@
               <thead>
                 <tr>
                   <th style="width:24%;">Package</th>
-                  <th style="width:76%;">Responsibility</th>
+                  <th style="width:76%;">Modules and responsibilities</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td><code>wahs_core</code></td><td>Standard-library-only FHIR R4 extraction (<code>extractors.py</code>), three-tier condenser (<code>condenser.py</code>), <code>[1]..[N]</code> chart rendering with citation mapping (<code>chart_serializer.py</code>), and the <code>ContextEnricher</code> protocol (<code>ports.py</code>).</td></tr>
-                <tr><td><code>wahs_engine</code></td><td>FastAPI runtime: record assembly and scope enforcement (<code>assembler.py</code>), enricher orchestration (<code>pipeline.py</code>), upstream streaming and provenance (<code>upstream.py</code>), profile and prompt registries, configuration, schemas, and model tokenizers.</td></tr>
-                <tr><td><code>wahs_extensions</code></td><td>Optional enrichers, imported only when a profile or request enables them.</td></tr>
-                <tr><td><code>wahs_devtools</code></td><td>Seeder that loads synthetic demo personas into HAPI FHIR and Keycloak.</td></tr>
+                <tr><td><code>wahs_core</code></td><td>Zero-dependency Python standard-library package: FHIR R4 parser (<code>extractors.py</code>), three-tier monotonic condenser (<code>condenser.py</code>), <code>[1]..[N]</code> serializer and mapping builder (<code>chart_serializer.py</code>), and <code>ContextEnricher</code> protocol (<code>ports.py</code>).</td></tr>
+                <tr><td><code>wahs_engine</code></td><td>FastAPI application (<code>app.py</code>), star-graph fetcher and scope guard (<code>assembler.py</code>), enricher runner (<code>pipeline.py</code>), southbound SSE client and provenance builder (<code>upstream.py</code>), profile/prompt loaders, JWT helpers, and bundled offline tokenizers (<code>tokenizers_registry.py</code>).</td></tr>
+                <tr><td><code>wahs_extensions</code></td><td>Optional enricher modules, imported lazily only when enabled by a profile or request.</td></tr>
+                <tr><td><code>wahs_devtools</code></td><td><code>wahs-seed-hapi</code> CLI for loading synthetic demo personas into HAPI FHIR and Keycloak.</td></tr>
               </tbody>
             </table>
           </div>
 
           <h3 style="margin:26px 0 10px; font-size:19px; color:var(--purple-ink);">Condensation tiers</h3>
           <p>
-            The condenser selects the lowest tier whose output fits the chart budget, measured with the target model's tokenizer. Why the tiers are designed this way is covered under <a href="/wahs/llm-strategy/index.html#condensation">Condensation</a> on the LLM Strategy page.
+            <code>condense_bundle_to_budget</code> measures candidate outputs with the target model's offline tokenizer and selects the lowest tier that fits <code>budget_effective</code>. Design trade-offs are discussed under <a href="/wahs/llm-strategy/index.html#condensation">LLM Strategy: Condensation</a>.
           </p>
           <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Condensation tiers">
             <table class="strategy-table">
               <thead>
                 <tr>
                   <th style="width:24%;">Tier</th>
-                  <th style="width:24%;">Selected when</th>
-                  <th style="width:52%;">Transformation</th>
+                  <th style="width:24%;">Activation</th>
+                  <th style="width:52%;">Mechanics</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td><strong>Tier 0 &middot; Verbatim</strong></td><td>Extracted chart fits the budget.</td><td>Removes FHIR transport overhead, invalidated entries, and duplicate notes. Every remaining item is rendered verbatim.</td></tr>
-                <tr><td><strong>Tier 1 &middot; Series folding</strong></td><td>Verbatim chart exceeds the budget.</td><td>Folds repeated lab and vital series by code and unit into earliest, extremes, and latest values.</td></tr>
-                <tr><td><strong>Tier 2 &middot; Safety core &amp; note packing</strong></td><td>Folded chart still exceeds the budget.</td><td>Reserves allergies, active medications, active problems, and implanted devices; packs remaining items by recency; distributes the rest of the budget across clinical notes. Omitted counts go to the <code>[2]</code> Completeness Manifest.</td></tr>
+                <tr><td><strong>Tier 0 &middot; Verbatim</strong></td><td>Full extracted chart fits budget.</td><td>Drops <code>entered-in-error</code>, <code>cancelled</code>, and unperformed entries, SHA-256 deduplicates identical decoded notes, and emits every clinical item and full note text verbatim.</td></tr>
+                <tr><td><strong>Tier 1 &middot; Uniform RLE folding</strong></td><td>Tier 0 exceeds budget.</td><td>Preserves the HL7 IPS safety core, acute encounters, active care plans, imaging, and full clinical notes verbatim. Run-length folds repeated historical observations, panels, immunizations, historical medications, resolved conditions, procedures, and routine visits sharing a <code>(section, code, unit/status)</code> key into the latest entry plus count, date span, numeric <code>min..max</code> range, and merged <code>memberUuids</code>.</td></tr>
+                <tr><td><strong>Tier 2 &middot; IPS core &amp; note horizon</strong></td><td>Tier 1 exceeds budget.</td><td>Reserves the HL7 IPS safety core (patient header, active allergies, active conditions, active medications, active devices, and folded immunizations), binary-searches a monotonic section-interleaved recency prefix, and binary-searches a character horizon across included notes to fill remaining tokens.</td></tr>
               </tbody>
             </table>
           </div>
 
-          <h3 style="margin:26px 0 10px; font-size:19px; color:var(--purple-ink);">Citation namespaces</h3>
+          <h3 style="margin:26px 0 10px; font-size:19px; color:var(--purple-ink);">Chart numbering and citation namespaces</h3>
           <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Citation namespaces">
             <table class="strategy-table">
               <thead>
                 <tr>
-                  <th style="width:16%;">Tag</th>
-                  <th style="width:40%;">Refers to</th>
-                  <th style="width:44%;">Registered by</th>
+                  <th style="width:18%;">Marker</th>
+                  <th style="width:42%;">Target</th>
+                  <th style="width:40%;">Prompt location &amp; registration</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td><code>[1]..[N]</code></td><td>Chart entries, including note passages and omitted records recovered for the current question.</td><td>Chart serializer, then <code>note_rag</code> and <code>overflow_lookup</code> continue the same numeric sequence.</td></tr>
-                <tr><td><code>[P1]..[PM]</code></td><td>Unsaved patient-authored drafts and flags sent as <code>wahs.overlay_resources</code>.</td><td>Assembler, from the client's overlay payload.</td></tr>
-                <tr><td><code>[K1]..[KM]</code></td><td>Public clinical reference snippets.</td><td><code>guideline_kb</code>, when enabled.</td></tr>
+                <tr><td><code>[1]</code>, <code>[2]</code>, <code>[3]..[N]</code></td><td><code>[1]</code> is the patient demographics line; <code>[2]</code> is the <code>Completeness Manifest</code> (tier, included counts, folded/excerpted/omitted counts); <code>[3]..[N]</code> are chart entries, continued sequentially by <code>note_rag</code> and <code>overflow_lookup</code>.</td><td>Chart in Region 1; recovered passages and items in Region 2. Mapped in <code>x_wahs.citation_map</code> with <code>memberIds</code> when folded.</td></tr>
+                <tr><td><code>[P1]..[PM]</code></td><td>Unsaved client draft notes and discrepancy flags passed in <code>wahs.overlay_resources</code> (capped at <code>5,120</code> bytes).</td><td>Appended after the chart inside Region 1 (<code>sys_prompt</code>) and added to <code>citation_map</code>.</td></tr>
+                <tr><td><code>[K1]..[KM]</code></td><td>Public clinical reference snippets matched to chart codes.</td><td>Appended to Region 2 when <code>guideline_kb</code> is active and added to <code>citation_map</code>.</td></tr>
               </tbody>
             </table>
           </div>
           <p>
-            The default system prompt (<code>prompts/wahs-default.txt</code>) instructs the model to cite only with these tags, to check the Completeness Manifest before stating that something is absent, to copy values and dates exactly, and to avoid medication-change instructions. Prompts load from <code>WAHS_PROMPTS_DIR</code> and their hash is recorded in every response.
+            The default prompt (<code>prompts/wahs-default.txt</code>) enforces numeric/tag-only bracket citations, requires checking <code>[2]</code> before reporting an item absent, requires copying values, units, and ISO dates verbatim without single-point trend extrapolation, and prohibits medication-change directives.
           </p>
         </section>
 
         <!-- WIRE CONTRACT -->
         <section class="strategy-section" id="wire-contract-details" tabindex="-1" aria-labelledby="wire-heading">
           <p class="section-kicker">Part 2 &middot; Builder Reference</p>
-          <h2 id="wire-heading">HTTP endpoints, request schema, and SSE contract</h2>
+          <h2 id="wire-heading">HTTP endpoints, request schema, and SSE stream</h2>
 
           <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="wahs-engine HTTP endpoints">
             <table class="strategy-table">
@@ -549,21 +546,21 @@
                 <tr>
                   <th style="width:34%;">Endpoint</th>
                   <th style="width:20%;">Auth</th>
-                  <th style="width:46%;">Purpose</th>
+                  <th style="width:46%;">Behavior</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td><code>GET /healthz</code></td><td>Internal</td><td>Version, default model, profile, budget, context window, and whether demo bundles are enabled.</td></tr>
-                <tr><td><code>GET /v1/models</code></td><td>Public</td><td>Configured model aliases.</td></tr>
-                <tr><td><code>GET /v1/wahs/profiles</code></td><td>Public</td><td>Profile catalog, <code>available_enrichers</code>, budget options, and active defaults.</td></tr>
-                <tr><td><code>POST /v1/wahs/context/preview</code></td><td>Bearer token (or sandbox bundle)</td><td>Runs assembly, condensation, and enrichment without calling the model. Returns <code>chart_text</code>, <code>system_prompt</code>, enrichment text, and <code>x_wahs</code>.</td></tr>
-                <tr><td><code>POST /v1/chat/completions</code></td><td>Bearer token (or gated sandbox)</td><td>Standard OpenAI chat completion, streamed or not, with the optional <code>wahs</code> block.</td></tr>
-                <tr><td><code>GET /v1/wahs/demo-bundles</code><br /><code>GET /v1/wahs/demo-bundles/{id}/resources</code></td><td>Sandbox only</td><td>Enabled only when <code>WAHS_ALLOW_LOCAL_BUNDLE_MODE=true</code> and <code>WAHS_DEMO_BUNDLES_DIR</code> is set; otherwise <code>404</code>.</td></tr>
+                <tr><td><code>GET /healthz</code></td><td>Internal</td><td>Returns engine version, default model, default profile, preferred budget, context window, and <code>demo_bundles_enabled</code>.</td></tr>
+                <tr><td><code>GET /v1/models</code></td><td>Public</td><td>Lists configured model aliases (<code>wahs-26b</code>, <code>wahs-12b</code>, <code>wahs-e4b</code>).</td></tr>
+                <tr><td><code>GET /v1/wahs/profiles</code></td><td>Public</td><td>Returns declarative profiles from <code>profiles.yaml</code>, <code>available_enrichers</code>, budget presets, and active defaults.</td></tr>
+                <tr><td><code>POST /v1/wahs/context/preview</code></td><td>Bearer JWT (or sandbox bundle)</td><td>Executes Stages 1 through 4 without calling the LLM; returns <code>chart_text</code>, <code>system_prompt</code>, <code>enrichment_text</code>, <code>X-WAHS-Prefix-Hash</code>, and <code>x_wahs</code>.</td></tr>
+                <tr><td><code>POST /v1/chat/completions</code></td><td>Bearer JWT (or gated sandbox)</td><td>OpenAI chat completion (<code>stream: true</code> or <code>false</code>) accepting the <code>wahs</code> extension object.</td></tr>
+                <tr><td><code>GET /v1/wahs/demo-bundles</code><br /><code>GET /v1/wahs/demo-bundles/{id}/resources</code></td><td>Sandbox only</td><td>Active only when both <code>WAHS_ALLOW_LOCAL_BUNDLE_MODE=true</code> and <code>WAHS_DEMO_BUNDLES_DIR</code> are set; returns <code>404</code> in production.</td></tr>
               </tbody>
             </table>
           </div>
 
-          <div class="flow-diagram" tabindex="0" role="region" aria-label="Illustrative wahs-engine request and response">POST /v1/chat/completions
+          <div class="flow-diagram" tabindex="0" role="region" aria-label="Illustrative wahs-engine request and SSE frames">POST /v1/chat/completions
 Authorization: Bearer &lt;keycloak_jwt&gt;
 Content-Type: application/json
 
@@ -587,20 +584,20 @@ Content-Type: application/json
   }
 }
 
---&gt; First SSE frame, sent before the model starts generating:
-data: {"object":"chat.completion.chunk","x_wahs_stream":{"event":"context_ready","prefix_cache_key_hash":"...","citation_map":{...}}}
+--&gt; Initial SSE chunk (emitted before southbound prefill completes):
+data: {"id":"chatcmpl-wahs-...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null}],"x_wahs_stream":{"event":"context_ready","prefix_cache_key_hash":"...","citation_map":{...}}}
 
---&gt; Comment frames while the model host queues or prefills:
+--&gt; Comment keepalive every 15s while southbound host queues or prefills:
 : keepalive
 
---&gt; Content deltas (reasoning blocks removed), or a structured error frame:
-data: {"error":{"type":"upstream_error","message":"..."}}
+--&gt; Streamed content deltas (&lt;think&gt; stripped), or structured 502 error chunk on upstream failure:
+data: {"id":"chatcmpl-wahs-...","error":{"message":"Southbound LLM stream returned HTTP 503.","status":502}}
 
---&gt; Final frame (values illustrative):
+--&gt; Final SSE chunk before [DONE] (illustrative field values):
 {
   "x_wahs": {
     "citation_map": {
-      "12": { "resourceType": "MedicationRequest", "id": "...", "date": "...", "source": "...", "display": "Zolpidem tartrate 10 MG Oral Tablet" }
+      "12": { "index": 12, "resourceType": "MedicationRequest", "id": "...", "source": "Overlake Sleep & Behavioral Clinic", "section": "med_active", "date": "2025-11-10", "display": "(2025-11-10) Medication: Zolpidem tartrate 10 MG Oral Tablet..." }
     },
     "condensation": {
       "tier": 0, "tier_name": "verbatim", "profile_id": "core-enriched", "prompt_id": "wahs-default",
@@ -608,7 +605,7 @@ data: {"error":{"type":"upstream_error","message":"..."}}
       "omitted_clinical_items": 0, "cache_hit": true, "history_trimmed_turns": 0
     },
     "completeness_manifest": { ... },
-    "enrichers": [ { "id": "temporal", ... }, { "id": "terminology_kb", ... } ],
+    "enrichers": [ { "id": "temporal", "fired": true, ... }, { "id": "terminology_kb", "fired": true, ... } ],
     "ai_provenance": {
       "resourceType": "Provenance",
       "profile": "http://hl7.org/fhir/uv/aitransparency/StructureDefinition/AI-Provenance",
@@ -622,28 +619,28 @@ data: {"error":{"type":"upstream_error","message":"..."}}
         <!-- ENRICHER RUNTIME -->
         <section class="strategy-section" id="profiles-and-enrichers" tabindex="-1" aria-labelledby="enrichers-heading">
           <p class="section-kicker">Enricher Runtime</p>
-          <h2 id="enrichers-heading">Profiles and the <code>ContextEnricher</code> contract</h2>
+          <h2 id="enrichers-heading">Enricher modules and profiles</h2>
           <p>
-            Enrichers implement the <code>ContextEnricher</code> protocol in <code>wahs_core/ports.py</code>. The pipeline imports a module only when the active profile or request enables it, gives each module its own token cap inside a shared ceiling (<code>WAHS_MAX_ENRICHMENT_TOKENS</code>, default 2048), and writes output only to the turn suffix. Each module returns an <code>EnrichmentDisclosure</code> that is surfaced in <code>x_wahs.enrichers</code> and the provenance record.
+            Enrichers implement <code>ContextEnricher</code> (<code>wahs_core/ports.py</code>). <code>EnricherPipeline</code> imports <code>wahs_extensions</code> lazily only when active IDs are non-empty, enforces per-module token caps within <code>WAHS_MAX_ENRICHMENT_TOKENS</code> (<code>2,048</code>), appends blocks strictly to Region 2, and records an <code>EnrichmentDisclosure</code> (including <code>fired</code>, <code>tokens_used</code>, and <code>latency_ms</code>) for every module.
           </p>
 
           <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Enricher modules">
             <table class="strategy-table">
               <thead>
                 <tr>
-                  <th style="width:20%;">Module</th>
-                  <th style="width:12%;">Token cap</th>
-                  <th style="width:40%;">Mechanism</th>
-                  <th style="width:28%;">Activation</th>
+                  <th style="width:22%;">Enricher ID</th>
+                  <th style="width:10%;">Cap</th>
+                  <th style="width:42%;">Mechanism</th>
+                  <th style="width:26%;">Gating</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td><code>temporal</code></td><td>450</td><td>Chart anchor date, lookback cutoffs, vaccine elapsed time, and unit-safe longitudinal lab deltas.</td><td>Always runs when enabled; skips single measurements and incompatible units.</td></tr>
-                <tr><td><code>terminology_kb</code></td><td>550</td><td>In-memory SQLite over CIEL, RxNorm/ATC, CDC CVX/ACIP, and LOINC: drug ingredients and classes, vaccine schedules, missing reference ranges.</td><td>Always runs when enabled; never overrides a reference range already in the record.</td></tr>
-                <tr><td><code>note_rag</code></td><td>1,100</td><td>Okapi BM25 over note spans not already shown in the chart, with terminology-based query expansion.</td><td>Only when Tier 2 excerpted or omitted notes.</td></tr>
-                <tr><td><code>overflow_lookup</code></td><td>550</td><td>IDF-weighted BM25 and code matching over omitted clinical items.</td><td>Only when the manifest reports omitted items.</td></tr>
-                <tr><td><code>guideline_kb</code></td><td>500</td><td>SQLite FTS5 over public reference snippets, intersected with the chart's codes.</td><td>Opt-in (<code>full-enriched</code> or explicit request).</td></tr>
-                <tr><td><code>experimental.clinical_reconciliation</code></td><td>n/a</td><td>Prototype rule graph over sample packs.</td><td>Rejected with <code>422</code> unless <code>WAHS_ALLOW_EXPERIMENTAL_ENRICHERS=true</code>.</td></tr>
+                <tr><td><code>temporal</code></td><td>450</td><td>Computes chart anchor date, 6m/12m lookback cutoffs, vaccine elapsed intervals, and UCUM-compatible numeric lab deltas.</td><td>Runs when enabled; skips single-point series (<code>n=1</code>) and mismatched units.</td></tr>
+                <tr><td><code>terminology_kb</code></td><td>550</td><td>In-memory SQLite lookup (<code>CIEL v2026-04-28</code>, RxNorm/ATC, CDC CVX/ACIP, LOINC) resolving active ingredients, ATC class overlaps, adult vaccine series, and missing lab reference intervals.</td><td>Runs when enabled; never overrides inline <code>Observation.referenceRange</code>.</td></tr>
+                <tr><td><code>note_rag</code></td><td>1,100</td><td>Single-patient Okapi BM25 passage retrieval over unseen note spans using <code>terminology_kb</code> synonym query expansion; cites passages sequentially as <code>[N]</code>.</td><td>Self-gated to Tier 2 when notes were excerpted or omitted.</td></tr>
+                <tr><td><code>overflow_lookup</code></td><td>550</td><td>IDF-weighted Okapi BM25 and code lookup over omitted structured <code>ClinicalItem</code> records; registers sequential <code>[N]</code> citations.</td><td>Self-gated to Tier 2 when <code>omitted_clinical_items &gt; 0</code>.</td></tr>
+                <tr><td><code>guideline_kb</code></td><td>500</td><td>In-memory SQLite FTS5 intersected with chart codes over public clinical reference snippets; cites as <code>[K1]..[KM]</code>.</td><td>Opt-in (<code>full-enriched</code> or explicit <code>wahs.enrichers</code>).</td></tr>
+                <tr><td><code>experimental.clinical_reconciliation</code></td><td>550</td><td>Prototype chronic-care rule graph over sample packs.</td><td>Quarantined; returns HTTP <code>422</code> unless <code>WAHS_ALLOW_EXPERIMENTAL_ENRICHERS=true</code>.</td></tr>
               </tbody>
             </table>
           </div>
@@ -652,68 +649,68 @@ data: {"error":{"type":"upstream_error","message":"..."}}
             <table class="strategy-table">
               <thead>
                 <tr>
-                  <th style="width:26%;">Profile (<code>profiles.yaml</code>)</th>
-                  <th style="width:20%;">Preferred chart tokens</th>
-                  <th style="width:54%;">Enrichers</th>
+                  <th style="width:28%;">Profile ID (<code>profiles.yaml</code>)</th>
+                  <th style="width:20%;"><code>preferred_chart_tokens</code></th>
+                  <th style="width:52%;">Active enrichers</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td><code>baseline</code> (package default)</td><td>Full window</td><td>None. <code>wahs_extensions</code> is never imported.</td></tr>
-                <tr><td><code>temporal</code></td><td>32,768</td><td><code>temporal</code></td></tr>
-                <tr><td><code>terminology</code></td><td>32,768</td><td><code>terminology_kb</code></td></tr>
-                <tr><td><code>temporal-terminology</code></td><td>32,768</td><td><code>temporal</code>, <code>terminology_kb</code></td></tr>
-                <tr><td><code>rag-overflow</code></td><td>16,384</td><td><code>note_rag</code>, <code>overflow_lookup</code></td></tr>
-                <tr class="highlight-row"><td><strong><code>core-enriched</code></strong> (hosted default)</td><td>16,384</td><td><code>temporal</code>, <code>terminology_kb</code>, <code>note_rag</code>, <code>overflow_lookup</code></td></tr>
-                <tr><td><code>full-enriched</code></td><td>32,768</td><td>All five, including <code>guideline_kb</code></td></tr>
+                <tr><td><code>baseline</code> (package default)</td><td><code>null</code> (full window)</td><td>None (<code>wahs_extensions</code> not imported)</td></tr>
+                <tr><td><code>temporal</code></td><td><code>32768</code></td><td><code>temporal</code></td></tr>
+                <tr><td><code>terminology</code></td><td><code>32768</code></td><td><code>terminology_kb</code></td></tr>
+                <tr><td><code>temporal-terminology</code></td><td><code>32768</code></td><td><code>temporal</code>, <code>terminology_kb</code></td></tr>
+                <tr><td><code>rag-overflow</code></td><td><code>16384</code></td><td><code>note_rag</code>, <code>overflow_lookup</code></td></tr>
+                <tr class="highlight-row"><td><strong><code>core-enriched</code></strong> (hosted default)</td><td><code>16384</code></td><td><code>temporal</code>, <code>terminology_kb</code>, <code>note_rag</code>, <code>overflow_lookup</code></td></tr>
+                <tr><td><code>full-enriched</code></td><td><code>32768</code></td><td><code>temporal</code>, <code>terminology_kb</code>, <code>note_rag</code>, <code>overflow_lookup</code>, <code>guideline_kb</code></td></tr>
               </tbody>
             </table>
           </div>
         </section>
 
-        <!-- BUDGETS & CONTEXT ALLOCATION -->
+        <!-- TOKEN ACCOUNTING -->
         <section class="strategy-section" id="budget-and-num-ctx" tabindex="-1" aria-labelledby="budget-heading">
-          <p class="section-kicker">Budgets &amp; Context Allocation</p>
-          <h2 id="budget-heading">Chart budget, context window, and model-host allocation</h2>
+          <p class="section-kicker">Token Accounting</p>
+          <h2 id="budget-heading">Token accounting and upstream context allocation</h2>
           <p>
-            Three separate numbers govern prompt size. The <strong>chart budget</strong> is how many tokens the condensed record may occupy. The <strong>context window</strong> (<code>WAHS_CONTEXT_WINDOW</code>) is the ceiling for the full prompt plus reserved output. The <strong>upstream allocation</strong> (<code>WAHS_OLLAMA_NUM_CTX</code>) is the context size requested from Ollama.
+            <code>wahs-engine</code> separates three token parameters: target chart budget (<code>wahs.target_budget_tokens</code>), physical prompt ceiling (<code>WAHS_CONTEXT_WINDOW</code>), and Ollama KV-cache allocation (<code>WAHS_OLLAMA_NUM_CTX</code>).
           </p>
           <ul style="max-width:860px; color:var(--ink); font-size:15.5px; line-height:1.65;">
-            <li><strong>Budget resolution:</strong> an explicit <code>wahs.target_budget_tokens</code> is honored and clamped to the context window. Otherwise the engine uses <code>WAHS_PREFERRED_CHART_TOKENS</code>, then the profile's preferred tokens, then the window minus system framing, history, enrichment cap, and output reserve. The chosen value and reason are reported as <code>budget_effective</code> and <code>resolution_reason</code>.</li>
-            <li><strong>Exact accounting:</strong> token counts use the target model's tokenizer offline, so prompts are sized before the upstream call instead of being truncated by the model host. A suspected upstream truncation is flagged in <code>x_wahs</code>.</li>
-            <li><strong>Upstream allocation:</strong> when <code>WAHS_OLLAMA_NUM_CTX</code> is set, every request uses that one allocation (stepping up only if a prompt exceeds it), so budget changes do not cause model reloads. Setting it to <code>0</code> defers to the server's own default. The rationale is under <a href="/wahs/llm-strategy/index.html#context-sizing">Context sizing</a>.</li>
-            <li><strong>Streaming resilience:</strong> the <code>context_ready</code> frame and keepalive comments keep proxies and browsers from timing out while a shared GPU queues the request.</li>
+            <li><strong>Offline exact tokenizers:</strong> <code>tokenizers_registry.py</code> bundles the Gemma 4 SentencePiece <code>tokenizer.json</code> and pre-cached OpenAI <code>tiktoken</code> encodings inside the container image, counting tokens offline with zero network calls.</li>
+            <li><strong>Budget resolution:</strong> An explicit <code>wahs.target_budget_tokens</code> is clamped to fit inside <code>WAHS_CONTEXT_WINDOW</code> alongside system framing, conversation turns, and output reserve. In Auto mode, the engine uses <code>WAHS_PREFERRED_CHART_TOKENS</code>, falling back to the profile's <code>preferred_chart_tokens</code> or remaining window capacity. If multi-turn history still pushes total prompt tokens past the ceiling, <code>assembler.py</code> tightens the chart target and re-condenses before sending.</li>
+            <li><strong>Truncation detection:</strong> <code>upstream.py</code> compares offline <code>exact_prompt_tokens</code> against upstream-reported <code>prompt_tokens</code> and sets <code>suspected_upstream_truncation: true</code> if the upstream count drops below 85% on prompts of 1,024+ tokens.</li>
+            <li><strong>Fixed Ollama <code>num_ctx</code>:</strong> For <code>litellm</code> and <code>ollama</code> provider flavors, <code>resolve_ollama_num_ctx</code> pins requests at or below <code>WAHS_OLLAMA_NUM_CTX</code> (<code>65536</code> in cloud) to a single warm bucket so changing UI budgets between <code>2k</code> and <code>64k</code> never triggers an Ollama model reload.</li>
           </ul>
         </section>
 
         <!-- SHARING -->
         <section class="strategy-section" id="sharing" tabindex="-1" aria-labelledby="sharing-heading">
           <p class="section-kicker">Sharing</p>
-          <h2 id="sharing-heading">SMART Health Links, outside the AI path</h2>
+          <h2 id="sharing-heading">SMART Health Links sharing</h2>
           <p>
-            Sharing a summary does not involve the engine. The client assembles the selected resources into a FHIR bundle, encrypts it in the browser as a compact JWE (<code>alg: dir</code>, <code>enc: A256GCM</code>), uploads the ciphertext to <code>shl-server</code>, and renders a <code>shlink:/</code> QR code and link with an expiry and optional passcode. The decryption key travels only in the link, so the server stores ciphertext it cannot read. Links can be listed and revoked from either app.
+            Summary sharing runs between the client browser and <code>wahs-shl-server</code> without touching <code>wahs-engine</code>. The client builds a FHIR R4 bundle from the user's selected items, encrypts it in the browser using WebCrypto compact JWE (<code>alg: dir</code>, <code>enc: A256GCM</code>, 32-byte random key), uploads the ciphertext to <code>POST /shl/{id}/file</code>, and encodes the manifest URL and decryption key into a <code>shlink:/</code> link and QR code with an expiration date and optional passcode. Because the decryption key stays in the URL fragment, <code>wahs-shl-server</code> stores only ciphertext.
           </p>
         </section>
 
         <!-- EDGE & ACCESS CONTROL -->
         <section class="strategy-section" id="edge-access" tabindex="-1" aria-labelledby="edge-heading">
           <p class="section-kicker">Edge &amp; Access Control</p>
-          <h2 id="edge-heading">Two layers of access control on the hosted demo</h2>
+          <h2 id="edge-heading">Hosted edge routing and access control</h2>
           <p>
-            The hosted demo adds a project-level gate in front of the patient-level controls described above. Neither layer replaces the other.
+            On the hosted demonstration VM, Caddy enforces a project-level Google allowlist (<code>wahs-auth-gate</code>) in front of the app subdomains while keeping patient-level data isolation in Keycloak and <code>fhir-auth</code>.
           </p>
           <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Edge routing and access control">
             <table class="strategy-table">
               <thead>
                 <tr>
-                  <th style="width:26%;">Host</th>
-                  <th style="width:74%;">Routing and access</th>
+                  <th style="width:26%;">Hostname</th>
+                  <th style="width:74%;">Caddy routing and authentication</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td><code>wahealth.openclinai.org</code></td><td>Gate portal. Verifies a Google sign-in against an allowlist and sets an HMAC-signed, HttpOnly session cookie scoped to <code>.openclinai.org</code>.</td></tr>
-                <tr><td><code>wahs-web.openclinai.org</code></td><td>Caddy <code>forward_auth</code> to the gate, then routes <code>/realms/*</code> to Keycloak, <code>/fhir*</code> to <code>fhir-auth</code>, the SHL API to <code>shl-server</code>, and everything else to <code>shl-ips</code>. Patient sign-in still happens in Keycloak.</td></tr>
-                <tr><td><code>wahs-mobile.openclinai.org</code></td><td>Same gate, with <code>/fhir*</code> to <code>fhir-auth</code>, the SHL API to <code>shl-server</code>, and the app and <code>/api/chat</code> to the mobile BFF.</td></tr>
-                <tr><td><code>wahs-demo.openclinai.org</code></td><td>Static sandbox page plus <code>/api/engine/*</code> to <code>wahs-sandbox-engine</code>. Bundle and preview routes are public; chat completion routes require the gate cookie.</td></tr>
+                <tr><td><code>wahealth.openclinai.org</code></td><td>Verifies Google sign-in against <code>WAHS_AUTH_WHITELIST_EMAILS</code> and issues an HMAC-SHA256 signed, <code>HttpOnly</code> cookie scoped to <code>.openclinai.org</code>.</td></tr>
+                <tr><td><code>wahs-web.openclinai.org</code></td><td><code>forward_auth</code> to <code>wahs-auth-gate</code>; routes <code>/realms/*</code> and <code>/resources/*</code> to Keycloak, <code>/fhir*</code> to <code>fhir-auth</code>, <code>/shl-server/*</code> to <code>wahs-shl-server</code>, and app/SSE routes (<code>flush_interval -1</code> on <code>/api/chat*</code>) to <code>wahs-shl-ips</code>.</td></tr>
+                <tr><td><code>wahs-mobile.openclinai.org</code></td><td><code>forward_auth</code> to <code>wahs-auth-gate</code>; routes <code>/fhir*</code> to <code>fhir-auth</code>, <code>/shl-server/*</code> to <code>wahs-shl-server</code>, and app/SSE routes to <code>wahs-mobile-frontend</code>.</td></tr>
+                <tr><td><code>wahs-demo.openclinai.org</code></td><td>Serves the static Research Sandbox UI and proxies <code>/api/engine/*</code> to <code>wahs-sandbox-engine</code>. Bundle and preview routes are open; <code>/api/engine/v1/chat/completions</code> requires <code>forward_auth</code>.</td></tr>
               </tbody>
             </table>
           </div>
@@ -722,45 +719,45 @@ data: {"error":{"type":"upstream_error","message":"..."}}
         <!-- CONFIGURATION & LOCAL STACK -->
         <section class="strategy-section" id="env-config" tabindex="-1" aria-labelledby="env-heading">
           <p class="section-kicker">Configuration</p>
-          <h2 id="env-heading">Runtime configuration</h2>
+          <h2 id="env-heading">Runtime configuration and local stack</h2>
           <p>
-            The <code>wahs-engine</code> package ships conservative defaults. The hosted deployment overrides several of them in <code>compose/wahs-cloud/docker-compose.yml</code>.
+            <code>wahs-engine</code> ships minimal package defaults (<code>baseline</code> profile with zero enrichers imported and a <code>32768</code> window). Hosted cloud deployments set the overrides below in <code>compose/wahs-cloud/docker-compose.yml</code>.
           </p>
           <div class="strategy-table-wrap" tabindex="0" role="region" aria-label="Runtime configuration">
             <table class="strategy-table">
               <thead>
                 <tr>
                   <th style="width:32%;">Variable</th>
-                  <th style="width:20%;">Package default</th>
+                  <th style="width:22%;">Package default</th>
                   <th style="width:20%;">Hosted value</th>
-                  <th style="width:28%;">Effect</th>
+                  <th style="width:26%;">Behavior</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td><code>WAHS_FHIR_AUTH_BASE_URL</code></td><td><code>http://fhir-auth:8080/fhir</code></td><td>same</td><td>Per-user FHIR proxy. Startup fails if it points at the internal FHIR server.</td></tr>
-                <tr><td><code>LLM_BASE_URL</code></td><td><code>http://host.docker.internal:8079/v1</code></td><td>UW CIRG gateway</td><td>Any OpenAI-compatible endpoint (LiteLLM, Ollama, vLLM, llama.cpp).</td></tr>
-                <tr><td><code>WAHS_MODEL_MAP_JSON</code></td><td>built-in aliases</td><td><code>wahs-26b/12b/e4b</code> &rarr; <code>ollama/gemma4:*</code></td><td>Maps public model aliases to upstream model IDs.</td></tr>
-                <tr><td><code>WAHS_DEFAULT_MODEL</code></td><td><code>wahs-26b</code></td><td><code>wahs-26b</code></td><td>Model used when a request omits one.</td></tr>
-                <tr><td><code>WAHS_DEFAULT_PROFILE</code></td><td><code>baseline</code></td><td><code>core-enriched</code></td><td>Profile used when a request omits one.</td></tr>
-                <tr><td><code>WAHS_PREFERRED_CHART_TOKENS</code></td><td>unset</td><td><code>16384</code></td><td>Auto-mode chart budget.</td></tr>
-                <tr><td><code>WAHS_CONTEXT_WINDOW</code></td><td><code>32768</code></td><td><code>65536</code></td><td>Full prompt ceiling.</td></tr>
-                <tr><td><code>WAHS_OLLAMA_NUM_CTX</code></td><td>unset (smaller of 65,536 and the window)</td><td><code>65536</code></td><td>Fixed upstream context allocation; <code>0</code> defers to the server.</td></tr>
-                <tr><td><code>WAHS_MAX_ENRICHMENT_TOKENS</code></td><td><code>2048</code></td><td><code>2048</code></td><td>Shared ceiling for all enricher output.</td></tr>
-                <tr><td><code>WAHS_CACHE_TTL_SECONDS</code></td><td><code>1800</code></td><td><code>3600</code></td><td>Dataset and prefix cache lifetime.</td></tr>
-                <tr><td><code>WAHS_ALLOW_LOCAL_BUNDLE_MODE</code></td><td><code>false</code></td><td><code>false</code> (sandbox: <code>true</code>)</td><td>Allows inline or registered bundles without a token. Never enabled on the patient-data engine.</td></tr>
-                <tr><td><code>WAHS_DEMO_BUNDLES_DIR</code></td><td>unset</td><td>unset (sandbox: <code>/bundles</code>)</td><td>Read-only bundle directory for the demo endpoints.</td></tr>
-                <tr><td><code>HEALTH_CHAT_BACKEND</code> (<code>shl-ips</code>)</td><td><code>gateway</code></td><td><code>wahs-engine</code></td><td>Routes the web app's upstream health record chat through the engine.</td></tr>
+                <tr><td><code>WAHS_FHIR_AUTH_BASE_URL</code></td><td><code>http://fhir-auth:8080/fhir</code></td><td>same</td><td>Per-user FHIR proxy URL; startup fails if pointed at <code>fhir-internal</code>.</td></tr>
+                <tr><td><code>LLM_BASE_URL</code></td><td><code>http://host.docker.internal:8079/v1</code></td><td>UW CIRG gateway</td><td>Southbound OpenAI-compatible base URL.</td></tr>
+                <tr><td><code>WAHS_MODEL_MAP_JSON</code></td><td>built-in alias map</td><td><code>wahs-26b/12b/e4b</code> &rarr; <code>ollama/gemma4:*</code></td><td>Maps public model IDs to upstream provider model names.</td></tr>
+                <tr><td><code>WAHS_DEFAULT_MODEL</code></td><td><code>wahs-26b</code></td><td><code>wahs-26b</code></td><td>Fallback model when omitted by caller.</td></tr>
+                <tr><td><code>WAHS_DEFAULT_PROFILE</code></td><td><code>baseline</code></td><td><code>core-enriched</code></td><td>Fallback profile from <code>profiles.yaml</code>.</td></tr>
+                <tr><td><code>WAHS_PREFERRED_CHART_TOKENS</code></td><td>unset</td><td><code>16384</code></td><td>Auto-mode target chart token budget.</td></tr>
+                <tr><td><code>WAHS_CONTEXT_WINDOW</code></td><td><code>32768</code></td><td><code>65536</code></td><td>Physical prompt ceiling enforced offline.</td></tr>
+                <tr><td><code>WAHS_OLLAMA_NUM_CTX</code></td><td>unset (<code>min(65536, window)</code>)</td><td><code>65536</code></td><td>Warm Ollama KV-cache pin; <code>0</code> or <code>omit</code> defers to server default.</td></tr>
+                <tr><td><code>WAHS_MAX_ENRICHMENT_TOKENS</code></td><td><code>2048</code></td><td><code>2048</code></td><td>Shared ceiling across enabled enrichers.</td></tr>
+                <tr><td><code>WAHS_CACHE_TTL_SECONDS</code></td><td><code>1800</code></td><td><code>3600</code></td><td>TTL for in-memory dataset and prefix caches.</td></tr>
+                <tr><td><code>WAHS_ALLOW_LOCAL_BUNDLE_MODE</code></td><td><code>false</code></td><td><code>false</code> (sandbox: <code>true</code>)</td><td>Permits <code>wahs.fhir_bundle</code> and <code>wahs.bundle_id</code> without a bearer JWT.</td></tr>
+                <tr><td><code>WAHS_DEMO_BUNDLES_DIR</code></td><td>unset</td><td>unset (sandbox: <code>/bundles</code>)</td><td>Read-only bundle directory for <code>/v1/wahs/demo-bundles</code>.</td></tr>
+                <tr><td><code>HEALTH_CHAT_BACKEND</code> (<code>shl-ips</code>)</td><td><code>gateway</code></td><td><code>wahs-engine</code></td><td>Routes <code>shl-ips</code> <code>/api/health-chat</code> through <code>wahs-engine</code>.</td></tr>
               </tbody>
             </table>
           </div>
 
           <div class="strategy-callout" id="local-stack">
-            <strong>Running WAHS locally.</strong> Developers with access to the WAHS repositories can run HAPI FHIR, Keycloak, <code>fhir-auth</code>, SMART Health Links, the engine, and both apps with Docker Compose.
+            <strong>Running locally.</strong> Developers with access to the WAHS repositories can run HAPI FHIR, Keycloak, <code>fhir-auth</code>, SMART Health Links, <code>wahs-engine</code>, and both client apps via Docker Compose:
             <ul>
               <li><strong>Engine:</strong> <a href="https://github.com/pmanko/wahs-engine"><code>pmanko/wahs-engine</code> ↗</a> (<code>uvicorn wahs_engine.app:app --port 8080</code>)</li>
               <li><strong>Web app:</strong> <a href="https://github.com/pmanko/shl-ips"><code>pmanko/shl-ips</code> ↗</a> (<code>http://localhost:4000</code>)</li>
               <li><strong>Mobile companion:</strong> <a href="https://github.com/pmanko/wahs-mobile-frontend"><code>pmanko/wahs-mobile-frontend</code> ↗</a> (<code>http://localhost:4001</code>)</li>
-              <li><strong>Hosted deployment and Research Sandbox:</strong> <a href="https://github.com/pmanko/openclinai.org"><code>pmanko/openclinai.org</code> ↗</a> (<code>compose/wahs-cloud/</code>, <code>wahs/demo/</code>, <code>wahs/cloud-gate/</code>)</li>
+              <li><strong>Cloud compose, gate &amp; Research Sandbox:</strong> <a href="https://github.com/pmanko/openclinai.org"><code>pmanko/openclinai.org</code> ↗</a> (<code>compose/wahs-cloud/</code>, <code>wahs/cloud-gate/</code>, <code>wahs/demo/</code>)</li>
             </ul>
           </div>
         </section>
