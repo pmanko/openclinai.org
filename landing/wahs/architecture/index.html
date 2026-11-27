@@ -55,10 +55,10 @@
       <span class="wahs-subnav-label">WA Health Summary</span>
       <nav class="wahs-subnav" aria-label="WA Health Summary navigation">
         <a href="/wahs/index.html">Overview</a>
+        <a href="/wahs/walkthrough/index.html">Mobile App</a>
+        <a href="/wahs/sandbox/index.html">Research Sandbox</a>
         <a href="/wahs/architecture/index.html" aria-current="page">Architecture</a>
         <a href="/wahs/llm-strategy/index.html">LLM Strategy</a>
-        <a href="/wahs/walkthrough/index.html">Walkthrough</a>
-        <a href="https://wahs-demo.openclinai.org/">Live Sandbox <span aria-hidden="true">↗</span></a>
         <a href="https://reports.openclinai.org/#wahs">Reports <span aria-hidden="true">↗</span></a>
       </nav>
     </div>
@@ -646,6 +646,15 @@ data: {"error":{"type":"upstream_error","message":"Southbound LLM stream returne
                 <tr><td><code>WAHS_DEMO_BUNDLES_DIR</code></td><td>unset (prod)<br /><code>/bundles</code> (sandbox)</td><td>Read-only FHIR R4 bundle directory for <code>/v1/wahs/demo-bundles</code> (returns <code>404</code> when unset).</td></tr>
               </tbody>
             </table>
+          </div>
+
+          <div class="strategy-callout" id="local-stack">
+            <strong>Running WAHS locally.</strong> Developers with access to the WAHS repositories can run HAPI FHIR, Keycloak, <code>fhir-auth</code>, SMART Health Links, the engine, and both apps with Docker Compose.
+            <ul>
+              <li><strong>Engine:</strong> <a href="https://github.com/pmanko/wahs-engine"><code>pmanko/wahs-engine</code> ↗</a> (<code>uvicorn wahs_engine.app:app --port 8080</code>)</li>
+              <li><strong>Web app:</strong> <a href="https://github.com/pmanko/shl-ips"><code>pmanko/shl-ips</code> ↗</a> (<code>http://localhost:4000</code>)</li>
+              <li><strong>Mobile companion:</strong> <a href="https://github.com/pmanko/wahs-mobile-frontend"><code>pmanko/wahs-mobile-frontend</code> ↗</a> (<code>http://localhost:4001</code>)</li>
+            </ul>
           </div>
         </section>
 

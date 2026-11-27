@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WAHS Research Sandbox Guide &middot; OpenClinAI</title>
+  <meta name="description" content="A guide to the public WAHS Research Sandbox: load example health records, see how a chart is prepared before a language model reads it, add optional context, and check answers against their sources." />
+  <link rel="canonical" href="https://openclinai.org/wahs/sandbox/" />
+  <meta property="og:url" content="https://openclinai.org/wahs/sandbox/" />
+  <meta property="og:title" content="WAHS Research Sandbox Guide &middot; OpenClinAI" />
+  <meta property="og:description" content="Explore how WA Health Summary prepares health records and answers questions, using synthetic and de-identified example records." />
+  <meta property="og:image" content="https://storage.googleapis.com/openclinai-media/wahs/wahs-web-app-demo-20261126.webp" />
+  <meta name="theme-color" content="#4b2e83" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/projects.css" />
+  <style>
+    .guide-intro { padding: 30px 0 32px; }
+    .guide-intro h1 { margin: 0; max-width: 860px; color: var(--purple-ink); font: 700 clamp(32px, 4vw, 46px)/1.14 Georgia, serif; letter-spacing: -0.02em; }
+    .guide-jump { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 6px; }
+    .guide-jump a { display: inline-block; padding: 7px 13px; border-radius: 999px; background: var(--soft); border: 1px solid var(--line); font-size: 13.5px; font-weight: 650; color: var(--ink); text-decoration: none; }
+    .guide-jump a:hover { border-color: var(--purple); color: var(--purple); }
+    .guide-section { padding: 40px 0 44px; border-top: 1px solid var(--line); scroll-margin-top: 24px; }
+    .guide-section > h2 { margin: 0 0 14px; max-width: 840px; color: var(--purple-ink); font: 700 clamp(26px, 3vw, 34px)/1.2 Georgia, serif; }
+    .guide-section > p { max-width: 820px; margin: 0 0 16px; color: var(--muted); font-size: 16.5px; line-height: 1.65; }
+    .guide-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 22px; }
+    .guide-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .guide-card { padding: 22px 24px; background: #ffffff; border: 1px solid var(--line); border-radius: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .guide-card h3 { margin: 0; font-size: 18.5px; line-height: 1.32; color: var(--ink); }
+    .guide-card p { margin: 0; font-size: 15px; color: var(--muted); line-height: 1.6; }
+    .guide-card ol, .guide-card ul { margin: 0; padding-left: 20px; font-size: 15px; line-height: 1.62; color: var(--ink); }
+    .guide-card li + li { margin-top: 6px; }
+    .guide-badge { display: inline-block; align-self: flex-start; padding: 3px 10px; border-radius: 999px; background: #ede9fe; color: #4b2e83; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+    .guide-badge.teal { background: #ccfbf1; color: #115e59; }
+    .guide-observe { margin-top: auto; padding: 12px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14.5px; line-height: 1.55; color: var(--ink); }
+    .guide-terms { max-width: 880px; margin: 18px 0 0; display: grid; grid-template-columns: minmax(150px, 0.32fr) 1fr; gap: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #ffffff; }
+    .guide-terms dt, .guide-terms dd { margin: 0; padding: 13px 18px; border-top: 1px solid var(--line); font-size: 15px; line-height: 1.55; }
+    .guide-terms dt { font-weight: 700; color: var(--ink); background: var(--soft); }
+    .guide-terms dd { color: var(--muted); }
+    .guide-terms dt:first-of-type, .guide-terms dt:first-of-type + dd { border-top: 0; }
+    .guide-links { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 10px; font-size: 15.5px; }
+    .guide-links a { color: var(--purple); font-weight: 650; text-decoration: none; }
+    .guide-links a:hover { text-decoration: underline; }
+    @media (max-width: 900px) {
+      .guide-grid, .guide-grid.two { grid-template-columns: 1fr; }
+      .guide-terms { grid-template-columns: 1fr; }
+      .guide-terms dd { border-top: 0; padding-top: 0; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <header class="site-header project-header">
+    <a class="brand" href="/index.html" aria-label="OpenClinAI home">
+      <span class="brand-mark" aria-hidden="true"><span></span></span>
+      <span class="brand-text">OpenClinAI</span>
+    </a>
+
+    <nav class="primary-nav" aria-label="Primary">
+      <a href="/index.html#project">Client Apps</a>
+      <a href="/med-agent-hub/index.html">AI Engine</a>
+      <a href="/validation-harness/index.html">Evaluation</a>
+      <a href="/experiments/index.html">Experiments</a>
+      <a href="/projects/index.html" aria-current="page">Projects</a>
+      <a href="https://reports.openclinai.org/">Reports <span aria-hidden="true">↗</span></a>
+      <a href="/index.html#about">About</a>
+    </nav>
+
+    <details class="nav-toggle">
+      <summary>Menu</summary>
+      <nav class="mobile-nav" aria-label="Mobile primary">
+        <a href="/index.html#project">Client Apps</a>
+        <a href="/med-agent-hub/index.html">AI Engine</a>
+        <a href="/validation-harness/index.html">Evaluation</a>
+        <a href="/experiments/index.html">Experiments</a>
+        <a href="/projects/index.html" aria-current="page">Projects</a>
+        <a href="https://reports.openclinai.org/">Reports <span aria-hidden="true">↗</span></a>
+        <a href="/index.html#about">About</a>
+      </nav>
+    </details>
+  </header>
+
+  <div class="wahs-subnav-bar">
+    <div class="page-width wahs-subnav-inner">
+      <span class="wahs-subnav-label">WA Health Summary</span>
+      <nav class="wahs-subnav" aria-label="WA Health Summary navigation">
+        <a href="/wahs/index.html">Overview</a>
+        <a href="/wahs/walkthrough/index.html">Mobile App</a>
+        <a href="/wahs/sandbox/index.html" aria-current="page">Research Sandbox</a>
+        <a href="/wahs/architecture/index.html">Architecture</a>
+        <a href="/wahs/llm-strategy/index.html">LLM Strategy</a>
+        <a href="https://reports.openclinai.org/#wahs">Reports <span aria-hidden="true">↗</span></a>
+      </nav>
+    </div>
+  </div>
+
+  <main id="main-content" tabindex="-1">
+    <section class="guide-intro page-width">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <a href="/index.html">OpenClinAI</a>
+        <span aria-hidden="true">/</span>
+        <a href="/projects/index.html">Projects</a>
+        <span aria-hidden="true">/</span>
+        <a href="/wahs/index.html">WA Health Summary (WAHS)</a>
+        <span aria-hidden="true">/</span>
+        <span>Research Sandbox</span>
+      </nav>
+
+      <p class="section-kicker">Research Sandbox Guide</p>
+      <h1>Exploring how WAHS prepares records and answers questions</h1>
+      <p class="overview-lead">
+        The WAHS Research Sandbox is a public tool for looking inside the question-answering process. You can load an example record, see how the chart is cleaned and condensed before a language model reads it, add optional context, and compare the answers that come back. The sandbox uses the same AI engine as the WAHS apps and contains only synthetic and de-identified records.
+      </p>
+      <div class="project-actions">
+        <a class="button button-primary" href="https://wahs-demo.openclinai.org/">Open the Research Sandbox <span aria-hidden="true">↗</span></a>
+        <a class="text-link" href="/wahs/walkthrough/index.html">Looking for the patient app? See the mobile app walkthrough <span aria-hidden="true">→</span></a>
+      </div>
+      <nav class="guide-jump" aria-label="Guide sections">
+        <a href="#layout">What the sandbox shows</a>
+        <a href="#connect">Connecting a model</a>
+        <a href="#exercises">Guided exercises</a>
+        <a href="#terms">Terms used in the sandbox</a>
+      </nav>
+    </section>
+
+    <section class="guide-section page-width" id="layout" aria-labelledby="layout-heading">
+      <p class="section-kicker">Layout</p>
+      <h2 id="layout-heading">What the sandbox shows</h2>
+      <p>
+        The sandbox is organized as three tabs that follow the path a question takes. The first two work for every visitor without signing in.
+      </p>
+
+      <div class="guide-grid">
+        <article class="guide-card">
+          <span class="guide-badge">Tab 1 &middot; Browse / Upload FHIR R4</span>
+          <h3>Choose a record</h3>
+          <p>
+            Pick one of ten example records. They range from small synthetic charts to a de-identified hospital record with more than 7,000 entries. You can also upload your own file in the FHIR format used for health records. The browser lists every entry in the record so you can see what the model will be working from.
+          </p>
+        </article>
+        <article class="guide-card">
+          <span class="guide-badge">Tab 2 &middot; Engine Condensation &amp; Enrichers</span>
+          <h3>See what the model receives</h3>
+          <p>
+            This tab shows the prepared chart exactly as the model will read it. Summary figures show how much of the record fit, which condensation level was used, and how many items were left out. Separate views show the added context, the instructions given to the model, and the full technical response for researchers who want it.
+          </p>
+        </article>
+        <article class="guide-card">
+          <span class="guide-badge teal">Tab 3 &middot; Ask WAHS &amp; Verify Provenance</span>
+          <h3>Ask questions and check the sources</h3>
+          <p>
+            Type a question or choose a suggested one. The answer appears with numbered citations. Selecting a citation opens the record entry it refers to, so you can confirm each statement against the chart.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="guide-section page-width" id="connect" aria-labelledby="connect-heading">
+      <p class="section-kicker">Setup</p>
+      <h2 id="connect-heading">Connecting a model</h2>
+      <p>
+        Tabs 1 and 2 need no setup. To get answers in Tab 3, open <strong>Connection</strong> in the top bar and choose one of two options.
+      </p>
+
+      <div class="guide-grid two">
+        <article class="guide-card">
+          <span class="guide-badge">Option A &middot; Hosted model</span>
+          <h3>Use the university-hosted models</h3>
+          <ol>
+            <li>Select <strong>Sign in for UW GPU</strong> and sign in with an authorized OpenClinAI Google account.</li>
+            <li>Choose a model from the <strong>Model</strong> menu. The larger model is the default; smaller models answer faster.</li>
+            <li>Ask a question in Tab 3.</li>
+          </ol>
+          <p>Answers are generated by open-weight models running on University of Washington servers. Access is currently limited to project collaborators.</p>
+        </article>
+        <article class="guide-card">
+          <span class="guide-badge teal">Option B &middot; Your own model</span>
+          <h3>Use a model on your own computer</h3>
+          <ol>
+            <li>Start a local model server such as LM Studio or Ollama.</li>
+            <li>In <strong>Connection</strong>, choose <strong>Local BYO-Model</strong>, pick your server address, and select <strong>Apply Connection</strong>.</li>
+            <li>Ask a question in Tab 3. No sign-in is needed.</li>
+          </ol>
+          <p>The sandbox still prepares the chart and links the citations. Only the answer itself is written by the model on your machine, which makes this option useful for comparing different models on the same prepared record.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="guide-section page-width" id="exercises" aria-labelledby="exercises-heading">
+      <p class="section-kicker">Guided Exercises</p>
+      <h2 id="exercises-heading">Three short exercises</h2>
+      <p>
+        Each exercise takes about two minutes and shows one part of how WAHS works. The first two use only Tabs 1 and 2, so they need no sign-in.
+      </p>
+
+      <div class="guide-grid">
+        <article class="guide-card" id="exercise-large-records">
+          <span class="guide-badge">Exercise 1</span>
+          <h3>Fitting a large record</h3>
+          <ol>
+            <li>In Tab 1, select <strong>Maurice742 Auer97</strong>, a record with 7,099 entries.</li>
+            <li>In Tab 2, switch <strong>Context Budget</strong> between <strong>64k</strong>, <strong>16k</strong>, and <strong>2k</strong>.</li>
+            <li>Compare <strong>Condensation Tier</strong> and <strong>Omitted Items</strong> at each size, and scroll through the condensed chart.</li>
+          </ol>
+          <div class="guide-observe">
+            <strong>What to look for:</strong> As the size shrinks, repeated measurements and older history are summarized. Allergies, active medications, and active conditions stay in full. The number of omitted items is reported openly, not hidden.
+          </div>
+        </article>
+
+        <article class="guide-card" id="exercise-added-context">
+          <span class="guide-badge">Exercise 2</span>
+          <h3>Adding optional context</h3>
+          <ol>
+            <li>Select <strong>Margaret Chen</strong> or <strong>Elena Rostova</strong>.</li>
+            <li>In Tab 2, open <strong>Enrichers</strong> and choose <strong>Clear</strong>. Then open the <strong>Enricher Appendix</strong> view.</li>
+            <li>Choose <strong>Core</strong>, then <strong>All</strong>, and compare what is added each time.</li>
+          </ol>
+          <div class="guide-observe">
+            <strong>What to look for:</strong> The added context appears after the chart. It can include lab trends over time, medications grouped by drug class, passages from long notes, and public guideline excerpts. The chart itself does not change.
+          </div>
+        </article>
+
+        <article class="guide-card" id="exercise-citations">
+          <span class="guide-badge teal">Exercise 3</span>
+          <h3>Checking citations and missing information</h3>
+          <ol>
+            <li>With <strong>Margaret Chen</strong> selected, ask in Tab 3: <em>"What active medications am I taking, and are there any fall or sedation risks?"</em></li>
+            <li>Select a numbered citation in the answer to open the record entry it refers to.</li>
+            <li>Select <strong>Show suggested questions</strong> and choose <strong>Test grounded abstention</strong>, which asks about a colonoscopy or cardiac stress test.</li>
+          </ol>
+          <div class="guide-observe">
+            <strong>What to look for:</strong> Each medication statement points to a real entry in her chart. Margaret has no colonoscopy or stress test on record, and the answer says so instead of guessing.
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="guide-section page-width" id="terms" aria-labelledby="terms-heading">
+      <p class="section-kicker">Reference</p>
+      <h2 id="terms-heading">Terms used in the sandbox</h2>
+      <p>
+        The sandbox labels are written for researchers. These short definitions explain the ones you will see most.
+      </p>
+      <dl class="guide-terms">
+        <dt>Context budget</dt>
+        <dd>How much of the record the model is given at once, measured in tokens (roughly, pieces of words). 16k is the default. Larger budgets include more history; smaller ones force more summarizing.</dd>
+        <dt>Condensation tier</dt>
+        <dd>How much the chart had to be shortened to fit. Tier 0 means the record fit in full. Higher tiers summarize repeated or older entries while keeping the most important clinical facts.</dd>
+        <dt>Omitted items</dt>
+        <dd>The count of entries that did not fit. They are listed openly so readers and the model both know the chart is not complete.</dd>
+        <dt>Enrichers</dt>
+        <dd>Optional modules that add supporting context for a specific question, such as lab trends, drug-class groupings, note passages, or guideline excerpts. <strong>Core</strong> turns on the standard set; <strong>All</strong> adds guideline excerpts.</dd>
+        <dt>Citation</dt>
+        <dd>A numbered marker in an answer, such as [3], that links a statement to the record entry it came from.</dd>
+        <dt>Provenance</dt>
+        <dd>Where a piece of information came from: the clinic, the date, and the original record entry.</dd>
+        <dt>Open-weight model</dt>
+        <dd>A language model whose weights are published, so it can run on university servers or a personal computer rather than only through a commercial service.</dd>
+      </dl>
+    </section>
+
+    <section class="guide-section page-width" id="further" aria-labelledby="further-heading">
+      <p class="section-kicker">Further Reading</p>
+      <h2 id="further-heading">Going further</h2>
+      <p>
+        The pages below explain the design choices behind the sandbox and report how different approaches compare.
+      </p>
+      <div class="guide-links">
+        <a href="/wahs/llm-strategy/index.html">LLM strategy and design rationale <span aria-hidden="true">→</span></a>
+        <a href="/wahs/architecture/index.html">Architecture and developer reference <span aria-hidden="true">→</span></a>
+        <a href="https://reports.openclinai.org/#wahs">Published evaluation reports <span aria-hidden="true">↗</span></a>
+      </div>
+      <p class="scope-note" style="margin-top:28px;">
+        WA Health Summary is an exploratory research and demonstration project using synthetic and de-identified records. AI outputs can contain errors and do not constitute medical advice or replace clinical review.
+      </p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="page-width footer-grid">
+      <div>
+        <a class="brand footer-brand" href="/index.html">
+          <span class="brand-mark" aria-hidden="true"><span></span></span>
+          <span>OpenClinAI</span>
+        </a>
+        <p>
+          Open-source tools for clinical questions, reporting and reproducible evaluation from the <a href="https://digi.uw.edu/">University of Washington Digital Initiatives Group at I-TECH (DIGI)</a>.
+        </p>
+      </div>
+      <nav aria-label="Project links">
+        <a href="/chartsearchai/index.html">ChartSearchAI</a>
+        <a href="/catalyst/index.html">Catalyst</a>
+        <a href="/med-agent-hub/index.html">Med Agent Hub</a>
+        <a href="/validation-harness/index.html">Validation Harness</a>
+        <a href="/experiments/index.html">Post-Training &amp; Lab</a>
+        <a href="/projects/index.html">Applied Projects</a>
+      </nav>
+      <p class="footer-disclaimer">
+        For research and demonstration. AI output can be inaccurate and requires review.<br />
+        <a href="https://reports.openclinai.org/">Evaluation Reports</a> &middot; <a href="/docs/openmrs-upstream/index.html">OpenMRS Upstream PRs</a>
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

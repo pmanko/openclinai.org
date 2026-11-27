@@ -3,48 +3,45 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>WAHS 3-Surface Walkthrough &amp; Experiments &middot; OpenClinAI</title>
-  <meta name="description" content="Hands-on walkthrough covering all three WA Health Summary surfaces: the live engine-backed Sandbox (wahs-demo), the Web App (shl-ips), and the Mobile Companion, plus reproducible budget, enricher, and abstention experiments." />
+  <title>WAHS Mobile App Walkthrough &middot; OpenClinAI</title>
+  <meta name="description" content="A step-by-step tour of the WA Health Summary mobile companion, following a synthetic patient as she reviews records from several clinics, adds personal notes, asks questions, and shares a summary with her care team." />
   <link rel="canonical" href="https://openclinai.org/wahs/walkthrough/" />
   <meta property="og:url" content="https://openclinai.org/wahs/walkthrough/" />
-  <meta property="og:title" content="WAHS 3-Surface Walkthrough &amp; Experiments &middot; OpenClinAI" />
-  <meta property="og:description" content="Try WA Health Summary across the Live Sandbox, Web App, and Mobile Companion with step-by-step condensation, enricher, and citation verification experiments." />
-  <meta property="og:image" content="https://storage.googleapis.com/openclinai-media/wahs/wahs-web-app-demo-20261126.webp" />
+  <meta property="og:title" content="WAHS Mobile App Walkthrough &middot; OpenClinAI" />
+  <meta property="og:description" content="Follow Margaret, a synthetic patient, through the WA Health Summary mobile companion as she prepares for a clinic visit." />
+  <meta property="og:image" content="https://storage.googleapis.com/openclinai-media/wahs/mobile-walkthrough-20261126/02-home.webp" />
   <meta name="theme-color" content="#4b2e83" />
   <meta name="twitter:card" content="summary_large_image" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/projects.css" />
   <style>
-    .walkthrough-intro { padding: 30px 0 32px; }
-    .walkthrough-intro h1 { margin: 0; max-width: 860px; color: var(--purple-ink); font: 700 clamp(34px, 4.2vw, 50px)/1.12 Georgia, serif; letter-spacing: -0.02em; }
-    .walkthrough-nav { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 6px; }
-    .walkthrough-nav a { display: inline-block; padding: 7px 13px; border-radius: 999px; background: var(--soft); border: 1px solid var(--line); font-size: 13.5px; font-weight: 650; color: var(--ink); text-decoration: none; }
-    .walkthrough-nav a:hover { border-color: var(--purple); color: var(--purple); }
-    .walkthrough-section { padding: 38px 0 42px; border-top: 1px solid var(--line); scroll-margin-top: 24px; }
-    .walkthrough-section > h2 { margin: 0 0 14px; color: var(--purple-ink); font: 700 clamp(26px, 3vw, 34px)/1.2 Georgia, serif; }
-    .walkthrough-section > p { max-width: 860px; color: var(--muted); font-size: 16px; line-height: 1.6; margin: 0 0 18px; }
-    .surface-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 20px; margin-top: 20px; }
-    .surface-card { padding: 22px 24px; background: #ffffff; border: 1px solid var(--line); border-radius: 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04); }
-    .surface-card.featured { border: 2px solid #4b2e83; background: #fcfaff; }
-    .surface-card h3 { margin: 0; font-size: 19px; color: var(--ink); }
-    .surface-card p { margin: 0; font-size: 14.5px; color: var(--muted); line-height: 1.55; }
-    .surface-card ul { margin: 4px 0 8px; padding-left: 18px; font-size: 14px; line-height: 1.58; color: var(--ink); }
-    .surface-card li + li { margin-top: 4px; }
-    .recipe-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 20px; margin-top: 20px; }
-    .recipe-card { padding: 22px 24px; background: #ffffff; border: 1px solid var(--line); border-radius: 12px; display: flex; flex-direction: column; gap: 12px; }
-    .recipe-card h3 { margin: 0; font-size: 18.5px; line-height: 1.32; color: var(--ink); }
-    .recipe-card p { margin: 0; font-size: 14.5px; color: var(--muted); line-height: 1.55; }
-    .recipe-steps { margin: 0; padding-left: 20px; font-size: 14.5px; line-height: 1.6; color: var(--ink); }
-    .recipe-steps li { margin-bottom: 6px; }
-    .recipe-expected { margin-top: auto; padding: 12px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13.5px; line-height: 1.5; }
-    .scene-step-badge { display: inline-block; align-self: flex-start; padding: 3px 10px; border-radius: 999px; background: #ede9fe; color: #4b2e83; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
-    .scene-step-badge.teal { background: #ccfbf1; color: #115e59; }
-    .connect-box { padding: 20px 24px; background: #ffffff; border: 1px solid var(--line); border-radius: 12px; max-width: 900px; }
-    .connect-box ol { margin: 10px 0 12px; padding-left: 20px; font-size: 15px; line-height: 1.62; color: var(--ink); }
-    .code-pill { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #0f172a; }
-    @media (max-width: 720px) {
-      .recipe-grid, .surface-grid { grid-template-columns: 1fr; }
+    .wt-intro { padding: 30px 0 32px; }
+    .wt-intro h1 { margin: 0; max-width: 860px; color: var(--purple-ink); font: 700 clamp(32px, 4vw, 46px)/1.14 Georgia, serif; letter-spacing: -0.02em; }
+    .wt-access { display: block; max-width: 800px; margin: 4px 0 22px; padding: 12px 16px; border-radius: 8px; background: var(--soft); border: 1px solid var(--line); color: var(--ink); font-size: 15px; line-height: 1.55; }
+    .wt-jump { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 6px; }
+    .wt-jump a { display: inline-block; padding: 7px 13px; border-radius: 999px; background: var(--soft); border: 1px solid var(--line); font-size: 13.5px; font-weight: 650; color: var(--ink); text-decoration: none; }
+    .wt-jump a:hover { border-color: var(--purple); color: var(--purple); }
+    .wt-step { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr); gap: 40px; align-items: start; padding: 40px 0 44px; border-top: 1px solid var(--line); scroll-margin-top: 24px; }
+    .wt-step-num { display: inline-grid; place-items: center; width: 34px; height: 34px; margin-bottom: 12px; border-radius: 999px; background: var(--purple); color: #ffffff; font-weight: 700; font-size: 15px; }
+    .wt-step h2 { margin: 0 0 14px; color: var(--purple-ink); font: 700 clamp(24px, 2.8vw, 31px)/1.22 Georgia, serif; }
+    .wt-step p { max-width: 640px; margin: 0 0 14px; color: var(--muted); font-size: 16.5px; line-height: 1.65; }
+    .wt-step ul { max-width: 640px; margin: 0 0 14px; padding-left: 20px; color: var(--ink); font-size: 16px; line-height: 1.65; }
+    .wt-step li + li { margin-top: 6px; }
+    .wt-step blockquote { max-width: 620px; margin: 4px 0 16px; padding: 12px 16px; border-left: 4px solid var(--purple); background: #fcfaff; border-radius: 6px; color: var(--ink); font-size: 16px; line-height: 1.6; font-style: italic; }
+    .wt-shots { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .wt-shots figure { margin: 0; flex: 0 1 280px; }
+    .wt-shots img { display: block; width: 100%; height: auto; border-radius: 22px; border: 1px solid var(--line); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.10); background: #ffffff; }
+    .wt-shots figcaption { margin-top: 8px; color: var(--muted); font-size: 13.5px; line-height: 1.45; text-align: center; }
+    .wt-step.wide { grid-template-columns: 1fr; }
+    .wt-step.wide .wt-shots figure { flex-basis: 240px; }
+    .wt-video { max-width: 360px; }
+    .wt-video video { display: block; width: 100%; height: auto; max-height: 640px; border-radius: 16px; border: 1px solid var(--line); background: #0f172a; }
+    .wt-links { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 8px; font-size: 15.5px; }
+    .wt-links a { color: var(--purple); font-weight: 650; text-decoration: none; }
+    .wt-links a:hover { text-decoration: underline; }
+    @media (max-width: 860px) {
+      .wt-step { grid-template-columns: 1fr; gap: 22px; }
     }
   </style>
 </head>
@@ -86,17 +83,17 @@
       <span class="wahs-subnav-label">WA Health Summary</span>
       <nav class="wahs-subnav" aria-label="WA Health Summary navigation">
         <a href="/wahs/index.html">Overview</a>
+        <a href="/wahs/walkthrough/index.html" aria-current="page">Mobile App</a>
+        <a href="/wahs/sandbox/index.html">Research Sandbox</a>
         <a href="/wahs/architecture/index.html">Architecture</a>
         <a href="/wahs/llm-strategy/index.html">LLM Strategy</a>
-        <a href="/wahs/walkthrough/index.html" aria-current="page">Walkthrough</a>
-        <a href="https://wahs-demo.openclinai.org/">Live Sandbox <span aria-hidden="true">↗</span></a>
         <a href="https://reports.openclinai.org/#wahs">Reports <span aria-hidden="true">↗</span></a>
       </nav>
     </div>
   </div>
 
   <main id="main-content" tabindex="-1">
-    <section class="walkthrough-intro page-width">
+    <section class="wt-intro page-width">
       <nav class="breadcrumbs" aria-label="Breadcrumb">
         <a href="/index.html">OpenClinAI</a>
         <span aria-hidden="true">/</span>
@@ -104,172 +101,220 @@
         <span aria-hidden="true">/</span>
         <a href="/wahs/index.html">WA Health Summary (WAHS)</a>
         <span aria-hidden="true">/</span>
-        <span>Walkthrough</span>
+        <span>Mobile App Walkthrough</span>
       </nav>
 
-      <p class="section-kicker">Three Live Surfaces &middot; One Shared <code>wahs-engine</code></p>
-      <h1>Try WA Health Summary across Sandbox, Web App, and Mobile Companion.</h1>
+      <p class="section-kicker">Mobile App Walkthrough</p>
+      <h1>Using the WAHS mobile companion</h1>
       <p class="overview-lead">
-        All three WAHS interfaces share the exact same 3-part AI selector (<strong>Model</strong>: <code>wahs-26b</code> / <code>12b</code> / <code>e4b</code>; <strong>Context</strong>: <code>Auto (16k)</code> or <code>2k</code>&ndash;<code>64k</code>; <strong>Enrichers</strong>: <code>4/5 (Core)</code> multi-select checkbox menu with <code>Core</code> / <code>All</code> / <code>Clear</code>) and stream from <code>wahs-engine</code> pinned at <code>64k</code> <code>num_ctx</code>.
+        This walkthrough follows Margaret, a synthetic patient in her early eighties, as she uses the WAHS mobile companion to prepare for a geriatrics appointment. It covers signing in, reviewing records from several clinics, adding a personal note, asking questions about her medications, and sharing a summary with her care team.
       </p>
-      <div class="project-actions">
-        <a class="button button-primary" href="https://wahs-demo.openclinai.org/">Open Live Sandbox <span aria-hidden="true">↗</span></a>
-        <a class="button button-secondary" href="https://wahealth.openclinai.org/">Open Cloud Portal (Web &amp; Mobile) <span aria-hidden="true">↗</span></a>
-        <a class="text-link" href="/wahs/architecture/index.html">Inspect Engine Architecture <span aria-hidden="true">→</span></a>
-      </div>
-      <nav class="walkthrough-nav" aria-label="Walkthrough sections">
-        <a href="#three-surfaces">1. The Three Surfaces</a>
-        <a href="#sandbox-guide">2. Using the Sandbox (Public + BYO-Model)</a>
-        <a href="#experimentation-recipes">3. Guided Experiments</a>
-        <a href="#local-stack">4. Running Locally</a>
+      <p class="wt-access">
+        <strong>About access:</strong> The mobile companion is currently available only to authorized project accounts, and every account uses synthetic records. The screenshots below show each step, and a full screen recording is at the end of the page.
+      </p>
+      <nav class="wt-jump" aria-label="Walkthrough steps">
+        <a href="#step-signin">1. Signing in</a>
+        <a href="#step-home">2. Home screen</a>
+        <a href="#step-records">3. Records</a>
+        <a href="#step-notes">4. Personal notes</a>
+        <a href="#step-ask">5. Asking a question</a>
+        <a href="#step-sources">6. Checking a source</a>
+        <a href="#step-missing">7. Missing information</a>
+        <a href="#step-share">8. Sharing a summary</a>
       </nav>
     </section>
 
-    <!-- SECTION 1: THREE SURFACES -->
-    <section class="walkthrough-section page-width" id="three-surfaces" aria-labelledby="surfaces-heading">
-      <p class="section-kicker">Section 1 &middot; Live Applications</p>
-      <h2 id="surfaces-heading">Choose the right WAHS surface for your task</h2>
-      <p>
-        Every surface delegates 100% of FHIR extraction, condensation, enricher execution, and provenance mapping to <code>wahs-engine</code>.
-      </p>
-
-      <div class="surface-grid">
-        <article class="surface-card featured" id="scene-step1">
-          <span class="scene-step-badge">Surface 1 &middot; Public Inspection</span>
-          <h3>WAHS Explorer Sandbox</h3>
-          <p><strong>URL:</strong> <a href="https://wahs-demo.openclinai.org/"><code>wahs-demo.openclinai.org</code> ↗</a></p>
-          <p>Zero-business-logic thin UI connected to an isolated <code>wahs-sandbox-engine</code> (no HAPI/Keycloak access).</p>
-          <ul>
-            <li><strong>Step 1 (Public):</strong> Browse all 10 mounted real FHIR R4 bundles (Synthea, US Core, and MIMIC-IV-FHIR up to 22 MB) or upload any custom FHIR R4 JSON bundle.</li>
-            <li><strong>Step 2 (Public):</strong> Call live <code>POST /v1/wahs/context/preview</code> to inspect exact Tier 0/1/2 condensation, <code>chart_text</code>, enricher suffix, <code>system_prompt</code>, and <code>X-WAHS-Prefix-Hash</code>.</li>
-            <li><strong>Step 3 (UW GPU or Local BYO):</strong> Stream via your shared OpenClinAI Google session or forward the exact Step 2 engine prompt to LM Studio, Ollama, or <code>llama-router</code> with zero sign-in.</li>
-          </ul>
-          <a class="button button-primary" href="https://wahs-demo.openclinai.org/" style="margin-top:auto;">Launch Sandbox ↗</a>
-        </article>
-
-        <article class="surface-card" id="scene-step2">
-          <span class="scene-step-badge">Surface 2 &middot; Full PHR Web App</span>
-          <h3>WAHS Web App (<code>shl-ips</code>)</h3>
-          <p><strong>URL:</strong> <a href="https://wahs-web.openclinai.org/"><code>wahs-web.openclinai.org</code> ↗</a> (whitelisted Google session)</p>
-          <p>Full SvelteKit International Patient Summary (IPS) portal backed by live HAPI FHIR, Keycloak OIDC, <code>fhir-auth</code>, and SMART Health Links.</p>
-          <ul>
-            <li>Switch across 12 seeded real Keycloak accounts via the profile menu or <code>?profile=margaret</code>.</li>
-            <li>Curate IPS summaries, issue SMART Health Links, and filter Ask WAHS by clinic source or resource category.</li>
-            <li>Click any inline <code>[N]</code> citation pill to open the FHIR Provenance Inspector drawer (<a href="/wahs/index.html#app-demos">watch live recording →</a>).</li>
-          </ul>
-          <a class="button button-secondary" href="https://wahealth.openclinai.org/" style="margin-top:auto;">Open via Cloud Portal ↗</a>
-        </article>
-
-        <article class="surface-card" id="scene-step3">
-          <span class="scene-step-badge teal">Surface 3 &middot; Mobile Companion</span>
-          <h3>WAHS Mobile Companion</h3>
-          <p><strong>URL:</strong> <a href="https://wahs-mobile.openclinai.org/"><code>wahs-mobile.openclinai.org</code> ↗</a> (whitelisted Google session)</p>
-          <p>Phone-sized companion UI sharing the identical HAPI FHIR store, Keycloak realm, and <code>wahs-engine</code> backend.</p>
-          <ul>
-            <li>1-tap sign-in across all 12 seeded patient personas right from the Sign-In screen.</li>
-            <li>Add or update patient-authored <em>My Story</em> notes directly in FHIR R4 and watch <code>wahs-engine</code> pick up the change on the very next turn via <code>meta.lastUpdated</code>.</li>
-            <li>Expand <strong>Scope &amp; AI Config</strong> inside Ask WAHS to adjust Model, Context, and <code>Enrichers: 4/5 (Core)</code> (<a href="/wahs/index.html#app-demos">watch live recording →</a>).</li>
-          </ul>
-          <a class="button button-secondary" href="https://wahealth.openclinai.org/" style="margin-top:auto;">Open via Cloud Portal ↗</a>
-        </article>
+    <section class="wt-step page-width" id="step-signin" aria-labelledby="signin-heading">
+      <div>
+        <span class="wt-step-num" aria-hidden="true">1</span>
+        <h2 id="signin-heading">Signing in</h2>
+        <p>
+          The demonstration system includes twelve example accounts, each built around a different kind of patient history. They include a child with asthma, a patient with heart and kidney disease, a patient in cancer treatment, and Margaret, who takes several medications prescribed by different clinics.
+        </p>
+        <p>
+          Selecting an account from the list signs in directly. The demonstration system is not meant for real health information.
+        </p>
+      </div>
+      <div class="wt-shots">
+        <figure>
+          <img src="https://storage.googleapis.com/openclinai-media/wahs/mobile-walkthrough-20261126/01-signin.webp" width="800" height="1720" loading="lazy" alt="Mobile sign-in screen with a list of example patient accounts, including Margaret Chen." />
+        </figure>
       </div>
     </section>
 
-    <!-- SECTION 2: SANDBOX SIGN-IN & LOCAL BYO-MODEL -->
-    <section class="walkthrough-section page-width" id="sandbox-guide" aria-labelledby="sandbox-heading">
-      <p class="section-kicker">Section 2 &middot; Sandbox Modes</p>
-      <h2 id="sandbox-heading">Two ways to run Step 3 generation in the Explorer Sandbox</h2>
-      <p>
-        Steps 1 (FHIR resource browsing) and 2 (live <code>wahs-sandbox-engine</code> condensation &amp; enricher preview) work immediately for every visitor with zero sign-in. For Step 3 live streaming, choose either option under <strong>Connection</strong> in the top bar:
-      </p>
-
-      <div class="connect-box">
-        <strong>Option A: Hosted UW CIRG GPU (Unified OpenClinAI Google Session)</strong>
-        <ol>
-          <li>Open <a href="https://wahs-demo.openclinai.org/"><code>wahs-demo.openclinai.org</code> ↗</a> and click <strong>Sign in for UW GPU</strong> (or sign in once at <a href="https://openclinai.org/wahs/gate/"><code>openclinai.org/wahs/gate/</code> ↗</a>).</li>
-          <li>The same HttpOnly session cookie authorizes <code>wahealth.openclinai.org</code>, <code>wahs-web.openclinai.org</code>, <code>wahs-mobile.openclinai.org</code>, and Step 3 streaming on <code>wahs-demo.openclinai.org</code>.</li>
-          <li>Select <code>wahs-26b</code> (default), <code>wahs-12b</code>, or <code>wahs-e4b</code> and ask any clinical question.</li>
-        </ol>
-        <strong style="display:block; margin-top:16px;">Option B: Local BYO-Model (Zero Sign-In Required)</strong>
-        <ol>
-          <li>Start any CORS-enabled local OpenAI-compatible server: <span class="code-pill">llama-router (:8077)</span>, <span class="code-pill">LM Studio (:1234)</span>, or <span class="code-pill">Ollama (:11434)</span>.</li>
-          <li>In the Sandbox top bar, click <strong>Connection</strong>, select <strong>Local BYO-Model</strong>, pick your local URL, and click <strong>Apply Connection</strong>.</li>
-          <li>When you send a question, the Sandbox fetches the exact engine-assembled <code>system_prompt</code> and <code>enrichment_text</code> from Step 2 (<code>/api/engine/v1/wahs/context/preview</code>) and streams straight to your local model while preserving clickable <code>[N]</code> provenance drawers.</li>
-        </ol>
+    <section class="wt-step page-width" id="step-home" aria-labelledby="home-heading">
+      <div>
+        <span class="wt-step-num" aria-hidden="true">2</span>
+        <h2 id="home-heading">The home screen</h2>
+        <p>
+          The home screen brings Margaret's records together in one place. Cards show her diagnoses, recent lab results, medications, and immunizations, with the clinic and date for each entry. Shortcuts at the top let her share a summary or open Ask WAHS.
+        </p>
+        <p>
+          Further down, she can see which organizations her records came from and open her personal notes, goals, care needs, and advance care planning documents. The bar at the bottom of the screen gives quick access to <strong>Home</strong>, <strong>Add Info</strong>, <strong>Share</strong>, and <strong>Ask WAHS</strong>.
+        </p>
+      </div>
+      <div class="wt-shots">
+        <figure>
+          <img src="https://storage.googleapis.com/openclinai-media/wahs/mobile-walkthrough-20261126/02-home.webp" width="800" height="1720" loading="lazy" alt="Home screen greeting Margaret, with cards for medical history, lab results, medications, and immunizations." />
+        </figure>
       </div>
     </section>
 
-    <!-- SECTION 3: GUIDED EXPERIMENTS -->
-    <section class="walkthrough-section page-width" id="experimentation-recipes" aria-labelledby="recipes-title">
-      <p class="section-kicker">Section 3 &middot; Reproducible Experiments</p>
-      <h2 id="recipes-title">Three hands-on experiments to run in the Sandbox or Apps</h2>
-      <p>
-        Each experiment takes under two minutes and directly reproduces the behaviors measured in our November 26 H200 benchmark reports.
-      </p>
-
-      <div class="recipe-grid">
-        <article class="recipe-card" id="recipe-budget-ablation">
-          <span class="scene-step-badge">Experiment 1 &middot; Budget &amp; Tiers</span>
-          <h3>Watch Tier 0 vs. Tier 2 on a 7,099-resource chart</h3>
-          <p>See how <code>wahs_core</code> preserves the HL7 IPS safety core while logging exact omissions as budget shrinks.</p>
-          <ol class="recipe-steps">
-            <li>In Sandbox Step 1, select <strong>Maurice742 Auer97</strong> (7,099 entries, 22 MB raw FHIR JSON).</li>
-            <li>Open Step 2 and toggle the Context Budget across <strong>64k</strong>, <strong>16k</strong>, and <strong>2k</strong>.</li>
-            <li>Inspect <strong>Condensation Tier</strong>, <strong>Omitted Items</strong>, and <strong>Prefix Cache Hash</strong> in the metrics strip, then toggle back to <strong>16k</strong> to observe an instant <strong>LRU prefix cache HIT</strong>.</li>
-          </ol>
-          <div class="recipe-expected">
-            <strong>What to observe:</strong> Under tight budgets (<code>16k</code> and <code>2k</code>), Tier 2 folds repeated historical series and protects active allergies, meds, and conditions while recording exact omitted counts in <code>[2] Completeness Manifest</code> so <code>note_rag</code> and <code>overflow_lookup</code> can recover question-specific dropped facts.
-          </div>
-        </article>
-
-        <article class="recipe-card" id="recipe-enricher-ablation">
-          <span class="scene-step-badge">Experiment 2 &middot; Enrichers</span>
-          <h3>Compare <code>0/5 (None)</code> vs. <code>4/5 (Core)</code> vs. <code>5/5 (All)</code></h3>
-          <p>Reproduce Run 3A live by toggling individual modules in the multi-select Enrichers menu.</p>
-          <ol class="recipe-steps">
-            <li>Select <strong>Margaret Chen</strong> (geriatrics polypharmacy) or <strong>Elena Rostova</strong> (cardiorenal HFrEF + CKD3b).</li>
-            <li>In Step 2, open the <strong>Enrichers</strong> checkbox menu and click <strong>Clear</strong> (<code>0/5 None</code>), then click <strong>Enricher Appendix</strong>.</li>
-            <li>Click <strong>Core</strong> (<code>4/5 Core</code>) and then <strong>All</strong> (<code>5/5 All</code>) and compare the appended suffix tokens and disclosures.</li>
-          </ol>
-          <div class="recipe-expected">
-            <strong>What to observe:</strong> Notice that <code>X-WAHS-Prefix-Hash</code> stays completely unchanged when toggling enrichers because enrichers append strictly to Region 2 (turn suffix). With <code>4/5 Core</code>, <code>temporal</code> and <code>terminology_kb</code> attach concise trend and drug-class facts; <code>5/5 All</code> adds <code>[K1]</code> guideline snippets.
-          </div>
-        </article>
-
-        <article class="recipe-card" id="recipe-citations-and-abstention">
-          <span class="scene-step-badge teal">Experiment 3 &middot; Grounding</span>
-          <h3>Verify clickable <code>[N]</code> provenance &amp; grounded abstention</h3>
-          <p>Confirm every claim links to a real FHIR resource and that undocumented procedures trigger clean abstention.</p>
-          <ol class="recipe-steps">
-            <li>In Step 3 (or Web/Mobile Ask WAHS) on <strong>Margaret Chen</strong>, ask: <em>"What active medications am I taking, and are there any fall or sedation risks?"</em></li>
-            <li>Click any inline <code>[N]</code> pill in the streamed answer to inspect the exact FHIR R4 JSON resource and source clinic.</li>
-            <li>Next, toggle <strong>Show suggested questions</strong> and ask: <em>"Are there any records of a colonoscopy or cardiac stress test in my chart?"</em></li>
-          </ol>
-          <div class="recipe-expected">
-            <strong>What to observe:</strong> Medication claims cite only numeric <code>[N]</code> tags mapped to real FHIR UUIDs (zero fabricated pseudo-citation brackets). When asked about undocumented procedures, the model explicitly states no matching record exists rather than guessing.
-          </div>
-        </article>
+    <section class="wt-step page-width" id="step-records" aria-labelledby="records-heading">
+      <div>
+        <span class="wt-step-num" aria-hidden="true">3</span>
+        <h2 id="records-heading">Reviewing records from different clinics</h2>
+        <p>
+          Margaret's records come from her geriatrics clinic, a sleep clinic, her pharmacy, and the state immunization registry. Opening a category such as medications shows every entry together, each labeled with its start date, whether it is active or stopped, and the clinic that recorded it.
+        </p>
+        <p>
+          If something looks outdated or wrong, she can select <strong>Flag</strong> on that entry to point it out to her care team and to Ask WAHS.
+        </p>
+      </div>
+      <div class="wt-shots">
+        <figure>
+          <img src="https://storage.googleapis.com/openclinai-media/wahs/mobile-walkthrough-20261126/03-medications.webp" width="800" height="1720" loading="lazy" alt="Medication list showing each prescription with its start date, status, and the clinic that recorded it, plus a Flag button." />
+        </figure>
       </div>
     </section>
 
-    <!-- SECTION 4: RUNNING LOCALLY -->
-    <section class="walkthrough-section page-width" id="local-stack" aria-labelledby="local-heading">
-      <p class="section-kicker">Section 4 &middot; Developer Setup</p>
-      <h2 id="local-heading">Run the complete local WAHS stack</h2>
-      <p>
-        Developers with access to the WAHS repositories can run HAPI FHIR, Keycloak, <code>fhir-auth</code>, SMART Health Links, <code>wahs-engine</code>, <code>shl-ips</code> (<code>:4000</code>), and <code>wahs-mobile-frontend</code> (<code>:4001</code>) locally via Docker Compose:
-      </p>
-      <div class="connect-box">
-        <ul style="margin:0; padding-left:20px; font-size:14.5px; line-height:1.7;">
-          <li><strong>Standalone Engine:</strong> <a href="https://github.com/pmanko/wahs-engine"><code>pmanko/wahs-engine</code> ↗</a> (<code>uvicorn wahs_engine.app:app --port 8080</code>)</li>
-          <li><strong>Web App:</strong> <a href="https://github.com/pmanko/shl-ips"><code>pmanko/shl-ips</code> ↗</a> (<code>http://localhost:4000</code>)</li>
-          <li><strong>Mobile Companion:</strong> <a href="https://github.com/pmanko/wahs-mobile-frontend"><code>pmanko/wahs-mobile-frontend</code> ↗</a> (<code>http://localhost:4001</code>)</li>
-          <li><strong>Architecture &amp; API Contract:</strong> <a href="/wahs/architecture/index.html">WAHS Architecture &amp; Builder Reference →</a></li>
+    <section class="wt-step page-width" id="step-notes" aria-labelledby="notes-heading">
+      <div>
+        <span class="wt-step-num" aria-hidden="true">4</span>
+        <h2 id="notes-heading">Adding personal notes</h2>
+        <p>
+          Clinic records do not capture everything a patient notices between visits. Under <strong>Add Info</strong>, Margaret can keep a <strong>Personal Health Journal</strong>, list <strong>My Goals</strong>, and note <strong>My Care Needs</strong> for her next appointment.
+        </p>
+        <p>
+          Here she records that she felt unsteady getting up at night and wants to ask about her sleep medicine. Ask WAHS includes her notes alongside her clinic records when she asks a question.
+        </p>
+      </div>
+      <div class="wt-shots">
+        <figure>
+          <img src="https://storage.googleapis.com/openclinai-media/wahs/mobile-walkthrough-20261126/04-journal.webp" width="800" height="1720" loading="lazy" alt="Personal Health Journal screen with a saved entry about feeling unsteady at night, tagged as a symptom." />
+        </figure>
+      </div>
+    </section>
+
+    <section class="wt-step page-width" id="step-ask" aria-labelledby="ask-heading">
+      <div>
+        <span class="wt-step-num" aria-hidden="true">5</span>
+        <h2 id="ask-heading">Asking a question</h2>
+        <p>
+          Before her appointment, Margaret opens <strong>Ask WAHS</strong> and asks:
+        </p>
+        <blockquote>"What active medications am I taking, and are there any fall or sedation risks I should ask my doctor about?"</blockquote>
+        <p>
+          The answer lists her active medications and connects details that were recorded at different times and places:
+        </p>
+        <ul>
+          <li>an emergency department visit after a fall</li>
+          <li>a diagnosis of low blood pressure when standing</li>
+          <li>two sedating sleep medications taken at the same time</li>
+          <li>a consultation note recommending changes to those medications</li>
         </ul>
+        <p>
+          Each point carries a numbered citation. The answer ends with suggested questions for her care team and a reminder not to change any medication without talking to her clinician.
+        </p>
+        <p>
+          The speech-bubble button next to the question box shows suggested questions. Under <strong>Scope &amp; AI Config</strong>, she can also limit a question to records from particular clinics.
+        </p>
       </div>
-      <p class="scope-note" style="margin-top:24px;">
-        Experimental research and demonstration software using synthetic and de-identified patient records. AI outputs and automated checks require human review and do not establish clinical safety or effectiveness.
-      </p>
+      <div class="wt-shots">
+        <figure>
+          <img src="https://storage.googleapis.com/openclinai-media/wahs/mobile-walkthrough-20261126/05-answer.webp" width="800" height="1720" loading="lazy" alt="Ask WAHS answer describing a fall, low blood pressure when standing, and two sedating medications, with numbered citations." />
+        </figure>
+      </div>
+    </section>
+
+    <section class="wt-step page-width" id="step-sources" aria-labelledby="sources-heading">
+      <div>
+        <span class="wt-step-num" aria-hidden="true">6</span>
+        <h2 id="sources-heading">Checking a source</h2>
+        <p>
+          Tapping a citation number opens the record behind that statement, such as a medication order, lab result, or clinic note, along with its date and the organization that recorded it. This lets Margaret, a family member, or her clinician confirm what the answer says against the original entry.
+        </p>
+        <p>
+          Citations to her own notes are marked differently, for example <strong>[P1]</strong>, so it is clear which statements came from clinic records and which came from her.
+        </p>
+      </div>
+      <div class="wt-shots">
+        <figure>
+          <img src="https://storage.googleapis.com/openclinai-media/wahs/mobile-walkthrough-20261126/06-citation.webp" width="800" height="1720" loading="lazy" alt="Source record panel opened from a citation, showing the original clinical entry, its date, and its source." />
+        </figure>
+      </div>
+    </section>
+
+    <section class="wt-step page-width" id="step-missing" aria-labelledby="missing-heading">
+      <div>
+        <span class="wt-step-num" aria-hidden="true">7</span>
+        <h2 id="missing-heading">When the record has no answer</h2>
+        <p>
+          Margaret then asks whether her chart includes a colonoscopy or a cardiac stress test. Neither appears in her records, and the answer says so directly. It describes what the record does contain and does not guess.
+        </p>
+        <p>
+          This matters for patient-facing tools. A missing record can mean a test never happened, or that it was done somewhere whose records have not been added yet. Saying so plainly gives Margaret something specific to ask about at her visit.
+        </p>
+      </div>
+      <div class="wt-shots">
+        <figure>
+          <img src="https://storage.googleapis.com/openclinai-media/wahs/mobile-walkthrough-20261126/07-missing.webp" width="800" height="1720" loading="lazy" alt="Ask WAHS answer stating that there are no documented records of a colonoscopy or cardiac stress test." />
+        </figure>
+      </div>
+    </section>
+
+    <section class="wt-step wide page-width" id="step-share" aria-labelledby="share-heading">
+      <div>
+        <span class="wt-step-num" aria-hidden="true">8</span>
+        <h2 id="share-heading">Sharing a summary</h2>
+        <p>
+          Under <strong>Share</strong>, Margaret first chooses who the summary is for: emergency use, her primary care team, family or friends, school or work, travel, or a custom selection. Each choice suggests what to include, and she can add or remove individual items.
+        </p>
+        <p>
+          WAHS then creates an encrypted summary with a QR code and a link that expire on a set date. She can show the QR code at the clinic or send the link ahead of time. She can also revoke and delete a shared summary at any time, and the home screen keeps track of which summaries are still active.
+        </p>
+      </div>
+      <div class="wt-shots">
+        <figure>
+          <img src="https://storage.googleapis.com/openclinai-media/wahs/mobile-walkthrough-20261126/08a-share-audience.webp" width="800" height="1720" loading="lazy" alt="Share screen asking who the summary is for, with options such as Emergency, Primary Care Team, and Family or Friends." />
+          <figcaption>Choosing who the summary is for</figcaption>
+        </figure>
+        <figure>
+          <img src="https://storage.googleapis.com/openclinai-media/wahs/mobile-walkthrough-20261126/08b-share-include.webp" width="800" height="1720" loading="lazy" alt="List of record categories with counts of selected items, such as medications, conditions, and personal notes." />
+          <figcaption>Choosing what to include</figcaption>
+        </figure>
+        <figure>
+          <img src="https://storage.googleapis.com/openclinai-media/wahs/mobile-walkthrough-20261126/08c-share-qr.webp" width="800" height="1720" loading="lazy" alt="Shared summary screen with a QR code, expiry date, copy link button, and an option to revoke the summary." />
+          <figcaption>QR code and link, with an option to revoke</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="wt-step page-width" id="recording" aria-labelledby="recording-heading">
+      <div>
+        <p class="section-kicker">Screen Recording</p>
+        <h2 id="recording-heading">The full flow in one recording</h2>
+        <p>
+          This recording shows Margaret signing in, checking her summary, asking about medication safety, and opening a cited record.
+        </p>
+        <p>
+          WAHS also has a desktop web app for organizing records and building summaries in more detail. Both apps work from the same health record.
+        </p>
+        <div class="wt-links">
+          <a href="/wahs/index.html#app-demos">Watch the web app recording <span aria-hidden="true">→</span></a>
+          <a href="/wahs/sandbox/index.html">See how answers are prepared in the Research Sandbox <span aria-hidden="true">→</span></a>
+        </div>
+        <p class="scope-note" style="margin-top:28px;">
+          WA Health Summary is an exploratory research and demonstration project using synthetic and de-identified records. Ask WAHS is designed to help patients prepare for conversations with their clinicians. Its answers can contain errors and do not constitute medical advice.
+        </p>
+      </div>
+      <div class="wt-video">
+        <video controls playsinline preload="metadata"
+          poster="https://storage.googleapis.com/openclinai-media/wahs/wahs-mobile-app-demo-20261126.webp"
+          aria-label="Screen recording of the WA Health Summary mobile companion signing into a synthetic patient account, viewing her health summary, asking about medications, and opening a cited source record.">
+          <source src="https://storage.googleapis.com/openclinai-media/wahs/wahs-mobile-app-demo-20261126.mp4" type="video/mp4" />
+        </video>
+      </div>
     </section>
   </main>
 
